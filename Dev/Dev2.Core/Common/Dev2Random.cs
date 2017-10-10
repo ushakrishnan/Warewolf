@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -53,17 +53,7 @@ namespace Dev2.Common
             int powerOfTen = (int)Math.Pow(10, GetDecimalPlaces(@from, to));
             Random rand = GetRandom(ref seed);
             string result;
-            if (powerOfTen != 1)
-                result = (rand.NextDouble() * (to - from) + from).ToString(CultureInfo.InvariantCulture);
-            //result = ((double)(rand.Next((int)(from * powerOfTen), (int)((to * powerOfTen) > 0 ? (to * powerOfTen + 1) : (to * powerOfTen)))) / (double)powerOfTen).ToString(CultureInfo.InvariantCulture);
-            else
-            {
-                if (IsInIntRange(from) && IsInIntRange(to))
-                    result = rand.Next((int)from, (int)(to > 0 ? to + 1 : to)).ToString(CultureInfo.InvariantCulture);
-                else
-                    result = Math.Round(rand.NextDouble() * (to - @from) + @from).ToString(CultureInfo.InvariantCulture);
-
-            }
+            result = powerOfTen != 1 ? (rand.NextDouble() * (to - from) + from).ToString(CultureInfo.InvariantCulture) : IsInIntRange(from) && IsInIntRange(to) ? rand.Next((int)from, (int)(to > 0 ? to + 1 : to)).ToString(CultureInfo.InvariantCulture) : Math.Round(rand.NextDouble() * (to - @from) + @from).ToString(CultureInfo.InvariantCulture);
             if (result == double.PositiveInfinity.ToString(CultureInfo.InvariantCulture))
             {
                 return double.MaxValue.ToString(CultureInfo.InvariantCulture);
@@ -96,9 +86,13 @@ namespace Dev2.Common
         private uint DecimalPlaces(double x)
         {
             uint places = 0;
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            // ReSharper disable once EmptyEmbeddedStatement
-            for (; x * Math.Pow(10, places) % 1 != 0; places++) ;
+            
+            
+            for (; x * Math.Pow(10, places) % 1 != 0; places++)
+            {
+                ;
+            }
+
             return places;
         }
         private string GenerateLetters(int length, ref int seed)

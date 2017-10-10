@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -34,7 +34,7 @@ namespace Dev2.Activities.Designers2.Core
         {
             base.OnLoaded();
             InitializeContextMenu();
-            if(_dataContext.ModelItemCollection != null)
+            if (_dataContext?.ModelItemCollection != null)
             {
                 _dataContext.ModelItemCollection.CollectionChanged += ModelItemCollectionCollectionChanged;
             }
@@ -42,7 +42,7 @@ namespace Dev2.Activities.Designers2.Core
         protected override void OnUnloaded()
         {
             base.OnUnloaded();
-            if(_dataContext.ModelItemCollection != null)
+            if (_dataContext?.ModelItemCollection != null)
             {
                 _dataContext.ModelItemCollection.CollectionChanged -= ModelItemCollectionCollectionChanged;
             }
@@ -53,7 +53,7 @@ namespace Dev2.Activities.Designers2.Core
             base.OnContextMenuOpening(e);
 
             var theGrid = TheGrid;
-            if(theGrid == null)
+            if (theGrid == null)
             {
                 return;
             }
@@ -66,9 +66,9 @@ namespace Dev2.Activities.Designers2.Core
         {
             var theGrid = TheGrid;
 
-            if(theGrid != null)
+            if (theGrid != null)
             {
-                if(e.Action != NotifyCollectionChangedAction.Add)
+                if (e.Action != NotifyCollectionChangedAction.Add)
                 {
                     theGrid.Items.Refresh();
                 }
@@ -77,8 +77,6 @@ namespace Dev2.Activities.Designers2.Core
                     theGrid.ScrollIntoView(e.NewItems[0]);
                 }
             }
-
-
         }
 
         void InitializeContextMenu()
@@ -91,15 +89,15 @@ namespace Dev2.Activities.Designers2.Core
             _deleteRowMenuItem.SetValue(AutomationProperties.AutomationIdProperty, "UI_DeleteRowMenuItem_AutoID");
             _deleteRowMenuItem.Click += DeleteDataGridRow;
 
-            ContextMenu.Items.Add(_insertRowMenuItem);
-            ContextMenu.Items.Add(_deleteRowMenuItem);
+            ContextMenu?.Items.Add(_insertRowMenuItem);
+            ContextMenu?.Items.Add(_deleteRowMenuItem);
         }
 
         protected void DeleteDataGridRow(object sender, RoutedEventArgs e)
         {
             var theGrid = TheGrid;
 
-            if(theGrid != null)
+            if (theGrid != null)
             {
                 ViewModel.RemoveAt(TheGrid.SelectedIndex + 1);
                 theGrid.Items.Refresh();
@@ -109,7 +107,7 @@ namespace Dev2.Activities.Designers2.Core
         protected void InsertDataGridRow(object sender, RoutedEventArgs e)
         {
             var theGrid = TheGrid;
-            if(theGrid != null)
+            if (theGrid != null)
             {
                 ViewModel.InsertAt(TheGrid.SelectedIndex + 1);
                 theGrid.Items.Refresh();

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -51,7 +51,9 @@ namespace Dev2.Runtime.ServiceModel.Utils
                 {
                     name = name.Remove(0, idx + 2);
                     if (name.StartsWith("."))
+                    {
                         name = name.Substring(1);
+                    }
                 }
 
                 var field = new RecordsetField { Name = name, Alias = string.IsNullOrEmpty(path.OutputExpression) ? alias : path.OutputExpression, Path = path };

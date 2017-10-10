@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Text;
 using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Data.ServiceModel;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Runtime.Interfaces;
@@ -23,7 +23,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Storage;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.ESB
 {
     [TestClass]
@@ -70,8 +70,7 @@ namespace Dev2.Tests.Runtime.ESB
 
             var container = CreateExecutionContainer(resourceCatalog.Object);
 
-            ErrorResultTO errors;
-            container.Execute(out errors, 0);
+            container.Execute(out ErrorResultTO errors, 0);
 
             Assert.AreEqual("Service not found", errors.MakeDisplayReady(), "Execute did not return an error for a non-existent resource catalog connection.");
         }

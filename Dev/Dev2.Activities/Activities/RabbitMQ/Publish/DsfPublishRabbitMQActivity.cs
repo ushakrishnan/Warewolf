@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,15 +21,15 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedMember.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 
-// ReSharper disable VirtualMemberCallInContructor
-// ReSharper disable InconsistentNaming
+
+
+
+
+
 namespace Dev2.Activities.RabbitMQ.Publish
 {
-    [ToolDescriptorInfo("RabbitMq", "RabbitMQ Publish", ToolType.Native, "FFEC6885-597E-49A2-A1AD-AE81E33DF809", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Rabbit MQ Publish_Tags")]
+    [ToolDescriptorInfo("RabbitMq", "RabbitMQ Publish", ToolType.Native, "FFEC6885-597E-49A2-A1AD-AE81E33DF809", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Rabbit_MQ_Publish")]
     public class DsfPublishRabbitMQActivity : DsfBaseActivity
     {
         #region Ctor
@@ -83,23 +83,20 @@ namespace Dev2.Activities.RabbitMQ.Publish
 
         #region Overrides of DsfBaseActivity
 
-        public override string DisplayName { get; set; }
-
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             try
             {
                 RabbitMQSource = ResourceCatalog.GetResource<RabbitMQSource>(GlobalConstants.ServerWorkspaceID, RabbitMQSourceResourceId);
                 if (RabbitMQSource == null)
                 {
-                    return ErrorResource.RabbitSourceHasBeenDeleted;
+                    return new List<string> { ErrorResource.RabbitSourceHasBeenDeleted };
                 }
 
-                string queueName, message;
-                if (!evaluatedValues.TryGetValue("QueueName", out queueName) ||
-                    !evaluatedValues.TryGetValue("Message", out message))
+                if (!evaluatedValues.TryGetValue("QueueName", out string queueName) ||
+                    !evaluatedValues.TryGetValue("Message", out string message))
                 {
-                    return ErrorResource.RabbitQueueNameAndMessageRequired;
+                    return new List<string> { ErrorResource.RabbitQueueNameAndMessageRequired };
                 }
 
                 ConnectionFactory.HostName = RabbitMQSource.HostName;
@@ -120,12 +117,12 @@ namespace Dev2.Activities.RabbitMQ.Publish
                         Channel.BasicPublish(queueName, "", basicProperties, Encoding.UTF8.GetBytes(message));
                     }
                 }
-                Dev2Logger.Debug(String.Format("Message published to queue {0}", queueName));
-                return "Success";
+                Dev2Logger.Debug($"Message published to queue {queueName}", GlobalConstants.WarewolfDebug);
+                return new List<string> { "Success" };
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error("PublishRabbitMQActivity", ex);
+                Dev2Logger.Error("PublishRabbitMQActivity", ex, GlobalConstants.WarewolfError);
                 throw new Exception(ex.GetAllMessages());
             }
         }

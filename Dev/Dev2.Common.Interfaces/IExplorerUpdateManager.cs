@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Dev2.Common.Interfaces.Infrastructure;
 
 namespace Dev2.Common.Interfaces
 {
@@ -38,7 +39,6 @@ namespace Dev2.Common.Interfaces
         /// </summary>
         /// <param name="path">the folder path</param>
         /// <param name="newName">the new name</param>
-        /// <param name="id"></param>
         void RenameFolder(string path, string newName);
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Dev2.Common.Interfaces
         /// <param name="sourcePath"></param>
         /// <param name="destinationPath"></param>
         /// <param name="itemPath"></param>
-        Task MoveItem(Guid sourcePath, string destinationPath,string itemPath);
+        Task<IExplorerRepositoryResult> MoveItem(Guid sourcePath, string destinationPath,string itemPath);
 
     }
 }

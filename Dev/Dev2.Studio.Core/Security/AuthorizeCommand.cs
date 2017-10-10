@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,12 +11,15 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+
+
 
 namespace Dev2.Security
 {
-    public class AuthorizeCommand<T> : DependencyObject, ICommand
+    public class AuthorizeCommand<T> : DependencyObject, IAuthorizeCommand<T>
     {
         readonly Action<T> _action;
         readonly Predicate<T> _canExecute;
@@ -55,7 +58,7 @@ namespace Dev2.Security
             DependencyProperty.Register("UnauthorizedVisibility", typeof(Visibility), typeof(AuthorizeCommand<T>), new PropertyMetadata(Visibility.Collapsed));
         private IContextualResourceModel _resourceModel;
 
-        public AuthorizationContext AuthorizationContext { get; private set; }
+        public AuthorizationContext AuthorizationContext { get;  set; }
 
         string ResourceId { get; set; }
         bool IsVersionResource { get; set; }
@@ -83,7 +86,9 @@ namespace Dev2.Security
             }
         }
 
-        public void UpdateContext(IEnvironmentModel environment, IContextualResourceModel resourceModel = null)
+        public void UpdateContext(IServer environment) => UpdateContext(environment, null);
+
+        public void UpdateContext(IServer environment, IContextualResourceModel resourceModel)
         {
             // MUST set ResourceID first as setting AuthorizationService triggers IsAuthorized() query
             if(resourceModel != null)
@@ -92,7 +97,7 @@ namespace Dev2.Security
                 ResourceId = resourceModel.ID.ToString();
                 IsVersionResource = resourceModel.IsVersionResource;
             }
-            AuthorizationService = environment == null ? null : environment.AuthorizationService;
+            AuthorizationService = environment?.AuthorizationService;
         }
 
         public void Execute(object parameter)

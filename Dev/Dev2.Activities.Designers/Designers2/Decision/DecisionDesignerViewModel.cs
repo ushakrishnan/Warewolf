@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,7 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Communication;
 using Dev2.Data.Decisions.Operations;
 using Dev2.Data.SystemTemplates;
@@ -27,13 +28,13 @@ using Dev2.Data.SystemTemplates.Models;
 using Dev2.Data.Util;
 using Dev2.DataList;
 using Dev2.DataList.Contract;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
 using Dev2.TO;
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedMember.Global
+
+
 
 namespace Dev2.Activities.Designers2.Decision
 {
@@ -68,6 +69,7 @@ namespace Dev2.Activities.Designers2.Decision
                 DisplayName = "Decision";
                 DisplayText = DisplayName;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Flow_Decision;
         }
 
         void CollectionCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -133,8 +135,7 @@ namespace Dev2.Activities.Designers2.Decision
 
         public override void UpdateDto(IDev2TOFn dto)
         {
-            var decto = dto as DecisionTO;
-            if (decto != null)
+            if (dto is DecisionTO decto)
             {
                 decto.UpdateDisplayAction = UpdateDecisionDisplayName;
             }
@@ -210,7 +211,7 @@ namespace Dev2.Activities.Designers2.Decision
         {
             var val = new Dev2DecisionStack { TheStack = new List<Dev2Decision>() };
             var value = valuecoll.Select(a => a as DecisionTO);
-            foreach (var decisionTo in value.Where(a => !a.IsEmpty()))
+            foreach (var decisionTo in value.Where(a => { return a != null && !a.IsEmpty(); }))
             {
                 var dev2Decision = new Dev2Decision { Col1 = decisionTo.MatchValue };
                 if (!string.IsNullOrEmpty(decisionTo.SearchCriteria))
@@ -270,7 +271,7 @@ namespace Dev2.Activities.Designers2.Decision
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e.Message, e);
+                Dev2Logger.Error(e.Message, e, "Warewolf Error");
             }
         }
 
@@ -296,21 +297,21 @@ namespace Dev2.Activities.Designers2.Decision
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach (var error in GetRuleSet("DisplayText").ValidateRules("'DisplayText'", () => IsDisplayTextFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach (var error in GetRuleSet("TrueArmText").ValidateRules("'TrueArmText'", () => IsTrueArmFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach (var error in GetRuleSet("FalseArmText").ValidateRules("'FalseArmText'", () => IsFalseArmFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
@@ -338,13 +339,15 @@ namespace Dev2.Activities.Designers2.Decision
                 case "FalseArmText":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => FalseArmText));
                     break;
+                default:
+                    break;
             }
             return ruleSet;
         }
 
         #region Implementation of IHandle<ConfigureDecisionExpressionMessage>
 
-        // ReSharper disable once UnusedParameter.Global
+
         public void Handle(ConfigureDecisionExpressionMessage message)
         {
             ShowLarge = true;
@@ -354,7 +357,7 @@ namespace Dev2.Activities.Designers2.Decision
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
             mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }

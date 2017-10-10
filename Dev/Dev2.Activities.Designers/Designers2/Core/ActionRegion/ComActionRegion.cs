@@ -13,6 +13,10 @@ using Dev2.Common.Interfaces.ToolBase.DotNet;
 using Dev2.Studio.Core.Activities.Utils;
 using Warewolf.Core;
 
+
+
+
+
 namespace Dev2.Activities.Designers2.Core.ActionRegion
 {
     public class ComActionRegion : IActionToolRegion<IPluginAction>
@@ -24,7 +28,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         readonly Dictionary<string, IList<IToolRegion>> _previousRegions = new Dictionary<string, IList<IToolRegion>>();
         private Action _sourceChangedAction;
         private IPluginAction _selectedAction;
-        private IComPluginServiceModel _model;
+        private readonly IComPluginServiceModel _model;
         private ICollection<IPluginAction> _actions;
         private bool _isActionEnabled;
         private bool _isRefreshing;
@@ -111,10 +115,10 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             {
                 Errors.Clear();
                 IsRefreshing = true;
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 UpdateBasedOnNamespace();
                 IsRefreshing = false;
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 OnPropertyChanged(@"IsEnabled");
             }
             catch (Exception e)
@@ -147,8 +151,9 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         public bool CanRefresh()
         {
-            IsActionEnabled = _source.SelectedSource != null;
-            return _source.SelectedSource != null;
+            var isActionEnabled = _source.SelectedSource != null;
+            IsActionEnabled = isActionEnabled;
+            return isActionEnabled;
         }
 
         public IPluginAction SelectedAction
@@ -162,13 +167,14 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 if (!Equals(value, _selectedAction) && _selectedAction != null)
                 {
                     if (!string.IsNullOrEmpty(_selectedAction.Method))
+                    {
                         StorePreviousValues(_selectedAction.GetIdentifier());
+                    }
                 }
                 if (Dependants != null)
                 {
                     var outputs = Dependants.FirstOrDefault(a => a is IOutputsToolRegion);
-                    var region = outputs as OutputsRegion;
-                    if (region != null)
+                    if (outputs is OutputsRegion region)
                     {
                         region.Outputs = new ObservableCollection<IServiceOutputMapping>();
                         region.RecordsetName = string.Empty;
@@ -285,8 +291,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as ComActionRegion;
-            if (region != null)
+            if (toRestore is ComActionRegion region)
             {
                 SelectedAction = region.SelectedAction;
                 RestoreIfPrevious(region.SelectedAction);
@@ -367,13 +372,13 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
             handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        protected virtual void OnSomethingChanged(IToolRegion args)
+        protected void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
             handler?.Invoke(this, args);

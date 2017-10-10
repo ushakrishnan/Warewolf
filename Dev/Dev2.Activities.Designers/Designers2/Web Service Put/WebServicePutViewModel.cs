@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using System.Windows.Input;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
 using Dev2.Activities.Designers2.Core.Source;
@@ -16,30 +17,24 @@ using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.WebService;
 using Dev2.Common.Interfaces.WebServices;
 using Dev2.Communication;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-using Warewolf.Resource.Errors;
-
-// ReSharper disable UnusedMember.Global
-
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Dev2.Activities.Designers2.Web_Service_Put
 {
     public class WebServicePutViewModel : CustomToolWithRegionBase, IWebServicePutViewModel
     {
-        private readonly IServiceInputBuilder _builder;
+        readonly IServiceInputBuilder _builder;
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        private IWebPutInputArea _inputArea;
-        private IOutputsToolRegion _outputsRegion;
-        private ISourceToolRegion<IWebServiceSource> _sourceRegion;
+        IWebPutInputArea _inputArea;
+        IOutputsToolRegion _outputsRegion;
+        ISourceToolRegion<IWebServiceSource> _sourceRegion;
 
-        private IErrorInfo _worstDesignError;
+        IErrorInfo _worstDesignError;
 
         public WebServicePutViewModel(ModelItem modelItem)
             : base(modelItem)
@@ -48,9 +43,10 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             var server = shellViewModel.ActiveServer;
             var model = CustomContainer.CreateInstance<IWebServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
             Model = model;
-            _builder = new ServiceInputBuilder();
+            _builder = new ServiceInputBuilder();           
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_WebMethod_Put;
         }
 
         public WebServicePutViewModel(ModelItem modelItem, IWebServiceModel model)
@@ -61,11 +57,11 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             SetupCommonProperties();
         }
 
-    
+
 
         Guid UniqueID => GetProperty<Guid>();
 
-        private void SetupCommonProperties()
+        void SetupCommonProperties()
         {
             AddTitleBarMappingToggle();
             InitialiseViewModel(new ManageWebServiceInputViewModel(this, Model));
@@ -74,7 +70,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
                 ErrorType = ErrorType.None,
                 Message = "Service Working Normally"
             };
-            if(SourceRegion.SelectedSource == null)
+            if (SourceRegion.SelectedSource == null)
             {
                 UpdateLastValidationMemoWithSourceNotFoundError();
             }
@@ -118,46 +114,32 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
         void UpdateDesignValidationErrors(IEnumerable<IErrorInfo> errors)
         {
             DesignValidationErrors.Clear();
-            foreach(var error in errors)
+            foreach (var error in errors)
             {
                 DesignValidationErrors.Add(error);
             }
             UpdateWorstError();
         }
 
-        // ReSharper disable UnusedMember.Local
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
-
-        #region Overrides of ActivityDesignerViewModel
-
+        
         public override void Validate()
         {
-            if(Errors == null)
+            if (Errors == null)
             {
                 Errors = new List<IActionableErrorInfo>();
             }
             Errors.Clear();
 
             Errors = Regions.SelectMany(a => a.Errors).Select(a => new ActionableErrorInfo(new ErrorInfo() { Message = a, ErrorType = ErrorType.Critical }, () => { }) as IActionableErrorInfo).ToList();
-            if(!OutputsRegion.IsEnabled)
+            if (SourceRegion.Errors.Count > 0)
             {
-                Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo() { Message = string.Format(ErrorResource.ValidateBeforeMinimising, "Web Put")}};
-            }
-            if(SourceRegion.Errors.Count > 0)
-            {
-                foreach(var designValidationError in SourceRegion.Errors)
+                foreach (var designValidationError in SourceRegion.Errors)
                 {
                     DesignValidationErrors.Add(new ErrorInfo { ErrorType = ErrorType.Critical, Message = designValidationError });
                 }
             }
-            if(Errors.Count <= 0)
+            if (Errors.Count <= 0)
             {
                 ClearValidationMemoWithNoFoundError();
             }
@@ -167,17 +149,17 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
         void UpdateWorstError()
         {
-            if(DesignValidationErrors.Count == 0)
+            if (DesignValidationErrors.Count == 0)
             {
                 DesignValidationErrors.Add(NoError);
             }
 
             IErrorInfo[] worstError = { DesignValidationErrors[0] };
 
-            foreach(var error in DesignValidationErrors.Where(error => error.ErrorType > worstError[0].ErrorType))
+            foreach (var error in DesignValidationErrors.Where(error => error.ErrorType > worstError[0].ErrorType))
             {
                 worstError[0] = error;
-                if(error.ErrorType == ErrorType.Critical)
+                if (error.ErrorType == ErrorType.Critical)
                 {
                     break;
                 }
@@ -187,23 +169,18 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
         IErrorInfo WorstDesignError
         {
-            // ReSharper disable once UnusedMember.Local
-            get
-            {
-                return _worstDesignError;
-            }
             set
             {
-                if(_worstDesignError != value)
+                if (_worstDesignError != value)
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
 
-        private void InitialiseViewModel(IManageWebServiceInputViewModel manageServiceInputViewModel)
+        void InitialiseViewModel(IManageWebServiceInputViewModel manageServiceInputViewModel)
         {
             ManageServiceInputViewModel = manageServiceInputViewModel;
 
@@ -211,8 +188,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
             LabelWidth = 46;
             ButtonDisplayValue = DoneText;
-
-            //ShowLarge = true;
+            
             ThumbVisibility = Visibility.Visible;
             ShowExampleWorkflowLink = Visibility.Collapsed;
 
@@ -225,10 +201,10 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
             InitializeProperties();
 
-            if(OutputsRegion != null && OutputsRegion.IsEnabled)
+            if (OutputsRegion != null && OutputsRegion.IsEnabled)
             {
                 var recordsetItem = OutputsRegion.Outputs.FirstOrDefault(mapping => !string.IsNullOrEmpty(mapping.RecordSetName));
-                if(recordsetItem != null)
+                if (recordsetItem != null)
                 {
                     OutputsRegion.IsEnabled = true;
                 }
@@ -249,7 +225,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
         void AddProperty(string key, string value)
         {
-            if(!string.IsNullOrEmpty(value))
+            if (!string.IsNullOrEmpty(value))
             {
                 Properties.Add(new KeyValuePair<string, string>(key, value));
             }
@@ -259,7 +235,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
         public void TestProcedure()
         {
-            if(SourceRegion.SelectedSource != null)
+            if (SourceRegion.SelectedSource != null)
             {
                 var service = ToModel();
                 ManageServiceInputViewModel.InputArea.Inputs = service.Inputs;
@@ -273,7 +249,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             }
         }
 
-        private IErrorInfo NoError { get; set; }
+        IErrorInfo NoError { get; set; }
 
         public bool IsWorstErrorReadOnly
         {
@@ -308,7 +284,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
         public DelegateCommand TestInputCommand { get; set; }
 
-        private string Type => GetProperty<string>();
+        string Type => GetProperty<string>();
 
         void AddTitleBarMappingToggle()
         {
@@ -319,21 +295,26 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
         {
             var index = DisplayName.IndexOf(" -", StringComparison.Ordinal);
 
-            if(index > 0)
+            if (index > 0)
             {
                 DisplayName = DisplayName.Remove(index);
             }
 
             var displayName = DisplayName;
 
-            if(!string.IsNullOrEmpty(displayName) && displayName.Contains("Dsf"))
+            if (!string.IsNullOrEmpty(displayName) && displayName.Contains("Dsf"))
             {
                 DisplayName = displayName;
             }
-            if(!string.IsNullOrWhiteSpace(outputFieldName))
+            if (!string.IsNullOrWhiteSpace(outputFieldName))
             {
                 DisplayName = displayName + outputFieldName;
             }
+        }
+
+        public IHeaderRegion GetHeaderRegion()
+        {
+            return InputArea;
         }
 
         public Runtime.Configuration.ViewModels.Base.DelegateCommand FixErrorsCommand { get; set; }
@@ -344,30 +325,32 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if(mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
-
-        #endregion
-
-        #region Overrides of CustomToolWithRegionBase
-
+        
         public override IList<IToolRegion> BuildRegions()
         {
             IList<IToolRegion> regions = new List<IToolRegion>();
-            if(SourceRegion == null)
+            if (SourceRegion == null)
             {
                 SourceRegion = new WebSourceRegion(Model, ModelItem) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 regions.Add(SourceRegion);
-                //InputArea = new WebDeleteInputRegion(ModelItem, SourceRegion);
                 InputArea = new WebPutInputRegion(ModelItem, SourceRegion);
+                InputArea.PropertyChanged += (sender, args) =>
+                 {
+                     if (args.PropertyName == "PutData")
+                     {
+                         if (InputArea.Headers.All(value => string.IsNullOrEmpty(value.Name)))
+                         {
+                             ((ManageWebServiceInputViewModel)ManageServiceInputViewModel).BuidHeaders(InputArea.PutData);
+                         }
+                     }
+                 };
                 regions.Add(InputArea);
                 OutputsRegion = new OutputsRegion(ModelItem, true);
                 regions.Add(OutputsRegion);
-                if(OutputsRegion.Outputs.Count > 0)
+                if (OutputsRegion.Outputs.Count > 0)
                 {
                     OutputsRegion.IsEnabled = true;
                 }
@@ -382,11 +365,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
         }
 
         public ErrorRegion ErrorRegion { get; private set; }
-
-        #endregion
-
-        #region Implementation of IWebServicePutViewModel
-
+        
         public IOutputsToolRegion OutputsRegion
         {
             get
@@ -428,7 +407,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
         public void ErrorMessage(Exception exception, bool hasError)
         {
             Errors = new List<IActionableErrorInfo>();
-            if(hasError)
+            if (hasError)
             {
                 Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo(new ErrorInfo() { ErrorType = ErrorType.Critical, FixData = "", FixType = FixType.None, Message = exception.Message, StackTrace = exception.StackTrace }, () => { }) };
             }
@@ -449,8 +428,8 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
                 Name = "",
                 Path = "",
                 Id = Guid.NewGuid(),
-                
-                PostData =  InputArea.PutData,
+
+                PostData = InputArea.PutData,
                 Headers = InputArea.Headers.Select(value => new NameValue { Name = value.Name, Value = value.Value }).ToList(),
                 QueryString = InputArea.QueryString,
                 RequestUrl = SourceRegion.SelectedSource.HostName,
@@ -460,14 +439,14 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             return webServiceDefinition;
         }
 
-        private IList<IServiceInput> InputsFromModel()
+        IList<IServiceInput> InputsFromModel()
         {
             var dt = new List<IServiceInput>();
             string s = InputArea.QueryString;
             string postValue = InputArea.PutData;
             _builder.GetValue(s, dt);
             _builder.GetValue(postValue, dt);
-            foreach(var nameValue in InputArea.Headers)
+            foreach (var nameValue in InputArea.Headers)
             {
                 _builder.GetValue(nameValue.Name, dt);
                 _builder.GetValue(nameValue.Value, dt);
@@ -475,7 +454,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             return dt;
         }
 
-        private IWebServiceModel Model { get; set; }
+        IWebServiceModel Model { get; set; }
         public bool GenerateOutputsVisible
         {
             get
@@ -485,22 +464,12 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             set
             {
                 _generateOutputsVisible = value;
-                if(value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }
+
+        public ICommand CellChangedCommand { get; set; }
 
         void SetRegionVisibility(bool value)
         {
@@ -509,7 +478,6 @@ namespace Dev2.Activities.Designers2.Web_Service_Put
             ErrorRegion.IsEnabled = value;
             SourceRegion.IsEnabled = value;
         }
-
-        #endregion
+        
     }
 }

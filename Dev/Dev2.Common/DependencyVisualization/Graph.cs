@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +9,9 @@
 */
 
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using Dev2.Common.Interfaces;
 
 namespace Dev2.Common.DependencyVisualization
 {
@@ -19,14 +19,14 @@ namespace Dev2.Common.DependencyVisualization
     /// Represents a set of nodes that can be dependent upon each other,
     /// and will detect circular dependencies between its nodes.
     /// </summary>
-    public class Graph
+    public class Graph : IGraph
     {
         #region Constructor
 
         public Graph(string title)
         {
-            CircularDependencies = new List<CircularDependency>();
-            Nodes = new List<Node>();
+            CircularDependencies = new List<ICircularDependency>();
+            Nodes = new List<IDependencyVisualizationNode>();
             Title = title;
         }
 
@@ -37,26 +37,26 @@ namespace Dev2.Common.DependencyVisualization
         public int GridColumn { get; set; }
         public int ColSpan { get; set; }
 
-        public List<CircularDependency> CircularDependencies { get; private set; }
+        public List<ICircularDependency> CircularDependencies { get; }
 
         public bool HasCircularDependency => CircularDependencies.Any();
 
-        public List<Node> Nodes { get; private set; }
+        public List<IDependencyVisualizationNode> Nodes { get; }
 
-        public string Title { get; private set; }
+        public string Title { get; }
 
         #endregion Properties
 
         #region Methods
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public new string ToString()
         {
-            StringBuilder result = new StringBuilder(string.Format("<graph title=\"{0}\">", Title));
+            var result = new StringBuilder($"<graph title=\"{Title}\">");
 
             foreach (var node in Nodes)
             {
-                result.Append(node.ToString());
+                result.Append(((DependencyVisualizationNode)node).ToString());
             }
 
             result.Append("</graph>");
@@ -69,25 +69,31 @@ namespace Dev2.Common.DependencyVisualization
         /// </summary>
         public void CheckForCircularDependencies()
         {
-            foreach (Node node in Nodes)
+            foreach (var node in Nodes)
             {
                 var circularDependencies = node.FindCircularDependencies();
                 if (circularDependencies != null)
+                {
                     ProcessCircularDependencies(circularDependencies);
+                }
             }
 
             CircularDependencies.Sort();
         }
 
-        public void ProcessCircularDependencies(List<CircularDependency> circularDependencies)
+        public void ProcessCircularDependencies(IEnumerable<ICircularDependency> circularDependencies)
         {
-            foreach (CircularDependency circularDependency in circularDependencies)
+            foreach (var circularDependency in circularDependencies)
             {
                 if (circularDependency.Nodes.Count == 0)
+                {
                     continue;
+                }
 
                 if (CircularDependencies.Contains(circularDependency))
+                {
                     continue;
+                }
 
                 // Arrange the nodes into the order in which they were discovered.
                 circularDependency.Nodes.Reverse();
@@ -95,8 +101,10 @@ namespace Dev2.Common.DependencyVisualization
                 CircularDependencies.Add(circularDependency);
 
                 // Inform each node that it is a member of the circular dependency.
-                foreach (Node dependency in circularDependency.Nodes)
+                foreach (var dependency in circularDependency.Nodes)
+                {
                     dependency.CircularDependencies.Add(circularDependency);
+                }
             }
         }
 

@@ -10,27 +10,38 @@ using Dev2.Runtime.ServiceModel;
 using Dev2.Workspaces;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestRabbitMQServiceSource : IEsbManagementEndpoint
     {
+
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             ExecuteMessage msg = new ExecuteMessage();
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
-                Dev2Logger.Info("Test RabbitMQ Service Source");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Test RabbitMQ Service Source", GlobalConstants.WarewolfInfo);
                 msg.HasError = false;
 
-                values.TryGetValue("RabbitMQServiceSource", out resourceDefinition);
+                values.TryGetValue("RabbitMQServiceSource", out StringBuilder resourceDefinition);
 
                 RabbitMQServiceSourceDefinition rabbitMQServiceSourceDefinition = serializer.Deserialize<RabbitMQServiceSourceDefinition>(resourceDefinition);
                 RabbitMQSources rabbitMQSources = new RabbitMQSources();
@@ -55,7 +66,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
             return serializer.SerializeToBuilder(msg);
         }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,13 @@
 
 using System;
 using Dev2.Common.Interfaces.Security;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests
 {
     [TestClass]
@@ -113,10 +113,10 @@ namespace Dev2.Core.Tests
             Verify_CreateResourceModel_ResourceType(environmentModel => ResourceModelFactory.CreateResourceModel(environmentModel, "EmailSource", "resourceName", "displayName"), ResourceType.Source, "displayName", "resourceName", "EmailSource");
         }
 
-        static void Verify_CreateResourceModel_UserPermissions(Func<IEnvironmentModel, IContextualResourceModel> createResourceModel)
+        static void Verify_CreateResourceModel_UserPermissions(Func<IServer, IContextualResourceModel> createResourceModel)
         {
             //------------Setup for test--------------------------
-            var environmentModel = new Mock<IEnvironmentModel>();
+            var environmentModel = new Mock<IServer>();
 
             //------------Execute Test---------------------------
             var resourceModel = createResourceModel(environmentModel.Object);
@@ -125,10 +125,10 @@ namespace Dev2.Core.Tests
             Assert.AreEqual(Permissions.Contribute, resourceModel.UserPermissions);
         }
 
-        static void Verify_CreateResourceModel_ResourceType(Func<IEnvironmentModel, IContextualResourceModel> createResourceModel, ResourceType resourceType, string displayName, string resourceName, string serverResourceName)
+        static void Verify_CreateResourceModel_ResourceType(Func<IServer, IContextualResourceModel> createResourceModel, ResourceType resourceType, string displayName, string resourceName, string serverResourceName)
         {
             //------------Setup for test--------------------------
-            var environmentModel = new Mock<IEnvironmentModel>();
+            var environmentModel = new Mock<IServer>();
 
             //------------Execute Test---------------------------
             var resourceModel = createResourceModel(environmentModel.Object);

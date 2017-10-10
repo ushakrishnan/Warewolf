@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,26 +9,27 @@
 */
 
 using Dev2;
-using Dev2.Data.Enums;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Studio.Core.Helpers;
 using Dev2.TO;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
     public class DTOFactory
     {
-        public static IDev2TOFn CreateNewDTO(IDev2TOFn dto, int index = 0, bool inserted = false, string initializeWith = "")
+        public static IDev2TOFn CreateNewDTO(IDev2TOFn dto) => CreateNewDTO(dto, 0, false, "");
+        public static IDev2TOFn CreateNewDTO(IDev2TOFn dto, int index, bool inserted, string initializeWith)
         {
             IDev2TOFn toReturn = null;
 
             TypeSwitch.Do(dto,
-                // ReSharper disable ImplicitlyCapturedClosure
+                
                 TypeSwitch.Case<ActivityDTO>(x => toReturn = new ActivityDTO(initializeWith, "", index, inserted)),
-                // ReSharper restore ImplicitlyCapturedClosure
+                
                 TypeSwitch.Case<DataSplitDTO>(x =>
                 {
                     var dataSplitDto = dto as DataSplitDTO;
@@ -61,7 +62,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         toReturn = new BaseConvertTO(initializeWith, baseConvertTO.FromType, baseConvertTO.ToType, baseConvertTO.ToExpression, index, inserted);
                     }
                 }),
-                // ReSharper disable ImplicitlyCapturedClosure
+                
                 TypeSwitch.Case<GatherSystemInformationTO>(x => toReturn =
                     new GatherSystemInformationTO(enTypeOfSystemInformationToGather.FullDateTime,
                         initializeWith, index, inserted)),
@@ -71,8 +72,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 TypeSwitch.Case<JsonMappingTo>(() => toReturn = new JsonMappingTo(initializeWith, index, inserted)),
                 TypeSwitch.Case<SharepointSearchTo>(() => toReturn = new SharepointSearchTo(initializeWith, "=", "", index, inserted)),
                 TypeSwitch.Case<SharepointReadListTo>(() => toReturn = new SharepointReadListTo("", initializeWith, "", "")),
-                //REPLACE WITH SHAREPOINT DELETE ACTIVITY
-                //TypeSwitch.Case<SharepointReadListTo>(() => toReturn = new SharepointReadListTo("", initializeWith, "")),
                 TypeSwitch.Case<AssignObjectDTO>(x => toReturn = new AssignObjectDTO(initializeWith, "", index, inserted)),
             TypeSwitch.Default(() => toReturn = null));
 

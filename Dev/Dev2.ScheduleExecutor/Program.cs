@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,7 +33,7 @@ namespace Dev2.ScheduleExecutor
     internal class Program
     {
         private const string WarewolfTaskSchedulerPath = "\\warewolf\\";
-        private static readonly string OutputPath = string.Format("{0}\\{1}", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), GlobalConstants.SchedulerDebugPath);
+        private static readonly string OutputPath = $"{Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)}\\{GlobalConstants.SchedulerDebugPath}";
         private static readonly string SchedulerLogDirectory = OutputPath + "SchedulerLogs";
         private static readonly Stopwatch Stopwatch = new Stopwatch();
         private static readonly DateTime StartTime = DateTime.Now.Subtract(new TimeSpan(0, 0, 5));
@@ -56,18 +56,20 @@ namespace Dev2.ScheduleExecutor
                     return;
                 }
                 var paramters = new Dictionary<string, string>();
-                for (int i = 0; i < args.Count(); i++)
+                for (int i = 0; i < args.Length; i++)
                 {
                     string[] singleParameters = args[i].Split(':');
 
                     paramters.Add(singleParameters[0],
-                                  singleParameters.Skip(1).Aggregate((a, b) => String.Format("{0}:{1}", a, b)));
+                                  singleParameters.Skip(1).Aggregate((a, b) => $"{a}:{b}"));
                 }
-                Log("Info", string.Format("Start execution of {0}", paramters["Workflow"]));
+                Log("Info", $"Start execution of {paramters["Workflow"]}");
                 try
                 {
                     if (paramters.ContainsKey("ResourceId"))
+                    {
                         PostDataToWebserverAsRemoteAgent(paramters["Workflow"], paramters["TaskName"], Guid.NewGuid(), paramters["ResourceId"]);
+                    }
                     else
                     {
                         PostDataToWebserverAsRemoteAgent(paramters["Workflow"], paramters["TaskName"], Guid.NewGuid());
@@ -82,7 +84,7 @@ namespace Dev2.ScheduleExecutor
             }
             catch (Exception e)
             {
-                Log("Error", string.Format("Error from execution: {0}{1}", e.Message, e.StackTrace));
+                Log("Error", $"Error from execution: {e.Message}{e.StackTrace}");
 
                 Environment.Exit(1);
             }
@@ -90,9 +92,9 @@ namespace Dev2.ScheduleExecutor
 
         public static string PostDataToWebserverAsRemoteAgent(string workflowName, string taskName, Guid requestID)
         {
-            string postUrl = string.Format("http://localhost:3142/services/{0}", workflowName);
-            Log("Info", string.Format("Executing as {0}", CredentialCache.DefaultNetworkCredentials.UserName));
-            int len = postUrl.Split('?').Count();
+            string postUrl = $"http://localhost:3142/services/{workflowName}";
+            Log("Info", $"Executing as {CredentialCache.DefaultNetworkCredentials.UserName}");
+            int len = postUrl.Split('?').Length;
             if (len == 1)
             {
                 string result = string.Empty;
@@ -107,20 +109,22 @@ namespace Dev2.ScheduleExecutor
                     {
                         if (response != null)
                         {
-                            // ReSharper disable AssignNullToNotNullAttribute
+                            
                             using (var reader = new StreamReader(response.GetResponseStream()))
-                            // ReSharper restore AssignNullToNotNullAttribute
+                            
                             {
                                 result = reader.ReadToEnd();
                             }
 
-                            if (response.StatusCode != HttpStatusCode.OK)
+                            if (response.StatusCode != HttpStatusCode.OK || result.StartsWith("<FatalError>"))
                             {
-                                Log("Error", string.Format("Error from execution: {0}", result));
+                                Log("Error", $"Error from execution: {result}");
+								CreateDebugState(result, workflowName, taskName);
+                                Environment.Exit(1);
                             }
                             else
                             {
-                                Log("Info", string.Format("Completed execution. Output: {0}", result));
+                                Log("Info", $"Completed execution. Output: {result}");
 
                                 WriteDebugItems(workflowName, taskName, result);
                             }
@@ -145,57 +149,70 @@ namespace Dev2.ScheduleExecutor
 
         public static string PostDataToWebserverAsRemoteAgent(string workflowName, string taskName, Guid requestID, string resourceId)
         {
-            string postUrl = string.Format("http://localhost:3142/services/{0}.xml?Name=&wid={1}", workflowName, resourceId);
-            Log("Info", string.Format("Executing as {0}", CredentialCache.DefaultNetworkCredentials.UserName));
-            int len = postUrl.Split('?').Count();
-            if (len == 2)
+            var portNumber = "3142";
+            if(File.Exists("userServerSettings.config"))
             {
-                string result = string.Empty;
-
-                WebRequest req = WebRequest.Create(postUrl);
-                req.Credentials = CredentialCache.DefaultNetworkCredentials;
-                req.Method = "GET";
-
-                try
+                var doc = XDocument.Load("userServerSettings.config");
+                var appSettingsElement = doc.Element("appSettings");
+                var webServerPortElement = appSettingsElement?.Elements()
+                    .FirstOrDefault(element => element.Name == "add" && element.Attribute("key")?.Value == "webServerPort");
+                if(webServerPortElement != null)
                 {
-                    using (var response = req.GetResponse() as HttpWebResponse)
+                    portNumber = webServerPortElement.Attribute("value")?.Value;
+                }
+            }
+            else
+            {
+                Log("Error", $"userServerSettings.config does not exist in {Directory.GetCurrentDirectory()}");
+            }
+
+            string postUrl = $"http://localhost:{portNumber}/services/{resourceId}.xml";
+            Log("Info", $"Executing as {CredentialCache.DefaultNetworkCredentials.UserName}");
+            string result = string.Empty;
+
+            WebRequest req = WebRequest.Create(postUrl);
+            req.Credentials = CredentialCache.DefaultNetworkCredentials;
+            req.Method = "GET";
+
+            try
+            {
+                using(var response = req.GetResponse() as HttpWebResponse)
+                {
+                    if(response != null)
                     {
-                        if (response != null)
+                        
+                        using(var reader = new StreamReader(response.GetResponseStream()))
+                            
                         {
-                            // ReSharper disable AssignNullToNotNullAttribute
-                            using (var reader = new StreamReader(response.GetResponseStream()))
-                            // ReSharper restore AssignNullToNotNullAttribute
-                            {
-                                result = reader.ReadToEnd();
-                            }
+                            result = reader.ReadToEnd();
+                        }
 
-                            if (response.StatusCode != HttpStatusCode.OK)
-                            {
-                                Log("Error", string.Format("Error from execution: {0}", result));
-                            }
-                            else
-                            {
-                                Log("Info", string.Format("Completed execution. Output: {0}", result));
-
-                                WriteDebugItems(workflowName, taskName, result);
-                            }
+                        if(response.StatusCode != HttpStatusCode.OK || result.StartsWith("<FatalError>"))
+                        {
+                            Log("Error", $"Error from execution: {result}");
+                            CreateDebugState(result, workflowName, taskName);
+                            Environment.Exit(1);
+                        }
+                        else
+                        {
+                            Log("Info", $"Completed execution. Output: {result}");
+                            WriteDebugItems(workflowName, taskName, result);
                         }
                     }
                 }
-                catch (Exception e)
-                {
-                    CreateDebugState("Warewolf Server Unavailable", workflowName, taskName);
-                    Console.Write(e.Message);
-                    Console.WriteLine(e.StackTrace);
-                    Log("Error",
-                        string.Format(
-                            "Error executing request. Exception: {0}" + Environment.NewLine + "StackTrace: {1}",
-                            e.Message, e.StackTrace));
-                    Environment.Exit(1);
-                }
-                return result;
             }
-            return string.Empty;
+            catch(Exception e)
+            {
+                CreateDebugState("Warewolf Server Unavailable", workflowName, taskName);
+                Console.Write(e.Message);
+                Console.WriteLine(e.StackTrace);
+                Log("Error",
+                    string.Format(
+                        "Error executing request. Exception: {0}" + Environment.NewLine + "StackTrace: {1}",
+                        e.Message, e.StackTrace));
+                Environment.Exit(1);
+            }
+            return result;
         }
 
         private static void CreateDebugState(string result, string workflowName, string taskName)
@@ -205,10 +222,10 @@ namespace Dev2.ScheduleExecutor
             {
                 HasError = true,
                 ID = Guid.NewGuid(),
-                Message = string.Format("{0}", result),
+                Message = $"{result}",
                 StartTime = StartTime,
                 EndTime = DateTime.Now,
-                ErrorMessage = string.Format("{0}", result),
+                ErrorMessage = $"{result}",
                 DisplayName = workflowName
             };
             var debug = new DebugItem();
@@ -223,10 +240,12 @@ namespace Dev2.ScheduleExecutor
             Thread.Sleep(5000);
             string correlation = GetCorrelationId(WarewolfTaskSchedulerPath + taskName);
             if (!Directory.Exists(OutputPath))
+            {
                 Directory.CreateDirectory(OutputPath);
+            }
+
             File.WriteAllText(
-                string.Format("{0}DebugItems_{1}_{2}_{3}_{4}.txt", OutputPath, workflowName.Replace("\\", "_"),
-                              DateTime.Now.ToString("yyyy-MM-dd"), correlation, user),
+                $"{OutputPath}DebugItems_{workflowName.Replace("\\", "_")}_{DateTime.Now.ToString("yyyy-MM-dd")}_{correlation}_{user}.txt",
                 js.SerializeToBuilder(new List<DebugState> { state }).ToString());
         }
 
@@ -279,8 +298,7 @@ namespace Dev2.ScheduleExecutor
             if (!string.IsNullOrEmpty(result))
             {
                 var data = DataListUtil.AdjustForEncodingIssues(result);
-                bool isFragment;
-                var isXml = DataListUtil.IsXml(data, out isFragment);
+                var isXml = DataListUtil.IsXml(data, out bool isFragment);
                 if (isXml)
                 {
                     var xmlData = XElement.Parse(data);
@@ -318,31 +336,40 @@ namespace Dev2.ScheduleExecutor
             Thread.Sleep(5000);
             string correlation = GetCorrelationId(WarewolfTaskSchedulerPath + taskName);
             if (!Directory.Exists(OutputPath))
+            {
                 Directory.CreateDirectory(OutputPath);
+            }
+
             File.WriteAllText(
-                string.Format("{0}DebugItems_{1}_{2}_{3}_{4}.txt", OutputPath, workflowName.Replace("\\", "_"),
-                    DateTime.Now.ToString("yyyy-MM-dd"), correlation, user),
+                $"{OutputPath}DebugItems_{workflowName.Replace("\\", "_")}_{DateTime.Now.ToString("yyyy-MM-dd")}_{correlation}_{user}.txt",
                 js.SerializeToBuilder(new List<DebugState> { state }).ToString());
 
         }
 
+        
+        
         private static List<IDebugItemResult> ProcessRecordSet(XElement recordSetElement, IEnumerable<XElement> elements)
         {
             var processRecordSet = new List<IDebugItemResult>();
             var recSetName = recordSetElement.Name.LocalName;
-            var index = recordSetElement.Attribute("Index").Value;
-            foreach (var xElement in elements)
+            var xAttribute = recordSetElement.Attribute("Index");
+            if(xAttribute != null)
             {
-                var debugItemResult = new DebugItemResult
+                var index = xAttribute.Value;
+                
+                foreach (var xElement in elements)
                 {
-                    GroupName = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.MakeValueIntoHighLevelRecordset(recSetName, true)),
-                    Value = xElement.Value,
-                    GroupIndex = int.Parse(index),
-                    Variable = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(recSetName, xElement.Name.LocalName, index)),
-                    Operator = "=",
-                    Type = DebugItemResultType.Variable
-                };
-                processRecordSet.Add(debugItemResult);
+                    var debugItemResult = new DebugItemResult
+                    {
+                        GroupName = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.MakeValueIntoHighLevelRecordset(recSetName, true)),
+                        Value = xElement.Value,
+                        GroupIndex = int.Parse(index),
+                        Variable = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(recSetName, xElement.Name.LocalName, index)),
+                        Operator = "=",
+                        Type = DebugItemResultType.Variable
+                    };
+                    processRecordSet.Add(debugItemResult);
+                }
             }
             return processRecordSet;
         }
@@ -362,9 +389,9 @@ namespace Dev2.ScheduleExecutor
                     tsw.WriteLine(logMessage);
                 }
             }
-            // ReSharper disable EmptyGeneralCatchClause
+            
             catch
-            // ReSharper restore EmptyGeneralCatchClause
+            
             {
             }
         }
@@ -383,9 +410,9 @@ namespace Dev2.ScheduleExecutor
                         FileInfo fileInfo = logFiles.OrderByDescending(f => f.LastWriteTime).First();
                         fileInfo.Delete();
                     }
-                    // ReSharper disable EmptyGeneralCatchClause
+                    
                     catch
-                    // ReSharper restore EmptyGeneralCatchClause
+                    
                     {
                     }
                 }

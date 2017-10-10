@@ -9,17 +9,20 @@ using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WarewolfCOMIPC.Client;
-// ReSharper disable NonLocalizedString
-// ReSharper disable ArrangeTypeModifiers
+
+
 
 namespace WarewolfCOMIPC
 {
-    // ReSharper disable once ClassNeverInstantiated.Global
+    
     class Program
     {
         static void Main(string[] args)
         {
-            if (args.Length < 1) return;
+            if (args.Length < 1)
+            {
+                return;
+            }
 
             string token = args[0];
 
@@ -39,24 +42,25 @@ namespace WarewolfCOMIPC
 
             // Receive CallData from client
             //var formatter = new BinaryFormatter();
-            Console.WriteLine("Client Connected to Server Pipe Stream");
+            Console.WriteLine("IpcClient Connected to Server Pipe Stream");
             var serializer = new JsonSerializer();
             var sr = new StreamReader(pipe);
             var jsonTextReader = new JsonTextReader(sr);
-            object callData = new object();
+            string callData;
             try
             {
-                callData = serializer.Deserialize(jsonTextReader, typeof(CallData));
+                callData = serializer.Deserialize<string>(jsonTextReader);
             }
-            catch (Exception)
+            catch 
             {
+                callData = null;
                 //
             }
             if (callData != null)
             {
-                Console.WriteLine("Client Data read and Deserialized to Server Pipe Stream");
+                Console.WriteLine("IpcClient Data read and Deserialized to Server Pipe Stream");
                 Console.WriteLine(callData.GetType());
-                var data = (CallData)callData;
+                var data = JsonConvert.DeserializeObject<CallData>(callData);
 
                 while (data.Status != KeepAliveStatus.Close)
                 {
@@ -69,7 +73,14 @@ namespace WarewolfCOMIPC
                     {
                         var newException = new Exception("Error executing COM",e);
                         var sw = new StreamWriter(pipe);
-                        serializer.Serialize(sw, newException);
+                        try
+                        {
+                            serializer.Serialize(sw, newException);
+                        }
+                        catch
+                        {
+                            Console.WriteLine("IpcClient Data not read nor Deserialized to Server Pipe Stream");
+                        } 
                         sw.Flush();
                         Console.WriteLine("Execution errored " + data.MethodToCall);
                     }
@@ -78,7 +89,7 @@ namespace WarewolfCOMIPC
             }
             else
             {
-                Console.WriteLine("Client Data not read nor Deserialized to Server Pipe Stream");
+                Console.WriteLine("IpcClient Data not read nor Deserialized to Server Pipe Stream");
             }
         }
 
@@ -99,7 +110,7 @@ namespace WarewolfCOMIPC
                         var objectInstance = Activator.CreateInstance(type);
                         Type dispatchedtype = DispatchUtility.GetType(objectInstance, false);
                         Console.WriteLine("Got Type:" + dispatchedtype.FullName);
-                        
+
                         Console.WriteLine("Serializing and sending:" + dispatchedtype.FullName);
                         formatter.Serialize(sw, dispatchedtype);
                         sw.Flush();
@@ -130,55 +141,56 @@ namespace WarewolfCOMIPC
                             }).ToList();
                         Console.WriteLine($"Got {methods.Count()} mrthods");
                         Console.WriteLine("Serializing and sending methods for:" + dispatchedtype.FullName);
-                        formatter.Serialize(sw, methodInfos);
+                        var json = JsonConvert.SerializeObject(methodInfos);
+                        formatter.Serialize(sw, json);
                         sw.Flush();
                         Console.WriteLine("Sent methods for:" + dispatchedtype.FullName);
                     }
                     break;
                 case Execute.ExecuteSpecifiedMethod:
-                {
-                    Console.WriteLine("Executing GeMethods for:" + data.CLSID);
-                    var type = Type.GetTypeFromCLSID(data.CLSID, true);
-                    var objectInstance = Activator.CreateInstance(type);
-                    var paramsObjects = BuildValuedTypeParams(data.Parameters);
-                    try
                     {
+                        Console.WriteLine("Executing GeMethods for:" + data.CLSID);
+                        var type = Type.GetTypeFromCLSID(data.CLSID, true);
+                        var objectInstance = Activator.CreateInstance(type);
+                        var paramsObjects = BuildValuedTypeParams(data.Parameters);
+                        try
+                        {
                             var result = DispatchUtility.Invoke(objectInstance, data.MethodToCall, paramsObjects);
                             if (result != null && result.ToString() == "System.__ComObject")
                             {
                                 var retType = DispatchUtility.GetType(result, false);
                                 var props = retType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
                                 var retObj = new JObject();
-                                foreach(var propertyInfo in props)
+                                foreach (var propertyInfo in props)
                                 {
                                     var propValue = retType.InvokeMember(propertyInfo.Name, BindingFlags.Instance | BindingFlags.GetProperty, null, result, null);
-                                    retObj.Add(propertyInfo.Name,new JValue(propValue.ToString()));
+                                    retObj.Add(propertyInfo.Name, new JValue(propValue.ToString()));
                                 }
                                 formatter.Serialize(sw, retObj);
                                 sw.Flush();
                             }
                             else
                             {
-                                if (result!=null && result.ToString() == "0")
+                                if (result != null && result.ToString() == "0")
                                 {
                                     result = "0";
                                 }
                                 formatter.Serialize(sw, result ?? "Success");
                                 sw.Flush();
                             }
-                        Console.WriteLine("Execution completed " + data.MethodToCall);
-                    }
-                    catch(Exception ex)
-                    {
-                        if(ex.InnerException != null)
+                            Console.WriteLine("Execution completed " + data.MethodToCall);
+                        }
+                        catch (Exception ex)
                         {
-                            throw new COMException(ex.InnerException?.Message);
+                            if (ex.InnerException != null)
+                            {
+                                throw new COMException(ex.InnerException?.Message);
+                            }
                         }
                     }
-                }
                     break;
                 case Execute.GetNamespaces:
-                {
+                    {
                         var type = Type.GetTypeFromCLSID(data.CLSID, true);
                         var loadedAssembly = type.Assembly;
                         // ensure we flush out the rubbish that GAC brings ;)
@@ -194,6 +206,8 @@ namespace WarewolfCOMIPC
                         sw.Flush();
                         Console.WriteLine("Sent methods for:" + type.FullName);
                     }
+                    break;
+                default:
                     break;
             }
         }
@@ -243,11 +257,10 @@ namespace WarewolfCOMIPC
         private static void BuildObjectType(Type type, ParameterInfoTO methodParameter, object[] valuedTypeList, int index)
         {
             var obj = Activator.CreateInstance(type);
-            var anonymousType = JsonConvert.DeserializeObject(methodParameter.DefaultValue.ToString()) as JObject;
-            if(anonymousType != null)
+            if (JsonConvert.DeserializeObject(methodParameter.DefaultValue.ToString()) is JObject anonymousType)
             {
                 var props = anonymousType.Properties().ToList();
-                foreach(var prop in props)
+                foreach (var prop in props)
                 {
                     var valueForProp = prop.Value.ToString();
                     type.InvokeMember(prop.Name, BindingFlags.Instance | BindingFlags.SetProperty | BindingFlags.Public, null, obj, new object[] { valueForProp });

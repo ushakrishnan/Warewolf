@@ -1,17 +1,41 @@
-﻿using Dev2.Data.Binary_Objects;
-using Dev2.Studio.Core.Interfaces.DataList;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Dev2.Common.Common;
+using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Parsers;
 using Dev2.Data.Util;
+using Dev2.Studio.Interfaces.DataList;
 
 namespace Dev2.Studio.Core.Models.DataList
 {
     public class RecordSetItemModel : DataListItemModel, IRecordSetItemModel
     {
         private ObservableCollection<IRecordSetFieldItemModel> _children;
+        private string _searchText;
 
-        public RecordSetItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection = enDev2ColumnArgumentDirection.None, string description = "", IDataListItemModel parent = null, OptomizedObservableCollection<IRecordSetFieldItemModel> children = null, bool hasError = false, string errorMessage = "", bool isEditable = true, bool isVisible = true, bool isSelected = false, bool isExpanded = true) 
+        public RecordSetItemModel(string displayname)
+            : this(displayname, enDev2ColumnArgumentDirection.None, "", null, null, false, "", true, true, false, true)
+        {
+        }
+
+        public RecordSetItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection)
+            : this(displayname, dev2ColumnArgumentDirection, "", null, null, false, "", true, true, false, true)
+        {
+        }
+
+        public RecordSetItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, IDataListItemModel parent, OptomizedObservableCollection<IRecordSetFieldItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible)
+            : this(displayname, dev2ColumnArgumentDirection, description, parent, children, hasError, errorMessage, isEditable, isVisible, false, true)
+        {
+        }
+
+        public RecordSetItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, IDataListItemModel parent, OptomizedObservableCollection<IRecordSetFieldItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected)
+            : this(displayname, dev2ColumnArgumentDirection, description, parent, children, hasError, errorMessage, isEditable, isVisible, isSelected, true)
+        {
+        }
+
+        public RecordSetItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, IDataListItemModel parent, OptomizedObservableCollection<IRecordSetFieldItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected, bool isExpanded) 
             : base(displayname, dev2ColumnArgumentDirection, description, hasError, errorMessage, isEditable, isVisible, isSelected, isExpanded)
         {
             Children = children;            
@@ -21,6 +45,14 @@ namespace Dev2.Studio.Core.Models.DataList
         {
             get
             {
+                if (!string.IsNullOrEmpty(_searchText))
+                {
+                    if (_children != null)
+                    {
+                        var itemModels = _children.Where(model => model.IsVisible).ToObservableCollection();
+                        return itemModels;
+                    }
+                }
                 return _children ?? (_children = new ObservableCollection<IRecordSetFieldItemModel>());
             }
             set
@@ -28,6 +60,34 @@ namespace Dev2.Studio.Core.Models.DataList
                 _children = value;
                 NotifyOfPropertyChange(() => Children);
             }
+        }
+
+        public void Filter(string searchText)
+        {
+            if(!string.IsNullOrEmpty(searchText))
+            {
+                if (_children != null)
+                {
+                    foreach (var recordSetFieldItemModel in _children)
+                    {
+                        recordSetFieldItemModel.Filter(searchText);
+                    }
+                }
+                IsVisible = _children != null && _children.Any(model => model.IsVisible) ? true : !string.IsNullOrEmpty(DisplayName) && DisplayName.ToLower().Contains(searchText.ToLower());
+            }
+            else
+            {
+                IsVisible = true;
+                if (_children != null)
+                {
+                    foreach(var recordSetFieldItemModel in _children)
+                    {
+                        recordSetFieldItemModel.IsVisible = true;
+                    }
+                }
+            }
+            _searchText = searchText;
+            NotifyOfPropertyChange(()=>Children);
         }
 
         public override bool Input

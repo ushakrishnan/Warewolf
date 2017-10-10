@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
@@ -28,6 +29,25 @@ namespace Dev2.Runtime.ESB.Management.Services
 {
     public class RenameItemService : IEsbManagementEndpoint
     {
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            requestArgs.TryGetValue("itemToRename", out StringBuilder tmp);
+            if (tmp != null)
+            {
+                if (Guid.TryParse(tmp.ToString(), out Guid resourceId))
+                {
+                    return resourceId;
+                }
+            }
+
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
         private IExplorerServerResourceRepository _serverExplorerRepository;
 
         public string HandlesType()
@@ -43,19 +63,17 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 if(values == null)
                 {
-                    throw new ArgumentNullException("values");
+                    throw new ArgumentNullException(nameof(values));
                 }
-                StringBuilder itemToBeRenamed;
-                StringBuilder newName;
-                StringBuilder folderToBeRenamed=null;
-                if(!values.TryGetValue("itemToRename", out itemToBeRenamed))
+                StringBuilder folderToBeRenamed = null;
+                if (!values.TryGetValue("itemToRename", out StringBuilder itemToBeRenamed))
                 {
                     if (!values.TryGetValue("folderToRename", out folderToBeRenamed))
                     {
                         throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "itemToRename"));
                     }
                 }
-                if(!values.TryGetValue("newName", out newName))
+                if(!values.TryGetValue("newName", out StringBuilder newName))
                 {
                     throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "newName"));
                 }
@@ -63,7 +81,11 @@ namespace Dev2.Runtime.ESB.Management.Services
                 if (itemToBeRenamed != null)
                 {
                     explorerItem = ServerExplorerRepo.Find(Guid.Parse(itemToBeRenamed.ToString()));
-                    Dev2Logger.Info(String.Format("Rename Item. Path:{0} NewPath:{1}", explorerItem.ResourcePath, newName));
+                    if (explorerItem == null)
+                    {
+                        throw new ArgumentException(string.Format(ErrorResource.FailedToFindResource, "newName"));
+                    }
+                    Dev2Logger.Info($"Rename Item. Path:{explorerItem.ResourcePath} NewPath:{newName}", GlobalConstants.WarewolfInfo);
                     item = ServerExplorerRepo.RenameItem(explorerItem, newName.ToString(), GlobalConstants.ServerWorkspaceID);
                 }
                 else if (folderToBeRenamed != null)
@@ -75,11 +97,12 @@ namespace Dev2.Runtime.ESB.Management.Services
 
                     };
                     item = ServerExplorerRepo.RenameItem(explorerItem, newName.ToString(), GlobalConstants.ServerWorkspaceID);
+                    
                 }
             }
             catch(Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 item = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
             }
             return serializer.SerializeToBuilder(item);

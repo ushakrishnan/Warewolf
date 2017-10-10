@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,10 +12,8 @@ using System;
 using System.Security.Permissions;
 using System.Windows;
 using Castle.DynamicProxy.Generators;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.ViewModels;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.Views.Workflow;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -25,7 +23,7 @@ using Warewolf.Studio.ViewModels;
 namespace Dev2.Core.Tests
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class DragDropHelpersTests
     {
         [TestInitialize]
@@ -85,9 +83,9 @@ namespace Dev2.Core.Tests
             //------------Setup for test--------------------------
             var data = new Object();
             var dataContext = new Mock<IWorkflowDesignerViewModel>();
-            var differentEnvironment = new Mock<IEnvironmentModel>();
-            differentEnvironment.Setup(model => model.ID).Returns(Guid.Empty);
-            dataContext.Setup(model => model.EnvironmentModel).Returns(differentEnvironment.Object);
+            var differentEnvironment = new Mock<IServer>();
+            differentEnvironment.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
+            dataContext.Setup(model => model.Server).Returns(differentEnvironment.Object);
             var dragDropHelpers = new DragDropHelpers(GetMockWorkflowDesignerView(dataContext.Object));
             //------------Execute Test---------------------------
             bool canDoDrop = dragDropHelpers.PreventDrop(GetMockDataObjectWithFormatData(new[] { "ExplorerItemViewModel" }, data));
@@ -103,9 +101,13 @@ namespace Dev2.Core.Tests
             var data = new ExplorerItemViewModel(new Mock<IServer>().Object, new Mock<IExplorerTreeItem>().Object, a => { }, new Mock<IShellViewModel>().Object, new Mock<IPopupController>().Object);
             data.IsService = true;
             var dataContext = new Mock<IWorkflowDesignerViewModel>();
-            var differentEnvironment = new Mock<IEnvironmentModel>();
-            differentEnvironment.Setup(model => model.ID).Returns(Guid.Empty);
-            dataContext.Setup(model => model.EnvironmentModel).Returns(differentEnvironment.Object);
+            var differentEnvironment = new Mock<IServer>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            resourceModel.Setup(model => model.ID).Returns(Guid.NewGuid);
+            differentEnvironment.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
+            dataContext.Setup(model => model.Server).Returns(differentEnvironment.Object);
+            dataContext.Setup(model => model.ResourceModel).Returns(resourceModel.Object);
+
             var dragDropHelpers = new DragDropHelpers(GetMockWorkflowDesignerView(dataContext.Object));
             //------------Execute Test---------------------------
             bool canDoDrop = dragDropHelpers.PreventDrop(GetMockDataObjectWithFormatData(new[] { "ExplorerItemViewModel" }, data));
@@ -123,9 +125,12 @@ namespace Dev2.Core.Tests
             data.ResourceType = "WorkflowService";
             var dataContext = new Mock<IWorkflowDesignerViewModel>();
 
-            var differentEnvironment = new Mock<IEnvironmentModel>();
-            differentEnvironment.Setup(model => model.ID).Returns(Guid.Empty);
-            dataContext.Setup(model => model.EnvironmentModel).Returns(differentEnvironment.Object);
+            var differentEnvironment = new Mock<IServer>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            resourceModel.Setup(model => model.ID).Returns(Guid.NewGuid);
+            differentEnvironment.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
+            dataContext.Setup(model => model.Server).Returns(differentEnvironment.Object);
+            dataContext.Setup(model => model.ResourceModel).Returns(resourceModel.Object);
             differentEnvironment.Setup(a => a.IsLocalHost).Returns(false);
             var dragDropHelpers = new DragDropHelpers(GetMockWorkflowDesignerView(dataContext.Object));
             CustomContainer.Register(new Mock<IPopupController>().Object);
@@ -133,6 +138,28 @@ namespace Dev2.Core.Tests
             bool canDoDrop = dragDropHelpers.PreventDrop(GetMockDataObjectWithFormatData(new[] { "ExplorerItemViewModel" }, data));
             //------------Assert Results-------------------------
             Assert.IsTrue(canDoDrop);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("DragDropHelpers_PreventDrop")]
+        public void DragDropHelpers_PreventDrop_EmptyService_ReturnsFalse()
+        {
+            //------------Setup for test--------------------------
+            AppSettings.LocalHost = "http://localhost";
+            var data = new ExplorerItemViewModel(new Mock<IServer>().Object, new Mock<IExplorerTreeItem>().Object, a => { }, new Mock<IShellViewModel>().Object, new Mock<IPopupController>().Object) { ResourceType = "WorkflowService" };
+            var dataContext = new Mock<IWorkflowDesignerViewModel>();
+
+            var differentEnvironment = new Mock<IServer>();
+            differentEnvironment.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
+            dataContext.Setup(model => model.Server).Returns(differentEnvironment.Object);
+            differentEnvironment.Setup(a => a.IsLocalHost).Returns(false);
+            var dragDropHelpers = new DragDropHelpers(GetMockWorkflowDesignerView(dataContext.Object));
+            CustomContainer.Register(new Mock<IPopupController>().Object);
+            //------------Execute Test---------------------------
+            bool canDoDrop = dragDropHelpers.PreventDrop(GetMockDataObjectWithFormatData(new[] { "FromToolBox", "ExplorerItemViewModel" }, data));
+            //------------Assert Results-------------------------
+            Assert.IsFalse(canDoDrop);
         }
         [TestMethod]
         [Owner("Massimo.Guerrera")]
@@ -149,7 +176,42 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(canDoDrop);
         }
-        
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DragDropHelpers_PreventDrop")]
+        public void DragDropHelpers_PreventDrop_DropResourceOntoItself_ReturnsFalse()
+        {
+            //------------Setup for test--------------------------
+            AppSettings.LocalHost = "http://localhost";
+            var resourceId = Guid.NewGuid();
+            var data = new ExplorerItemViewModel(new Mock<IServer>().Object, new Mock<IExplorerTreeItem>().Object,
+                a => { }, new Mock<IShellViewModel>().Object, new Mock<IPopupController>().Object)
+            {
+                ResourceType = "WorkflowService",
+                ResourceId = resourceId,
+                CanExecute = true,
+                CanView = true,
+                IsService = true,
+                IsSource = false
+            };
+
+            var dataContext = new Mock<IWorkflowDesignerViewModel>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            resourceModel.Setup(model => model.ID).Returns(resourceId);
+            var differentEnvironment = new Mock<IServer>();
+            differentEnvironment.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
+            dataContext.Setup(model => model.Server).Returns(differentEnvironment.Object);
+            dataContext.Setup(model => model.ResourceModel).Returns(resourceModel.Object);
+            differentEnvironment.Setup(a => a.IsLocalHost).Returns(false);
+            var dragDropHelpers = new DragDropHelpers(GetMockWorkflowDesignerView(dataContext.Object));
+            CustomContainer.Register(new Mock<IPopupController>().Object);
+            //------------Execute Test---------------------------
+            bool canDoDrop = dragDropHelpers.PreventDrop(GetMockDataObjectWithFormatData(new[] { "ExplorerItemViewModel" }, data));
+            //------------Assert Results-------------------------
+            Assert.IsTrue(canDoDrop);
+        }
+
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("DragDropHelpers_PreventDrop")]

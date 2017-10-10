@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,15 +9,14 @@
 */
 
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Data.Util;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.TO;
 using Dev2.Util;
 using Dev2.Validation;
+using System;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
     public class XPathDTO : ValidatedObject, IDev2TOFn
@@ -30,10 +29,14 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public XPathDTO()
         {
-
         }
 
-        public XPathDTO(string outputVariable, string xPath, int indexNum, bool inserted = false)
+        public XPathDTO(string outputVariable, string xPath, int indexNum)
+            : this(outputVariable, xPath, indexNum, false)
+        {
+        }
+
+        public XPathDTO(string outputVariable, string xPath, int indexNum, bool inserted)
         {
             Inserted = inserted;
             OutputVariable = outputVariable;
@@ -45,10 +48,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
 
         public int IndexNumber
@@ -163,6 +166,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         }
                     }
                     break;
+                default:
+                    throw new ArgumentException("Unrecognized property name: " + propertyName);
             }
             return ruleSet;
         }

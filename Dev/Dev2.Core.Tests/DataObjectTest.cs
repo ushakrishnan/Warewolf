@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,18 +9,25 @@
 */
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.Data.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.Web;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable InconsistentNaming
-// ReSharper disable MethodTooLong
+
+
+
+
 namespace Dev2.Tests
 {
     [TestClass]
@@ -43,6 +50,48 @@ namespace Dev2.Tests
             Assert.IsTrue(result);
         }
 
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PopEnvironment_GivenHasNoEnvironments_ShouldNotSetEnvironment()
+        {
+            //---------------Set up test pack-------------------
+            var mock = new Mock<IExecutionEnvironment>();
+            mock.SetupAllProperties();
+            IDSFDataObject dataObject = new DsfDataObject(string.Empty, Guid.NewGuid());
+            dataObject.Environment = mock.Object;
+            PrivateObject privateObject = new PrivateObject(dataObject);
+            var field = privateObject.GetField("_environments", BindingFlags.Instance | BindingFlags.NonPublic) as ConcurrentStack<IExecutionEnvironment>;
+            //---------------Assert Precondition----------------
+            Assert.IsNotNull(dataObject.Environment);
+            Assert.IsNotNull(field);
+            Assert.AreEqual(0,field.Count);
+            //---------------Execute Test ----------------------
+            dataObject.PopEnvironment();
+            //---------------Test Result -----------------------
+            Assert.AreEqual(dataObject.Environment, mock.Object);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PopEnvironment_GivenNoEnvironments_ShouldSetEnvironment()
+        {
+            //---------------Set up test pack-------------------
+            var mock = new Mock<IExecutionEnvironment>();
+            mock.SetupAllProperties();
+            IDSFDataObject dataObject = new DsfDataObject(string.Empty, Guid.NewGuid());
+            dataObject.Environment = mock.Object;
+            PrivateObject privateObject = new PrivateObject(dataObject);
+            var field = privateObject.GetField("_environments", BindingFlags.Instance | BindingFlags.NonPublic) as ConcurrentStack<IExecutionEnvironment>;
+            //---------------Assert Precondition----------------
+            Assert.IsNotNull(dataObject.Environment);
+            Assert.IsNotNull(field);
+            Assert.AreEqual(0,field.Count);
+            //---------------Execute Test ----------------------
+            dataObject.PushEnvironment(new ExecutionEnvironment());
+            dataObject.PopEnvironment();
+            //---------------Test Result -----------------------
+            Assert.AreEqual(dataObject.Environment, mock.Object);
+        }
 
         [TestMethod]
         [Owner("Travis Frisinger")]
@@ -142,9 +191,8 @@ namespace Dev2.Tests
         public void DsfDataObject_Clone_NormalClone_FullDuplicationForProperties()
         {
             //------------Setup for test--------------------------
-            IDSFDataObject dataObject = new DsfDataObject(string.Empty, Guid.NewGuid(), "<x>1</x>");
             Guid wfInstanceID = Guid.NewGuid();
-
+            IDSFDataObject dataObject = new DsfDataObject(string.Empty, Guid.NewGuid(), "<x>1</x>");
             dataObject.BookmarkExecutionCallbackID = Guid.NewGuid();
             dataObject.CurrentBookmarkName = "def";
             dataObject.DataList = new StringBuilder("<x/>");
@@ -158,8 +206,6 @@ namespace Dev2.Tests
             dataObject.DatalistOutMergeType = enDataListMergeTypes.Union;
             dataObject.DebugSessionID = Guid.NewGuid();
             dataObject.EnvironmentID = Guid.NewGuid();
-         //   dataObject.Errors = new ErrorResultTO();
-         //   dataObject.Errors.AddError("my error");
             dataObject.ExecutionCallbackID = Guid.NewGuid();
             dataObject.ExecutionOrigin = ExecutionOrigin.Debug;
             dataObject.ExecutionOriginDescription = "xxx";
@@ -193,6 +239,12 @@ namespace Dev2.Tests
             dataObject.IsDebugNested = true;
             dataObject.ForEachNestingLevel = 3;
             dataObject.StopExecution = false;
+            dataObject.IsServiceTestExecution = true;
+            dataObject.TestName = "Test 1";
+            dataObject.IsDebugFromWeb = true;
+            dataObject.SourceResourceID = Guid.NewGuid();
+            dataObject.IsSubExecution = true;
+            dataObject.ServiceTest = new ServiceTestModelTO {TestName = "Test Mock"};
             var threadsToDispose = new Dictionary<int, List<Guid>>();
             List<Guid> guidList = new List<Guid> { Guid.NewGuid() };
             threadsToDispose.Add(3, guidList);
@@ -205,7 +257,7 @@ namespace Dev2.Tests
 
             // check counts, then check values
             var properties = typeof(IDSFDataObject).GetProperties();
-            Assert.AreEqual(57, properties.Length);
+            Assert.AreEqual(67, properties.Length);
 
             // now check each value to ensure it transfered
             Assert.AreEqual(dataObject.BookmarkExecutionCallbackID, clonedObject.BookmarkExecutionCallbackID);
@@ -221,7 +273,6 @@ namespace Dev2.Tests
             Assert.AreEqual(dataObject.DatalistOutMergeType, clonedObject.DatalistOutMergeType);
             Assert.AreEqual(dataObject.DebugSessionID, clonedObject.DebugSessionID);
             Assert.AreEqual(dataObject.EnvironmentID, clonedObject.EnvironmentID);
-    //        Assert.AreEqual(dataObject.Errors, clonedObject.Errors);
             Assert.AreEqual(dataObject.ExecutingUser, clonedObject.ExecutingUser);
             Assert.AreEqual(dataObject.ExecutionCallbackID, clonedObject.ExecutionCallbackID);
             Assert.AreEqual(dataObject.ExecutionOrigin, clonedObject.ExecutionOrigin);
@@ -260,6 +311,15 @@ namespace Dev2.Tests
             Assert.AreEqual(dataObject.IsDebugNested, clonedObject.IsDebugNested);
             Assert.AreEqual(dataObject.ForEachNestingLevel, clonedObject.ForEachNestingLevel);
             Assert.AreEqual(dataObject.StopExecution, clonedObject.StopExecution);
+            Assert.AreEqual(dataObject.SourceResourceID, clonedObject.SourceResourceID);
+            Assert.AreEqual(dataObject.TestName, clonedObject.TestName);
+            Assert.AreEqual(dataObject.IsServiceTestExecution, clonedObject.IsServiceTestExecution);
+            Assert.AreEqual(dataObject.IsDebugFromWeb, clonedObject.IsDebugFromWeb);
+            Assert.AreNotEqual(dataObject.ServiceTest, clonedObject.ServiceTest);
+            Assert.AreEqual(dataObject.ServiceTest.TestName, clonedObject.ServiceTest.TestName);
+            Assert.AreEqual(dataObject.IsSubExecution,clonedObject.IsSubExecution);
+            Assert.AreEqual(dataObject.WebUrl,clonedObject.WebUrl);
+            Assert.AreEqual(dataObject.QueryString,clonedObject.QueryString);
         }
 
         #region Debug Mode Test
@@ -413,12 +473,12 @@ namespace Dev2.Tests
             // Default Data Merge Checks
             StringAssert.Contains(dataObjct.DatalistOutMergeID.ToString(), Guid.Empty.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeType.ToString(), enDataListMergeTypes.Intersection.ToString());
-            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), enTranslationDepth.Data_With_Blank_OverWrite.ToString());
+            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data_With_Blank_OverWrite.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeFrequency.ToString(), DataListMergeFrequency.OnCompletion.ToString());
 
             StringAssert.Contains(dataObjct.DatalistInMergeID.ToString(), Guid.Empty.ToString());
             StringAssert.Contains(dataObjct.DatalistInMergeType.ToString(), enDataListMergeTypes.Intersection.ToString());
-            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), enTranslationDepth.Data_With_Blank_OverWrite.ToString());
+            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data_With_Blank_OverWrite.ToString());
 
         }
 
@@ -474,12 +534,12 @@ namespace Dev2.Tests
             // Default Data Merge Checks
             StringAssert.Contains(dataObjct.DatalistOutMergeID.ToString(), Guid.Empty.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeType.ToString(), enDataListMergeTypes.Intersection.ToString());
-            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), enTranslationDepth.Data_With_Blank_OverWrite.ToString());
+            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data_With_Blank_OverWrite.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeFrequency.ToString(), DataListMergeFrequency.OnCompletion.ToString());
 
             StringAssert.Contains(dataObjct.DatalistInMergeID.ToString(), Guid.Empty.ToString());
             StringAssert.Contains(dataObjct.DatalistInMergeType.ToString(), enDataListMergeTypes.Intersection.ToString());
-            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), enTranslationDepth.Data_With_Blank_OverWrite.ToString());
+            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data_With_Blank_OverWrite.ToString());
 
         }
 
@@ -533,12 +593,12 @@ namespace Dev2.Tests
             // Default Data Merge Checks
             StringAssert.Contains(dataObjct.DatalistOutMergeID.ToString(), Guid.Empty.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeType.ToString(), enDataListMergeTypes.Intersection.ToString());
-            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), enTranslationDepth.Data_With_Blank_OverWrite.ToString());
+            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data_With_Blank_OverWrite.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeFrequency.ToString(), DataListMergeFrequency.OnCompletion.ToString());
 
             StringAssert.Contains(dataObjct.DatalistInMergeID.ToString(), Guid.Empty.ToString());
             StringAssert.Contains(dataObjct.DatalistInMergeType.ToString(), enDataListMergeTypes.Intersection.ToString());
-            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), enTranslationDepth.Data_With_Blank_OverWrite.ToString());
+            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data_With_Blank_OverWrite.ToString());
 
         }
 
@@ -603,12 +663,12 @@ namespace Dev2.Tests
             // Data Merge Checks
             StringAssert.Contains(dataObjct.DatalistOutMergeID.ToString(), mergeIDOut.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeType.ToString(), enDataListMergeTypes.Union.ToString());
-            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), enTranslationDepth.Data.ToString());
+            StringAssert.Contains(dataObjct.DatalistOutMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data.ToString());
             StringAssert.Contains(dataObjct.DatalistOutMergeFrequency.ToString(), DataListMergeFrequency.Never.ToString());
 
             StringAssert.Contains(dataObjct.DatalistInMergeID.ToString(), mergeIDIn.ToString());
             StringAssert.Contains(dataObjct.DatalistInMergeType.ToString(), enDataListMergeTypes.Union.ToString());
-            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), enTranslationDepth.Data.ToString());
+            StringAssert.Contains(dataObjct.DatalistInMergeDepth.ToString(), Common.Interfaces.DataList.Contract.enTranslationDepth.Data.ToString());
 
         }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System;
 using System.Activities.Presentation.Model;
+using System.Activities.Presentation.View;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -26,6 +27,7 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.Activities.Utils;
+
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -56,10 +58,7 @@ namespace Dev2.Activities.Designers2.Core
             OpenErrorsLinkCommand = new DelegateCommand(o =>
             {
                 var actionableErrorInfo = o as IActionableErrorInfo;
-                if(actionableErrorInfo != null)
-                {
-                    actionableErrorInfo.Do();
-                }
+                actionableErrorInfo?.Do();
             });
 
             BindingOperations.SetBinding(this, IsClosedProperty, new Binding(ShowLargeProperty.Name)
@@ -163,14 +162,10 @@ namespace Dev2.Activities.Designers2.Core
 
         static void OnShowHelp(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var vm = d as ActivityDesignerViewModel;
 
-            if(vm != null && (bool)e.NewValue)
+            if (d is ActivityDesignerViewModel vm && (bool)e.NewValue)
             {
-                if(vm._setInitialFocus != null)
-                {
-                    vm._setInitialFocus();
-                }
+                vm._setInitialFocus?.Invoke();
             }
         }
 
@@ -272,8 +267,7 @@ namespace Dev2.Activities.Designers2.Core
 
         protected virtual void OnModelItemPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            var item = sender as ModelItem;
-            if (item != null)
+            if (sender is ModelItem item)
             {
                 switch (e.PropertyName)
                 {
@@ -282,6 +276,8 @@ namespace Dev2.Activities.Designers2.Core
                         break;
                     case "IsPrimarySelection":
 
+                        break;
+                    default:
                         break;
                 }
             }
@@ -312,10 +308,6 @@ namespace Dev2.Activities.Designers2.Core
                 if(isChecked)
                 {
                     ActivityDesignerToggle activityDesignerToggle = TitleBarToggles.FirstOrDefault(c => c.AutomationID == "HelpToggle");
-                    if(activityDesignerToggle == null)
-                    {
-                        //AddTitleBarHelpToggle();
-                    }
                 }
                 else
                 {
@@ -338,12 +330,21 @@ namespace Dev2.Activities.Designers2.Core
 
         void ToggleTitleBarVisibility()
         {
+            DesignerView parentContentPane = FindDependencyParent.FindParent<DesignerView>(ModelItem.View);
+            var dataContext = parentContentPane?.DataContext;
             var isSelectedOrMouseOver = IsSelectedOrMouseOver;
-            TitleBarTogglesVisibility = isSelectedOrMouseOver ? Visibility.Visible : Visibility.Collapsed;
-            ZIndexPosition = isSelectedOrMouseOver ? ZIndexPosition.Front : ZIndexPosition.Back;
+            if (dataContext != null && dataContext.GetType().Name == "ServiceTestViewModel")
+            {
+                TitleBarTogglesVisibility = Visibility.Collapsed;
+            }
+            else
+            {
+                TitleBarTogglesVisibility = isSelectedOrMouseOver ? Visibility.Visible : Visibility.Collapsed;
+                ZIndexPosition = isSelectedOrMouseOver ? ZIndexPosition.Front : ZIndexPosition.Back;
+            }
         }
 
-        protected string DisplayName { get { return GetProperty<string>(); } set { SetProperty(value); } }
+        protected string DisplayName { get => GetProperty<string>(); set => SetProperty(value); }
 
         #region Get/SetProperty
 

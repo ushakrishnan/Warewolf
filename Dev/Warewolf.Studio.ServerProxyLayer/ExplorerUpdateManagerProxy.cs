@@ -7,6 +7,8 @@ using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
 using Dev2.Controller;
 using Dev2.Explorer;
+using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ServerProxyLayer
 {
@@ -14,7 +16,7 @@ namespace Warewolf.Studio.ServerProxyLayer
     {
         #region Implementation of IExplorerUpdateManager
 
-        public ExplorerUpdateManagerProxy(ICommunicationControllerFactory communicationControllerFactory, Dev2.Studio.Core.Interfaces.IEnvironmentConnection connection):base(communicationControllerFactory,connection)
+        public ExplorerUpdateManagerProxy(ICommunicationControllerFactory communicationControllerFactory, IEnvironmentConnection connection):base(communicationControllerFactory,connection)
         {
 
         }
@@ -69,9 +71,12 @@ namespace Warewolf.Studio.ServerProxyLayer
             var controller = CommunicationControllerFactory.CreateController("DeleteItemService");
             controller.AddPayloadArgument("itemToDelete", id.ToString());
             var result = controller.ExecuteCommand<IExplorerRepositoryResult>(Connection, GlobalConstants.ServerWorkspaceID);
-            if (result.Status != ExecStatus.Success)
+            if (result?.Status != ExecStatus.Success)
             {
-                throw new WarewolfSaveException(result.Message, null);
+                if(result != null)
+                {
+                    throw new WarewolfSaveException(result.Message, null);
+                }
             }
         }
 
@@ -115,13 +120,13 @@ namespace Warewolf.Studio.ServerProxyLayer
         /// <param name="sourceId"></param>
         /// <param name="destinationPath"></param>
         /// <param name="resourcePath"></param>
-        public async Task MoveItem(Guid sourceId, string destinationPath, string resourcePath)
+        public async Task<IExplorerRepositoryResult> MoveItem(Guid sourceId, string destinationPath, string resourcePath)
         {
             var controller = CommunicationControllerFactory.CreateController("MoveItemService");
             controller.AddPayloadArgument("itemToMove", sourceId.ToString());
             controller.AddPayloadArgument("newPath", destinationPath);
             controller.AddPayloadArgument("itemToBeRenamedPath", resourcePath);
-            await controller.ExecuteCommandAsync<IExplorerRepositoryResult>(Connection, GlobalConstants.ServerWorkspaceID);
+            return await controller.ExecuteCommandAsync<IExplorerRepositoryResult>(Connection, GlobalConstants.ServerWorkspaceID);
         }
 
         #endregion

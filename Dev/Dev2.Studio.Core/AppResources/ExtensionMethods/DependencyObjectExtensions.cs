@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +15,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.ExtensionMethods
 {
     public static class DependencyObjectExtensions
@@ -70,7 +70,10 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
         {
             DependencyObject parent = VisualTreeHelper.GetParent(source);
 
-            if(parent == null) return null;
+            if(parent == null)
+            {
+                return null;
+            }
 
             return parent.GetType() == type ? parent : GetParentByType(parent, type);
         }
@@ -103,7 +106,8 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
         public static T FindChild<T>(this DependencyObject parent, Func<T, bool> predicate)
             where T : DependencyObject
         {
-            return parent.FindChildren(predicate).First();
+            var findChildren = parent.FindChildren(predicate);
+            return findChildren.FirstOrDefault();
         }
 
         /// <summary>
@@ -124,20 +128,29 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
             {
                 var visualChildrenCount = VisualTreeHelper.GetChildrenCount(parent);
                 for(int childIndex = 0; childIndex < visualChildrenCount; childIndex++)
+                {
                     children.Add(VisualTreeHelper.GetChild(parent, childIndex));
+                }
             }
             foreach(var logicalChild in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>())
-                if(!children.Contains(logicalChild))
-                    children.Add(logicalChild);
-
-            foreach(var child in children)
             {
-                var typedChild = child as T;
-                if((typedChild != null) && predicate.Invoke(typedChild))
-                    yield return typedChild;
+                if (!children.Contains(logicalChild))
+                {
+                    children.Add(logicalChild);
+                }
+            }
 
-                foreach(var foundDescendant in FindChildren(child, predicate))
+            foreach (var child in children)
+            {
+                if ((child is T typedChild) && predicate.Invoke(typedChild))
+                {
+                    yield return typedChild;
+                }
+
+                foreach (var foundDescendant in FindChildren(child, predicate))
+                {
                     yield return foundDescendant;
+                }
             }
         }
     }

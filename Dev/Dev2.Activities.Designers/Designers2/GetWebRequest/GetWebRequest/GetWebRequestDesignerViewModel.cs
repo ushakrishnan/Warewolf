@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,11 +19,11 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Preview;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.DataList.Contract;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Activities.Designers2.GetWebRequest
 {
     public class GetWebRequestDesignerViewModel : ActivityDesignerViewModel
@@ -48,6 +48,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest
             {
                 Headers = string.Empty;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Web_Request;
         }
 
         public PreviewViewModel PreviewViewModel { get; private set; }
@@ -98,6 +99,8 @@ namespace Dev2.Activities.Designers2.GetWebRequest
                 case "Url":
                 case "Headers":
                     ExtractVariables();
+                    break;
+                default:
                     break;
             }
         }
@@ -228,8 +231,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest
             }
             else
             {
-                Uri uriResult;
-                var isValid = Uri.TryCreate(urlValue, UriKind.Absolute, out uriResult) &&
+                var isValid = Uri.TryCreate(urlValue, UriKind.Absolute, out Uri uriResult) &&
                               (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
                 if (!isValid)
                 {
@@ -245,7 +247,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest
             }
         }
 
-        public Func<string, string, List<Tuple<string, string>>, string> WebInvoke = (method, url, headers) =>
+        readonly Func<string, string, List<Tuple<string, string>>, string> WebInvoke = (method, url, headers) =>
             {
                 var webInvoker = new WebRequestInvoker();
                 return webInvoker.ExecuteRequest(method, url, headers);
@@ -286,11 +288,8 @@ namespace Dev2.Activities.Designers2.GetWebRequest
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

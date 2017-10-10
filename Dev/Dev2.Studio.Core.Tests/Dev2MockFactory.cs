@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,25 +15,25 @@ using System.Text;
 using System.Windows;
 using Caliburn.Micro;
 using Dev2.Common.Interfaces.Studio.Controller;
+using Dev2.Common.Interfaces.Studio.Core;
 using Dev2.Core.Tests.Utils;
-using Dev2.Network;
 using Dev2.Providers.Events;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Helpers;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.ViewModels;
 using Dev2.Util;
 using Moq;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
+using Dev2.Studio.Interfaces.Enums;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests
 {
     public static class Dev2MockFactory
     {
-        private static Mock<MainViewModel> _mockMainViewModel;
+        private static Mock<ShellViewModel> _mockMainViewModel;
         private static Mock<IContextualResourceModel> _mockResourceModel;
 
         static Dev2MockFactory()
@@ -53,21 +53,21 @@ namespace Dev2.Core.Tests
          */
         // required for IsSelected Property of LayoutGridObjectViewModel
 
-        static public Mock<MainViewModel> MainViewModel
+        static public Mock<ShellViewModel> MainViewModel
         {
             get
             {
                 if (_mockMainViewModel == null)
                 {
                     var eventPublisher = new Mock<IEventAggregator>();
-                    var environmentRepository = new Mock<IEnvironmentRepository>();
-                    var environmentModel = new Mock<IEnvironmentModel>();
+                    var environmentRepository = new Mock<IServerRepository>();
+                    var environmentModel = new Mock<IServer>();
                     environmentModel.Setup(c => c.CanStudioExecute).Returns(false);
                     environmentRepository.Setup(c => c.All()).Returns(new[] { environmentModel.Object });
                     environmentRepository.Setup(c => c.Source).Returns(environmentModel.Object);
                     var versionChecker = new Mock<IVersionChecker>();
                     var asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
-                    _mockMainViewModel = new Mock<MainViewModel>(eventPublisher.Object, asyncWorker.Object, environmentRepository.Object,
+                    _mockMainViewModel = new Mock<ShellViewModel>(eventPublisher.Object, asyncWorker.Object, environmentRepository.Object,
                                                                  versionChecker.Object, false, null, null, null, null);
                 }
                 return _mockMainViewModel;
@@ -87,9 +87,9 @@ namespace Dev2.Core.Tests
             }
         }
 
-        static public Mock<IEnvironmentModel> SetupEnvironmentModel()
+        static public Mock<IServer> SetupEnvironmentModel()
         {
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             mockEnvironmentModel.Setup(environmentModel => environmentModel.Connect()).Verifiable();
             mockEnvironmentModel.Setup(environmentModel => environmentModel.LoadResources()).Verifiable();
             mockEnvironmentModel.Setup(environmentModel => environmentModel.ResourceRepository).Returns(SetupFrameworkRepositoryResourceModelMock().Object);
@@ -101,9 +101,9 @@ namespace Dev2.Core.Tests
             return mockEnvironmentModel;
         }
 
-        static public Mock<IEnvironmentModel> SetupEnvironmentModel(Mock<IContextualResourceModel> returnResource, List<IResourceModel> resourceRepositoryFakeBacker)
+        static public Mock<IServer> SetupEnvironmentModel(Mock<IContextualResourceModel> returnResource, List<IResourceModel> resourceRepositoryFakeBacker)
         {
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             mockEnvironmentModel.Setup(environmentModel => environmentModel.Connect()).Verifiable();
             mockEnvironmentModel.Setup(environmentModel => environmentModel.LoadResources()).Verifiable();
             mockEnvironmentModel.Setup(environmentModel => environmentModel.ResourceRepository).Returns(SetupFrameworkRepositoryResourceModelMock(returnResource, resourceRepositoryFakeBacker).Object);
@@ -136,7 +136,6 @@ namespace Dev2.Core.Tests
             {
                 mockResourceModel.Setup(r => r.Save(It.IsAny<IResourceModel>())).Callback<IResourceModel>(resourceRepositoryFakeBacker.Add);
             }
-            mockResourceModel.Setup(r => r.ReloadResource(It.IsAny<Guid>(), It.IsAny<ResourceType>(), It.IsAny<IEqualityComparer<IResourceModel>>(), true)).Returns(new List<IResourceModel> { returnResource.Object });
             mockResourceModel.Setup(r => r.All()).Returns(new List<IResourceModel> { returnResource.Object });
 
             return mockResourceModel;
@@ -186,12 +185,12 @@ namespace Dev2.Core.Tests
             return mockDataListViewModel;
         }
 
-        // ReSharper disable ParameterHidesMember
+        
 
         public static Mock<IPopupController> CreateIPopup(MessageBoxResult returningResult)
         {
             Mock<IPopupController> result = new Mock<IPopupController>();
-            result.Setup(moq => moq.Show(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MessageBoxButton>(), It.IsAny<MessageBoxImage>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>())).Returns(returningResult).Verifiable();
+            result.Setup(moq => moq.Show(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<MessageBoxButton>(), It.IsAny<MessageBoxImage>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>())).Returns(returningResult).Verifiable();
 
             return result;
         }

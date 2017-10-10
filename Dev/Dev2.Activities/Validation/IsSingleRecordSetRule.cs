@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,9 +36,15 @@ namespace Dev2.Validation
             {
                 var regions = DataListCleaningUtils.SplitIntoRegions(exp);
                 if (regions.Count > 1)
+                {
                     return CreatError();
+                }
+
                 if (regions.Count == 1 && !DataListUtil.IsValueRecordsetWithFields(regions[0]))
-                    return CreatError(); 
+                {
+                    return CreatError();
+                }
+
                 return null;
             }
             return null;

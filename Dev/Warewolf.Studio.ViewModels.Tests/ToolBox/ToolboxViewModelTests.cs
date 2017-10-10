@@ -4,10 +4,11 @@ using System.Linq;
 using Dev2;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable PossibleUnintendedReferenceComparison
+
+
 
 namespace Warewolf.Studio.ViewModels.ToolBox.Tests
 {
@@ -398,10 +399,11 @@ namespace Warewolf.Studio.ViewModels.ToolBox.Tests
             _target.ClearFilterCommand.Execute(null);
 
             //assert
-            Assert.AreEqual(3, _target.Tools.Count);
-            Assert.IsTrue(_target.Tools.Any(it => it.Tool == toolDescriptorMockContainingInLocal.Object && it.IsEnabled));
-            Assert.IsTrue(_target.Tools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal.Object && !it.IsEnabled));
-            Assert.IsTrue(_target.Tools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal2.Object && !it.IsEnabled));
+            Assert.AreEqual(3, _target.BackedUpTools.Count);
+            Assert.AreEqual(0, _target.Tools.Count);
+            Assert.IsTrue(_target.BackedUpTools.Any(it => it.Tool == toolDescriptorMockContainingInLocal.Object && it.IsEnabled));
+            Assert.IsTrue(_target.BackedUpTools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal.Object && !it.IsEnabled));
+            Assert.IsTrue(_target.BackedUpTools.Any(it => it.Tool == toolDescriptorMockNotContainingInLocal2.Object && !it.IsEnabled));
         }
 
         [TestMethod]
@@ -454,10 +456,10 @@ namespace Warewolf.Studio.ViewModels.ToolBox.Tests
         public void TestUpdateHelpDescriptor()
         {
             //arrange
-            var mainViewModelMock = new Mock<IMainViewModel>();
+            var mainViewModelMock = new Mock<IShellViewModel>();
             var helpWindowViewModelMock = new Mock<IHelpWindowViewModel>();
             mainViewModelMock.SetupGet(it => it.HelpViewModel).Returns(helpWindowViewModelMock.Object);
-            CustomContainer.Register<IMainViewModel>(mainViewModelMock.Object);
+            CustomContainer.Register(mainViewModelMock.Object);
 
             //act
             _target.UpdateHelpDescriptor("someText");

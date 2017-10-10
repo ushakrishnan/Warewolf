@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,9 +12,8 @@ using System;
 using System.Activities;
 using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
-using System.Diagnostics.CodeAnalysis;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Activities.Utils
 {
     public static class ModelItemUtils
@@ -33,7 +32,7 @@ namespace Dev2.Studio.Core.Activities.Utils
                     var modelProperty = modelItem.Properties[propertyName];
                     if(modelProperty != null)
                     {
-                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                        
                         if(modelProperty.PropertyType == typeof(InArgument<T>))
                         {
                             modelProperty.SetValue(InArgument<T>.FromValue(value));
@@ -47,7 +46,7 @@ namespace Dev2.Studio.Core.Activities.Utils
             }
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static ModelItem CreateModelItem(object parent, object objectToMakeModelItem)
         {
             EditingContext ec = new EditingContext();
@@ -56,7 +55,7 @@ namespace Dev2.Studio.Core.Activities.Utils
             return mtm.CreateModelItem(CreateModelItem(parent), objectToMakeModelItem);
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static ModelItem CreateModelItem()
         {
             return CreateModelItem(new object());
@@ -80,8 +79,7 @@ namespace Dev2.Studio.Core.Activities.Utils
             {
                 if(modelProperty.PropertyType == typeof(InArgument<T>))
                 {
-                    var arg = modelProperty.ComputedValue as InArgument<T>;
-                    if(arg != null)
+                    if (modelProperty.ComputedValue is InArgument<T> arg)
                     {
                         value = arg.Expression.ToString();
                     }
@@ -95,8 +93,7 @@ namespace Dev2.Studio.Core.Activities.Utils
                 {
                     if(typeof(T) == typeof(Guid))
                     {
-                        Guid guid;
-                        Guid.TryParse(value.ToString(), out guid);
+                        Guid.TryParse(value.ToString(), out Guid guid);
                         value = guid;
                     }
                 }
@@ -118,8 +115,7 @@ namespace Dev2.Studio.Core.Activities.Utils
         public static Guid GetUniqueID(ModelItem modelItem)
         {
             var instanceIDStr = GetProperty("UniqueID", modelItem) as string;
-            Guid instanceID;
-            Guid.TryParse(instanceIDStr, out instanceID);
+            Guid.TryParse(instanceIDStr, out Guid instanceID);
             return instanceID;
         }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,10 +13,10 @@ using System.Collections.Generic;
 using System.Xml;
 using Dev2.Common.Interfaces.Data;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.DataList.Contract
-// ReSharper restore CheckNamespace
+
 {
     public abstract class LanguageParser
     {
@@ -73,13 +73,12 @@ namespace Dev2.DataList.Contract
                     bool isEvaluated = false;
                     string mapsTo = tmp.Attributes[_mapsToAttribute].Value;
 
-                    bool isObject;
-                    if (tmp.Attributes["IsObject"] == null || !bool.TryParse(tmp.Attributes["IsObject"].Value,out isObject))
+                    if (tmp.Attributes["IsObject"] == null || !bool.TryParse(tmp.Attributes["IsObject"].Value, out bool isObject))
                     {
                         isObject = false;
                     }
 
-                    if(!_defaultValueToMapsTo)
+                    if (!_defaultValueToMapsTo)
                     { // output
 
                         // account for blank mapsto in generated output defs

@@ -5,20 +5,20 @@ using Dev2.Common.Interfaces.Toolbox;
 
 namespace Warewolf.Core
 {
-    public class ToolDescriptor:IToolDescriptor, IEquatable<ToolDescriptor>
-    {
-
-
-        // ReSharper disable TooManyDependencies
-        public ToolDescriptor(Guid id, IWarewolfType designer,  IWarewolfType activity, string name, string icon, Version version, bool isSupported, string category, ToolType toolType,string iconUri, string filterTag)
-            // ReSharper restore TooManyDependencies
+    public class ToolDescriptor : IToolDescriptor, IEquatable<ToolDescriptor>
+    {        
+        public ToolDescriptor(Guid id, IWarewolfType designer, IWarewolfType activity, string name, string icon, Version version, bool isSupported, string category, ToolType toolType, string iconUri, string filterTag,string toolTip, string helpText)        
         {
-            if(id==Guid.Empty) throw  new ArgumentNullException("id","empty guids not allowed fo tools");
+            if (id == Guid.Empty)
+            {
+                throw new ArgumentNullException("id", "empty guids not allowed fo tools");
+            }
+
             VerifyArgument.AreNotNull(new Dictionary<string, object> { { "id", id }, { "designer", designer }, { "activity", activity }, { "name", name }, { "icon", icon }, { "version", version }, { "category", category }, { iconUri, "iconUri" }, { filterTag, "filterTag" } });
             ToolType = toolType;
             Category = category;
             IsSupported = isSupported;
-            
+
             Version = version;
             Icon = icon;
             Name = name;
@@ -27,58 +27,24 @@ namespace Warewolf.Core
             Designer = designer;
             Id = id;
             FilterTag = filterTag;
+            ResourceToolTip = toolTip;
+            ResourceHelpText = helpText;
         }
 
-        
         #region Implementation of IToolDescriptor
-
-        /// <summary>
-        /// Tool identifier. Originates from containing dll
-        /// </summary>
+        
         public Guid Id { get; private set; }
-        /// <summary>
-        /// The type that will be instantiated as the designer
-        /// </summary>
         public IWarewolfType Designer { get; private set; }
-        /// <summary>
-        /// something or the other; //todo: check what this was meant to do in diagram
-        /// </summary>
-        //public IWarewolfType Model { get; private set; }
-        /// <summary>
-        /// Server activity that this will instantiate
-        /// </summary>
         public IWarewolfType Activity { get; private set; }
-        /// <summary>
-        /// Name of tool as per toolbox
-        /// </summary>
         public string Name { get; private set; }
-        /// <summary>
-        /// Icon that will be displayed
-        /// </summary>
         public string Icon { get; private set; }
-
         public string IconUri { get; private set; }
         public string FilterTag { get; set; }
-
-        /// <summary>
-        /// Version as per dll
-        /// </summary>
+        public string ResourceToolTip { get; set; }
+        public string ResourceHelpText { get; set; }    
         public Version Version { get; private set; }
-        /// <summary>
-        /// Help text for help window
-        /// </summary>
-        //public IHelpDescriptor Helpdescriptor { get; private set; }
-        /// <summary>
-        /// Is supported locally
-        /// </summary>
         public bool IsSupported { get; private set; }
-        /// <summary>
-        /// Tool category for toolbox
-        /// </summary>
         public string Category { get; private set; }
-        /// <summary>
-        /// Native or user
-        /// </summary>
         public ToolType ToolType { get; private set; }
 
         #region Overrides of Object
@@ -92,15 +58,15 @@ namespace Warewolf.Core
         /// <param name="obj">The object to compare with the current object. </param>
         public override bool Equals(object obj)
         {
-            if(ReferenceEquals(null, obj))
+            if (ReferenceEquals(null, obj))
             {
                 return false;
             }
-            if(ReferenceEquals(this, obj))
+            if (ReferenceEquals(this, obj))
             {
                 return true;
             }
-            if(obj.GetType() != GetType())
+            if (obj.GetType() != GetType())
             {
                 return false;
             }
@@ -152,8 +118,8 @@ namespace Warewolf.Core
             return !Equals(left, right);
         }
 
-        #endregion
-        #endregion
+            #endregion
+            #endregion
 
         #endregion
     }

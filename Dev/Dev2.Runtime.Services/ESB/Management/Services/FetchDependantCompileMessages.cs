@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +10,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Communication;
@@ -32,7 +32,7 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// <summary>
     /// Internal service to fetch compile time messages
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class FetchDependantCompileMessages : IEsbManagementEndpoint
     {
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
@@ -43,9 +43,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             var result = new ExecuteMessage { HasError = false };
 
-            StringBuilder tmp;
-            values.TryGetValue("ServiceID", out tmp);
-            if(tmp != null)
+            values.TryGetValue("ServiceID", out StringBuilder tmp);
+            if (tmp != null)
             {
                 serviceId = tmp.ToString();
             }
@@ -55,20 +54,14 @@ namespace Dev2.Runtime.ESB.Management.Services
                 workspaceId = tmp.ToString();
             }
             values.TryGetValue("FilterList", out tmp);
-            if(tmp != null)
-            {
-            }
 
             if(string.IsNullOrEmpty(serviceId) || string.IsNullOrEmpty(workspaceId))
             {
                 throw new InvalidDataContractException(ErrorResource.NullServiceIDOrWorkspaceID);
             }
 
-            Guid wGuid;
-            Guid sGuid;
-
-            Guid.TryParse(workspaceId, out wGuid);
-            Guid.TryParse(serviceId, out sGuid);
+            Guid.TryParse(workspaceId, out Guid wGuid);
+            Guid.TryParse(serviceId, out Guid sGuid);
 
 
             var thisService = ResourceCatalog.Instance.GetResource(wGuid, sGuid);
@@ -91,7 +84,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var deps = enumerable.Distinct().ToList();
                 if(deps.Count > 0)
                 {
-                    // ReSharper disable ExpressionIsAlwaysNull
+                    
                     msgs = new CompileMessageList();
                     var compileMessageTo = new CompileMessageTO
                     {
@@ -101,7 +94,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     msgs.Dependants =new List<string>();
                     deps.ForEach(s => msgs.Dependants.Add(s));
                     msgs.MessageList = new List<ICompileMessageTO> { compileMessageTo };
-                    // ReSharper restore ExpressionIsAlwaysNull
+                    
                     return serializer.SerializeToBuilder(msgs);
                 }
             }
@@ -125,6 +118,16 @@ namespace Dev2.Runtime.ESB.Management.Services
         public string HandlesType()
         {
             return "FetchDependantCompileMessagesService";
+        }
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
         }
     }
 }

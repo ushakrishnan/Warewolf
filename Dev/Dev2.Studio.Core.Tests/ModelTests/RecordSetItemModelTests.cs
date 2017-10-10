@@ -1,17 +1,14 @@
-using System.Diagnostics.CodeAnalysis;
-using Dev2.Data.Binary_Objects;
-using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Studio.Core.Models.DataList;
+using Dev2.Studio.Interfaces.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Core.Tests.ModelTests
 {
     [TestClass]
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public class RecordSetItemModelTests
     {
-
         #region Test Fields
 
         private IRecordSetItemModel _recordSetItemModel;
@@ -112,6 +109,5 @@ namespace Dev2.Core.Tests.ModelTests
         }
 
         #endregion Name Validation
-
     }
 }

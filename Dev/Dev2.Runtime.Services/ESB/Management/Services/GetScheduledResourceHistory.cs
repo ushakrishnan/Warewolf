@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.DynamicServices;
@@ -27,6 +28,16 @@ namespace Dev2.Runtime.ESB.Management.Services
 {
     public class GetScheduledResourceHistory : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         private IServerSchedulerFactory _schedulerFactory;
         ISecurityWrapper _securityWrapper;
         private IResourceCatalog _catalog;
@@ -37,14 +48,13 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
 
 
-                StringBuilder tmp;
-                values.TryGetValue("Resource", out tmp);
+                values.TryGetValue("Resource", out StringBuilder tmp);
                 var serializer = new Dev2JsonSerializer();
 
                 if (tmp != null)
                 {
                     var res = serializer.Deserialize<IScheduledResource>(tmp);
-                    Dev2Logger.Info("Get Scheduled History. " +tmp);
+                    Dev2Logger.Info("Get Scheduled History. " +tmp, GlobalConstants.WarewolfInfo);
                     IList<IResourceHistory> resources;
                     using (var model = SchedulerFactory.CreateModel(GlobalConstants.SchedulerFolderId, SecurityWrapper))
                     {
@@ -52,12 +62,12 @@ namespace Dev2.Runtime.ESB.Management.Services
                     }
                     return serializer.SerializeToBuilder(resources);
                 }
-                Dev2Logger.Debug("No resource Provided");
+                Dev2Logger.Debug("No resource Provided", GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(new List<IResourceHistory>());
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 throw;
             }
         }

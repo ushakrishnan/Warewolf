@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Diagnostics.Debug;
 using Dev2.DynamicServices;
@@ -28,19 +29,28 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// </summary>
     public class FetchRemoteDebugMessages : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
             {
 
          
-            Dev2Logger.Info("Fetch Remote Debug Messages");
+            Dev2Logger.Info("Fetch Remote Debug Messages", GlobalConstants.WarewolfInfo);
             string invokerId = null;
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
 
-            StringBuilder tmp;
-            values.TryGetValue("InvokerID", out tmp);
-            if(tmp != null)
+                values.TryGetValue("InvokerID", out StringBuilder tmp);
+                if (tmp != null)
             {
                 invokerId = tmp.ToString();
             }
@@ -50,11 +60,10 @@ namespace Dev2.Runtime.ESB.Management.Services
                 throw new InvalidDataContractException(ErrorResource.NullServiceIDOrWorkspaceID);
             }
 
-            Guid iGuid;
-            // RemoteDebugMessageRepo
-            Guid.TryParse(invokerId, out iGuid);
+                // RemoteDebugMessageRepo
+                Guid.TryParse(invokerId, out Guid iGuid);
 
-            if(iGuid != Guid.Empty)
+                if (iGuid != Guid.Empty)
             {
                 var items = RemoteDebugMessageRepo.Instance.FetchDebugItems(iGuid);
 
@@ -65,7 +74,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception err)
             {
-                Dev2Logger.Error("Fetch Remote Debug Messages Error", err);
+                Dev2Logger.Error("Fetch Remote Debug Messages Error", err, GlobalConstants.WarewolfError);
                 throw;
             }
         }

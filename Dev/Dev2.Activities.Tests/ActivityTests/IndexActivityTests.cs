@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class IndexActivityTests : BaseActivityUnitTest
     {
         /// <summary>
@@ -40,10 +40,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "[[recset1(1).field1]]", "First Occurrence", "ney", "Left To Right", "[[res]]", "0");
             IDSFDataObject result = ExecuteProcess();
             const string expected = "4";
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -58,8 +55,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "[[Customers(*).FirstName]]", "First Occurrence", "[[recset1(*).field1]]", "Left To Right", "[[results(*).resField]]", "0");
             IDSFDataObject result = ExecuteProcess();
 
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "results", "resField", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "results", "resField", out string error);
 
             // remove test datalist ;)
 
@@ -76,7 +72,6 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void Index_Recordset_With_Star_And_Star_Search_Criteria_Numeric_Return_Field_Expected_RowWithValuesAsCSV()
         {
             const int Expected = 1;
-            string error;
             //Create datalist
             SetupArguments(ActivityStrings.IndexDataListShapeWithThreeRecordsets, ActivityStrings.IndexDataListWithDataAndThreeRecordsets,
                            "[[Customers(*).FirstName]]", "First Occurrence", "[[recset1(*).field1]]", "Left To Right", "[[results(1).resField]]", "0");
@@ -84,7 +79,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             //Get the result from Find Index
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "results", "resField", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "results", "resField", out string error);
 
             //Datalist dispose
 
@@ -100,10 +95,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "[[recset1().field1]]", "First Occurrence", "f1", "Left To Right", "[[res]]", "0");
             IDSFDataObject result = ExecuteProcess();
             const string Expected = "1";
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -117,8 +109,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.IndexDataListShape, ActivityStrings.IndexDataListWithData,
                            "[[recset1(*).field1]]", "First Occurrence", "f1", "Left To Right", "[[Customers(*).FirstName]]", "0");
             IDSFDataObject result = ExecuteProcess();
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "Customers", "FirstName", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "Customers", "FirstName", out string error);
 
             // remove test datalist ;)
 
@@ -134,9 +125,6 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             const string Expected = "4";
 
-            string actual;
-            string error;
-
             //create datalist
             SetupArguments(ActivityStrings.IndexDataListShape, ActivityStrings.IndexDataListWithData,
                            "[[CompanyName]]", "First Occurrence", "2", "Left To Right", "[[res]]", "0");
@@ -144,7 +132,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
             
             //get the result
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             //datalist dispose
 
@@ -158,10 +146,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "[[CompanyName]]", "First Occurrence", "2", "Right to Left", "[[res]]", "0");
             IDSFDataObject result = ExecuteProcess();
             const string Expected = "1";
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
             Assert.AreEqual(Expected, actual);
@@ -175,10 +160,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "[[CompanyName]]", "First Occurrence", "zz", "Right to Left", "[[res]]", "0");
             IDSFDataObject result = ExecuteProcess();
             const string Expected = "-1";
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
             Assert.AreEqual(Expected, actual);
@@ -196,10 +178,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "ABCFDEFGH", "All Occurrences", "F", "Left To Right", "[[res]]", "0");
             IDSFDataObject result = ExecuteProcess();
             const string Expected = "4,7";
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -214,8 +193,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.IndexDataListShape, ActivityStrings.IndexDataListWithData,
                            "[[recset1(*).field2]]", "All Occurrences", "2", "Left To Right", "[[Customers(*).FirstName]]", "0");
             IDSFDataObject result = ExecuteProcess();
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "Customers", "FirstName", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "Customers", "FirstName", out string error);
 
             // remove test datalist ;)
 
@@ -227,8 +205,23 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         #endregion Index Negative Tests
 
-        
 
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfBaseActivity_GetOutputs")]
+        public void DsfBaseActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string inField = "[[CompanyName]]";
+            const string characters = "2";
+            var act = new DsfIndexActivity { InField = inField, Index = "First Occurance", Characters = characters, Direction = "Left To Right", Result = "[[res]]" };
+
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
+        }
 
         [TestMethod]
         [Owner("Hagashen Naidu")]

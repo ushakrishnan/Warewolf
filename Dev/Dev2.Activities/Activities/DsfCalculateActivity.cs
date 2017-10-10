@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,7 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Util;
@@ -27,11 +27,12 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
-    [ToolDescriptorInfo("Utility-Calculate", "Calculate", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Calculate_Tags")]
+    [ToolDescriptorInfo("Utility-Calculate", "Calculate", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Calculate")]
     public class DsfCalculateActivity : DsfActivityAbstract<string>
     {
 
@@ -97,8 +98,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 var warewolfListIterator = new WarewolfListIterator();
                 var calc = String.Format(GlobalConstants.CalculateTextConvertFormat, input);
                 var warewolfEvalResult = dataObject.Environment.Eval(calc, update);
-                var scalarResult = warewolfEvalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                if(scalarResult != null && scalarResult.Item.IsNothing)
+                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult scalarResult && scalarResult.Item.IsNothing)
                 {
                     throw new NullValueInVariableException(ErrorResource.VariableInputError, input);
                 }
@@ -120,7 +120,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error("Calculate Exception", ex);
+                Dev2Logger.Error("Calculate Exception", ex, GlobalConstants.WarewolfError);
                 allErrors.AddError(ex.Message);
             }
             finally
@@ -151,7 +151,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         private void AddDebugInputItem(IExecutionEnvironment environment,int update)
         {
-            AddDebugInputItem(new DebugEvalResult(Expression, "fx =", environment, update,false,true));
+            AddDebugInputItem(new DebugEvalResult(Expression, "fx =", environment, update, false, true));
         }
 
         private void AddDebugOutputItem(string expression, IExecutionEnvironment environment, int update)
@@ -160,6 +160,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion Private Methods
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
 
         #region Get Debug Inputs/Outputs
 
@@ -194,13 +199,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

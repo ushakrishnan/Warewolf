@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,13 +26,12 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.DotNet;
 using Dev2.Communication;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-using Warewolf.Resource.Errors;
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+
 
 namespace Dev2.Activities.Designers2.Net_DLL
 {
@@ -49,16 +48,9 @@ namespace Dev2.Activities.Designers2.Net_DLL
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
-
+        
         public DotNetDllViewModel(ModelItem modelItem)
             : base(modelItem)
         {
@@ -69,6 +61,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Resources_Dot_net_DLL;
         }
 
         Guid UniqueID => GetProperty<Guid>();
@@ -187,10 +180,6 @@ namespace Dev2.Activities.Designers2.Net_DLL
             Errors.Clear();
 
             Errors = Regions.SelectMany(a => a.Errors).Select(a => new ActionableErrorInfo(new ErrorInfo() { Message = a, ErrorType = ErrorType.Critical }, () => { }) as IActionableErrorInfo).ToList();
-            if (!OutputsRegion.IsEnabled)
-            {
-                Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo() { Message = string.Format(ErrorResource.ValidateBeforeMinimising, "Plugin get")} };
-            }
             if (SourceRegion.Errors.Count > 0)
             {
                 foreach (var designValidationError in SourceRegion.Errors)
@@ -227,9 +216,8 @@ namespace Dev2.Activities.Designers2.Net_DLL
             WorstDesignError = worstError[0];
         }
 
-        IErrorInfo WorstDesignError
+        internal IErrorInfo WorstDesignError
         {
-            // ReSharper disable once UnusedMember.Local
             get { return _worstDesignError; }
             set
             {
@@ -237,7 +225,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -308,7 +296,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
         public DelegateCommand TestInputCommand { get; set; }
 
         private string Type => GetProperty<string>();
-        // ReSharper disable InconsistentNaming
+        
 
         private void FixErrors()
         {
@@ -327,11 +315,8 @@ namespace Dev2.Activities.Designers2.Net_DLL
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -352,10 +337,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
                             {
                                 foreach (var toolRegion in Regions)
                                 {
-                                    if (toolRegion.Errors != null)
-                                    {
-                                        toolRegion.Errors.Clear();
-                                    }
+                                    toolRegion.Errors?.Clear();
                                 }
                             }
                         }
@@ -370,10 +352,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
                             {
                                 foreach (var toolRegion in Regions)
                                 {
-                                    if (toolRegion.Errors != null)
-                                    {
-                                        toolRegion.Errors.Clear();
-                                    }
+                                    toolRegion.Errors?.Clear();
                                 }
                             }
                         }
@@ -381,9 +360,11 @@ namespace Dev2.Activities.Designers2.Net_DLL
                 NamespaceRegion.SomethingChanged += (sender, args) =>
                 {
                     if (args.Errors != null)
+                    {
                         Errors =
                             args.Errors.Select(e => new ActionableErrorInfo { ErrorType = ErrorType.Critical, Message = e } as IActionableErrorInfo)
                                 .ToList();
+                    }
                 };
                 regions.Add(NamespaceRegion);
                 ActionRegion = new DotNetActionRegion(Model, ModelItem, SourceRegion, NamespaceRegion)
@@ -395,10 +376,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
                             {
                                 foreach (var toolRegion in Regions)
                                 {
-                                    if (toolRegion.Errors != null)
-                                    {
-                                        toolRegion.Errors.Clear();
-                                    }
+                                    toolRegion.Errors?.Clear();
                                 }
                             }
                         }
@@ -436,6 +414,8 @@ namespace Dev2.Activities.Designers2.Net_DLL
         #endregion
 
         #region Implementation of IDatabaseServiceViewModel
+
+        public IConstructorRegion<IPluginConstructor> ConstructorRegion { get; set; }
 
         public IActionToolRegion<IPluginAction> ActionRegion
         {
@@ -506,20 +486,7 @@ namespace Dev2.Activities.Designers2.Net_DLL
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }
@@ -549,7 +516,9 @@ namespace Dev2.Activities.Designers2.Net_DLL
         {
             Errors = new List<IActionableErrorInfo>();
             if (hasError)
+            {
                 Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo(new ErrorInfo() { ErrorType = ErrorType.Critical, FixData = "", FixType = FixType.None, Message = exception.Message, StackTrace = exception.StackTrace }, () => { }) };
+            }
         }
 
         public void SetDisplayName(string outputFieldName)

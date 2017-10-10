@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -16,17 +16,26 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class GetDllListings : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             ExecuteMessage msg = new ExecuteMessage();
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-            Dev2Logger.Info("Get Dll Listings");
-            StringBuilder dllListing;
+            Dev2Logger.Info("Get Dll Listings", GlobalConstants.WarewolfInfo);
 
-            values.TryGetValue("currentDllListing", out dllListing);
+            values.TryGetValue("currentDllListing", out StringBuilder dllListing);
             if (dllListing != null)
             {
                 var src = serializer.Deserialize(dllListing.ToString(), typeof(IFileListing)) as IFileListing;
@@ -38,7 +47,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 catch (Exception ex)
                 {
-                    Dev2Logger.Error(ex);
+                    Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                     msg.HasError = true;
                     msg.SetMessage(ex.Message);
                 }
@@ -63,7 +72,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Error(e.Message);
+                    Dev2Logger.Error(e.Message, GlobalConstants.WarewolfError);
                 }
                 var enumAssembly = new AssemblyCacheEnumerator();
                 var assemblyName = enumAssembly.GetNextAssembly();
@@ -80,7 +89,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     }
                     catch (Exception e)
                     {
-                        Dev2Logger.Error(e.Message);
+                        Dev2Logger.Error(e.Message, GlobalConstants.WarewolfError);
                     }
                     //  Create an assembly view model.
                     assemblyName = enumAssembly.GetNextAssembly();
@@ -93,7 +102,9 @@ namespace Dev2.Runtime.ESB.Management.Services
             else
             {
                 if(src.IsDirectory)
-                completeList = GetChildrenForDllListing(new DirectoryInfo(src.FullName));
+                {
+                    completeList = GetChildrenForDllListing(new DirectoryInfo(src.FullName));
+                }
             }
             return completeList;
         }
@@ -110,7 +121,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(ErrorResource.ErrorEnumeratingDirectory, e);
+                Dev2Logger.Error(ErrorResource.ErrorEnumeratingDirectory, e, GlobalConstants.WarewolfError);
             }
             return null;
         }
@@ -125,7 +136,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(ErrorResource.ErrorEnumeratingDirectory, e);
+                Dev2Logger.Error(ErrorResource.ErrorEnumeratingDirectory, e, GlobalConstants.WarewolfError);
             }
             return dllListing;
         }

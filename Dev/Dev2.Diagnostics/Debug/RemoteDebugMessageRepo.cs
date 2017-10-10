@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -39,16 +39,18 @@ namespace Dev2.Diagnostics.Debug
         /// <param name="ds">The ds.</param>
         public void AddDebugItem(string remoteInvokeID, IDebugState ds)
         {
-            Guid id;
-            Guid.TryParse(remoteInvokeID, out id);
-            if(id != Guid.Empty)
+            Guid.TryParse(remoteInvokeID, out Guid id);
+            if (id != Guid.Empty)
             {
                 lock(Lock)
                 {
-                    IList<IDebugState> list;
-                    if(_data.TryGetValue(id, out list))
+                    if (_data.TryGetValue(id, out IList<IDebugState> list))
                     {
-                        if(list.Contains(ds)) return;
+                        if (list.Contains(ds))
+                        {
+                            return;
+                        }
+
                         list.Add(ds);
                     }
                     else
@@ -70,8 +72,7 @@ namespace Dev2.Diagnostics.Debug
 
             lock(Lock)
             {
-                IList<IDebugState> list;
-                if(_data.TryGetValue(remoteInvokeID, out list))
+                if (_data.TryGetValue(remoteInvokeID, out IList<IDebugState> list))
                 {
                     _data.Remove(remoteInvokeID); // clear out all messages ;)
                     return list;

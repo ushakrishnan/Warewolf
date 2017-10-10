@@ -4,33 +4,33 @@ using System.Collections.Generic;
 using Dev2.Activities.Designers2.SharepointListRead;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Threading;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable ArrangeTypeMemberModifiers
-// ReSharper disable UnusedMember.Local
 
-// ReSharper disable UnusedAutoPropertyAccessor.Local
+
+
+
 
 namespace Dev2.Activities.Designers2.SharepointFolderRead
 {
     public class SharePointReadFolderDesignerViewModel : SharepointListDesignerViewModelBase
     {
         public SharePointReadFolderDesignerViewModel(ModelItem modelItem)
-            : this(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment)
+            : this(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer)
         {
             if (!IsFilesAndFoldersSelected && !IsFoldersSelected && !IsFilesSelected)
             {
                 IsFilesSelected = true;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_SharePoint_Read_Folder;
         }
 
-        public SharePointReadFolderDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel envModel)
+        public SharePointReadFolderDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IServer envModel)
             : base(modelItem, asyncWorker, envModel, EventPublishers.Aggregator)
         {
             
@@ -41,11 +41,8 @@ namespace Dev2.Activities.Designers2.SharepointFolderRead
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel?.UpdateHelpText(helpText);
         }
         
         public bool IsFilesAndFoldersSelected { set { SetProperty(value); } get { return GetProperty<bool>(); } }

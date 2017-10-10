@@ -12,22 +12,28 @@ namespace Dev2.Activities.Debug
         readonly string _labelText;
         string _operand;
         readonly string _variable;
-        readonly DebugItemResultType _type;
+        private readonly bool _mockSelected;
 
         public DebugItemWarewolfRecordset(DataStorage.WarewolfRecordset warewolfRecordset, string variable, string labelText, string operand)
+            : this(warewolfRecordset, variable, labelText, operand, false)
+        {
+        }
+
+        public DebugItemWarewolfRecordset(DataStorage.WarewolfRecordset warewolfRecordset, string variable, string labelText, string operand, bool mockSelected)
         {
             _warewolfRecordset = warewolfRecordset;
             _labelText = labelText;
             _operand = operand;
             _variable = variable;
-            _type = DebugItemResultType.Variable;
+            Type = DebugItemResultType.Variable;
+            _mockSelected = mockSelected;
         }
         
         public override string LabelText => _labelText;
 
         public string Variable => _variable;
 
-        public DebugItemResultType Type => _type;
+        public DebugItemResultType Type { get; }
 
         public override List<IDebugItemResult> GetDebugItemResult()
         {
@@ -75,7 +81,8 @@ namespace Dev2.Activities.Debug
                             Operator = _operand,
                             GroupName = _variable,
                             Value = ExecutionEnvironment.WarewolfAtomToString(warewolfAtom),
-                            GroupIndex = grpIdx
+                            GroupIndex = grpIdx,
+                            MockSelected = _mockSelected
                         });
                     }
                 }

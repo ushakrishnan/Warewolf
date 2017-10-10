@@ -7,12 +7,10 @@ using System.Windows.Input;
 using Dev2.Common.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Warewolf.Studio.ViewModels;
+using Dev2.Common;
 
 namespace Warewolf.Studio.Views
 {
-    /// <summary>
-    /// Interaction logic for ManageDatabaseSourceControl.xaml
-    /// </summary>
     public partial class ManageDatabaseSourceControl : IManageDatabaseSourceView, ICheckControlEnabledView
     {
         public ManageDatabaseSourceControl()
@@ -37,10 +35,12 @@ namespace Warewolf.Studio.Views
             switch (controlName)
             {
                 case "Save":
-                    var viewModel = DataContext as ManageDatabaseSourceViewModel;
+                    var viewModel = DataContext as DatabaseSourceViewModelBase;
                     return viewModel != null && viewModel.OkCommand.CanExecute(null);
                 case "Test Connection":
                     return TestConnectionButton.Command.CanExecute(null);
+                default:
+                    break;
             }
             return false;
         }
@@ -61,6 +61,10 @@ namespace Warewolf.Studio.Views
         {
             try
             {
+                if (DataContext is DatabaseSourceViewModelBase viewModelBase)
+                {
+                    viewModelBase.DatabaseName = databaseName;
+                }
                 DatabaseComboxBox.SelectedItem = databaseName;
             }
             catch (Exception)
@@ -75,21 +79,9 @@ namespace Warewolf.Studio.Views
             {
                 EnterServerName(serverName);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                //Stupid exception when running from tests
-            }
-        }
-
-        public void SelectType(string type)
-        {
-            try
-            {
-                ServerTypeComboBox.SelectedItem = type;
-            }
-            catch (Exception)
-            {
-                //Stupid exception when running from tests
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
         }
 
@@ -114,55 +106,48 @@ namespace Warewolf.Studio.Views
 
         public void PerformSave()
         {
-            var viewModel = DataContext as ManageDatabaseSourceViewModel;
+            var viewModel = DataContext as DatabaseSourceViewModelBase;
             viewModel?.OkCommand.Execute(null);
         }
 
         public void EnterUserName(string userName)
         {
+            if (DataContext is DatabaseSourceViewModelBase viewModel)
+            {
+                viewModel.UserName = userName;
+            }
             UserNameTextBox.Text = userName;
         }
 
         public void EnterPassword(string password)
         {
+            if (DataContext is DatabaseSourceViewModelBase viewModel)
+            {
+                viewModel.Password = password;
+            }
             PasswordTextBox.Password = password;
         }
 
         public string GetErrorMessage()
         {
-            return ((ManageDatabaseSourceViewModel)DataContext).TestMessage;
+            return ((DatabaseSourceViewModelBase)DataContext).TestMessage;
         }
 
 
-        // ReSharper disable once InconsistentNaming
+
         private void XamComboEditor_Loaded(object sender, RoutedEventArgs e)
         {
-            //SpecializedTextBox txt = Utilities.GetDescendantFromType(sender as DependencyObject, typeof(SpecializedTextBox), false) as SpecializedTextBox;
-            //if (txt != null)
-            //{
-            //    txt.SelectAll();
-            //    txt.Focus();
-            //    var selectedItem = DatabaseComboxBox.SelectedItem;
-            //    if (selectedItem != null) 
-            //        txt.Text = selectedItem.ToString();
-            //    DatabaseComboxBox.Style = Application.Current.TryFindResource("XamComboEditorStyle") as Style;
-            //}
         }
 
         public void VerifyServerExistsintComboBox(string serverName)
         {
-
+           
         }
 
         public IEnumerable<string> GetServerOptions()
         {
 
             return new List<string>();
-        }
-
-        public string GetSelectedDbOption()
-        {
-            return ServerTypeComboBox.SelectedItem.ToString();
         }
 
         public void Test()
@@ -182,11 +167,11 @@ namespace Warewolf.Studio.Views
 
         public string GetHeader()
         {
-            return ((ManageDatabaseSourceViewModel)DataContext).HeaderText;
+            return ((DatabaseSourceViewModelBase)DataContext).HeaderText;
         }
         public string GetTabHeader()
         {
-            return ((ManageDatabaseSourceViewModel)DataContext).Header;
+            return ((DatabaseSourceViewModelBase)DataContext).Header;
         }
         public void CancelTest()
         {
@@ -196,6 +181,11 @@ namespace Warewolf.Studio.Views
         void ManageServerControl_OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             WindowsRadioButton.Focus();
+        }
+
+        public void SetDatabaseComboxBindingVisibility(Visibility collapsed)
+        {
+            DatabaseComboxContainer.Visibility = collapsed;
         }
     }
 

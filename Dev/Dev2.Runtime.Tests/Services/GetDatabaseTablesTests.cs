@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
@@ -21,12 +22,39 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]    
     public class GetDatabaseTablesTests
     {
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getDatabaseTables = new GetDatabaseTables();
+
+            //------------Execute Test---------------------------
+            var resId = getDatabaseTables.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getDatabaseTables = new GetDatabaseTables();
+
+            //------------Execute Test---------------------------
+            var resId = getDatabaseTables.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
         #region Execute
 
         [TestMethod]
@@ -152,7 +180,7 @@ namespace Dev2.Tests.Runtime.Services
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "Dev2TestingDB",
                 DatabaseName = emptyDBName?"": "Dev2TestingDB",
-                Server = "RSAKLFSVRGENDEV",
+                Server = "RSAKLFSVRDEV",
                 AuthenticationType = AuthenticationType.User,
                 ServerType = enSourceType.SqlDatabase,
                 ReloadActions = true,

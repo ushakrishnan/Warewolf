@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,15 +17,15 @@ using Dev2.Tests.Activities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable CheckNamespace
+
 namespace ActivityUnitTests.ActivityTests
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class DateTimeDifferenceTests : BaseActivityUnitTest
     {
         /// <summary>
@@ -51,9 +51,7 @@ namespace ActivityUnitTests.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = "209";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "Result", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "Result", out string actual, out string error);
             // remove test datalist ;)
 
             Assert.AreEqual(expected, actual);
@@ -73,17 +71,14 @@ namespace ActivityUnitTests.ActivityTests
                          );
 
             IDSFDataObject result = ExecuteProcess();
-            string error;
-            IList<string> results;
-            GetRecordSetFieldValueFromDataList(result.Environment, "resCol", "res", out results, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "resCol", "res", out IList<string> results, out string error);
             // remove test datalist ;)
 
             Assert.AreEqual("8847", results[0]);
             Assert.AreEqual("9477", results[1]);
             Assert.AreEqual("9090", results[2]);
         }
-
-        //2013.03.11: Ashley Lewis - PBI 9167 Moved to positive tests
+        
         [TestMethod]
         public void Blank_InputFormat_Expected_Error()
         {
@@ -98,9 +93,7 @@ namespace ActivityUnitTests.ActivityTests
                             );
             IDSFDataObject result = ExecuteProcess();
             const string expected = "209";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "Result", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "Result", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -110,9 +103,9 @@ namespace ActivityUnitTests.ActivityTests
         [TestMethod]
         [TestCategory("DateTimeDifferenceUnitTest")]
         [Owner("Massimo Guerrera")]
-        // ReSharper disable InconsistentNaming
+        
         public void DateTimeDifference_DateTimeDifferenceUnitTest_ExecuteWithBlankInput_DateTimeNowIsUsed()
-        // ReSharper restore InconsistentNaming
+
         {
             const string currDL = @"<root><MyTestResult></MyTestResult></root>";
             SetupArguments(currDL
@@ -124,10 +117,7 @@ namespace ActivityUnitTests.ActivityTests
                          , "[[MyTestResult]]");
 
             IDSFDataObject result = ExecuteProcess();
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "MyTestResult", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "MyTestResult", out string actual, out string error);
 
             Assert.AreEqual("0", actual);
         }
@@ -138,7 +128,19 @@ namespace ActivityUnitTests.ActivityTests
 
         #endregion Error Test Cases
 
-        
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfDateTimeDifferenceActivity_GetOutputs")]
+        public void DsfDateTimeDifferenceActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfDateTimeDifferenceActivity { Input1 = "", Input2 = "", InputFormat = "", OutputType = "", Result = "[[dtd]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[dtd]]", outputs[0]);
+        }
 
         #region Private Test Methods
 

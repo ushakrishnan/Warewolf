@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,8 +13,8 @@ using System.Collections.Generic;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -345,7 +345,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         {
             const string Content = "File [[contains&]] Stored Here";
             const string ExpectedResult = "File [[contains&]] Stored Here";
-            const string ExpectedMessageFormat = "Label - Variable name [[contains&]] contains invalid character(s)";
+            const string ExpectedMessageFormat = "Label - Variable name [[contains&]] contains invalid character(s). Only use alphanumeric _ and - ";
 
             var viewModel = VerifyValidateFileContent(Content, ExpectedResult);
             Assert.AreEqual(1, viewModel.Errors.Count);
@@ -398,7 +398,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         {
             const string Password = "[[password&]]";
             const string ExpectedResult = "[[password&]]";
-            const string ExpectedMessageFormat = "Label - Variable name [[password&]] contains invalid character(s)";
+            const string ExpectedMessageFormat = "Label - Variable name [[password&]] contains invalid character(s). Only use alphanumeric _ and - ";
 
             var viewModel = VerifyValidateArchivePassword(Password, ExpectedResult);
             

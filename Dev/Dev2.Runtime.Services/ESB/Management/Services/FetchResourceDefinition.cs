@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,9 +25,12 @@ using Dev2.Util;
 using Dev2.Workspaces;
 using Dev2.Common.Utils;
 using System.Text.RegularExpressions;
+using Dev2.Common.Interfaces.Enums;
 using Warewolf.Resource.Errors;
 using Warewolf.Security.Encryption;
-// ReSharper disable NonLocalizedString
+
+
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
@@ -41,15 +44,34 @@ namespace Dev2.Runtime.ESB.Management.Services
         const string AltPayloadStart = @"<Actions>";
         const string AltPayloadEnd = @"</Actions>";
 
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            requestArgs.TryGetValue("ResourceID", out StringBuilder tmp);
+            if (tmp != null)
+            {
+                if (Guid.TryParse(tmp.ToString(), out Guid resourceId))
+                {
+                    return resourceId;
+                }
+            }
+
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.View;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
+            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
                 var res = new ExecuteMessage { HasError = false };
                 string serviceId = null;
                 bool prepairForDeployment = false;
-                StringBuilder tmp;
-                values.TryGetValue(@"ResourceID", out tmp);
+                values.TryGetValue(@"ResourceID", out StringBuilder tmp);
 
                 if (tmp != null)
                 {
@@ -63,57 +85,69 @@ namespace Dev2.Runtime.ESB.Management.Services
                     prepairForDeployment = bool.Parse(tmp.ToString());
                 }
 
-                Guid resourceId;
-                Guid.TryParse(serviceId, out resourceId);
-                Dev2Logger.Info($"Fetch Resource definition. ResourceId: {resourceId}");
-                try
-                {
-                    var result = ResourceCatalog.Instance.GetResourceContents(theWorkspace.ID, resourceId);
-                    if (!result.IsNullOrEmpty())
-                    {
-                        var tempResource = new Resource(result.ToXElement());
-                        var resource = tempResource;
+                Guid.TryParse(serviceId, out Guid resourceId);
 
-                        if (resource.ResourceType == @"DbSource")
-                        {
-                            res.Message.Append(result);
-                        }
-                        else
-                        {
-                            DoWorkflowServiceMessage(result, res);
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Dev2Logger.Error(string.Format(ErrorResource.ErrorGettingResourceDefinition, resourceId), e);
-                }
-            
-                if (!res.Message.IsNullOrEmpty())
-                {
-                    Dev2XamlCleaner dev2XamlCleaner = new Dev2XamlCleaner();
-                    res.Message = dev2XamlCleaner.StripNaughtyNamespaces(res.Message);
-                }
-                if (prepairForDeployment)
-                {
-                    try
-                    {
-                        res.Message = DecryptAllPasswords(res.Message);
-                    }
-                    catch(CryptographicException e)
-                    {
-                        Dev2Logger.Error(@"Encryption had issues.",e);
-                    }
-                }
-
-                Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-                return serializer.SerializeToBuilder(res);
+                Dev2Logger.Info($"Fetch Resource definition. ResourceId: {resourceId}", GlobalConstants.WarewolfInfo);
+                return GetResourceDefinition(theWorkspace, serializer, res, prepairForDeployment, resourceId);
             }
             catch (Exception err)
             {
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
                 throw;
             }
+        }
+
+        public StringBuilder GetResourceDefinition(IWorkspace theWorkspace, Dev2JsonSerializer serializer, ExecuteMessage res, bool prepairForDeployment, Guid resourceId)
+        {
+            try
+            {
+
+                var result = ResourceCatalog.Instance.GetResourceContents(theWorkspace.ID, resourceId);
+                if (!result.IsNullOrEmpty())
+                {
+                    var tempResource = new Resource(result.ToXElement());
+                    var resource = tempResource;
+
+                    if (resource.ResourceType == @"DbSource")
+                    {
+                        res.Message.Append(result);
+                    }
+                    else
+                    {
+                        DoWorkflowServiceMessage(result, res);
+                    }
+                }
+            }
+            catch (ServiceNotAuthorizedException ex)
+            {
+                res.Message = ex.Message.ToStringBuilder();
+                res.HasError = true;
+                return serializer.SerializeToBuilder(res);
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error(string.Format(ErrorResource.ErrorGettingResourceDefinition, resourceId), e, GlobalConstants.WarewolfError);
+            }
+
+            if (!res.Message.IsNullOrEmpty())
+            {
+                Dev2XamlCleaner dev2XamlCleaner = new Dev2XamlCleaner();
+                res.Message = dev2XamlCleaner.StripNaughtyNamespaces(res.Message);
+            }
+            if (prepairForDeployment)
+            {
+                try
+                {
+                    res.Message = DecryptAllPasswords(res.Message);
+                }
+                catch (CryptographicException e)
+                {
+                    Dev2Logger.Error(@"Encryption had issues.", e, GlobalConstants.WarewolfError);
+                }
+            }
+
+
+            return serializer.SerializeToBuilder(res);
         }
 
         private static void DoWorkflowServiceMessage(StringBuilder result, ExecuteMessage res)

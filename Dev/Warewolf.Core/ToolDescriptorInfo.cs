@@ -6,7 +6,7 @@ namespace Warewolf.Core
     public class ToolDescriptorInfo : Attribute
     {
 
-        // ReSharper disable once TooManyDependencies
+        
         public ToolDescriptorInfo(string iconName, string name, ToolType toolType, string id, string assemblyname, string version ,string path, string category, string iconUri, string tag)
         {
             IconUri = iconUri;
@@ -16,7 +16,9 @@ namespace Warewolf.Core
             ToolType = toolType;
             Name = name;
             Icon = iconName;
-            FilterTag = Studio.Resources.Languages.Core.ResourceManager.GetString(tag) ?? "";
+            FilterTag = Studio.Resources.Languages.ToolboxSearchTags.ResourceManager.GetString(tag) ?? "";
+            ResourceToolTip = Studio.Resources.Languages.Tooltips.ResourceManager.GetString(tag) ?? "";
+            ResourceHelpText = Studio.Resources.Languages.HelpText.ResourceManager.GetString(tag) ?? "";
         }
 
     
@@ -33,5 +35,7 @@ namespace Warewolf.Core
         public string Category { get; private set; }
         public string IconUri { get; private set; }
         public string FilterTag { get; set; }
+        public string ResourceToolTip { get; set; }
+        public string ResourceHelpText { get; set; }
     }
 }

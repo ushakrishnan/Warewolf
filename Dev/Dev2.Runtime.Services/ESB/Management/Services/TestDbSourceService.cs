@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,11 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Communication;
 using Dev2.DynamicServices;
@@ -26,9 +26,31 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestDbSourceService : IEsbManagementEndpoint
     {
+        private readonly IDbSources _dbSources;
+
+        public TestDbSourceService()
+            : this(new DbSources())
+        {
+
+        }
+
+        public TestDbSourceService(IDbSources dbSources)
+        {
+            _dbSources = dbSources;
+        }
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             ExecuteMessage msg = new ExecuteMessage();
@@ -36,24 +58,30 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
 
-                Dev2Logger.Info("Test DB Connection Service");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Test DB Connection Service", GlobalConstants.WarewolfInfo);
 
-                values.TryGetValue("DbSource", out resourceDefinition);
+                values.TryGetValue("DbSource", out StringBuilder resourceDefinition);
 
                 IDbSource src = serializer.Deserialize<DbSourceDefinition>(resourceDefinition);
-                var con = new DbSources();
-                DatabaseValidationResult result = con.DoDatabaseValidation(new DbSource
+                DatabaseValidationResult result = null;
+                Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.OrginalExecutingUser, () =>
                 {
-                    AuthenticationType = src.AuthenticationType,
-                    Server = src.ServerName,
-                    Password = src.Password,
-                    ServerType = src.Type,
-                    UserID = src.UserName
+                    result = _dbSources.DoDatabaseValidation(new DbSource
+                    {
+                        AuthenticationType = src.AuthenticationType,
+                        Server = src.ServerName,
+                        Password = src.Password,
+                        ServerType = src.Type,
+                        UserID = src.UserName
+
+                    });
 
                 });
+                if (result == null)
+                {
+                    result = new DatabaseValidationResult { ErrorMessage = "Problem testing connection.", IsValid = false };
+                }
 
-                msg.HasError = false;
                 msg.Message = new StringBuilder(result.IsValid ? serializer.Serialize(result.DatabaseList) : result.ErrorMessage);
                 msg.HasError = !result.IsValid;
 
@@ -62,7 +90,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
 
             }
 

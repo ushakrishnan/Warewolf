@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,11 +21,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class SendEmailActivityTests : BaseActivityUnitTest
     {
         [TestMethod]
@@ -505,6 +505,27 @@ namespace Dev2.Tests.Activities.ActivityTests
             });
             //------------Assert Results-------------------------
             Assert.AreEqual("TheResult", activity.Result);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var emailSourceForTesting = EmailSourceForTesting();
+            var mock = new Mock<IEmailSender>();
+            mock.Setup(sender =>
+                sender.Send(emailSourceForTesting, It.IsAny<MailMessage>())).
+                Callback<EmailSource, MailMessage>((client, message) =>
+                { });
+            var act = GetSendEmailActivity(mock);
+            act.Result = "[[Result]]";
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[Result]]", outputs[0]);
         }
 
         static Mock<IEsbChannel> CreateMockEsbChannel()

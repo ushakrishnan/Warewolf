@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -110,6 +110,8 @@ namespace Dev2.Studio.AppResources.Behaviors
             set { SetValue(WatermarkPropertyNameProperty, value); }
         }
 
+        public INotifyCollectionChanged Observable { get => observable; set => observable = value; }
+
         #endregion WatermarkPropertyNames
 
         #endregion Dependency Properties
@@ -135,29 +137,13 @@ namespace Dev2.Studio.AppResources.Behaviors
                 for (int i = 0; i < dataGridItems.Count; i++)
                 {
                     List<object> list = dataGridItems.SourceCollection.Cast<object>().ToList();
-                    var mi = list[i] as ModelItem;
 
-                    if (mi != null)
+                    if (list[i] is ModelItem mi)
                     {
                         int watermarkIndex = WatermarkIndexes.IndexOf(i);
-                        if (watermarkIndex != -1)
-                        {
-                            WatermarkSential.IsWatermarkBeingApplied = true;
-                            ModelProperty modelProperty = mi.Properties[WatermarkPropertyName];
-                            if (modelProperty != null)
-                            {
-                                modelProperty.SetValue(WatermarkText[watermarkIndex]);
-                            }
-                        }
-                        else
-                        {
-                            WatermarkSential.IsWatermarkBeingApplied = true;
-                            ModelProperty modelProperty = mi.Properties[WatermarkPropertyName];
-                            if (modelProperty != null)
-                            {
-                                modelProperty.SetValue("");
-                            }
-                        }
+                        WatermarkSential.IsWatermarkBeingApplied = true;
+                        ModelProperty modelProperty = mi.Properties[WatermarkPropertyName];
+                        modelProperty?.SetValue(watermarkIndex != -1 ? WatermarkText[watermarkIndex] : "");
                     }
                     else
                     {
@@ -169,9 +155,12 @@ namespace Dev2.Studio.AppResources.Behaviors
                             {
                                 pi.SetValue(dataGridItems[i], WatermarkText[i], null);
                             }
-                            else if (i == dataGridItems.Count - 1)
+                            else
                             {
-                                pi.SetValue(dataGridItems[i], "", null);
+                                if (i == dataGridItems.Count - 1)
+                                {
+                                    pi.SetValue(dataGridItems[i], "", null);
+                                }
                             }
                         }
                     }
@@ -188,8 +177,7 @@ namespace Dev2.Studio.AppResources.Behaviors
                 observable.CollectionChanged += observable_CollectionChanged;
             }
 
-            var notifyPropertyChangedImplimentor = AssociatedObject as INotifyPropertyChanged;
-            if (notifyPropertyChangedImplimentor != null)
+            if (AssociatedObject is INotifyPropertyChanged notifyPropertyChangedImplimentor)
             {
                 notifyPropertyChangedImplimentor.PropertyChanged -= notifyPropertyChangedImplimentor_PropertyChanged;
             }
@@ -205,8 +193,7 @@ namespace Dev2.Studio.AppResources.Behaviors
                 observable.CollectionChanged -= observable_CollectionChanged;
             }
 
-            var notifyPropertyChangedImplimentor = AssociatedObject as INotifyPropertyChanged;
-            if (notifyPropertyChangedImplimentor != null)
+            if (AssociatedObject is INotifyPropertyChanged notifyPropertyChangedImplimentor)
             {
                 notifyPropertyChangedImplimentor.PropertyChanged -= notifyPropertyChangedImplimentor_PropertyChanged;
             }
@@ -226,7 +213,10 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         private void observable_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            UpdateWatermarks();
+            if (e.NewItems != null)
+            {
+                UpdateWatermarks();
+            }
         }
 
         private void notifyPropertyChangedImplimentor_PropertyChanged(object sender, PropertyChangedEventArgs e)

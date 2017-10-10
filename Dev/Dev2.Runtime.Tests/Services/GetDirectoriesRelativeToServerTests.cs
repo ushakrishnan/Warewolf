@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Explorer;
@@ -21,13 +22,40 @@ using Dev2.Runtime.ESB.Management.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
     [ExcludeFromCodeCoverage]
     public class GetDirectoriesRelativeToServerTests
     {
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getDirectoriesRelativeToServer = new GetDirectoriesRelativeToServer();
+
+            //------------Execute Test---------------------------
+            var resId = getDirectoriesRelativeToServer.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getDirectoriesRelativeToServer = new GetDirectoriesRelativeToServer();
+
+            //------------Execute Test---------------------------
+            var resId = getDirectoriesRelativeToServer.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
 
         #region Execute
 
@@ -51,17 +79,7 @@ namespace Dev2.Tests.Runtime.Services
             var actual = esb.Execute(new Dictionary<string, StringBuilder> { { "DebugFilePath", null } }, null);
             Assert.AreEqual(string.Empty, actual);
         }
-
-        [TestMethod]
-        [Owner("Huggs")]
-        [ExpectedException(typeof(InvalidDataContractException))]
-        public void GetDirectoriesRelativeToServer_UnitTest_ExecuteWithNullDirectory_ExpectedInvalidDataContractException()
-        {
-
-            var esb = new RenameResourceCategory();
-            var actual = esb.Execute(new Dictionary<string, StringBuilder> { { "Directory", null } }, null);
-            Assert.AreEqual(string.Empty, actual);
-        }
+       
 
         [TestMethod]
         [Owner("Huggs")]
@@ -105,6 +123,7 @@ namespace Dev2.Tests.Runtime.Services
             //----------------Assert Results-----------------------------------------
             Assert.AreNotEqual(string.Empty, actual);
              string expected = @"<JSON>{
+  ""$id"": ""1"",
   ""$type"": ""Dev2.Runtime.ESB.Management.Services.JsonTreeNode, Dev2.Runtime.Services"",
   ""title"": ""Root"",
   ""isFolder"": true,
@@ -112,6 +131,7 @@ namespace Dev2.Tests.Runtime.Services
   ""isLazy"": false,
   ""children"": [
     {
+      ""$id"": ""2"",
       ""$type"": ""Dev2.Runtime.ESB.Management.Services.JsonTreeNode, Dev2.Runtime.Services"",
       ""title"": ""Test1"",
       ""isFolder"": true,
@@ -120,6 +140,7 @@ namespace Dev2.Tests.Runtime.Services
       ""children"": []
     },
     {
+      ""$id"": ""3"",
       ""$type"": ""Dev2.Runtime.ESB.Management.Services.JsonTreeNode, Dev2.Runtime.Services"",
       ""title"": ""Test2"",
       ""isFolder"": true,
@@ -127,6 +148,7 @@ namespace Dev2.Tests.Runtime.Services
       ""isLazy"": false,
       ""children"": [
         {
+          ""$id"": ""4"",
           ""$type"": ""Dev2.Runtime.ESB.Management.Services.JsonTreeNode, Dev2.Runtime.Services"",
           ""title"": ""InnerTest2"",
           ""isFolder"": true,

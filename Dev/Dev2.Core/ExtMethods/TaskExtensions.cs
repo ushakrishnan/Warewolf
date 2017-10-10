@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +24,8 @@ namespace Dev2.ExtMethods
         /// <param name="task">The task for which to wait.</param>
         /// <param name="millisecondsTimeout">The number of milliseconds to wait, or Infinite (-1) to wait indefinitely.</param>
         /// <remarks>This method is intended for usage with Windows Presentation Foundation.</remarks>
-        public static bool WaitWithPumping(this Task task, int millisecondsTimeout = Timeout.Infinite)
+        public static bool WaitWithPumping(this Task task) => task.WaitWithPumping(Timeout.Infinite);
+        public static bool WaitWithPumping(this Task task, int millisecondsTimeout)
         {
             if (task == null)
             {
@@ -32,7 +33,7 @@ namespace Dev2.ExtMethods
             }
 
             var nestedFrame = new DispatcherFrame();
-            task.ContinueWith(_ => nestedFrame.Continue = false);
+            task.ContinueWith(_ => nestedFrame.Continue = true);
             Dispatcher.PushFrame(nestedFrame);
             return task.Wait(millisecondsTimeout);
         }

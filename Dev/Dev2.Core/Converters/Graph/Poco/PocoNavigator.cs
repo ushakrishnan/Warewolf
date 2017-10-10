@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -175,9 +175,8 @@ namespace Unlimited.Framework.Converters.Graph.Poco
             else if (validPaths.Count == 1 &&
                      validPaths[0].ActualPath == PocoPath.EnumerableSymbol + PocoPath.SeperatorSymbol)
             {
-                var enumerableData = Data as IEnumerable;
 
-                if (enumerableData != null)
+                if (Data is IEnumerable enumerableData)
                 {
                     IEnumerator enumerator = enumerableData.GetEnumerator();
                     enumerator.Reset();
@@ -242,12 +241,6 @@ namespace Unlimited.Framework.Converters.Graph.Poco
                         {
                             returnData.AddRange(SelectEnumberable(pathSegments.Skip(i + 1).ToList(), enumerator.Current));
                         }
-                    }
-                    else
-                    {
-                        // ReSharper disable RedundantAssignment
-                        currentData = null;
-                        // ReSharper restore RedundantAssignment
                     }
 
                     return returnData;

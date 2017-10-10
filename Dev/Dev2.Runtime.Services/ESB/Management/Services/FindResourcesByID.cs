@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,11 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
 using Dev2.DynamicServices;
@@ -27,11 +27,20 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// <summary>
     /// Find a resource by its id
     /// </summary>
-    // ReSharper disable InconsistentNaming
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
+
     public class FindResourcesByID : IEsbManagementEndpoint
-    // ReSharper restore InconsistentNaming
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+           return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
@@ -41,8 +50,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 string guidCsv = string.Empty;
                 string type = null;
 
-                StringBuilder tmp;
-                values.TryGetValue("GuidCsv", out tmp);
+                values.TryGetValue("GuidCsv", out StringBuilder tmp);
                 if (tmp != null)
                 {
                     guidCsv = tmp.ToString();
@@ -52,8 +60,6 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     type = tmp.ToString();
                 }
-                Dev2Logger.Info("Find Resource By Id. " + guidCsv);
-                // BUG 7850 - TWR - 2013.03.11 - ResourceCatalog refactor
 
                 var resources = ResourceCatalog.Instance.GetResourceList(theWorkspace.ID, new Dictionary<string, string> { { "guidCsv", guidCsv }, { "type", type } });
 
@@ -66,7 +72,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception err)
             {
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
                 throw;
             }
         }

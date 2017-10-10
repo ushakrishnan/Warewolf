@@ -2,19 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Parsers;
-using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 
 namespace Dev2.Data.Util
 {
     internal class CommonRecordSetUtil : ICommonRecordSetUtil
     {
-        private Dev2DataLanguageParser _dev2DataLanguageParser;
-
+        private readonly Dev2DataLanguageParser _dev2DataLanguageParser;
+        const string EmptyBrackets = "()";
         public CommonRecordSetUtil()
         {
-            
+
         }
         public CommonRecordSetUtil(Dev2DataLanguageParser dev2DataLanguageParser)
         {
@@ -24,10 +24,10 @@ namespace Dev2.Data.Util
 
         public string ReplaceRecordBlankWithStar(string fullRecSetName)
         {
-            var blankIndex = fullRecSetName.IndexOf("()", StringComparison.Ordinal);
+            var blankIndex = fullRecSetName.IndexOf(EmptyBrackets, StringComparison.Ordinal);
             if (blankIndex != -1)
             {
-                return fullRecSetName.Replace("()", $"({"*"})");
+                return fullRecSetName.Replace(EmptyBrackets, "(*)");
             }
             return fullRecSetName;
         }
@@ -37,7 +37,7 @@ namespace Dev2.Data.Util
             var blankIndex = fullRecSetName.IndexOf("().", StringComparison.Ordinal);
             if (blankIndex != -1)
             {
-                return fullRecSetName.Replace("().", $"({"*"}).");
+                return fullRecSetName.Replace("().", "(*).");
             }
             return fullRecSetName;
         }
@@ -51,6 +51,15 @@ namespace Dev2.Data.Util
             }
             return fullRecSetName;
         }
+        public string ReplaceObjectBlankWithIndex(string fullRecSetName, int length)
+        {
+            var blankIndex = fullRecSetName.IndexOf("()", StringComparison.Ordinal);
+            if (blankIndex != -1)
+            {
+                return fullRecSetName.Replace("()", $"({length})");
+            }
+            return fullRecSetName;
+        }
 
         public string CreateRecordsetDisplayValue(string recsetName, string colName, string indexNum)
         {
@@ -59,7 +68,7 @@ namespace Dev2.Data.Util
 
         public string RemoveRecordsetBracketsFromValue(string value)
         {
-            return value.Replace("()", "");
+            return value.Replace(EmptyBrackets, "");
         }
 
         public enRecordsetIndexType GetRecordsetIndexType(string expression)
@@ -77,8 +86,7 @@ namespace Dev2.Data.Util
             }
             else
             {
-                int convertIntTest;
-                if (Int32.TryParse(idx, out convertIntTest))
+                if (Int32.TryParse(idx, out int convertIntTest))
                 {
                     result = enRecordsetIndexType.Numeric;
                 }
@@ -119,7 +127,7 @@ namespace Dev2.Data.Util
 
         public string MakeValueIntoHighLevelRecordset(string value, bool starNotation)
         {
-            var inject = "()";
+            var inject = EmptyBrackets;
 
             if (starNotation)
             {
@@ -136,7 +144,7 @@ namespace Dev2.Data.Util
             {
                 return result.Replace(DataListUtil.RecordsetIndexClosingBracket, inject);
             }
-            else if (!result.EndsWith("()"))
+            else if (!result.EndsWith(EmptyBrackets))
             {
                 result = string.Concat(result, inject);
             }
@@ -175,7 +183,7 @@ namespace Dev2.Data.Util
             {
                 return string.Empty;
             }
-            
+
             value = DataListUtil.StripBracketsFromValue(value);
             string result = string.Empty;
 
@@ -224,6 +232,13 @@ namespace Dev2.Data.Util
 
         public string ReplaceRecordsetIndexWithBlank(string expression)
         {
+            var firstOpenBracket = expression.IndexOf(DataListUtil.RecordsetIndexOpeningBracket, StringComparison.Ordinal);
+            var firstCloseBracket = expression.IndexOf(DataListUtil.RecordsetIndexClosingBracket, StringComparison.Ordinal);            
+            if (firstOpenBracket > firstCloseBracket)
+            {
+                return EmptyBrackets;
+            }
+
             var index = ExtractIndexRegionFromRecordset(expression);
 
             if (string.IsNullOrEmpty(index))
@@ -233,7 +248,7 @@ namespace Dev2.Data.Util
 
             string extractIndexRegionFromRecordset = $"({index})";
             return string.IsNullOrEmpty(extractIndexRegionFromRecordset) ? expression :
-                                        expression.Replace(extractIndexRegionFromRecordset, "()");
+                                        expression.Replace(extractIndexRegionFromRecordset, EmptyBrackets);
         }
 
         public string RemoveRecordSetBraces(string search, ref bool isRs)
@@ -247,7 +262,7 @@ namespace Dev2.Data.Util
             return search;
         }
 
-        public void ProcessRecordSetFields(ParseTO payload, bool addCompleteParts, IList<IIntellisenseResult> result, IDev2DataLanguageIntellisensePart t1)
+        public void ProcessRecordSetFields(IParseTO payload, bool addCompleteParts, IList<IIntellisenseResult> result, IDev2DataLanguageIntellisensePart t1)
         {
             IDataListVerifyPart part;
 
@@ -273,7 +288,7 @@ namespace Dev2.Data.Util
             }
         }
 
-        public void ProcessNonRecordsetFields(ParseTO payload, IList<IIntellisenseResult> result, IDev2DataLanguageIntellisensePart t1)
+        public void ProcessNonRecordsetFields(IParseTO payload, IList<IIntellisenseResult> result, IDev2DataLanguageIntellisensePart t1)
         {
             if (payload.Parent != null && payload.Parent.Payload.IndexOf(DataListUtil.RecordsetIndexOpeningBracket, StringComparison.Ordinal) >= 0)
             {
@@ -284,33 +299,18 @@ namespace Dev2.Data.Util
             else
             {
                 IDataListVerifyPart part;
-                if (t1.Name.Contains('(') && t1.Name.Contains(')'))
-                {
-                    part = IntellisenseFactory.CreateDataListValidationRecordsetPart(string.Empty, t1.Name, true);
-                }
-                else
-                {
-                    part = IntellisenseFactory.CreateDataListValidationScalarPart(t1.Name, t1.Description);
-                }
+                part = t1.Name.Contains('(') && t1.Name.Contains(')') ? IntellisenseFactory.CreateDataListValidationRecordsetPart(string.Empty, t1.Name, true) : IntellisenseFactory.CreateDataListValidationScalarPart(t1.Name, t1.Description);
 
                 result.Add(IntellisenseFactory.CreateSelectableResult(payload.StartIndex, payload.EndIndex, part, part.Description));
             }
         }
 
-        public void ProcessRecordSetMatch(ParseTO payload, IList<IIntellisenseResult> result, string rawSearch, string search, IDev2DataLanguageIntellisensePart t1)
+        public void ProcessRecordSetMatch(IParseTO payload, IList<IIntellisenseResult> result, string rawSearch, string search, IDev2DataLanguageIntellisensePart t1)
         {
             // only process if it is an open region
             // we need to add all children
             string idx;
-            if (!payload.IsLeaf && !payload.Child.HangingOpen)
-            {
-                idx = DataListUtil.OpeningSquareBrackets + payload.Child.Payload + DataListUtil.ClosingSquareBrackets;
-            }
-            else
-            {
-                // we need to extract the index
-                idx = DataListUtil.ExtractIndexRegionFromRecordset(rawSearch);
-            }
+            idx = !payload.IsLeaf && !payload.Child.HangingOpen ? DataListUtil.OpeningSquareBrackets + payload.Child.Payload + DataListUtil.ClosingSquareBrackets : DataListUtil.ExtractIndexRegionFromRecordset(rawSearch);
             // add general closed recordset
             string rsName = search;
             if (idx == string.Empty)
@@ -331,7 +331,7 @@ namespace Dev2.Data.Util
             }
         }
 
-        public bool AddRecordSetIndex(ParseTO payload, bool addCompleteParts, IList<IIntellisenseResult> result, string[] parts, IDev2DataLanguageIntellisensePart t1, bool emptyOk)
+        public bool AddRecordSetIndex(IParseTO payload, bool addCompleteParts, IList<IIntellisenseResult> result, string[] parts, IDev2DataLanguageIntellisensePart t1, bool emptyOk)
         {
             if (addCompleteParts)
             {
@@ -349,7 +349,7 @@ namespace Dev2.Data.Util
             return emptyOk;
         }
 
-        public bool RecordsetMatch(ParseTO payload, bool addCompleteParts, IList<IIntellisenseResult> result, string rawSearch, string search, bool emptyOk, string[] parts, IDev2DataLanguageIntellisensePart t1)
+        public bool RecordsetMatch(IParseTO payload, bool addCompleteParts, IList<IIntellisenseResult> result, string rawSearch, string search, bool emptyOk, string[] parts, IDev2DataLanguageIntellisensePart t1)
         {
             if (payload.HangingOpen)
             {
@@ -363,7 +363,7 @@ namespace Dev2.Data.Util
             return emptyOk;
         }
 
-        public void OpenRecordsetItem(ParseTO payload, IList<IIntellisenseResult> result, IDev2DataLanguageIntellisensePart t1)
+        public void OpenRecordsetItem(IParseTO payload, IList<IIntellisenseResult> result, IDev2DataLanguageIntellisensePart t1)
         {
             if (payload.Child != null)
             {

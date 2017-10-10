@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,11 +9,12 @@
 */
 
 using Caliburn.Micro;
-using Dev2.Data.Binary_Objects;
-using Dev2.Studio.Core.Interfaces.DataList;
-// ReSharper disable InconsistentNaming
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Studio.Interfaces.DataList;
 
-// ReSharper disable CheckNamespace
+
+
+
 namespace Dev2.Studio.Core.Models.DataList
 {
     public class DataListItemModel : PropertyChangedBase, IDataListItemModel
@@ -33,12 +34,16 @@ namespace Dev2.Studio.Core.Models.DataList
         private bool _isExpanded = true;
         protected enDev2ColumnArgumentDirection _columnIODir = enDev2ColumnArgumentDirection.None;
         private string _name;
-        
+
         #endregion Fields
 
         #region Ctor
-        
-        public DataListItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection = enDev2ColumnArgumentDirection.None, string description = "", bool hasError = false, string errorMessage = "", bool isEditable = true, bool isVisible = true, bool isSelected = false, bool isExpanded = true)
+
+        public DataListItemModel(string displayname): this(displayname, enDev2ColumnArgumentDirection.None, "", false, "", true, true, false, true)
+        {
+        }
+
+        public DataListItemModel(string displayname, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected, bool isExpanded)
         {
             Description = description;
             HasError = hasError;
@@ -184,8 +189,7 @@ namespace Dev2.Studio.Core.Models.DataList
         {
             get
             {
-                return _columnIODir == enDev2ColumnArgumentDirection.Both
-                       || _columnIODir == enDev2ColumnArgumentDirection.Input;
+                return _columnIODir == enDev2ColumnArgumentDirection.Both || _columnIODir == enDev2ColumnArgumentDirection.Input;
             }
             set
             {
@@ -330,7 +334,6 @@ namespace Dev2.Studio.Core.Models.DataList
 
         private void NotifyIOPropertyChanged()
         {
-            NotifyOfPropertyChange(() => ColumnIODirection);
             NotifyOfPropertyChange(() => Input);
             NotifyOfPropertyChange(() => Output);
         }

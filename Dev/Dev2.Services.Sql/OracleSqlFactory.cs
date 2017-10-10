@@ -39,22 +39,28 @@ namespace Dev2.Services.Sql
         DataTable GetOracleServerSchema(IDbConnection connection)
         {
             if (!(connection is OracleConnection))
+            {
                 throw new Exception(string.Format(ErrorResource.InvalidSqlConnection, "Oracle"));
+            }
 
             return ((OracleConnection)connection).GetSchema();
         }
 
-        public DataTable CreateTable(IDataReader reader, LoadOption overwriteChanges)
+        public DataTable CreateTable(IDataAdapter reader, LoadOption overwriteChanges)
         {
-            var table = new DataTable();
-            table.Load(reader, LoadOption.OverwriteChanges);
-            return table;
+            DataSet ds = new DataSet(); //conn is opened by dataadapter
+            reader.Fill(ds);
+            var t = ds.Tables[0];
+            return t;
         }
 
         public DataSet FetchDataSet(IDbCommand command)
         {
             if (!(command is OracleCommand))
+            {
                 throw new Exception(string.Format(ErrorResource.InvalidCommand, "OracleCommand"));
+            }
+
             using (var dataSet = new DataSet())
             {
                 using (var adapter = new OracleDataAdapter(command as OracleCommand))

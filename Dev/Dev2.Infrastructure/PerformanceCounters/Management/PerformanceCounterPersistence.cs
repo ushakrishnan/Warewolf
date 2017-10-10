@@ -7,8 +7,8 @@ using Dev2.Common.Interfaces.Monitoring;
 using Dev2.Common.Interfaces.Wrappers;
 using Dev2.Communication;
 using Dev2.PerformanceCounters.Counters;
-// ReSharper disable UnusedParameter.Global
-// ReSharper disable MemberCanBePrivate.Global
+
+
 
 namespace Dev2.PerformanceCounters.Management
 {
@@ -67,7 +67,7 @@ namespace Dev2.PerformanceCounters.Management
                  }
                  catch (Exception e)
                  {
-                     Dev2Logger.Error(e);
+                     Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                      return CreateDefaultPerfCounters();
                  }
              }
@@ -85,7 +85,7 @@ namespace Dev2.PerformanceCounters.Management
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 return DefaultResourceCounters;
             }
 

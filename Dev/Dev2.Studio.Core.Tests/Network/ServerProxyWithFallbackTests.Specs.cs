@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Dev2.Network;
 using Dev2.SignalR.Wrappers;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -48,9 +48,9 @@ namespace Dev2.Core.Tests.Network
             {
                 serverProxy.Connect(serverGuid);
             }
-            // ReSharper disable EmptyGeneralCatchClause
+            
             catch
-            // ReSharper restore EmptyGeneralCatchClause
+            
             {
 
             }
@@ -82,9 +82,9 @@ namespace Dev2.Core.Tests.Network
                 serverProxy.Connect(serverGuid);
 
             }
-            // ReSharper disable EmptyGeneralCatchClause
+            
             catch
-            // ReSharper restore EmptyGeneralCatchClause
+            
             {
 
 

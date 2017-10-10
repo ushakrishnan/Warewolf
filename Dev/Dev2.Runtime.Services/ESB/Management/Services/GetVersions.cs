@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Versioning;
@@ -24,10 +25,21 @@ using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 using Warewolf.Resource.Errors;
 
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class GetVersions : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         private IServerVersionRepository _serverExplorerRepository;
 
         public string HandlesType()
@@ -46,18 +58,18 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 if (!values.ContainsKey("resourceId"))
                 {
-                    // ReSharper disable NotResolvedInText
+                    
                     throw new ArgumentNullException(ErrorResource.NoResourceIdInTheIncomingData);
-                    // ReSharper restore NotResolvedInText
+                    
                 }
                 var id = Guid.Parse(values["resourceId"].ToString());
-                Dev2Logger.Info("Get Versions. " + id);
+                Dev2Logger.Info("Get Versions. " + id, GlobalConstants.WarewolfInfo);
                 var item = ServerVersionRepo.GetVersions(id);
                 return serializer.SerializeToBuilder(item);
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 IExplorerRepositoryResult error = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
                 return serializer.SerializeToBuilder(error);
             }

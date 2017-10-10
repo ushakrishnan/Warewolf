@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,10 @@
 
 using System;
 using System.Collections.Generic;
+using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core;
+using Dev2.Data.ServiceModel;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -51,7 +54,30 @@ namespace Warewolf.Studio.ViewModels
 
         public string ServerName { get; set; }
 
+        public IServerSource FetchSource(Guid resourceID)
+        {
+            var xaml = _queryProxy.FetchResourceXaml(resourceID);
+            
+            var connection = new Connection(xaml.ToXElement());
+            string address = null;
+            if (Uri.TryCreate(connection.Address, UriKind.RelativeOrAbsolute, out Uri uri))
+            {
+                address = uri.Host;
+            }
 
+            var selectedServer = new ServerSource
+            {
+                Address = connection.Address,
+                ID = connection.ResourceID,
+                AuthenticationType = connection.AuthenticationType,
+                UserName = connection.UserName,
+                Password = connection.Password,
+                ResourcePath = connection.GetSavePath(),
+                ServerName = address,
+                Name = connection.ResourceName
+            };
+            return selectedServer;
+        }
 
         #endregion
     }

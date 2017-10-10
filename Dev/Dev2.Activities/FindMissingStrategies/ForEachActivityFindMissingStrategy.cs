@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Dev2.Activities.SelectAndApply;
 using Dev2.Factories;
@@ -19,9 +18,10 @@ using Dev2.Util;
 using Dev2.Utilities;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
+
 namespace Dev2.FindMissingStrategies
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")] //This is loaded based on SpookyAction implementing IFindMissingStrategy
+    //This is loaded based on SpookyAction implementing IFindMissingStrategy
     public class ForEachActivityFindMissingStrategy : IFindMissingStrategy
     {
         #region Implementation of ISpookyLoadable<Enum>
@@ -40,16 +40,14 @@ namespace Dev2.FindMissingStrategies
         {
             List<string> results = new List<string>();
             Dev2FindMissingStrategyFactory stratFac = new Dev2FindMissingStrategyFactory();
-            DsfForEachActivity forEachActivity = activity as DsfForEachActivity;
-            if(forEachActivity != null)
+            if (activity is DsfForEachActivity forEachActivity)
             {
                 IFindMissingStrategy strategy;
                 enFindMissingType findMissingType;
                 var boolAct = forEachActivity.DataFunc.Handler as DsfNativeActivity<bool>;
-                if(boolAct == null)
+                if (boolAct == null)
                 {
-                    DsfNativeActivity<string> stringAct = forEachActivity.DataFunc.Handler as DsfNativeActivity<string>;
-                    if(stringAct != null)
+                    if (forEachActivity.DataFunc.Handler is DsfNativeActivity<string> stringAct)
                     {
                         findMissingType = stringAct.GetFindMissingType();
                         strategy = stratFac.CreateFindMissingStrategy(findMissingType);
@@ -64,16 +62,14 @@ namespace Dev2.FindMissingStrategies
                 }
             }
 
-            DsfSelectAndApplyActivity selectAndApply = activity as DsfSelectAndApplyActivity;
-            if (selectAndApply != null)
+            if (activity is DsfSelectAndApplyActivity selectAndApply)
             {
                 IFindMissingStrategy strategy;
                 enFindMissingType findMissingType;
                 var boolAct = selectAndApply.ApplyActivityFunc.Handler as DsfNativeActivity<bool>;
                 if (boolAct == null)
                 {
-                    DsfNativeActivity<string> stringAct = selectAndApply.ApplyActivityFunc.Handler as DsfNativeActivity<string>;
-                    if (stringAct != null)
+                    if (selectAndApply.ApplyActivityFunc.Handler is DsfNativeActivity<string> stringAct)
                     {
                         findMissingType = stringAct.GetFindMissingType();
                         strategy = stratFac.CreateFindMissingStrategy(findMissingType);
@@ -97,7 +93,6 @@ namespace Dev2.FindMissingStrategies
                     results.Add(property.ToString());
                 }
             }
-
             return results;
         }
 

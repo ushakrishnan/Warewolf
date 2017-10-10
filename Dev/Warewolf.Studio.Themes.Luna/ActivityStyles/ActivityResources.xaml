@@ -52,6 +52,12 @@
         <Setter Property="RowStyle" Value="{StaticResource SpacedDataGridRowStyle}"/>
     </Style>
 
+    <Style x:Key="TransparentActivityDataGridStyle" BasedOn="{StaticResource TransparentActivityDataGridStyle}" TargetType="{x:Type DataGrid}">
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="RowStyle" Value="{StaticResource SpacedDataGridRowStyle}"/>
+    </Style>
+
     <Style x:Key="NonSelectableActivityDataGridStyle" TargetType="{x:Type DataGrid}">
         <Setter Property="HeadersVisibility" Value="None"/>
         <Setter Property="Width" Value="Auto"/>
@@ -69,7 +75,7 @@
         <Setter Property="RowStyle" Value="{StaticResource NonSelectableDataGridRowStyle}"/>
     </Style>
 
-    <Style x:Key="ActivityMapppingDataGridStyle" BasedOn="{StaticResource SpacedActivityDataGridStyle}" TargetType="{x:Type DataGrid}">
+    <Style x:Key="ActivityMappingDataGridStyle" BasedOn="{StaticResource SpacedActivityDataGridStyle}" TargetType="{x:Type DataGrid}">
         
         <Setter Property="GridLinesVisibility" Value="All"/>
         <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource DataGridBorderBrush}"/>
@@ -80,17 +86,40 @@
         <Setter Property="MaxHeight" Value="Infinity"/>
     </Style>
 
-    <Style x:Key="ActivityMapppingDataGridHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+    <Style x:Key="TransparentActivityMappingDataGridStyle" BasedOn="{StaticResource TransparentActivityDataGridStyle}" TargetType="{x:Type DataGrid}">
+        
+        <Setter Property="GridLinesVisibility" Value="All"/>
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource DataGridBorderBrush}"/>
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource DataGridBorderBrush}"/>
+        <Setter Property="HeadersVisibility" Value="Column"/>
+        <Setter Property="CanUserReorderColumns" Value="False"/>
+        <Setter Property="MinHeight" Value="60"/>
+        <Setter Property="MaxHeight" Value="Infinity"/>
+    </Style>
+
+    <Style x:Key="ActivityMappingDataGridHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="Background" Value="{StaticResource DataGridColumnHeaderBackgroundBrush}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
         <Setter Property="BorderBrush" Value="{StaticResource DataGridBorderBrush}" />
         <Setter Property="Foreground" Value="{StaticResource BrushDarkForeground}"/>
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Height" Value="Auto" />
     </Style>
-    <Style x:Key="ActivityMapppingDecisionDataGridHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+    <Style x:Key="ActivityMappingDecisionDataGridHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
+        <Setter Property="Background" Value="{StaticResource DataGridColumnHeaderBackgroundBrush}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="3,0" />
+        <Setter Property="BorderThickness" Value="0,0,1,1" />
+        <Setter Property="Margin" Value="0,0,0,-1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource DataGridBorderBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource BrushDarkForeground}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Height" Value="Auto" />
+    </Style>
+    <Style x:Key="ServiceTestAssertDataGridHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="Background" Value="{StaticResource DataGridColumnHeaderBackgroundBrush}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Padding" Value="3,0" />
@@ -101,5 +130,7 @@
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Height" Value="Auto" />
+        <Setter Property="Template" Value="{StaticResource ServiceTestAssertHeaderTemplate}"/>
     </Style>
+    
 </ResourceDictionary>

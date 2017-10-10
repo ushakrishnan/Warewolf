@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,11 +17,16 @@ namespace Dev2.Common.Interfaces
     {
         ObservableCollection<IPluginSource> RetrieveSources();
         ICollection<IPluginAction> GetActions(IPluginSource source, INamespaceItem value);
+        ICollection<IPluginConstructor> GetConstructors(IPluginSource source, INamespaceItem value);
         ICollection<INamespaceItem> GetNameSpaces(IPluginSource source);
+        ICollection<INamespaceItem> GetNameSpacesWithJsonRetunrs(IPluginSource source);
         void CreateNewSource();
         void EditSource(IPluginSource selectedSource);
         string TestService(IPluginService inputValues);
-
         IStudioUpdateManager UpdateRepository { get; }
+
+        ICollection<IPluginAction> GetActionsWithReturns(IPluginSource source, INamespaceItem ns);
     }
+
+
 }

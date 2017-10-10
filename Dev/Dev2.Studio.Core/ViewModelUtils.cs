@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -10,7 +11,7 @@ namespace Dev2
         
         public static void RaiseCanExecuteChanged(ICommand commandForCanExecuteChange)
         {
-            if (Application.Current != null && Application.Current.Dispatcher != null)
+            if (Application.Current != null && Application.Current.Dispatcher != null && Application.Current.CheckAccess())
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -31,8 +32,25 @@ namespace Dev2
             
                 if (typeOfCommand == typeof(Microsoft.Practices.Prism.Commands.DelegateCommand))
                 {
-                    var command = commandForCanExecuteChange as Microsoft.Practices.Prism.Commands.DelegateCommand;
-                    if (command != null)
+                    if (commandForCanExecuteChange is Microsoft.Practices.Prism.Commands.DelegateCommand command)
+                    {
+                        if (Application.Current != null)
+                        {
+                            if (Application.Current.Dispatcher != null)
+                            {
+                                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                               {
+                                   command.RaiseCanExecuteChanged();
+                               }));
+                            }
+                        }
+
+                        return;
+                    }
+                }
+                if (typeOfCommand.BaseType == typeof(Microsoft.Practices.Prism.Commands.DelegateCommandBase))
+                {
+                    if (commandForCanExecuteChange is Microsoft.Practices.Prism.Commands.DelegateCommandBase command)
                     {
                         command.RaiseCanExecuteChanged();
                         return;
@@ -40,20 +58,21 @@ namespace Dev2
                 }
                 if (typeOfCommand == typeof(RelayCommand))
                 {
-                    var command = commandForCanExecuteChange as RelayCommand;
-                    if (command != null)
+                    if (commandForCanExecuteChange is RelayCommand command)
                     {
                         command.RaiseCanExecuteChanged();
                         return;
                     }
                 }
+                if (typeOfCommand == typeof(DelegateCommand))
+                {
+                    var command = commandForCanExecuteChange as DelegateCommand;
+                    command?.RaiseCanExecuteChanged();
+                }
                 if (typeOfCommand == typeof(AuthorizeCommand))
                 {
                     var command = commandForCanExecuteChange as AuthorizeCommand;
-                    if (command != null)
-                    {
-                        command.RaiseCanExecuteChanged();
-                    }
+                    command?.RaiseCanExecuteChanged();
                 }
             }
         }

@@ -15,14 +15,13 @@ using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.WebService;
 using Dev2.Common.Interfaces.WebServices;
 using Dev2.Communication;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-using Warewolf.Resource.Errors;
 
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+
 
 namespace Dev2.Activities.Designers2.Web_Service_Get
 {
@@ -37,15 +36,9 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
         public WebServiceGetViewModel(ModelItem modelItem)
             : base(modelItem)
         {
@@ -56,6 +49,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
             _builder = new ServiceInputBuilder();
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_WebMethod_Get;
         }
         Guid UniqueID => GetProperty<Guid>();
 
@@ -138,16 +132,6 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
             Errors.Clear();
 
             Errors = Regions.SelectMany(a => a.Errors).Select(a => new ActionableErrorInfo(new ErrorInfo() { Message = a, ErrorType = ErrorType.Critical }, () => { }) as IActionableErrorInfo).ToList();
-            if (!OutputsRegion.IsEnabled)
-            {
-                Errors = new List<IActionableErrorInfo>()
-                {
-                    new ActionableErrorInfo
-                    {
-                        Message = string.Format(ErrorResource.ValidateBeforeMinimising, "Web get")
-                    }
-                };
-            }
             if (SourceRegion.Errors.Count > 0)
             {
                 foreach (var designValidationError in SourceRegion.Errors)
@@ -186,15 +170,13 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
 
         IErrorInfo WorstDesignError
         {
-            // ReSharper disable once UnusedMember.Local
-            get { return _worstDesignError; }
             set
             {
                 if (_worstDesignError != value)
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -301,7 +283,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
         public DelegateCommand TestInputCommand { get; set; }
 
         private string Type => GetProperty<string>();
-        // ReSharper disable InconsistentNaming
+        
 
         private void FixErrors()
         {
@@ -337,6 +319,11 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
             }
         }
 
+        public IHeaderRegion GetHeaderRegion()
+        {
+            return InputArea;
+        }
+
         public Runtime.Configuration.ViewModels.Base.DelegateCommand FixErrorsCommand { get; set; }
 
         public ObservableCollection<IErrorInfo> DesignValidationErrors { get; set; }
@@ -345,11 +332,8 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -429,7 +413,9 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
         {
             Errors = new List<IActionableErrorInfo>();
             if (hasError)
+            {
                 Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo(new ErrorInfo() { ErrorType = ErrorType.Critical, FixData = "", FixType = FixType.None, Message = exception.Message, StackTrace = exception.StackTrace }, () => { }) };
+            }
         }
 
         public IWebService ToModel()
@@ -477,20 +463,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }

@@ -636,6 +636,9 @@
   <data name="InvalidScriptingContext" xml:space="preserve">
     <value>Invalid scripting context</value>
   </data>
+  <data name="SaveToFolderOrRootOnly" xml:space="preserve">
+    <value>Can only save to folders or root</value>
+  </data>
   <data name="CannotBeNull" xml:space="preserve">
     <value>Cannot be null</value>
   </data>
@@ -661,10 +664,10 @@
     <value>Can only execute workflows from web browser</value>
   </data>
   <data name="ContainsInvalidCharecters" xml:space="preserve">
-    <value>{0} contains invalid characters</value>
+    <value>'Name' contains invalid characters</value>
   </data>
   <data name="ContainsLeadingOrTrailingWhitespace" xml:space="preserve">
-    <value>{0} contains leading or trailing whitespace characters.</value>
+    <value>'Name' contains leading or trailing whitespace characters.</value>
   </data>
   <data name="CopyToFailedArrayTooSmall" xml:space="preserve">
     <value>CopyTo() failed:  supplied array was too small</value>
@@ -698,6 +701,12 @@
   </data>
   <data name="ErrorConnectingToServer" xml:space="preserve">
     <value>Error connecting to server. Please check your network connection.</value>
+  </data>
+  <data name="ServerDroppedErrorHeading" xml:space="preserve">
+    <value>Server dropped</value>
+  </data>
+  <data name="EnsureConnectionToServerWorking" xml:space="preserve">
+    <value>Please ensure that your server is still running and your network connection is working.</value>
   </data>
   <data name="ErrorEnumeratingDirectory" xml:space="preserve">
     <value>Error enumerating directory.</value>
@@ -748,7 +757,7 @@
     <value>Invalid workflow selected</value>
   </data>
   <data name="ItemWithNameAlreadyExists" xml:space="preserve">
-    <value>An item with name '{0}' already exists in this folder.</value>
+    <value>An item with this name already exists in this folder.</value>
   </data>
   <data name="MalformedService" xml:space="preserve">
     <value>Malformed Service [{0}] it contains multiple actions</value>
@@ -1083,8 +1092,14 @@
   <data name="ServerconnectionDropped" xml:space="preserve">
     <value>Server connection has dropped during execution of command.</value>
   </data>
-  <data name="ServerDissconnected" xml:space="preserve">
+  <data name="ServerDisconnected" xml:space="preserve">
     <value>Server: {0} has disconnected.</value>
+  </data>
+  <data name="ServerDisconnectedHeader" xml:space="preserve">
+    <value>Disconnected Server</value>
+  </data>
+  <data name="ServerReconnectForActions" xml:space="preserve">
+    <value>Please reconnect before performing any actions</value>
   </data>
   <data name="ToServiceDefinitionDoesNotRupportResourcesOfTypeSource" xml:space="preserve">
     <value>ToServiceDefinition doesn't support resources of type source. Sources are meant to be managed through the Web API.</value>
@@ -1203,6 +1218,9 @@
   <data name="RabbitMqQueueNameNotNullErrorTest" xml:space="preserve">
     <value>'Queue Name' Cannot be null</value>
   </data>
+  <data name="RabbitMqPrefetchNotNullErrorTest" xml:space="preserve">
+    <value>'Prefetch' Cannot be null</value>
+  </data>
   <data name="RabbitMqSourceNotNullErrorTest" xml:space="preserve">
     <value>'RabbitMQ Source' Cannot be null</value>
   </data>
@@ -1264,5 +1282,38 @@ Please contact your Windows System Administrator.</value>
   </data>
   <data name="InvalidMovePermissionErrorMessage" xml:space="preserve">
     <value>You do not have permission to move this item. Contribute permission is required to move an item.</value>
+  </data>
+  <data name="NotAuthorizedToAdministratorException" xml:space="preserve">
+    <value>Administrator rights required to perfom this action.</value>
+  </data>
+  <data name="NotAuthorizedToContributeException" xml:space="preserve">
+    <value>Contribute rights required to perfom this action.</value>
+  </data>
+  <data name="NotAuthorizedToCreateException" xml:space="preserve">
+    <value>Create rights required to perfom this action.</value>
+  </data>
+  <data name="NotAuthorizedToDeployFromException" xml:space="preserve">
+    <value>DeployFrom  rights required to perfom this action.</value>
+  </data>
+  <data name="NotAuthorizedToDeployToException" xml:space="preserve">
+    <value>DeployTo rights required to perfom this action.</value>
+  </data>
+  <data name="NotAuthorizedToExecuteException" xml:space="preserve">
+    <value>Execute rights required to perfom this action.</value>
+  </data>
+  <data name="NotAuthorizedToViewException" xml:space="preserve">
+    <value>View rights required to perfom this action.</value>
+  </data>
+  <data name="ServiceNotAuthorizedExceptionHeader" xml:space="preserve">
+    <value>Not Authorized</value>
+  </data>
+  <data name="JSONIncompatibleConversionError" xml:space="preserve">
+    <value>Cannot convert given JSON to target type</value>
+  </data>
+  <data name="ServerBusyError" xml:space="preserve">
+    <value>{0} is currently busy. Please try again later.</value>
+  </data>
+  <data name="ServerBusyHeader" xml:space="preserve">
+    <value>Server is currently busy</value>
   </data>
 </root>

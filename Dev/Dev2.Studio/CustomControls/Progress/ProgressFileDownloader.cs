@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,7 +30,7 @@ namespace Dev2.CustomControls.Progress
         private readonly IFile _file;
         private readonly ICryptoProvider _cryptoProvider;
         private readonly Window _owner;
-        private string _tmpFileName = "";
+        private readonly string _tmpFileName = "";
 
         #region Properties
 
@@ -70,8 +70,9 @@ namespace Dev2.CustomControls.Progress
             _webClient.DownloadProgressChanged += OnDownloadProgressChanged;
             ShutDownAction = ShutdownAndInstall;
             if (!Directory.Exists("Installers"))
+            {
                 Directory.CreateDirectory("Installers");
-
+            }
         }
 
         public static void PerformCleanup(IDirectory dir, string path, IFile file)
@@ -79,11 +80,13 @@ namespace Dev2.CustomControls.Progress
             try
             {
                 foreach(var v in dir.GetFiles(path).Where(a => a.Contains("tmp")))
+                {
                     file.Delete(v);
+                }
             }
-            // ReSharper disable EmptyGeneralCatchClause
+            
             catch
-            // ReSharper restore EmptyGeneralCatchClause
+            
             {
                 //best effort.
             }

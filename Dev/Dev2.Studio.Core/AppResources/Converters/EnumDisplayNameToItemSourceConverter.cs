@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +23,7 @@ using System.Windows.Data;
 
 #endregion
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Converters
 {
     internal static class EnumValueDescriptionCache
@@ -34,10 +34,11 @@ namespace Dev2.Studio.Core.AppResources.Converters
         public static Tuple<object[], string[]> GetValues(Type type)
         {
             if(!type.IsEnum)
+            {
                 throw new ArgumentException("Type '" + type.Name + "' is not an enum");
+            }
 
-            Tuple<object[], string[]> values;
-            if(!Cache.TryGetValue(type, out values))
+            if (!Cache.TryGetValue(type, out Tuple<object[], string[]> values))
             {
                 FieldInfo[] fieldInfos = type.GetFields()
                     .Where(f => f.IsLiteral)
@@ -97,10 +98,14 @@ namespace Dev2.Studio.Core.AppResources.Converters
         {
             string description = value as string;
             if(description == null)
+            {
                 return value;
+            }
 
-            if((targetType == null) || !targetType.IsEnum)
+            if ((targetType == null) || !targetType.IsEnum)
+            {
                 return value;
+            }
 
             Tuple<object[], string[]> tuple = EnumValueDescriptionCache.GetValues(targetType);
             for(int i = 0; i < tuple.Item2.Length; i++)

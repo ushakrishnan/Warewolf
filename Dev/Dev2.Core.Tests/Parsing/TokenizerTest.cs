@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,11 +14,11 @@ using System.Parsing.Intellisense;
 using System.Parsing.SyntaxAnalysis;
 using System.Parsing.Tokenization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable LoopCanBeConvertedToQuery
-// ReSharper disable ForCanBeConvertedToForeach
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
+
+
 namespace Unlimited.UnitTest.Framework.Parsing
 {
     [TestClass]
@@ -30,13 +30,13 @@ namespace Unlimited.UnitTest.Framework.Parsing
         public void RequiredDefinitions_EnsureNotNull_Test()
         {
 #pragma warning disable 219
-            // ReSharper disable ObjectCreationAsStatement
+            
             new RequiredTokenDefinitions<TokenKind>(TokenKind.Whitespace, TokenKind.LineBreak, null, TokenKind.EOF);
 #pragma warning restore 219
             new RequiredTokenDefinitions<TokenKind>(TokenKind.Whitespace, TokenKind.LineBreak, TokenKind.EOF, null);
             new RequiredTokenDefinitions<TokenKind>(TokenKind.Whitespace, null, TokenKind.LineBreak, TokenKind.EOF);
             new RequiredTokenDefinitions<TokenKind>(null, TokenKind.LineBreak, TokenKind.LineBreak, TokenKind.EOF);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
         #endregion
 
@@ -176,8 +176,12 @@ namespace Unlimited.UnitTest.Framework.Parsing
             int present = 0;
 
             for(int i = 0; i < grammer.Tokenizer.Handlers.Count; i++)
-                if(grammer.Tokenizer.Handlers[i] is UnaryTokenizationHandler<Token, TokenKind>)
+            {
+                if (grammer.Tokenizer.Handlers[i] is UnaryTokenizationHandler<Token, TokenKind>)
+                {
                     present++;
+                }
+            }
 
             Assert.AreEqual(1, present);
         }

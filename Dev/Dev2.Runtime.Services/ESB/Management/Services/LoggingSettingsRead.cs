@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -33,7 +34,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Error("LoggingSettingsRead", e);
+                Dev2Logger.Error("LoggingSettingsRead", e, GlobalConstants.WarewolfError);
             }
             return null;
         }
@@ -62,6 +63,16 @@ namespace Dev2.Runtime.ESB.Management.Services
         public string HandlesType()
         {
             return "LoggingSettingsReadService";
+        }
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
         }
     }
 }

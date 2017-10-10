@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Monitoring;
 using Dev2.Communication;
 using Dev2.PerformanceCounters.Management;
@@ -8,13 +9,41 @@ using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
     public class SavePerformanceCountesTests
     {
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var performanceCounters = new SavePerformanceCounters();
+
+            //------------Execute Test---------------------------
+            var resId = performanceCounters.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var performanceCounters = new SavePerformanceCounters();
+
+            //------------Execute Test---------------------------
+            var resId = performanceCounters.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Administrator, resId);
+        }
+
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("SavePerformanceCounters_Execute")]
@@ -46,7 +75,7 @@ namespace Dev2.Tests.Runtime.Services
             var serializedCounter = serializer.SerializeToBuilder(new PerformanceCounterTo());
             var mockPerfCounterManager = new Mock<IPerformanceCounterRepository>();
             mockPerfCounterManager.Setup(repository => repository.Save(It.IsAny<IPerformanceCounterTo>())).Throws(new Exception("This call failed"));
-            var savePerformanceCounters = new SavePerformanceCounters { Manager = mockPerfCounterManager.Object };
+            var savePerformanceCounters = new SavePerformanceCounters() { Manager = mockPerfCounterManager.Object };
             var values = new Dictionary<string, StringBuilder> { { "PerformanceCounterTo", serializedCounter } };
             //------------Execute Test---------------------------
             var result = savePerformanceCounters.Execute(values, new Mock<IWorkspace>().Object);

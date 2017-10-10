@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using ActivityUnitTests;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Communication;
+using Dev2.Data.Interfaces;
 using Dev2.Diagnostics;
 using Dev2.Tests.Activities.Mocks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -25,7 +26,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class PathMoveTests : BaseActivityUnitTest
     {
 #pragma warning disable 649
@@ -87,7 +88,25 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         #endregion
 
-        
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfPathMove_UpdateForEachInputs")]
+        public void DsfPathMove_Serialize_ShouldDeserializeCorrectly()
+        {
+            //------------Setup for test--------------------------
+            var newGuid = Guid.NewGuid();
+            var inputPath = string.Concat(TestContext.TestRunDirectory, "\\", newGuid + "[[CompanyName]].txt");
+            var outputPath = string.Concat(TestContext.TestRunDirectory, "\\", newGuid + "[[CompanyName]]2.txt");
+            var act = new DsfPathMove { InputPath = inputPath, OutputPath = outputPath, Result = "[[CompanyName]]" };
+            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serialized = serializer.Serialize(act);
+            //------------Execute Test---------------------------
+            var deSerialized = serializer.Deserialize<DsfPathMove>(serialized);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(inputPath, deSerialized.InputPath);
+            Assert.AreEqual(outputPath, deSerialized.OutputPath);
+        }
+
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -256,11 +275,8 @@ namespace Dev2.Tests.Activities.ActivityTests
                 GetOperationBroker = () => activityOperationBrokerMock
             };
 
-            List<DebugItem> inRes;
-            List<DebugItem> outRes;
-
             CheckPathOperationActivityDebugInputOutput(act, ActivityStrings.DebugDataListShape,
-                                                       ActivityStrings.DebugDataListWithData, out inRes, out outRes);
+                                                       ActivityStrings.DebugDataListWithData, out List<DebugItem> inRes, out List<DebugItem> outRes);
 
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Password, "destPWord");
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Username, "destUName");

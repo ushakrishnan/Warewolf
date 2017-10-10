@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -44,7 +44,7 @@ namespace Dev2.Services.Security.MoqInstallerActions
             using (var ad = new DirectoryEntry("WinNT://" + Environment.MachineName + ",computer"))
             {
                 ad.Children.SchemaFilter.Add("group");
-                if (ad.Children.Cast<DirectoryEntry>().Any(dChildEntry => dChildEntry.Name == WarewolfGroup))
+                if (ad.Children.Cast<DirectoryEntry>().Any(dChildEntry => string.Equals(dChildEntry.Name, WarewolfGroup, StringComparison.CurrentCultureIgnoreCase)))
                 {
                     return true;
                 }
@@ -102,9 +102,9 @@ namespace Dev2.Services.Security.MoqInstallerActions
         {
             if (string.IsNullOrEmpty(currentUser))
             {
-                // ReSharper disable NotResolvedInText
+                
                 throw new ArgumentNullException("Null or Empty User");
-                // ReSharper restore NotResolvedInText
+                
             }
 
             using (var ad = new DirectoryEntry("WinNT://" + Environment.MachineName + ",computer"))
@@ -121,7 +121,7 @@ namespace Dev2.Services.Security.MoqInstallerActions
                         }
                         catch (Exception)
                         {
-                            Dev2Logger.Error(string.Format(ErrorResource.UserDoesNotExistOnTheMachine, currentUser));
+                            Dev2Logger.Error(string.Format(ErrorResource.UserDoesNotExistOnTheMachine, currentUser), GlobalConstants.WarewolfError);
                         }
                     }
                 }
@@ -138,7 +138,14 @@ namespace Dev2.Services.Security.MoqInstallerActions
                     if (dChildEntry.Name == WarewolfGroup)
                     {
                         const string Entry = "WinNT://./" + AdministratorsGroup;
-                        dChildEntry.Invoke("Add", Entry);
+                        try
+                        {
+                            dChildEntry.Invoke("Add", Entry);
+                        }
+                        catch(Exception)
+                        {
+                            //Already part of the group
+                        }
                     }
                 }
             }

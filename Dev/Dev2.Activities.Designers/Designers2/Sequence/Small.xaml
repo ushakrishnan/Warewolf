@@ -12,12 +12,13 @@
                                xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
                                xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
                                xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
-                               Width="200"
+                               Width="230"
+                               MaxWidth="230"
                                MinHeight="35"
                                mc:Ignorable="d"
                                d:DesignWidth="250"
                                d:DataContext="{d:DesignInstance local:SequenceDesignerViewModel}"
-                               ToolTip="{x:Static languages:Core.SequenceTooltipSequence}">
+                               ToolTip="{x:Static languages:Tooltips.SequenceTooltipSequence}">
 
     <core:ActivityDesignerTemplate.Resources>
         <ResourceDictionary>
@@ -58,7 +59,7 @@
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
             <i:Interaction.Behaviors>
-                <core1:HelpSetter Text="{x:Static languages:Core.SequenceHelpSequence}" DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.SequenceHelpSequence}" DataContext="{Binding}" />
             </i:Interaction.Behaviors>
         </DataGrid>
         <Border BorderBrush="#CFD6E1"

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.Windows;
 using System.Windows.Data;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Converters
 {
     public class DebugItemResultTypeToColorConverter : IValueConverter
@@ -23,19 +23,23 @@ namespace Dev2.Studio.Core.AppResources.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            var resultType = (DebugItemResultType)value;
-            switch(resultType)
+            var isDebugItemResultType = Enum.TryParse(value?.ToString(), true, out DebugItemResultType debugItemResultType);
+            if (isDebugItemResultType)
             {
-                case DebugItemResultType.Variable:
-                    return Application.Current.Resources["DebugItemVariableBrush"];
+                switch (debugItemResultType)
+                {
+                    case DebugItemResultType.Variable:
+                        return Application.Current.Resources["DebugItemVariableBrush"];
 
-                case DebugItemResultType.Value:
-                    return Application.Current.Resources["DebugItemValueBrush"];
-
-                default: // DebugItemResultType.Label:
-                    return Application.Current.Resources["DebugItemLabelBrush"];
+                    case DebugItemResultType.Value:
+                        return Application.Current.Resources["DebugItemValueBrush"];
+                    case DebugItemResultType.Label:
+                        break;
+                    default: // DebugItemResultType.Label:
+                        return Application.Current.Resources["DebugItemLabelBrush"];
+                }
             }
-
+            return Application.Current.Resources["DebugItemLabelBrush"];
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

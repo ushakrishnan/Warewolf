@@ -227,9 +227,54 @@ and parseLanguageExpressionWithoutUpdate (lang : string) : LanguageExpression =
                      raise ex
     else WarewolfAtomExpression(parseAtom lang)
 
+ and parseLanguageExpressionWithoutUpdateStrict (lang : string) : LanguageExpression = 
+    if (lang.Contains "[[" && lang.EndsWith"]]") then 
+        let exp = ParseCache.TryFind lang
+        match exp with
+        | Some a -> a
+        | None -> 
+            try
+                let lexbuf = LexBuffer<string>.FromString lang
+                let buffer = Parser.start Lexer.tokenstream lexbuf
+                let res = buffer |> Clean
+                ParseCache <- ParseCache.Add(lang, res)
+                res
+            with
+                | :? System.IndexOutOfRangeException as ex ->
+                     raise ex
+    else WarewolfAtomExpression(parseAtom lang)
+
 ///Simple parse. convert a string to a language expression and replace * with the update value
 and parseLanguageExpression (lang : string) (update : int) : LanguageExpression = 
     let data = parseLanguageExpressionWithoutUpdate lang
+    match update with
+    | 0 -> data
+    | _ -> 
+        match data with
+        | RecordSetExpression a -> 
+            match a.Index with
+            | Star -> { a with Index = IntIndex update } |> LanguageExpression.RecordSetExpression
+            | _ -> a |> LanguageExpression.RecordSetExpression
+        | RecordSetNameExpression a -> 
+            match a.Index with
+            | Star -> { a with Index = IntIndex update } |> LanguageExpression.RecordSetNameExpression
+            | _ -> a |> LanguageExpression.RecordSetNameExpression
+        | ComplexExpression p -> List.map (updateComplex update) p |> LanguageExpression.ComplexExpression
+        | JsonIdentifierExpression a ->
+            match a with
+            | IndexNestedNameExpression b-> {b with Index = IntIndex update} |> JsonIdentifierExpression.IndexNestedNameExpression |> JsonIdentifierExpression
+            | NestedNameExpression b -> 
+                match b.Next with 
+                | IndexNestedNameExpression x-> {b with 
+                                                    ObjectName = b.ObjectName
+                                                    Next = {x with Index = IntIndex update} |> IndexNestedNameExpression} |> NestedNameExpression |> JsonIdentifierExpression
+                |_->data
+            | Terminal _ -> data
+            | _ -> data
+        | _ -> data
+
+and parseLanguageExpressionStrict (lang : string) (update : int) : LanguageExpression = 
+    let data = parseLanguageExpressionWithoutUpdateStrict lang
     match update with
     | 0 -> data
     | _ -> 
@@ -378,6 +423,7 @@ and languageExpressionToJPath (lang : LanguageExpression) =
         | _ -> failwith "not supported for JSON types"
     | ComplexExpression _ -> failwith "not supported for JSON types"
     | JsonIdentifierExpression a -> jsonIdentifierToJsonPathLevel1 a
+    
 ///Convert a jsonIdentifierExpression to jsonPath
 and jsonIdentifierToJsonPath (a : JsonIdentifierExpression) (accx : string) = 
     let acc = 
@@ -440,6 +486,7 @@ and evalJson (env : WarewolfEnvironment) (update : int) (shouldEscape:bool) (lan
             WarewolfAtomListresult
                 (new WarewolfParserInterop.WarewolfAtomList<WarewolfAtomRecord>(WarewolfAtomRecord.Nothing, data))
         else failwith "non existent object"
+    
     | JsonIdentifierExpression a -> 
         let jPath = "$." + languageExpressionToJPath (lang)
         if env.JsonObjects.ContainsKey(jsonIdentifierToName a) then 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +10,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Webs.Callbacks;
 using Newtonsoft.Json;
-using Warewolf.Studio.AntiCorruptionLayer;
 using Warewolf.Studio.ViewModels;
 
 namespace Dev2.Webs
@@ -28,9 +27,10 @@ namespace Dev2.Webs
 
         #region ShowSaveDialog
 
-        public static void ShowNewWorkflowSaveDialog(IContextualResourceModel resourceModel, string resourceId = null, bool addToTabManager = true)
+        public static void ShowNewWorkflowSaveDialog(IContextualResourceModel resourceModel) => ShowNewWorkflowSaveDialog(resourceModel, null, true);
+        public static void ShowNewWorkflowSaveDialog(IContextualResourceModel resourceModel, string resourceId, bool addToTabManager)
         {
-            ShowSaveDialog(resourceModel, new SaveNewWorkflowCallbackHandler(EventPublishers.Aggregator, EnvironmentRepository.Instance, resourceModel, addToTabManager));
+            ShowSaveDialog(resourceModel, new SaveNewWorkflowCallbackHandler(EventPublishers.Aggregator, ServerRepository.Instance, resourceModel, addToTabManager));
         }
 
         static async void ShowSaveDialog(IContextualResourceModel resourceModel, WebsiteCallbackHandler callbackHandler, Action loaded = null)
@@ -39,23 +39,15 @@ namespace Dev2.Webs
             {
                 if (resourceModel == null)
                 {
-                    throw new ArgumentNullException("resourceModel");
+                    throw new ArgumentNullException(nameof(resourceModel));
                 }
-                IEnvironmentModel environment = resourceModel.Environment;
+                IServer server = resourceModel.Environment;
+                ServerRepository.Instance.ActiveServer = server ?? throw new ArgumentNullException("environment");
 
-                if (environment == null)
-                {
-                    // ReSharper disable NotResolvedInText
-                    throw new ArgumentNullException("environment");
-                }
-
-                EnvironmentRepository.Instance.ActiveEnvironment = environment;
-
-                IServer server = new Server(environment);
                 if (server.Permissions == null)
                 {
                     server.Permissions = new List<IWindowsGroupPermission>();
-                    server.Permissions.AddRange(environment.AuthorizationService.SecurityService.Permissions);
+                    server.Permissions.AddRange(server.AuthorizationService.SecurityService.Permissions);
                 }
                 if (resourceModel.Category == null)
                 {
@@ -69,7 +61,9 @@ namespace Dev2.Webs
                     selectedPath = selectedPath.Substring(0, lastIndexOf);
                 }
                 selectedPath = selectedPath.Replace("\\", "\\\\");
-                var env = new EnvironmentViewModel(server, CustomContainer.Get<IShellViewModel>(), true);
+
+                var mainViewModel = CustomContainer.Get<IShellViewModel>();
+                var environmentViewModel = mainViewModel?.ExplorerViewModel?.Environments.FirstOrDefault(model => model.Server.EnvironmentID == resourceModel.Environment.EnvironmentID);
 
                 var header = string.IsNullOrEmpty(resourceModel.Category) ? "Unsaved Item" : resourceModel.Category;
                 var lastHeaderIndexOf = header.LastIndexOf("\\", StringComparison.Ordinal);
@@ -79,26 +73,20 @@ namespace Dev2.Webs
                     header = header.Replace("\\", "");
                 }
 
-                var requestViewModel = await RequestServiceNameViewModel.CreateAsync(env, selectedPath, header);
-
-                if (loaded != null)
-                {
-                    loaded();
-                }
+                var requestViewModel = await RequestServiceNameViewModel.CreateAsync(environmentViewModel, selectedPath, header);
+                
                 var messageBoxResult = requestViewModel.ShowSaveDialog();
                 if (messageBoxResult == MessageBoxResult.OK)
                 {
                     var value = new { resourceName = requestViewModel.ResourceName.Name, resourcePath = requestViewModel.ResourceName.Path };
                     var serializeObject = JsonConvert.SerializeObject(value);
-                    callbackHandler.Save(serializeObject, environment);
+                    callbackHandler.Save(serializeObject, server);
                 }
+                loaded?.Invoke();
             }
             catch (Exception)
             {
-                if (loaded != null)
-                {
-                    loaded();
-                }
+                loaded?.Invoke();
                 throw;
             }
         }
@@ -108,7 +96,7 @@ namespace Dev2.Webs
 
         public static void ShowNewWorkflowSaveDialog(IContextualResourceModel resourceModel, string resourceId, bool addToTabManager, Action action)
         {
-            ShowSaveDialog(resourceModel, new SaveNewWorkflowCallbackHandler(EventPublishers.Aggregator, EnvironmentRepository.Instance, resourceModel, addToTabManager), action);
+            ShowSaveDialog(resourceModel, new SaveNewWorkflowCallbackHandler(EventPublishers.Aggregator, ServerRepository.Instance, resourceModel, addToTabManager), action);
         }
     }
 }

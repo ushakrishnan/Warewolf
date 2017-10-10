@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,20 +14,20 @@ using Caliburn.Micro;
 using Dev2.Messages;
 using Dev2.Security;
 using Dev2.Studio.AppResources.Comparers;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Dev2.Studio.ViewModels.Diagnostics;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.ViewModels.WorkSurface
-// ReSharper restore CheckNamespace
+
 {
     public interface IWorkSurfaceContextViewModel
     {
         WorkSurfaceKey WorkSurfaceKey { get; }
-        IEnvironmentModel Environment { get; }
+        IServer Environment { get; }
         DebugOutputViewModel DebugOutputViewModel { get; set; }
         bool DeleteRequested { get; set; }
         IDataListViewModel DataListViewModel { get; set; }
@@ -75,7 +75,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         void ShowSaveDialog(IContextualResourceModel resourceModel, bool addToTabManager);
 
-        bool Save(bool isLocalSave = false, bool isStudioShutdown = false);
+        bool Save(bool isLocalSave, bool isStudioShutdown);
 
         bool IsEnvironmentConnected();
 

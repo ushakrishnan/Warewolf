@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,25 +13,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.DataList.Contract;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.TO;
 using Dev2.Util;
 using Dev2.Validation;
 using Warewolf.Resource.Errors;
-// ReSharper disable UnusedMember.Global
 
-// ReSharper disable CheckNamespace
+
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Used for activties
     /// </summary>
-    // ReSharper disable InconsistentNaming
+    
     public class ActivityDTO : ValidatedObject, IDev2TOFn
-    // ReSharper restore InconsistentNaming
+    
     {
         string _fieldName;
         string _fieldValue;
@@ -46,7 +46,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
         }
 
-        public ActivityDTO(string fieldName, string fieldValue, int indexNumber, bool inserted = false)
+        public ActivityDTO(string fieldName, string fieldValue, int indexNumber)
+            : this(fieldName, fieldValue, indexNumber, false)
+        {
+        }
+
+        public ActivityDTO(string fieldName, string fieldValue, int indexNumber, bool inserted)
         {
             Inserted = inserted;
             FieldName = fieldName;
@@ -61,10 +66,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
 
         [FindMissing]
@@ -250,6 +255,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 case "FieldValueAndCalculate":
                     ruleSet.Add(new ComposableRule<string>(new IsValidExpressionRule(() => FieldValue, datalist, "1")).Or(new IsValidCalculateRule(() => FieldValue)));
                     break;
+                default:
+                    throw new ArgumentException("Unrecognized Property Name: " + propertyName);
             }
             return ruleSet;
         }

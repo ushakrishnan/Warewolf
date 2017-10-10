@@ -7,9 +7,9 @@ using Dev2.PerformanceCounters.Counters;
 using Dev2.PerformanceCounters.Management;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable EmptyStatement
 
-// ReSharper disable InconsistentNaming
+
+
 
 namespace Dev2.Diagnostics.Test
 {
@@ -27,7 +27,7 @@ namespace Dev2.Diagnostics.Test
                     PerformanceCounterCategory.Delete("Warewolf");
                     PerformanceCounterCategory.Delete("Warewolf Services");
                 }
-                // ReSharper disable once EmptyGeneralCatchClause
+                
                 catch
                 {
 
@@ -60,7 +60,7 @@ namespace Dev2.Diagnostics.Test
             catch (Exception err)
             {
                 // ignored
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
         }
 
@@ -109,8 +109,7 @@ namespace Dev2.Diagnostics.Test
             Assert.AreEqual(innerCounter.RawValue, 0);
             counter.IncrementBy(3);
             Assert.AreEqual(innerCounter.RawValue, 3);
-            var resourcePerformanceCounter = counter as IResourcePerformanceCounter;
-            if (resourcePerformanceCounter != null)
+            if (counter is IResourcePerformanceCounter resourcePerformanceCounter)
             {
                 Assert.AreEqual(guid, resourcePerformanceCounter.ResourceId);
             }
@@ -162,8 +161,7 @@ namespace Dev2.Diagnostics.Test
             Assert.AreEqual(innerCounter.RawValue, 0);
             counter.IncrementBy(3);
             Assert.AreEqual(innerCounter.RawValue, 3);
-            var resourcePerformanceCounter = counter as IResourcePerformanceCounter;
-            if(resourcePerformanceCounter != null)
+            if (counter is IResourcePerformanceCounter resourcePerformanceCounter)
             {
                 Assert.AreEqual(guid, resourcePerformanceCounter.ResourceId);
             }
@@ -237,8 +235,7 @@ namespace Dev2.Diagnostics.Test
             Assert.AreEqual(innerCounter.RawValue, 0);
             counter.IncrementBy(3);
             Assert.AreEqual(innerCounter.RawValue, 3);
-            var resourcePerformanceCounter = counter as IResourcePerformanceCounter;
-            if (resourcePerformanceCounter != null)
+            if (counter is IResourcePerformanceCounter resourcePerformanceCounter)
             {
                 Assert.AreEqual(guid, resourcePerformanceCounter.ResourceId);
             }
@@ -254,7 +251,7 @@ namespace Dev2.Diagnostics.Test
         public void WarewolfServicesNotFound_TestOps_Valid_ExpectValidValues()
         {
             var counter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter(WarewolfPerfCounterType.ServicesNotFound).FromSafe(); ;
-            Assert.AreEqual(counter.Name, "Count of requests for workflows which don’t exist");
+            Assert.AreEqual(counter.Name, "Count of requests for workflows which don't exist");
             Assert.AreEqual(counter.Category, "Warewolf");
             PrivateObject po = new PrivateObject(counter);
             po.Invoke("Setup", new object[0]);
@@ -359,8 +356,7 @@ namespace Dev2.Diagnostics.Test
             counter.IncrementBy(3);
             Assert.AreEqual(innerCounter.RawValue, 3);
             Assert.AreEqual(innerBase.RawValue, 1);
-            var resourcePerformanceCounter = counter as IResourcePerformanceCounter;
-            if (resourcePerformanceCounter != null)
+            if (counter is IResourcePerformanceCounter resourcePerformanceCounter)
             {
                 Assert.AreEqual(guid, resourcePerformanceCounter.ResourceId);
             }

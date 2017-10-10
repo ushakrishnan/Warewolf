@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,10 +15,11 @@ using System.Linq;
 using System.Xml.Linq;
 using Dev2.Communication;
 using Dev2.Controller;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Workspaces;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
+
 
 namespace Dev2.Workspaces
 {
@@ -70,7 +71,6 @@ namespace Dev2.Workspaces
         {
         }
 
-        // BUG 9492 - 2013.06.08 - TWR : added constructor - use for testing only!
         public WorkspaceItemRepository(string repositoryPath)
         {
             _repositoryPath = repositoryPath;
@@ -85,7 +85,6 @@ namespace Dev2.Workspaces
 
         #region RepositoryPath
 
-        // BUG 9492 - 2013.06.08 - TWR : made public and non-static
         string _repositoryPath;
         public string RepositoryPath
         {
@@ -121,9 +120,9 @@ namespace Dev2.Workspaces
                     var xml = XElement.Parse(File.ReadAllText(RepositoryPath));
                     result.AddRange(xml.Elements().Select(x => new WorkspaceItem(x)));
                 }
-                // ReSharper disable EmptyGeneralCatchClause
+                
                 catch
-                // ReSharper restore EmptyGeneralCatchClause
+                
                 {
                     // corrupt so ignore
                 }
@@ -170,14 +169,14 @@ namespace Dev2.Workspaces
             {
                 throw new ArgumentNullException("model");
             }
-            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == model.ID && wi.EnvironmentID == model.Environment.ID);
+            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == model.ID && wi.EnvironmentID == model.Environment.EnvironmentID);
             if(workspaceItem != null)
             {
                 return;
             }
 
             var context = model.Environment.Connection;
-            WorkspaceItems.Add(new WorkspaceItem(context.WorkspaceID, context.ServerID, model.Environment.ID, model.ID)
+            WorkspaceItems.Add(new WorkspaceItem(context.WorkspaceID, context.ServerID, model.Environment.EnvironmentID, model.ID)
             {
                 ServiceName = model.ResourceName,
                 IsWorkflowSaved = model.IsWorkflowSaved,
@@ -200,7 +199,7 @@ namespace Dev2.Workspaces
             {
                 throw new ArgumentNullException("resourceModel");
             }
-            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == resourceModel.ID && wi.EnvironmentID == resourceModel.Environment.ID);
+            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == resourceModel.ID && wi.EnvironmentID == resourceModel.Environment.EnvironmentID);
 
             if(workspaceItem == null)
             {
@@ -211,12 +210,11 @@ namespace Dev2.Workspaces
 
         public ExecuteMessage UpdateWorkspaceItem(IContextualResourceModel resource, bool isLocalSave)
         {
-            // BUG 9492 - 2013.06.08 - TWR : added null check
             if(resource == null)
             {
                 throw new ArgumentNullException("resource");
             }
-            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == resource.ID && wi.EnvironmentID == resource.Environment.ID);
+            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == resource.ID && wi.EnvironmentID == resource.Environment.EnvironmentID);
 
             if(workspaceItem == null)
             {
@@ -248,7 +246,6 @@ namespace Dev2.Workspaces
 
         public void Remove(IContextualResourceModel resourceModel)
         {
-            // BUG 9492 - 2013.06.08 - TWR : added null check
             if(resourceModel == null)
             {
                 return;
@@ -261,6 +258,16 @@ namespace Dev2.Workspaces
 
             WorkspaceItems.Remove(itemToRemove);
             Write();
+            resourceModel.Environment.ResourceRepository.DeleteResourceFromWorkspaceAsync(resourceModel);
+        }
+
+        public void ClearWorkspaceItems(IContextualResourceModel resourceModel)
+        {
+            if (resourceModel == null)
+            {
+                return;
+            }
+            WorkspaceItems.Clear();
             resourceModel.Environment.ResourceRepository.DeleteResourceFromWorkspace(resourceModel);
         }
 

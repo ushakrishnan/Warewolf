@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,25 +11,19 @@
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.TO;
 using Dev2.Util;
 using Dev2.Validation;
 
-// ReSharper disable CheckNamespace
-
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
-{
-    // ReSharper disable InconsistentNaming
-    public class DataMergeDTO : ValidatedObject, IDev2TOFn
-    // ReSharper restore InconsistentNaming
+{    
+    public class DataMergeDTO : ValidatedObject, IDev2TOFn    
     {
         public const string MergeTypeIndex = "Index";
         public const string MergeTypeChars = "Chars";
         public const string MergeTypeNone = "None";
-
         public const string AlignmentLeft = "Left";
 
         #region Fields
@@ -49,10 +43,14 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Ctor
 
-        public DataMergeDTO(string inputVariable, string mergeType, string at, int indexNum, string padding, string alignment, bool inserted = false)
+        public DataMergeDTO(string inputVariable, string mergeType, string at, int indexNum, string padding, string alignment)
+            : this(inputVariable, mergeType, at, indexNum, padding, alignment, false)
+        {
+        }
+
+        public DataMergeDTO(string inputVariable, string mergeType, string at, int indexNum, string padding, string alignment, bool inserted)
         {
             Inserted = inserted;
-
             InputVariable = string.IsNullOrEmpty(inputVariable) ? string.Empty : inputVariable;
             MergeType = string.IsNullOrEmpty(mergeType) ? MergeTypeIndex : mergeType;
             At = string.IsNullOrEmpty(at) ? string.Empty : at;
@@ -60,7 +58,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             _enableAt = true;
             Padding = string.IsNullOrEmpty(padding) ? string.Empty : padding;
             Alignment = string.IsNullOrEmpty(alignment) ? AlignmentLeft : alignment;
-
         }
 
         public DataMergeDTO()
@@ -86,10 +83,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
 
         [FindMissing]
@@ -220,7 +217,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         ruleSet.Add(inputExprRule);
                     }
                     else
+                    {
                         ruleSet.Add(new IsStringEmptyRule(() => InputVariable));
+                    }
+
                     break;
                 case "At":
                     if (MergeType == MergeTypeIndex)
@@ -241,6 +241,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         ruleSet.Add(new IsSingleCharRule(() => paddingExprRule.ExpressionValue));
                     }
                     break;
+                default:
+                    return ruleSet;
             }
             return ruleSet;
         }

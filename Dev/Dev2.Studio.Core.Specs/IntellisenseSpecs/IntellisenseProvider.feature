@@ -139,6 +139,22 @@ Scenario Outline: Insert for RecordsetsOnly FilterType and Default Provider
 	| 15       | [[ba]],[[b]],[[sum().b]],[[mus().b]],[[sum()]],[[mus()]],[[sum().ba]] | All             | [[sum().b]]b           | 12    | [[b]],[[ba]],[[sum().b]],[[sum().ba]],[[mus().b]] | [[ba]]       | [[sum().b]][[ba]]       | Default  | 17            |
 	| 16       | [[b]],[[sum().b]],[[mus().b]],[[sum()]],[[mus()]]                     | RecordsetsOnly  | =u                     | 2     | [[sum()]],[[mus()]]                               | [[sum()]]    | =[[sum()]]              | Default  | 10            |
 
+	Scenario Outline: Insert for Json FilterType and Default Provider Case Insensitive
+	Given I have the following intellisense options '<varlist>'
+	And the filter type is '<filterType>'
+	And the current text in the textbox is '<input>'
+	And the cursor is at index '<index>'		
+	And the provider used is '<provider>'	
+	And the suggestion list as '<dropDownList>'		
+	When I select the following string option '<option>'
+	Then the result text should be "<result>" with caret position will be '<caretposition>'
+	Examples: 
+	| testName | varlist                      | filterType | input      | index | dropDownList                 | option           | result           | provider | caretposition |
+	| 1        | [[@Person]],[[@Person.name]] | JsonObject | @P         | 2     | [[@Person.name]],[[@Person]] | [[@Person.name]] | [[@Person.name]] | Default  | 16            |
+	| 2        | [[@Person]],[[@Person.name]] | JsonObject | [[         | 3     | [[@Person.name]],[[@Person]] | [[@Person.name]] | [[@Person.name]] | Default  | 16            |
+	| 3        | [[@Person]],[[@Person.name]] | JsonObject | @PERSON.   | 8     | [[@Person.name]]             | [[@Person.name]] | [[@Person.name]] | Default  | 16            |
+	| 4        | [[@Person]],[[@Person.name]] | JsonObject | [[@PERSON. | 10    | [[@Person.name]]             | [[@Person.name]] | [[@Person.name]] | Default  | 16            |
+	| 5        | [[@Person]],[[@PERSON.name]] | JsonObject | [[@person  | 9     | [[@PERSON.name]]             | [[@PERSON.name]] | [[@PERSON.name]] | Default  | 16            |
 
 Scenario Outline: Insert for Json FilterType and Default Provider
 	Given I have the following intellisense options '<varlist>'
@@ -210,3 +226,51 @@ Scenario Outline: Insert for RecordsetFields FilterType and Default Provider
 	| 9        | [[a]],[[rec()]],[[rec().a]],[[set()]],[[set().z]],[[rec(*)]],[[rec(*).a]],[[set(*)]],[[set(*).z]] | RecordsetFields | b b                     | 1     |                                                   |              | b b                     | Default  | 1             |
 	| 10       | [[rec()]],[[rec().a]],[[a]],[[rec().z]],[[rec(*)]],[[rec(*).a]],[[rec(*).z]]                      | RecordsetFields | [[rec().a]],[[rec().a]] | 5     | [[rec().a]],[[rec(*).a]],[[rec().z]],[[rec(*).z]] | [[rec().z]]  | [[rec().z]],[[rec().a]] | Default  | 11            |
 	| 11       | [[rec()]],[[rec().a]],[[a]],[[rec().z]],[[rec(*)]],[[rec(*).a]],[[rec(*).z]]                      | RecordsetFields | [[rec [[rec().a]]       | 5     | [[rec().a]],[[rec(*).a]],[[rec().z]],[[rec(*).z]] | [[rec().z]]  | [[rec().z]] [[rec().a]] | Default  | 12            |
+
+
+Scenario Outline: Validation messages when Invalid Variables  
+	Given the current text in the textbox is '<Variable>'
+	And the provider used is 'Default'	
+	Then the result has the error '<Error>'
+Examples: 
+	| No | Variable                                  | Error                                                                                                                |
+	| 1  | [[my(-1).var]]                            | Recordset index [ -1 ] is not greater than zero                                                                      |
+	| 2  | [[rec"()".a]]                             | Variable name [[rec"()".a]] contains invalid character(s). Only use alphanumeric _ and -                             |
+	| 3  | [[rec.a]]                                 | Variable name [[rec.a]] contains invalid character(s). Only use alphanumeric _ and -                                 |
+	| 4  | [[1]]                                     | Recordset field [[1]] begins with a number                                                                           |
+	| 5  | [[@]]                                     | Variable name [[@]] contains invalid character(s). Only use alphanumeric _ and -                                     |
+	| 6  | [[var#]]                                  | Variable name [[var#]] contains invalid character(s). Only use alphanumeric _ and -                                  |
+	| 7  | [[var]]00]]                               | Invalid region detected: A close ]] without a related open [[                                                        |
+	| 8  | [[]]                                      | Variable name [[]] contains invalid character(s). Only use alphanumeric _ and -                                      |
+	| 9  | [[r(q).a]][[r()..]][[r"]][[r()]][[]][[1]] | Variable name [[r(q).a]][[r()..]][[r"]][[r()]][[]][[1]] contains invalid character(s). Only use alphanumeric _ and - |
+	| 10 | [[var]]00[[                               | Invalid region detected: An open [[ without a related close ]]                                                       |
+
+Scenario Outline: Insert for All FilterType and Default Provider Case Insensitive
+	Given I have the following intellisense options '<varlist>'
+	And the filter type is '<filterType>'
+	And the current text in the textbox is '<input>'
+	And the cursor is at index '<index>'		
+	And the provider used is '<provider>'	
+	And the suggestion list as '<dropDownList>'		
+	When I select the following string option '<option>'
+	Then the result text should be "<result>" with caret position will be '<caretposition>'
+Examples: 
+	| testName | varlist                                                                                | filterType | input                 | index | dropDownList                                                                 | option          | result                 | provider | caretposition |
+	| 1        | [[Var]],[[VAR2]],[[Rec()]],[[rEc().var]],[[rec().VAR2]]                                | All        | text var              | 8     | [[Var]],[[VAR2]],[[rEc().var]],[[rec().VAR2]]                                | [[Var]]         | text [[Var]]           | Default  | 12            |
+	| 2        | [[var]],[[Var2]],[[rec()]],[[rec().var2]],[[rec().var]]                                | All        | text[[var             | 9     | [[var]],[[Var2]],[[rec().var]],[[rec().var2]]                                | [[Var2]]        | text[[Var2]]           | Default  | 12            |
+	| 3        | [[var]],[[var2]],[[REC()]],[[rec().VAR2]],[[rec().var]]                                | All        | text[[REC().var]]     | 15    | [[rec().var]],[[rec().VAR2]]                                                 | [[rec().VAR2]]  | text[[rec().VAR2]]     | Default  | 18            |
+	| 4        | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | [[                    | 2     | [[var]],[[var2]],[[rec().var]],[[rec().var2]]                                | [[var2]]        | [[var2]]               | Default  | 8             |
+	| 5        | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | text[[REC().[[var     | 17    | [[var]],[[var2]]                                                             | [[var2]]        | text[[REC().[[var2]]   | Default  | 20            |
+	| 6        | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | text[[rec().[[var]]   | 17    | [[var]],[[var2]]                                                             | [[var2]]        | text[[rec().[[var2]]   | Default  | 20            |
+	| 7        | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | text[[rec().[[var]]]] | 17    | [[var]],[[var2]]                                                             | [[var2]]        | text[[rec().[[var2]]]] | Default  | 20            |
+	| 8        | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec(*).var2]],[[rec().var]],[[rec(*).var]] | All        | [[var]]v              | 8     | [[var]],[[var2]],[[rec().var]],[[rec(*).var]],[[rec().var2]],[[rec(*).var2]] | [[rec(*).var]]  | [[var]][[rec(*).var]]  | Default  | 21            |
+	| 9        | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | [[var]][[             | 9     | [[var]],[[var2]],[[rec().var]],[[rec().var2]]                                | [[rec().var]]   | [[var]][[rec().var]]   | Default  | 20            |
+	| 10       | [[var]],[[VAR2]],[[REC()]],[[rec().var2]],[[rec(*).var2]],[[rec().var]],[[REC(*).var]] | All        | [[var]][[VAR         | 12    | [[var]],[[VAR2]],[[rec(*).var2]],[[rec().var2]],[[REC(*).var]],[[rec().var]] | [[rec(*).var2]] | [[var]][[rec(*).var2]] | Default  | 22            |
+	| 11       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec(*).var2]],[[rec().var]],[[rec(*).var]] | All        | [[var]][[var]]        | 12    | [[var]],[[var2]],[[rec().var]],[[rec(*).var]],[[rec().var2]],[[rec(*).var2]] | [[rec(*).var2]] | [[var]][[rec(*).var2]] | Default  | 22            |
+	| 12       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | [[var]]               | 7     |                                                                              |                 | [[var]]                | Default  | 7             |
+	| 13       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | [[var]] text          | 13    |                                                                              |                 | [[var]] text           | Default  | 13            |
+	| 14       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | text[[var2]]text      | 10    | [[var2]],[[rec().var2]]                                                      | [[rec().var2]]  | text[[rec().var2]]text | Default  | 18            |
+	| 15       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | r                     | 1     | [[var]],[[var2]],[[rec().var]],[[rec().var2]]                                | [[rec().var2]]  | [[rec().var2]]         | Default  | 14            |
+	| 16       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | [[rec([[va]]).var]]   | 10    | [[var]],[[var2]],[[rec().var]],[[rec().var2]]                                | [[var]]         | [[rec([[var]]).var]]   | Default  | 13            |
+	| 17       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[rec().var]]                                | All        | [[[[a]]]]             | 5     | [[var]],[[var2]],[[rec().var]],[[rec().var2]]                                | [[var]]         | [[var]]]]              | Default  | 7             |
+	| 18       | [[var]],[[var2]],[[REC()]],[[rec().var2]],[[REc().var]]                                | All        | [[                    | 2     | [[var]],[[var2]],[[REc().var]],[[rec().var2]]                                | [[var]]         | [[var]]                | Default  | 7             |

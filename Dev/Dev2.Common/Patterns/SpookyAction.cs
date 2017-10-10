@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,10 +14,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2.Common
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     ///     Base class for all spooky action at a distanced impls
@@ -57,8 +57,7 @@ namespace Dev2.Common
         /// <returns></returns>
         public TReflect FindMatch(THandle typeOf)
         {
-            TReflect result;
-            if (!_options.TryGetValue(typeOf, out result))
+            if (!_options.TryGetValue(typeOf, out TReflect result))
             {
                 lock (_options)
                 {

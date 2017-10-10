@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Runtime.ServiceModel.Data;
 
@@ -22,16 +23,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
     public class PluginInvokeArgs
     {
         public string AssemblyLocation { get; set; }
-
         public string AssemblyName { get; set; }
-
         public string Fullname { get; set; }
-
         public string Method { get; set; }
-
-        public List<MethodParameter> Parameters { get; set; }
-
+        public List<IDev2MethodInfo> MethodsToRun { get; set; } 
+        public IPluginConstructor PluginConstructor { get; set; }
         public IOutputFormatter OutputFormatter { get; set; }
-
+        public List<MethodParameter> Parameters { get; set; }
     }
 }

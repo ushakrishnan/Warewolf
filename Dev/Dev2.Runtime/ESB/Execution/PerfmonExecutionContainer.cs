@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using Dev2.Common.Interfaces.Monitoring;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 
 namespace Dev2.Runtime.ESB.Execution
@@ -27,7 +27,6 @@ namespace Dev2.Runtime.ESB.Execution
             _totalErrors = _locater.GetCounter("Total Errors");
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
-            //_counter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Request Per Second");
         }
 
         #region Implementation of IEsbExecutionContainer

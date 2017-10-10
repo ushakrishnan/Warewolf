@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Dev2.Activities;
@@ -18,6 +17,9 @@ using Dev2.Activities.Debug;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
@@ -27,9 +29,9 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Storage;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
 
     /// <summary>
@@ -37,7 +39,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
     /// Status : New
     /// Purpose : To provide an activity that can read a folder's contents via FTP, FTPS and file system
     /// </summary>
-    [ToolDescriptorInfo("FileFolder-ReadFolder", "Read Folder", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Read Folder_Tags")]
+    [ToolDescriptorInfo("FileFolder-ReadFolder", "Read Folder", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Read_Folder")]
     public class DsfFolderRead : DsfAbstractFileActivity, IPathInput
     {
 
@@ -148,8 +150,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Properties
 
-        // ReSharper disable MemberCanBePrivate.Global
-        // ReSharper disable UnusedAutoPropertyAccessor.Global
+        
+        
         /// <summary>
         /// Gets or sets the files option.
         /// </summary>
@@ -175,7 +177,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         /// <summary>
         /// Gets or sets the files and folders option.
         /// </summary>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         [Inputs("Files & Folders")]
         [FindMissing]
         public bool IsFilesAndFoldersSelected

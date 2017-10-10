@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,8 +12,7 @@ using System;
 using System.Windows;
 using Caliburn.Micro;
 using Dev2.Common.Utils;
-using Dev2.Interfaces;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Newtonsoft.Json.Linq;
 
 namespace Dev2.Webs.Callbacks
@@ -22,13 +21,13 @@ namespace Dev2.Webs.Callbacks
     {
         protected readonly IEventAggregator EventPublisher;
 
-        protected WebsiteCallbackHandler(IEventAggregator eventPublisher, IEnvironmentRepository currentEnvironmentRepository, IShowDependencyProvider showDependencyProvider = null)
+        protected WebsiteCallbackHandler(IEventAggregator eventPublisher, IServerRepository currentServerRepository, IShowDependencyProvider showDependencyProvider = null)
         {
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
-            VerifyArgument.IsNotNull("currentEnvironmentRepository", currentEnvironmentRepository);
+            VerifyArgument.IsNotNull("currentEnvironmentRepository", currentServerRepository);
             EventPublisher = eventPublisher;
 
-            CurrentEnvironmentRepository = currentEnvironmentRepository;
+            CurrentServerRepository = currentServerRepository;
         }
 
 
@@ -36,11 +35,11 @@ namespace Dev2.Webs.Callbacks
 
         public Window Owner { get; set; }
 
-        public IEnvironmentRepository CurrentEnvironmentRepository { get; private set; }
+        public IServerRepository CurrentServerRepository { get; private set; }
 
         #endregion
 
-        protected abstract void Save(IEnvironmentModel environmentModel, dynamic jsonArgs);
+        protected abstract void Save(IServer server, dynamic jsonArgs);
 
         #region Navigate
 
@@ -54,7 +53,8 @@ namespace Dev2.Webs.Callbacks
 
         public ILayoutObjectViewModel SelectedLayoutObject => null;
 
-        public virtual void Save(string value, IEnvironmentModel environmentModel, bool closeBrowserWindow = true)
+        public virtual void Save(string value, IServer server) => Save(value, server, true);
+        public virtual void Save(string value, IServer server, bool closeBrowserWindow)
         {
             if(closeBrowserWindow)
             {
@@ -63,23 +63,23 @@ namespace Dev2.Webs.Callbacks
 
             if(string.IsNullOrEmpty(value))
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
             value = JSONUtils.ScrubJSON(value);
 
             dynamic jsonObj = JObject.Parse(value);
-            Save(environmentModel, jsonObj);
+            Save(server, jsonObj);
         }
 
         public virtual void Close()
         {
-            if(Owner != null)
-            {
-                Owner.Close();
-            }
+            Owner?.Close();
         }
 
+        
+#pragma warning disable 67
         public event NavigateRequestedEventHandler NavigateRequested;
+#pragma warning restore 67
 
         #endregion
 

@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
@@ -11,12 +11,23 @@ using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 using Dev2.Common.Interfaces.Core;
+using Dev2.Common.Interfaces.Enums;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class FetchWcfSources : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public string HandlesType()
         {
             return "FetchWcfSources";
@@ -26,7 +37,7 @@ namespace Dev2.Runtime.ESB.Management.Services
         {
             var serializer = new Dev2JsonSerializer();
 
-            // ReSharper disable MaximumChainedReferences
+            
          
             List<WcfServiceSourceDefinition> list = Resources.GetResourceList(GlobalConstants.ServerWorkspaceID).Where(a => a.ResourceType == "WcfSource").Select(a =>
             {
@@ -48,7 +59,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 return null;
             }).ToList();
             return serializer.SerializeToBuilder(new ExecuteMessage() { HasError = false, Message = serializer.SerializeToBuilder(list) });
-            // ReSharper restore MaximumChainedReferences
+            
         }
 
         public DynamicService CreateServiceEntry()
@@ -62,6 +73,6 @@ namespace Dev2.Runtime.ESB.Management.Services
             return findServices;
         }
 
-        public ResourceCatalog Resources => ResourceCatalog.Instance;
+        private ResourceCatalog Resources => ResourceCatalog.Instance;
     }
 }

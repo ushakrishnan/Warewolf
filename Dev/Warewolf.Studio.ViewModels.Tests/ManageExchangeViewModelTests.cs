@@ -1,12 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.SaveDialog;
+using Dev2.Studio.Interfaces;
+using Dev2.Threading;
 using Microsoft.Practices.Prism.PubSubEvents;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable InconsistentNaming
+
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -18,16 +20,19 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         public ManageExchangeSourceViewModel GetViewModelWithSource()
         {
-            return new ManageExchangeSourceViewModel(new Mock<IManageExchangeSourceModel>().Object, new Mock<IEventAggregator>().Object,new ExchangeSourceDefinition()
+            var mock = new Mock<IManageExchangeSourceModel>();
+            var exchangeSourceDefinition = new ExchangeSourceDefinition()
             {
                 AutoDiscoverUrl = "test",
                 Password = "test",
                 UserName = "test",
                 Path = "test",
                 ResourceName = "test exchange",
-                Name = "test exchange",
                 Type = enSourceType.ExchangeSource,
-            } )
+            };
+            mock.Setup(model => model.FetchSource(It.IsAny<Guid>()))
+                .Returns(exchangeSourceDefinition);
+            return new ManageExchangeSourceViewModel(mock.Object, new Mock<IEventAggregator>().Object,exchangeSourceDefinition, new SynchronousAsyncWorker())
             {
                 Name = "Exchange Source",
                 AutoDiscoverUrl = "test Url",
@@ -117,6 +122,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(viewModel.AutoDiscoverLabel);
             Assert.IsNotNull(viewModel.EmailTo);
             Assert.IsNotNull(viewModel.EmailFromLabel);
+            Assert.IsNotNull(viewModel.TestLabel);
             Assert.IsNotNull(viewModel.EmailToLabel);
             Assert.IsNotNull(viewModel.Password);
             Assert.IsNotNull(viewModel.PasswordLabel);

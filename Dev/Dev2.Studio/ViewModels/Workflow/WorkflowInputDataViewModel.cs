@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,29 +17,28 @@ using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Data;
-using Dev2.Data.Binary_Objects;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList.Contract.Binary_Objects;
 using Dev2.Instrumentation;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Security;
 using Dev2.Session;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Network;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Dev2.Threading;
-using Dev2.ViewModels.Workflow;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-// ReSharper disable MemberCanBePrivate.Global
 
-// ReSharper disable CheckNamespace
+
+
 namespace Dev2.Studio.ViewModels.Workflow
-// ReSharper restore CheckNamespace
+
 {
     public class WorkflowInputDataViewModel : SimpleBaseViewModel
     {
@@ -102,9 +101,9 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
 
             _resourceModel = input.ResourceModel;
-            // ReSharper disable DoNotCallOverridableMethodsInConstructor
+            
             DisplayName = @"Debug input data";
-            // ReSharper restore DoNotCallOverridableMethodsInConstructor
+            
             _dataListConversionUtils = new DataListConversionUtils();
             _popupController = CustomContainer.Get<IPopupController>();
         }
@@ -143,7 +142,9 @@ namespace Dev2.Studio.ViewModels.Workflow
         public void ViewClosed()
         {
             if (!CloseRequested)
+            {
                 SendFinishedMessage();
+            }
         }
 
         /// <summary>
@@ -287,11 +288,15 @@ namespace Dev2.Studio.ViewModels.Workflow
             context?.BindToModel();
 
             var clientContext = _resourceModel.Environment.Connection;
-            if (clientContext == null) return;
+            if (clientContext == null)
+            {
+                return;
+            }
+
             var dataList = XElement.Parse(DebugTo.XmlData);
             dataList.Add(new XElement(@"BDSDebugMode", DebugTo.IsDebugMode));
             dataList.Add(new XElement(@"DebugSessionID", DebugTo.SessionID));
-            dataList.Add(new XElement(@"EnvironmentID", _resourceModel.Environment.ID));
+            dataList.Add(new XElement(@"EnvironmentID", _resourceModel.Environment.EnvironmentID));
             OnDebugExecutionStart();
             SendExecuteRequest(dataList);
         }
@@ -305,7 +310,7 @@ namespace Dev2.Studio.ViewModels.Workflow
         {
             _popupController.Show(StringResources.DataInput_Error,
                                   StringResources.DataInput_Error_Title,
-                                  MessageBoxButton.OK, MessageBoxImage.Error, string.Empty, false, true, false, false);
+                                  MessageBoxButton.OK, MessageBoxImage.Error, string.Empty, false, true, false, false, false, false);
 
             IsInError = true;
         }
@@ -362,7 +367,10 @@ namespace Dev2.Studio.ViewModels.Workflow
             SetXmlData();
             DebugTo.XmlData = XmlData;
             DebugTo.RememberInputs = RememberInputs;
-            if (DebugTo.DataList != null) Broker.PersistDebugSession(DebugTo);
+            if (DebugTo.DataList != null)
+            {
+                Broker.PersistDebugSession(DebugTo);
+            }
 
             SendFinishedMessage();
             RequestClose(ViewModelDialogResults.Cancel);
@@ -495,14 +503,15 @@ namespace Dev2.Studio.ViewModels.Workflow
         /// <summary>
         /// Used to transform the WorkflowInputs into XML
         /// </summary>
-        public void SetXmlData()
+        public void SetXmlData() => SetXmlData(false);
+        public void SetXmlData(bool includeBlank)
         {
             var dataListObject = new JObject();
             var objects = WorkflowInputs.Where(item => item.IsObject);
             var recSets = WorkflowInputs.Where(item => item.CanHaveMutipleRows && !item.IsObject);
             var scalars = WorkflowInputs.Where(item => !item.CanHaveMutipleRows && !item.IsObject);
             AddScalarsToObject(scalars, dataListObject);
-            AddRecordsetsToObject(recSets, dataListObject);
+            AddRecordsetsToObject(recSets, dataListObject,includeBlank);
             AddObjectsToObject(objects, dataListObject);
 
             var dataListString = dataListObject.ToString(Formatting.Indented);
@@ -519,7 +528,7 @@ namespace Dev2.Studio.ViewModels.Workflow
             catch (Exception e)
             {
                 XmlData = @"Invalid characters entered";
-                Dev2Logger.Error(e.StackTrace, e);
+                Dev2Logger.Error(e.StackTrace, e, "Warewolf Error");
             }
         }
 
@@ -565,7 +574,7 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
         }
 
-        private static void AddRecordsetsToObject(IEnumerable<IDataListItem> recSets, JObject dataListObject)
+        private static void AddRecordsetsToObject(IEnumerable<IDataListItem> recSets, JObject dataListObject,bool includeBlank = false)
         {
             var groupedRecsets = recSets.GroupBy(item => item.Recordset);
             foreach (var groupedRecset in groupedRecsets)
@@ -585,7 +594,7 @@ namespace Dev2.Studio.ViewModels.Workflow
                         }
                         jObjForArray.Add(new JProperty(listItem.Field, listItem.Value ?? string.Empty));
                     }
-                    if (!empty)
+                    if (!empty || includeBlank)
                     {
                         newArray.Add(jObjForArray);
                     }
@@ -685,7 +694,7 @@ namespace Dev2.Studio.ViewModels.Workflow
         }
 
 
-        // ReSharper disable once ParameterTypeCanBeEnumerable.Local
+        
         private bool AddBlankRowToRecordset(IDataListItem dlItem, IList<IScalar> columns, int indexToInsertAt, int indexNum)
         {
             bool itemsAdded = false;
@@ -736,48 +745,10 @@ namespace Dev2.Studio.ViewModels.Workflow
             var result = new WorkflowInputDataViewModel(debugInfoModel, sessionId);
             if (resourceModel?.Environment?.AuthorizationService != null)
             {
-                result.CanDebug = resourceModel.Environment.AuthorizationService.GetResourcePermissions(resourceModel.ID).CanDebug();
+                result.CanDebug = resourceModel.UserPermissions.CanDebug();
             }
 
             return result;
         }
-    }
-
-    internal class ScalarNameComparer : IEqualityComparer<IScalar>
-    {
-        #region Implementation of IEqualityComparer<in IScalar>
-
-        /// <summary>
-        /// Determines whether the specified objects are equal.
-        /// </summary>
-        /// <returns>
-        /// true if the specified objects are equal; otherwise, false.
-        /// </returns>
-        /// <param name="x">The first object of type <paramref name="x"/> to compare.</param><param name="y">The second object of type <paramref name="y"/> to compare.</param>
-        public bool Equals(IScalar x, IScalar y)
-        {
-            if (x == null) return false;
-            if (y == null) return false;
-            if (x.Name == null && y.Name == null) return true;
-            if (x.Name != null)
-            {
-                return x.Name.Equals(y.Name, StringComparison.OrdinalIgnoreCase);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Returns a hash code for the specified object.
-        /// </summary>
-        /// <returns>
-        /// A hash code for the specified object.
-        /// </returns>
-        /// <param name="obj">The <see cref="T:System.Object"/> for which a hash code is to be returned.</param>
-        public int GetHashCode(IScalar obj)
-        {
-            return obj.Name.GetHashCode();
-        }
-
-        #endregion
     }
 }

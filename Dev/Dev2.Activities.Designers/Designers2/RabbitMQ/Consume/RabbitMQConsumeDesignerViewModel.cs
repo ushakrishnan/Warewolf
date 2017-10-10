@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,6 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Common.Interfaces.RabbitMQ;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using System;
@@ -24,25 +23,29 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
-// ReSharper disable ConvertPropertyToExpressionBody
+using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable InconsistentNaming
+
+
+
 
 namespace Dev2.Activities.Designers2.RabbitMQ.Consume
 {
     public class RabbitMQConsumeDesignerViewModel : ActivityDesignerViewModel, INotifyPropertyChanged
     {
         private readonly IRabbitMQSourceModel _model;
-
+        private readonly IShellViewModel _shellViewModel;
         public RabbitMQConsumeDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
             VerifyArgument.IsNotNull("modelItem", modelItem);
 
-            IShellViewModel shellViewModel = CustomContainer.Get<IShellViewModel>();
-            IServer server = shellViewModel.ActiveServer;
-            _model = CustomContainer.CreateInstance<IRabbitMQSourceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel);
+            _shellViewModel = CustomContainer.Get<IShellViewModel>();
+            IServer server = _shellViewModel.ActiveServer;
+            _model = CustomContainer.CreateInstance<IRabbitMQSourceModel>(server.UpdateRepository, server.QueryProxy, _shellViewModel);
             SetupCommonViewModelProperties();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Rabbit_MQ_Consume;
         }
 
         public RabbitMQConsumeDesignerViewModel(ModelItem modelItem, IRabbitMQSourceModel model)
@@ -57,8 +60,7 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
 
         private void SetupCommonViewModelProperties()
         {
-            ShowLarge = true;
-            ThumbVisibility = Visibility.Visible;
+            ShowLarge = false;
 
             EditRabbitMQSourceCommand = new RelayCommand(o => EditRabbitMQSource(), o => IsRabbitMQSourceSelected);
             NewRabbitMQSourceCommand = new RelayCommand(o => NewRabbitMQSource());
@@ -74,19 +76,19 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
 
         public RelayCommand EditRabbitMQSourceCommand { get; private set; }
 
-        public bool IsRabbitMQSourceFocused { get { return (bool)GetValue(IsRabbitMQSourceFocusedProperty); } set { SetValue(IsRabbitMQSourceFocusedProperty, value); } }
+        public bool IsRabbitMQSourceFocused { get => (bool)GetValue(IsRabbitMQSourceFocusedProperty); set => SetValue(IsRabbitMQSourceFocusedProperty, value); }
         public static readonly DependencyProperty IsRabbitMQSourceFocusedProperty = DependencyProperty.Register("IsRabbitMQSourceFocused", typeof(bool), typeof(RabbitMQConsumeDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsQueueNameFocused { get { return (bool)GetValue(IsQueueNameFocusedProperty); } set { SetValue(IsQueueNameFocusedProperty, value); } }
+        public bool IsQueueNameFocused { get => (bool)GetValue(IsQueueNameFocusedProperty); set => SetValue(IsQueueNameFocusedProperty, value); }
         public static readonly DependencyProperty IsQueueNameFocusedProperty = DependencyProperty.Register("IsQueueNameFocused", typeof(bool), typeof(RabbitMQConsumeDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsPrefetchFocused { get { return (bool)GetValue(IsPrefetchFocusedProperty); } set { SetValue(IsPrefetchFocusedProperty, value); } }
+        public bool IsPrefetchFocused { get => (bool)GetValue(IsPrefetchFocusedProperty); set => SetValue(IsPrefetchFocusedProperty, value); }
         public static readonly DependencyProperty IsPrefetchFocusedProperty = DependencyProperty.Register("IsPrefetchFocused", typeof(bool), typeof(RabbitMQConsumeDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsResponseFocused { get { return (bool)GetValue(IsResponseFocusedProperty); } set { SetValue(IsResponseFocusedProperty, value); } }
+        public bool IsResponseFocused { get => (bool)GetValue(IsResponseFocusedProperty); set => SetValue(IsResponseFocusedProperty, value); }
         public static readonly DependencyProperty IsResponseFocusedProperty = DependencyProperty.Register("IsResponseFocused", typeof(bool), typeof(RabbitMQConsumeDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsTimeOutFocused { get { return (bool)GetValue(IsTimeOutFocusedProperty); } set { SetValue(IsTimeOutFocusedProperty, value); } }
+        public bool IsTimeOutFocused { get => (bool)GetValue(IsTimeOutFocusedProperty); set => SetValue(IsTimeOutFocusedProperty, value); }
         public static readonly DependencyProperty IsTimeOutFocusedProperty = DependencyProperty.Register("IsTimeOutFocused", typeof(bool), typeof(RabbitMQConsumeDesignerViewModel), new PropertyMetadata(default(bool)));
 
         private IRabbitMQServiceSourceDefinition _selectedRabbitMQSource;
@@ -100,7 +102,7 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
             set
             {
                 _selectedRabbitMQSource = value;
-                RabbitMQSourceResourceId = _selectedRabbitMQSource == null ? Guid.Empty : _selectedRabbitMQSource.ResourceID;
+                RabbitMQSourceResourceId = _selectedRabbitMQSource?.ResourceID ?? Guid.Empty;
                 OnPropertyChanged("IsRabbitMQSourceSelected");
                 EditRabbitMQSourceCommand.RaiseCanExecuteChanged();
             }
@@ -161,6 +163,35 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
             set { SetProperty(value); }
         }
 
+        public bool IsObject
+        {
+            get
+            {
+                var isObject = ModelItem.GetProperty<bool>("IsObject");
+                return isObject;
+            }
+            set
+            {
+                ModelItem.SetProperty("IsObject", value);
+                OnPropertyChanged();
+                OnPropertyChanged("ObjectName");
+            }
+        }
+
+        public string ObjectName
+        {
+            get
+            {
+                var objectName = ModelItem.GetProperty<string>("ObjectName");
+                return objectName;
+            }
+            set
+            {
+                ModelItem.SetProperty("ObjectName", value);
+                OnPropertyChanged();
+            }
+        }
+
         public string Result
         {
             get { return GetProperty<string>(); }
@@ -210,6 +241,10 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
             {
                 yield return error;
             }
+            foreach (var error in GetRuleSet("Prefetch").ValidateRules("'Prefetch'", () => IsPrefetchFocused = true))
+            {
+                yield return error;
+            }
         }
 
         private IRuleSet GetRuleSet(string propertyName)
@@ -225,6 +260,12 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
                 case "QueueName":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => QueueName));
                     break;
+
+                case "Prefetch":
+                    ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => Prefetch));
+                    break;
+                default:
+                    break;
             }
             return ruleSet;
         }
@@ -234,19 +275,13 @@ namespace Dev2.Activities.Designers2.RabbitMQ.Consume
         private void OnPropertyChanged(string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

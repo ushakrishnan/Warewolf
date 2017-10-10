@@ -14,6 +14,10 @@ namespace Warewolf.Studio.Views
             InitializeComponent();
         }
 
+        public void TestSend()
+        {
+            TestSendCommand.Command.Execute(null);
+        }
 
         #region Implementation of ICheckControlEnabledView
 
@@ -26,6 +30,8 @@ namespace Warewolf.Studio.Views
                 case "Save":
                     var viewModel = DataContext as ManageEmailSourceViewModel;
                     return viewModel != null && viewModel.OkCommand.CanExecute(null);
+                default:
+                    break;
             }
             return false;
         }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -10,11 +12,12 @@ using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.DotNet;
 using Dev2.Studio.Core.Activities.Utils;
+using Microsoft.Practices.Prism;
 using Warewolf.Core;
 
-// ReSharper disable ExplicitCallerInfoArgument
 
-// ReSharper disable NotAccessedField.Local
+
+
 
 namespace Dev2.Activities.Designers2.Core.InputRegion
 {
@@ -23,25 +26,85 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
          private readonly ModelItem _modelItem;
         private readonly IActionToolRegion<IPluginAction> _action;
         bool _isEnabled;
-        private IList<IServiceInput> _inputs;
+        private ICollection<IServiceInput> _inputs;
         private bool _isInputsEmptyRows;
+        private readonly IActionInputDatatalistMapper _datatalistMapper;
 
+        
         public DotNetInputRegion()
         {
             ToolRegionName = "DotNetInputRegion";
         }
 
         public DotNetInputRegion(ModelItem modelItem, IActionToolRegion<IPluginAction> action)
+            : this(new ActionInputDatatalistMapper())
         {
             ToolRegionName = "DotNetInputRegion";
             _modelItem = modelItem;
             _action = action;
             _action.SomethingChanged += SourceOnSomethingChanged;
             var inputsFromModel = _modelItem.GetProperty<List<IServiceInput>>("Inputs");
-            Inputs = new List<IServiceInput>(inputsFromModel ?? new List<IServiceInput>());
+            var serviceInputs = inputsFromModel ?? new List<IServiceInput>();
+            Inputs = new ObservableCollection<IServiceInput>();
+            var inputs = new ObservableCollection<IServiceInput>();
+            inputs.CollectionChanged += InputsCollectionChanged;
+            inputs.AddRange(serviceInputs);
+            Inputs = inputs;
             if (inputsFromModel == null)
+            {
                 UpdateOnActionSelection();
-            IsEnabled = action != null && action.SelectedAction != null;
+            }
+
+            IsEnabled = action?.SelectedAction != null;
+        }
+
+        
+        public DotNetInputRegion(IActionInputDatatalistMapper datatalistMapper)
+        {
+            _datatalistMapper = datatalistMapper;
+        }
+
+        private void InputsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            AddItemPropertyChangeEvent(e);
+            RemoveItemPropertyChangeEvent(e);
+        }
+
+        private void AddItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        {
+            if (args.NewItems == null)
+            {
+                return;
+            }
+
+            foreach (INotifyPropertyChanged item in args.NewItems)
+            {
+                if (item != null)
+                {
+                    item.PropertyChanged += ItemPropertyChanged;
+                }
+            }
+        }
+
+        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            _modelItem.SetProperty("Inputs", Inputs.ToList());
+        }
+
+        private void RemoveItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        {
+            if (args.OldItems == null)
+            {
+                return;
+            }
+
+            foreach (INotifyPropertyChanged item in args.OldItems)
+            {
+                if (item != null)
+                {
+                    item.PropertyChanged -= ItemPropertyChanged;
+                }
+            }
         }
 
         private void SourceOnSomethingChanged(object sender, IToolRegion args)
@@ -50,9 +113,9 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
             {
                 Errors.Clear();
 
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 UpdateOnActionSelection();
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 OnPropertyChanged(@"Inputs");
                 OnPropertyChanged(@"IsEnabled");
             }
@@ -68,20 +131,18 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
 
         private void CallErrorsEventHandler()
         {
-            if (ErrorsHandler != null)
-            {
-                ErrorsHandler(this, new List<string>(Errors));
-            }
+            ErrorsHandler?.Invoke(this, new List<string>(Errors));
         }
 
         private void UpdateOnActionSelection()
         {
             Inputs = new List<IServiceInput>();
             IsEnabled = false;
-            if (_action != null && _action.SelectedAction != null)
+            if (_action?.SelectedAction != null)
             {
 
                 Inputs = _action.SelectedAction.Inputs;
+                _datatalistMapper.MapInputsToDatalist(Inputs);
                 IsInputsEmptyRows = Inputs.Count < 1;
                 IsEnabled = true;
             }
@@ -135,8 +196,7 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as DotNetInputRegionClone;
-            if (region != null)
+            if (toRestore is DotNetInputRegionClone region)
             {
                 Inputs.Clear();
                 if (region.Inputs != null)
@@ -172,26 +232,32 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #region Implementation of IDotNetInputRegion
 
-        public IList<IServiceInput> Inputs
+        public ICollection<IServiceInput> Inputs
         {
             get
             {
-                return _modelItem.GetProperty<List<IServiceInput>>("Inputs") ?? new List<IServiceInput>();
+                return _inputs;
             }
             set
             {
-                _inputs = value;
-                OnPropertyChanged();
-                _modelItem.SetProperty("Inputs", value);
-                OnPropertyChanged();
+                if (value != null)
+                {
+                    _inputs = value;
+                    _modelItem.SetProperty("Inputs", value.ToList());
+                    OnPropertyChanged();
+                }
+                else
+                {
+                    _inputs.Clear();
+                    _modelItem.SetProperty("Outputs", _inputs.ToList());
+                    OnPropertyChanged();
+                }
+
             }
         }
 

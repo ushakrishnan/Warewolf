@@ -10,17 +10,30 @@ using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Runtime.Interfaces;
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class SaveExchangeServiceSource : IEsbManagementEndpoint
     {
         private IExplorerServerResourceRepository _serverExplorerRepository;
         private IResourceCatalog _resourceCatalogue;
+
+
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
@@ -28,10 +41,10 @@ namespace Dev2.Runtime.ESB.Management.Services
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
-                Dev2Logger.Info("Save Exchange Service Source");
-                StringBuilder resourceDefinition;
 
-                values.TryGetValue("ExchangeSource", out resourceDefinition);
+                Dev2Logger.Info("Save Exchange Service Source", GlobalConstants.WarewolfInfo);
+
+                values.TryGetValue("ExchangeSource", out StringBuilder resourceDefinition);
 
                 var src = serializer.Deserialize<ExchangeSourceDefinition>(resourceDefinition);
                 var con = new ExchangeSource
@@ -40,8 +53,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     UserName = src.UserName,
                     Password = src.Password,
                     Timeout = src.Timeout,
-                    ResourceName = src.Name,
-                    Name = src.Name,
+                    ResourceName = src.ResourceName,
                     ResourceID = src.Id,
                     Type = enSourceType.ExchangeSource,
                     ResourceType = "ExchangeSource"
@@ -55,7 +67,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
 
             return serializer.SerializeToBuilder(msg);

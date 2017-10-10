@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +22,7 @@ using Dev2.Collections;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.Collections;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Common.Interfaces.Versioning;
@@ -29,26 +30,26 @@ using Dev2.Communication;
 using Dev2.Services;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
+using Microsoft.Practices.Prism.Mvvm;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.Models
 {
     public class ResourceModel : ValidationController, IDataErrorInfo, IContextualResourceModel
     {
         #region Class Members
 
-        private readonly List<string> _tagList;
         private bool _allowCategoryEditing = true;
         private string _category;
         private string _comment;
         private string _dataList;
         private string _dataTags;
         private string _displayName = string.Empty;
-        private IEnvironmentModel _environment;
+        private IServer _environment;
         private string _helpLink;
         private bool _isDatabaseService;
         private bool _isDebugMode;
@@ -74,16 +75,16 @@ namespace Dev2.Studio.Core.Models
 
         #region Constructors
 
-        public ResourceModel(IEnvironmentModel environment)
+        public ResourceModel(IServer environment)
             : this(environment, EventPublishers.Aggregator)
         {
         }
 
-        public ResourceModel(IEnvironmentModel environment, IEventAggregator eventPublisher)
+        public ResourceModel(IServer environment, IEventAggregator eventPublisher)
         {
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
 
-            _tagList = new List<string>();
+            TagList = new List<string>();
             Environment = environment;
 
             if (environment?.Connection != null)
@@ -130,7 +131,7 @@ namespace Dev2.Studio.Core.Models
             }
         }
 
-        public IEnvironmentModel Environment
+        public IServer Environment
         {
             get { return _environment; }
             private set
@@ -140,13 +141,12 @@ namespace Dev2.Studio.Core.Models
                 {
                     _validationService = new DesignValidationService(_environment.Connection.ServerEvents);
 
-                    // BUG 9634 - 2013.07.17 - TWR : added
-                    _validationService.Subscribe(_environment.ID, ReceiveEnvironmentValidation);
+                    _validationService.Subscribe(_environment.EnvironmentID, ReceiveEnvironmentValidation);
                 }
                 NotifyOfPropertyChange(nameof(Environment));
-                // ReSharper disable NotResolvedInText
+                
                 NotifyOfPropertyChange("CanExecute");
-                // ReSharper restore NotResolvedInText
+                
             }
         }
 
@@ -272,7 +272,7 @@ namespace Dev2.Studio.Core.Models
             }
         }
 
-        public List<string> TagList => _tagList;
+        public List<string> TagList { get; }
 
         public string DataList
         {
@@ -433,15 +433,18 @@ namespace Dev2.Studio.Core.Models
             OnDesignValidationReceived?.Invoke(this, memo);
         }
 
+        public IView GetView(Func<IView> view)
+        {
+            return view.Invoke();
+        }
+
         public void ClearErrors()
         {
             _errors.Clear();
             NotifyOfPropertyChange(() => Errors);
             NotifyOfPropertyChange(() => IsValid);
-        }
+        }      
 
-
-        // BUG 9634 - 2013.07.17 - TWR : added
         void ReceiveEnvironmentValidation(DesignValidationMemo memo)
         {
             foreach (var error in memo.Errors)
@@ -525,24 +528,26 @@ namespace Dev2.Studio.Core.Models
 
         public string ConnectionString { get; set; }
 
+        public StringBuilder ToServiceDefinition() => ToServiceDefinition(false);
 
-        public StringBuilder ToServiceDefinition(bool prepairForDeployment = false)
+        public StringBuilder ToServiceDefinition(bool prepairForDeployment)
         {
             StringBuilder result = new StringBuilder();
 
             if(ResourceType == ResourceType.WorkflowService)
             {
-                var msg = Environment.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, false);
                 StringBuilder xaml = WorkflowXaml;
-
-                if ((xaml==null || xaml.Length==0) && msg?.Message != null)
+                if (xaml==null || xaml.Length==0)
                 {
-                    xaml = msg.Message;
+                    var msg = Environment.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, false);
+                    if (msg?.Message != null)
+                    {
+                        xaml = msg.Message;
+                    }                    
                 }
                 if (xaml != null && xaml.Length != 0)
                 {
                     var service = CreateWorkflowXElement(xaml);
-                    // save to the string builder ;)
                     XmlWriterSettings xws = new XmlWriterSettings { OmitXmlDeclaration = true };
                     using (XmlWriter xwriter = XmlWriter.Create(result, xws))
                     {
@@ -550,7 +555,7 @@ namespace Dev2.Studio.Core.Models
                     }
                 }
             }
-            else if (ResourceType == ResourceType.Source || ResourceType == ResourceType.Service || ResourceType == ResourceType.Server)
+            else if (ResourceType == ResourceType.Source || ResourceType == ResourceType.Server)
             {
                 var msg = Environment.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, prepairForDeployment);
                 result = msg.Message;
@@ -558,12 +563,6 @@ namespace Dev2.Studio.Core.Models
                 if(result == null || result.Length == 0)
                 {
                     result = WorkflowXaml;
-                }
-
-                if(ResourceType == ResourceType.Service)
-                {
-                    var completeDefintion = CreateServiceXElement(result);
-                    result = completeDefintion.ToStringBuilder();
                 }
 
                 if(result != null)
@@ -617,36 +616,13 @@ namespace Dev2.Studio.Core.Models
             return service;
         }
 
-        XElement CreateServiceXElement(StringBuilder xaml)
-        {
-            XElement dataList = string.IsNullOrEmpty(DataList) ? new XElement("DataList") : XElement.Parse(DataList);
-            var content = xaml.Unescape();
-            content = content.Replace("&", "&amp;");
-            var contentElement = content.ToXElement();
-            XElement service = new XElement("Service",
-                new XAttribute("ID", ID),
-                new XAttribute("Version", Version?.ToString() ?? "1.0"),
-                new XAttribute("ServerID", ServerID.ToString()),
-                new XAttribute("Name", ResourceName ?? string.Empty),
-                new XAttribute("ResourceType", ServerResourceType ?? ResourceType.ToString()),
-                new XAttribute("IsValid", IsValid),
-                new XElement("DisplayName", ResourceName ?? string.Empty),
-                new XElement("Category", Category ?? string.Empty),
-                new XElement("AuthorRoles", string.Empty),
-                new XElement("Comment", Comment ?? string.Empty),
-                new XElement("Tags", Tags ?? string.Empty),
-                new XElement("HelpLink", HelpLink ?? string.Empty),
-                new XElement("UnitTestTargetWorkflowService", UnitTestTargetWorkflowService ?? string.Empty),
-                dataList,
-                new XElement("Actions", contentElement),
-                new XElement("ErrorMessages", WriteErrors())
-                );
-            return service;
-        }
-
         List<XElement> WriteErrors()
         {
-            if (Errors == null || Errors.Count == 0) return null;
+            if (Errors == null || Errors.Count == 0)
+            {
+                return null;
+            }
+
             var errorElements = new List<XElement>();
             foreach (var errorInfo in Errors)
             {
@@ -707,8 +683,7 @@ namespace Dev2.Studio.Core.Models
 
                 if (columnName == "HelpLink")
                 {
-                    Uri testUri;
-                    if (!Uri.TryCreate(HelpLink, UriKind.Absolute, out testUri))
+                    if (!Uri.TryCreate(HelpLink, UriKind.Absolute, out Uri testUri))
                     {
                         errMsg = "The help link is not in a valid format";
                         AddError(columnName, errMsg);

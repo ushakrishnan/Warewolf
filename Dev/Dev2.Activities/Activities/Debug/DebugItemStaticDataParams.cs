@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,30 +19,50 @@ namespace Dev2.Activities.Debug
         readonly string _operand;
 
         public DebugItemStaticDataParams(string value, string labelText)
+            : this(value, labelText, false)
+        {
+        }
+
+        public DebugItemStaticDataParams(string value, string labelText, bool mockSelected)
         {
             Value = value;
             LabelText = labelText;
             Type = DebugItemResultType.Value;
+            MockSelected = mockSelected;
         }
 
         public DebugItemStaticDataParams(string value, string variable, string labelText)
+            : this(value, variable, labelText, false)
+        {
+        }
+
+        public DebugItemStaticDataParams(string value, string variable, string labelText, bool mockSelected)
         {
             Value = value;
             LabelText = labelText;
             Variable = variable;
             Type = DebugItemResultType.Variable;
+            MockSelected = mockSelected;
         }
 
         public DebugItemStaticDataParams(string value, string variable, string labelText, string operand)
+            : this(value, variable, labelText, operand, false)
+        {
+        }
+
+        public DebugItemStaticDataParams(string value, string variable, string labelText, string operand, bool mockSelected)
         {
             Value = value;
             LabelText = labelText;
             _operand = operand;
             Variable = variable;
             Type = DebugItemResultType.Variable;
+            MockSelected = mockSelected;
         }
 
         public string Value { get; }
+
+        public bool MockSelected { get; }
 
         public override string LabelText { get; }
 
@@ -60,7 +80,8 @@ namespace Dev2.Activities.Debug
                         Value = Value,
                         Label = LabelText,
                         Variable = Variable,
-                        Operator = string.IsNullOrWhiteSpace(_operand) ? "" : "="
+                        Operator = string.IsNullOrWhiteSpace(_operand) ? "" : "=",
+                        MockSelected = MockSelected
                     }};
             return debugItemsResults;
         }

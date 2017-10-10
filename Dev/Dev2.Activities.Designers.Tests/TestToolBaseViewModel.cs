@@ -2,15 +2,14 @@
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable InconsistentNaming
+
+
 
 namespace Dev2.Activities.Designers.Tests
 {
@@ -63,14 +62,11 @@ namespace Dev2.Activities.Designers.Tests
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Providers.Validation.Rules;
 using Warewolf.Resource.Errors;
@@ -35,7 +36,10 @@ namespace Dev2.Validation
             {
                 var regions = DataListCleaningUtils.SplitIntoRegions(exp);
                 if (regions.Count > 1)
+                {
                     return CreatError();
+                }
+
                 return null;
             }
             return null;
@@ -48,7 +52,9 @@ namespace Dev2.Validation
             var rule = new IsSingleValueRule(() => value);
             var single = rule.Check();
             if (single != null)
+            {
                 errors.AddError(single.Message);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,24 +16,22 @@ using System.Net;
 using System.Reflection;
 using System.Windows;
 using Caliburn.Micro;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Diagnostics;
-using Dev2.Interfaces;
 using Dev2.Network;
 using Dev2.Services;
 using Dev2.Studio;
 using Dev2.Studio.Controller;
 using Dev2.Studio.Core.Helpers;
 using Dev2.Studio.Core.Services;
-using Dev2.Studio.Core.Services.System;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels;
 using Dev2.Threading;
 using Warewolf.Studio.ViewModels;
 
 namespace Dev2
 {
-    public class Bootstrapper : Bootstrapper<IMainViewModel>
+    public class Bootstrapper : Bootstrapper<IShellViewModel>
     {
         protected override void PrepareApplication()
         {
@@ -77,10 +75,9 @@ namespace Dev2
         protected override void Configure()
         {
             CustomContainer.Register<IWindowManager>(new WindowManager());
-            CustomContainer.Register<ISystemInfoService>(new SystemInfoService());
             CustomContainer.Register<IPopupController>(new PopupController());
-            var mainViewModel = new MainViewModel();
-            CustomContainer.Register<IMainViewModel>(mainViewModel);
+            var mainViewModel = new ShellViewModel();
+            CustomContainer.Register<IShellViewModel>(mainViewModel);
             CustomContainer.Register<IShellViewModel>(mainViewModel);
             CustomContainer.Register<IWindowsServiceManager>(new WindowsServiceManager());
             var conn = new ServerProxy("http://localHost:3142",CredentialCache.DefaultNetworkCredentials, new AsyncWorker());
@@ -97,8 +94,7 @@ namespace Dev2
         {
             if(_serverServiceStartedFromStudio)
             {
-                var app = Application.Current as IApp;
-                if(app != null)
+                if (Application.Current is IApp app)
                 {
                     app.ShouldRestart = true;
                 }
@@ -112,28 +108,28 @@ namespace Dev2
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
 
-            // ReSharper disable JoinDeclarationAndInitializer
-            // ReSharper disable RedundantAssignment
-            // ReSharper disable ConvertToConstant.Local
+            
+            
+            
             bool start = true;
-            // ReSharper restore ConvertToConstant.Local
-            // ReSharper restore RedundantAssignment
-            // ReSharper restore JoinDeclarationAndInitializer
+            
+            
+            
 #if !DEBUG
             start = CheckWindowsService();
 #endif
 
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            
             if(start)
             {
                 base.OnStartup(sender, e);
             }
             else
-            // ReSharper disable HeuristicUnreachableCode
+            
             {
                 Application.Shutdown();
             }
-            // ReSharper restore HeuristicUnreachableCode
+            
         }
 
         #region Overrides of BootstrapperBase
@@ -149,13 +145,7 @@ namespace Dev2
 
         #region Private Methods
 
-        /*
-         * DELETE THIS METHOD AND LOOSE A VERY IMPORTANT PART OF YOU ;)
-         * 
-         * IT IS REQUIRED FOR UPDATES IN RELEASE MODE ;)
-         * REMOVING IT MEANS IT IS NOT POSSIBLE TO BUILD AN INSTALLER ;)
-         */
-        // ReSharper disable once UnusedMember.Local
+#if !DEBUG
         private bool CheckWindowsService()
         {
             IWindowsServiceManager windowsServiceManager = CustomContainer.Get<IWindowsServiceManager>();
@@ -181,20 +171,23 @@ namespace Dev2
 
             return false;
         }
+#endif
 
         private void CheckPath()
         {
             var sysUri = new Uri(AppDomain.CurrentDomain.BaseDirectory);
 
-            if(IsLocal(sysUri)) return;
+            if(IsLocal(sysUri))
+            {
+                return;
+            }
 
             var popup = new PopupController
                 {
                     Header = "Load Error",
                     Description = 
                         $@"The Design Studio could not be launched from a network location.
-                                                    {Environment
-                            .NewLine}Please install the application on your local machine",
+                        {Environment.NewLine}Please install the application on your local machine",
                     Buttons = MessageBoxButton.OK
                 };
 
@@ -233,6 +226,6 @@ namespace Dev2
             return sysUri.IsUnc;
         }
 
-        #endregion Private Methods
+#endregion Private Methods
     }
 }

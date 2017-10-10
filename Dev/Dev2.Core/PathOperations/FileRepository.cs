@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using Dev2.Common;
-using Dev2.PathOperations.Interfaces;
+using Dev2.Data.Interfaces;
 using Dev2.Reflection;
 
 namespace Dev2.PathOperations
@@ -24,7 +24,7 @@ namespace Dev2.PathOperations
     /// </summary>
     /// <typeparam name="TKey">The type of the key.</typeparam>
     /// <typeparam name="TItem">The type of the item.</typeparam>
-    public class FileRepository<TKey, TItem> : IRepository<TKey, TItem>
+    public class FileRepository<TKey, TItem> : IRepository<TKey, TItem>, IDisposable
         where TItem : class, IRepositoryItem<TKey>
     {
         private readonly string _fileExtension;
@@ -131,11 +131,11 @@ namespace Dev2.PathOperations
                     {
                         return (TItem) formatter.Deserialize(stream);
                     }
-                        // ReSharper disable EmptyGeneralCatchClause 
+                         
                     catch (Exception ex)
-                        // ReSharper restore EmptyGeneralCatchClause
+                        
                     {
-                        Dev2Logger.Error(ex);
+                        Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                     }
                 }
             }
@@ -168,6 +168,11 @@ namespace Dev2.PathOperations
         /// <param name="item">The item that was read.</param>
         protected virtual void OnAfterGet(TItem item)
         {
+        }
+
+        public void Dispose()
+        {
+            _fileLock.Dispose();
         }
 
         #endregion

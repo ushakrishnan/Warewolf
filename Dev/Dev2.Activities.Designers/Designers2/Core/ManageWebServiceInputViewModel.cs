@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.DB;
@@ -19,9 +20,6 @@ using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.Practices.Prism.Commands;
 using Newtonsoft.Json;
 using Warewolf.Core;
-// ReSharper disable FieldCanBeMadeReadOnly.Local
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -35,17 +33,26 @@ namespace Dev2.Activities.Designers2.Core
         private IWebService _model;
         bool _pasteResponseVisible;
         bool _pasteResponseAvailable;
-        IGenerateOutputArea _generateOutputArea;
-        IGenerateInputArea _generateInputArea;
+        readonly IGenerateOutputArea _generateOutputArea;
+        readonly IGenerateInputArea _generateInputArea;
         bool _isEnabled;
-        IWebServiceBaseViewModel _viewmodel;
-        IWebServiceModel _serverModel;
+        readonly IWebServiceBaseViewModel _viewmodel;
+        readonly IWebServiceModel _serverModel;
         bool _isGenerateInputsEmptyRows;
         private RecordsetList _recordsetList;
         private bool _outputCountExpandAllowed;
         private bool _inputCountExpandAllowed;
+        private bool _testPassed;
+        private bool _testFailed;
+        private readonly IWebServiceHeaderBuilder _serviceHeaderBuilder;
+
+        public ManageWebServiceInputViewModel(IWebServiceHeaderBuilder serviceHeaderBuilder)
+        {
+            _serviceHeaderBuilder = serviceHeaderBuilder;
+        }
 
         public ManageWebServiceInputViewModel(IWebServiceBaseViewModel model, IWebServiceModel serviceModel)
+            : this(new WebServiceHeaderBuilder())
         {
             PasteResponseAvailable = true;
             IsTesting = false;
@@ -85,6 +92,18 @@ namespace Dev2.Activities.Designers2.Core
                 OnPropertyChanged();
             }
         }
+
+        public void BuidHeaders(string requestpayLoad)
+        {
+            try
+            {
+                _serviceHeaderBuilder.BuildHeader(_viewmodel.GetHeaderRegion(), requestpayLoad);
+            }
+            catch (Exception)
+            {
+                // 
+            }
+        }
         public void ExecuteTest()
         {
             ViewErrors = new List<IActionableErrorInfo>();
@@ -93,13 +112,15 @@ namespace Dev2.Activities.Designers2.Core
             TestResults = null;
             IsTesting = true;
 
+           
             try
             {
                 var testResult = _serverModel.TestService(Model);
                 var serializer = new Dev2JsonSerializer();
                 using (var responseService = serializer.Deserialize<WebService>(testResult))
                 {
-                   TestResults = responseService.RequestResponse;
+                    TestResults = responseService.RequestResponse;
+                    BuidHeaders(TestResults);
                     _recordsetList = responseService.Recordsets;
                     if (_recordsetList.Any(recordset => recordset.HasErrors))
                     {
@@ -109,21 +130,23 @@ namespace Dev2.Activities.Designers2.Core
 
                     Description = responseService.GetOutputDescription();
                 }
-                // ReSharper disable MaximumChainedReferences
+                
                 var outputMapping = _recordsetList.SelectMany(recordset => recordset.Fields, (recordset, recordsetField) =>
                 {
                     var serviceOutputMapping = new ServiceOutputMapping(recordsetField.Name, recordsetField.Alias, recordset.Name) { Path = recordsetField.Path };
                     return serviceOutputMapping;
                 }).Cast<IServiceOutputMapping>().ToList();
-                // ReSharper restore MaximumChainedReferences
+                
                 _generateOutputArea.IsEnabled = true;
                 _generateOutputArea.Outputs = outputMapping;
-                
-                
+
+
                 if (TestResults != null)
                 {
                     TestResultsAvailable = TestResults != null;
                     IsTesting = false;
+                    TestPassed = true;
+                    TestFailed = false;
                     OutputCountExpandAllowed = true;
                 }
             }
@@ -135,6 +158,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 Errors.Add(e.Message);
                 IsTesting = false;
+                TestPassed = false;
+                TestFailed = true;
                 _generateOutputArea.IsEnabled = false;
                 _generateOutputArea.Outputs = new List<IServiceOutputMapping>();
                 _viewmodel.ErrorMessage(e, true);
@@ -193,7 +218,9 @@ namespace Dev2.Activities.Designers2.Core
             PasteResponseVisible = false;
             InputArea.IsEnabled = false;
             OutputArea.IsEnabled = false;
-            TestResults = String.Empty;
+            TestResults = string.Empty;
+            TestFailed = false;
+            TestPassed = false;
             TestResultsAvailable = false;
             Errors.Clear();
 
@@ -218,10 +245,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 return _generateInputArea;
             }
-            set
-            {
-            }
         }
+
         public string TestResults
         {
             get
@@ -250,6 +275,27 @@ namespace Dev2.Activities.Designers2.Core
         }
         public Action TestAction { get; set; }
         public ICommand TestCommand { get; private set; }
+
+        public bool TestPassed
+        {
+            get { return _testPassed; }
+            set
+            {
+                _testPassed = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool TestFailed
+        {
+            get { return _testFailed; }
+            set
+            {
+                _testFailed = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool TestResultsAvailable
         {
             get
@@ -333,11 +379,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 return Application.Current.TryFindResource("Explorer-WebService-White") as DrawingImage;
             }
-            set
-            {
-
-            }
         }
+
         public ICommand CloseCommand { get; private set; }
         public ICommand OkCommand { get; private set; }
         public Action CloseAction { get; set; }
@@ -365,13 +408,10 @@ namespace Dev2.Activities.Designers2.Core
             {
                 return _generateOutputArea;
             }
-            set
-            {
-            }
         }
         public IOutputDescription Description { get; set; }
 
-        
+
 
         #region Implementation of IToolRegion
 
@@ -413,10 +453,7 @@ namespace Dev2.Activities.Designers2.Core
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

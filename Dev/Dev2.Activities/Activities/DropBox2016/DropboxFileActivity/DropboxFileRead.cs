@@ -6,6 +6,7 @@ using Dropbox.Api;
 using Dropbox.Api.Files;
 using System;
 using System.Net;
+using Dev2.Common.Interfaces.Wrappers;
 
 namespace Dev2.Activities.DropBox2016.DropboxFileActivity
 {
@@ -22,7 +23,11 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
             _path = path;
             _includeMediaInfo = includeMediaInfo;
             _includeDeleted = includeDeleted;
-            if (!string.IsNullOrWhiteSpace(path) && !path.StartsWith(@"/"))
+            if (string.IsNullOrEmpty(path))
+            {
+                path = "";
+            }
+            else if (!string.IsNullOrWhiteSpace(path) && !path.StartsWith(@"/"))
             {
                 path = string.Concat(@"/", path);
             }
@@ -37,17 +42,17 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
             InitializeCertPinning();
         }
 
-        public IDropboxResult ExecuteTask(DropboxClient client)
+        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
         {
             try
             {
                 var listFolderArg = new ListFolderArg(_path, _recursive, _includeMediaInfo, _includeDeleted);
-                var listFolderResult = client.Files.ListFolderAsync(listFolderArg).Result;
+                var listFolderResult = client.ListFolderAsync(listFolderArg).Result;
                 return new DropboxListFolderSuccesResult(listFolderResult);
             }
             catch (Exception exception)
             {
-                Dev2Logger.Error(exception.Message);
+                Dev2Logger.Error(exception.Message, GlobalConstants.WarewolfError);
                 var hasInnerExc = exception.InnerException != null;
                 if (hasInnerExc)
                 {

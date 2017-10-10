@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -52,7 +52,7 @@ namespace Unlimited.UnitTest.Framework.Parsing
         {
             IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullFalse);
 
-            Assert.IsTrue(inputs.Count == 2 && inputs[0].EmptyToNull == false);
+            Assert.IsTrue(inputs.Count == 2 && !inputs[0].EmptyToNull);
         }
 
         // Sashen Added : PBI 5779
@@ -61,7 +61,7 @@ namespace Unlimited.UnitTest.Framework.Parsing
         {
             IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullNotInXML);
 
-            Assert.IsTrue(inputs.Count == 2 && inputs[0].EmptyToNull == false);
+            Assert.IsTrue(inputs.Count == 2 && !inputs[0].EmptyToNull);
         }
 
         [TestMethod]

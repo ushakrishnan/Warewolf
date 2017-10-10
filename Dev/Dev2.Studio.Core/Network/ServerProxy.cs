@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,18 +18,21 @@ using System.Threading.Tasks;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Infrastructure.Events;
+using Dev2.Common.Interfaces.Studio.Core;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Data.ServiceModel.Messages;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Security;
 using Dev2.SignalR.Wrappers;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+
+
 
 namespace Dev2.Network
 {
     public class ServerProxy :  IEnvironmentConnection
     {
-        IEnvironmentConnection _wrappedConnection;
+        readonly IEnvironmentConnection _wrappedConnection;
         public ServerProxy(Uri serverUri)
         {
            _wrappedConnection = new ServerProxyWithoutChunking(serverUri);
@@ -44,7 +47,7 @@ namespace Dev2.Network
             _wrappedConnection.NetworkStateChanged += (sender, args) => OnNetworkStateChanged(args);           
         }
 
-        // ReSharper disable MemberCanBeProtected.Global
+        
         public ServerProxy(string serverUri, ICredentials credentials, IAsyncWorker worker)
         {
             _wrappedConnection = new ServerProxyWithoutChunking(serverUri,credentials,worker);
@@ -157,7 +160,7 @@ namespace Dev2.Network
            
             catch (Exception err)
             {
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, "Warewolf Error");
             }
         }
         
@@ -169,7 +172,7 @@ namespace Dev2.Network
             }
              catch( FallbackException)
             {
-                Dev2Logger.Info("Falling Back to previous signal r client");
+                Dev2Logger.Info("Falling Back to previous signal r client", "Warewolf Info");
                 var name = _wrappedConnection.DisplayName;
                 
                 SetupPassthroughEvents();
@@ -178,7 +181,7 @@ namespace Dev2.Network
             }
             catch (Exception err)
             {
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, "Warewolf Error");
                 throw;
             }
             return false;
@@ -190,7 +193,9 @@ namespace Dev2.Network
             _wrappedConnection.Disconnect();
         }
 
-        public void Verify(Action<ConnectResult> callback, bool wait = true)
+        public void Verify(Action<ConnectResult> callback) => Verify(callback, true);
+
+        public void Verify(Action<ConnectResult> callback, bool wait)
         {
             _wrappedConnection.Verify(callback,wait);
         }
@@ -230,6 +235,10 @@ namespace Dev2.Network
         }
         public IHubConnectionWrapper HubConnection => _wrappedConnection.HubConnection;
 
+        public void FetchResourcesAffectedMemo(Guid resourceId)
+        {
+            _wrappedConnection.FetchResourcesAffectedMemo(resourceId);
+        }
 
         public event EventHandler<NetworkStateEventArgs> NetworkStateChanged;
         public event EventHandler PermissionsChanged;
@@ -245,29 +254,37 @@ namespace Dev2.Network
         {
             if (PermissionsModified != null)
             {
-                Dev2Logger.Debug("Permissions Modified: "+args);
+                Dev2Logger.Debug("Permissions Modified: "+args, "Warewolf Debug");
                 PermissionsModified(this, args);
             }
         }
 
-        // ReSharper disable UnusedMember.Local
-        void UpdateIsAuthorized(bool isAuthorized)
-            // ReSharper restore UnusedMember.Local
-        {
-            if (IsAuthorized != isAuthorized)
-            {
-                _wrappedConnection.IsAuthorized = isAuthorized;
-                RaisePermissionsChanged();
-            }
-        }
-
-        // ReSharper disable VirtualMemberNeverOverriden.Global
-        protected virtual void OnNetworkStateChanged(NetworkStateEventArgs e)
-            // ReSharper restore VirtualMemberNeverOverriden.Global
+        protected void OnNetworkStateChanged(NetworkStateEventArgs e)
         {
             var handler = NetworkStateChanged;
             handler?.Invoke(this, e);
         }
         #endregion
+
+        public bool Equals(IEnvironmentConnection other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            var isEqual = other.ID == ID && other.AuthenticationType == AuthenticationType &&
+                          other.AppServerUri.Equals(AppServerUri) && other.WebServerUri.Equals(WebServerUri);
+            return isEqual;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as IEnvironmentConnection);
+        }
+
+        public override int GetHashCode()
+        {
+            return ID.GetHashCode();
+        }
     }
 }

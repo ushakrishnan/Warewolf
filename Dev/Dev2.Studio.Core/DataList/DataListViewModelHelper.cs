@@ -1,8 +1,9 @@
 using System.Text;
 using System.Xml;
 using Dev2.Common;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Data;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Dev2.Studio.ViewModels.DataList;
 
 namespace Dev2.Studio.Core.DataList
@@ -39,10 +40,17 @@ namespace Dev2.Studio.Core.DataList
         public bool IsJsonAttribute(XmlNode child)
         {
             var jsonAttribute = false;
-            if (child.Attributes == null) return false;
+            if (child.Attributes == null)
+            {
+                return false;
+            }
+
             var xmlAttribute = child.Attributes["IsJson"];
             if (xmlAttribute != null)
+            {
                 bool.TryParse(xmlAttribute.Value, out jsonAttribute);
+            }
+
             return jsonAttribute;
         }
         private const string Description = "Description";

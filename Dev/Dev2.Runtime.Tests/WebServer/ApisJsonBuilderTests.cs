@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.WebServer;
@@ -9,7 +10,7 @@ using Dev2.Services.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.WebServer
 {
     [TestClass]
@@ -25,7 +26,7 @@ namespace Dev2.Tests.Runtime.WebServer
             
             
             //------------Execute Test---------------------------
-            // ReSharper disable once ObjectCreationAsStatement
+            
             new ApisJsonBuilder(null,new Mock<IResourceCatalog>().Object);
             //------------Assert Results-------------------------
         }
@@ -40,7 +41,7 @@ namespace Dev2.Tests.Runtime.WebServer
             
             
             //------------Execute Test---------------------------
-            // ReSharper disable once ObjectCreationAsStatement
+            
             new ApisJsonBuilder(new Mock<IAuthorizationService>().Object,null);
             //------------Assert Results-------------------------
         }

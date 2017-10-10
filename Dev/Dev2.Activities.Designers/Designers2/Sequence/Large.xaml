@@ -13,13 +13,13 @@
                                xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
                                xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
                                xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
-                               MinWidth="200"
+                               MinWidth="315"
                                MinHeight="188"
-                               MaxWidth="Infinity"
+                               MaxWidth="700"
                                MaxHeight="Infinity"
                                mc:Ignorable="d"
                                d:DataContext="{d:DesignInstance local:SequenceDesignerViewModel}"
-                               ToolTip="{x:Static languages:Core.SequenceTooltipSequence}">
+                               ToolTip="{x:Static languages:Tooltips.SequenceTooltipSequence}">
 
     <core:ActivityDesignerTemplate.Resources>
         <ResourceDictionary>
@@ -28,7 +28,16 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </core:ActivityDesignerTemplate.Resources>
-    
+
+    <core:ActivityDesignerTemplate.RightButtons>
+        <core:ActivityDesignerButton x:Name="DoneButton"
+                                     Content="Done"
+                                     Margin="0,0,7,12"
+                                     IsValidatedBefore="True"
+                                     IsClosedAfter="True"
+                                     Style="{StaticResource ActivityDesignerButtonStyle}" />
+    </core:ActivityDesignerTemplate.RightButtons>
+
     <Grid Margin="{StaticResource ElementBorder}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -38,7 +47,7 @@
             <sap:WorkflowItemsPresenter x:Uid="sad:WorkflowItemsPresenter_1"
                                         x:Name="ActivitiesPresenter"
                                         HintText="AddMode New Activity"
-                                        ToolTip="{x:Static languages:Core.SequenceTooltipSequence}"
+                                        ToolTip="{x:Static languages:Tooltips.SequenceTooltipSequence}"
                                         IsDefaultContainer="true">
                 <sap:WorkflowItemsPresenter.CommandBindings>
                     <CommandBinding Command="Copy" Executed="CopyCommandExecuted"
@@ -73,7 +82,7 @@
                     </ItemsPanelTemplate>
                 </sap:WorkflowItemsPresenter.ItemsPanel>
                 <i:Interaction.Behaviors>
-                    <core1:HelpSetter Text="{x:Static languages:Core.SequenceHelpSequence}" DataContext="{Binding}" />
+                    <core1:HelpSetter Text="{x:Static languages:HelpText.SequenceHelpSequence}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
                 <AutomationProperties.AutomationId>
                     <MultiBinding StringFormat="UI_{0}_ActivitiesPresenter_AutoID">

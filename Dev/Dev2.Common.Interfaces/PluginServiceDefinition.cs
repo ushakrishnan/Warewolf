@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +24,10 @@ namespace Dev2.Common.Interfaces
         public IList<IServiceInput> Inputs { get; set; }
         public IList<IServiceOutputMapping> OutputMappings { get; set; }
         public string Path { get; set; }
+        public IPluginConstructor Constructor { get; set; }
+        public INamespaceItem Namespace { get; set; }
         public IPluginAction Action { get; set; }
+        public List<IPluginAction> Actions { get; set; }
 
         #endregion
 
@@ -55,15 +58,23 @@ namespace Dev2.Common.Interfaces
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(PluginServiceDefinition other)
         {
-            if(ReferenceEquals(null, other))
+            if (ReferenceEquals(null, other))
             {
                 return false;
             }
-            if(ReferenceEquals(this, other))
+            if (ReferenceEquals(this, other))
             {
                 return true;
             }
-            return string.Equals(Name, other.Name) && Id.Equals(other.Id) && Equals(Source, other.Source) && string.Equals(Path, other.Path) && Equals(Action, other.Action);
+
+            return string.Equals(Name, other.Name)
+                && Id.Equals(other.Id)
+                && Equals(Source, other.Source)
+                && string.Equals(Path, other.Path)
+                && Equals(Action, other.Action)
+                && Equals(Constructor, other.Constructor)
+                && Equals(Namespace, other.Namespace)
+                && Equals(Actions, other.Actions);
         }
 
         /// <summary>
@@ -75,15 +86,15 @@ namespace Dev2.Common.Interfaces
         /// <param name="obj">The object to compare with the current object. </param>
         public override bool Equals(object obj)
         {
-            if(ReferenceEquals(null, obj))
+            if (ReferenceEquals(null, obj))
             {
                 return false;
             }
-            if(ReferenceEquals(this, obj))
+            if (ReferenceEquals(this, obj))
             {
                 return true;
             }
-            if(obj.GetType() != GetType())
+            if (obj.GetType() != GetType())
             {
                 return false;
             }
@@ -100,11 +111,11 @@ namespace Dev2.Common.Interfaces
         {
             unchecked
             {
-                var hashCode = Name != null ? Name.GetHashCode() : 0;
+                var hashCode = Name?.GetHashCode() ?? 0;
                 hashCode = (hashCode * 397) ^ Id.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Source != null ? Source.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Path != null ? Path.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Action != null ? Action.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Source?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Path?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Action?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Globalization;
 using System.Windows.Data;
 using Dev2.Common.Interfaces.Enums.Enums;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Converters
 {
     public class EnumToStringConverter : IValueConverter
@@ -25,7 +25,7 @@ namespace Dev2.Studio.Core.AppResources.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return Dev2EnumConverter.GetEnumFromStringDiscription(value.ToString(), targetType);
+            return Dev2EnumConverter.GetEnumFromStringDiscription(value?.ToString(), targetType);
         }
     }
 }

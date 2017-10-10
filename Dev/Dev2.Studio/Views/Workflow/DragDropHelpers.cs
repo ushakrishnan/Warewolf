@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,12 +11,12 @@
 using System;
 using System.Linq;
 using System.Windows;
-using Dev2.Studio.Core.ViewModels;
+using Dev2.Studio.Interfaces;
 using Warewolf.Studio.ViewModels;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Views.Workflow
-// ReSharper restore CheckNamespace
+
 {
     public class DragDropHelpers
     {
@@ -41,6 +41,7 @@ namespace Dev2.Studio.Views.Workflow
                 return false;
             }
 
+
             //if it is a ReourceTreeViewModel, get the data for this string
             var modelItemString = formats.FirstOrDefault(s => s.IndexOf(@"ExplorerItemViewModel", StringComparison.Ordinal) >= 0);
 
@@ -56,8 +57,14 @@ namespace Dev2.Studio.Views.Workflow
                 }
             }
 
-            
-            if(string.IsNullOrEmpty(modelItemString))
+            var serviceFromToolBox = formats.FirstOrDefault(s => s.IndexOf(@"FromToolBox", StringComparison.Ordinal) >= 0);
+            if (!string.IsNullOrEmpty(serviceFromToolBox))
+            {
+                return false;
+            }
+
+
+            if (string.IsNullOrEmpty(modelItemString))
             {
                 return false;
             }
@@ -69,21 +76,25 @@ namespace Dev2.Studio.Views.Workflow
                 return false;
             }
 
-            IWorkflowDesignerViewModel workflowDesignerViewModel = _workflowDesignerView.DataContext as IWorkflowDesignerViewModel;
-            if (workflowDesignerViewModel != null)
+            if (_workflowDesignerView.DataContext is IWorkflowDesignerViewModel workflowDesignerViewModel)
             {
-                var explorerItemViewModel = objectData as ExplorerItemViewModel;
-                if (explorerItemViewModel != null)
+                if (objectData is ExplorerItemViewModel explorerItemViewModel)
                 {
-                    if (workflowDesignerViewModel.EnvironmentModel.ID != explorerItemViewModel.Server.EnvironmentID && !explorerItemViewModel.IsService)
+                    if (workflowDesignerViewModel.Server.EnvironmentID != explorerItemViewModel.Server.EnvironmentID && !explorerItemViewModel.IsService)
                     {
                         return true;
                     }
-                    if (workflowDesignerViewModel.EnvironmentModel.ID != explorerItemViewModel.Server.EnvironmentID &&
-                        !workflowDesignerViewModel.EnvironmentModel.IsLocalHostCheck() && explorerItemViewModel.IsService)
+                    if (workflowDesignerViewModel.Server.EnvironmentID != explorerItemViewModel.Server.EnvironmentID &&
+                        !workflowDesignerViewModel.Server.IsLocalHostCheck() && explorerItemViewModel.IsService)
                     {
                         return true;
                     }
+
+                    if (workflowDesignerViewModel.ResourceModel.ID == explorerItemViewModel.ResourceId)
+                    {
+                        return true;
+                    }
+
                     if (explorerItemViewModel.CanExecute && explorerItemViewModel.CanView && explorerItemViewModel.IsService && !explorerItemViewModel.IsSource)
                     {
                         return false;

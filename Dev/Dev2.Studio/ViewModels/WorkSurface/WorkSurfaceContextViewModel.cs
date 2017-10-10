@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,42 +10,40 @@
 
 using Caliburn.Micro;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel.Messages;
-using Dev2.Diagnostics;
 using Dev2.Factory;
 using Dev2.Messages;
-using Dev2.Providers.Events;
 using Dev2.Security;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
 using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Controller;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.Utils;
-using Dev2.Studio.Core.ViewModels;
 using Dev2.Studio.Core.ViewModels.Base;
-using Dev2.Studio.Core.Workspaces;
 using Dev2.Studio.ViewModels.Diagnostics;
 using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Utils;
 using Dev2.Webs;
-using Dev2.Workspaces;
 using System;
 using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
+using Dev2.Common.Interfaces.Enums;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
+using Dev2.Studio.Interfaces.Enums;
+using Warewolf.Studio.ViewModels;
 
-// ReSharper disable CheckNamespace
+
+
+
+
+
 namespace Dev2.Studio.ViewModels.WorkSurface
 {
     /// <summary>
@@ -54,7 +52,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
     /// <author>Jurie.smit</author>
     /// <date>2/27/2013</date>
     public class WorkSurfaceContextViewModel : BaseViewModel,
-                                 IHandle<SaveResourceMessage>, IHandle<DebugResourceMessage>, IHandle<DebugOutputMessage>,
+                                 IHandle<SaveResourceMessage>, IHandle<DebugResourceMessage>,
                                  IHandle<ExecuteResourceMessage>,
                                  IHandle<UpdateWorksurfaceDisplayName>, IWorkSurfaceContextViewModel
     {
@@ -66,7 +64,6 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         private IContextualResourceModel _contextualResourceModel;
 
         private readonly IWindowManager _windowManager;
-        private readonly IWorkspaceItemRepository _workspaceItemRepository;
 
         private AuthorizeCommand _viewInBrowserCommand;
         private AuthorizeCommand _debugCommand;
@@ -75,7 +72,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         private AuthorizeCommand _quickDebugCommand;
         private AuthorizeCommand _quickViewInBrowserCommand;
 
-        private readonly IEnvironmentModel _environmentModel;
+        private readonly IServer _server;
         private readonly IPopupController _popupController;
         private readonly Action<IContextualResourceModel, bool, System.Action> _saveDialogAction;
         private IStudioCompileMessageRepoFactory _studioCompileMessageRepoFactory;
@@ -87,12 +84,11 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public WorkSurfaceKey WorkSurfaceKey { get; }
 
-        public IEnvironmentModel Environment
+        public IServer Environment
         {
             get
             {
                 var environmentModel = ContextualResourceModel?.Environment;
-
                 return environmentModel;
             }
         }
@@ -101,6 +97,10 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         {
             get
             {
+                if (WorkSurfaceViewModel is WorkflowDesignerViewModel workflowDesignerViewModel)
+                {
+                    return workflowDesignerViewModel.DebugOutputViewModel;
+                }
                 return _debugOutputViewModel;
             }
             set { _debugOutputViewModel = value; }
@@ -112,6 +112,10 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         {
             get
             {
+                if (WorkSurfaceViewModel is WorkflowDesignerViewModel workflowDesignerViewModel)
+                {
+                    return workflowDesignerViewModel.DataListViewModel;
+                }
                 return _dataListViewModel;
             }
             set
@@ -122,12 +126,6 @@ namespace Dev2.Studio.ViewModels.WorkSurface
                 }
 
                 _dataListViewModel = value;
-                if (_dataListViewModel != null)
-                {
-                    _dataListViewModel.ConductWith(this);
-                    _dataListViewModel.Parent = this;
-                }
-
                 NotifyOfPropertyChange(() => DataListViewModel);
             }
         }
@@ -171,43 +169,30 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         public WorkSurfaceContextViewModel(IEventAggregator eventPublisher, WorkSurfaceKey workSurfaceKey, IWorkSurfaceViewModel workSurfaceViewModel, IPopupController popupController, Action<IContextualResourceModel, bool, System.Action> saveDialogAction)
             : base(eventPublisher)
         {
-            if (workSurfaceKey == null)
-            {
-                throw new ArgumentNullException(nameof(workSurfaceKey));
-            }
-            if (workSurfaceViewModel == null)
-            {
-                throw new ArgumentNullException(nameof(workSurfaceViewModel));
-            }
             VerifyArgument.IsNotNull("popupController", popupController);
-            WorkSurfaceKey = workSurfaceKey;
-            WorkSurfaceViewModel = workSurfaceViewModel;
+            WorkSurfaceKey = workSurfaceKey ?? throw new ArgumentNullException(nameof(workSurfaceKey));
+            WorkSurfaceViewModel = workSurfaceViewModel ?? throw new ArgumentNullException(nameof(workSurfaceViewModel));
 
             _windowManager = CustomContainer.Get<IWindowManager>();
-            _workspaceItemRepository = WorkspaceItemRepository.Instance;
 
-            var model = WorkSurfaceViewModel as IWorkflowDesignerViewModel;
-            if (model != null)
+            if (WorkSurfaceViewModel is IWorkflowDesignerViewModel model)
             {
-                _environmentModel = model.EnvironmentModel;
-                if (_environmentModel != null)
+                model.WorkflowChanged += UpdateForWorkflowChange;
+                _server = model.Server;
+                if (_server != null)
                 {
-                    // MUST use connection server event publisher - debug events are published from the server!
-                    DebugOutputViewModel = new DebugOutputViewModel(_environmentModel.Connection.ServerEvents, EnvironmentRepository.Instance, new DebugOutputFilterStrategy());
-                    _environmentModel.IsConnectedChanged += EnvironmentModelOnIsConnectedChanged();
-                    _environmentModel.Connection.ReceivedResourceAffectedMessage += OnReceivedResourceAffectedMessage;
+                    _server.IsConnectedChanged += EnvironmentModelOnIsConnectedChanged();
+                    _server.Connection.ReceivedResourceAffectedMessage += OnReceivedResourceAffectedMessage;
                 }
             }
 
-            if (WorkSurfaceKey.WorkSurfaceContext == WorkSurfaceContext.Scheduler)
-            {
-                if (DebugOutputViewModel == null)
-                {
-                    DebugOutputViewModel = new DebugOutputViewModel(new EventPublisher(), EnvironmentRepository.Instance, new DebugOutputFilterStrategy());
-                }
-            }
             _popupController = popupController;
             _saveDialogAction = saveDialogAction;
+        }
+
+        private void UpdateForWorkflowChange()
+        {
+            _workspaceSaved = false;
         }
 
         private void OnReceivedResourceAffectedMessage(Guid resourceId, CompileMessageList compileMessageList)
@@ -218,8 +203,14 @@ namespace Dev2.Studio.ViewModels.WorkSurface
                 var showResourceChangedUtil = ResourceChangeHandlerFactory.Create(EventPublisher);
                 Execute.OnUIThread(() =>
                 {
-                    numberOfDependants = compileMessageList.MessageList.Select(to => to.ServiceID.ToString()).Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
-                    showResourceChangedUtil.ShowResourceChanged(ContextualResourceModel, numberOfDependants);
+                    var shellViewModel = CustomContainer.Get<IShellViewModel>();
+                    if (shellViewModel != null && !shellViewModel.ResourceCalled)
+                    {
+                        shellViewModel.ResourceCalled = true;
+                        numberOfDependants = compileMessageList.MessageList.Select(to => to.ServiceID.ToString())
+                                .Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
+                        showResourceChangedUtil.ShowResourceChanged(ContextualResourceModel, numberOfDependants);
+                    }
                 });
             }
         }
@@ -228,7 +219,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         {
             return (sender, args) =>
             {
-                if (args.IsConnected == false)
+                if (!args.IsConnected)
                 {
                     SetDebugStatus(DebugStatus.Finished);
                 }
@@ -241,7 +232,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public void Handle(DebugResourceMessage message)
         {
-            Dev2Logger.Debug(message.GetType().Name);
+            Dev2Logger.Debug(message.GetType().Name, "Warewolf Debug");
             IContextualResourceModel contextualResourceModel = message.Resource;
             if (contextualResourceModel != null && ContextualResourceModel != null && contextualResourceModel.ID == ContextualResourceModel.ID)
             {
@@ -249,32 +240,15 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             }
         }
 
-        public void Handle(DebugOutputMessage message)
-        {
-            Dev2Logger.Info(message.GetType().Name);
-            if (WorkSurfaceKey.WorkSurfaceContext == WorkSurfaceContext.Scheduler)
-            {
-                DebugOutputViewModel.Clear();
-                var debugState = message.DebugStates.LastOrDefault();
-
-                if (debugState != null)
-                {
-                    debugState.StateType = StateType.Clear;
-                    debugState.SessionID = DebugOutputViewModel.SessionID;
-                    DebugOutputViewModel.Append(debugState);
-                }
-            }
-        }
-
         public void Handle(ExecuteResourceMessage message)
         {
-            Dev2Logger.Info(message.GetType().Name);
+            Dev2Logger.Info(message.GetType().Name, "Warewolf Info");
             Debug(message.Resource, false);
         }
 
         public void Handle(SaveResourceMessage message)
         {
-            Dev2Logger.Info(message.GetType().Name);
+            Dev2Logger.Info(message.GetType().Name, "Warewolf Info");
             if (ContextualResourceModel != null)
             {
                 if (ContextualResourceModel.ID == message.Resource.ID)
@@ -293,7 +267,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public void Handle(UpdateWorksurfaceDisplayName message)
         {
-            Dev2Logger.Info(message.GetType().Name);
+            Dev2Logger.Info(message.GetType().Name, "Warewolf Info");
             if (ContextualResourceModel != null && ContextualResourceModel.ID == message.WorksurfaceResourceID)
             {
                 //tab title
@@ -385,7 +359,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public bool CanSave()
         {
-            var enabled = IsEnvironmentConnected() && !DebugOutputViewModel.IsStopping && !DebugOutputViewModel.IsConfiguring;
+            var enabled = IsEnvironmentConnected() && !DebugOutputViewModel.IsStopping && !DebugOutputViewModel.IsConfiguring && !ContextualResourceModel.IsWorkflowSaved;
             return enabled;
         }
 
@@ -434,8 +408,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
                 return;
             }
 
-            // only try saving if I can debug and contribute, else I should just debug what I have
-            if (resourceModel.UserPermissions.IsContributor())
+            if (!resourceModel.IsWorkflowSaved)
             {
                 var succesfulSave = Save(resourceModel, true);
                 if (!succesfulSave)
@@ -454,8 +427,8 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             inputDataViewModel.DebugExecutionStart += () =>
             {
                 SetDebugStatus(DebugStatus.Executing);
-                DebugOutputViewModel.DebugStatus = DebugStatus.Executing;
                 var workfloDesignerViewModel = WorkSurfaceViewModel as WorkflowDesignerViewModel;
+                DebugOutputViewModel.DebugStatus = DebugStatus.Executing;
                 workfloDesignerViewModel?.GetWorkflowLink();
             };
             inputDataViewModel.DebugExecutionFinished += () =>
@@ -482,14 +455,13 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             var result = ContextualResourceModel.Environment.ResourceRepository.StopExecution(ContextualResourceModel);
             DispatchServerDebugMessage(result, ContextualResourceModel);
 
-            //Bug 10912 - Only set the Debug Status to Finished when rendering has completed
             SetDebugStatus(DebugStatus.Finished);
         }
 
         public void ViewInBrowser()
         {
             FindMissing();
-            Dev2Logger.Debug("Publish message of type - " + typeof(SaveAllOpenTabsMessage));
+            Dev2Logger.Debug("Publish message of type - " + typeof(SaveAllOpenTabsMessage), "Warewolf Debug");
             EventPublisher.Publish(new SaveAllOpenTabsMessage());
 
             if (ContextualResourceModel?.Environment?.Connection == null)
@@ -502,10 +474,13 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public void QuickViewInBrowser()
         {
-            var successfuleSave = Save(ContextualResourceModel, true);
-            if (!successfuleSave)
+            if (!ContextualResourceModel.IsWorkflowSaved)
             {
-                return;
+                var successfuleSave = Save(ContextualResourceModel, true);
+                if (!successfuleSave)
+                {
+                    return;
+                }
             }
             ViewInBrowserInternal(ContextualResourceModel);
         }
@@ -522,29 +497,31 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             if (DebugOutputViewModel.IsProcessing)
             {
                 StopExecution();
-                Thread.Sleep(500);
             }
             if (WorkflowDesignerViewModel.ValidatResourceModel(ContextualResourceModel.DataList))
             {
-                var successfuleSave = Save(ContextualResourceModel, true);
-                if (!successfuleSave)
+                if(!ContextualResourceModel.IsWorkflowSaved && !_workspaceSaved)
                 {
-                    return;
-                }
+                    var successfuleSave = Save(ContextualResourceModel, true);
+                    if(!successfuleSave)
+                    {
+                        return;
+                    }
+                }                
             }
             else
             {
                 _popupController.Show(StringResources.Debugging_Error,
                                       StringResources.Debugging_Error_Title,
-                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false);
+                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false);
 
                 SetDebugStatus(DebugStatus.Finished);
                 return;
             }
-
             var inputDataViewModel = SetupForDebug(ContextualResourceModel, true);
             inputDataViewModel.LoadWorkflowInputs();
             inputDataViewModel.Save();
+
         }
 
         public void BindToModel()
@@ -554,16 +531,25 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         }
 
         private bool _waitingforDialog;
+        private bool _workspaceSaved;
 
         public void ShowSaveDialog(IContextualResourceModel resourceModel, bool addToTabManager)
         {
             SaveDialogHelper.ShowNewWorkflowSaveDialog(resourceModel, null, addToTabManager);
         }
 
-        public bool Save(bool isLocalSave = false, bool isStudioShutdown = false)
+        public bool Save() => Save(false, false);
+        public bool Save(bool isLocalSave, bool isStudioShutdown)
         {
-            var saveResult = Save(ContextualResourceModel, isLocalSave, isStudioShutdown: isStudioShutdown);
+            var saveResult = Save(ContextualResourceModel, isLocalSave);
             WorkSurfaceViewModel?.NotifyOfPropertyChange("DisplayName");
+            if (!isLocalSave)
+            {
+                if (DebugOutputViewModel != null)
+                {
+                    ViewModelUtils.RaiseCanExecuteChanged(DebugOutputViewModel.AddNewTestCommand);
+                }
+            }
             return saveResult;
         }
 
@@ -574,8 +560,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         public void FindMissing()
         {
-            WorkflowDesignerViewModel model = WorkSurfaceViewModel as WorkflowDesignerViewModel;
-            if (model != null)
+            if (WorkSurfaceViewModel is WorkflowDesignerViewModel model)
             {
                 var vm = model;
                 vm.AddMissingWithNoPopUpAndFindUnusedDataListItems();
@@ -586,7 +571,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         #region private methods
 
-        protected virtual bool Save(IContextualResourceModel resource, bool isLocalSave, bool addToTabManager = true, bool isStudioShutdown = false)
+        protected virtual bool Save(IContextualResourceModel resource, bool isLocalSave, bool addToTabManager = true)
         {
             if (resource == null || !resource.UserPermissions.IsContributor())
             {
@@ -595,11 +580,11 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
             FindMissing();
 
-            if (DataListViewModel != null && DataListViewModel.HasErrors)
+            if (DataListViewModel != null && DataListViewModel.HasErrors && !isLocalSave)
             {
                 _popupController.Show(string.Format(StringResources.Saving_Error + System.Environment.NewLine + System.Environment.NewLine + DataListViewModel.DataListErrorMessage),
                                       StringResources.Saving_Error_Title,
-                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false);
+                                      MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false);
 
                 return false;
             }
@@ -613,24 +598,38 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             }
 
             BindToModel();
-
-            var result = _workspaceItemRepository.UpdateWorkspaceItem(resource, isLocalSave);
-
-            // shutdown - just save to workspace
-            if (isStudioShutdown)
-            {
-                return true;
-            }
-
-            resource.Environment.ResourceRepository.Save(resource);
-            DisplaySaveResult(result, resource);
             if (!isLocalSave)
             {
                 ExecuteMessage saveResult = resource.Environment.ResourceRepository.SaveToServer(resource);
                 DispatchServerDebugMessage(saveResult, resource);
                 resource.IsWorkflowSaved = true;
+                _workspaceSaved = true;
+                UpdateResourceVersionInfo(resource);
+            }
+            else
+            {
+                _workspaceSaved = true;
+                ExecuteMessage saveResult = resource.Environment.ResourceRepository.Save(resource);
+                DisplaySaveResult(saveResult, resource);
             }
             return true;
+        }
+
+        private static void UpdateResourceVersionInfo(IContextualResourceModel resource)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            var explorerViewModel = mainViewModel?.ExplorerViewModel;
+            var environmentViewModel =
+                explorerViewModel?.Environments?.FirstOrDefault(model => model.ResourceId == resource.Environment.EnvironmentID);
+            var explorerItemViewModel = environmentViewModel?.Children?.Flatten(model => model.Children).FirstOrDefault(
+                model => model.ResourceId == resource.ID);
+            if (explorerItemViewModel != null && explorerItemViewModel.GetType() == typeof (VersionViewModel))
+            {
+                if (explorerItemViewModel.Parent != null)
+                {
+                    explorerItemViewModel.Parent.AreVersionsVisible = true;
+                }
+            }
         }
 
         private void DisplaySaveResult(ExecuteMessage result, IContextualResourceModel resource)
@@ -707,20 +706,19 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         /// </summary>
         protected override void OnDispose()
         {
-            if (_environmentModel != null)
+            if (_server != null)
             {
-                _environmentModel.IsConnectedChanged -= EnvironmentModelOnIsConnectedChanged();
+                _server.IsConnectedChanged -= EnvironmentModelOnIsConnectedChanged();
 
-                if (_environmentModel.Connection != null)
+                if (_server.Connection != null)
                 {
-                    // ReSharper disable DelegateSubtraction
-                    _environmentModel.Connection.ReceivedResourceAffectedMessage -= OnReceivedResourceAffectedMessage;
+                    
+                    _server.Connection.ReceivedResourceAffectedMessage -= OnReceivedResourceAffectedMessage;
                 }
             }
 
             DebugOutputViewModel?.Dispose();
-            var model = DataListViewModel as SimpleBaseViewModel;
-            if (model != null)
+            if (DataListViewModel is SimpleBaseViewModel model)
             {
                 DataListViewModel.Parent = null;
                 model.Dispose();

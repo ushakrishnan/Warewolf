@@ -1,10 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Runtime.ESB.Control
 {
@@ -100,16 +104,14 @@ namespace Dev2.Runtime.ESB.Control
                     var warewolfEvalResult = innerEnvironment.Eval(DataListUtil.AddBracketsToValueIfNotExist(dev2Definition.Name), update);
                     if (warewolfEvalResult.IsWarewolfAtomListresult)
                     {
-                        var data = warewolfEvalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
-                        if (data != null && data.Item.Any())
+                        if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult data && data.Item.Any())
                         {
                             environment.Assign("[[" + dev2Definition.Value + "]]", ExecutionEnvironment.WarewolfAtomToString(data.Item.Last()), update);
                         }
                     }
                     else
                     {
-                        var data = warewolfEvalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                        if (data != null)
+                        if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult data)
                         {
                             environment.Assign(DataListUtil.AddBracketsToValueIfNotExist(dev2Definition.Value), ExecutionEnvironment.WarewolfAtomToString(data.Item), update);
                         }

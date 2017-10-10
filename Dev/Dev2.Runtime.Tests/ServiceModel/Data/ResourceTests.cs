@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Providers.Errors;
@@ -20,9 +21,10 @@ using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+
 namespace Dev2.Tests.Runtime.ServiceModel.Data
 {
-    // ReSharper disable InconsistentNaming
+
     [TestClass]
     public class ResourceTests
     {
@@ -97,6 +99,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
         }
 
         [TestMethod]
+        
         public void ToXMLWhereValidResourceWIthErrorInfoDataIsValidFalse()
         {
             //------------Setup for test--------------------------
@@ -115,6 +118,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.IsNotNull(errorMessagesElement);
             var errorMessageElement = errorMessagesElement.Element("ErrorMessage");
             Assert.IsNotNull(errorMessageElement);
+            
             Assert.AreEqual("Fix Me", errorMessageElement.Attribute("Message").Value);
             Assert.AreEqual("Line 1", errorMessageElement.Attribute("StackTrace").Value);
             Assert.AreEqual("None", errorMessageElement.Attribute("FixType").Value);
@@ -344,6 +348,81 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("62505a00-b304-4ac0-a55c-50ce85111f16", resource.Dependencies[1].ResourceID.ToString());
         }
 
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebPutTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("put");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebDeleteTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("delete");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebPostTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("post");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasWebSourceFromWebGetTool_ShouldHaveWebSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("delete");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Resource_LoadDependencies")]
+        public void Resource_LoadDependencies_HasSharepointSourceFromSharepointCopyTool_ShouldHaveSharepointSourceInDepencyList()
+        {
+            //------------Setup for test--------------------------
+            var element = XmlResource.Fetch("Sharepoint Connectors Testing");
+            //------------Execute Test---------------------------
+            var resource = new Resource(element);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(resource);
+            Assert.IsNotNull(resource.Dependencies);
+            Assert.AreEqual(1, resource.Dependencies.Count);
+        }
+
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -525,6 +604,45 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("<DataList />", resource.DataList.ToString());
             Assert.IsFalse(String.IsNullOrEmpty(resource.Inputs));
             Assert.IsFalse(String.IsNullOrEmpty(resource.Outputs));
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        public void Resource_Given_ResourceType_Is_Null_Sets_IsServer_To_False()
+        {
+            //------------Setup for test-------------------------
+            var resource = new Resource();
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            Assert.IsFalse(resource.IsServer);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        public void Resource_Given_ResourceType_Is_Dev2Server_Sets_IsServer_To_True()
+        {
+            //------------Setup for test-------------------------
+            var resource = new Resource
+            {
+                ResourceType = enSourceType.Dev2Server.ToString()
+            };
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            Assert.IsTrue(resource.IsServer);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        public void Resource_Given_ResourceType_Is_ComPluginSource_Sets_IsServer_To_False()
+        {
+            //------------Setup for test-------------------------
+            var resource = new Resource
+            {
+                ResourceType = enSourceType.ComPluginSource.ToString()
+            };
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            Assert.IsFalse(resource.IsServer);
         }
 
         string GetValidXMLString()

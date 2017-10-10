@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,7 +33,12 @@ namespace Dev2.Data.Binary_Objects
 
         private IndexList() { }
 
-        public IndexList(HashSet<int> gaps, int maxValue, int minValue = 1)
+        public IndexList(HashSet<int> gaps, int maxValue)
+            : this(gaps, maxValue, 1)
+        {
+        }
+
+        public IndexList(HashSet<int> gaps, int maxValue, int minValue)
         {
             if(gaps == null)
             {

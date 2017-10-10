@@ -11,7 +11,7 @@ using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
 using Microsoft.Practices.Prism.Commands;
 
-// ReSharper disable ExplicitCallerInfoArgument
+
 
 namespace Dev2.Activities.Designers2.Core.Source
 {
@@ -21,8 +21,6 @@ namespace Dev2.Activities.Designers2.Core.Source
         private IComPluginSource _selectedSource;
         private ICollection<IComPluginSource> _sources;
         private readonly ModelItem _modelItem;
-        // ReSharper disable once UnusedMember.Local
-        readonly Dictionary<Guid, IList<IToolRegion>> _previousRegions = new Dictionary<Guid, IList<IToolRegion>>();
         private Guid _sourceId;
         private Action _sourceChangedAction;
         private double _labelWidth;
@@ -46,13 +44,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             IsEnabled = true;
             _modelItem = modelItem;
             SourceId = modelItem.GetProperty<Guid>("SourceId");
-            SourcesHelpText = Warewolf.Studio.Resources.Languages.Core.ComPluginServiceSourcesHelp;
-            EditSourceHelpText = Warewolf.Studio.Resources.Languages.Core.ComPluginServiceEditSourceHelp;
-            NewSourceHelpText = Warewolf.Studio.Resources.Languages.Core.ComPluginServiceNewSourceHelp;
+            SourcesHelpText = Warewolf.Studio.Resources.Languages.HelpText.ComPluginServiceSourcesHelp;
+            EditSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.ComPluginServiceEditSourceHelp;
+            NewSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.ComPluginServiceNewSourceHelp;
 
-            SourcesTooltip = Warewolf.Studio.Resources.Languages.Core.ComManagePluginServiceSourcesTooltip;
-            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ComManagePluginServiceEditSourceTooltip;
-            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ComManagePluginServiceNewSourceTooltip;
+            SourcesTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ComManagePluginServiceSourcesTooltip;
+            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ComManagePluginServiceEditSourceTooltip;
+            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ComManagePluginServiceNewSourceTooltip;
 
             if (SourceId != Guid.Empty)
             {
@@ -221,8 +219,7 @@ namespace Dev2.Activities.Designers2.Core.Source
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as ComSourceRegion;
-            if (region != null)
+            if (toRestore is ComSourceRegion region)
             {
                 SelectedSource = region.SelectedSource;
                 IsEnabled = region.IsEnabled;

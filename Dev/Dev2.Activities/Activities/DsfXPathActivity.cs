@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,23 +14,23 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
 using Dev2.Data.Parsers;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Utility-Path", "XPath", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Xpath_Tags")]
+    [ToolDescriptorInfo("Utility-Path", "XPath", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Xpath")]
     public class DsfXPathActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Fields
@@ -83,6 +83,11 @@ namespace Dev2.Activities
 
         #endregion
 
+        public override List<string> GetOutputs()
+        {
+            return ResultsCollection?.Select(dto => dto.OutputVariable).ToList() ?? new List<string>();
+        }
+
         #region Overridden NativeActivity Methods
 
         protected override void OnExecute(NativeActivityContext context)
@@ -105,96 +110,19 @@ namespace Dev2.Activities
             InitializeDebug(dataObject);
             try
             {
-                if(!errors.HasErrors())
+                if (!string.IsNullOrEmpty(SourceString))
                 {
-                    if(_isDebugMode)
+                    if (_isDebugMode)
                     {
                         AddSourceStringDebugInputItem(SourceString, dataObject.Environment, update);
                         AddResultDebugInputs(ResultsCollection, out errors);
                         allErrors.MergeErrors(errors);
                     }
-                    if(!allErrors.HasErrors())
+                    if (!allErrors.HasErrors())
                     {
-                        var itr = new WarewolfListIterator();
-                        var sourceIterator = new WarewolfIterator(dataObject.Environment.Eval(SourceString, update));
-                        itr.AddVariableToIterateOn(sourceIterator);
-                        while(itr.HasMoreData())
-                        {
-                            var c = itr.FetchNextValue(sourceIterator);
-                            //foreach(IBinaryDataListItem c in cols)
-                            {
-                                for(i = 0; i < ResultsCollection.Count; i++)
-                                {
-                                    if(!string.IsNullOrEmpty(ResultsCollection[i].OutputVariable))
-                                    {
-                                        var xpathEntry = dataObject.Environment.Eval(ResultsCollection[i].XPath, update);
-                                        var xpathIterator = new WarewolfIterator(xpathEntry);
-                                        while(xpathIterator.HasMoreData())
-                                        {
-                                            var xpathCol = xpathIterator.GetNextValue();
-                                            //foreach(IBinaryDataListItem xPathCol in xpathCols)
-                                            {
-                                                try
-                                                {
-                                                    List<string> eval = parser.ExecuteXPath(c, xpathCol).ToList();
-
-                                                    //2013.06.03: Ashley Lewis for bug 9498 - handle line breaks in multi assign
-                                                    string[] openParts = Regex.Split(ResultsCollection[i].OutputVariable, @"\[\[");
-                                                    string[] closeParts = Regex.Split(ResultsCollection[i].OutputVariable, @"\]\]");
-                                                    if(openParts.Length == closeParts.Length && openParts.Length > 2 && closeParts.Length > 2)
-                                                    {
-                                                        foreach(var newFieldName in openParts)
-                                                        {
-                                                            if(!string.IsNullOrEmpty(newFieldName))
-                                                            {
-                                                                string cleanFieldName;
-                                                                if(newFieldName.IndexOf("]]", StringComparison.Ordinal) + 2 < newFieldName.Length)
-                                                                {
-                                                                    cleanFieldName = "[[" + newFieldName.Remove(newFieldName.IndexOf("]]", StringComparison.Ordinal) + 2);
-                                                                }
-                                                                else
-                                                                {
-                                                                    cleanFieldName = "[[" + newFieldName;
-                                                                }
-                                                                AssignResult(cleanFieldName, dataObject, eval, update);
-                                                            }
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        var variable = ResultsCollection[i].OutputVariable;
-                                                        AssignResult(variable, dataObject, eval, update);
-                                                    }
-                                                }
-                                                catch(Exception e)
-                                                {
-                                                    allErrors.AddError(e.Message);
-                                                    dataObject.Environment.Assign(ResultsCollection[i].OutputVariable, null, update);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            allErrors.MergeErrors(errors);
-                        }
+                        i = Process(dataObject, update, i, parser, allErrors, errors);
                     }
-                    if(_isDebugMode && !allErrors.HasErrors())
-                    {
-                        var innerCount = 1;
-                        foreach(var debugOutputTo in ResultsCollection)
-                        {
-                            if (!string.IsNullOrEmpty(debugOutputTo.OutputVariable))
-                            {
-                                var itemToAdd = new DebugItem();
-                                AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
-                                AddDebugItem(new DebugEvalResult(DataListUtil.ReplaceRecordsetBlankWithStar(debugOutputTo.OutputVariable), "", dataObject.Environment, update), itemToAdd);
-                                _debugOutputs.Add(itemToAdd);
-                                innerCount++;
-                            }
-                        }
-                    }
+                    DoDebug(dataObject, update, allErrors);
                 }
             }
             catch(Exception ex)
@@ -203,41 +131,105 @@ namespace Dev2.Activities
             }
             finally
             {
-                // Handle Errors
-
                 var actualIndex = i - 1;
                 var hasErrors = allErrors.HasErrors();
-                if(hasErrors)
+                ProcessErrors(dataObject, update, hasErrors, allErrors, actualIndex);
+
+                DispatchDebugState(dataObject, StateType.Before, update);
+                DispatchDebugState(dataObject, StateType.After, update);
+            }
+        }
+
+        private void ProcessErrors(IDSFDataObject dataObject, int update, bool hasErrors, ErrorResultTO allErrors, int actualIndex)
+        {
+            if(hasErrors)
+            {
+                DisplayAndWriteError("DsfXPathActivity", allErrors);
+                var errorString = allErrors.MakeDataListReady();
+                dataObject.Environment.AddError(errorString);
+                if(actualIndex > -1)
                 {
-                    DisplayAndWriteError("DsfXPathActivity", allErrors);
-                    var errorString = allErrors.MakeDataListReady();
-                    dataObject.Environment.AddError(errorString);
-                    if (actualIndex > -1)
-                    {
-                        dataObject.Environment.Assign(ResultsCollection[actualIndex].OutputVariable, null, update);
-                    }
+                    dataObject.Environment.Assign(ResultsCollection[actualIndex].OutputVariable, null, update);
                 }
                 if(_isDebugMode)
                 {
-                    if(hasErrors)
+                    var itemToAdd = new DebugItem();
+                    if(actualIndex < 0)
                     {
-                        if(_isDebugMode)
-                        {
-                            var itemToAdd = new DebugItem();
-                            if (actualIndex < 0)
-                            {
-                                actualIndex = 0;
-                            }
-                            AddDebugItem(new DebugItemStaticDataParams("", (actualIndex + 1).ToString(CultureInfo.InvariantCulture)), itemToAdd);
-
-                            AddDebugItem(new DebugEvalResult(ResultsCollection[actualIndex].OutputVariable, "", dataObject.Environment, update), itemToAdd);
-                            _debugOutputs.Add(itemToAdd);
-                        }
+                        actualIndex = 0;
                     }
-                    DispatchDebugState(dataObject, StateType.Before, update);
-                    DispatchDebugState(dataObject, StateType.After, update);
+                    AddDebugItem(new DebugItemStaticDataParams("", (actualIndex + 1).ToString(CultureInfo.InvariantCulture)), itemToAdd);
+
+                    var outputVariable = "";
+                    if (actualIndex >= 0)
+                    {
+                        outputVariable = ResultsCollection[actualIndex].OutputVariable;
+                    }
+                    AddDebugItem(new DebugEvalResult(outputVariable, "", dataObject.Environment, update), itemToAdd);
+                    _debugOutputs.Add(itemToAdd);
+
                 }
             }
+
+        }
+
+        private void DoDebug(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            if(_isDebugMode && !allErrors.HasErrors())
+            {
+                var innerCount = 1;
+                foreach(var debugOutputTo in ResultsCollection)
+                {
+                    if(!string.IsNullOrEmpty(debugOutputTo.OutputVariable))
+                    {
+                        var itemToAdd = new DebugItem();
+                        AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
+                        AddDebugItem(new DebugEvalResult(DataListUtil.ReplaceRecordsetBlankWithStar(debugOutputTo.OutputVariable), "", dataObject.Environment, update), itemToAdd);
+                        _debugOutputs.Add(itemToAdd);
+                        innerCount++;
+                    }
+                }
+            }
+        }
+
+        private int Process(IDSFDataObject dataObject, int update, int i, XPathParser parser, ErrorResultTO allErrors, ErrorResultTO errors)
+        {
+            if (!string.IsNullOrEmpty(SourceString))
+            {
+
+                var itr = new WarewolfListIterator();
+                var sourceIterator = new WarewolfIterator(dataObject.Environment.Eval(SourceString, update));
+                itr.AddVariableToIterateOn(sourceIterator);
+                while (itr.HasMoreData())
+                {
+                    var c = itr.FetchNextValue(sourceIterator);
+                    for (i = 0; i < ResultsCollection.Count; i++)
+                    {
+                        if (!string.IsNullOrEmpty(ResultsCollection[i].OutputVariable))
+                        {
+                            var xpathEntry = dataObject.Environment.Eval(ResultsCollection[i].XPath, update);
+                            var xpathIterator = new WarewolfIterator(xpathEntry);
+                            while (xpathIterator.HasMoreData())
+                            {
+                                var xpathCol = xpathIterator.GetNextValue();
+                                try
+                                {
+                                    List<string> eval = parser.ExecuteXPath(c, xpathCol).ToList();
+                                    var variable = ResultsCollection[i].OutputVariable;
+                                    AssignResult(variable, dataObject, eval, update);
+                                }
+                                catch (Exception e)
+                                {
+                                    allErrors.AddError(e.Message);
+                                    dataObject.Environment.Assign(ResultsCollection[i].OutputVariable, null, update);
+                                }
+                            }
+                        }
+                    }
+                    allErrors.MergeErrors(errors);
+                }
+            }
+            return i;
         }
 
         void AssignResult(string variable, IDSFDataObject dataObject, IEnumerable<string> eval, int update)
@@ -246,7 +238,7 @@ namespace Dev2.Activities
             if(DataListUtil.IsValueScalar(variable))
             {
                 var values = eval as IList<string> ?? eval.ToList();
-                dataObject.Environment.Assign(variable, eval != null ? values.LastOrDefault() : "", update);
+                dataObject.Environment.Assign(variable, values.LastOrDefault(), update);
             }
             else
             {
@@ -254,7 +246,7 @@ namespace Dev2.Activities
                 foreach(var val in eval)
                 {
                     var correctedVariable = variable;
-                    if(DataListUtil.IsValueRecordset(variable) && DataListUtil.IsStarIndex(variable))
+                    if(DataListUtil.IsValueRecordset(variable) && DataListUtil.IsStarIndex(variable) && update==0)
                     {
                         correctedVariable = DataListUtil.ReplaceStarWithFixedIndex(variable, index);
                     }
@@ -374,7 +366,7 @@ namespace Dev2.Activities
                 return "";
             }
             var currentName = modelProperty.ComputedValue as string;
-            if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+            if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
             {
                 currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
             }

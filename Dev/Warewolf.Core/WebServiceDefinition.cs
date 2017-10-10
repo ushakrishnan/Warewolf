@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,7 @@ using Dev2.Common.Interfaces.WebServices;
 namespace Warewolf.Core
 {
     public class WebServiceDefinition : IWebService
-    // ReSharper restore UnusedMember.Global
+    
     {
         WebRequestMethod _method;
 
@@ -33,9 +33,9 @@ namespace Warewolf.Core
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Object" /> class.
         /// </summary>
-        // ReSharper disable TooManyDependencies
+        
         public WebServiceDefinition(string name, string path, IWebServiceSource source, IList<IServiceInput> inputs, IList<IServiceOutputMapping> outputMappings, string queryString, Guid id)
-        // ReSharper restore TooManyDependencies
+        
         {
             Name = name;
             Path = path;
@@ -120,7 +120,10 @@ namespace Warewolf.Core
                 return false;
             }
             if (obj.GetHashCode() != GetHashCode())
+            {
                 return false;
+            }
+
             bool eq = true;
             var other = obj as WebServiceDefinition;
             var headers = Headers;
@@ -144,25 +147,25 @@ namespace Warewolf.Core
         {
             unchecked
             {
-                // ReSharper disable NonReadonlyFieldInGetHashCode
-                int hashCode = Name != null ? Name.GetHashCode() : 0;
+                
+                int hashCode = Name?.GetHashCode() ?? 0;
 
-                hashCode = (hashCode * 397) ^ (Path != null ? Path.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Source != null ? Source.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Path?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Source?.GetHashCode() ?? 0);
 
                 if (OutputMappings != null)
                 {
-                    hashCode = OutputMappings.Aggregate(hashCode, (a, b) => a * 397 ^ (b != null ? b.GetHashCode() : 0));
+                    hashCode = OutputMappings.Aggregate(hashCode, (a, b) => a * 397 ^ (b?.GetHashCode() ?? 0));
                 }
-                hashCode = (hashCode * 397) ^ (QueryString != null ? QueryString.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (QueryString?.GetHashCode() ?? 0);
                 if (Headers != null)
                 {
                     hashCode = Headers.Aggregate(hashCode, (current, nameValue) => (current * 397) ^ (nameValue != null ? nameValue.GetHashCode() : 0));
                 }
-                hashCode = (hashCode * 397) ^ (PostData != null ? PostData.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (PostData?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ Method.GetHashCode();
                 return hashCode;
-                // ReSharper restore NonReadonlyFieldInGetHashCode
+                
             }
         }
 
@@ -186,7 +189,10 @@ namespace Warewolf.Core
         {
             bool eq = true;
             if (otherHeaders == null && headers == null)
+            {
                 return true;
+            }
+
             if (otherHeaders != null && headers != null)
             {
                 if (otherHeaders.Count == headers.Count)
@@ -204,7 +210,7 @@ namespace Warewolf.Core
                     eq = false;
                 }
             }
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            
             else if (otherHeaders == null && headers != null)
             {
                 return false;

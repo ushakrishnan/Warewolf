@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,22 +10,32 @@
 
 using System;
 using System.Collections.Generic;
+using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Warewolf.Core;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
 {
-    [ToolDescriptorInfo("ControlFlow-Switch", "Switch", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Control Flow", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Flow_Switch_Tags")]
+    [ToolDescriptorInfo("ControlFlow-Switch", "Switch", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Control Flow", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Flow_Switch")]
     public class DsfFlowSwitchActivity : DsfFlowNodeActivity<string>
     {
         #region Ctor
 
         public DsfFlowSwitchActivity()
             : base("Switch")
+        {
+        }
+
+        public DsfFlowSwitchActivity(string displayName, IDebugDispatcher debugDispatcher)
+            : this(displayName, debugDispatcher, false)
+        {
+        }
+
+        public DsfFlowSwitchActivity(string displayName, IDebugDispatcher debugDispatcher, bool isAsync)
+            : base(displayName, debugDispatcher, isAsync)
         {
         }
 
@@ -48,6 +58,16 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         public void SetDebugInputs(List<DebugItem> debugInputs)
         {
             _debugInputs = debugInputs;
+        }
+
+        public void SetDebugOutputs(List<DebugItem> debugOutputs)
+        {
+            _debugOutputs = debugOutputs;
+        }
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
         }
     }
 }

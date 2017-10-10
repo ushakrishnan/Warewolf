@@ -11,15 +11,15 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Data.ServiceModel;
 using Dev2.Data.Util;
-using Dev2.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.TO;
-// ReSharper disable MemberCanBePrivate.Global
+
 
 namespace Dev2.Activities.Designers2.SharepointListRead
 {
@@ -43,17 +43,17 @@ namespace Dev2.Activities.Designers2.SharepointListRead
         };
        
         bool _isInitializing;
-        readonly IEnvironmentModel _environmentModel;
+        readonly IServer _server;
         readonly IAsyncWorker _asyncWorker;
 
-        protected SharepointListDesignerViewModelBase(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel environmentModel, IEventAggregator eventPublisher, bool loadOnlyEditableFields)
+        protected SharepointListDesignerViewModelBase(ModelItem modelItem, IAsyncWorker asyncWorker, IServer server, IEventAggregator eventPublisher, bool loadOnlyEditableFields)
             :base(modelItem)
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
-            VerifyArgument.IsNotNull("environmentModel", environmentModel);
+            VerifyArgument.IsNotNull("environmentModel", server);
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             _asyncWorker = asyncWorker;
-            _environmentModel = environmentModel;
+            _server = server;
             AddTitleBarLargeToggle();
             _eventPublisher = eventPublisher;
             ShowExampleWorkflowLink = Visibility.Collapsed;
@@ -75,14 +75,14 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         }
 
-        protected SharepointListDesignerViewModelBase(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel environmentModel, IEventAggregator eventPublisher)
+        protected SharepointListDesignerViewModelBase(ModelItem modelItem, IAsyncWorker asyncWorker, IServer server, IEventAggregator eventPublisher)
             : base(modelItem)
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
-            VerifyArgument.IsNotNull("environmentModel", environmentModel);
+            VerifyArgument.IsNotNull("environmentModel", server);
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             _asyncWorker = asyncWorker;
-            _environmentModel = environmentModel;
+            _server = server;
             AddTitleBarLargeToggle();
             _eventPublisher = eventPublisher;
             ShowExampleWorkflowLink = Visibility.Collapsed;
@@ -114,7 +114,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
         public static readonly DependencyProperty ListItemsProperty =
             DependencyProperty.Register("ListItems", typeof(List<SharepointReadListTo>), typeof(SharepointListDesignerViewModelBase), new PropertyMetadata(new List<SharepointReadListTo>()));
 
-        private bool _isFileTool;
+        private readonly bool _isFileTool;
         public bool IsSelectedSharepointServerFocused { get { return (bool)GetValue(IsSelectedSharepointServerFocusedProperty); } set { SetValue(IsSelectedSharepointServerFocusedProperty, value); } }
         public bool IsSelectedListFocused { get { return (bool)GetValue(IsSelectedListFocusedProperty); } set { SetValue(IsSelectedListFocusedProperty, value); } }
         public SharepointSource SelectedSharepointServer
@@ -260,7 +260,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         List<SharepointListTo> GetSharepointLists(SharepointSource sharepointSource)
         {
-            var sharepointLists = _environmentModel.ResourceRepository.GetSharepointLists(sharepointSource);
+            var sharepointLists = _server.ResourceRepository.GetSharepointLists(sharepointSource);
             return sharepointLists ?? new List<SharepointListTo>();
         }
 
@@ -270,10 +270,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
             if (!IsSharepointServerSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -288,10 +285,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
                         Lists.Add(listTo);
                     }
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -311,7 +305,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         IEnumerable<SharepointSource> GetSharepointServers()
         {
-            var sources = _environmentModel.ResourceRepository.FindSourcesByType<SharepointSource>(_environmentModel, enSourceType.SharepointServerSource) ?? new List<SharepointSource>();
+            var sources = _server.ResourceRepository.FindSourcesByType<SharepointSource>(_server, enSourceType.SharepointServerSource) ?? new List<SharepointSource>();
             return sources;
         }
 
@@ -329,10 +323,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
                         SharepointServers.Add(sharepointSource);
                     }
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -357,7 +348,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         static string GetListName(SharepointListTo table)
         {
-            return table == null ? null : table.FullName;
+            return table?.FullName;
         }
 
         protected void OnSharepointServerChanged()
@@ -371,7 +362,11 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
             SharepointServers.Remove(SelectSharepointSource);
             SharepointServerResourceId = SelectedSharepointServer.ResourceID;
-            if (_isFileTool) return;
+            if (_isFileTool)
+            {
+                return;
+            }
+
             IsRefreshing = true;
             // Save selection
             var listName = GetListName(SelectedList);
@@ -411,18 +406,15 @@ namespace Dev2.Activities.Designers2.SharepointListRead
         {
             if (!IsListSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
             var selectedSharepointServer = SelectedSharepointServer;
             var selectedList = SelectedList;
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             _asyncWorker.Start(() => GetListFields(selectedSharepointServer, selectedList), columnList =>
-                // ReSharper restore ImplicitlyCapturedClosure
+                
             {
                 if(columnList != null)
                 {
@@ -450,10 +442,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
                     }
                     ListItems = ReadListItems;
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -476,7 +465,7 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         List<ISharepointFieldTo> GetListFields(ISharepointSource source, SharepointListTo list)
         {
-            var columns = _environmentModel.ResourceRepository.GetSharepointListFields(source, list, _loadOnlyEditableFields);
+            var columns = _server.ResourceRepository.GetSharepointListFields(source, list, _loadOnlyEditableFields);
             return columns ?? new List<ISharepointFieldTo>();
         }
 
@@ -497,7 +486,12 @@ namespace Dev2.Activities.Designers2.SharepointListRead
 
         void EditSharepointSource()
         {
-            CustomContainer.Get<IShellViewModel>().OpenResource(SelectedSharepointServer.ResourceID, CustomContainer.Get<IShellViewModel>().ActiveServer);
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var activeServer = shellViewModel.ActiveServer;
+            if (activeServer != null)
+            {
+                shellViewModel.OpenResource(SelectedSharepointServer.ResourceID,activeServer.EnvironmentID, activeServer);
+            }
         }
 
 
@@ -545,3 +539,11 @@ namespace Dev2.Activities.Designers2.SharepointListRead
         }
     }
 }
+
+
+
+
+
+
+
+

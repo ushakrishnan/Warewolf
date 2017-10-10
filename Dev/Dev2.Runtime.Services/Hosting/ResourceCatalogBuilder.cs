@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,9 +32,9 @@ namespace Dev2.Runtime.Hosting
     /// <summary>
     /// Transfer FileStream and ResourcePath together
     /// </summary>
-    // ReSharper disable InconsistentNaming
+    
     internal class ResourceBuilderTO
-    // ReSharper restore InconsistentNaming
+    
     {
         internal string FilePath;
         internal FileStream FileStream;
@@ -69,11 +69,19 @@ namespace Dev2.Runtime.Hosting
         public void BuildCatalogFromWorkspace(string workspacePath, params string[] folders)
         {
             if(string.IsNullOrEmpty(workspacePath))
+            {
                 throw new ArgumentNullException("workspacePath");
-            if(folders == null)
+            }
+
+            if (folders == null)
+            {
                 throw new ArgumentNullException("folders");
-            if(folders.Length == 0 || !Directory.Exists(workspacePath))
+            }
+
+            if (folders.Length == 0 || !Directory.Exists(workspacePath))
+            {
                 return;
+            }
 
             var streams = new List<ResourceBuilderTO>();
 
@@ -95,7 +103,7 @@ namespace Dev2.Runtime.Hosting
 
                         if ((fa & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
                         {
-                            Dev2Logger.Info("Removed READONLY Flag from [ " + file + " ]");
+                            Dev2Logger.Info("Removed READONLY Flag from [ " + file + " ]", GlobalConstants.WarewolfInfo);
                             File.SetAttributes(file, FileAttributes.Normal);
                         }
 
@@ -111,6 +119,7 @@ namespace Dev2.Runtime.Hosting
                 IList<Type> allTypes = new List<Type>();
                 var connectionTypeName = typeof(Connection).Name;
                 var dropBoxSourceName = typeof(DropBoxSource).Name;
+                var sharepointSourceName = typeof(SharepointSource).Name;
                 var dbType = typeof(DbSource).Name;
                 try
                 {
@@ -123,7 +132,7 @@ namespace Dev2.Runtime.Hosting
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Error(ErrorResource.ErrorLoadingTypes, e);
+                    Dev2Logger.Error(ErrorResource.ErrorLoadingTypes, e, GlobalConstants.WarewolfError);
                 }
                 streams.ForEach(currentItem =>
                 {
@@ -135,12 +144,12 @@ namespace Dev2.Runtime.Hosting
                     }
                     catch (Exception e)
                     {
-                        Dev2Logger.Error("Resource [ " + currentItem.FilePath + " ] caused " + e.Message);
+                        Dev2Logger.Error("Resource [ " + currentItem.FilePath + " ] caused " + e.Message, GlobalConstants.WarewolfError);
                     }
+                                      
+                    StringBuilder result = xml?.ToStringBuilder();
 
-                    StringBuilder result = xml.ToStringBuilder();
-
-                    var isValid = xml != null && HostSecurityProvider.Instance.VerifyXml(result);
+                    var isValid = result!=null && HostSecurityProvider.Instance.VerifyXml(result);
                     if (isValid)
                     {
                         //TODO: Remove this after V1 is released. All will be updated.
@@ -167,6 +176,11 @@ namespace Dev2.Runtime.Hosting
                             xml.SetAttributeValue("Type", dropBoxSourceName);
                             typeName = dropBoxSourceName;
                         }
+                        if (typeName == "SharepointServerSource")
+                        {
+                            xml.SetAttributeValue("Type", sharepointSourceName);
+                            typeName = sharepointSourceName;
+                        }
                         #endregion
 
                         Type type = null;
@@ -175,14 +189,7 @@ namespace Dev2.Runtime.Hosting
                             type = allTypes.FirstOrDefault(type1 => type1.Name == typeName);
                         }
                         Resource resource;
-                        if (type != null)
-                        {
-                            resource = (Resource)Activator.CreateInstance(type, xml);
-                        }
-                        else
-                        {
-                            resource = new Resource(xml);
-                        }
+                        resource = type != null ? (Resource)Activator.CreateInstance(type, xml) : new Resource(xml);
                         resource.FilePath = currentItem.FilePath;
                         xml = _resourceUpgrader.UpgradeResource(xml, Assembly.GetExecutingAssembly().GetName().Version, a =>
                         {
@@ -195,7 +202,6 @@ namespace Dev2.Runtime.Hosting
 
                                     StringBuilder updateXml = a.ToStringBuilder();
                                     var signedXml = HostSecurityProvider.Instance.SignXml(updateXml);
-
                                     signedXml.WriteToFile(currentItem.FilePath, Encoding.UTF8, fileManager);
                                     tx.Complete();
                                 }
@@ -207,7 +213,7 @@ namespace Dev2.Runtime.Hosting
                                     }
                                     catch (Exception err)
                                     {
-                                        Dev2Logger.Error(err);
+                                        Dev2Logger.Error(err, GlobalConstants.WarewolfError);
                                     }
                                     throw;
                                 }
@@ -247,7 +253,7 @@ namespace Dev2.Runtime.Hosting
                     }
                     else
                     {
-                        Dev2Logger.Debug(string.Format("'{0}' wasn't loaded because it isn't signed or has modified since it was signed.", currentItem.FilePath));
+                        Dev2Logger.Debug(string.Format("'{0}' wasn't loaded because it isn't signed or has modified since it was signed.", currentItem.FilePath), GlobalConstants.WarewolfDebug);
                     }
                 });
             }
@@ -283,13 +289,13 @@ namespace Dev2.Runtime.Hosting
                     CreateDupResource(dupRes,filePath);
                     Dev2Logger.Debug(
                         string.Format(ErrorResource.ResourceAlreadyLoaded,
-                            res.ResourceName, filePath, dupRes.FilePath));
+                            res.ResourceName, filePath, dupRes.FilePath), GlobalConstants.WarewolfDebug);
                 }
                 else
                 {
                     Dev2Logger.Debug(string.Format(
                             "Resource '{0}' from file '{1}' wasn't loaded because a resource with the same name has already been loaded but cannot find its location.",
-                            res.ResourceName, filePath));
+                            res.ResourceName, filePath), GlobalConstants.WarewolfDebug);
                 }
             }
         }
@@ -305,7 +311,9 @@ namespace Dev2.Runtime.Hosting
                     {
                         var firstDup = _duplicateResources.First(p => p.ResourceId == dupRes.ResourceID);
                         if (!firstDup.ResourcePath.Contains(filePath))
+                        {
                             firstDup.ResourcePath.Add(filePath);
+                        }
                     }
                     var duplicatePaths = filePath == dupRes.FilePath ? string.Empty : filePath;
                     var resourcePaths = new List<string> { dupRes.FilePath };

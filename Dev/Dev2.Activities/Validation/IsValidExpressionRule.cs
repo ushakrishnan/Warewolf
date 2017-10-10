@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Parsers;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
@@ -24,13 +24,23 @@ namespace Dev2.Validation
     public class IsValidExpressionRule : Rule<string>
     {
         readonly string _variableValue;
-        // ReSharper disable NotAccessedField.Local
+        
         readonly ObservableCollection<ObservablePair<string, string>> _inputs;
-        // ReSharper restore NotAccessedField.Local
+        
         readonly string _datalist;
         string _outputValue;
+        
+        public IsValidExpressionRule(Func<string> getValue, string datalist)
+            : this(getValue, datalist, "a", null)
+        {
+        }
 
-        public IsValidExpressionRule(Func<string> getValue, string datalist, string variableValue = "a", ObservableCollection<ObservablePair<string, string>> inputs = null)
+        public IsValidExpressionRule(Func<string> getValue, string datalist, string variableValue)
+            : this(getValue, datalist, variableValue, null)
+        {
+        }
+
+        public IsValidExpressionRule(Func<string> getValue, string datalist, string variableValue, ObservableCollection<ObservablePair<string, string>> inputs)
             : base(getValue)
         {
             _variableValue = variableValue;

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,7 @@ namespace Dev2.Common.Utils
         public int[] GroupNumbers { private get; set; }
         public Func<string, string> TransformFunction { private get; set; }
 
-        // ReSharper disable once ParameterTypeCanBeEnumerable.Local
+        
         public static string TransformAllMatches(string initial, List<StringTransform> transforms)
         {
             StringBuilder result = new StringBuilder(initial);
@@ -30,7 +30,11 @@ namespace Dev2.Common.Utils
                 Regex regex = transform.SearchRegex;
                 int[] groupNumbers = transform.GroupNumbers;
                 MatchCollection matches = regex.Matches(initial);
-                if (matches.Count == 0) continue;
+                if (matches.Count == 0)
+                {
+                    continue;
+                }
+
                 StringBuilder encrypted = new StringBuilder();
                 foreach (Match match in matches)
                 {

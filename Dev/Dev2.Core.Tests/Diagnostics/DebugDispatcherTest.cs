@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -117,7 +117,7 @@ namespace Dev2.Tests.Diagnostics
         public void WriteWithNull()
         {
 
-            DebugDispatcher.Instance.Write(null);
+            DebugDispatcher.Instance.Write(null,false,false,"");
 
             // No exception thrown
             Assert.IsTrue(true);
@@ -128,9 +128,9 @@ namespace Dev2.Tests.Diagnostics
         [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("DebugDispatcher_Write")]
-        // ReSharper disable InconsistentNaming
+        
         public void DebugDispatcher_Write_WhenRemoteInvoke_ExpectRemoteItemsAddedToRepo()
-        // ReSharper restore InconsistentNaming
+
         {
             //------------Setup for test--------------------------
             var workspaceID = Guid.NewGuid();
@@ -145,7 +145,7 @@ namespace Dev2.Tests.Diagnostics
             var remoteID = Guid.NewGuid();
 
             //------------Execute Test---------------------------
-            DebugDispatcher.Instance.Write(state.Object, true, remoteID.ToString()); // queue remote item ;)
+            DebugDispatcher.Instance.Write(state.Object, false,false,"",true, remoteID.ToString()); // queue remote item ;)
 
             //------------Assert Results-------------------------
 

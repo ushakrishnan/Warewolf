@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +10,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Data.Decisions.Operations;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Data.SystemTemplates.Models
 {
@@ -57,7 +56,7 @@ namespace Dev2.Data.SystemTemplates.Models
             return result;
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public void AddModelItem(Dev2Decision item)
         {
             TheStack.Add(item);
@@ -68,9 +67,9 @@ namespace Dev2.Data.SystemTemplates.Models
             return idx < TotalDecisions ? TheStack[idx] : null;
         }
 
-        // ReSharper disable InconsistentNaming
+        
         public string ToVBPersistableModel()
-        // ReSharper restore InconsistentNaming
+
         {
 
             string result = ToWebModel();
@@ -107,12 +106,10 @@ namespace Dev2.Data.SystemTemplates.Models
             return result.ToString();
         }
 
-        // ReSharper disable InconsistentNaming
+        
         public static string FromVBPersitableModelToJSON(string val)
-        // ReSharper restore InconsistentNaming
-        {
-            // ! for old models, __!__ for new modesl ;)
 
+        {
             return val.Replace("!", "\"");
 
         }
@@ -134,7 +131,6 @@ namespace Dev2.Data.SystemTemplates.Models
                     start += 2;
                     val = val.Substring(start, end - start);
 
-                    // Convert back for usage ;)
                     return FromVBPersitableModelToJSON(val);
                 }
             }
@@ -169,7 +165,7 @@ namespace Dev2.Data.SystemTemplates.Models
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error("Dev2DecisionStack", ex);
+                Dev2Logger.Error("Dev2DecisionStack", ex, GlobalConstants.WarewolfError);
                 // Best effort ;)
             }
 

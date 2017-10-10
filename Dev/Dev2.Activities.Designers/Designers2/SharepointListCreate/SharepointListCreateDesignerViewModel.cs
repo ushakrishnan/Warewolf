@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,9 +12,9 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using Dev2.Activities.Designers2.SharepointListRead;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
-using Dev2.Interfaces;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.TO;
 
@@ -23,8 +23,9 @@ namespace Dev2.Activities.Designers2.SharepointListCreate
     public class SharepointListCreateDesignerViewModel : SharepointListDesignerViewModelBase
     {
         public SharepointListCreateDesignerViewModel(ModelItem modelItem)
-            : base(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment, EventPublishers.Aggregator,true)
+            : base(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer, EventPublishers.Aggregator,true)
         {
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_SharePoint_Create_List_Item;
         }
 
         public override string CollectionName => "FilterCriteria";
@@ -46,11 +47,8 @@ namespace Dev2.Activities.Designers2.SharepointListCreate
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

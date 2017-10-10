@@ -23,6 +23,7 @@ namespace Dev2.Scheduler
         string _password;
         IErrorResultTO _errors;
         bool _isNew;
+        readonly
 #pragma warning disable 414
         bool _isNewItem;
 #pragma warning restore 414
@@ -244,12 +245,12 @@ namespace Dev2.Scheduler
             {
                 return true;
             }
-            set
-            {
-
-            }
         }
         public string NameForDisplay { get; private set; }
+
+        public void SetItem(IScheduledResource item)
+        {
+        }
 
         #endregion
 
@@ -265,6 +266,15 @@ namespace Dev2.Scheduler
             {
                 _newCommand = value;
             }
+        }
+
+        #endregion
+
+        #region Implementation of IEquatable<IScheduledResource>
+
+        public bool Equals(IScheduledResource other)
+        {
+            return false;
         }
 
         #endregion

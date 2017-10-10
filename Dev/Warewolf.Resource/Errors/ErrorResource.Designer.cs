@@ -19,7 +19,7 @@ namespace Warewolf.Resource.Errors {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class ErrorResource {
@@ -421,7 +421,7 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} contains invalid characters.
+        ///   Looks up a localized string similar to &apos;Name&apos; contains invalid characters.
         /// </summary>
         public static string ContainsInvalidCharecters {
             get {
@@ -430,7 +430,7 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} contains leading or trailing whitespace characters..
+        ///   Looks up a localized string similar to &apos;Name&apos; contains leading or trailing whitespace characters..
         /// </summary>
         public static string ContainsLeadingOrTrailingWhitespace {
             get {
@@ -939,6 +939,15 @@ namespace Warewolf.Resource.Errors {
         public static string EmptyValuesPassed {
             get {
                 return ResourceManager.GetString("EmptyValuesPassed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please ensure that your server is still running and your network connection is working..
+        /// </summary>
+        public static string EnsureConnectionToServerWorking {
+            get {
+                return ResourceManager.GetString("EnsureConnectionToServerWorking", resourceCulture);
             }
         }
         
@@ -1969,11 +1978,20 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to An item with name &apos;{0}&apos; already exists in this folder..
+        ///   Looks up a localized string similar to An item with this name already exists in this folder..
         /// </summary>
         public static string ItemWithNameAlreadyExists {
             get {
                 return ResourceManager.GetString("ItemWithNameAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot convert given JSON to target type.
+        /// </summary>
+        public static string JSONIncompatibleConversionError {
+            get {
+                return ResourceManager.GetString("JSONIncompatibleConversionError", resourceCulture);
             }
         }
         
@@ -2244,6 +2262,69 @@ namespace Warewolf.Resource.Errors {
         public static string NoSharepointServerSet {
             get {
                 return ResourceManager.GetString("NoSharepointServerSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Administrator rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToAdministratorException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToAdministratorException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Contribute rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToContributeException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToContributeException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToCreateException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToCreateException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DeployFrom  rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToDeployFromException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToDeployFromException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DeployTo rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToDeployToException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToDeployToException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Execute rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToExecuteException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToExecuteException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View rights required to perfom this action..
+        /// </summary>
+        public static string NotAuthorizedToViewException {
+            get {
+                return ResourceManager.GetString("NotAuthorizedToViewException", resourceCulture);
             }
         }
         
@@ -2590,6 +2671,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;Prefetch&apos; Cannot be null.
+        /// </summary>
+        public static string RabbitMqPrefetchNotNullErrorTest {
+            get {
+                return ResourceManager.GetString("RabbitMqPrefetchNotNullErrorTest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &apos;Queue Name&apos; Cannot be null.
         /// </summary>
         public static string RabbitMqQueueNameNotNullErrorTest {
@@ -2896,6 +2986,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Can only save to folders or root.
+        /// </summary>
+        public static string SaveToFolderOrRootOnly {
+            get {
+                return ResourceManager.GetString("SaveToFolderOrRootOnly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Scalars are not allowed. Please check the following: {0}.
         /// </summary>
         public static string ScalarsNotAllowed {
@@ -2943,6 +3042,24 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} is currently busy. Please try again later..
+        /// </summary>
+        public static string ServerBusyError {
+            get {
+                return ResourceManager.GetString("ServerBusyError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server is currently busy.
+        /// </summary>
+        public static string ServerBusyHeader {
+            get {
+                return ResourceManager.GetString("ServerBusyHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Server connection has dropped during execution of command..
         /// </summary>
         public static string ServerconnectionDropped {
@@ -2954,9 +3071,27 @@ namespace Warewolf.Resource.Errors {
         /// <summary>
         ///   Looks up a localized string similar to Server: {0} has disconnected..
         /// </summary>
-        public static string ServerDissconnected {
+        public static string ServerDisconnected {
             get {
-                return ResourceManager.GetString("ServerDissconnected", resourceCulture);
+                return ResourceManager.GetString("ServerDisconnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Disconnected Server.
+        /// </summary>
+        public static string ServerDisconnectedHeader {
+            get {
+                return ResourceManager.GetString("ServerDisconnectedHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Server dropped.
+        /// </summary>
+        public static string ServerDroppedErrorHeading {
+            get {
+                return ResourceManager.GetString("ServerDroppedErrorHeading", resourceCulture);
             }
         }
         
@@ -2966,6 +3101,15 @@ namespace Warewolf.Resource.Errors {
         public static string ServerInputPathEmpty {
             get {
                 return ResourceManager.GetString("ServerInputPathEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please reconnect before performing any actions.
+        /// </summary>
+        public static string ServerReconnectForActions {
+            get {
+                return ResourceManager.GetString("ServerReconnectForActions", resourceCulture);
             }
         }
         
@@ -3011,6 +3155,15 @@ namespace Warewolf.Resource.Errors {
         public static string ServiceIsNull {
             get {
                 return ResourceManager.GetString("ServiceIsNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not Authorized.
+        /// </summary>
+        public static string ServiceNotAuthorizedExceptionHeader {
+            get {
+                return ResourceManager.GetString("ServiceNotAuthorizedExceptionHeader", resourceCulture);
             }
         }
         

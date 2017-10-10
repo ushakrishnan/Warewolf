@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
+using Dev2.Common;
 
 namespace Dev2.Activities.Designers2.Core.Adorners
 {
@@ -48,12 +49,12 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         /// </summary>
         public new FrameworkElement AdornedElement => (FrameworkElement)base.AdornedElement;
 
-        public FrameworkElement Content { get { return (FrameworkElement)GetValue(ContentProperty); } set { SetValue(ContentProperty, value); } }
+        public FrameworkElement Content { get => (FrameworkElement)GetValue(ContentProperty); set => SetValue(ContentProperty, value); }
 
         public static readonly DependencyProperty ContentProperty =
             DependencyProperty.Register("Content", typeof(FrameworkElement), typeof(AdornerControl), new PropertyMetadata(null));
 
-        public bool IsAdornerVisible { get { return (bool)GetValue(IsAdornerVisibleProperty); } set { SetValue(IsAdornerVisibleProperty, value); } }
+        public bool IsAdornerVisible { get => (bool)GetValue(IsAdornerVisibleProperty); set => SetValue(IsAdornerVisibleProperty, value); }
 
         public static readonly DependencyProperty IsAdornerVisibleProperty =
             DependencyProperty.Register("IsAdornerVisible", typeof(bool), typeof(AdornerControl), new PropertyMetadata(false, OnIsAdornerVisibleChanged));
@@ -61,7 +62,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         static void OnIsAdornerVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var adorner = (AdornerControl)d;
-            adorner.Toggle();
+            adorner?.Toggle();
         }
 
         protected override Int32 VisualChildrenCount => 1;
@@ -108,7 +109,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         {
             var adornedWidth = AdornedElement.ActualWidth;
             var adornerWidth = Content.DesiredSize.Width;
-            switch(Content.HorizontalAlignment)
+            switch (Content.HorizontalAlignment)
             {
                 case HorizontalAlignment.Left:
                     return -adornerWidth + OffsetX;
@@ -122,6 +123,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
 
                 case HorizontalAlignment.Stretch:
                     return 0.0;
+                default:
+                    break;
             }
             return 0.0;
         }
@@ -130,7 +133,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         {
             var adornedHeight = AdornedElement.ActualHeight;
             var adornerHeight = Content.DesiredSize.Height;
-            switch(Content.VerticalAlignment)
+            switch (Content.VerticalAlignment)
             {
                 case VerticalAlignment.Top:
                     return OffsetY;
@@ -144,6 +147,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
 
                 case VerticalAlignment.Stretch:
                     return 0.0;
+                default:
+                    break;
             }
             return 0.0;
         }
@@ -155,7 +160,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                 return Content.DesiredSize.Width;
             }
 
-            switch(Content.HorizontalAlignment)
+            switch (Content.HorizontalAlignment)
             {
                 case HorizontalAlignment.Left:
                 case HorizontalAlignment.Right:
@@ -163,6 +168,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                     return Content.DesiredSize.Width;
                 case HorizontalAlignment.Stretch:
                     return AdornedElement.ActualWidth;
+                default:
+                    break;
             }
 
             return 0.0;
@@ -176,7 +183,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                 return height;
             }
 
-            switch(Content.VerticalAlignment)
+            switch (Content.VerticalAlignment)
             {
                 case VerticalAlignment.Top:
                 case VerticalAlignment.Bottom:
@@ -184,23 +191,32 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                     return height;
                 case VerticalAlignment.Stretch:
                     return AdornedElement.ActualHeight;
+                default:
+                    break;
             }
             return 0.0;
         }
 
         void Toggle()
         {
-            if(IsAdornerVisible)
+            try
             {
-                AddLogicalChild(Content);
-                AddVisualChild(Content);
-                AdornerLayer.Add(this);
+                if(IsAdornerVisible)
+                {
+                    AddLogicalChild(Content);
+                    AddVisualChild(Content);
+                    AdornerLayer?.Add(this);
+                }
+                else
+                {
+                    AdornerLayer?.Remove(this);
+                    RemoveLogicalChild(Content);
+                    RemoveVisualChild(Content);
+                }
             }
-            else
+            catch(Exception e)
             {
-                AdornerLayer.Remove(this);
-                RemoveLogicalChild(Content);
-                RemoveVisualChild(Content);
+                Dev2Logger.Error("Error toggling adorner: ",e, "Warewolf Error");
             }
         }
     }

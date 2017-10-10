@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Windows;
+using Dev2;
 using Dev2.Common.Interfaces.Explorer;
+using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Communication;
 using Dev2.Controller;
+using Dev2.Studio.Interfaces;
+using Warewolf.Resource.Errors;
 
 namespace Warewolf.Studio.ServerProxyLayer
 {
     public class VersionManagerProxy : Dev2.Common.Interfaces.ServerProxyLayer.IVersionManager {
-        readonly Dev2.Studio.Core.Interfaces.IEnvironmentConnection _connection;
+        readonly IEnvironmentConnection _connection;
 
-        public VersionManagerProxy(ICommunicationControllerFactory communicationControllerFactory, Dev2.Studio.Core.Interfaces.IEnvironmentConnection connection)
+        public VersionManagerProxy(ICommunicationControllerFactory communicationControllerFactory, IEnvironmentConnection connection)
         {
             CommunicationControllerFactory = communicationControllerFactory;
             _connection = connection;
@@ -21,6 +26,14 @@ namespace Warewolf.Studio.ServerProxyLayer
 
         #region Implementation of IVersionManager
 
+        private void ShowServerDisconnectedPopup()
+        {
+            var controller = CustomContainer.Get<IPopupController>();
+            controller?.Show(string.Format(ErrorResource.ServerDisconnected, _connection.DisplayName.Replace("(Connected)", "")) + Environment.NewLine +
+                             ErrorResource.ServerReconnectForActions, ErrorResource.ServerDisconnectedHeader, MessageBoxButton.OK,
+                MessageBoxImage.Error, "", false, true, false, false, false, false);
+        }
+
         /// <summary>
         /// Get a list of versions of a resource
         /// </summary>
@@ -28,6 +41,12 @@ namespace Warewolf.Studio.ServerProxyLayer
         /// <returns>the resource versions. N configured versions are stored on a server</returns>
         public IList<IExplorerItem> GetVersions(Guid resourceId)
         {
+            if (!_connection.IsConnected)
+            {
+                ShowServerDisconnectedPopup();
+                return new List<IExplorerItem>();
+            }
+
             var workSpaceId = Guid.NewGuid();
             var controller = CommunicationControllerFactory.CreateController("GetVersions");
             controller.AddPayloadArgument("resourceId", resourceId.ToString());

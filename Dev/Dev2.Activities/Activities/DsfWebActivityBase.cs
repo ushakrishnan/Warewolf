@@ -13,6 +13,7 @@ using Dev2.Diagnostics;
 using Dev2.Runtime.ServiceModel.Data;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
@@ -94,7 +95,7 @@ namespace Dev2.Activities
             catch (UriFormatException e)
             {
                 //CurrentDataObject.Environment.AddError(e.Message);// To investigate this
-                Dev2Logger.Error(e.Message, e); // Error must be added on the environment
+                Dev2Logger.Error(e.Message, e, GlobalConstants.WarewolfError); // Error must be added on the environment
                 return httpClient;
             }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,10 +18,10 @@ using Dev2.Common.Interfaces.Core.Graph;
 using Newtonsoft.Json.Linq;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Unlimited.Framework.Converters.Graph.String.Json
-// ReSharper restore CheckNamespace
+
 {
     [Serializable]
     public class JsonMapper : IMapper
@@ -83,7 +83,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
                     }
                     catch (Exception ex)
                     {
-                        Dev2Logger.Error(ex);
+                        Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                         propertyData = null;
                     }
 
@@ -104,7 +104,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
                     }
                     catch (Exception ex)
                     {
-                        Dev2Logger.Error(ex);
+                        Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                         propertyData = null;
                         //TODO When an exception is encountered stop discovery for this path and write to log
                     }
@@ -113,13 +113,12 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
                     {
                         if (property.IsEnumerable())
                         {
-                            // ReSharper disable RedundantCast
-                            var enumerableData = propertyData as IEnumerable;
-                            // ReSharper restore RedundantCast
 
-                            // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                            if (enumerableData != null)
-                                // ReSharper restore ConditionIsAlwaysTrueOrFalse
+
+
+
+                            if (propertyData is IEnumerable enumerableData)
+
                             {
                                 IEnumerator enumerator = enumerableData.GetEnumerator();
                                 enumerator.Reset();
@@ -170,7 +169,10 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
                     pathSegment.Item1.IsEnumarable = false;
                 }
 
-                if (pathSegment.Item1.IsEnumarable && pathSegment.Item2) recordsetEncountered = true;
+                if (pathSegment.Item1.IsEnumarable && pathSegment.Item2)
+                {
+                    recordsetEncountered = true;
+                }
             }
 
             path.DisplayPath = string.Join(JsonPath.SeperatorSymbol,

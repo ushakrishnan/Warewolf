@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,18 +29,18 @@ using Newtonsoft.Json;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable FieldCanBeMadeReadOnly.Local
+
 
 namespace Dev2.Activities.Designers2.Core
 {
     public class ManagePluginServiceInputViewModel : IManagePluginServiceInputViewModel
     {
-        IGenerateOutputArea _generateOutputArea;
-        IGenerateInputArea _generateInputArea;
+        readonly IGenerateOutputArea _generateOutputArea;
+        readonly IGenerateInputArea _generateInputArea;
         bool _isEnabled;
         bool _pasteResponseAvailable;
-        IDotNetViewModel _viewmodel;
-        IPluginServiceModel _serverModel;
+        readonly IDotNetViewModel _viewmodel;
+        readonly IPluginServiceModel _serverModel;
         bool _isGenerateInputsEmptyRows;
         private bool _okSelected;
         private string _testResults;
@@ -52,6 +52,8 @@ namespace Dev2.Activities.Designers2.Core
         private RecordsetList _recordsetList;
         private bool _outputCountExpandAllowed;
         private bool _inputCountExpandAllowed;
+        private bool _testPassed;
+        private bool _testFailed;
 
         public ManagePluginServiceInputViewModel(IDotNetViewModel model, IPluginServiceModel serviceModel)
         {
@@ -67,6 +69,7 @@ namespace Dev2.Activities.Designers2.Core
             _viewmodel = model;
             _serverModel = serviceModel;
         }
+       
 
         public bool OutputCountExpandAllowed
         {
@@ -100,7 +103,9 @@ namespace Dev2.Activities.Designers2.Core
             _viewmodel.GenerateOutputsVisible = false;
             InputArea.IsEnabled = false;
             OutputArea.IsEnabled = false;
-            TestResults = String.Empty;
+            TestResults = string.Empty;
+            TestFailed = false;
+            TestPassed = false;
             TestResultsAvailable = false;
             Errors.Clear();
 
@@ -181,13 +186,13 @@ namespace Dev2.Activities.Designers2.Core
                         throw new Exception(errorMessage);
                     }
                     Description = responseService.Description;
-                    // ReSharper disable MaximumChainedReferences
+                    
                     var outputMapping = _recordsetList.SelectMany(recordset => recordset.Fields, (recordset, recordsetField) =>
                     {
                         var serviceOutputMapping = new ServiceOutputMapping(recordsetField.Name, recordsetField.Alias, recordset.Name) { Path = recordsetField.Path };
                         return serviceOutputMapping;
                     }).Cast<IServiceOutputMapping>().ToList();
-                    // ReSharper restore MaximumChainedReferences
+                    
                     _generateOutputArea.IsEnabled = true;
                     _generateOutputArea.Outputs = outputMapping;
                 }
@@ -195,6 +200,8 @@ namespace Dev2.Activities.Designers2.Core
                 {
                     TestResultsAvailable = TestResults != null;
                     IsTesting = false;
+                    TestPassed = true;
+                    TestFailed = false;
                 }
             }
             catch (JsonSerializationException)
@@ -205,6 +212,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 Errors.Add(e.Message);
                 IsTesting = false;
+                TestPassed = false;
+                TestFailed = true;
                 _generateOutputArea.IsEnabled = false;
                 _generateOutputArea.Outputs = new List<IServiceOutputMapping>();
                 _viewmodel.ErrorMessage(e, true);
@@ -265,6 +274,27 @@ namespace Dev2.Activities.Designers2.Core
 
         public Action TestAction { get; set; }
         public ICommand TestCommand { get; private set; }
+
+        public bool TestPassed
+        {
+            get { return _testPassed; }
+            set
+            {
+                _testPassed = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool TestFailed
+        {
+            get { return _testFailed; }
+            set
+            {
+                _testFailed = value;
+                OnPropertyChanged();
+            }
+        }
+
         public bool TestResultsAvailable
         {
             get
@@ -355,11 +385,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 return _generateOutputArea;
             }
-            set
-            {
-                
-            }
         }
+
         public IOutputDescription Description { get; set; }
         public IGenerateInputArea InputArea
         {
@@ -367,11 +394,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 return _generateInputArea;
             }
-            set
-            {
-                
-            }
         }
+
         public bool PasteResponseVisible
         {
             get

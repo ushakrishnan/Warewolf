@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,12 +9,14 @@
 */
 
 using System;
+using System.Linq;
+using Dev2.Runtime;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin;
 using DummyNamespaceForTest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.ESB.ComPlugin
 {
@@ -59,12 +61,13 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
 
 
 
-        /*[TestMethod]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
+        [DeploymentItem("WarewolfCOMIPC.exe")]
         public void ListMethods_GivenAdodbConnection_ShouldContainOpen()
         {
             //---------------Set up test pack-------------------
-            const string adodbConGuid = "00000514-0000-0010-8000-00AA006D2EA4";
+            const string adodbConGuid = ComPluginRuntimeHandlerTest.adodbConnectionClassId;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var ns = ComPluginServiceExecutionFactory.GetNamespaces(new ComPluginSource { ClsId = adodbConGuid });
@@ -76,7 +79,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             //---------------Test Result -----------------------
             Assert.IsNotNull(openMethod);
         }
-        */
+        
         #region Helper Methods
 
         static ComPluginSource CreatePluginSource(bool invalidResourceID = false)

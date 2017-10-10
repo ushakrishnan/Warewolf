@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,12 +18,10 @@ using System.Linq;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common;
-using Dev2.Common.Interfaces;
-using Dev2.Interfaces;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Utils;
 using Microsoft.CSharp.RuntimeBinder;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -42,6 +40,7 @@ namespace Dev2.Activities.Designers2.Sequence
             dynamic mi = ModelItem;
             ModelItemCollection activities = mi.Activities;
             activities.CollectionChanged += ActivitiesOnCollectionChanged;
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Flow_Sequence;
         }
 
         void ActivitiesOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs notifyCollectionChangedEventArgs)
@@ -60,9 +59,9 @@ namespace Dev2.Activities.Designers2.Sequence
             {
                 return _smallViewItem;
             }
-            // ReSharper disable ValueParameterNotUsed
+            
             set
-            // ReSharper restore ValueParameterNotUsed
+            
             {
                 var test = value as ModelItem;
 
@@ -88,8 +87,7 @@ namespace Dev2.Activities.Designers2.Sequence
             get
             {
                 var property = ModelItem.GetProperty("Activities");
-                var activityNames = property as Collection<Activity>;
-                if (activityNames != null)
+                if (property is Collection<Activity> activityNames)
                 {
                     var fullListOfNames = activityNames.Select(item => item.DisplayName).ToList();
                     if (fullListOfNames.Count <= 4)
@@ -116,22 +114,24 @@ namespace Dev2.Activities.Designers2.Sequence
                 {
                     return false;
                 }
-                IExplorerItemViewModel itemModel = explorerItemModel as IExplorerItemViewModel;
-                if (itemModel != null)
+                if (explorerItemModel is IExplorerItemViewModel itemModel)
                 {
                     if (itemModel.Server != null)
+                    {
                         envId = itemModel.Server.EnvironmentID;
+                    }
+
                     resourceId = itemModel.ResourceId;
                 }
 
                 try
                 {
-                    IEnvironmentModel environmentModel = EnvironmentRepository.Instance.FindSingle(c => c.ID == envId);
-                    var resource = environmentModel?.ResourceRepository.FindSingle(c => c.ID == resourceId) as IContextualResourceModel;
+                    IServer server = ServerRepository.Instance.FindSingle(c => c.EnvironmentID == envId);
+                    var resource = server?.ResourceRepository.LoadContextualResourceModel(resourceId);
 
                     if (resource != null)
                     {
-                        DsfActivity d = DsfActivityFactory.CreateDsfActivity(resource, null, true, EnvironmentRepository.Instance, true);
+                        DsfActivity d = DsfActivityFactory.CreateDsfActivity(resource, null, true, ServerRepository.Instance, true);
                         d.ServiceName = d.DisplayName = d.ToolboxFriendlyName = resource.Category;
                         if (Application.Current != null && Application.Current.Dispatcher.CheckAccess() && Application.Current.MainWindow != null)
                         {
@@ -154,7 +154,7 @@ namespace Dev2.Activities.Designers2.Sequence
                 }
                 catch (RuntimeBinderException e)
                 {
-                    Dev2Logger.Error(e);
+                    Dev2Logger.Error(e, "Warewolf Error");
                 }
             }
             return false;
@@ -173,8 +173,7 @@ namespace Dev2.Activities.Designers2.Sequence
             if (!string.IsNullOrEmpty(modelItemString))
             {
                 var objectData = dataObject.GetData(modelItemString);
-                var data = objectData as List<ModelItem>;
-                if (data != null && data.Count >= 1)
+                if (objectData is List<ModelItem> data && data.Count >= 1)
                 {
                     foreach (var item in data)
                     {
@@ -193,7 +192,7 @@ namespace Dev2.Activities.Designers2.Sequence
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
             mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }

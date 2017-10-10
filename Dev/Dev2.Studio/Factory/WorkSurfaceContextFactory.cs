@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,26 +10,26 @@
 
 using System;
 using Dev2.Common.ExtMethods;
-using Dev2.Common.Interfaces;
 using Dev2.Factory;
 using Dev2.Settings;
 using Dev2.Settings.Scheduler;
 using Dev2.Studio.AppResources.Comparers;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
+using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Studio.ViewModels.WorkSurface;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Factory
 {
     public static class WorkSurfaceContextFactory
     {
-        public static WorkSurfaceContextViewModel CreateResourceViewModel(IContextualResourceModel resourceModel, bool createDesigner = true)
+        public static WorkSurfaceContextViewModel CreateResourceViewModel(IContextualResourceModel resourceModel) => CreateResourceViewModel(resourceModel, true);
+        public static WorkSurfaceContextViewModel CreateResourceViewModel(IContextualResourceModel resourceModel, bool createDesigner)
         {
             var key = WorkSurfaceKeyFactory.CreateKey(resourceModel);
 
-            //TODO Juries move to factory
             var workSurfaceVm = new WorkflowDesignerViewModel(resourceModel, createDesigner);
 
             var contextVm = new WorkSurfaceContextViewModel(key, workSurfaceVm)
@@ -38,15 +38,7 @@ namespace Dev2.Studio.Factory
                 };
 
             return contextVm;
-        }       
-
-        //public static WorkSurfaceContextViewModel CreateSingleEnvironmentDeployViewModel(object input)
-        //{
-        //    var vm = DeployViewModelFactory.GetDeployViewModel(CustomContainer.Get<IEventAggregator>(),CustomContainer.Get<IShellViewModel>(),new List<IExplorerTreeItem>());
-       
-        //    var context = CreateUniqueWorkSurfaceContextViewModel(vm, WorkSurfaceContext.DeployResources);
-        //    return context;
-        //}
+        }
 
 
         /// <summary>
@@ -64,8 +56,18 @@ namespace Dev2.Studio.Factory
         {
 
             var key = WorkSurfaceKeyFactory.CreateKey(workSurfaceContext) as WorkSurfaceKey;
+            if(vm is HelpViewModel)
+            {
+                if(key != null)
+                {
+                    key.ResourceID = Guid.Empty;
+                }
+            }
             if (vm is SchedulerViewModel || vm is SettingsViewModel)
+            {
                 key = WorkSurfaceKeyFactory.CreateEnvKey(workSurfaceContext, CustomContainer.Get<IShellViewModel>().ActiveServer.EnvironmentID) as WorkSurfaceKey;
+            }
+
             return CreateWorkSurfaceContextViewModel(vm, workSurfaceContext, key);
         }
 
@@ -77,7 +79,10 @@ namespace Dev2.Studio.Factory
             var context = new WorkSurfaceContextViewModel(key, vm);
            
             if (!(vm is SchedulerViewModel)&& !(vm is SettingsViewModel))
+            {
                 vm.DisplayName = workSurfaceContext.GetDescription();
+            }
+
             vm.WorkSurfaceContext = workSurfaceContext;
             return context;
         }

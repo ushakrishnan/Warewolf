@@ -3,19 +3,18 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Windows;
 using System.Windows.Input;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
 using Dev2.Common.Common;
-using Dev2.Common.Interfaces;
 using Dev2.Data.ServiceModel;
-using Dev2.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
-// ReSharper disable UnusedMember.Global
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
-// ReSharper disable MemberCanBePrivate.Global
+
+
+
+
 
 namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
 {
@@ -41,11 +40,10 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
         public DropBoxFileListDesignerViewModel(ModelItem modelItem, IDropboxSourceManager sourceManager)
             : base(modelItem)
         {
-            ThumbVisibility = Visibility.Visible;
             _sourceManager = sourceManager;
             EditDropboxSourceCommand = new RelayCommand(o => EditDropBoxSource(), p => IsDropboxSourceSelected);
             NewSourceCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(CreateOAuthSource);
-            // ReSharper disable once VirtualMemberCallInContructor
+            
             Sources = LoadOAuthSources();
             AddTitleBarLargeToggle();
             EditDropboxSourceCommand.RaiseCanExecuteChanged();
@@ -53,6 +51,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
             IncludeDeleted = false;
             IsRecursive = false;
             IncludeMediaInfo = false;
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Dropbox_List_Contents;
         }
 
         public ICommand NewSourceCommand { get; set; }
@@ -63,13 +62,13 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
                 var oauthSource = GetProperty<DropBoxSource>();
                 return oauthSource ?? GetProperty<DropBoxSource>();
             }
-            // ReSharper disable once ExplicitCallerInfoArgument
+            
             set
             {
                 SetProperty(value);
                 EditDropboxSourceCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged("IsDropboxSourceSelected");
-                // ReSharper disable once RedundantArgumentDefaultValue
+                
                 OnPropertyChanged("SelectedSource");
             }
         }
@@ -84,7 +83,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
             {
                 SetProperty(value);
                 _sources = value;
-                // ReSharper disable once RedundantArgumentDefaultValue
+                
                 OnPropertyChanged("Sources");
             }
         }
@@ -223,8 +222,12 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
 
         private void EditDropBoxSource()
         {
-            CustomContainer.Get<IShellViewModel>().OpenResource(SelectedSource.ResourceID, CustomContainer.Get<IShellViewModel>().ActiveServer);
-
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var activeServer = shellViewModel.ActiveServer;
+            if (activeServer != null)
+            {
+                shellViewModel.OpenResource(SelectedSource.ResourceID,activeServer.EnvironmentID, activeServer);
+            }
         }
 
         public void CreateOAuthSource()
@@ -251,11 +254,8 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
         }
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -265,10 +265,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.DropboxFile
         protected void OnPropertyChanged(string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             if (propertyName != null && propertyName.ToUpper() == "SelectedSource".ToUpper())
             {
                 ToPath = String.Empty;

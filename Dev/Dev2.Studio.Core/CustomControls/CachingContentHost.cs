@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Caliburn.Micro;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.CustomControls
 {
     public class CachingContentHost : ContentControl
@@ -74,8 +74,7 @@ namespace Dev2.Studio.Core.CustomControls
 
         private void SubscribeDeactivation(object source)
         {
-            var sourceScreen = source as IScreen;
-            if(sourceScreen != null)
+            if (source is IScreen sourceScreen)
             {
                 sourceScreen.Deactivated += SourceScreenDeactivated;
             }

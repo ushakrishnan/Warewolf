@@ -11,7 +11,8 @@
 			 mc:Ignorable="d"
 			 x:Class="Warewolf.Studio.Views.ToolboxView"
 			 x:Name="UserControl"
-			 d:DesignWidth="640" d:DesignHeight="480">
+			 d:DesignWidth="640" 
+             d:DesignHeight="480">
 
 	<d:UserControl.DataContext>
 		<d:DesignInstance>
@@ -38,7 +39,7 @@
 				</CollectionViewSource.GroupDescriptions>
 			</CollectionViewSource>
 			<DataTemplate x:Key="ToolDataTemplate" DataType="toolBox:ToolDescriptorViewModel">
-				<Grid MouseMove="UIElement_OnMouseMove" 
+				<Grid MouseMove="UIElement_OnMouseMove" MouseEnter="ToolGrid_OnMouseEnter" MouseLeftButtonDown="ToolGrid_OnMouseLeftButtonDown"
 					  x:Name="ToolGrid"
 					  HorizontalAlignment="Stretch" 
 					  VerticalAlignment="Stretch"
@@ -122,18 +123,18 @@
 
 			<customControls:SearchTextBox Grid.Column="0" 
 										  Grid.Row="0"  
-										  LabelText="Filter"
+										  LabelText="Search tags e.g. add"
 										  x:Name="SearchTextBox"
 										  ClearSearchCommand="{Binding ClearFilterCommand}"
-										  ClearSearchToolTip="{x:Static languages:Core.ToolboxClearSearchTooltip}"
+										  ClearSearchToolTip="{x:Static languages:Tooltips.ToolboxClearSearchTooltip}"
 										  Style="{StaticResource SearchTextboxStyle}"
 										  GotKeyboardFocus="SelectAllText"
 										  MouseDoubleClick="SelectAllText"
 										  PreviewMouseLeftButtonDown="SelectivelyIgnoreMouseButton"
-										  ToolTip="{x:Static languages:Core.ToolboxSearchToolTip}"
-										  Text="{Binding SearchTerm, Delay=450, UpdateSourceTrigger=PropertyChanged}">
+										  ToolTip="{x:Static languages:Tooltips.ToolboxSearchToolTip}"
+										  Text="{Binding SearchTerm, Delay=300, UpdateSourceTrigger=PropertyChanged}">
 				<i:Interaction.Behaviors>
-					<core:HelpSetter Text="{x:Static languages:Core.ToolboxViewFilterSearchHelp}" DataContext="{Binding}" />
+					<core:HelpSetter Text="{x:Static languages:HelpText.ToolboxViewFilterSearchHelp}" DataContext="{Binding}" />
 				</i:Interaction.Behaviors>
 			</customControls:SearchTextBox>
 		</Grid>
@@ -211,7 +212,7 @@
 				<Style TargetType="ListBox" BasedOn="{StaticResource ListBoxToolboxStyle}">
 					<Setter Property="Visibility" Value="Collapsed"/>
 					<Style.Triggers>
-						<DataTrigger Binding="{Binding ElementName=SearchTextBox, Path=Text}" Value="">
+						<DataTrigger Binding="{Binding ElementName=SearchTextBox, Path=DataContext.SearchTerm}" Value="">
 							<Setter Property="Visibility" Value="Visible"/>
 						</DataTrigger>
 					</Style.Triggers>

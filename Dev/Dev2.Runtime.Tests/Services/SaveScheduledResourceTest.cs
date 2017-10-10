@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
@@ -21,13 +22,41 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Win32.TaskScheduler;
 using Moq;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
     public class SaveScheduledResourceTest
     {
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var saveScheduledResource = new SaveScheduledResource();
+
+            //------------Execute Test---------------------------
+            var resId = saveScheduledResource.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var saveScheduledResource = new SaveScheduledResource();
+
+            //------------Execute Test---------------------------
+            var resId = saveScheduledResource.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Contribute, resId);
+        }
+
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Save")]
         [TestMethod]
@@ -124,8 +153,11 @@ namespace Dev2.Tests.Runtime.Services
 
             var output = esbMethod.Execute(inp, ws.Object);
             if(expectCorrectInput && hasUserNameAndPassword)
+            {
                 model.Verify(a => a.Save(It.IsAny<ScheduledResource>(), username, password));
-            if(delete)
+            }
+
+            if (delete)
             {
                 model.Verify(a => a.DeleteSchedule(It.IsAny<IScheduledResource>()));
             }

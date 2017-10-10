@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,14 +11,17 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
+using System.Linq;
 using ActivityUnitTests;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
-    // ReSharper disable InconsistentNaming
+    
     /// <summary>
     /// Summary description for FindRecordsActivityTest
     /// </summary>
@@ -34,6 +37,27 @@ namespace Dev2.Tests.Activities.ActivityTests
         #region Additional test attributes
 
         #endregion
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfFindRecordsMultipleCriteriaActivity_GetOutputs")]
+        public void DsfFindRecordsMultipleCriteriaActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfFindRecordsMultipleCriteriaActivity
+            {
+                FieldsToSearch = "[[Recset().Field1]],[[Recset().Field2]],[[Recset().Field3]]",
+                ResultsCollection = new List<FindRecordsTO> { new FindRecordsTO("jimmy", ">", 1) },
+                StartIndex = "",
+                Result = "[[Result().res]]"
+            };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[Result().res]]", outputs[0]);
+        }
+
 
         [TestMethod]
         public void FindRecordsMulitpleCriteriaActivity_WithTextInMatchField_Expected_NoResults()
@@ -99,10 +123,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 </ADL>";
             TestData = "<root>" + data + "</root>";
             IDSFDataObject result = ExecuteProcess();
-
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "Result", "res", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "Result", "res", out IList<string> actual, out string error);
 
             Assert.AreEqual(1, actual.Count);
             Assert.AreEqual("-1", actual[0]);
@@ -174,10 +195,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             CurrentDl = "<DL><Recset><Field1/><Field2/><Field3/></Recset><Result><res/></Result></DL>";
             TestData = "<root>" + data + "</root>";
             IDSFDataObject result = ExecuteProcess();
-
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "Result", "res", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "Result", "res", out IList<string> actual, out string error);
 
             Assert.AreEqual(1, actual.Count);
             Assert.AreEqual("-1", actual[0]);
@@ -327,6 +345,28 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(1, dsfForEachItems.Count);
             Assert.AreEqual("[[res]]", dsfForEachItems[0].Name);
             Assert.AreEqual("[[res]]", dsfForEachItems[0].Value);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        public void AddResultDebugInputs_Sets_Operand_To_EmptyString()
+        {
+            //------------Setup for test-------------------------
+            DsfFindRecordsMultipleCriteriaActivity activity = new DsfFindRecordsMultipleCriteriaActivity();
+            var privateObject = new PrivateObject(activity);
+            IEnumerable<FindRecordsTO> resultsCollection = new List<FindRecordsTO>
+            {
+                new FindRecordsTO {SearchCriteria = "1", IndexNumber = 1, SearchType = "="}
+            };
+            var atomResult = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.NewInt(1));
+            var environment = new Mock<IExecutionEnvironment>();
+            environment.Setup(executionEnvironment => executionEnvironment.Eval("1", 0, false, false)).Returns(atomResult);
+            var args = new object[] { resultsCollection, environment.Object, 0 };
+            //------------Execute Test---------------------------
+            privateObject.Invoke("AddResultDebugInputs", args);
+            //------------Assert Results-------------------------
+            var debugInputs = activity.GetDebugInputs(environment.Object, 0);
+            Assert.IsTrue(debugInputs.Single().ResultsList.All(p=>p.Operator == ""));
         }
     }
 }

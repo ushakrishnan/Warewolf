@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.DateAndTime;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.DateTimeDifference
 {
@@ -25,6 +25,7 @@ namespace Dev2.Activities.Designers2.DateTimeDifference
             OutputTypes = new List<string>(DateTimeComparer.OutputFormatTypes);
             SelectedOutputType = string.IsNullOrEmpty(OutputType) ? OutputTypes[0] : OutputType;
             AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Date_Time_Diff;
         }
 
         public List<string> OutputTypes { get; private set; }
@@ -54,11 +55,8 @@ namespace Dev2.Activities.Designers2.DateTimeDifference
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

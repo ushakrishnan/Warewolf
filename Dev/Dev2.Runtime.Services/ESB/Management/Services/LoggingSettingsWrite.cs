@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -26,10 +27,9 @@ namespace Dev2.Runtime.ESB.Management.Services
                 throw new InvalidDataException(ErrorResource.EmptyValuesPassed);
             }
 
-            StringBuilder loggingSettingsBuilder;
-            values.TryGetValue("LoggingSettings", out loggingSettingsBuilder);
+            values.TryGetValue("LoggingSettings", out StringBuilder loggingSettingsBuilder);
 
-            if(loggingSettingsBuilder == null || loggingSettingsBuilder.Length == 0)
+            if (loggingSettingsBuilder == null || loggingSettingsBuilder.Length == 0)
             {
                 throw new InvalidDataException(ErrorResource.EmptyLoggingSettingsPassed);
             }
@@ -48,7 +48,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception e)
             {
-                throw new InvalidDataException(ErrorResource.InvalidSecuritySettings + string.Format(" Error: {0}", e.Message));
+                throw new InvalidDataException(ErrorResource.InvalidSecuritySettings + $" Error: {e.Message}");
             }
 
             var msg = new ExecuteMessage { HasError = false };
@@ -86,6 +86,15 @@ namespace Dev2.Runtime.ESB.Management.Services
         public string HandlesType()
         {
             return "LoggingSettingsWriteService";
+        }
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
         }
     }
 }

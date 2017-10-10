@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +10,15 @@
 
 using System;
 using System.Windows.Input;
-using Dev2.Common.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Enums;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.ViewModels.WorkSurface;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.ViewModels.Workflow
 {
     public class DsfActivityDropViewModel : SimpleBaseViewModel
@@ -54,7 +54,7 @@ namespace Dev2.Studio.ViewModels.Workflow
 
         void Init()
         {
-            switch(ActivityType)
+            switch (ActivityType)
             {
                 case enDsfActivityType.Workflow:
                     ImageSource = "Workflow-32";
@@ -63,6 +63,10 @@ namespace Dev2.Studio.ViewModels.Workflow
                 case enDsfActivityType.Service:
                     ImageSource = "ToolService-32";
                     Title = "Select A Data Connector";
+                    break;
+                case enDsfActivityType.All:
+                    break;
+                case enDsfActivityType.Source:
                     break;
                 default:
                     ImageSource = "ExplorerWarewolfConnection-32";
@@ -122,6 +126,17 @@ namespace Dev2.Studio.ViewModels.Workflow
                 isMatched = explorerItemModel.IsService;
             }
 
+            var explorerViewModelBase = ((Warewolf.Studio.ViewModels.ExplorerViewModelBase)SingleEnvironmentExplorerViewModel);
+            var conductorBaseWithActiveItem = (Caliburn.Micro.ConductorBaseWithActiveItem<WorkSurfaceContextViewModel>)
+                ((Warewolf.Studio.ViewModels.ExplorerItemViewModel)explorerViewModelBase?.SelectedItem)?.ShellViewModel;
+            var workSurfaceContextViewModel = conductorBaseWithActiveItem?.ActiveItem;
+            var contextualResourceModel = workSurfaceContextViewModel?.ContextualResourceModel;
+            var guid = contextualResourceModel?.ID;
+            if(explorerItemModel != null && explorerItemModel.ResourceId == guid)
+            {
+                return false;
+            }
+
             return explorerItemModel != null && isMatched;
         }
 
@@ -137,27 +152,25 @@ namespace Dev2.Studio.ViewModels.Workflow
 
         #region Methods
 
-        public Func<IEnvironmentRepository> GetEnvironmentRepository = () => EnvironmentRepository.Instance;
-
-        /// <summary>
-        /// Used for saving the data input by the user to the file system and pushing the data back at the workflow
-        /// </summary>
+        readonly Func<IServerRepository> GetEnvironmentRepository = () => ServerRepository.Instance;
+        
         public void Okay()
         {
             var selectedItem = SingleEnvironmentExplorerViewModel.SelectedItem;
+
+
+
             if(selectedItem == null)
             {
                 return;
             }
 
-            var environment = GetEnvironmentRepository().FindSingle(ev => ev.ID == selectedItem.Server.EnvironmentID);
+            var environment = GetEnvironmentRepository().FindSingle(ev => ev.EnvironmentID == selectedItem.Server.EnvironmentID);
 
             if(environment == null)
             {
                 return;
             }
-
-           // SelectedResourceModel = environment.ResourceRepository.FindSingleWithPayLoad(r => r.ID == selectedItem.ResourceId) as IContextualResourceModel;
             SelectedExplorerItemModel = selectedItem;
             if (SelectedExplorerItemModel != null)
             {
@@ -166,10 +179,7 @@ namespace Dev2.Studio.ViewModels.Workflow
         }
 
         internal IExplorerTreeItem SelectedExplorerItemModel { get; private set; }
-
-        /// <summary>
-        /// Used for canceling the drop of t    he design surface
-        /// </summary>
+        
         void Cancel()
         {
             RequestClose(ViewModelDialogResults.Cancel);

@@ -2,6 +2,7 @@
 using Dev2.Common.ExtMethods;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+
 namespace Dev2.Tests.ExtMethods
 {
     [TestClass]
@@ -22,7 +23,8 @@ namespace Dev2.Tests.ExtMethods
             var p = new Person();
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var deepCopy = p.DeepCopy();
+
+            var deepCopy = ObjectExtensions.DeepCopy(p);
             //---------------Test Result -----------------------
             var memberInfos = p.GetType().GetMembers();
             var copiedMemmbers = deepCopy.GetType().GetMembers();

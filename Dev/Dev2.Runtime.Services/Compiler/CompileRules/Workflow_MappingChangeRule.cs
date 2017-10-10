@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,14 +12,14 @@ using System;
 using System.Text;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.ServiceModel.Helper;
 using Dev2.Data.ServiceModel.Messages;
 using Dev2.Data.Util;
 using Newtonsoft.Json;
-// ReSharper disable UnusedMember.Global
 
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.Runtime.Compiler.CompileRules
 {
     /// <summary>
@@ -45,24 +45,23 @@ namespace Dev2.Runtime.Compiler.CompileRules
 
             var outputMappingsPost = DataListUtil.GenerateDefsFromDataList(postDL, enDev2ColumnArgumentDirection.Output);
             var inputMappingsPost = DataListUtil.GenerateDefsFromDataList(postDL, enDev2ColumnArgumentDirection.Input);
-
-            if(inputMappings.Count != inputMappingsPost.Count || outputMappings.Count != outputMappingsPost.Count)
+            if (inputMappings.Count != inputMappingsPost.Count || outputMappings.Count != outputMappingsPost.Count)
             {
                 var inputDefs = DataListUtil.GenerateDefsFromDataList(postDL, enDev2ColumnArgumentDirection.Input);
                 var outputDefs = DataListUtil.GenerateDefsFromDataList(postDL, enDev2ColumnArgumentDirection.Output);
                 var defStr = "<Args><Input>" + JsonConvert.SerializeObject(inputDefs) + "</Input><Output>" + JsonConvert.SerializeObject(outputDefs) + "</Output></Args>";
-
-                return new CompileMessageTO { MessageID = Guid.NewGuid(), MessageType = CompileMessageType.MappingChange, ServiceID = serviceID, MessagePayload = defStr,ErrorType = ErrorType.Critical};
+                TestCatalog.Instance.UpdateTestsBasedOnIOChange(serviceID,inputDefs,outputDefs);
+                return new CompileMessageTO { MessageID = Guid.NewGuid(), MessageType = CompileMessageType.MappingChange, ServiceID = serviceID, MessagePayload = defStr, ErrorType = ErrorType.Critical };
             }
-
             if(ServiceUtils.MappingNamesChanged(inputMappings, inputMappingsPost) || ServiceUtils.MappingNamesChanged(outputMappings, outputMappingsPost))
             {
                 var inputDefs = DataListUtil.GenerateDefsFromDataList(postDL, enDev2ColumnArgumentDirection.Input);
                 var outputDefs = DataListUtil.GenerateDefsFromDataList(postDL, enDev2ColumnArgumentDirection.Output);
                 var defStr = "<Args><Input>" + JsonConvert.SerializeObject(inputDefs) + "</Input><Output>" + JsonConvert.SerializeObject(outputDefs) + "</Output></Args>";
-
-                return new CompileMessageTO { MessageID = Guid.NewGuid(), MessageType = CompileMessageType.MappingChange, ServiceID = serviceID, MessagePayload = defStr,ErrorType = ErrorType.Critical};
+                TestCatalog.Instance.UpdateTestsBasedOnIOChange(serviceID, inputDefs, outputDefs);
+                return new CompileMessageTO { MessageID = Guid.NewGuid(), MessageType = CompileMessageType.MappingChange, ServiceID = serviceID, MessagePayload = defStr, ErrorType = ErrorType.Critical };
             }
+            TestCatalog.Instance.UpdateTestsBasedOnIOChange(serviceID, null, null);
             return null;
         }
     }

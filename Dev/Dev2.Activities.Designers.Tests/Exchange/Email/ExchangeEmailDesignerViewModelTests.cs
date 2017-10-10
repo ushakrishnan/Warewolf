@@ -8,22 +8,22 @@ using Caliburn.Micro;
 using Dev2.Activities.Designers2.ExchangeEmail;
 using Dev2.Activities.Exchange;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Activities.Designers.Tests.Exchange.Email
 {
@@ -78,13 +78,13 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             return ModelItemUtils.CreateModelItem(activity);
         }
 
-        static List<ExchangeSource> CreateEmailSources(int count)
+        static List<ExchangeSourceDefinition> CreateEmailSources(int count)
         {
-            var result = new List<ExchangeSource>();
+            var result = new List<ExchangeSourceDefinition>();
 
             for (var i = 0; i < count; i++)
             {
-                result.Add(new ExchangeSource()
+                result.Add(new ExchangeSourceDefinition
                 {
                     ResourceID = Guid.NewGuid(),
                     ResourceName = "Email" + i,
@@ -108,8 +108,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
         {
            
             var testEmailDesignerViewModel = new TestExchangeEmailDesignerViewModel(modelItem, model, eve)
-            {
-              
+            {              
                 GetDatalistString = () =>
                 {
                     const string trueString = "True";
@@ -133,9 +132,9 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
-            new ExchangeEmailDesignerViewModel(CreateModelItem(), null, new Mock<IEnvironmentModel>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
+            new ExchangeEmailDesignerViewModel(CreateModelItem(), null, new Mock<IServer>().Object, null);
+            
 
             //------------Assert Results-------------------------
         }
@@ -149,9 +148,9 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
-            new ExchangeEmailDesignerViewModel(CreateModelItem(), null, (IEnvironmentModel)null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
+            new ExchangeEmailDesignerViewModel(CreateModelItem(), null, (IServer)null, null);
+            
 
             //------------Assert Results-------------------------
         }
@@ -165,9 +164,9 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
-            new ExchangeEmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IEnvironmentModel>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
+            new ExchangeEmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IServer>().Object, null);
+            
 
             //------------Assert Results-------------------------
         }
@@ -199,7 +198,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             Assert.IsNotNull(viewModel.SourceRegion.Sources);
             Assert.IsTrue(viewModel.CanTestEmailAccount);
             Assert.AreEqual(emailSourceCount, viewModel.SourceRegion.Sources.Count);
-            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.Name);
+            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.ResourceName);
             Assert.IsTrue(propertyChanged);
         }
 
@@ -212,7 +211,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             var modelItem = CreateModelItem();
             var eventPublisher = new Mock<IEventAggregator>();
 
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -256,7 +255,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             Assert.IsTrue(viewModel.CanTestEmailAccount);
 
             Assert.AreEqual(emailSourceCount, viewModel.SourceRegion.Sources.Count);
-            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.Name);
+            Assert.AreEqual("TestExchange", viewModel.SourceRegion.SelectedSource.ResourceName);
 
             Assert.IsTrue(propertyChanged);
         }
@@ -275,7 +274,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             //------------Setup for test--------------------------
             var activity = new DsfExchangeEmailActivity() { To = to };
 
-            var emailSource = new ExchangeSource()
+            var emailSource = new ExchangeSourceDefinition
             {
                 UserName = "bob@mydomain.com",
                 Password = "MyPassword",
@@ -405,7 +404,6 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
 
             viewModel.AddProperty("Test","test");
 
-            Assert.IsNotNull(viewModel.AsyncWorker);
             Assert.IsTrue(viewModel.HasLargeView);
             Assert.IsTrue(viewModel.CanTestEmailAccount);
             Assert.IsTrue(viewModel.IsEmailSourceFocused);
@@ -903,14 +901,14 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
 
         public ExchangeSource SelectedEmailSourceModelItemValue
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             get { return GetProperty<ExchangeSource>("SelectedEmailSource"); }
-            // ReSharper restore ExplicitCallerInfoArgument
+            
             set
             {
-                // ReSharper disable ExplicitCallerInfoArgument
+                
                 SetProperty(value, "SelectedEmailSource");
-                // ReSharper restore ExplicitCallerInfoArgument
+                
             }
         }
     }
@@ -920,10 +918,11 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
         public ObservableCollection<IExchangeSource> Sources { get; set; }
         private readonly ObservableCollection<IExchangeSource> _sources = new ObservableCollection<IExchangeSource>
         {
-            new ExchangeSource()
+            new ExchangeSourceDefinition
             {
-                Name = "TestExchange",
+                ResourceName = "TestExchange",
                 Type = enSourceType.ExchangeSource,
+                ResourceType = "ExchangeSource",
                 AutoDiscoverUrl = "Localhost",
                 UserName = "test",
                 Password = "test",
@@ -935,7 +934,7 @@ namespace Dev2.Activities.Designers.Tests.Exchange.Email
             {
                 _sources = new ObservableCollection<IExchangeSource>()
                 {
-                    new ExchangeSource()
+                    new ExchangeSourceDefinition()
                 };
             }
         }

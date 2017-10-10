@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,9 @@
 using System;
 using Caliburn.Micro;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.ViewModels.Base
-// ReSharper restore CheckNamespace
+
 {
     public abstract class SimpleBaseViewModel : Screen, IDisposable
     {
@@ -34,7 +34,9 @@ namespace Dev2.Studio.Core.ViewModels.Base
             set
             {
                 if(_validationController == value)
+                {
                     return;
+                }
 
                 _validationController = value;
                 NotifyOfPropertyChange(() => ValidationController);
@@ -60,10 +62,7 @@ namespace Dev2.Studio.Core.ViewModels.Base
         /// </summary>
         protected virtual void OnDispose()
         {
-            if(_validationController != null)
-            {
-                _validationController.Dispose();
-            }
+            _validationController?.Dispose();
         }
 
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -109,8 +109,12 @@ namespace Dev2.Intellisense.Helper
         {
             bool bQueryUncShares = false;
             string sFileServer = string.Empty;
-            if(String.IsNullOrEmpty(searchPath)) return new List<string>();
-            if(searchPath.Length > 3)
+            if(String.IsNullOrEmpty(searchPath))
+            {
+                return new List<string>();
+            }
+
+            if (searchPath.Length > 3)
             {
                 bQueryUncShares = GetServerNameFromInput(searchPath, ref queryCollection, ref sFileServer);
             }
@@ -161,8 +165,7 @@ namespace Dev2.Intellisense.Helper
 
         public List<string> GetFilesAndFoldersIncludingNetwork(string searchPath, List<string> queryCollection, char directorySeparatorChar)
         {
-            string sServerFolderShare;
-            if(GetServerFolderShare(searchPath, out sServerFolderShare))
+            if (GetServerFolderShare(searchPath, out string sServerFolderShare))
             {
                 queryCollection.Add(sServerFolderShare);
             }

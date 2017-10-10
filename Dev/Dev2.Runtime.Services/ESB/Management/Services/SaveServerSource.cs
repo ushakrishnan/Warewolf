@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
@@ -15,22 +15,36 @@ using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Workspaces;
 
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
     /// <summary>
     /// Adds a resource
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class SaveServerSource : IEsbManagementEndpoint
     {
         IExplorerServerResourceRepository _serverExplorerRepository;
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
 
-        private static int GETSpecifiedIndexOf(string str, char ch, int index)
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
+        private static int GetSpecifiedIndexOf(string str, char ch, int index)
         {
             int i = 0, o = 1;
             while ((i = str.IndexOf(ch, i)) != -1)
             {
-                if (o == index) return i;
+                if (o == index)
+                {
+                    return i;
+                }
+
                 o++;
                 i++;
             }
@@ -42,16 +56,14 @@ namespace Dev2.Runtime.ESB.Management.Services
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
+                Dev2Logger.Info("Save Resource Service",GlobalConstants.WarewolfInfo);
 
-                Dev2Logger.Info("Save Resource Service");
-                StringBuilder resourceDefinition;
-
-                values.TryGetValue("ServerSource", out resourceDefinition);
+                values.TryGetValue("ServerSource", out StringBuilder resourceDefinition);
 
                 IServerSource src = serializer.Deserialize<ServerSource>(resourceDefinition);
                 Connection con = new Connection();
 
-                int portIndex = GETSpecifiedIndexOf(src.Address, ':', 2);
+                int portIndex = GetSpecifiedIndexOf(src.Address, ':', 2);
                 string port = src.Address.Substring(portIndex + 1);
 
                 con.Address = src.Address;
@@ -63,19 +75,25 @@ namespace Dev2.Runtime.ESB.Management.Services
                 con.WebServerPort = int.Parse(port);
                 Connections tester = new Connections();
                 var res = tester.CanConnectToServer(con);
-                if(res.IsValid)
-                ResourceCatalog.Instance.SaveResource(GlobalConstants.ServerWorkspaceID,con, src.ResourcePath);
-                ServerExplorerRepo.UpdateItem(con);
-                msg.HasError = false;
-                msg.Message = new StringBuilder(res.IsValid ? "" : res.ErrorMessage);
-
+                if (res.IsValid)
+                {
+                    ResourceCatalog.Instance.SaveResource(GlobalConstants.ServerWorkspaceID, con, src.ResourcePath);
+                    ServerExplorerRepo.UpdateItem(con);
+                    msg.HasError = false;
+                    msg.Message = new StringBuilder();
+                }
+                else
+                {
+                    msg.HasError = true;
+                    msg.Message = new StringBuilder(res.ErrorMessage);
+                }
 
             }
             catch (Exception err)
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err,GlobalConstants.WarewolfError);
 
             }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,14 +15,15 @@ using System.Security.Permissions;
 using System.Windows;
 using Castle.DynamicProxy.Generators;
 using Dev2.Activities.Utils;
-using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.PopupController;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
-// ReSharper disable CheckNamespace
+
+
 namespace Dev2.Core.Tests.Activities
 {
     [TestClass]
@@ -91,7 +92,7 @@ namespace Dev2.Core.Tests.Activities
             var activityDesignerUtils = new DropEnabledActivityDesignerUtils();
             var dataObject = new Mock<IDataObject>();
             dataObject.Setup(o => o.GetFormats()).Returns(new[] { "ModelItemsFormat" });
-            var modelItemList = new List<ModelItem> { ModelItemUtils.CreateModelItem(new DsfCountRecordsetActivity()), ModelItemUtils.CreateModelItem(new FlowDecision()) };
+            var modelItemList = new List<ModelItem> { ModelItemUtils.CreateModelItem(new DsfCountRecordsetNullHandlerActivity()), ModelItemUtils.CreateModelItem(new FlowDecision()) };
             dataObject.Setup(o => o.GetData(It.IsAny<string>())).Returns(modelItemList);
             //------------Execute Test---------------------------
             var dropEnabled = activityDesignerUtils.LimitDragDropOptions(dataObject.Object);
@@ -108,7 +109,7 @@ namespace Dev2.Core.Tests.Activities
             var activityDesignerUtils = new DropEnabledActivityDesignerUtils();
             var dataObject = new Mock<IDataObject>();
             dataObject.Setup(o => o.GetFormats()).Returns(new[] { "ModelItemsFormat" });
-            var modelItemList = new List<ModelItem> { ModelItemUtils.CreateModelItem(new DsfCountRecordsetActivity()), ModelItemUtils.CreateModelItem(new FlowSwitch<string>()) };
+            var modelItemList = new List<ModelItem> { ModelItemUtils.CreateModelItem(new DsfCountRecordsetNullHandlerActivity()), ModelItemUtils.CreateModelItem(new FlowSwitch<string>()) };
             dataObject.Setup(o => o.GetData(It.IsAny<string>())).Returns(modelItemList);
             //------------Execute Test---------------------------
             var dropEnabled = activityDesignerUtils.LimitDragDropOptions(dataObject.Object);
@@ -310,6 +311,9 @@ namespace Dev2.Core.Tests.Activities
         {
             //------------Setup for test--------------------------
             var activityDesignerUtils = new DropEnabledActivityDesignerUtils();
+            var mock = new Mock<IShellViewModel>();
+            mock.Setup(model => model.ShowPopup(It.IsAny<IPopupMessage>()));
+            CustomContainer.Register(mock.Object);
             var dataObject = new Mock<IDataObject>();
             dataObject.Setup(o => o.GetFormats()).Returns(new[] { "WorkflowItemTypeNameFormat" });
             var modelItem = ModelItemUtils.CreateModelItem(new FlowSwitch<string>());
@@ -318,6 +322,7 @@ namespace Dev2.Core.Tests.Activities
             var dropEnabled = activityDesignerUtils.LimitDragDropOptions(dataObject.Object);
             //------------Assert Results-------------------------
             Assert.IsFalse(dropEnabled);
+            mock.VerifyAll();
         }
 
         [TestMethod]

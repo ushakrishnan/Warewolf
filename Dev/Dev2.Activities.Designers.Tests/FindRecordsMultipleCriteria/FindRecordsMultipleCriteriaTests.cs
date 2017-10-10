@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,9 +13,9 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using Dev2.Activities.Designers2.FindRecordsMultipleCriteria;
 using Dev2.Common.Interfaces.Help;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -24,7 +24,7 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
 {
     // OnSearchTypeChanged moved from FindRecordsTO tests
-    // ReSharper disable InconsistentNaming
+    
     [TestClass]
     public class FindRecordsMultipleCriteriaTests
     {
@@ -184,7 +184,7 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
                 new FindRecordsTO("yyyy", "Contains", 2)
             };
 
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -359,7 +359,7 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             var dto5 = new FindRecordsTO("", "Is Between", 4);
             var dto6 = new FindRecordsTO("", "Is Not Between", 5);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["ResultsCollection"].Collection;
             var dtoModelItem1 = miCollection.Add(dto1);
             var dtoModelItem2 = miCollection.Add(dto2);
@@ -367,7 +367,7 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             var dtoModelItem4 = miCollection.Add(dto4);
             var dtoModelItem5 = miCollection.Add(dto5);
             var dtoModelItem6 = miCollection.Add(dto6);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new FindRecordsMultipleCriteriaDesignerViewModel(mi);
             SetDataListString(viewModel);
@@ -391,10 +391,6 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
 
             StringAssert.Contains(viewModel.Errors[4].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsToNotNullErrorTest);
             Verify_IsFocused(dtoModelItem6, viewModel.Errors[4].Do, "IsToFocused");
-
-
-
-
         }
         
         static void SetDataListString(FindRecordsMultipleCriteriaDesignerViewModel viewModel)
@@ -421,13 +417,13 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             var modelItem = ModelItemUtils.CreateModelItem(new DsfFindRecordsMultipleCriteriaActivity());
             modelItem.SetProperty("DisplayName", displayName);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var modelItemCollection = modelItem.Properties["ResultsCollection"].Collection;
             foreach(var dto in items)
             {
                 modelItemCollection.Add(dto);
             }
-            // ReSharper restore PossibleNullReferenceException
+            
 
             return modelItem;
         }

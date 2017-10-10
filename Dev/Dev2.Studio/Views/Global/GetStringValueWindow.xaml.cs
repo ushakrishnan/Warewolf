@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,7 @@
 using System.ComponentModel;
 using System.Windows;
 
-// ReSharper disable once CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio
 {
     /// <summary>
@@ -60,10 +60,7 @@ namespace Unlimited.Applications.BusinessDesignStudio
                 MessageBox.Show("A value is required", "Error", MessageBoxButton.OK);
                 return false;
             }
-            if(GotValueEvent != null)
-            {
-                GotValueEvent(txtDataElementName.Text);
-            }
+            GotValueEvent?.Invoke(txtDataElementName.Text);
             return true;
         }
 

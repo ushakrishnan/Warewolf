@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,18 +14,18 @@ using Dev2.Activities;
 using Dev2.Activities.PathOperations;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Data.Interfaces;
 using Dev2.PathOperations;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    [ToolDescriptorInfo("FileFolder-UnZip", "UnZip", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Unzip_Tags")]
+    [ToolDescriptorInfo("FileFolder-UnZip", "UnZip", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Unzip")]
     public class DsfUnZip : DsfAbstractMultipleFilesActivity, IUnZip, IPathOverwrite, IPathOutput, IPathInput,
                             IDestinationUsernamePassword
     {
@@ -57,8 +57,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
                 if(t.Item1 == Overwrite.ToString())
                 {
-                    bool tmpOverwrite;
-                    bool.TryParse(t.Item2, out tmpOverwrite);
+                    bool.TryParse(t.Item2, out bool tmpOverwrite);
                     Overwrite = tmpOverwrite;
                 }
 

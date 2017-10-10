@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,7 @@ using System.Activities.Presentation.Model;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Utils;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.RecordsLength
 {
@@ -23,6 +23,7 @@ namespace Dev2.Activities.Designers2.RecordsLength
         {
             RecordsetNameValue = RecordsetName;
             AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Recordset_Length;
         }
         
         public string RecordsetNameValue { get { return (string)GetValue(RecordsetNameValueProperty); } set { SetValue(RecordsetNameValueProperty, value); } }
@@ -50,11 +51,8 @@ namespace Dev2.Activities.Designers2.RecordsLength
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

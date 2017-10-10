@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Common.Interfaces.Versioning;
@@ -16,11 +17,38 @@ namespace Dev2.Tests.Runtime.Services
          [TestClass]
     public class GetServerVersionTest
     {
-           
-            [TestMethod]
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var serverVersion = new GetServerVersion();
+
+            //------------Execute Test---------------------------
+            var resId = serverVersion.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var serverVersion = new GetServerVersion();
+
+            //------------Execute Test---------------------------
+            var resId = serverVersion.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+
+        [TestMethod]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
-            // ReSharper disable InconsistentNaming
+            
             public void GetVersions_HandlesType_ExpectName()
             
             {
@@ -57,7 +85,7 @@ namespace Dev2.Tests.Runtime.Services
                 //------------Setup for test--------------------------
                 var getVersions = new GetVersions();
                 var resourceId = Guid.NewGuid();
-                ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "", "", "");
+                ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
                 var repo = new Mock<IServerVersionRepository>();
                 var ws = new Mock<IWorkspace>();
                 repo.Setup(a => a.GetVersions(resourceId)).Returns(new List<IExplorerItem> {item});
@@ -91,4 +119,4 @@ namespace Dev2.Tests.Runtime.Services
 
 
 
-// ReSharper restore InconsistentNaming
+

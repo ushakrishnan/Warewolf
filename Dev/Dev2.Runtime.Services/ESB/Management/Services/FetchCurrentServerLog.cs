@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -42,7 +43,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
 
-                Dev2Logger.Info("Fetch Server Log Started");
+                Dev2Logger.Info("Fetch Server Log Started", GlobalConstants.WarewolfInfo);
                 var result = new ExecuteMessage { HasError = false };
                 if (File.Exists(_serverLogPath))
                 {
@@ -60,7 +61,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception err)
             {
-                Dev2Logger.Error("Fetch Server Log Error", err);
+                Dev2Logger.Error("Fetch Server Log Error", err, GlobalConstants.WarewolfError);
                 throw;
             }
         }
@@ -88,6 +89,16 @@ namespace Dev2.Runtime.ESB.Management.Services
         public string HandlesType()
         {
             return "FetchCurrentServerLogService";
+        }
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
         }
     }
 }

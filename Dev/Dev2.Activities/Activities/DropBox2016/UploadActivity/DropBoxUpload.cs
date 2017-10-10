@@ -6,8 +6,9 @@ using Dropbox.Api.Files;
 using System;
 using System.IO;
 using System.Net;
+using Dev2.Common.Interfaces.Wrappers;
 
-// ReSharper disable MemberCanBePrivate.Global
+
 
 namespace Dev2.Activities.DropBox2016.UploadActivity
 {
@@ -15,8 +16,8 @@ namespace Dev2.Activities.DropBox2016.UploadActivity
     {
         private readonly IFilenameValidator _validator;
 
-        // ReSharper disable once FieldCanBeMadeReadOnly.Local
-        private WriteMode _writeMode;
+        
+        private readonly WriteMode _writeMode;
 
         private readonly string _dropboxPath;
         private readonly string _fromPath;
@@ -49,19 +50,19 @@ namespace Dev2.Activities.DropBox2016.UploadActivity
 
         #region Implementation of IDropboxSingleExecutor
 
-        public IDropboxResult ExecuteTask(DropboxClient client)
+        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
         {
             try
             {
                 using (var stream = new MemoryStream(File.ReadAllBytes(_fromPath)))
                 {
-                    FileMetadata uploadAsync = client.Files.UploadAsync(_dropboxPath, _writeMode, true, null, false, stream).Result;
+                    FileMetadata uploadAsync = client.UploadAsync(_dropboxPath, _writeMode, true, null, false, stream).Result;
                     return new DropboxUploadSuccessResult(uploadAsync);
                 }
             }
             catch (Exception exception)
             {
-                Dev2Logger.Error(exception.Message);
+                Dev2Logger.Error(exception.Message, GlobalConstants.WarewolfError);
                 return exception.InnerException != null ? new DropboxFailureResult(exception.InnerException) : new DropboxFailureResult(exception);
             }
         }

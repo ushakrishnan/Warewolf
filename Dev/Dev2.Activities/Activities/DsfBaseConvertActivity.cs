@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,19 +23,19 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Enums.Enums;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Converters;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Validation;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    [ToolDescriptorInfo("Data-BaseConversion", "Base Convert", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Base Convert_Tags")]
+    [ToolDescriptorInfo("Data-BaseConversion", "Base Convert", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Base_Convert")]
     public class DsfBaseConvertActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
 
@@ -66,22 +66,27 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #endregion Ctor
 
+        public override List<string> GetOutputs()
+        {
+            return ConvertCollection.Select(to => to.ToExpression).ToList();
+        }
+
         #region Overridden NativeActivity Methods
 
-        // ReSharper disable RedundantOverridenMember
+        
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
         }
-        // ReSharper restore RedundantOverridenMember
+        
 
         /// <summary>
         /// The execute method that is called when the activity is executed at run time and will hold all the logic of the activity
         /// </summary>       
-        // ReSharper disable MethodTooLong
-        // ReSharper disable FunctionComplexityOverflow
+        
+        
         protected override void OnExecute(NativeActivityContext context)
-            // ReSharper restore MethodTooLong
+            
         {
             IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
 
@@ -131,14 +136,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     }
                     catch(Exception e)
                     {
-                        Dev2Logger.Error("DSFBaseConvert", e);
+                        Dev2Logger.Error("DSFBaseConvert", e, GlobalConstants.WarewolfError);
                         allErrors.AddError(e.Message);
                         if(dataObject.IsDebugMode())
                         {
-                            //var debugItem = new DebugItem();
-                            // AddDebugItem(new DebugItemStaticDataParams("", outputIndex.ToString(CultureInfo.InvariantCulture)), debugItem);
-                            // AddDebugItem(new DebugEvalResult(item.FromExpression, "", env), debugItem);
-                            // _debugOutputs.Add(debugItem);
                             outputIndex++;
                         }
                     }
@@ -146,7 +147,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("DSFBaseConvert", e);
+                Dev2Logger.Error("DSFBaseConvert", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -196,8 +197,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     var evalled = env.Eval(upper, update);
                     if (evalled.IsWarewolfAtomResult)
                     {
-                        var warewolfAtomResult = evalled as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                        if (warewolfAtomResult != null)
+                        if (evalled is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult warewolfAtomResult)
                         {
                             return warewolfAtomResult.Item;
                         }
@@ -324,8 +324,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             var modelProperty = modelItem.Properties["DisplayName"];
             if(modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }
@@ -385,9 +385,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             var result = new List<DsfForEachItem>();
 
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var item in ConvertCollection)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 if(!string.IsNullOrEmpty(item.FromExpression) && item.FromExpression.Contains("[["))
                 {
@@ -402,9 +402,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             var result = new List<DsfForEachItem>();
 
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var item in ConvertCollection)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 if(!string.IsNullOrEmpty(item.FromExpression) && item.FromExpression.Contains("[["))
                 {

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.Settings;
 using Dev2.DynamicServices;
@@ -25,6 +26,16 @@ namespace Dev2.Runtime.ESB.Management.Services
 {
     public class SettingsWrite : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             if(values == null)
@@ -32,9 +43,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                 throw new InvalidDataException(ErrorResource.EmptyValuesPassed);
             }
 
-            StringBuilder settingsJson;
-            values.TryGetValue("Settings", out settingsJson);
-            if(settingsJson == null || settingsJson.Length == 0)
+            values.TryGetValue("Settings", out StringBuilder settingsJson);
+            if (settingsJson == null || settingsJson.Length == 0)
             {
                 throw new InvalidDataException("Error: Unable to parse values.");
             }
@@ -49,7 +59,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ErrorResource.ErrorWritingSettings, ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingSettings, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
                 result.Message.AppendLine(ErrorResource.ErrorWritingSettings);
             }
@@ -68,7 +78,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error(ErrorResource.ErrorWritingLoggingConfiguration, ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingLoggingConfiguration, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
                 result.Message.AppendLine(ErrorResource.ErrorWritingLoggingConfiguration);
             }
@@ -86,7 +96,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ErrorResource.ErrorWritingLoggingConfiguration, ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingLoggingConfiguration, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
                 result.Message.AppendLine(ErrorResource.ErrorWritingLoggingConfiguration);
             }
@@ -104,7 +114,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error(ErrorResource.ErrorWritingSettingsConfiguration, ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingSettingsConfiguration, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
                 result.Message.AppendLine(ErrorResource.ErrorWritingSettingsConfiguration);
             }

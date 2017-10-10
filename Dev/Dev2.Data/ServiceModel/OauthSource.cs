@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
@@ -9,7 +8,7 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Data.ServiceModel
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public abstract class OauthSource : Resource, IResourceSource, IOAuthSource
     {
 
@@ -115,14 +114,18 @@ namespace Dev2.Data.ServiceModel
         /// <param name="other">An object to compare with this object.</param>
         public override bool Equals(IOAuthSource other)
         {
-            return AppKey == other.AppKey && AccessToken == other.AccessToken;
+            if (other != null)
+            {
+                return AppKey == other.AppKey && AccessToken == other.AccessToken;
+            }
+            return false;
         }
 
         protected override string GetConnectionString()
         {
             var connectionString = string.Join(";",
-                string.Format("AccessToken={0}", AccessToken),
-                string.Format("AppKey={0}", AppKey)
+                $"AccessToken={AccessToken}",
+                $"AppKey={AppKey}"
                 );
             return connectionString;
         }

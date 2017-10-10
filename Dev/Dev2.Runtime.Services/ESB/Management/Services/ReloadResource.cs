@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,10 +10,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -26,9 +26,19 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// <summary>
     /// Reload a resource from disk ;)
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class ReloadResource : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
 
@@ -37,9 +47,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             string resourceID = null;
             string resourceType = null;
 
-            StringBuilder tmp;
-            values.TryGetValue("ResourceID", out tmp);
-            if(tmp != null)
+            values.TryGetValue("ResourceID", out StringBuilder tmp);
+            if (tmp != null)
             {
                 resourceID = tmp.ToString();
             }
@@ -49,7 +58,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 resourceType = tmp.ToString();
             }
-            Dev2Logger.Info(String.Format("Reload Resource. Id:{0} Type:{1}",resourceID,resourceType));
+            Dev2Logger.Info($"Reload Resource. Id:{resourceID} Type:{resourceType}", GlobalConstants.WarewolfInfo);
             try
             {
                 // 2012.10.01: TWR - 5392 - Server does not dynamically reload resources 
@@ -82,32 +91,18 @@ namespace Dev2.Runtime.ESB.Management.Services
                         default:
                             throw new Exception("Unexpected resource type '" + resourceType + "'.");
                     }
-                    Guid getID;
-                    if(resourceID != null && Guid.TryParse(resourceID, out getID))
+                    theWorkspace.Update(resourceID != null && Guid.TryParse(resourceID, out Guid getID) ? new WorkspaceItem(theWorkspace.ID, HostSecurityProvider.Instance.ServerID, Guid.Empty, getID)
                     {
-                        //
-                        // Copy the file from the server workspace into the current workspace
-                        //
-                        theWorkspace.Update(
-                            new WorkspaceItem(theWorkspace.ID, HostSecurityProvider.Instance.ServerID, Guid.Empty, getID)
-                            {
-                                Action = WorkspaceItemAction.Edit,
-                                IsWorkflowSaved = true,
-                                ServiceType = serviceType.ToString()
-                            }, false);
-
-                    }
-                    else
+                        Action = WorkspaceItemAction.Edit,
+                        IsWorkflowSaved = true,
+                        ServiceType = serviceType.ToString()
+                    } : new WorkspaceItem(theWorkspace.ID, HostSecurityProvider.Instance.ServerID, Guid.Empty, Guid.Empty)
                     {
-                        theWorkspace.Update(
-                            new WorkspaceItem(theWorkspace.ID, HostSecurityProvider.Instance.ServerID, Guid.Empty, Guid.Empty)
-                            {
-                                Action = WorkspaceItemAction.Edit,
-                                ServiceName = resourceID,
-                                IsWorkflowSaved = true,
-                                ServiceType = serviceType.ToString()
-                            }, false);
-                    }
+                        Action = WorkspaceItemAction.Edit,
+                        ServiceName = resourceID,
+                        IsWorkflowSaved = true,
+                        ServiceType = serviceType.ToString()
+                    });
                     //
                     // Reload resources
                     //
@@ -118,7 +113,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             catch(Exception ex)
             {
                 result.SetMessage(string.Concat("Error reloading '", resourceID, "'..."));
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
 
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();

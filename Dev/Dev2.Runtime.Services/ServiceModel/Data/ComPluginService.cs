@@ -7,6 +7,7 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.DynamicServices;
 using Dev2.Runtime.Hosting;
 
+
 namespace Dev2.Runtime.ServiceModel.Data
 {
     public class ComPluginService : Service
@@ -33,9 +34,10 @@ namespace Dev2.Runtime.ServiceModel.Data
             : base(xml)
         {
             ResourceType = "ComPluginService";
-            var action = xml.Descendants("Action").FirstOrDefault(); ;
+            var action = xml.Descendants("Action").FirstOrDefault();
             if(action == null)
             {
+                
                 if (xml.HasAttributes && xml.Attribute("Type").Value == "ComPlugin")
                 {
                     action = xml;

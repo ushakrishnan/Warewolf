@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,18 +17,18 @@ using Dev2.Activities.PathOperations;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Data.Interfaces;
 using Dev2.Data.Util;
 using Dev2.PathOperations;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Security.Encryption;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
 
     /// <summary>
@@ -36,7 +36,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
     /// Status : New 
     /// Purpose : To provide an activity that can zip the contents of a file/folder from FTP, FTPS and file system
     /// </summary>
-    [ToolDescriptorInfo("FileFolder-Zip", "Zip", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Zip_Tags")]
+    [ToolDescriptorInfo("FileFolder-Zip", "Zip", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Zip")]
     public class DsfZip : DsfAbstractMultipleFilesActivity, IZip, IPathInput, IPathOutput, IPathOverwrite,
                           IDestinationUsernamePassword
     {
@@ -87,7 +87,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        // ReSharper disable once MemberCanBePrivate.Global
+        
         protected string DecryptedArchivePassword => DataListUtil.NotEncrypted(ArchivePassword) ? ArchivePassword : DpapiWrapper.Decrypt(ArchivePassword);
 
 
@@ -178,13 +178,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

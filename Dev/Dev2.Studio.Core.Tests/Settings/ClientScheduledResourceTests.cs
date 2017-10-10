@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,13 +16,13 @@ using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Settings.Scheduler;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests.Settings
 {
     [TestClass]
@@ -39,7 +39,7 @@ namespace Dev2.Core.Tests.Settings
             resources.Add(scheduledResourceForTest);
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             var serializeObject = serializer.SerializeToBuilder(resources);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             var mockConnection = new Mock<IEnvironmentConnection>();
             mockConnection.Setup(connection => connection.IsConnected).Returns(true);
             mockConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(serializeObject);
@@ -63,7 +63,7 @@ namespace Dev2.Core.Tests.Settings
             var serializeObject = serializer.SerializeToBuilder(scheduledResourceForTest);
             var esbPayLoad = new EsbExecuteRequest { ServiceName = "DeleteScheduledResourceService" };
             esbPayLoad.AddArgument("Resource", serializeObject);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             var mockConnection = new Mock<IEnvironmentConnection>();
             mockConnection.Setup(connection => connection.IsConnected).Returns(true);
             mockConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Verifiable();
@@ -87,7 +87,7 @@ namespace Dev2.Core.Tests.Settings
             var serializeObject = serializer.SerializeToBuilder(scheduledResourceForTest);
             var esbPayLoad = new EsbExecuteRequest { ServiceName = "AddScheduledResourceService" };
             esbPayLoad.AddArgument("Resource", serializeObject);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             var mockConnection = new Mock<IEnvironmentConnection>();
             mockConnection.Setup(connection => connection.IsConnected).Returns(true);
             mockConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Verifiable();
@@ -95,8 +95,7 @@ namespace Dev2.Core.Tests.Settings
             mockEnvironmentModel.Setup(model => model.Connection).Returns(mockConnection.Object);
             var clientScheduledResourceModel = new ClientScheduledResourceModel(mockEnvironmentModel.Object, () => { });
             //------------Execute Test---------------------------
-            string errorMessage;
-            var saved = clientScheduledResourceModel.Save(scheduledResourceForTest, out errorMessage);
+            var saved = clientScheduledResourceModel.Save(scheduledResourceForTest, out string errorMessage);
             //------------Assert Results-------------------------
             mockConnection.Verify(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>()), Times.Once());
             Assert.IsTrue(saved);
@@ -115,7 +114,7 @@ namespace Dev2.Core.Tests.Settings
             esbPayLoad.AddArgument("Resource", serializeObject);
             var returnMessage = new ExecuteMessage { HasError = true, Message = new StringBuilder("Error occurred") };
             var serializedReturnMessage = serializer.SerializeToBuilder(returnMessage);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             var mockConnection = new Mock<IEnvironmentConnection>();
             mockConnection.Setup(connection => connection.IsConnected).Returns(true);
             mockConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Verifiable();
@@ -124,8 +123,7 @@ namespace Dev2.Core.Tests.Settings
             mockEnvironmentModel.Setup(model => model.Connection).Returns(mockConnection.Object);
             var clientScheduledResourceModel = new ClientScheduledResourceModel(mockEnvironmentModel.Object, () => { });
             //------------Execute Test---------------------------
-            string errorMessage;
-            var saved = clientScheduledResourceModel.Save(scheduledResourceForTest, out errorMessage);
+            var saved = clientScheduledResourceModel.Save(scheduledResourceForTest, out string errorMessage);
             //------------Assert Results-------------------------
             mockConnection.Verify(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>()), Times.Once());
             Assert.IsFalse(saved);
@@ -143,7 +141,7 @@ namespace Dev2.Core.Tests.Settings
             var listOfHistoryResources = new List<IResourceHistory> { resourceHistory };
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             var serializeObject = serializer.SerializeToBuilder(listOfHistoryResources);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
             var mockConnection = new Mock<IEnvironmentConnection>();
             mockConnection.Setup(connection => connection.IsConnected).Returns(true);
             mockConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(serializeObject);
@@ -166,11 +164,11 @@ namespace Dev2.Core.Tests.Settings
         {
             //------------Setup for test--------------------------
             //------------Execute Test---------------------------
-            // ReSharper disable AssignNullToNotNullAttribute
-            // ReSharper disable ObjectCreationAsStatement
+            
+            
             new ClientScheduledResourceModel(null, () => { });
-            // ReSharper restore ObjectCreationAsStatement
-            // ReSharper restore AssignNullToNotNullAttribute
+            
+            
             //------------Assert Results-------------------------
         }
     }
@@ -179,7 +177,7 @@ namespace Dev2.Core.Tests.Settings
     {
         #region Implementation of IResourceHistory
 
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        
         public string WorkflowOutput { get; private set; }
         public IList<IDebugState> DebugOutput { get; private set; }
         public IEventInfo TaskHistoryOutput { get; private set; }
@@ -191,6 +189,7 @@ namespace Dev2.Core.Tests.Settings
     internal class ScheduledResourceForTest : IScheduledResource
     {
         bool _isNewItem;
+        private bool _isDirty;
 
         #region Implementation of IScheduledResource
 
@@ -202,7 +201,17 @@ namespace Dev2.Core.Tests.Settings
         /// <summary>
         /// Property to check if the scheduled resouce is saved
         /// </summary>
-        public bool IsDirty { get; set; }
+        public bool IsDirty
+        {
+            get
+            {
+                return _isDirty;
+            }
+            set
+            {
+                _isDirty = value;
+            }
+        }
         /// <summary>
         ///     Schedule Name
         /// </summary>
@@ -258,6 +267,19 @@ namespace Dev2.Core.Tests.Settings
             }
         }
         public string NameForDisplay { get; private set; }
+
+        public void SetItem(IScheduledResource item)
+        {
+        }
+
+        #endregion
+
+        #region Implementation of IEquatable<IScheduledResource>
+
+        public bool Equals(IScheduledResource other)
+        {
+            return !IsDirty;
+        }
 
         #endregion
     }

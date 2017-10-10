@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,13 @@ namespace Dev2.Validation
             }
         }
 
-        public static IActionableErrorInfo TryParseVariables(this string inputValue, out string outputValue, Action onError, string labelText = null, string variableValue = "a", ObservableCollection<ObservablePair<string, string>> inputs = null)
+        public static IActionableErrorInfo TryParseVariables(this string inputValue, out string outputValue, Action onError)=>inputValue.TryParseVariables(out outputValue, onError, null, "a", null);
+
+        public static IActionableErrorInfo TryParseVariables(this string inputValue, out string outputValue, Action onError, string variableValue) => inputValue.TryParseVariables(out outputValue, onError, null, variableValue, null);
+
+        public static IActionableErrorInfo TryParseVariables(this string inputValue, out string outputValue, Action onError, string variableValue, string labelText) => inputValue.TryParseVariables(out outputValue, onError, labelText, variableValue, null);
+
+        public static IActionableErrorInfo TryParseVariables(this string inputValue, out string outputValue, Action onError, string labelText, string variableValue, ObservableCollection<ObservablePair<string, string>> inputs)
         {
             outputValue = inputValue;
 

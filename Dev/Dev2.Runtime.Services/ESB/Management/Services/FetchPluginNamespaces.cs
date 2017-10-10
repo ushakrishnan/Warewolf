@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -17,9 +17,19 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class FetchPluginNamespaces : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public string HandlesType()
         {
             return "FetchPluginNameSpaces";
@@ -31,16 +41,19 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
                 var dbSource = serializer.Deserialize<PluginSourceDefinition>(values["source"]);
-                // ReSharper disable MaximumChainedReferences
+                var containsKey = values.ContainsKey("fetchJson");
+           
+                
                 PluginServices services = new PluginServices();
                 var src = ResourceCatalog.Instance.GetResource<PluginSource>(GlobalConstants.ServerWorkspaceID, dbSource.Id);
-                var methods = services.Namespaces(src, Guid.Empty, Guid.Empty).Select(a => a as INamespaceItem).ToList();
+                List<INamespaceItem> methods = containsKey ? services.NamespacesWithJsonObjects(src, Guid.Empty, Guid.Empty).Select(a => a as INamespaceItem).ToList() 
+                    : services.Namespaces(src, Guid.Empty, Guid.Empty).Select(a => a as INamespaceItem).ToList();
                 return serializer.SerializeToBuilder(new ExecuteMessage()
                 {
                     HasError = false,
                     Message = serializer.SerializeToBuilder(methods)
                 });
-                // ReSharper restore MaximumChainedReferences
+                
             }
             catch (Exception e)
             {

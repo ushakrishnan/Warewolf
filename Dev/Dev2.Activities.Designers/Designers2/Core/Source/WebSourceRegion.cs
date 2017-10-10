@@ -13,10 +13,10 @@ using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.WebService;
 using Dev2.Studio.Core.Activities.Utils;
 
-// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable ExplicitCallerInfoArgument
-// ReSharper disable UnusedMember.Global
+
+
+
+
 
 namespace Dev2.Activities.Designers2.Core.Source
 {
@@ -48,13 +48,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             IsEnabled = true;
             _modelItem = modelItem;
             SourceId = modelItem.GetProperty<Guid>("SourceId");
-            SourcesHelpText = Warewolf.Studio.Resources.Languages.Core.WebServiceSourcesHelp;
-            EditSourceHelpText = Warewolf.Studio.Resources.Languages.Core.WebServiceSelectedSourceHelp;
-            NewSourceHelpText = Warewolf.Studio.Resources.Languages.Core.WebServiceNewWebSourceHelp;
+            SourcesHelpText = Warewolf.Studio.Resources.Languages.HelpText.WebServiceSourcesHelp;
+            EditSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.WebServiceSelectedSourceHelp;
+            NewSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.WebServiceNewWebSourceHelp;
 
-            SourcesTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWebServiceSourcesTooltip;
-            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWebServiceEditSourceTooltip;
-            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWebServiceNewSourceTooltip;
+            SourcesTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWebServiceSourcesTooltip;
+            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWebServiceEditSourceTooltip;
+            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWebServiceNewSourceTooltip;
 
             if (SourceId != Guid.Empty)
             {
@@ -151,10 +151,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 _sourceId = value;
-                if (_modelItem != null)
-                {
-                    _modelItem.SetProperty("SourceId", value);
-                }
+                _modelItem?.SetProperty("SourceId", value);
             }
         }
 
@@ -207,8 +204,7 @@ namespace Dev2.Activities.Designers2.Core.Source
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as WebSourceRegion;
-            if (region != null)
+            if (toRestore is WebSourceRegion region)
             {
                 SelectedSource = region.SelectedSource;
             }
@@ -235,13 +231,14 @@ namespace Dev2.Activities.Designers2.Core.Source
                 if (!Equals(value, _selectedSource) && _selectedSource != null)
                 {
                     if (!string.IsNullOrEmpty(_selectedSource.HostName))
+                    {
                         StorePreviousValues(_selectedSource.Id);
+                    }
                 }
                 if (Dependants != null)
                 {
                     var outputs = Dependants.FirstOrDefault(a => a is IOutputsToolRegion);
-                    var region = outputs as OutputsRegion;
-                    if (region != null)
+                    if (outputs is OutputsRegion region)
                     {
                         region.Outputs = new ObservableCollection<IServiceOutputMapping>();
                         region.RecordsetName = string.Empty;
@@ -269,10 +266,7 @@ namespace Dev2.Activities.Designers2.Core.Source
                 OnSomethingChanged(this);
             }
             var delegateCommand = EditSourceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
-            if (delegateCommand != null)
-            {
-                delegateCommand.RaiseCanExecuteChanged();
-            }
+            delegateCommand?.RaiseCanExecuteChanged();
 
             _selectedSource = value;
         }
@@ -342,19 +336,13 @@ namespace Dev2.Activities.Designers2.Core.Source
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            handler?.Invoke(this, args);
         }
     }
 }

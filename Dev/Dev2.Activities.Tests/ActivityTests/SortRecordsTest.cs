@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for SortRecordsTest
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class SortRecordsTest : BaseActivityUnitTest
     {
         /// <summary>
@@ -30,6 +30,20 @@ namespace Dev2.Tests.Activities.ActivityTests
         ///information about and functionality for the current test run.
         ///</summary>
         public TestContext TestContext { get; set; }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfSortRecordsActivity { SortField = "[[recset().Id]]", SelectedSort = "Forward" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[recset().Id]]", outputs[0]);
+        }
 
         #region Forward Sort Tests
 
@@ -59,8 +73,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                                                      , "8"
                                                      , "9"
                                                      , "10" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -95,8 +108,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                                                      , "L"
                                                      , "Y"
                                                      , "Z" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Name", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Name", out string error);
 
             // remove test datalist ;)
 
@@ -115,8 +127,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -140,8 +151,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             List<string> expected = new List<string> { "10", "9", "8", "7", "6", "4", "3", "2", "1", "1" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -159,8 +169,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           );
             IDSFDataObject result = ExecuteProcess();
             List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -183,8 +192,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -204,8 +212,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            string error;
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out error);
+            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 

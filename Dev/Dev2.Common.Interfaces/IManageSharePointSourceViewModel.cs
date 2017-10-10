@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System;
+using System.Windows.Input;
 using Dev2.Runtime.ServiceModel.Data;
 
 namespace Dev2.Common.Interfaces
@@ -62,9 +63,9 @@ namespace Dev2.Common.Interfaces
         /// <summary>
         /// The name of the resource
         /// </summary>
-        // ReSharper disable UnusedMemberInSuper.Global
+        
         string ResourceName { get; set; }
-        // ReSharper restore UnusedMemberInSuper.Global
+        
 
         /// <summary>
         /// The authentications Type
@@ -78,5 +79,7 @@ namespace Dev2.Common.Interfaces
         void Save(ISharepointServerSource toSpSource);
 
         string ServerName { get; set; }
+
+        ISharepointServerSource FetchSource(Guid resourceID);
     }
 }

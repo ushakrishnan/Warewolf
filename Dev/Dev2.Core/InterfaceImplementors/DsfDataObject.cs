@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System;
 using System.Activities.Persistence;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -18,18 +19,20 @@ using System.Text;
 using System.Xml.Linq;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.Data.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Communication;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Diagnostics.Logging;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Web;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
+
 
 namespace Dev2.DynamicServices
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     ///     The core TO used in the execution engine ;)
@@ -39,9 +42,8 @@ namespace Dev2.DynamicServices
         #region Class Members
 
         private readonly XNamespace _dSfDataObjectNs = XNamespace.Get("http://dev2.co.za/");
-        private string _parentServiceName = string.Empty;
         private string _parentWorkflowInstanceId = string.Empty;
-        private readonly Stack<IExecutionEnvironment> _environments; 
+        private readonly ConcurrentStack<IExecutionEnvironment> _environments;
         #endregion Class Members
 
         #region Constructor
@@ -49,13 +51,18 @@ namespace Dev2.DynamicServices
         private DsfDataObject()
         {
             Environment = new ExecutionEnvironment();
-            _environments = new Stack<IExecutionEnvironment>();
+            _environments = new ConcurrentStack<IExecutionEnvironment>();
         }
 
-        public DsfDataObject(string xmldata, Guid dataListId, string rawPayload = "")
+        public DsfDataObject(string xmldata, Guid dataListId)
+            : this(xmldata, dataListId, "")
+        {
+        }
+
+        public DsfDataObject(string xmldata, Guid dataListId, string rawPayload)
         {
             Environment = new ExecutionEnvironment();
-            _environments = new Stack<IExecutionEnvironment>();
+            _environments = new ConcurrentStack<IExecutionEnvironment>();
             ThreadsToDispose = new Dictionary<int, List<Guid>>();
 
             if (xmldata != null)
@@ -68,9 +75,9 @@ namespace Dev2.DynamicServices
                         xe = XElement.Parse(xmldata);
                     }
                 }
-                    // ReSharper disable EmptyGeneralCatchClause
+                
                 catch (Exception)
-                    // ReSharper restore EmptyGeneralCatchClause
+                
                 {
                     // we only trying to parse ;)
                 }
@@ -90,12 +97,10 @@ namespace Dev2.DynamicServices
                     }
                     IsDebug = isDebug;
 
-                    Guid debugSessionId;
-                    Guid.TryParse(ExtractValue(xe, "DebugSessionID"), out debugSessionId);
+                    Guid.TryParse(ExtractValue(xe, "DebugSessionID"), out Guid debugSessionId);
                     DebugSessionID = debugSessionId;
 
-                    Guid environmentId;
-                    if (Guid.TryParse(ExtractValue(xe, "EnvironmentID"), out environmentId))
+                    if (Guid.TryParse(ExtractValue(xe, "EnvironmentID"), out Guid environmentId))
                     {
                         EnvironmentID = environmentId;
                         DebugEnvironmentId = environmentId;
@@ -109,15 +114,13 @@ namespace Dev2.DynamicServices
                     }
                     IsOnDemandSimulation = isOnDemandSimulation;
 
-                    _parentServiceName = ExtractValue(xe, "ParentServiceName");
+                    ParentServiceName = ExtractValue(xe, "ParentServiceName");
                     _parentWorkflowInstanceId = ExtractValue(xe, "ParentWorkflowInstanceId");
 
-                    Guid executionCallbackId;
-                    Guid.TryParse(ExtractValue(xe, "ExecutionCallbackID"), out executionCallbackId);
+                    Guid.TryParse(ExtractValue(xe, "ExecutionCallbackID"), out Guid executionCallbackId);
                     ExecutionCallbackID = executionCallbackId;
 
-                    Guid bookmarkExecutionCallbackId;
-                    Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out bookmarkExecutionCallbackId);
+                    Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid bookmarkExecutionCallbackId);
                     BookmarkExecutionCallbackID = bookmarkExecutionCallbackId;
 
                     if (BookmarkExecutionCallbackID == Guid.Empty && ExecutionCallbackID != Guid.Empty)
@@ -125,20 +128,17 @@ namespace Dev2.DynamicServices
                         BookmarkExecutionCallbackID = ExecutionCallbackID;
                     }
 
-                    Guid parentInstanceId;
-                    Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out parentInstanceId);
+                    Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid parentInstanceId);
 
                     ParentInstanceID = ExtractValue(xe, "ParentInstanceID");
 
-                    int numberOfSteps;
-                    Int32.TryParse(ExtractValue(xe, "NumberOfSteps"), out numberOfSteps);
+                    Int32.TryParse(ExtractValue(xe, "NumberOfSteps"), out int numberOfSteps);
                     NumberOfSteps = numberOfSteps;
 
                     CurrentBookmarkName = ExtractValue(xe, "CurrentBookmarkName");
 
-                    Guid instId;
 
-                    if (Guid.TryParse(ExtractValue(xe, "WorkflowInstanceId"), out instId))
+                    if (Guid.TryParse(ExtractValue(xe, "WorkflowInstanceId"), out Guid instId))
                     {
                         WorkflowInstanceId = instId;
                     }
@@ -154,8 +154,7 @@ namespace Dev2.DynamicServices
                     DataListID = dataListId;
 
                     // set the IsDataListScoped flag ;)
-                    bool isScoped;
-                    bool.TryParse(ExtractValue(xe, "IsDataListScoped"), out isScoped);
+                    bool.TryParse(ExtractValue(xe, "IsDataListScoped"), out bool isScoped);
                     IsDataListScoped = isScoped;
 
                     // Set incoming service name ;)
@@ -169,27 +168,17 @@ namespace Dev2.DynamicServices
             if (!IsDebug && !string.IsNullOrEmpty(rawPayload))
             {
                 RawPayload = new StringBuilder(rawPayload);
-                }
+            }
         }
 
-        public Guid DebugEnvironmentId
-        {
-            get
-            {
-                return _debugEnvironmentId;
-            }
-            set
-            {
-                _debugEnvironmentId = value;
-            }
-        }
+        public Guid DebugEnvironmentId { get; set; }
 
         private string ExtractValue(XElement xe, string elementName)
         {
             IEnumerable<XElement> tmp = xe.Descendants(elementName);
             XElement targetElement = tmp.FirstOrDefault();
 
-            return targetElement != null ? targetElement.Value : string.Empty;
+            return targetElement?.Value ?? string.Empty;
         }
 
         #endregion Constructor
@@ -197,14 +186,15 @@ namespace Dev2.DynamicServices
         #region Properties
 
         private StringBuilder _rawPayload;
-        Guid _debugEnvironmentId;
         public ServiceAction ExecuteAction { get; set; }
         public string ParentWorkflowXmlData { get; set; }
         public Guid DebugSessionID { get; set; }
         public Guid ParentID { get; set; }
         public bool RunWorkflowAsync { get; set; }
         public bool IsDebugNested { get; set; }
-
+        public List<Guid> TestsResourceIds { get; set; }
+        public bool IsSubExecution { get; set; }
+        public string QueryString { get; set; }
         public bool IsRemoteInvoke => EnvironmentID != Guid.Empty;
 
         public bool IsRemoteInvokeOverridden { get; set; }
@@ -224,8 +214,11 @@ namespace Dev2.DynamicServices
 
         public void PopEnvironment()
         {
-            Environment=  _environments.Pop();
-
+            var tryPop = _environments.TryPop(out IExecutionEnvironment localEnv);
+            if (tryPop)
+            {
+                Environment = localEnv;
+            }
         }
 
         public void PushEnvironment(IExecutionEnvironment env)
@@ -248,9 +241,13 @@ namespace Dev2.DynamicServices
         public Dictionary<int, List<Guid>> ThreadsToDispose { get; set; }
         public string CurrentBookmarkName { get; set; }
         public string ServiceName { get; set; }
+        public string TestName { get; set; }
+        public bool IsServiceTestExecution { get; set; }
+        public bool IsDebugFromWeb { get; set; }
         public Guid WorkflowInstanceId { get; set; }
         public bool IsDebug { get; set; }
         public Guid WorkspaceID { get; set; }
+        public Guid SourceResourceID { get; set; }
         public Guid OriginalInstanceID { get; set; }
         public bool IsOnDemandSimulation { get; set; }
         public Guid ServerID { get; set; }
@@ -288,16 +285,12 @@ namespace Dev2.DynamicServices
         public string RemoteInvokerID { get; set; }
         public IList<IDebugState> RemoteDebugItems { get; set; }
         public string RemoteServiceType { get; set; }
-    
+
         public int ParentThreadID { get; set; }
 
         public bool WorkflowResumeable { get; set; }
 
-        public string ParentServiceName
-        {
-            get { return _parentServiceName; }
-            set { _parentServiceName = value; }
-        }
+        public string ParentServiceName { get; set; } = string.Empty;
 
         public string ParentWorkflowInstanceId
         {
@@ -316,6 +309,10 @@ namespace Dev2.DynamicServices
         public bool ForceDeleteAtNextNativeActivityCleanup { get; set; }
         public bool RemoteNonDebugInvoke { get; set; }
         public bool StopExecution { get; set; }
+        public IServiceTestModelTO ServiceTest { get; set; }
+
+        public Guid? ExecutionID { get; set; }
+        public string WebUrl { get; set; }
 
         #endregion Properties
 
@@ -328,7 +325,6 @@ namespace Dev2.DynamicServices
         public IDSFDataObject Clone()
         {
             IDSFDataObject result = new DsfDataObject();
-
             result.BookmarkExecutionCallbackID = BookmarkExecutionCallbackID;
             result.CurrentBookmarkName = CurrentBookmarkName;
             result.DebugSessionID = DebugSessionID;
@@ -361,7 +357,7 @@ namespace Dev2.DynamicServices
             result.RemoteDebugItems = RemoteDebugItems;
             result.RemoteInvoke = RemoteInvoke;
             result.RemoteNonDebugInvoke = RemoteNonDebugInvoke;
-            result.IsRemoteInvokeOverridden = result.IsRemoteInvokeOverridden;
+            result.IsRemoteInvokeOverridden = IsRemoteInvokeOverridden;
             result.RemoteInvokeResultShape = RemoteInvokeResultShape;
             result.RemoteInvokerID = RemoteInvokerID;
             result.RemoteServiceType = RemoteServiceType;
@@ -382,12 +378,26 @@ namespace Dev2.DynamicServices
             result.EsbChannel = EsbChannel;
             result.ExecutionToken = ExecutionToken;
             result.ForEachUpdateValue = ForEachUpdateValue;
+            result.TestName = TestName;
+            result.SourceResourceID = SourceResourceID;
+            result.IsServiceTestExecution = IsServiceTestExecution;
+            result.IsDebugFromWeb = IsDebugFromWeb;
+            result.ExecutionID = ExecutionID;
+            result.WebUrl = WebUrl;
+            result.IsSubExecution = IsSubExecution;
+            result.QueryString = QueryString;
+            if (ServiceTest != null)
+            {
+                Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+                var testString = serializer.Serialize(ServiceTest);
+                result.ServiceTest = serializer.Deserialize<IServiceTestModelTO>(testString);
+            }
             return result;
         }
 
         public bool IsDebugMode()
         {
-            return (IsDebug || WorkflowLoggger.ShouldLog(ResourceID) || RemoteInvoke ) && !RunWorkflowAsync;
+            return (IsDebug || WorkflowLoggger.ShouldLog(ResourceID) || RemoteInvoke) && !RunWorkflowAsync;
         }
 
         #endregion
@@ -413,7 +423,7 @@ namespace Dev2.DynamicServices
 
             readWriteValues = new Dictionary<XName, object>();
 
-            foreach (PropertyInfo pi in typeof (IDSFDataObject).GetProperties())
+            foreach (PropertyInfo pi in typeof(IDSFDataObject).GetProperties())
             {
                 readWriteValues.Add(_dSfDataObjectNs.GetName(pi.Name).LocalName, pi.GetValue(this, null));
             }
@@ -434,7 +444,7 @@ namespace Dev2.DynamicServices
         {
             foreach (XName key in readWriteValues.Keys)
             {
-                PropertyInfo pi = typeof (IDSFDataObject).GetProperty(key.LocalName);
+                PropertyInfo pi = typeof(IDSFDataObject).GetProperty(key.LocalName);
 
                 if (pi != null)
                 {
@@ -449,49 +459,34 @@ namespace Dev2.DynamicServices
 
         private void ExtractOutMergeDataFromRequest(XElement xe)
         {
-            Guid datalistOutMergeId;
-            Guid.TryParse(ExtractValue(xe, "DatalistOutMergeID"), out datalistOutMergeId);
+            Guid.TryParse(ExtractValue(xe, "DatalistOutMergeID"), out Guid datalistOutMergeId);
             DatalistOutMergeID = datalistOutMergeId;
 
-            enDataListMergeTypes datalistOutMergeType;
-            // ReSharper disable ConvertIfStatementToConditionalTernaryExpression
-            if (Enum.TryParse(ExtractValue(xe, "DatalistOutMergeType"), true, out datalistOutMergeType))
-                // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
-            {
-                DatalistOutMergeType = datalistOutMergeType;
-            }
-            else
-            {
-                DatalistOutMergeType = enDataListMergeTypes.Intersection;
-            }
 
-            enTranslationDepth datalistOutMergeDepth;
+            DatalistOutMergeType = Enum.TryParse(ExtractValue(xe, "DatalistOutMergeType"), true, out enDataListMergeTypes datalistOutMergeType) ? datalistOutMergeType : enDataListMergeTypes.Intersection;
+
             DatalistOutMergeDepth = Enum.TryParse(ExtractValue(xe, "DatalistOutMergeDepth"), true,
-                out datalistOutMergeDepth)
+                out enTranslationDepth datalistOutMergeDepth)
                 ? datalistOutMergeDepth
                 : enTranslationDepth.Data_With_Blank_OverWrite;
 
-            DataListMergeFrequency datalistOutMergeFrequency;
             DatalistOutMergeFrequency = Enum.TryParse(ExtractValue(xe, "DatalistOutMergeFrequency"), true,
-                out datalistOutMergeFrequency)
+                out DataListMergeFrequency datalistOutMergeFrequency)
                 ? datalistOutMergeFrequency
                 : DataListMergeFrequency.OnCompletion;
         }
 
         private void ExtractInMergeDataFromRequest(XElement xe)
         {
-            Guid datalistInMergeId;
-            Guid.TryParse(ExtractValue(xe, "DatalistInMergeID"), out datalistInMergeId);
+            Guid.TryParse(ExtractValue(xe, "DatalistInMergeID"), out Guid datalistInMergeId);
             DatalistInMergeID = datalistInMergeId;
 
-            enDataListMergeTypes datalistInMergeType;
-            DatalistInMergeType = Enum.TryParse(ExtractValue(xe, "DatalistInMergeType"), true, out datalistInMergeType)
+            DatalistInMergeType = Enum.TryParse(ExtractValue(xe, "DatalistInMergeType"), true, out enDataListMergeTypes datalistInMergeType)
                 ? datalistInMergeType
                 : enDataListMergeTypes.Intersection;
 
-            enTranslationDepth datalistInMergeDepth;
             DatalistInMergeDepth = Enum.TryParse(ExtractValue(xe, "DatalistInMergeDepth"), true,
-                out datalistInMergeDepth)
+                out enTranslationDepth datalistInMergeDepth)
                 ? datalistInMergeDepth
                 : enTranslationDepth.Data_With_Blank_OverWrite;
         }

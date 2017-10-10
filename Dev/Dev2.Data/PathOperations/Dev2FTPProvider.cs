@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -19,25 +18,21 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
-using Dev2.Data.PathOperations.Enums;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.PathOperations;
 using Renci.SshNet;
 using Warewolf.Resource.Errors;
-// ReSharper disable ThrowFromCatchWithNoInnerException
-// ReSharper disable ReturnTypeCanBeEnumerable.Local
-// ReSharper disable ParameterTypeCanBeEnumerable.Local
+using System.Globalization;
 
 namespace Dev2.Data.PathOperations
-{ 
+{
     [Serializable]
-    // ReSharper disable InconsistentNaming
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+#pragma warning disable S101
     public class Dev2FTPProvider : IActivityIOOperationsEndPoint
-    // ReSharper restore InconsistentNaming
+#pragma warning restore S101
     {
         const int SftpTimeoutSeconds = 10;
-
-
         public bool PathExist(IActivityIOPath dst)
         {
             var result = PathIs(dst) == enPathType.Directory ? IsDirectoryAlreadyPresent(dst) : IsFilePresent(dst);
@@ -46,8 +41,6 @@ namespace Dev2.Data.PathOperations
 
         public Stream Get(IActivityIOPath path, List<string> filesToCleanup)
         {
-
-
             Stream result = null;
             try
             {
@@ -58,13 +51,13 @@ namespace Dev2.Data.PathOperations
                 }
                 else
                 {
-                    Dev2Logger.Debug($"SFTP_GET:{path.Path}");
+                    Dev2Logger.Debug($"SFTP_GET:{path.Path}", GlobalConstants.WarewolfDebug);
                     ReadFromSftp(path, ref result, filesToCleanup);
                 }
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 var message = $"{ex.Message} ,  [{path.Path}]";
                 throw new Exception(message, ex);
             }
@@ -140,8 +133,7 @@ namespace Dev2.Data.PathOperations
         }
         string ExtractHostNameFromPath(string path)
         {
-            Uri uriForSftp;
-            if (Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out uriForSftp))
+            if (Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out Uri uriForSftp))
             {
                 try
                 {
@@ -157,10 +149,12 @@ namespace Dev2.Data.PathOperations
 
         SftpClient BuildSftpClient(IActivityIOPath path)
         {
-
             var hostName = ExtractHostNameFromPath(path.Path);
-            if (hostName.ToLower().StartsWith(@"localhost"))
+            if (hostName.ToLower(CultureInfo.InvariantCulture).StartsWith(@"localhost"))
+            {
                 hostName = hostName.Replace(@"localhost", @"127.0.0.1");
+            }
+
             var methods = new List<AuthenticationMethod> { new PasswordAuthenticationMethod(path.Username, path.Password) };
 
             if (!string.IsNullOrEmpty(path.PrivateKeyFile))
@@ -178,12 +172,8 @@ namespace Dev2.Data.PathOperations
             }
             catch (Exception e)
             {
-                Dev2Logger.Debug(@"Exception Creating SFTP Client");
-                Dev2Logger.Debug(e.Message);
-                Dev2Logger.Debug(e.StackTrace);
-                {
+                Dev2Logger.Debug(@"Exception Creating SFTP Client", e, GlobalConstants.WarewolfError);
 
-                }
                 if (e.Message.Contains(@"timeout"))
                 {
                     throw new Exception(ErrorResource.ConnectionTimedOut);
@@ -201,12 +191,9 @@ namespace Dev2.Data.PathOperations
             return sftp;
         }
 
-
-
         string ExtractFileNameFromPath(string path)
         {
-            Uri uriForSftp;
-            if (Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out uriForSftp))
+            if (Uri.TryCreate(path, UriKind.RelativeOrAbsolute, out Uri uriForSftp))
             {
                 try
                 {
@@ -220,7 +207,7 @@ namespace Dev2.Data.PathOperations
             return string.Empty;
         }
 
-        public int Put(Stream src, IActivityIOPath dst, Dev2CRUDOperationTO args, string whereToPut, List<string> filesToCleanup)
+        public int Put(Stream src, IActivityIOPath dst, IDev2CRUDOperationTO args, string whereToPut, List<string> filesToCleanup)
         {
             var result = -1;
 
@@ -232,7 +219,6 @@ namespace Dev2.Data.PathOperations
             }
             else
             {
-                // try and fetch the file, if not found ok because we not in Overwrite mode
                 try
                 {
                     using (Get(dst, filesToCleanup))
@@ -242,7 +228,7 @@ namespace Dev2.Data.PathOperations
                 }
                 catch (Exception ex)
                 {
-                    Dev2Logger.Error(this, ex);
+                    Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                     ok = true;
                 }
             }
@@ -255,11 +241,7 @@ namespace Dev2.Data.PathOperations
                 }
                 catch (Exception ex)
                 {
-                    Dev2Logger.Debug(@"Exception in Put command");
-                    Dev2Logger.Debug(ex.Message);
-                    Dev2Logger.Debug(ex.StackTrace);
-
-                    Dev2Logger.Error(this, ex);
+                    Dev2Logger.Error(@"Exception in Put command", ex, GlobalConstants.WarewolfError);
                     throw;
                 }
             }
@@ -329,9 +311,7 @@ namespace Dev2.Data.PathOperations
                         catch (Exception e)
                         {
 
-                            Dev2Logger.Debug(@"Exception WriteToSFTP");
-                            Dev2Logger.Debug(e.Message);
-                            Dev2Logger.Debug(e.StackTrace);
+                            Dev2Logger.Debug(@"Exception WriteToSFTP", e, GlobalConstants.WarewolfDebug);
                             sftp.Disconnect();
                             sftp.Dispose();
                             throw new Exception(ErrorResource.FileNotCreated);
@@ -342,16 +322,10 @@ namespace Dev2.Data.PathOperations
             return result;
         }
 
-        /// <summary>
-        /// Public entry point to this method
-        /// </summary>
-        /// <param name="src"></param>
-        /// <returns></returns>
         public bool Delete(IActivityIOPath src)
         {
             try
             {
-                // directory delete
                 if (PathIs(src) == enPathType.Directory)
                 {
                     DeleteHandler(new List<string> { src.Path }, src.Username, src.Password, src.PrivateKeyFile);
@@ -360,19 +334,18 @@ namespace Dev2.Data.PathOperations
                 {
                     if (!DeleteOp(new List<IActivityIOPath> { src }))
                     {
-                        Dev2Logger.Error($"Error Deleting Path: {src.Path}");
+                        Dev2Logger.Error($"Error Deleting Path: {src.Path}", GlobalConstants.WarewolfError);
                     }
                 }
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 throw new Exception(ex.Message, ex);
             }
 
             return true;
         }
-
 
         public IList<IActivityIOPath> ListDirectory(IActivityIOPath src)
         {
@@ -431,7 +404,7 @@ namespace Dev2.Data.PathOperations
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 throw;
             }
 
@@ -469,16 +442,13 @@ namespace Dev2.Data.PathOperations
             {
                 sftp.Dispose();
             }
-
             return result;
         }
 
-        public bool CreateDirectory(IActivityIOPath dst, Dev2CRUDOperationTO args)
+        public bool CreateDirectory(IActivityIOPath dst, IDev2CRUDOperationTO args)
         {
             bool result = false;
-
             bool ok;
-
             if (args.Overwrite)
             {
                 if (IsDirectoryAlreadyPresent(dst))
@@ -491,10 +461,8 @@ namespace Dev2.Data.PathOperations
             {
                 ok = !IsDirectoryAlreadyPresent(dst);
             }
-
             if (ok)
             {
-
                 result = IsStandardFtp(dst) ? CreateDirectoryStandardFtp(dst) : CreateDirectorySftp(dst);
             }
             return result;
@@ -507,11 +475,9 @@ namespace Dev2.Data.PathOperations
             {
                 FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ConvertSslToPlain(dst.Path));
                 request.Method = WebRequestMethods.Ftp.MakeDirectory;
-
                 request.UseBinary = true;
                 request.KeepAlive = false;
                 request.EnableSsl = EnableSsl(dst);
-
                 if (dst.Username != string.Empty)
                 {
                     request.Credentials = new NetworkCredential(dst.Username, dst.Password);
@@ -531,7 +497,7 @@ namespace Dev2.Data.PathOperations
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
             }
             finally
             {
@@ -553,7 +519,7 @@ namespace Dev2.Data.PathOperations
             catch (Exception ex)
             {
                 result = false;
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
             }
             finally
             {
@@ -578,8 +544,6 @@ namespace Dev2.Data.PathOperations
         public enPathType PathIs(IActivityIOPath path)
         {
             enPathType result = enPathType.File;
-
-            // WARN : here for now because FTP has no way of knowing of the user wants a directory or file?!?!
             if (Dev2ActivityIOPathUtils.IsDirectory(path.Path))
             {
                 result = enPathType.Directory;
@@ -592,10 +556,6 @@ namespace Dev2.Data.PathOperations
             return @"/";
         }
 
-        /// <summary>
-        /// Get folder listing for source
-        /// </summary>
-        /// <returns></returns>
         public IList<IActivityIOPath> ListFoldersInDirectory(IActivityIOPath src)
         {
             List<string> dirs;
@@ -610,17 +570,13 @@ namespace Dev2.Data.PathOperations
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 string message = $"{ex.Message} : [{src.Path}]";
                 throw new Exception(message, ex);
             }
             return dirs.Select(dir => BuildValidPathForFtp(src, dir)).Select(uri => ActivityIOFactory.CreatePathFromString(uri, src.Username, src.Password, src.PrivateKeyFile)).ToList();
         }
 
-        /// <summary>
-        /// Get folder listing for source
-        /// </summary>
-        /// <returns></returns>
         public IList<IActivityIOPath> ListFilesInDirectory(IActivityIOPath src)
         {
             List<string> dirs;
@@ -631,7 +587,7 @@ namespace Dev2.Data.PathOperations
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 string message = $"{ex.Message} : [{src.Path}]";
                 throw new Exception(message, ex);
             }
@@ -646,17 +602,10 @@ namespace Dev2.Data.PathOperations
             set;
         }
 
-        /// <summary>
-        /// Converts the SSL automatic plain.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
         private static string ConvertSslToPlain(string path)
         {
             string result = path;
-
             result = result.Replace(@"FTPS:", @"FTP:").Replace(@"ftps:", @"ftp:");
-
             return result;
         }
 
@@ -666,13 +615,10 @@ namespace Dev2.Data.PathOperations
             {
                 string path = pathStack[0];
                 pathStack.RemoveAt(0);
-
                 bool addBack = true;
-
                 var pathFromString = ActivityIOFactory.CreatePathFromString(path, user, pass, privateKeyFile);
                 IList<IActivityIOPath> allFiles = ListFilesInDirectory(pathFromString).GroupBy(a => a.Path).Select(g => g.First()).ToList();
                 IList<IActivityIOPath> allDirs = ListFoldersInDirectory(pathFromString);
-
                 if (allDirs.Count == 0)
                 {
                     IActivityIOPath tmpPath = pathFromString;
@@ -682,15 +628,11 @@ namespace Dev2.Data.PathOperations
                 }
                 else
                 {
-                    // more dirs to process 
                     pathStack = pathStack.Union(allDirs.Select(ioPath => ioPath.Path)).ToList();
                 }
-
                 DeleteHandler(pathStack, user, pass, privateKeyFile);
-
                 if (addBack)
                 {
-                    // remove the dir now all its sub-dirs are gone ;)
                     DeleteHandler(new List<string> { path }, user, pass, privateKeyFile);
                 }
             }
@@ -712,16 +654,13 @@ namespace Dev2.Data.PathOperations
             try
             {
                 FtpWebRequest req = (FtpWebRequest)WebRequest.Create(ConvertSslToPlain(path));
-
                 if (user != string.Empty)
                 {
                     req.Credentials = new NetworkCredential(user, pass);
                 }
-
                 req.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
                 req.KeepAlive = false;
                 req.EnableSsl = ssl;
-
                 if (isNotCertVerifiable)
                 {
                     ServicePointManager.ServerCertificateValidationCallback = AcceptAllCertifications;
@@ -729,7 +668,6 @@ namespace Dev2.Data.PathOperations
 
                 using (resp = (FtpWebResponse)req.GetResponse())
                 {
-
                     using (Stream stream = resp.GetResponseStream())
                     {
                         if (stream != null)
@@ -744,7 +682,7 @@ namespace Dev2.Data.PathOperations
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 throw;
             }
             finally
@@ -767,7 +705,7 @@ namespace Dev2.Data.PathOperations
             catch (Exception ex)
             {
                 sftp.Dispose();
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 throw new Exception(string.Format(ErrorResource.DirectoryNotFound, path));
             }
             finally
@@ -793,13 +731,6 @@ namespace Dev2.Data.PathOperations
             }
         }
 
-        /// <summary>
-        /// Extract dirs from dir list
-        /// </summary>
-        /// <param name="basePath"></param>
-        /// <param name="payload"></param>
-        /// <param name="matchFunc"></param>
-        /// <returns></returns>
         private List<string> ExtractList(string basePath, string payload, Func<string, bool> matchFunc)
         {
             List<string> result = new List<string>();
@@ -813,7 +744,6 @@ namespace Dev2.Data.PathOperations
                     string part = p.Substring(idx + 1).Trim();
                     if (matchFunc(p))
                     {
-                        // directory -- add it
                         if (!basePath.EndsWith(@"/"))
                         {
                             basePath += @"/";
@@ -834,7 +764,7 @@ namespace Dev2.Data.PathOperations
 
         static bool IsDirectory(string part)
         {
-            return Dev2ActivityIOPathUtils.IsDirectory(part) || part.ToLower().Contains(@"<dir>");
+            return Dev2ActivityIOPathUtils.IsDirectory(part) || part.ToLower(CultureInfo.InvariantCulture).Contains(@"<dir>");
         }
 
         static bool IsFile(string part)
@@ -866,30 +796,23 @@ namespace Dev2.Data.PathOperations
         bool DeleteUsingStandardFtp(IList<IActivityIOPath> src)
         {
             FtpWebResponse response = null;
-
-
             foreach (var activityIOPath in src)
             {
                 try
                 {
                     FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ConvertSslToPlain(activityIOPath.Path));
-
                     request.Method = PathIs(activityIOPath) == enPathType.Directory ? WebRequestMethods.Ftp.RemoveDirectory : WebRequestMethods.Ftp.DeleteFile;
-
                     request.UseBinary = true;
                     request.KeepAlive = false;
                     request.EnableSsl = EnableSsl(activityIOPath);
-
                     if (activityIOPath.IsNotCertVerifiable)
                     {
                         ServicePointManager.ServerCertificateValidationCallback = AcceptAllCertifications;
                     }
-
                     if (activityIOPath.Username != string.Empty)
                     {
                         request.Credentials = new NetworkCredential(activityIOPath.Username, activityIOPath.Password);
                     }
-
                     using (response = (FtpWebResponse)request.GetResponse())
                     {
                         if (response.StatusCode != FtpStatusCode.FileActionOK)
@@ -913,8 +836,6 @@ namespace Dev2.Data.PathOperations
 
         bool DeleteUsingSftp(IList<IActivityIOPath> src)
         {
-
-
             foreach (var activityIOPath in src)
             {
                 try
@@ -924,13 +845,10 @@ namespace Dev2.Data.PathOperations
                         var fromPath = ExtractFileNameFromPath(activityIOPath.Path);
                         if (PathIs(activityIOPath) == enPathType.Directory)
                         {
-
                             sftp.DeleteDirectory(fromPath);
                         }
-
                         else
                         {
-
                             sftp.DeleteFile(fromPath);
                         }
                     }
@@ -939,7 +857,7 @@ namespace Dev2.Data.PathOperations
                 catch (Exception e)
                 {
                     var message = string.Format(ErrorResource.CouldNotDelete, activityIOPath.Path);
-                    Dev2Logger.Error(message, e);
+                    Dev2Logger.Error(message, e, GlobalConstants.WarewolfError);
                     throw new Exception(message);
                 }
             }
@@ -961,9 +879,7 @@ namespace Dev2.Data.PathOperations
         bool IsFilePresentStandardFtp(IActivityIOPath path)
         {
             FtpWebResponse response = null;
-
             bool isAlive;
-
             try
             {
                 FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ConvertSslToPlain(path.Path));
@@ -971,54 +887,43 @@ namespace Dev2.Data.PathOperations
                 request.UseBinary = true;
                 request.KeepAlive = false;
                 request.EnableSsl = EnableSsl(path);
-
-                if(path.Username != string.Empty)
+                if (path.Username != string.Empty)
                 {
                     request.Credentials = new NetworkCredential(path.Username, path.Password);
                 }
-
-                if(path.IsNotCertVerifiable)
+                if (path.IsNotCertVerifiable)
                 {
                     ServicePointManager.ServerCertificateValidationCallback = AcceptAllCertifications;
                 }
-
-                using(response = (FtpWebResponse)request.GetResponse())
+                using (response = (FtpWebResponse)request.GetResponse())
                 {
-
-                    using(Stream responseStream = response.GetResponseStream())
+                    using (Stream responseStream = response.GetResponseStream())
                     {
-                        if(responseStream != null)
+                        if (responseStream != null)
                         {
-                            using(StreamReader reader = new StreamReader(responseStream))
+                            using (StreamReader reader = new StreamReader(responseStream))
                             {
-
-                                if(reader.EndOfStream)
-                                {
-                                    // just check for exception, slow I know, but not sure how else to tackle this                  
-                                }
+                                Dev2Logger.Info("FTP file of size " + reader.ReadToEnd() + " found at " + path.Path, GlobalConstants.WarewolfInfo);
                             }
                         }
                     }
                 }
-
-                // exception will be thrown if not present
                 isAlive = true;
             }
-            catch(WebException wex)
+            catch (WebException wex)
             {
-                Dev2Logger.Error(this, wex);
+                Dev2Logger.Error(this, wex, GlobalConstants.WarewolfError);
                 isAlive = false;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 throw;
             }
             finally
             {
                 response?.Close();
             }
-
             return isAlive;
         }
 
@@ -1028,14 +933,14 @@ namespace Dev2.Data.PathOperations
             try
             {
                 var listFilesInDirectory = ListFilesInDirectory(path);
-                if(listFilesInDirectory.Count > 0)
+                if (listFilesInDirectory.Count > 0)
                 {
                     isAlive = true;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 isAlive = false;
             }
             return isAlive;
@@ -1044,16 +949,13 @@ namespace Dev2.Data.PathOperations
         private bool IsDirectoryAlreadyPresent(IActivityIOPath path)
         {
             var isAlive = IsStandardFtp(path) ? IsDirectoryAlreadyPresentStandardFtp(path) : IsDirectoryAlreadyPresentSftp(path);
-
             return isAlive;
         }
 
         bool IsDirectoryAlreadyPresentStandardFtp(IActivityIOPath path)
         {
             FtpWebResponse response = null;
-
             bool isAlive;
-
             try
             {
                 FtpWebRequest request = (FtpWebRequest)WebRequest.Create(ConvertSslToPlain(path.Path));
@@ -1062,46 +964,40 @@ namespace Dev2.Data.PathOperations
                 request.KeepAlive = false;
                 request.EnableSsl = EnableSsl(path);
 
-                if(path.Username != string.Empty)
+                if (path.Username != string.Empty)
                 {
                     request.Credentials = new NetworkCredential(path.Username, path.Password);
                 }
 
-                if(path.IsNotCertVerifiable)
+                if (path.IsNotCertVerifiable)
                 {
                     ServicePointManager.ServerCertificateValidationCallback = AcceptAllCertifications;
                 }
 
-                using(response = (FtpWebResponse)request.GetResponse())
+                using (response = (FtpWebResponse)request.GetResponse())
                 {
 
-                    using(Stream responseStream = response.GetResponseStream())
+                    using (Stream responseStream = response.GetResponseStream())
                     {
-                        if(responseStream != null)
+                        if (responseStream != null)
                         {
-                            using(StreamReader reader = new StreamReader(responseStream))
+                            using (StreamReader reader = new StreamReader(responseStream))
                             {
-
-                                if(reader.EndOfStream)
-                                {
-                                    // just check for exception, slow I know, but not sure how else to tackle this                  
-                                }
+                                Dev2Logger.Info("FTP directory containing files " + reader.ReadToEnd() + " found at " + path.Path, GlobalConstants.WarewolfInfo);
                             }
                         }
                     }
                 }
-
-                // exception will be thrown if not present
                 isAlive = true;
             }
-            catch(WebException wex)
+            catch (WebException wex)
             {
-                Dev2Logger.Error(this, wex);
+                Dev2Logger.Error(this, wex, GlobalConstants.WarewolfError);
                 isAlive = false;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
                 throw;
             }
             finally
@@ -1119,15 +1015,15 @@ namespace Dev2.Data.PathOperations
             {
                 var ftpPath = ExtractFileNameFromPath(path.Path);
                 var arrayList = sftpClient.ListDirectory(ftpPath);
-                if(arrayList == null || !arrayList.Any())
+                if (arrayList == null || !arrayList.Any())
                 {
                     isAlive = false;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 isAlive = false;
-                Dev2Logger.Error(this, ex);
+                Dev2Logger.Error(this, ex, GlobalConstants.WarewolfError);
             }
             finally
             {
@@ -1140,7 +1036,6 @@ namespace Dev2.Data.PathOperations
         {
             return true;
         }
-
         #endregion Private Methods
     }
 }

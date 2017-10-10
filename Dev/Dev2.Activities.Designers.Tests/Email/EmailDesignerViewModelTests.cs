@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,17 +22,16 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Communication;
-using Dev2.Interfaces;
 using Dev2.Runtime.Diagnostics;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.Email
 {
     [TestClass]
@@ -55,9 +54,9 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new EmailDesignerViewModel(CreateModelItem(), null, null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
         }
@@ -71,9 +70,9 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new EmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
         }
@@ -87,9 +86,9 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
-            new EmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IEnvironmentModel>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
+            new EmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IServer>().Object, null);
+            
 
             //------------Assert Results-------------------------
         }
@@ -146,7 +145,7 @@ namespace Dev2.Activities.Designers.Tests.Email
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedEmailSource", selectedEmailSource);
 
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -253,7 +252,7 @@ namespace Dev2.Activities.Designers.Tests.Email
 
             var eventPublisher = new Mock<IEventAggregator>();
             var mockShellViewModel = new Mock<IShellViewModel>();
-            mockShellViewModel.Setup(model => model.EditResource(It.IsAny<IEmailServiceSource>(),null)).Verifiable();
+            mockShellViewModel.Setup(model => model.EditResource(It.IsAny<IEmailServiceSource>())).Verifiable();
             CustomContainer.Register(mockShellViewModel.Object);
             var resourceModel = new Mock<IResourceModel>();
 
@@ -264,7 +263,7 @@ namespace Dev2.Activities.Designers.Tests.Email
 
 
             //------------Assert Results-------------------------
-            mockShellViewModel.Verify(model => model.EditResource(It.IsAny<IEmailServiceSource>(), null));
+            mockShellViewModel.Verify(model => model.EditResource(It.IsAny<IEmailServiceSource>()));
             CustomContainer.DeRegister<IShellViewModel>();
         }
 
@@ -359,19 +358,44 @@ namespace Dev2.Activities.Designers.Tests.Email
         [TestCategory("EmailDesignerViewModel_ChooseAttachments")]
         public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNotNull_AddsFilesToAttachments()
         {
-            Verify_ChooseAttachments(new List<string> { @"c:\tmp2.txt", @"c:\logs\errors2.log" });
+            List<string> selectedFiles = new List<string> { @"c:\tmp2.txt", @"c:\logs\errors2.log" };
+            //------------Setup for test--------------------------
+            var existingFiles = new List<string> { @"c:\tmp1.txt", @"c:\logs\errors1.log" };
+
+            var expectedFiles = new List<string>();
+            expectedFiles.AddRange(existingFiles);
+            if (selectedFiles != null)
+            {
+                expectedFiles.AddRange(selectedFiles);
+            }
+
+            var emailSources = CreateEmailSources(2);
+            var modelItem = CreateModelItem();
+            modelItem.SetProperty("Attachments", string.Join(";", expectedFiles));
+
+            var eventPublisher = new Mock<IEventAggregator>();
+            eventPublisher.Setup(p => p.Publish(It.IsAny<FileChooserMessage>())).Callback((object m) =>
+            {
+                ((FileChooserMessage)m).SelectedFiles = expectedFiles;
+            });
+
+            var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, new Mock<IResourceModel>().Object);
+
+            //------------Execute Test---------------------------
+            viewModel.ChooseAttachmentsCommand.Execute(null);
+
+            //------------Assert Results-------------------------
+            eventPublisher.Verify(p => p.Publish(It.IsAny<FileChooserMessage>()));
+            var attachments = modelItem.GetProperty<string>("Attachments");
+            Assert.AreEqual(string.Join(";", expectedFiles), attachments);
         }
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("EmailDesignerViewModel_ChooseAttachments")]
-        public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNull_DoesAddNotFilesToAttachments()
+        public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNotNull_SelectedNewFilesToAttachments()
         {
-            Verify_ChooseAttachments(null);
-        }
-
-        void Verify_ChooseAttachments(List<string> selectedFiles)
-        {
+            List<string> selectedFiles = new List<string> { @"c:\tmp2.txt", @"c:\logs\errors2.log" };
             //------------Setup for test--------------------------
             var existingFiles = new List<string> { @"c:\tmp1.txt", @"c:\logs\errors1.log" };
 
@@ -390,6 +414,36 @@ namespace Dev2.Activities.Designers.Tests.Email
             eventPublisher.Setup(p => p.Publish(It.IsAny<FileChooserMessage>())).Callback((object m) =>
             {
                 ((FileChooserMessage)m).SelectedFiles = selectedFiles;
+            });
+
+            var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, new Mock<IResourceModel>().Object);
+
+            //------------Execute Test---------------------------
+            viewModel.ChooseAttachmentsCommand.Execute(null);
+
+            //------------Assert Results-------------------------
+            eventPublisher.Verify(p => p.Publish(It.IsAny<FileChooserMessage>()));
+            var attachments = modelItem.GetProperty<string>("Attachments");
+            Assert.AreEqual(string.Join(";", selectedFiles), attachments);
+        }
+
+        [TestMethod]
+        [Owner("Trevor Williams-Ros")]
+        [TestCategory("EmailDesignerViewModel_ChooseAttachments")]
+        public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNull_DoesAddNotFilesToAttachments()
+        {
+            //------------Setup for test--------------------------
+            var existingFiles = new List<string> { @"c:\tmp1.txt", @"c:\logs\errors1.log" };
+
+            var expectedFiles = new List<string>();
+            var emailSources = CreateEmailSources(2);
+            var modelItem = CreateModelItem();
+            modelItem.SetProperty("Attachments", string.Join(";", existingFiles));
+
+            var eventPublisher = new Mock<IEventAggregator>();
+            eventPublisher.Setup(p => p.Publish(It.IsAny<FileChooserMessage>())).Callback((object m) =>
+            {
+                ((FileChooserMessage)m).SelectedFiles = null;
             });
 
             var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, new Mock<IResourceModel>().Object);
@@ -1265,8 +1319,12 @@ namespace Dev2.Activities.Designers.Tests.Email
 
         static TestEmailDesignerViewModel CreateViewModel(List<EmailSource> sources, ModelItem modelItem, IEventAggregator eventPublisher, IResourceModel resourceModel)
         {
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ResourceRepository.FindSourcesByType<EmailSource>(It.IsAny<IEnvironmentModel>(), enSourceType.EmailSource))
+            if (CustomContainer.Get<IShellViewModel>() == null)
+            {
+                CustomContainer.Register(new Mock<IShellViewModel>().Object);
+            }
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.ResourceRepository.FindSourcesByType<EmailSource>(It.IsAny<IServer>(), enSourceType.EmailSource))
                 .Returns(sources);
             environment.Setup(e => e.ResourceRepository.FindSingle(It.IsAny<Expression<Func<IResourceModel, bool>>>(), false, false))
                 .Returns(resourceModel);

@@ -6,6 +6,22 @@ namespace Dev2.Common.Interfaces.Core
 {
     public class ServerSource : IServerSource, IEquatable<ServerSource>
     {
+        public ServerSource(IConnection connection)
+        {
+            Address = connection.Address;
+            ID = connection.ResourceID;
+            AuthenticationType = connection.AuthenticationType;
+            UserName = connection.UserName;
+            Password = connection.Password;
+            ResourcePath = "";
+            ServerName = "";
+            Name = connection.ResourceName;
+        }
+
+        public ServerSource()
+        {
+        }
+
         #region Implementation of IServerSource
 
         public string ServerName { get; set; }
@@ -74,7 +90,8 @@ namespace Dev2.Common.Interfaces.Core
             {
                 return true;
             }
-            return string.Equals(Address, other.Address) && AuthenticationType == other.AuthenticationType && string.Equals(UserName, other.UserName) && string.Equals(Password, other.Password) && string.Equals(Name, other.Name);
+            var equals = string.Equals(Address, other.Address,StringComparison.InvariantCultureIgnoreCase) && AuthenticationType == other.AuthenticationType && string.Equals(UserName, other.UserName, StringComparison.InvariantCultureIgnoreCase) && string.Equals(Password, other.Password) && string.Equals(Name, other.Name, StringComparison.InvariantCultureIgnoreCase);
+            return equals;
         }
 
         /// <summary>
@@ -111,13 +128,13 @@ namespace Dev2.Common.Interfaces.Core
         {
             unchecked
             {
-                var hashCode = Address != null ? Address.GetHashCode() : 0;
+                var hashCode = Address?.GetHashCode() ?? 0;
                 hashCode = (hashCode * 397) ^ (int)AuthenticationType;
-                hashCode = (hashCode * 397) ^ (UserName != null ? UserName.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Password != null ? Password.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (UserName?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Password?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ ID.GetHashCode();
-                hashCode = (hashCode * 397) ^ (Name != null ? Name.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (ResourcePath != null ? ResourcePath.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Name?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (ResourcePath?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }

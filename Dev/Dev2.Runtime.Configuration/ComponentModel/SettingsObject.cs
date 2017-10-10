@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,10 +22,7 @@ namespace Dev2.Runtime.Configuration.ComponentModel
 
         protected void OnPropertyChanged(string propertyName)
         {
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion
@@ -110,9 +107,9 @@ namespace Dev2.Runtime.Configuration.ComponentModel
                 {
                     value = property.GetValue(attributedObject, null);
                 }
-                // ReSharper disable EmptyGeneralCatchClause
+                
                 catch(Exception)
-                // ReSharper restore EmptyGeneralCatchClause
+                
                 {
 #if DEBUG
                     //DIE execution DIE ... dude what are you doing?! Fix this otherwise the property won't show as an option in the settings treeview.
@@ -138,9 +135,8 @@ namespace Dev2.Runtime.Configuration.ComponentModel
                 object[] attributes = property.GetCustomAttributes(typeof(SettingsObjectAttribute), true);
                 if(attributes.Length > 0)
                 {
-                    SettingsObjectAttribute settingsObjectAttribute = attributes[0] as SettingsObjectAttribute;
                     // Add settings object to graph
-                    if(settingsObjectAttribute != null)
+                    if (attributes[0] is SettingsObjectAttribute settingsObjectAttribute)
                     {
                         graph.Add(new SettingsObject(value, settingsObjectAttribute.View, settingsObjectAttribute.ViewModel));
                     }

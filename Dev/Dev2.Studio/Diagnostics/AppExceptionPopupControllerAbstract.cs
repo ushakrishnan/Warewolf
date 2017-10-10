@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,22 +9,21 @@
 */
 
 using System;
+using System.Threading.Tasks;
 using Dev2.Studio.ViewModels.Diagnostics;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Diagnostics
 {
     public abstract class AppExceptionPopupControllerAbstract : IAppExceptionPopupController
     {
-        public void ShowPopup(Exception ex, ErrorSeverity severity)
+        public async void ShowPopup(Exception ex, ErrorSeverity severity)
         {
             var exceptionViewModel = CreateExceptionViewModel(ex, severity);
-            if(exceptionViewModel != null)
-            {
-                exceptionViewModel.Show();
-            }
+            var result = await exceptionViewModel;
+            result.Show();
         }
 
-        protected abstract IExceptionViewModel CreateExceptionViewModel(Exception exception, ErrorSeverity severity);
+        protected abstract Task<IExceptionViewModel> CreateExceptionViewModel(Exception exception, ErrorSeverity severity);
     }
 }

@@ -3,7 +3,9 @@ using Dev2.Common.Interfaces.WebServices;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Dev2.Common.Interfaces.Deploy;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
+
 
 namespace Dev2.Common.Interfaces.ServerProxyLayer
 {
@@ -18,11 +20,9 @@ namespace Dev2.Common.Interfaces.ServerProxyLayer
         void SavePluginSource(IPluginSource source, Guid serverWorkspaceID);
         void SaveComPluginSource(IComPluginSource source, Guid serverWorkspaceID);
         void SaveOAuthSource(IOAuthSource source, Guid serverWorkspaceID);
-        void SavePluginService(IPluginService toSource);
-        void SaveComPluginService(IComPluginService toSource);
         void SaveEmailServiceSource(IEmailServiceSource emailServiceSource, Guid serverWorkspaceID);
         void SaveExchangeSource(IExchangeSource exchangeSource, Guid serverWorkspaceID);
-        // ReSharper disable once InconsistentNaming
+
         void SaveRabbitMQServiceSource(IRabbitMQServiceSourceDefinition rabbitMqServiceSource, Guid serverWorkspaceID);
         void SaveWcfSource(IWcfServerSource wcfSource, Guid serverWorkspaceID);
     }
@@ -39,7 +39,7 @@ namespace Dev2.Common.Interfaces.ServerProxyLayer
         string TestComPluginService(IComPluginService inputValues);
         string TestEmailServiceSource(IEmailServiceSource emailServiceSource);
         string TestExchangeServiceSource(IExchangeSource emailServiceSource);
-        // ReSharper disable once InconsistentNaming
+
         string TestRabbitMQServiceSource(IRabbitMQServiceSourceDefinition rabbitMqServiceSource);
         string TestWcfServiceSource(IWcfServerSource wcfServerSource);
         string TestWcfService(IWcfService service);
@@ -50,6 +50,6 @@ namespace Dev2.Common.Interfaces.ServerProxyLayer
     /// </summary>
     public interface IUpdateManager : IUpdateManagerSave, IUpdateManagerTest
     {
-        
+        List<IDeployResult> Deploy(List<Guid> resourceIDsToDeploy, bool deployTests, IConnection destinationEnvironmentId);
     }
 }

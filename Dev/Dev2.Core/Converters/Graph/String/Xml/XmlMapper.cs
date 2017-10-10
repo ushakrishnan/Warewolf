@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,19 +15,19 @@ using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.Graph;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Unlimited.Framework.Converters.Graph.String.Xml
-// ReSharper restore CheckNamespace
+
 {
     [Serializable]
     public class XmlMapper : IMapper
     {
         #region Constructors
 
-        // ReSharper disable EmptyConstructor
+        
         public XmlMapper()
-            // ReSharper restore EmptyConstructor
+            
         {
         }
 
@@ -51,8 +51,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
             var uniquePaths = new Dictionary<string, IPath>();
             foreach (IPath path in allPaths)
             {
-                IPath tmpPath;
-                if (!uniquePaths.TryGetValue(path.ActualPath, out tmpPath))
+                if (!uniquePaths.TryGetValue(path.ActualPath, out IPath tmpPath))
                 {
                     uniquePaths.Add(path.ActualPath, path);
                 }
@@ -131,7 +130,10 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                     pathSegment.Item1.IsEnumarable = false;
                 }
 
-                if (pathSegment.Item1.IsEnumarable && pathSegment.Item2) recordsetEncountered = true;
+                if (pathSegment.Item1.IsEnumarable && pathSegment.Item2)
+                {
+                    recordsetEncountered = true;
+                }
             }
 
             path.DisplayPath = string.Join(XmlPath.NodeSeperatorSymbol,
@@ -175,7 +177,10 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                     pathSegment.Item1.IsEnumarable = false;
                 }
 
-                if (pathSegment.Item1.IsEnumarable && pathSegment.Item2) recordsetEncountered = true;
+                if (pathSegment.Item1.IsEnumarable && pathSegment.Item2)
+                {
+                    recordsetEncountered = true;
+                }
             }
 
             path.DisplayPath = string.Join(XmlPath.NodeSeperatorSymbol,

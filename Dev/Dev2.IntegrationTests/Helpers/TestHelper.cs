@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,7 @@ using Dev2.Controller;
 using Dev2.Core.Tests.Utils;
 using Dev2.Integration.Tests.MEF.WebTester;
 using Dev2.Network;
-// ReSharper disable UnusedMember.Global
+
 
 namespace Dev2.Integration.Tests.Helpers
 {
@@ -119,15 +119,15 @@ namespace Dev2.Integration.Tests.Helpers
             {
                 if(response != null)
                 {
-                    // ReSharper disable AssignNullToNotNullAttribute
+                    
                     using(StreamReader reader = new StreamReader(response.GetResponseStream()))
-                    // ReSharper restore AssignNullToNotNullAttribute
+                    
                     {
 
                         var data = reader.ReadToEnd();
-                        // ReSharper disable ConditionIsAlwaysTrueOrFalse
+                        
                         if(data != null)
-                        // ReSharper restore ConditionIsAlwaysTrueOrFalse
+                        
                         {
                             var serializer = new Dev2JsonSerializer();
                             return serializer.Deserialize<List<IDebugState>>(data);
@@ -158,9 +158,9 @@ namespace Dev2.Integration.Tests.Helpers
                 {
                     if(response != null)
                     {
-                        // ReSharper disable AssignNullToNotNullAttribute
+                        
                         using(StreamReader reader = new StreamReader(response.GetResponseStream()))
-                        // ReSharper restore AssignNullToNotNullAttribute
+                        
                         {
                             result = reader.ReadToEnd();
                         }

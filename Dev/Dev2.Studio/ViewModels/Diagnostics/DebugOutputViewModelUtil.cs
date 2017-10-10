@@ -4,6 +4,7 @@ using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Studio.Diagnostics;
 
+
 namespace Dev2.Studio.ViewModels.Diagnostics
 {
 
@@ -37,17 +38,17 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 return true;
             }
 
-            if (content.StateType == StateType.Start && !content.IsFirstStep())
-            {
-                return true;
-            }
             return false;
         }
 
         public bool IsValidLineItem(IDebugLineItem item)
         {
-            if (item != null) return false;
-            Dev2Logger.Debug("Debug line item is null, did not proceed");
+            if (item != null)
+            {
+                return false;
+            }
+
+            Dev2Logger.Debug("Debug line item is null, did not proceed", "Warewolf Debug");
             return true;
         }
         public bool IsItemMoreLinkValid(IDebugLineItem item)

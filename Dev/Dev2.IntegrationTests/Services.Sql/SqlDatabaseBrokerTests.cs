@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Esb.Brokers;
+using Dev2.Services.Sql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Integration.Tests.Services.Sql
@@ -26,9 +27,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Ashley Lewis")]
         [TestCategory("SqlDatabaseBroker_GetServiceMethods")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_GetServiceMethods_WindowsUserWithDbAccess_GetsMethods()
-        // ReSharper restore InconsistentNaming
+
         {
             Impersonator.RunAs("IntegrationTester", "DEV2", "I73573r0", () =>
             {
@@ -43,9 +44,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Ashley Lewis")]
         [TestCategory("SqlDatabaseBroker_GetServiceMethods")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_GetServiceMethods_WindowsUserWithoutDbAccess_ThrowsLoginFailedException()
-        // ReSharper restore InconsistentNaming
+
         {
 
             Impersonator.RunAs("NoDBAccessTest", "DEV2", "One23456", () =>
@@ -70,9 +71,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [Owner("Ashley Lewis")]
         [TestCategory("SqlDatabaseBroker_GetServiceMethods")]
         [ExpectedException(typeof(SqlException))]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_GetServiceMethods_SqlUserWithInvalidUsername_ThrowsLoginFailedException()
-        // ReSharper restore InconsistentNaming
+
         {
             var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
             dbSource.UserID = "Billy.Jane";
@@ -85,9 +86,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Ashley Lewis")]
         [TestCategory("SqlDatabaseBroker_GetServiceMethods")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_GetServiceMethods_SqlUserWithValidUsername_GetsMethods()
-        // ReSharper restore InconsistentNaming
+
         {
             var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
             var broker = new SqlDatabaseBroker();
@@ -99,9 +100,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Massimo.Guerrera")]
         [TestCategory("SqlDatabaseBroker_TestService")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_TestService_WindowsUserWithDbAccess_ReturnsValidResult()
-        // ReSharper restore InconsistentNaming
+
         {
             Impersonator.RunAs("IntegrationTester", "DEV2", "I73573r0", () =>
             {
@@ -129,9 +130,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Massimo.Guerrera")]
         [TestCategory("SqlDatabaseBroker_TestService")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_TestService_WindowsUserWithoutDbAccess_ReturnsInvalidResult()
-        // ReSharper restore InconsistentNaming
+
         {
             Exception exception = null;
 
@@ -175,10 +176,10 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Massimo.Guerrera")]
         [TestCategory("SqlDatabaseBroker_TestService")]
-        [ExpectedException(typeof(SqlException))]
-        // ReSharper disable InconsistentNaming
+        [ExpectedException(typeof(WarewolfDbException))]
+        
         public void SqlDatabaseBroker_TestService_SqlUserWithInvalidUsername_ReturnsInvalidResult()
-        // ReSharper restore InconsistentNaming
+
         {
             var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
             dbSource.UserID = "Billy.Jane";
@@ -204,9 +205,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Massimo.Guerrera")]
         [TestCategory("SqlDatabaseBroker_TestService")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_TestService_SqlUserWithValidUsername_ReturnsValidResult()
-        // ReSharper restore InconsistentNaming
+
         {
             var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
             var serviceConn = new DbService
@@ -231,9 +232,9 @@ namespace Dev2.Integration.Tests.Services.Sql
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("SqlDatabaseBroker_TestService")]
-        // ReSharper disable InconsistentNaming
+        
         public void SqlDatabaseBroker_TestService_ValidDbServiceThatReturnsNull_RecordsetWithNullColumn()
-        // ReSharper restore InconsistentNaming
+
         {
             var service = new DbService
             {

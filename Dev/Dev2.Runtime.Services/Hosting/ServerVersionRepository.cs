@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -73,9 +73,9 @@ namespace Dev2.Runtime.Hosting
             var versionPath = resource.GetResourcePath(GlobalConstants.ServerWorkspaceID);
             var path = GetVersionFolderFromResource(versionPath);
 
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             var files = _directory.GetFiles(path).Where(a => a.Contains(resource.VersionInfo.VersionId.ToString()));
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             return files.Select(a => CreateVersionFromFilePath(a, resource, path)).OrderByDescending(a => a.VersionInfo.DateTimeStamp).Take(GlobalConstants.VersionCount).ToList();
         }
 
@@ -89,14 +89,16 @@ namespace Dev2.Runtime.Hosting
             }
             var path = GetVersionFolderFromResource(resourcePath);
 
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             var files = _directory.GetFiles(path).Where(a => a.Contains(resource.VersionInfo.VersionId.ToString()));
             var versionPath = Path.Combine(ServerExplorerRepository.DirectoryStructureFromPath(newPath), "VersionControl");
             if (!_directory.Exists(versionPath))
+            {
                 _directory.CreateIfNotExists(versionPath);
-            // ReSharper restore ImplicitlyCapturedClosure
+            }
+
             IEnumerable<string> enumerable = files as IList<string> ?? files.ToList();
-            // ReSharper disable once AssignNullToNotNullAttribute
+            
             enumerable.ForEach(a => _file.Move(a, Path.Combine(versionPath, Path.GetFileName(a))));
         }
 
@@ -106,7 +108,9 @@ namespace Dev2.Runtime.Hosting
             var path = GetVersionFolderFromResource(resourcePath);
             var files = _directory.GetFiles(path).FirstOrDefault(a => a.Contains(string.Format("{0}_{1}_", resource.VersionInfo.VersionId.ToString(), version.VersionNumber)));
             if (string.IsNullOrEmpty(files))
+            {
                 throw new VersionNotFoundException("Version Does not exist");
+            }
 
             return new StringBuilder(_file.ReadAllText(files));
         }
@@ -129,7 +133,7 @@ namespace Dev2.Runtime.Hosting
 
         IExplorerItem CreateVersionFromFilePath(string path, IResource resource, string resourcePath)
         {
-            return new ServerExplorerItem(CreateNameFromPath(path), resource.ResourceID, "Version", new List<IExplorerItem>(), Permissions.View, resourcePath, "", "")
+            return new ServerExplorerItem(CreateNameFromPath(path), resource.ResourceID, "Version", new List<IExplorerItem>(), Permissions.View, resourcePath)
             {
                 VersionInfo = CreateVersionInfoFromFilePath(path, resource.ResourceID),
                 IsResourceVersion = true
@@ -141,7 +145,10 @@ namespace Dev2.Runtime.Hosting
             var name = new FileInfo(path).Name;
             var parts = name.Split('_');
             if (parts.Length != 4)
+            {
                 throw new Exception(ErrorResource.InvalidVersion);
+            }
+
             return new VersionInfo(new DateTime(long.Parse(parts[2])), parts[3], "", parts[1], resourceId, Guid.Parse(parts[0]));
         }
 
@@ -150,14 +157,20 @@ namespace Dev2.Runtime.Hosting
             var name = new FileInfo(path).Name;
             var parts = name.Split('_');
             if (parts.Length != 4)
+            {
                 throw new Exception(ErrorResource.InvalidVersion);
+            }
+
             return $"v.{parts[1]}  {new DateTime(long.Parse(parts[2]))}  {parts[3].Replace(".xml", "")}";
         }
 
         static string GetDirectoryFromResource(string resourcePath)
         {
             if (resourcePath.Contains("\\"))
+            {
                 return resourcePath.Substring(0, resourcePath.LastIndexOf('\\'));
+            }
+
             return "";
         }
 
@@ -170,9 +183,13 @@ namespace Dev2.Runtime.Hosting
             Resource oldResource = new Resource(xml);
             StoreAndDeleteCurrentIfRenamed(res, oldResource, resourcePath);
             UpdateVersionInfoIfNotExists(resourceId, xml, res);
-            _catalogue.SaveResource(Guid.Empty, xml.ToStringBuilder(), "", "Rollback", "WorkflowService");
+            var savePath = res.GetSavePath();
+            _catalogue.SaveResource(Guid.Empty, xml.ToStringBuilder(), savePath, "Rollback", "WorkflowService");
             if (oldResource.ResourceName != res.ResourceName)
+            {
                 _catalogue.GetResource(Guid.Empty, res.ResourceID).ResourceName = oldResource.ResourceName;
+            }
+
             return new RollbackResult { DisplayName = oldResource.ResourceName, VersionHistory = GetVersions(resourceId) };
         }
 
@@ -213,7 +230,9 @@ namespace Dev2.Runtime.Hosting
             if (workSpaceId == Guid.Empty)
             {
                 if (string.IsNullOrEmpty(userName))
+                {
                     userName = Thread.CurrentPrincipal.Identity.Name;
+                }
 
                 lock (LockObject)
                 {

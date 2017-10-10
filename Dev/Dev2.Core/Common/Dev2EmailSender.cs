@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,12 @@
 
 using Dev2.Common.Exchange;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
-using Dev2.DataList.Contract;
 using Dev2.Interfaces;
 using Microsoft.Exchange.WebServices.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dev2.Data.TO;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.Common
@@ -46,8 +45,8 @@ namespace Dev2.Common
         public IExchangeEmailSender EmailSender { get; set; }
         public ExchangeService ExchangeService { get; set; }
 
-        public string SendEmail(IExchangeSource runtimeSource, IWarewolfListIterator colItr, IWarewolfIterator toItr, IWarewolfIterator ccItr, IWarewolfIterator bccItr, IWarewolfIterator subjectItr, IWarewolfIterator bodyItr, IWarewolfIterator attachmentsItr, out ErrorResultTO errors)
-        // ReSharper restore TooManyArguments
+        public string SendEmail(IExchange runtimeSource, IWarewolfListIterator colItr, IWarewolfIterator toItr, IWarewolfIterator ccItr, IWarewolfIterator bccItr, IWarewolfIterator subjectItr, IWarewolfIterator bodyItr, IWarewolfIterator attachmentsItr, out ErrorResultTO errors)
+        
         {
             InitializeService();
             errors = new ErrorResultTO();

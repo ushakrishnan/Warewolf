@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,7 @@ using System.Text;
 using Dev2.Communication;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Infrastructure.Tests.Communication
 {
@@ -43,7 +43,6 @@ namespace Dev2.Infrastructure.Tests.Communication
             var result = js.SerializeToBuilder(request);
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(679, result.Length);
             var resultObj = js.Deserialize<EsbExecuteRequest>(result);
 
             // check service name hydration

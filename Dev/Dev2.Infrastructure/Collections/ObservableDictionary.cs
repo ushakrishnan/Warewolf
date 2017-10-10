@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +17,6 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Warewolf.Resource.Errors;
-// ReSharper disable UnusedMember.Global
 
 namespace Dev2.Collections
 {
@@ -100,7 +99,10 @@ namespace Dev2.Collections
 
         public Dictionary<TKey, TValue>.KeyCollection Keys => TrueDictionary.Keys;
 
-        public TValue this[TKey key] { get { return (TValue)KeyedEntryCollection[key].Value; } set { DoSetEntry(key, value); } }
+        public TValue this[TKey key] {
+            get => (TValue)KeyedEntryCollection[key].Value;
+            set => DoSetEntry(key, value);
+        }
 
         public Dictionary<TKey, TValue>.ValueCollection Values => TrueDictionary.Values;
 
@@ -206,18 +208,12 @@ namespace Dev2.Collections
 
         protected virtual void OnCollectionChanged(NotifyCollectionChangedEventArgs args)
         {
-            if(CollectionChanged != null)
-            {
-                CollectionChanged(this, args);
-            }
+            CollectionChanged?.Invoke(this, args);
         }
 
         protected virtual void OnPropertyChanged(string name)
         {
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
         protected virtual bool RemoveEntry(TKey key)
@@ -258,8 +254,7 @@ namespace Dev2.Collections
             {
                 _version++;
 
-                DictionaryEntry entry;
-                var index = GetIndexAndEntryForKey(key, out entry);
+                var index = GetIndexAndEntryForKey(key, out DictionaryEntry entry);
                 FireEntryAddedNotifications(entry, index);
             }
         }
@@ -275,8 +270,7 @@ namespace Dev2.Collections
 
         bool DoRemoveEntry(TKey key)
         {
-            DictionaryEntry entry;
-            var index = GetIndexAndEntryForKey(key, out entry);
+            var index = GetIndexAndEntryForKey(key, out DictionaryEntry entry);
 
             var result = RemoveEntry(key);
             if(result)
@@ -293,10 +287,9 @@ namespace Dev2.Collections
 
         void DoSetEntry(TKey key, TValue value)
         {
-            DictionaryEntry entry;
-            var index = GetIndexAndEntryForKey(key, out entry);
+            var index = GetIndexAndEntryForKey(key, out DictionaryEntry entry);
 
-            if(SetEntry(key, value))
+            if (SetEntry(key, value))
             {
                 _version++;
 
@@ -390,7 +383,11 @@ namespace Dev2.Collections
 
         ICollection<TValue> IDictionary<TKey, TValue>.Values => Values;
 
-        TValue IDictionary<TKey, TValue>.this[TKey key] { get { return (TValue)KeyedEntryCollection[key].Value; } set { DoSetEntry(key, value); } }
+        TValue IDictionary<TKey, TValue>.this[TKey key]
+        {
+            get => (TValue)KeyedEntryCollection[key].Value;
+            set => DoSetEntry(key, value);
+        }
 
         #endregion IDictionary<TKey, TValue>
 

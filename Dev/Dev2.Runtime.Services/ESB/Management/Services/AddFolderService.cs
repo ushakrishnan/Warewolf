@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,10 +8,12 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Communication;
@@ -37,7 +39,7 @@ namespace Dev2.Runtime.ESB.Management.Services
            
             var serializer = new Dev2JsonSerializer();
             var itemToAdd = serializer.Deserialize<ServerExplorerItem>(values["itemToAdd"]);
-            Dev2Logger.Info("Add Folder Service." +itemToAdd);
+            Dev2Logger.Info("Add Folder Service." +itemToAdd, GlobalConstants.WarewolfInfo);
             itemToAdd.Permissions = Permissions.Contribute;
             if(itemToAdd.ResourcePath.ToLower().StartsWith("root\\"))
             {
@@ -56,6 +58,16 @@ namespace Dev2.Runtime.ESB.Management.Services
             findServices.Actions.Add(fetchItemsAction);
 
             return findServices;
+        }
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
         }
 
         public IExplorerServerResourceRepository ServerExplorerRepo

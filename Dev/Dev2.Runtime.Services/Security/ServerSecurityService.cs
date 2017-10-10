@@ -1,7 +1,7 @@
  
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -106,7 +106,9 @@ namespace Dev2.Runtime.Security
         protected virtual void OnFileChangedEnableRaisingEvents(bool enabled)
         {
             if (!_disposing)
-            _configWatcher.EnableRaisingEvents = enabled;
+            {
+                _configWatcher.EnableRaisingEvents = enabled;
+            }
         }
 
         protected override void OnDisposed()
@@ -129,14 +131,12 @@ namespace Dev2.Runtime.Security
 
         protected override void LogStart([CallerMemberName]string methodName = null)
         {
-            // ReSharper disable once ExplicitCallerInfoArgument
-            Dev2Logger.Info("SecurityService"+ methodName);
+            Dev2Logger.Info("SecurityService"+ methodName, GlobalConstants.WarewolfInfo);
         }
 
         protected override void LogEnd([CallerMemberName]string methodName = null)
         {
-            // ReSharper disable once ExplicitCallerInfoArgument
-            Dev2Logger.Info("SecurityService"+ methodName);
+            Dev2Logger.Info("SecurityService"+ methodName, GlobalConstants.WarewolfInfo);
         }
     }
 }

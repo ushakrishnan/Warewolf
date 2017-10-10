@@ -10,7 +10,7 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
-// ReSharper disable NotAccessedField.Local
+
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -37,7 +37,7 @@ namespace Dev2.Activities.Designers2.Core
             _source.SomethingChanged += SourceOnSomethingChanged;
             IsEnabled = false;
             SetupHeaders(modelItem);
-            if (source != null && source.SelectedSource != null)
+            if (source?.SelectedSource != null)
             {
                 RequestUrl = source.SelectedSource.HostName;
                 IsEnabled = true;
@@ -45,8 +45,8 @@ namespace Dev2.Activities.Designers2.Core
         }
         private void SourceOnSomethingChanged(object sender, IToolRegion args)
         {
-            // ReSharper disable once ExplicitCallerInfoArgument
-            if (_source != null && _source.SelectedSource != null)
+            
+            if (_source?.SelectedSource != null)
             {
                 RequestUrl = _source.SelectedSource.HostName;
                 QueryString = _source.SelectedSource.DefaultQuery;
@@ -59,7 +59,7 @@ namespace Dev2.Activities.Designers2.Core
                 }));
                 IsEnabled = true;
             }
-            // ReSharper disable once ExplicitCallerInfoArgument
+            
             OnPropertyChanged(@"IsEnabled");
         }
         private void SetupHeaders(ModelItem modelItem)
@@ -103,10 +103,7 @@ namespace Dev2.Activities.Designers2.Core
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion
@@ -131,14 +128,12 @@ namespace Dev2.Activities.Designers2.Core
 
         public IToolRegion CloneRegion()
         {
-            //var ser = new Dev2JsonSerializer();
-            //return ser.Deserialize<IToolRegion>(ser.SerializeToBuilder(this));
             var headers2 = new ObservableCollection<INameValue>();
             foreach (var nameValue in Headers)
             {
                 headers2.Add(new NameValue(nameValue.Name, nameValue.Value));
             }
-            return new WebPostInputRegionClone()
+            return new WebPostInputRegionClone
             {
                 Headers = headers2,
                 PostData = PostData,
@@ -150,8 +145,7 @@ namespace Dev2.Activities.Designers2.Core
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as WebPostInputRegionClone;
-            if (region != null)
+            if (toRestore is WebPostInputRegionClone region)
             {
                 IsEnabled = region.IsEnabled;
                 PostData = region.PostData;
@@ -171,7 +165,8 @@ namespace Dev2.Activities.Designers2.Core
                         {
                             _modelItem.SetProperty("Headers",
                                 _headers.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
-                        }) { Name = nameValue.Name, Value = nameValue.Value });
+                        })
+                        { Name = nameValue.Name, Value = nameValue.Value });
                     }
                     Headers.Remove(Headers.First());
                 }

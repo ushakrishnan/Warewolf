@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Monitoring;
 using Dev2.Communication;
 using Dev2.DynamicServices;
@@ -13,6 +14,16 @@ namespace Dev2.Runtime.ESB.Management.Services
     public class SavePerformanceCounters : IEsbManagementEndpoint
     {
         private IPerformanceCounterRepository _manager;
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Administrator;
+        }
 
         public string HandlesType()
         {

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,8 +20,8 @@ using Dev2.Activities.Preview;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
@@ -32,7 +32,6 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             : base(modelItem)
         {
             AddTitleBarLargeToggle();
-            //AddTitleBarHelpToggle();
 
             PreviewViewModel = new PreviewViewModel
                 {
@@ -49,6 +48,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             {
                 Headers = string.Empty;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Web_Request;
         }
 
         public PreviewViewModel PreviewViewModel { get; private set; }
@@ -90,8 +90,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             }
             if (TimeOutText.Length > 0)
             {
-                int res;
-                if (!int.TryParse(TimeOutText, out res))
+                if (!int.TryParse(TimeOutText, out int res))
                 {
                     if (!DataListUtil.IsValueRecordset(TimeOutText) && !DataListUtil.IsValueScalar(TimeOutText))
                     {
@@ -113,13 +112,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             }
         }
 
-        private string TimeOutText
-        {
-            get { return GetProperty<string>(); }
-            // ReSharper disable UnusedMember.Local
-            set { SetProperty(value); }
-            // ReSharper restore UnusedMember.Local
-        }
+        private string TimeOutText => GetProperty<string>();
 
         #region Overrides of ActivityDesignerViewModel
 
@@ -130,6 +123,8 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
                 case "Url":
                 case "Headers":
                     ExtractVariables();
+                    break;
+                default:
                     break;
             }
         }
@@ -153,17 +148,17 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             {
                 PreviewViewModel.InputsVisibility = Visibility.Visible;
 
-                // ReSharper disable MaximumChainedReferences
+                
                 var mustRemainKeys = PreviewViewModel.Inputs
                                                      .Where(i => variableList.Contains(i.Key))
                                                      .ToList();
-                // ReSharper restore MaximumChainedReferences
+                
 
-                // ReSharper disable MaximumChainedReferences
+                
                 var mustRemove = PreviewViewModel.Inputs
                                                  .Where(i => !variableList.Contains(i.Key))
                                                  .ToList();
-                // ReSharper restore MaximumChainedReferences
+                
 
                 mustRemove.ForEach(r => PreviewViewModel.Inputs.Remove(r));
 
@@ -264,8 +259,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             }
             else
             {
-                Uri uriResult;
-                var isValid = Uri.TryCreate(urlValue, UriKind.Absolute, out uriResult) &&
+                var isValid = Uri.TryCreate(urlValue, UriKind.Absolute, out Uri uriResult) &&
                               (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
                 if (!isValid)
                 {
@@ -281,7 +275,7 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
             }
         }
 
-        public Func<string, string, List<Tuple<string, string>>, string> WebInvoke = (method, url, headers) =>
+        internal Func<string, string, List<Tuple<string, string>>, string> WebInvoke = (method, url, headers) =>
             {
                 var webInvoker = new WebRequestInvoker();
                 return webInvoker.ExecuteRequest(method, url, headers);
@@ -297,9 +291,9 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
                                   ? new string[0]
                                   : Headers.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
 
-                // ReSharper disable MaximumChainedReferences
+                
                 var headersEntries = headers.Select(header => header.Split(':')).Select(headerSegments => new Tuple<string, string>(headerSegments[0], headerSegments[1])).ToList();
-                // ReSharper restore MaximumChainedReferences
+                
 
                 url = PreviewViewModel.Inputs.Aggregate(url,
                                                         (current, previewInput) =>
@@ -324,11 +318,8 @@ namespace Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

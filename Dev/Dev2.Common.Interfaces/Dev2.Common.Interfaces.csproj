@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -21,6 +21,7 @@
     </SccProvider>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <SonarQubeTestProject>False</SonarQubeTestProject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -30,7 +31,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Dev2.Common.Interfaces.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -39,22 +41,24 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Dev2.Common.Interfaces.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AeroWizard, Version=2.1.7.0, Culture=neutral, PublicKeyToken=915e74f5d64b8f37, processorArchitecture=MSIL">
       <HintPath>..\packages\AeroWizard.2.1.7\lib\net40\AeroWizard.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Caliburn.Micro">
-      <HintPath>..\packages\Caliburn.Micro.1.4\lib\net40\Caliburn.Micro.dll</HintPath>
+    <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="CubicOrange.Windows.Forms.ActiveDirectory, Version=2.5.2.0, Culture=neutral, PublicKeyToken=4d9365c354fd6f36, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\CubicOrange.Windows.Forms.ActiveDirectory.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Dropbox.Api, Version=0.1.5906.37642, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dropbox.Api.3.0.2\lib\net45\Dropbox.Api.dll</HintPath>
+    <Reference Include="Dropbox.Api, Version=4.0.0.0, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dropbox.Api.4.2.4\lib\net45\Dropbox.Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="GroupControls, Version=1.5.3.0, Culture=neutral, PublicKeyToken=3726d9da21b6ac8f, processorArchitecture=MSIL">
@@ -93,21 +97,22 @@
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\Microsoft.Win32.TaskSchedulerEditor.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Windows.Design.Interaction">
-      <HintPath>%vs140comntools%\..\IDE\PublicAssemblies\Microsoft.Windows.Design.Interaction.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
+    <Reference Include="System.Windows" />
     <Reference Include="System.Core" />
     <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.IdentityModel" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -126,6 +131,12 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\Run Tests.ps1">
+      <Visible>False</Visible>
+      <Link>Run Tests.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="Attribute\ReasonAttribute.cs" />
     <Compile Include="AuthenticationType.cs" />
     <Compile Include="Communication\IMemo.cs" />
     <Compile Include="Communication\ISerializer.cs" />
@@ -146,7 +157,7 @@
     <Compile Include="Core\Convertors\DateAndTime\IDateTimeParser.cs" />
     <Compile Include="Core\Convertors\DateAndTime\IDateTimeResultTO.cs" />
     <Compile Include="Core\Convertors\DateAndTime\ITimeZoneTO.cs" />
-    <Compile Include="Core\DbSourceDefinition.cs" />
+    <Compile Include="Core\Database\DbSourceDefinition.cs" />
     <Compile Include="Core\DynamicServices\Globals.cs" />
     <Compile Include="Core\DynamicServices\IDynamicServiceObject.cs" />
     <Compile Include="Core\RabbitMQServiceSourceDefinition.cs" />
@@ -184,10 +195,7 @@
     <Compile Include="DB\IServiceInput.cs" />
     <Compile Include="DB\IServiceOutputMapping.cs" />
     <Compile Include="DB\ISourceBase.cs" />
-    <Compile Include="Deploy\IDeployDestinationExplorerViewModel.cs" />
-    <Compile Include="Deploy\IDeploySourceExplorerViewModel.cs" />
-    <Compile Include="Deploy\IDeployStatsViewer.cs" />
-    <Compile Include="Deploy\IDeployViewModel.cs" />
+    <Compile Include="Deploy\IDeployResult.cs" />
     <Compile Include="Diagnostics\Debug\Enums.cs" />
     <Compile Include="Diagnostics\Debug\IDebugDispatcher.cs" />
     <Compile Include="Diagnostics\Debug\IDebugItem.cs" />
@@ -199,6 +207,7 @@
     <Compile Include="DllListing.cs" />
     <Compile Include="enIntellisensePartType.cs" />
     <Compile Include="Dropbox\IDropBoxFactory.cs" />
+    <Compile Include="Enums\AuthorizationContext.cs" />
     <Compile Include="Enums\enRandomType.cs" />
     <Compile Include="Enums\enScriptType.cs" />
     <Compile Include="Enums\PopulateOptions.cs" />
@@ -213,45 +222,51 @@
     <Compile Include="IAdminManager.cs" />
     <Compile Include="IAssignValue.cs" />
     <Compile Include="ICheckControlEnabledView.cs" />
+    <Compile Include="IChooseDLLView.cs" />
+    <Compile Include="ICircularDependency.cs" />
+    <Compile Include="IComPlugin.cs" />
     <Compile Include="IComPluginService.cs" />
     <Compile Include="IComPluginServiceModel.cs" />
     <Compile Include="IComPluginSource.cs" />
     <Compile Include="IComputerName.cs" />
-    <Compile Include="IConnectControlViewModel.cs" />
+    <Compile Include="IConnection.cs" />
+    <Compile Include="IConstructorParameter.cs" />
     <Compile Include="ICreateDuplicateResourceView.cs" />
+    <Compile Include="IDatabaseSourceViewModel.cs" />
+    <Compile Include="IDbSource.cs" />
     <Compile Include="IDeletedFileMetadata.cs" />
+    <Compile Include="IDependencyGraphGenerator.cs" />
+    <Compile Include="IDependencyVisualizationNode.cs" />
+    <Compile Include="IDev2MethodInfo.cs" />
+    <Compile Include="IDLLChooser.cs" />
     <Compile Include="IDllListing.cs" />
     <Compile Include="IDropboxExecutor.cs" />
     <Compile Include="IDropboxResult.cs" />
-    <Compile Include="IEmailAttachmentModel.cs" />
-    <Compile Include="IEmailAttachmentView.cs" />
-    <Compile Include="IEmailAttachmentVm.cs" />
     <Compile Include="IEmailServiceSource.cs" />
-    <Compile Include="IEnvironmentViewModel.cs" />
+    <Compile Include="IEmailSource.cs" />
+    <Compile Include="IExchange.cs" />
     <Compile Include="IExchangeEmailSender.cs" />
     <Compile Include="IExchangeServiceFactory.cs" />
     <Compile Include="IExecutionToken.cs" />
-    <Compile Include="IExplorerItemNodeViewModel.cs" />
-    <Compile Include="IExplorerItemViewModel.cs" />
-    <Compile Include="IExplorerRepository.cs" />
-    <Compile Include="IExplorerTreeItem.cs" />
     <Compile Include="IExplorerUpdateManager.cs" />
-    <Compile Include="IExplorerView.cs" />
-    <Compile Include="IExplorerViewModel.cs" />
     <Compile Include="IExternalProcessExecutor.cs" />
+    <Compile Include="IFileChooser.cs" />
+    <Compile Include="IFileChooserModel.cs" />
+    <Compile Include="IFileChooserView.cs" />
     <Compile Include="IFilenameValidator.cs" />
     <Compile Include="IFileResource.cs" />
     <Compile Include="IFrameworkRepository.cs" />
+    <Compile Include="IGraph.cs" />
     <Compile Include="IHelpView.cs" />
+    <Compile Include="IImpersonator.cs" />
     <Compile Include="IIntellisenseStringResult.cs" />
     <Compile Include="IIntellisenseStringResultBuilder.cs" />
     <Compile Include="IJsonObjectsView.cs" />
-    <Compile Include="ILightExplorerItem.cs" />
     <Compile Include="ILocalPathManager.cs" />
     <Compile Include="IManageComPluginSourceModel.cs" />
     <Compile Include="IManageComPluginSourceViewModel.cs" />
+    <Compile Include="IManageDatabaseSourceModel.cs" />
     <Compile Include="IManageDatabaseSourceView.cs" />
-    <Compile Include="IManageDatabaseSourceViewModel.cs" />
     <Compile Include="IManageRabbitMQSourceViewModel.cs" />
     <Compile Include="IManageEmailSourceViewModel.cs" />
     <Compile Include="IManageExchangeSourceViewModel.cs" />
@@ -266,6 +281,7 @@
     <Compile Include="IManageWcfSourceViewModel.cs" />
     <Compile Include="IManageWebserviceSourceViewModel.cs" />
     <Compile Include="IMenuView.cs" />
+    <Compile Include="IMethodParameter.cs" />
     <Compile Include="INamespaceItem.cs" />
     <Compile Include="INetworkStateChangedEventArgs.cs" />
     <Compile Include="Infrastructure\Communication\IExecuteMessage.cs" />
@@ -294,30 +310,37 @@
     <Compile Include="IOAuthSource.cs" />
     <Compile Include="IPerformanceCountersByMachine.cs" />
     <Compile Include="IPerformanceCountersByResource.cs" />
+    <Compile Include="IPlugin.cs" />
     <Compile Include="IPluginAction.cs" />
+    <Compile Include="IPluginConstructor.cs" />
     <Compile Include="IPluginService.cs" />
     <Compile Include="IPluginServiceModel.cs" />
     <Compile Include="IPluginSource.cs" />
     <Compile Include="IPulseLogger.cs" />
     <Compile Include="IQueryManager.cs" />
+    <Compile Include="IRabbitMQ.cs" />
     <Compile Include="IRabbitMQServiceSourceDefinition.cs" />
+    <Compile Include="IRelayCommand.cs" />
     <Compile Include="IRequestServiceNameView.cs" />
     <Compile Include="IResourceHolder.cs" />
     <Compile Include="IResourceSource.cs" />
     <Compile Include="IServer.cs" />
     <Compile Include="IServerSource.cs" />
+    <Compile Include="IServiceTestModelTO.cs" />
+    <Compile Include="IServiceTestStep.cs" />
     <Compile Include="ISharepointServerSource.cs" />
-    <Compile Include="IShellViewModel.cs" />
     <Compile Include="ISplashView.cs" />
-    <Compile Include="ISplashViewModel.cs" />
     <Compile Include="IStudioUpdateManager.cs" />
     <Compile Include="ISuggestionProvider.cs" />
+    <Compile Include="IServiceTestModel.cs" />
+    <Compile Include="ITestCatalog.cs" />
     <Compile Include="IToolboxView.cs" />
     <Compile Include="IUpdatesHelp.cs" />
     <Compile Include="ISharepointListTo.cs" />
     <Compile Include="ISharepointReadListTo.cs" />
     <Compile Include="ISharepointSource.cs" />
     <Compile Include="IVersionStrategy.cs" />
+    <Compile Include="IViewPropertyBuilder.cs" />
     <Compile Include="IWarewolfIterator.cs" />
     <Compile Include="IWarewolfListIterator.cs" />
     <Compile Include="IWarewolfWebClient.cs" />
@@ -326,6 +349,7 @@
     <Compile Include="IWcfService.cs" />
     <Compile Include="IWcfServiceModel.cs" />
     <Compile Include="IWcfSource.cs" />
+    <Compile Include="IWebSource.cs" />
     <Compile Include="IWorksurfaceKey.cs" />
     <Compile Include="Monitoring\IPerformanceCounter.cs" />
     <Compile Include="Monitoring\IPerformanceCounterFactory.cs" />
@@ -367,6 +391,7 @@
     <Compile Include="ServerStats.cs" />
     <Compile Include="Services\Sql\IDbFactory.cs" />
     <Compile Include="Services\Sql\IDbServer.cs" />
+    <Compile Include="StepType.cs" />
     <Compile Include="StringTokenizer\Interfaces\IDev2Tokenizer.cs" />
     <Compile Include="StringTokenizer\Interfaces\IDev2TokenOp.cs" />
     <Compile Include="Studio\Controller\IPopUp.cs" />
@@ -374,6 +399,7 @@
     <Compile Include="Studio\IDialogueViewModel.cs" />
     <Compile Include="Studio\IdialogViewModelFactory.cs" />
     <Compile Include="Studio\IMenuViewModel.cs" />
+    <Compile Include="TestSaveResult.cs" />
     <Compile Include="Threading\IAsyncWorker.cs" />
     <Compile Include="ToolBase\Database\IDatabaseServiceViewModel.cs" />
     <Compile Include="ToolBase\DotNet\IDotNetViewModel.cs" />
@@ -382,9 +408,11 @@
     <Compile Include="ToolBase\ExchangeEmail\IExchangeServiceViewModel.cs" />
     <Compile Include="ToolBase\ExchangeEmail\IExchangeSource.cs" />
     <Compile Include="ToolBase\IActionToolRegion.cs" />
+    <Compile Include="ToolBase\IConstructorRegion.cs" />
     <Compile Include="ToolBase\ICustomToolViewModelWithRegionBase.cs" />
     <Compile Include="ToolBase\IGenerateInputArea.cs" />
     <Compile Include="ToolBase\IGenerateOutputArea.cs" />
+    <Compile Include="ToolBase\IHeaderRegion.cs" />
     <Compile Include="ToolBase\IOutputsToolRegion.cs" />
     <Compile Include="ToolBase\ISourceToolRegion.cs" />
     <Compile Include="ToolBase\IToolRegion.cs" />
@@ -435,12 +463,18 @@
     <Compile Include="Wrappers\IDirectoryEntry.cs" />
     <Compile Include="Wrappers\IDirectoryEntryFactory.cs" />
     <Compile Include="Wrappers\IDomain.cs" />
+    <Compile Include="Wrappers\IDropboxClientWrapper.cs" />
     <Compile Include="Wrappers\IFile.cs" />
     <Compile Include="Wrappers\IWrappedObject.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Dev2.Common.Interfaces.ruleset" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>

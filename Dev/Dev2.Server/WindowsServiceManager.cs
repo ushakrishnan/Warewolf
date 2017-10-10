@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -258,8 +258,7 @@ namespace Dev2
                 return;
             }
 
-            var aggregateException = e as AggregateException;
-            if (aggregateException != null)
+            if (e is AggregateException aggregateException)
             {
                 foreach (Exception child in aggregateException.InnerExceptions)
                 {
@@ -289,7 +288,7 @@ namespace Dev2
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
 
             if (serviceExists)
@@ -313,15 +312,12 @@ namespace Dev2
         {
             bool serviceExists = false;
             try
-            {
-                // ReSharper disable UnusedVariable
-                var controller = new ServiceController(AppSettings.ServiceName);
-                // ReSharper restore UnusedVariable
+            {                
                 serviceExists = true;
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
 
             if (serviceExists)

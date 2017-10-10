@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,8 @@
 
 using System;
 using System.IO;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.PathOperations;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -27,9 +29,9 @@ namespace Dev2.Data.Tests.Operations
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("ActivityIOFactory_CreateOperationEndPointFromIOPath")]
-        // ReSharper disable InconsistentNaming
+        
         public void ActivityIOFactory_CreateOperationEndPointFromIOPath_WithSftp_ShouldSetTypeTpSFtp()
-        // ReSharper restore InconsistentNaming
+
         {
             //------------Setup for test--------------------------
             const string Path = "sftp://sftp.theunlimited.co.za/text.txt";

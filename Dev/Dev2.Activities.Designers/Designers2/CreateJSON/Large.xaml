@@ -55,7 +55,7 @@
         <controls:Dev2DataGrid x:Name="LargeDataGrid"
                                Grid.Row="0"                                                                                            
                                ItemsSource="{Binding ModelItem.JsonMappings, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"                              
-                               Style="{StaticResource ActivityMapppingDataGridStyle}"
+                               Style="{StaticResource ActivityMappingDataGridStyle}"
                                CanUserResizeRows="True"
                                RowStyle="{StaticResource ActivityGridRowStyle}"
                                LoadingRow="DataGrid_LoadingRow">
@@ -82,9 +82,9 @@
                                                     Text="{Binding DestinationName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                     Style="{StaticResource DatagridIntellisenseTextBoxStyle}"
                                                     Margin="0,0,1,1"
-                                                    ToolTip="{x:Static languages:Core.CreateJSONToolTipName}">
+                                                    ToolTip="{x:Static languages:Tooltips.CreateJSONToolTipName}">
                                 <i:Interaction.Behaviors>
-                                    <core1:HelpSetter Text="{x:Static languages:Core.CreateJSONHelpName}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core:ActivityDesignerTemplate}}" />
+                                    <core1:HelpSetter Text="{x:Static languages:HelpText.CreateJSONHelpName}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core:ActivityDesignerTemplate}}" />
                                     <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="DestinationName"
                                                          SourcePropertyValue="{Binding DestinationName, UpdateSourceTrigger=PropertyChanged}"
@@ -117,14 +117,15 @@
                                                     AcceptsReturn="True"
                                                     AllowUserInsertLine="False"
                                                     MaxHeight="80"
+                                                    FilterType="RecordsetFields,RecordsetsOnly,ScalarsOnly"
                                                     Text="{Binding SourceName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, 
                                                     Converter={StaticResource ModelTextConverter}, ConverterParameter=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"
                                                     attachedProperties:FocusSetter.IsFocused="{Binding IsSourceNameFocused, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                                     Style="{StaticResource DatagridIntellisenseTextBoxStyle}"
                                                     Margin="0,0,1,1"
-                                                    ToolTip="{x:Static languages:Core.CreateJSONToolTipInput}">
+                                                    ToolTip="{x:Static languages:Tooltips.CreateJSONToolTipInput}">
                                 <i:Interaction.Behaviors>
-                                    <core1:HelpSetter Text="{x:Static languages:Core.CreateJSONHelpInput}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core:ActivityDesignerTemplate}}" />
+                                    <core1:HelpSetter Text="{x:Static languages:HelpText.CreateJSONHelpInput}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core:ActivityDesignerTemplate}}" />
                                     <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="SourceName"
                                                          SourcePropertyValue="{Binding SourceName, UpdateSourceTrigger=PropertyChanged}"
@@ -157,11 +158,11 @@
                                     DefaultText="[[JSON]]"
                                     AllowUserInsertLine="False"
                                     Text="{Binding Path=ModelItem.JsonString, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    ToolTip="{x:Static languages:Core.CreateJSONToolTipResult}"
+                                    ToolTip="{x:Static languages:Tooltips.CreateJSONToolTipResult}"
                                     Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
                                     AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Resulttxt_AutoID}">
                 <i:Interaction.Behaviors>
-                    <core1:HelpSetter Text="{x:Static languages:Core.CreateJSONHelpResult}" DataContext="{Binding}" />
+                    <core1:HelpSetter Text="{x:Static languages:HelpText.CreateJSONHelpResult}" DataContext="{Binding}" />
                     <errors:ErrorsSetter Source="{Binding}"
                                          SourcePropertyName="ModelItem.JsonString"
                                          SourcePropertyValue="{Binding  ModelItem.JsonString, UpdateSourceTrigger=PropertyChanged}"

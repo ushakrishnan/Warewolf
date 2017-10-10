@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,8 +9,9 @@
 */
 
 using System.Text.RegularExpressions;
+using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Data.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 
 namespace Dev2.Data.Operations
 {
@@ -41,7 +42,7 @@ namespace Dev2.Data.Operations
         /// <param name="errors">The errors.</param>
         /// <param name="replaceCount">The replace count.</param>
         /// <returns></returns>
-        public string Replace(string stringToSearch, string findString, string replacementString, bool caseMatch, out ErrorResultTO errors, ref int replaceCount)
+        public string Replace(string stringToSearch, string findString, string replacementString, bool caseMatch, out IErrorResultTO errors, ref int replaceCount)
         {
 
             var oldString = stringToSearch;

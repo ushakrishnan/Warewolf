@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -171,10 +171,7 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
         private static ILoggingSettings GetSettingsObject(IEnumerable<IWorkflowDescriptor> workflows = null)
         {
             var settings = new LoggingSettings("InvalidUri");
-            if(workflows != null)
-            {
-                workflows.ToList().ForEach(wf => settings.Workflows.Add(wf));
-            }
+            workflows?.ToList().ForEach(wf => settings.Workflows.Add(wf));
             return settings;
         }
 
@@ -199,7 +196,10 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
             var vm = new LoggingViewModel();
             var commService = new Mock<ICommunicationService>();
             if(descriptors == null)
+            {
                 descriptors = new List<WorkflowDescriptor>();
+            }
+
             commService.Setup(s => s.GetResources(It.IsAny<string>())).Returns(descriptors);
             commService.Setup(s => s.GetDataListInputs(It.IsAny<string>(), It.IsAny<string>())).Returns(new List<DataListVariable>());
             vm.CommunicationService = commService.Object;

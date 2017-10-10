@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,12 +8,14 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System.Activities.Presentation;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
-using Dev2.Interfaces;
+using System.Windows.Media;
 using Dev2.Studio.ViewModels.Workflow;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Views.Workflow
 {
     /// <summary>
@@ -22,43 +24,97 @@ namespace Dev2.Studio.Views.Workflow
     public partial class WorkflowDesignerView : IWorkflowDesignerView
     {
         readonly DragDropHelpers _dragDropHelpers;
-        //IDisposable _subscription;
+
         public WorkflowDesignerView()
         {
             InitializeComponent();
             PreviewDrop += DropPointOnDragEnter;
             PreviewDragOver += DropPointOnDragEnter;
             PreviewMouseDown += WorkflowDesignerViewPreviewMouseDown;
-            KeyDown += OnKeyDown;
             _dragDropHelpers = new DragDropHelpers(this);
-            //            var pattern = Observable.FromEventPattern<KeyEventArgs>(this,"KeyUp");
-            //            pattern.Throttle(TimeSpan.FromMilliseconds(50000))
-            //                .ObserveOn(SynchronizationContext.Current);
-            //
-            //            pattern.Subscribe(PerformOnDispatcher);
-        }
-
-        void OnKeyDown(object sender, KeyEventArgs e)
-        {
-            //if (e.Key == Key.Enter)
-            //{
-                
-            //}
+            
         }
 
         void WorkflowDesignerViewPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            var vm = DataContext as WorkflowDesignerViewModel;
-            if (vm != null)
+            if (e.OriginalSource.GetType() == typeof (System.Windows.Documents.Run))
             {
-                CustomContainer.Get<IMainViewModel>().AddWorkSurfaceContext(vm.ResourceModel);
+                return;
             }
+            if (e.ChangedButton == MouseButton.Right)
+            {
+                DependencyObject node = e.OriginalSource as DependencyObject;
+                while (node != null)
+                {
+                    if (node is ActivityDesigner)
+                    {
+                        break;
+                    }
+                    if (node.GetType().Name.Contains("StartSymbol"))
+                    {
+                        var grid = e.OriginalSource as Grid;
+                        var rect = e.OriginalSource as System.Windows.Shapes.Rectangle;
+                        if (grid != null)
+                        {
+                            grid.ContextMenu = WorkflowDesigner.Resources["StartNodeContextMenu"] as ContextMenu;
+                            if (grid.ContextMenu != null)
+                            {
+                                grid.ContextMenu.IsOpen = true;
+                                grid.ContextMenu.DataContext = DataContext;
+
+                            }
+                        }
+                        else if (rect != null)
+                        {
+                            rect.ContextMenu = WorkflowDesigner.Resources["StartNodeContextMenu"] as ContextMenu;
+                            if (rect.ContextMenu != null)
+                            {
+                                rect.ContextMenu.IsOpen = true;
+                                rect.ContextMenu.DataContext = DataContext;
+                            }
+                        }
+                        break;
+                    }
+                    node = VisualTreeHelper.GetParent(node);
+                }
+            }
+            OnPreviewMouseDown(e);
         }
         //a return from here without settings handled to true and DragDropEffects.None implies that the item drop is allowed
         void DropPointOnDragEnter(object sender, DragEventArgs e)
         {
             var dataObject = e.Data;
-            if (_dragDropHelpers.PreventDrop(dataObject))
+            var workSurfaceServiceId = ((Core.Models.ResourceModel)
+                             ((WorkflowDesignerViewModel)
+                             ((FrameworkElement)e.Source)
+                             .DataContext).ResourceModel).ID;
+            var data = dataObject.GetData("Warewolf.Studio.ViewModels.ExplorerItemViewModel");
+            var itemBeingDraggedOntoTheSurface = data as Warewolf.Studio.ViewModels.ExplorerItemViewModel;
+
+            if (e.OriginalSource.GetType() == typeof(ScrollViewer))
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+            else if (e.OriginalSource.GetType() == typeof(Border))
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+            else if (e.OriginalSource.GetType() == typeof(Grid))
+            {
+                if (e.OriginalSource is Grid grid && grid.DataContext.GetType() == typeof(WorkflowDesignerViewModel))
+                {
+                    e.Effects = DragDropEffects.None;
+                    e.Handled = true;
+                }
+            }
+            else if (itemBeingDraggedOntoTheSurface != null && workSurfaceServiceId == itemBeingDraggedOntoTheSurface.ResourceId)
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+            else if (_dragDropHelpers.PreventDrop(dataObject))
             {
                 e.Effects = DragDropEffects.None;
                 e.Handled = true;

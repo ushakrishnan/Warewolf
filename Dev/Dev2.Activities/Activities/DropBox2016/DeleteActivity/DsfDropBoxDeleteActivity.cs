@@ -8,30 +8,34 @@ using Dropbox.Api;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
-
 namespace Dev2.Activities.DropBox2016.DeleteActivity
 {
-    [ToolDescriptorInfo("Dropbox", "Delete", ToolType.Native, "8AC94835-0A28-4166-A53A-D7B07730C135", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Delete_Tags")]
-    public class DsfDropBoxDeleteActivity : DsfBaseActivity
+    [ToolDescriptorInfo("Dropbox", "Delete", ToolType.Native, "8AC94835-0A28-4166-A53A-D7B07730C135", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Delete")]
+    public class DsfDropBoxDeleteActivity : DsfBaseActivity, IDisposable
     {
         private DropboxClient _client;
         protected Exception Exception;
         protected IDropboxSingleExecutor<IDropboxResult> DropboxSingleExecutor;
+        private IDropboxClientWrapper _dropboxClientWrapper;
 
         public DsfDropBoxDeleteActivity()
         {
-            // ReSharper disable once VirtualMemberCallInContructor
+            
             DisplayName = "Delete from Dropbox";
         }
 
+        protected DsfDropBoxDeleteActivity(IDropboxClientWrapper dropboxClientWrapper)
+            :this()
+        {
+            _dropboxClientWrapper = dropboxClientWrapper;
+        }
         public OauthSource SelectedSource { get; set; }
 
         [Inputs("Path in the user's Dropbox")]
@@ -52,29 +56,27 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
             return _client;
         }
 
-        #region Overrides of DsfActivity
-
-        public override string DisplayName { get; set; }
-
-        #endregion Overrides of DsfActivity
-
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             DropboxSingleExecutor = new DropboxDelete(evaluatedValues["DeletePath"]);
-            var dropboxExecutionResult = DropboxSingleExecutor.ExecuteTask(GetClient());
-            var dropboxSuccessResult = dropboxExecutionResult as DropboxDeleteSuccessResult;
-            if (dropboxSuccessResult != null)
+            _dropboxClientWrapper = _dropboxClientWrapper ?? new DropboxClientWrapper(GetClient());
+            var dropboxExecutionResult = DropboxSingleExecutor.ExecuteTask(_dropboxClientWrapper);
+            if (dropboxExecutionResult is DropboxDeleteSuccessResult dropboxSuccessResult)
             {
                 dropboxSuccessResult.GerFileMetadata();
-                return GlobalConstants.DropBoxSucces;
+                return new List<string> { GlobalConstants.DropBoxSuccess };
             }
-            var dropboxFailureResult = dropboxExecutionResult as DropboxFailureResult;
-            if (dropboxFailureResult != null)
+            if (dropboxExecutionResult is DropboxFailureResult dropboxFailureResult)
             {
                 Exception = dropboxFailureResult.GetException();
             }
-            var executionError = Exception.InnerException == null ? Exception.Message : Exception.InnerException.Message;
+            var executionError = Exception.InnerException?.Message ?? Exception.Message;
             throw new Exception(executionError);
+        }
+
+        public void Dispose()
+        {
+            _client.Dispose();
         }
 
         #region Overrides of DsfNativeActivity<string>
@@ -93,7 +95,6 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
             if (string.IsNullOrEmpty(DeletePath))
             {
                 dataObject.Environment.AddError(ErrorResource.DropBoxConfirmCorrectFileLocation);
-                return;
             }
             base.ExecuteTool(dataObject, update);
         }

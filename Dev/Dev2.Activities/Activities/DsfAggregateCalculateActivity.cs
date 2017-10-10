@@ -8,7 +8,7 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Util;
@@ -17,11 +17,12 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
-    [ToolDescriptorInfo("Utility-Calculate", "Aggregate Calculate", ToolType.Native, "8889E69B-38A3-43BC-A98F-7190C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Aggregate Calculate_Tags")]
+    [ToolDescriptorInfo("Utility-Calculate", "Aggregate Calculate", ToolType.Native, "8889E69B-38A3-43BC-A98F-7190C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Aggregate_Calculate")]
     public class DsfAggregateCalculateActivity : DsfActivityAbstract<string>
     {
 
@@ -87,8 +88,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 var warewolfListIterator = new WarewolfListIterator();
                 var calc = String.Format(GlobalConstants.AggregateCalculateTextConvertFormat, input);
                 var warewolfEvalResult = dataObject.Environment.Eval(calc, update);
-                var scalarResult = warewolfEvalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                if(scalarResult != null && scalarResult.Item.IsNothing)
+                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult scalarResult && scalarResult.Item.IsNothing)
                 {
                     throw new NullValueInVariableException(ErrorResource.VariableInputError, input);
                 }
@@ -109,7 +109,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error("Aggregate Calculate Exception", ex);
+                Dev2Logger.Error("Aggregate Calculate Exception", ex, GlobalConstants.WarewolfError);
                 allErrors.AddError(ex.Message);
             }
             finally
@@ -173,6 +173,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #endregion Get Inputs/Outputs
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
+
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
 
@@ -184,13 +189,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

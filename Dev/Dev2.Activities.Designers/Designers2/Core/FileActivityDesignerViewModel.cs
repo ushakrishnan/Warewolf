@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,6 @@ namespace Dev2.Activities.Designers2.Core
     public abstract class FileActivityDesignerViewModel : CredentialsActivityDesignerViewModel
     {
         public static readonly List<string> ValidUriSchemes = new List<string> { "file", "ftp", "ftps", "sftp" };
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         protected FileActivityDesignerViewModel(ModelItem modelItem, string inputPathLabel, string outputPathLabel)
             : base(modelItem)
@@ -152,8 +151,7 @@ namespace Dev2.Activities.Designers2.Core
             fileActivityRuleSet.Add(isValidExpressionRule);
             errors.AddRange(fileActivityRuleSet.ValidateRules(label, onError));
 
-            string pathValue;
-            path.TryParseVariables(out pathValue, onError, variableValue: ValidUriSchemes[0] + "://temp");
+            path.TryParseVariables(out string pathValue, onError, variableValue: ValidUriSchemes[0] + "://temp");
 
             if (errors.Count == 0)
             {

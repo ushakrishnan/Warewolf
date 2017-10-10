@@ -15,13 +15,19 @@ namespace Warewolf.ResourceManagement
         {
             _activityParser = activityParser;
             _cache = cache;
-        }        
+        }
 
-        public IDev2Activity Parse(DynamicActivity activity,Guid resourceIdGuid,bool failOnException=false)
+        public IDev2Activity Parse(DynamicActivity activity, Guid resourceIdGuid) => Parse(activity, resourceIdGuid, false);
+
+        public IDev2Activity Parse(DynamicActivity activity, Guid resourceIdGuid, bool failOnException)
         {
             if(HasActivityInCache(resourceIdGuid))
             {
-                return GetActivity(resourceIdGuid);
+                var dev2Activity = GetActivity(resourceIdGuid);
+                if (dev2Activity != null)
+                {
+                    return dev2Activity;
+                }
             }
             var dynamicActivity = activity;
             if (dynamicActivity != null)
@@ -33,14 +39,22 @@ namespace Warewolf.ResourceManagement
                     {
                         return act;
                     }
+                    _cache.AddOrUpdate(resourceIdGuid, act, (guid, dev2Activity) =>
+                    {
+                        _cache[resourceIdGuid] = act;
+                        return act;
+                    });
+                    return act;
                 }
-                    // ReSharper disable EmptyGeneralCatchClause
+                    
                 catch(Exception err) //errors caught inside
-                    // ReSharper restore EmptyGeneralCatchClause
+                    
                 {
-                    Dev2Logger.Error(err);
+                    Dev2Logger.Error(err, "Warewolf Error");
                     if(failOnException)
-                    throw;
+                    {
+                        throw;
+                    }
                 }
    
             }
@@ -59,8 +73,17 @@ namespace Warewolf.ResourceManagement
 
         public void RemoveFromCache(Guid resourceID)
         {
-            IDev2Activity act;
-            _cache.TryRemove(resourceID, out act);
+            _cache.TryRemove(resourceID, out IDev2Activity act);
+        }
+
+        public void AddToCache(Guid resourceID, DynamicActivity activity)
+        {
+            IDev2Activity act = _activityParser.Parse(activity);
+            _cache.AddOrUpdate(resourceID, act, (guid, dev2Activity) =>
+            {
+                _cache[resourceID] = act;
+                return act;
+            });
         }
     }
 }

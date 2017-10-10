@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2.Tests.Runtime.ServiceModel
 {
@@ -62,7 +62,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
                 DataList = "This is test string",
                 EmailFrom = "test@email.com",
                 EmailTo = "test@email.com",
-                Name = "testName",
+                ResourceName = "testName",
                 Path = "Test Path",
                 TestFromAddress = "test@email.com",
                 Type = enSourceType.ExchangeSource,

@@ -2,12 +2,12 @@
 using System.Threading.Tasks;
 using System.Windows;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Common.Interfaces.Threading;
-using Dev2.Studio.Core.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Dev2.Common.Interfaces.Core;
+using Dev2.Common.Interfaces.SaveDialog;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -26,19 +26,21 @@ namespace Warewolf.Studio.ViewModels.Tests
                 EndpointUrl = "http/test/com"
             };
 
-            return new ManageWcfSourceViewModel(UpdateManager, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), sourceModel, new Mock<IAsyncWorker>().Object, new Mock<IEnvironmentModel>().Object);
+            var updateManager = new Mock<IWcfSourceModel>();
+            updateManager.Setup(model => model.ServerName).Returns("Test");
+            updateManager.Setup(model => model.FetchSource(It.IsAny<Guid>())).Returns(sourceModel);
+            var asyncWorker = new Mock<IAsyncWorker>();
+            asyncWorker.Setup(worker => worker.Start(It.IsAny<Func<IWcfServerSource>>(), It.IsAny<Action<IWcfServerSource>>()))
+                                                .Callback<Func<IWcfServerSource>, Action<IWcfServerSource>>((func, action) =>
+                                                {
+                                                    var wcfSource = func.Invoke();
+                                                    action(wcfSource);
+                                                });
+            var manageWcfSourceViewModel = new ManageWcfSourceViewModel(updateManager.Object, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), sourceModel, asyncWorker.Object, new Mock<IServer>().Object);
+            return manageWcfSourceViewModel;
         }
 
-        private static ManageWcfSourceModel UpdateManager
-        {
-            get
-            {
-                var manager = new ManageWcfSourceModel(new Mock<IStudioUpdateManager>().Object, "") { ServerName = "Test" };
-                var serverName = manager.ServerName;
-
-                return manager;
-            }
-        }
+       
 
         public ManageWcfSourceViewModel TestModel()
         {
@@ -50,7 +52,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             task.Start();
 
-            return new ManageWcfSourceViewModel(new ManageWcfSourceModel(new Mock<IStudioUpdateManager>().Object, ""),task, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), new Mock<IAsyncWorker>().Object, new Mock<IEnvironmentModel>().Object);
+            return new ManageWcfSourceViewModel(new ManageWcfSourceModel(new Mock<IStudioUpdateManager>().Object, new Mock<IQueryManager>().Object),task, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), new Mock<IAsyncWorker>().Object, new Mock<IServer>().Object);
         }
 
         [TestMethod]
@@ -169,17 +171,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             
             Assert.IsFalse(model.CanCancelTest());
         }
-
-        [TestMethod]
-        [Owner(TestOwner)]
-        [TestCategory(Category)]
-        public void WcfSource_TestConnection_Returns_Success()
-        {
-            var model = GetModel();
-           model.TestCommand.Execute(null);
-
-            Assert.IsFalse(model.CanCancelTest());
-        }
+       
 
         [TestMethod]
         [Owner(TestOwner)]

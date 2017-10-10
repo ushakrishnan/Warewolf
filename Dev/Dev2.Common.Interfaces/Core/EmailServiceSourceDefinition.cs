@@ -4,6 +4,23 @@ namespace Dev2.Common.Interfaces.Core
 {
     public class EmailServiceSourceDefinition : IEmailServiceSource, IEquatable<EmailServiceSourceDefinition>
     {
+        public EmailServiceSourceDefinition()
+        {
+                
+        }
+
+        public EmailServiceSourceDefinition(IEmailSource db)
+        {
+                Id = db.ResourceID;
+                HostName = db.Host;
+                Password = db.Password;
+                UserName = db.UserName;
+                Path = "";
+                Port = db.Port;
+                Timeout = db.Timeout;
+                ResourceName = db.ResourceName;
+                EnableSsl = db.EnableSsl;
+        }
         #region Equality members
 
         /// <summary>
@@ -73,9 +90,9 @@ namespace Dev2.Common.Interfaces.Core
         {
             unchecked
             {
-                var hashCode = HostName != null ? HostName.GetHashCode() : 0;
-                hashCode = (hashCode * 397) ^ (UserName != null ? UserName.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Password != null ? Password.GetHashCode() : 0);
+                var hashCode = HostName?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (UserName?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Password?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }

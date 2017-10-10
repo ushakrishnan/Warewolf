@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,11 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -25,7 +25,7 @@ using ServiceStack.Common.Extensions;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class GetDependanciesOnList : IEsbManagementEndpoint
     {
         #region Implementation of ISpookyLoadable<string>
@@ -57,9 +57,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             bool dependsOnMe = false;
             string resourceIdsString = string.Empty;
             string dependsOnMeString = string.Empty;
-            StringBuilder tmp;
-            values.TryGetValue("ResourceIds", out tmp);
-            if(tmp != null)
+                values.TryGetValue("ResourceIds", out StringBuilder tmp);
+                if (tmp != null)
             {
                 resourceIdsString = tmp.ToString();
             }
@@ -70,7 +69,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
 
             IEnumerable<Guid> resourceIds = JsonConvert.DeserializeObject<List<string>>(resourceIdsString).Select(Guid.Parse);
-            Dev2Logger.Info("Get Dependencies On List. " + resourceIdsString);
+            Dev2Logger.Info("Get Dependencies On List. " + resourceIdsString, GlobalConstants.WarewolfInfo);
             if(!string.IsNullOrEmpty(dependsOnMeString))
             {
                 if(!bool.TryParse(dependsOnMeString, out dependsOnMe))
@@ -97,7 +96,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 throw;
             }
         }
@@ -134,20 +133,17 @@ namespace Dev2.Runtime.ESB.Management.Services
         {
             List<string> results = new List<string>();
             var resource = ResourceCatalog.Instance.GetResource(workspaceId, resourceId);
-            
-            if(resource != null)
-            {
-                var dependencies = resource.Dependencies;
 
-                if(dependencies != null)
-                {
-// ReSharper disable ImplicitlyCapturedClosure
-                    dependencies.ForEach(c =>
-// ReSharper restore ImplicitlyCapturedClosure
+            var dependencies = resource?.Dependencies;
+
+            if(dependencies != null)
+            {
+
+                dependencies.ForEach(c =>
+
                     { results.Add(c.ResourceID != Guid.Empty ? c.ResourceID.ToString() : c.ResourceName); });
-                    dependencies.ToList().ForEach(c =>
-                                                  { results.AddRange(c.ResourceID != Guid.Empty ? FetchRecursiveDependancies(c.ResourceID, workspaceId) : FetchRecursiveDependancies(workspaceId, c.ResourceName)); });
-                }
+                dependencies.ToList().ForEach(c =>
+                    { results.AddRange(c.ResourceID != Guid.Empty ? FetchRecursiveDependancies(c.ResourceID, workspaceId) : FetchRecursiveDependancies(workspaceId, c.ResourceName)); });
             }
             return results;
         }
@@ -163,5 +159,15 @@ namespace Dev2.Runtime.ESB.Management.Services
         }
 
         #endregion
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,9 +42,9 @@ namespace Dev2.DynamicServices.Objects
             }
 
             // Travis.Frisinger : 13.11.2012 - Remove bad namespaces
-            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+            
             if (GlobalConstants.runtimeNamespaceClean)
-                // ReSharper restore ConditionIsAlwaysTrueOrFalse
+                
             {
                 xamlDefinition = new Dev2XamlCleaner().CleanServiceDef(xamlDefinition);
             }

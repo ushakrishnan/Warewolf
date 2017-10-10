@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,10 +16,10 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Data.Util;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -27,7 +27,7 @@ namespace Dev2.Activities.Designers2.XPath
 {
     public class XPathDesignerViewModel : ActivityCollectionDesignerViewModel<XPathDTO>
     {
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public XPathDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
@@ -35,6 +35,7 @@ namespace Dev2.Activities.Designers2.XPath
             AddTitleBarQuickVariableInputToggle();
             dynamic mi = ModelItem;
             InitializeItems(mi.ResultsCollection);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Xpath;
         }
         public override string CollectionName => "ResultsCollection";
 
@@ -46,9 +47,9 @@ namespace Dev2.Activities.Designers2.XPath
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var error in GetRuleSet("SourceString").ValidateRules("'XML'", () => IsSourceStringFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
@@ -58,12 +59,12 @@ namespace Dev2.Activities.Designers2.XPath
         {
             var ruleSet = new RuleSet();
 
-            switch(propertyName)
+            switch (propertyName)
             {
                 case "SourceString":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => SourceString));
 
-                    if(!string.IsNullOrEmpty(SourceString) && !DataListUtil.IsEvaluated(SourceString))
+                    if (!string.IsNullOrEmpty(SourceString) && !DataListUtil.IsEvaluated(SourceString))
                     {
                         ruleSet.Add(new IsValidXmlRule(() => SourceString));
                     }
@@ -71,6 +72,8 @@ namespace Dev2.Activities.Designers2.XPath
                     var outputExprRule = new IsValidExpressionRule(() => SourceString, GetDatalistString(), "1");
                     ruleSet.Add(outputExprRule);
 
+                    break;
+                default:
                     break;
             }
             return ruleSet;
@@ -96,11 +99,8 @@ namespace Dev2.Activities.Designers2.XPath
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,19 +12,20 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Data.Decisions.Operations;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.SystemTemplates.Models;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.Data.Decision
 {
     public class Dev2DataListDecisionHandler
@@ -44,22 +45,10 @@ namespace Dev2.Data.Decision
             _environments.Remove(id);
         }
 
-
-        // Guid dlID
-        /// <summary>
-        /// Executes the decision stack.
-        /// </summary>
-        /// <param name="decisionDataPayload">The decision data payload.</param>
-        /// <param name="oldAmbientData">The old ambient data.</param>
-        /// <param name="update"></param>
-        /// <returns></returns>
-        /// <exception cref="System.Data.InvalidExpressionException">Could not evaluate decision data - No decision function found for [  + typeOf + ]</exception>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public bool ExecuteDecisionStack(string decisionDataPayload, IList<string> oldAmbientData,int update)
         {
 
             Guid dlId = FetchDataListID(oldAmbientData);
-//            if(dlId == GlobalConstants.NullDataListID) throw new InvalidExpressionException("Could not evaluate decision data - no DataList ID sent!");
             string newDecisionData = Dev2DecisionStack.FromVBPersitableModelToJSON(decisionDataPayload);
             var dds = EvaluateRegion(newDecisionData, dlId, update);
 
@@ -157,7 +146,6 @@ namespace Dev2.Data.Decision
 
             if(payload.StartsWith("{\"TheStack\":[{") || payload.StartsWith("{'TheStack':[{"))
             {
-                //2013.05.06: Ashley Lewis for PBI 9460 - handle record-sets with stars in their index by resolving them
                 var dds = DataListUtil.ConvertFromJsonToModel<Dev2DecisionStack>(new StringBuilder(payload));
 
                 if(dds.TheStack != null)
@@ -211,8 +199,7 @@ namespace Dev2.Data.Decision
                     //Remove those record sets and replace them with a new decision for each resolved value
                     foreach(Dev2Decision decision in invalidDecisions)
                     {
-                        ErrorResultTO errors;
-                        dds = ResolveAllRecords(env, dds, decision, effectedCols, out errors, update);
+                        dds = ResolveAllRecords(env, dds, decision, effectedCols, out ErrorResultTO errors, update);
                     }
                 }
 

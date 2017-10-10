@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +23,7 @@ using Dev2.TO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     [TestClass]
@@ -96,6 +96,20 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Assert Results-------------------------
             mockSqlBulkInserter.Verify(inserter => inserter.Insert(It.IsAny<ISqlBulkCopy>(), It.IsAny<DataTable>()), Times.Never());
             Assert.IsNull(returnedDataTable);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfSqlBulkInsertActivity { TableName = "myTable", Result = "[[insResult]]"};
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[insResult]]", outputs[0]);
         }
 
         [TestMethod]

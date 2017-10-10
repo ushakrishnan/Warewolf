@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,17 +19,18 @@ using Dev2.DataList.Contract;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.AppResources.ExtensionMethods;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Core.Views;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Warewolf.Storage;
 
-// ReSharper disable once CheckNamespace
-// ReSharper disable CheckNamespace
+
+
+
+
 namespace Dev2.Studio.ViewModels.DataList
-// ReSharper restore CheckNamespace
+
 {
     public class InputOutputViewModel : SimpleBaseViewModel, IInputOutputViewModel, ICloneable
     {
@@ -191,13 +192,6 @@ namespace Dev2.Studio.ViewModels.DataList
             }
         }
 
-        //public ObservableCollection<IDataListItemModel> DataList
-        //{
-        //    get
-        //    {
-        //        return _dataList;
-        //    }
-        //}
 
         public string DefaultValue { get; set; }
 
@@ -297,7 +291,12 @@ namespace Dev2.Studio.ViewModels.DataList
 
         #endregion
 
-        public InputOutputViewModel(string name, string value, string mapsTo, string defaultValue, bool required, string recordSetName, bool emptyToNull = false)
+        public InputOutputViewModel(string name, string value, string mapsTo, string defaultValue, bool required, string recordSetName)
+            : this(name, value, mapsTo, defaultValue, required, recordSetName, false)
+        {
+        }
+
+        public InputOutputViewModel(string name, string value, string mapsTo, string defaultValue, bool required, string recordSetName, bool emptyToNull)
         {
             Name = name;
             RecordSetName = recordSetName;
@@ -307,20 +306,7 @@ namespace Dev2.Studio.ViewModels.DataList
             DefaultValue = defaultValue;
             EmptyToNull = emptyToNull;
 
-            if(RecordSetName == string.Empty)
-            {
-                // ReSharper disable once DoNotCallOverridableMethodsInConstructor
-                // ReSharper disable DoNotCallOverridableMethodsInConstructor
-                DisplayName = Name;
-                // ReSharper restore DoNotCallOverridableMethodsInConstructor
-            }
-            else
-            {
-                // ReSharper disable once DoNotCallOverridableMethodsInConstructor
-                // ReSharper disable DoNotCallOverridableMethodsInConstructor
-                DisplayName = RecordSetName + "(*)." + Name;
-                // ReSharper restore DoNotCallOverridableMethodsInConstructor
-            }
+            DisplayName = RecordSetName == string.Empty ? Name : RecordSetName + "(*)." + Name;
             ViewComplexObjectsCommand = new RelayCommand(item =>
             {
                 ViewJsonObjects();
@@ -339,11 +325,6 @@ namespace Dev2.Studio.ViewModels.DataList
 
         public object Clone()
         {
-
-            // ReSharper disable once ObjectCreationAsStatement
-            // ReSharper disable ObjectCreationAsStatement
-            new ObjectCloner<IDataListItemModel>();
-            // ReSharper restore ObjectCreationAsStatement
             IInputOutputViewModel result = new InputOutputViewModel(Name, Value, MapsTo, DefaultValue, Required, RecordSetName, EmptyToNull);
 
             return result;

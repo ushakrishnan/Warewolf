@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +23,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for CaseConvertActivityTests
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class CaseConvertActivityTests : BaseActivityUnitTest
     {
         /// <summary>
@@ -42,9 +42,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(@"<root><testVar>change this to upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
             const string expected = @"CHANGE THIS TO UPPER CASE";
 
             // remove test datalist ;)
@@ -52,7 +50,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(expected, actual);
         }
 
-        //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in case convert result
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfCaseConvertActivity_GetOutputs")]
+        public void DsfCaseConvertActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO> { CaseConverterFactory.CreateCaseConverterTO("[[testVar]]", "UPPER", "[[testVar]]", 1), CaseConverterFactory.CreateCaseConverterTO("[[testVar2]]", "UPPER", "[[testVar2]]", 1) };
+            var act = new DsfCaseConvertActivity { ConvertCollection = convertCollection };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, outputs.Count);
+            Assert.AreEqual("[[testVar]]", outputs[0]);
+            Assert.AreEqual("[[testVar2]]", outputs[1]);
+        }
+
         [TestMethod]
         public void CaseConvertWithAllUpperAndMultipleRegionsExpectedAllUpperCase()
         {
@@ -61,11 +74,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.CaseConvert_MixedRegionTypes_CurrentDL, ActivityStrings.CaseConvert_MixedRegionTypes_DLShape, convertCollection);
 
             IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
             const string expected = @"CHANGE THIS TO UPPER CASE";
 
             // remove test datalist ;)
@@ -86,9 +96,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "NewVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "NewVar", out string actual, out string error);
 
             //------------Assert Results-------------------------
             const string expected = @"CHANGE THIS TO UPPER CASE";
@@ -104,11 +112,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.CaseConvert_MixedRegionTypes_CurrentDL, ActivityStrings.CaseConvert_MixedRegionTypes_DLShape, convertCollection);
 
             IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
 
             // remove test datalist ;)
 
@@ -133,11 +138,8 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
 
             // remove test datalist ;)
 
@@ -162,11 +164,8 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
 
             // remove test datalist ;)
 
@@ -188,9 +187,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = @"change this to lower case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -210,9 +207,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(@"<root><testVar>change this to first leter upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
             IDSFDataObject result = ExecuteProcess();
             const string expected = @"Change this to first leter upper case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -233,9 +228,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -252,9 +245,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -272,10 +263,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = @"Change This 5435123130T Lete2435r Upper Case";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -293,10 +282,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = @"change this 5435123130t lete2435r upper case";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -450,9 +437,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out IList<string> actual, out string error);
 
 
             string actualValue = actual[1];
@@ -471,9 +456,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out IList<string> actual, out string error);
 
 
             // This should be an index of 2

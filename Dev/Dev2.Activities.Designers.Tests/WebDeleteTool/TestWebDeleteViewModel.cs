@@ -9,13 +9,13 @@ using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.WebService;
-using Dev2.Interfaces;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Core;
-// ReSharper disable InconsistentNaming
-// ReSharper disable All
+
+
 
 namespace Dev2.Activities.Designers.Tests.WebDeleteTool
 {
@@ -79,12 +79,34 @@ namespace Dev2.Activities.Designers.Tests.WebDeleteTool
         }
 
         [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("Webget_MethodName")]
+        public void GetHeaderRegion_GivenIsNew_ShouldReturnInputArea()
+        {
+            //---------------Set up test pack-------------------
+            var id = Guid.NewGuid();
+            var mod = GetMockModel();
+            var act = GetPostActivityWithOutPuts(mod);
+            var deleteViewModel = new WebServiceDeleteViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            //---------------Test Result -----------------------
+            Assert.IsTrue(deleteViewModel.SourceRegion.IsEnabled);
+            Assert.IsTrue(deleteViewModel.OutputsRegion.IsEnabled);
+            Assert.IsTrue(deleteViewModel.InputArea.IsEnabled);
+            Assert.IsTrue(deleteViewModel.ErrorRegion.IsEnabled);
+            deleteViewModel.ValidateTestComplete();
+            Assert.IsTrue(deleteViewModel.OutputsRegion.IsEnabled);
+            Assert.AreSame(deleteViewModel.InputArea, deleteViewModel.GetHeaderRegion());
+        }
+
+        [TestMethod]
         [Owner("Pieter Terblanche")]
         [TestCategory("WebDeleteDesignerViewModel_Handle")]
         public void WebDeleteDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);

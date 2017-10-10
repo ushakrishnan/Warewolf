@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,7 +32,7 @@ using Dev2.Runtime.WebServer.Security;
 using Dev2.Services.Security;
 using Microsoft.AspNet.SignalR.Hubs;
 using Warewolf.Resource.Errors;
-// ReSharper disable UnusedMember.Global
+
 
 
 // Interface between the Studio and Server. Commands sent from the Studio come here to get processed, this is why methods are unused or only used in tests.
@@ -45,7 +45,7 @@ namespace Dev2.Runtime.WebServer.Hubs
     {
         static readonly ConcurrentDictionary<Guid, StringBuilder> MessageCache = new ConcurrentDictionary<Guid, StringBuilder>();
         readonly Dev2JsonSerializer _serializer = new Dev2JsonSerializer();
-
+        static readonly Dictionary<Guid, string>  ResourceAffectedMessagesCache = new Dictionary<Guid, string>();
         public EsbHub()
         {
         }
@@ -158,27 +158,38 @@ namespace Dev2.Runtime.WebServer.Hubs
 
         #endregion
 
-        public void SendMemo(Memo memo)
+        void SendResourcesAffectedMemo(Guid resourceId, IList<ICompileMessageTO> messages)
         {
-            var serializedMemo = _serializer.Serialize(memo);
-            var hubCallerConnectionContext = Clients;
-
-            hubCallerConnectionContext.All.SendMemo(serializedMemo);
-
-            CompileMessageRepo.Instance.ClearObservable();
-            CompileMessageRepo.Instance.AllMessages.Subscribe(OnCompilerMessageReceived);
-        }
-
-        public void SendResourcesAffectedMemo(Guid resourceId, IList<ICompileMessageTO> messages)
-        {
+            
             var msgs = new CompileMessageList { Dependants = new List<string>() };
             messages.ToList().ForEach(s => msgs.Dependants.Add(s.ServiceName));
             msgs.MessageList = messages;
             msgs.ServiceID = resourceId;
             var serializedMemo = _serializer.Serialize(msgs);
-            var hubCallerConnectionContext = Clients;
+            if (!ResourceAffectedMessagesCache.ContainsKey(resourceId))
+            {
+                ResourceAffectedMessagesCache.Add(resourceId, serializedMemo);
+            }
+        }
 
-            hubCallerConnectionContext.All.ReceiveResourcesAffectedMemo(serializedMemo);
+        public async Task<string> FetchResourcesAffectedMemo(Guid resourceId)
+        {
+            try
+            {
+                if (ResourceAffectedMessagesCache.TryGetValue(resourceId, out string value))
+                {
+                    var task = new Task<string>(() => value);
+                    ResourceAffectedMessagesCache.Remove(resourceId);
+                    task.Start();
+                    return await task;
+                }
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error(this, e, GlobalConstants.WarewolfError);
+            }
+
+            return null;
         }
 
         public void SendDebugState(DebugState debugState)
@@ -233,14 +244,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                     memo.WorkspaceID = message.WorkspaceID;
                     coalesceErrors(memo, message);
                 }
-
-                WriteEventProviderClientMessage(memo);
             }
-        }
-
-        protected virtual void WriteEventProviderClientMessage(IMemo memo)
-        {
-            SendMemo(memo as Memo);
         }
 
         public async Task AddDebugWriter(Guid workspaceId)
@@ -274,9 +278,7 @@ namespace Dev2.Runtime.WebServer.Hubs
             }
             catch (Exception e)
             {
-                // ReSharper disable InvokeAsExtensionMethod
-                Dev2Logger.Error(this, e);
-                // ReSharper restore InvokeAsExtensionMethod
+                Dev2Logger.Error(this, e, GlobalConstants.WarewolfError);
             }
 
             return null;
@@ -300,8 +302,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                 {
                     try
                     {
-                        StringBuilder sb;
-                        if (!MessageCache.TryGetValue(messageId, out sb))
+                        if (!MessageCache.TryGetValue(messageId, out StringBuilder sb))
                         {
                             sb = new StringBuilder();
                             MessageCache.TryAdd(messageId, sb);
@@ -312,20 +313,18 @@ namespace Dev2.Runtime.WebServer.Hubs
                         var request = _serializer.Deserialize<EsbExecuteRequest>(sb);
 
                         var user = string.Empty;
-                        // ReSharper disable ConditionIsAlwaysTrueOrFalse
+                        
                         var userPrinciple = Context.User;
                         if (Context.User.Identity != null)
-                        // ReSharper restore ConditionIsAlwaysTrueOrFalse
+                        
                         {
                             user = Context.User.Identity.Name;
-                            // set correct principle ;)
                             userPrinciple = Context.User;
                             Thread.CurrentPrincipal = userPrinciple;
-                            Dev2Logger.Debug("Execute Command Invoked For [ " + user + " ] For Service [ " + request.ServiceName + " ]");
+                            Dev2Logger.Debug("Execute Command Invoked For [ " + user + " : "+userPrinciple?.Identity?.AuthenticationType+" : "+userPrinciple?.Identity?.IsAuthenticated+" ] For Service [ " + request.ServiceName + " ]", GlobalConstants.WarewolfDebug);
                         }
                         StringBuilder processRequest = null;
                         Common.Utilities.PerformActionInsideImpersonatedContext(userPrinciple, () => { processRequest = internalServiceRequestHandler.ProcessRequest(request, workspaceId, dataListId, Context.ConnectionId); });
-                        // always place requesting user in here ;)
                         var future = new FutureReceipt
                         {
                             PartID = 0,
@@ -338,7 +337,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                         {
                             if (!ResultsCache.Instance.AddResult(future, value))
                             {
-                                Dev2Logger.Error(new Exception(string.Format(ErrorResource.FailedToBuildFutureReceipt, Context.ConnectionId, value)));
+                                Dev2Logger.Error(new Exception(string.Format(ErrorResource.FailedToBuildFutureReceipt, Context.ConnectionId, value)), GlobalConstants.WarewolfError);
                             }
                         }
                         return new Receipt { PartID = envelope.PartID, ResultParts = 1 };
@@ -346,7 +345,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                     }
                     catch (Exception e)
                     {
-                        Dev2Logger.Error(e);
+                        Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                     }
                     return null;
                 });
@@ -355,8 +354,8 @@ namespace Dev2.Runtime.WebServer.Hubs
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
-                Dev2Logger.Info("Is End of Stream:" + endOfStream);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                Dev2Logger.Info("Is End of Stream:" + endOfStream, GlobalConstants.WarewolfInfo);
             }
             return null;
         }
@@ -396,7 +395,7 @@ namespace Dev2.Runtime.WebServer.Hubs
             Task t = new Task(() =>
             {
                 var workspaceId = Server.GetWorkspaceID(Context.User.Identity);
-                ResourceCatalog.Instance.LoadResourceActivityCache(workspaceId);
+                ResourceCatalog.Instance.LoadServerActivityCache();
                 var hubCallerConnectionContext = Clients;
                 var user = hubCallerConnectionContext.User(Context.User.Identity.Name);
                 user.SendWorkspaceID(workspaceId);

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Text;
 using System.Xml.Linq;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -27,23 +28,31 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// </summary>
     public class UpdateWorkspaceItem : IEsbManagementEndpoint
     {
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
 
-            StringBuilder itemXml;
             string isLocal = string.Empty;
 
-            StringBuilder tmp;
-            values.TryGetValue("ItemXml", out itemXml);
-            values.TryGetValue("IsLocalSave", out tmp);
+            values.TryGetValue("ItemXml", out StringBuilder itemXml);
+            values.TryGetValue("IsLocalSave", out StringBuilder tmp);
             if (tmp != null)
             {
                 isLocal = tmp.ToString();
             }
 
-            bool isLocalSave;
 
-            bool.TryParse(isLocal, out isLocalSave);
+            bool.TryParse(isLocal, out bool isLocalSave);
 
             var res = new ExecuteMessage { HasError = false};
 
@@ -66,7 +75,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     }
                     else
                     {
-                        theWorkspace.Update(workspaceItem, isLocalSave);
+                        theWorkspace.Update(workspaceItem);
                         res.SetMessage("Workspace item updated " + DateTime.Now);
                     }
                 }

@@ -7,17 +7,18 @@ using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("WebMethods", "POST", ToolType.Native, "6AEB1038-6332-46F9-8BDD-752DE4EA038E", "Dev2.Activities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Post_Tags")]
+    [ToolDescriptorInfo("WebMethods", "POST", ToolType.Native, "6AEB1038-6332-46F9-8BDD-752DE4EA038E", "Dev2.Activities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Post")]
     public class DsfWebPostActivity:DsfActivity
     {
         public IList<INameValue> Headers { get; set; }
@@ -38,7 +39,11 @@ namespace Dev2.Activities
 
         public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
-            if (env == null) return _debugInputs;
+            if (env == null)
+            {
+                return _debugInputs;
+            }
+
             base.GetDebugInputs(env, update);
 
             IEnumerable<NameValue> head = null;
@@ -50,7 +55,9 @@ namespace Dev2.Activities
             var url = ResourceCatalog.GetResource<WebSource>(Guid.Empty, SourceId);
             string headerString=string.Empty;
             if (head != null)
+            {
                 headerString = string.Join(" ", head.Select(a => a.Name + " : " + a.Value));
+            }
 
             DebugItem debugItem = new DebugItem();
             AddDebugItem(new DebugItemStaticDataParams("", "URL"), debugItem);
@@ -102,6 +109,7 @@ namespace Dev2.Activities
 
         }
 
+        
         public IResponseManager ResponseManager { get; set; }
 
         
@@ -130,7 +138,9 @@ namespace Dev2.Activities
                 foreach (var nameValue in head)
                 {
                     if (!String.IsNullOrEmpty(nameValue.Name) && !String.IsNullOrEmpty(nameValue.Value))
+                    {
                         webclient.Headers.Add(nameValue.Name, nameValue.Value);
+                    }
                 }
             }
 

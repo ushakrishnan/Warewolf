@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,7 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList;
 using Dev2.DataList.Contract;
@@ -29,16 +30,16 @@ using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
     /// <New>
     /// Activity for finding records accoring to a search criteria that the user specifies
     /// </New>
-    [ToolDescriptorInfo("RecordSet-FindRecords", "Find Records", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Recordset", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Recordset_Find Records_Tags")]
+    [ToolDescriptorInfo("RecordSet-FindRecords", "Find Records", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Recordset", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Recordset_Find_Records")]
     public class DsfFindRecordsMultipleCriteriaActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Properties
@@ -91,6 +92,13 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion Ctor
+
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
+
 
         /// <summary>
         ///     Executes the logic of the activity and calls the backend code to do the work
@@ -148,41 +156,46 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         {
                             tovalue = env.EvalAsList(to.To, update);
                         }
-                        if (func == null)
-                        {
-                            func = CreateFuncFromOperator(to.SearchType, right, @from, tovalue);
-                        }
-                        else
-                        {
-                            func = RequireAllTrue ? CombineFuncAnd(func, to.SearchType, right, @from, tovalue) : CombineFuncOr(func, to.SearchType, right, @from, tovalue);
-                        }
+                        func = func == null ? CreateFuncFromOperator(to.SearchType, right, @from, tovalue) : RequireAllTrue ? CombineFuncAnd(func, to.SearchType, right, @from, tovalue) : CombineFuncOr(func, to.SearchType, right, @from, tovalue);
                     }
                     var output = env.EvalWhere(dataObject.Environment.ToStar(searchvar), func, update);
 
-                    if (RequireAllFieldsToMatch && hasEvaled)
-                    {
-                        results = results.Intersect(output).ToList();
-                    }
-                    else
-                    {
-                        results = results.Union(output).ToList();
-                    }
+                    results = RequireAllFieldsToMatch && hasEvaled ? results.Intersect(output).ToList() : results.Union(output).ToList();
                     hasEvaled = true;
                 }
                 if (!results.Any())
                 {
                     results.Add(-1);
                 }
-                var res = String.Join(",", results.Distinct());
-                env.Assign(Result, res, update);
+                var distinctResults = results.Distinct();
+                if (DataListUtil.IsValueScalar(Result))
+                {
+                    var res = string.Join(",", distinctResults);
+                    env.Assign(Result, res, update);
+                }
+                else
+                {
+                    foreach(var distinctResult in distinctResults)
+                    {
+                        env.Assign(Result, distinctResult.ToString(), update);
+                    }
+                }
                 if (dataObject.IsDebugMode())
                 {
-                    AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+                    if (DataListUtil.IsValueRecordset(Result))
+                    {
+                        var recVar = DataListUtil.ReplaceRecordsetBlankWithStar(Result);
+                        AddDebugOutputItem(new DebugEvalResult(recVar, "", dataObject.Environment, update));
+                    }
+                    else
+                    {
+                        AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+                    }
                 }
             }
             catch (Exception exception)
             {
-                Dev2Logger.Error("DSFRecordsMultipleCriteria", exception);
+                Dev2Logger.Error("DSFRecordsMultipleCriteria", exception, GlobalConstants.WarewolfError);
                 allErrors.AddError(exception.Message);
             }
             finally
@@ -308,7 +321,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
                     if (!string.IsNullOrEmpty(findRecordsTo.SearchCriteria))
                     {
-                        AddDebugItem(new DebugEvalResult(findRecordsTo.SearchCriteria, "", environment, update), debugItem);
+                        AddDebugItem(new DebugEvalResult(findRecordsTo.SearchCriteria, "", environment, update, ""), debugItem);
                     }
 
                     if (findRecordsTo.SearchType == "Is Between" || findRecordsTo.SearchType == "Not Between")
@@ -322,7 +335,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     indexCount++;
                 }
             }
-        }
+        } 
 
         void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {

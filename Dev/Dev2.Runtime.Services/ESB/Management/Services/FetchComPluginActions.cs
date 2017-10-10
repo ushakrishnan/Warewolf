@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
@@ -8,6 +7,7 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -16,10 +16,10 @@ using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 using Warewolf.Core;
+using Task = System.Threading.Tasks.Task;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
     public class FetchComPluginActions : IEsbManagementEndpoint
     {
         public string HandlesType()
@@ -34,10 +34,9 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 var pluginSource = serializer.Deserialize<ComPluginSourceDefinition>(values["source"]);
                 var ns = serializer.Deserialize<INamespaceItem>(values["namespace"]);
-                // ReSharper disable MaximumChainedReferences
+
                 ComPluginServices services = new ComPluginServices();
                 var src = ResourceCatalog.Instance.GetResource<ComPluginSource>(GlobalConstants.ServerWorkspaceID, pluginSource.Id);
-                //src.AssemblyName = ns.FullName;
                 ComPluginService svc = new ComPluginService();
                 if (ns != null)
                 {
@@ -47,7 +46,24 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     svc.Source = src;
                 }
-                var serviceMethodList = services.Methods(svc, Guid.Empty, Guid.Empty);
+
+
+                var serviceMethodList = new ServiceMethodList();
+                var task = Task.Run(() =>
+                {
+                    return serviceMethodList = services.Methods(svc, Guid.Empty, Guid.Empty);
+                });
+                try
+                {
+                    var timeoutAfter = task.TimeoutAfter(TimeSpan.FromSeconds(3));
+                    serviceMethodList = timeoutAfter.Result;
+                }
+                catch (Exception e)
+                {
+                    Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                }
+
+
                 var methods = serviceMethodList.Select(a => new PluginAction
                 {
                     FullName = ns?.FullName,
@@ -87,7 +103,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
                 var cleanTypeName = Type.GetType(typeName);
-                // ReSharper disable once PossibleNullReferenceException
+
                 return $"{name} ({cleanTypeName.Name})";
             }
             catch (Exception)
@@ -119,5 +135,15 @@ namespace Dev2.Runtime.ESB.Management.Services
         }
 
         public ResourceCatalog Resources => ResourceCatalog.Instance;
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -63,12 +63,12 @@ namespace Dev2.Runtime.WebServer
 
         void InitializeContentLength()
         {
-            ContentLength = (int)(_request.Content.Headers.ContentLength.HasValue ? _request.Content.Headers.ContentLength.Value : 0L);
+            ContentLength = (int)(_request.Content.Headers.ContentLength ?? 0L);
         }
 
         void InitializeContentType()
         {
-            ContentType = _request.Content.Headers.ContentType == null ? null : _request.Content.Headers.ContentType.MediaType;
+            ContentType = _request.Content.Headers.ContentType?.MediaType;
         }
 
         void InitializeQueryString()

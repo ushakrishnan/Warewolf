@@ -12,9 +12,9 @@ using System.Linq;
 using System.Windows;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Help;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
 {
@@ -31,12 +31,12 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
             //------------Execute Test---------------------------
             var vm = new RabbitMQConsumeDesignerViewModel(null, new Mock<IRabbitMQSourceModel>().Object);
             //------------Assert Results-------------------------
-            Assert.IsNull(vm);            
+            Assert.IsNull(vm);
         }
 
         [TestMethod]
         [Owner("Mthembu Sanele")]
-        [TestCategory("RabbitMQConsumeDesignerViewModelTest_Constructor")]        
+        [TestCategory("RabbitMQConsumeDesignerViewModelTest_Constructor")]
         public void RabbitMQConsumeDesignerViewModel_Constructor_Properties()
         {
             var model = new Mock<IRabbitMQSourceModel>();
@@ -53,14 +53,76 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
             vm.IsPrefetchFocused = false;
             //------------Assert Results-------------------------
             Assert.IsNotNull(vm);
+            Assert.IsFalse(vm.ShowLarge);
+            Assert.AreEqual(vm.ThumbVisibility, Visibility.Collapsed);
             Assert.AreEqual("Q1", vm.QueueName);
             Assert.IsTrue(vm.ReQueue);
             Assert.IsFalse(vm.IsRabbitMQSourceSelected);
             Assert.AreEqual((ushort)2, ushort.Parse(vm.Prefetch));
         }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("RabbitMQConsumeDesignerViewModelTest_IsObject")]
+        public void RabbitMQConsumeDesignerViewModel_IsObject_Default()
+        {
+            var model = new Mock<IRabbitMQSourceModel>();
+            model.Setup(m => m.RetrieveSources()).Returns(new List<IRabbitMQServiceSourceDefinition>());
+
+            //------------Execute Test---------------------------
+            var modelItem = CreateModelItem();
+            var vm = new RabbitMQConsumeDesignerViewModel(modelItem, model.Object);
+            //------------Assert Results-------------------------
+            Assert.IsFalse(vm.IsObject);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("RabbitMQConsumeDesignerViewModelTest_IsObject")]
+        public void RabbitMQConsumeDesignerViewModel_IsObject_IsChanged()
+        {
+            var shellVm = new Mock<IShellViewModel>();
+            CustomContainer.Register(shellVm.Object);
+            var model = new Mock<IRabbitMQSourceModel>();
+            model.Setup(m => m.RetrieveSources()).Returns(new List<IRabbitMQServiceSourceDefinition>());
+
+            //------------Execute Test---------------------------
+            var consumeRabbitMqActivity = new DsfConsumeRabbitMQActivity();
+            var modelItem = ModelItemUtils.CreateModelItem(consumeRabbitMqActivity);
+            var vm = new RabbitMQConsumeDesignerViewModel(modelItem, model.Object) { IsObject = true };
+           
+            //------------Assert Results-------------------------
+            Assert.IsTrue(vm.IsObject);
+            Assert.IsTrue(consumeRabbitMqActivity.IsObject);
+        }
+
+     
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("RabbitMQConsumeDesignerViewModelTest_ObjectName")]
+        public void RabbitMQConsumeDesignerViewModel_ObjectName_IsChanged()
+        {
+            var shellVm = new Mock<IShellViewModel>();
+            CustomContainer.Register(shellVm.Object);
+            var model = new Mock<IRabbitMQSourceModel>();
+            model.Setup(m => m.RetrieveSources()).Returns(new List<IRabbitMQServiceSourceDefinition>());
+
+            //------------Execute Test---------------------------
+            var consumeRabbitMqActivity = new DsfConsumeRabbitMQActivity();
+           
+            var modelItem = ModelItemUtils.CreateModelItem(consumeRabbitMqActivity);
+            var vm = new RabbitMQConsumeDesignerViewModel(modelItem, model.Object) { IsObject = true, ObjectName = "[[@Home]]" };
+           
+            //------------Assert Results-------------------------
+            Assert.IsTrue(vm.IsObject);
+            Assert.IsTrue(consumeRabbitMqActivity.IsObject);
+            Assert.AreEqual("[[@Home]]", consumeRabbitMqActivity.ObjectName);
+        }
+
         [TestMethod]
         [Owner("Mthembu Sanele")]
-        [TestCategory("RabbitMQConsumeDesignerViewModelTest_Constructor")]        
+        [TestCategory("RabbitMQConsumeDesignerViewModelTest_Constructor")]
         public void RabbitMQConsumeDesignerViewModel_Create_NewRabbitMQSource()
         {
             var model = new Mock<IRabbitMQSourceModel>();
@@ -70,10 +132,10 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
             var vm = new RabbitMQConsumeDesignerViewModel(CreateModelItem(), model.Object);
             var privateObject = new PrivateObject(vm);
             privateObject.Invoke("NewRabbitMQSource");
-    
+
             //------------Assert Results-------------------------
             Assert.IsNotNull(vm);
-          
+
         }
 
         [TestMethod]
@@ -88,8 +150,8 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
             //------------Assert Results-------------------------
             Assert.IsNotNull(vm);
             Assert.IsTrue(vm.HasLargeView);
-            Assert.IsTrue(vm.ShowLarge);
-            Assert.AreEqual(Visibility.Visible, vm.ThumbVisibility);
+            Assert.IsFalse(vm.ShowLarge);
+            Assert.AreEqual(Visibility.Collapsed, vm.ThumbVisibility);
             Assert.IsNotNull(vm.EditRabbitMQSourceCommand);
             Assert.IsNotNull(vm.NewRabbitMQSourceCommand);
             Assert.IsNotNull(vm.RabbitMQSources);
@@ -101,7 +163,7 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
         public void RabbitMQConsumeDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -133,14 +195,14 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
             Assert.IsNotNull(vm);
             Assert.IsNotNull(vm.EditRabbitMQSourceCommand);
             Assert.IsNotNull(vm.NewRabbitMQSourceCommand);
-            Assert.IsTrue(vm.ShowLarge);
-            Assert.AreEqual(vm.ThumbVisibility, Visibility.Visible);
+            Assert.IsFalse(vm.ShowLarge);
+            Assert.AreEqual(vm.ThumbVisibility, Visibility.Collapsed);
             Assert.IsNotNull(vm.RabbitMQSources);
             Assert.IsFalse(vm.IsRabbitMQSourceFocused);
             Assert.IsFalse(vm.IsQueueNameFocused);
             Assert.IsFalse(vm.IsPrefetchFocused);
             Assert.IsNull(vm.SelectedRabbitMQSource);
-            Assert.AreEqual(vm.QueueName, "Q1");            
+            Assert.AreEqual(vm.QueueName, "Q1");
             Assert.AreEqual(vm.Result, "Success");
             Assert.AreEqual(vm.IsRabbitMQSourceFocused, false);
             Assert.AreEqual(vm.IsQueueNameFocused, false);
@@ -166,6 +228,27 @@ namespace Dev2.Activities.Designers.Tests.RabbitMQ.Consume
             var errors = vm.Errors;
             Assert.IsNotNull(errors);
             Assert.IsTrue(errors.Any(info => info.Message == Warewolf.Resource.Errors.ErrorResource.RabbitMqQueueNameNotNullErrorTest));
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("RabbitMQConsumeDesignerViewModelTest_Validate")]
+        public void RabbitMQConsumeDesignerViewModel_Validate_With_No_Prefetch_ShouldBreakRule()
+        {
+            //------------Setup for test--------------------------
+            var model = new Mock<IRabbitMQSourceModel>();
+            model.Setup(m => m.RetrieveSources()).Returns(new List<IRabbitMQServiceSourceDefinition>());
+
+            var vm = new RabbitMQConsumeDesignerViewModel(CreateModelItem(), model.Object);
+            vm.Prefetch = "";
+            vm.SelectedRabbitMQSource = new RabbitMQServiceSourceDefinition();
+            //------------Execute Test---------------------------
+            vm.Validate();
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(vm);
+            var errors = vm.Errors;
+            Assert.IsNotNull(errors);
+            Assert.IsTrue(errors.Any(info => info.Message == Warewolf.Resource.Errors.ErrorResource.RabbitMqPrefetchNotNullErrorTest));
         }
 
         [TestMethod]

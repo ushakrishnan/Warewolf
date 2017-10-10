@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Microsoft.Practices.Prism.Mvvm;
 using Warewolf.Studio.AntiCorruptionLayer;
@@ -16,8 +17,16 @@ namespace Warewolf.Studio.ViewModels
 
         public SplashViewModel(IServer server, IExternalProcessExecutor externalProcessExecutor)
         {
-            if (server == null) throw new ArgumentNullException(nameof(server));
-            if (externalProcessExecutor == null) throw new ArgumentNullException(nameof(externalProcessExecutor));
+            if (server == null)
+            {
+                throw new ArgumentNullException(nameof(server));
+            }
+
+            if (externalProcessExecutor == null)
+            {
+                throw new ArgumentNullException(nameof(externalProcessExecutor));
+            }
+
             Server = server;
             ExternalProcessExecutor = externalProcessExecutor;
 
@@ -25,7 +34,7 @@ namespace Warewolf.Studio.ViewModels
             ContributorsUrl = conUri;
             Uri comUri = new Uri(Resources.Languages.Core.CommunityUrl);
             CommunityUrl = comUri;
-            Uri expUri = new Uri(Resources.Languages.Core.ExpertHelpUrl);
+            Uri expUri = new Uri(Resources.Languages.HelpText.ExpertHelpUrl);
             ExpertHelpUrl = expUri;
             Uri warewolfUri = new Uri(Resources.Languages.Core.WarewolfUrl);
             WarewolfUrl = warewolfUri;

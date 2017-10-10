@@ -19,18 +19,17 @@ using System.Windows.Media;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable FieldCanBeMadeReadOnly.Local
 
 namespace Dev2.Activities.Designers2.Core
 {
     public class ManageWcfServiceInputViewModel : IManageWcfServiceInputViewModel
     {
-        private IGenerateOutputArea _generateOutputArea;
-        private IGenerateInputArea _generateInputArea;
+        private readonly IGenerateOutputArea _generateOutputArea;
+        private readonly IGenerateInputArea _generateInputArea;
         private bool _isEnabled;
         private bool _pasteResponseAvailable;
-        private IWcfEndPointViewModel _viewmodel;
-        private IWcfServiceModel _serviceModel;
+        private readonly IWcfEndPointViewModel _viewmodel;
+        private readonly IWcfServiceModel _serviceModel;
         private bool _isGenerateInputsEmptyRows;
         private bool _okSelected;
         private string _testResults;
@@ -42,6 +41,8 @@ namespace Dev2.Activities.Designers2.Core
         private RecordsetList _recordsetList;
         private bool _outputCountExpandAllowed;
         private bool _inputCountExpandAllowed;
+        private bool _testPassed;
+        private bool _testFailed;
 
         public ManageWcfServiceInputViewModel(IWcfEndPointViewModel model, IWcfServiceModel serviceModel)
         {
@@ -90,7 +91,9 @@ namespace Dev2.Activities.Designers2.Core
             _viewmodel.GenerateOutputsVisible = false;
             InputArea.IsEnabled = false;
             OutputArea.IsEnabled = false;
-            TestResults = String.Empty;
+            TestResults = string.Empty;
+            TestFailed = false;
+            TestPassed = false;
             TestResultsAvailable = false;
             Errors.Clear();
 
@@ -171,13 +174,13 @@ namespace Dev2.Activities.Designers2.Core
                         throw new Exception(errorMessage);
                     }
                     Description = responseService.Description;
-                    // ReSharper disable MaximumChainedReferences
+                    
                     var outputMapping = _recordsetList.SelectMany(recordset => recordset.Fields, (recordset, recordsetField) =>
                     {
                         var serviceOutputMapping = new ServiceOutputMapping(recordsetField.Name, recordsetField.Alias, recordset.Name) { Path = recordsetField.Path };
                         return serviceOutputMapping;
                     }).Cast<IServiceOutputMapping>().ToList();
-                    // ReSharper restore MaximumChainedReferences
+                    
                     _generateOutputArea.IsEnabled = true;
                     _generateOutputArea.Outputs = outputMapping;
                 }
@@ -185,6 +188,8 @@ namespace Dev2.Activities.Designers2.Core
                 {
                     TestResultsAvailable = TestResults != null;
                     IsTesting = false;
+                    TestPassed = true;
+                    TestFailed = false;
                 }
             }
             catch (JsonSerializationException)
@@ -195,6 +200,8 @@ namespace Dev2.Activities.Designers2.Core
             {
                 Errors.Add(e.Message);
                 IsTesting = false;
+                TestPassed = false;
+                TestFailed = true;
                 _generateOutputArea.IsEnabled = false;
                 _generateOutputArea.Outputs = new List<IServiceOutputMapping>();
                 _viewmodel.ErrorMessage(e, true);
@@ -257,6 +264,26 @@ namespace Dev2.Activities.Designers2.Core
 
         public Action TestAction { get; set; }
         public ICommand TestCommand { get; private set; }
+
+        public bool TestPassed
+        {
+            get { return _testPassed; }
+            set
+            {
+                _testPassed = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool TestFailed
+        {
+            get { return _testFailed; }
+            set
+            {
+                _testFailed = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool TestResultsAvailable
         {
@@ -354,9 +381,6 @@ namespace Dev2.Activities.Designers2.Core
             {
                 return _generateOutputArea;
             }
-            set
-            {
-            }
         }
 
         public IOutputDescription Description { get; set; }
@@ -366,9 +390,6 @@ namespace Dev2.Activities.Designers2.Core
             get
             {
                 return _generateInputArea;
-            }
-            set
-            {
             }
         }
 
@@ -405,10 +426,7 @@ namespace Dev2.Activities.Designers2.Core
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion Implementation of INotifyPropertyChanged

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,7 @@ using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
@@ -29,7 +30,7 @@ using Unlimited.Framework.Converters.Graph;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 using WarewolfParserInterop;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Services.Execution
 {
@@ -80,7 +81,11 @@ namespace Dev2.Services.Execution
 
         private void CreateService(ResourceCatalog catalog)
         {
-            if (!GetService(catalog)) return;
+            if (!GetService(catalog))
+            {
+                return;
+            }
+
             GetSource(catalog);
         }
 
@@ -110,6 +115,13 @@ namespace Dev2.Services.Execution
           
         }
 
+        public void SetSourceId(Guid sourceId)
+        {
+            SourceId = sourceId;
+        }
+
+        public Guid SourceId { get; set; }
+
         private bool GetService(ResourceCatalog catalog)
         {
             Service = catalog.GetResource<TService>(GlobalConstants.ServerWorkspaceID, DataObj.ResourceID) ??
@@ -137,9 +149,9 @@ namespace Dev2.Services.Execution
 
             #region Create OutputFormatter
 
-            // ReSharper disable RedundantAssignment
+            
             IOutputFormatter outputFormatter = null;
-            // ReSharper restore RedundantAssignment
+            
 
             try
             {
@@ -304,8 +316,7 @@ namespace Dev2.Services.Execution
 
             try
             {
-                ErrorResultTO invokeErrors;
-                ExecuteService(out invokeErrors, update, formater);
+                ExecuteService(out ErrorResultTO invokeErrors, update, formater);
                 errors.MergeErrors(invokeErrors);
             }
             catch (Exception ex)
@@ -346,19 +357,18 @@ namespace Dev2.Services.Execution
                 string result;
                 if (parameters.Any())
                 {
+                 
+
                     result = ExecuteService(update, out errors, formater).ToString();
                 }
                 else
                 {
-                    ErrorResultTO invokeErrors;
-                    result = ExecuteService(update, out invokeErrors, formater).ToString();
+                    result = ExecuteService(update, out ErrorResultTO invokeErrors, formater).ToString();
                     errors.MergeErrors(invokeErrors);
                 }
                 if (!HandlesOutputFormatting)
                 {
-                    var formattedPayload = formater != null
-                            ? formater.Format(result).ToString()
-                            : result;
+                    var formattedPayload = formater?.Format(result).ToString() ?? result;
                     PushXmlIntoEnvironment(formattedPayload, update);
                 }
                 else
@@ -401,11 +411,7 @@ namespace Dev2.Services.Execution
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Error(e.Message, e);
-                    // if use passed in empty input they only wanted the shape ;)
-                    if (input.Length > 0)
-                    {
-                    }
+                    Dev2Logger.Error(e.Message, e, GlobalConstants.WarewolfError);
                 }
             }
         }
@@ -425,8 +431,7 @@ namespace Dev2.Services.Execution
                         if (dev2Definitions.Length != 0)
                         {
                             // fetch recordset index
-                            int fetchIdx;
-                            var idx = indexCache.TryGetValue(c.Name, out fetchIdx) ? fetchIdx : 1;
+                            var idx = indexCache.TryGetValue(c.Name, out int fetchIdx) ? fetchIdx : 1;
                             // process recordset
                             var nl = c.ChildNodes;
                             foreach (XmlNode subc in nl)

@@ -2,19 +2,19 @@
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.RabbitMQ;
-using Dev2.Common.Interfaces.SaveDialog;
-using Dev2.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using Dev2.Common.Interfaces.Threading;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable VirtualMemberCallInContructor
-// ReSharper disable ValueParameterNotUsed
-// ReSharper disable UnusedMember.Global
-// ReSharper disable InconsistentNaming
+
+
+
+
+
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -46,21 +46,40 @@ namespace Warewolf.Studio.ViewModels
 
             HeaderText = Resources.Languages.Core.RabbitMQSourceNewHeaderLabel;
             Header = Resources.Languages.Core.RabbitMQSourceNewHeaderLabel;
-            HostName = String.Empty;
+            HostName = string.Empty;
             Port = 5672;
-            UserName = String.Empty;
-            Password = String.Empty;
+            UserName = string.Empty;
+            Password = string.Empty;
             VirtualHost = "/";
         }
 
-        public ManageRabbitMQSourceViewModel(IRabbitMQSourceModel rabbitMQSourceModel, IRabbitMQServiceSourceDefinition rabbitMQServiceSource)
+        public ManageRabbitMQSourceViewModel(IRabbitMQSourceModel rabbitMQSourceModel, IRabbitMQServiceSourceDefinition rabbitMQServiceSource,IAsyncWorker asyncWorker)
             : this(rabbitMQSourceModel)
         {
             VerifyArgument.IsNotNull("rabbitMQServiceSource", rabbitMQServiceSource);
+            asyncWorker.Start(() => rabbitMQSourceModel.FetchSource(rabbitMQServiceSource.ResourceID), source =>
+            {
+                _rabbitMQServiceSource = source;
+                _rabbitMQServiceSource.ResourcePath = rabbitMQServiceSource.ResourcePath;
+                SetupHeaderTextFromExisting();
+                ToItem();
+                FromModel(source);
+            });
+        }
 
-            _rabbitMQServiceSource = rabbitMQServiceSource;
-            SetupHeaderTextFromExisting();
-            FromModel(rabbitMQServiceSource);
+        void ToItem()
+        {
+            Item = new RabbitMQServiceSourceDefinition()
+            {
+                HostName = _rabbitMQServiceSource.HostName,
+                Password = _rabbitMQServiceSource.Password,
+                UserName = _rabbitMQServiceSource.UserName,
+                Port = _rabbitMQServiceSource.Port,
+                ResourceName = _rabbitMQServiceSource.ResourceName,
+                ResourceID = _rabbitMQServiceSource.ResourceID,
+                VirtualHost = _rabbitMQServiceSource.VirtualHost,
+                ResourcePath = _rabbitMQServiceSource.ResourcePath,
+            };
         }
 
         private ManageRabbitMQSourceViewModel(IRabbitMQSourceModel rabbitMQSourceModel)
@@ -130,11 +149,11 @@ namespace Warewolf.Studio.ViewModels
                 return false;
             }
 
-            if (String.IsNullOrEmpty(HostName) ||
+            if (string.IsNullOrEmpty(HostName) ||
                 (Port >= 49152 && Port <= 65535) ||
-                String.IsNullOrEmpty(UserName) ||
-                String.IsNullOrEmpty(Password) ||
-                String.IsNullOrEmpty(VirtualHost))
+                string.IsNullOrEmpty(UserName) ||
+                string.IsNullOrEmpty(Password) ||
+                string.IsNullOrEmpty(VirtualHost))
             {
                 return false;
             }
@@ -143,11 +162,8 @@ namespace Warewolf.Studio.ViewModels
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void Save()
@@ -162,14 +178,20 @@ namespace Warewolf.Studio.ViewModels
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                    var res = requestServiceNameViewModel.ShowSaveDialog();
 
                     if (res == MessageBoxResult.OK)
                     {
-                        ResourceName = RequestServiceNameViewModel.Result.ResourceName.Name;
+                        ResourceName = requestServiceNameViewModel.ResourceName.Name;
                         IRabbitMQServiceSourceDefinition source = ToSource();
-                        source.ResourcePath = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                        source.ResourcePath = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(source);
+                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                        {
+                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, source.ResourceID);
+                        }
+
                         Item = source;
                         _rabbitMQServiceSource = source;
                         SetupHeaderTextFromExisting();
@@ -195,16 +217,19 @@ namespace Warewolf.Studio.ViewModels
         {
             try
             {
+                Testing = true;
                 TestErrorMessage = "";
                 _rabbitMQSourceModel.TestSource(ToNewSource());
                 TestPassed = true;
                 TestFailed = false;
+                Testing = false;
             }
-            catch (Exception e)
+            catch (Exception exception)
             {
                 TestPassed = false;
                 TestFailed = true;
-                TestErrorMessage = "Failed: " + e.Message;
+                Testing = false;
+                TestErrorMessage = GetExceptionMessage(exception);
             }
         }
 
@@ -214,7 +239,7 @@ namespace Warewolf.Studio.ViewModels
             {
                 return ToNewSource();
             }
-            // ReSharper disable once RedundantIfElseBlock
+            
             else
             {
                 _rabbitMQServiceSource.HostName = HostName;
@@ -236,7 +261,7 @@ namespace Warewolf.Studio.ViewModels
                 UserName = UserName,
                 Password = Password,
                 VirtualHost = VirtualHost,
-                ResourceID = _rabbitMQServiceSource == null ? Guid.NewGuid() : _rabbitMQServiceSource.ResourceID
+                ResourceID = _rabbitMQServiceSource?.ResourceID ?? Guid.NewGuid()
             };
         }
 
@@ -365,7 +390,7 @@ namespace Warewolf.Studio.ViewModels
         {
             get { return _testErrorMessage; }
 
-            private set
+            set
             {
                 _testErrorMessage = value;
                 OnPropertyChanged(() => TestErrorMessage);

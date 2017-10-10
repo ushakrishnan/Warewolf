@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
@@ -25,7 +26,18 @@ namespace Dev2.Runtime.ESB.Management.Services
 {
     public class FetchResourceDuplicates : IEsbManagementEndpoint
     {
+
         private IExplorerServerResourceRepository _serverExplorerRepository;
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
 
         public string HandlesType()
         {
@@ -34,7 +46,7 @@ namespace Dev2.Runtime.ESB.Management.Services
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2Logger.Info("Fetch Duplicate ResourcesError");
+            Dev2Logger.Info("Fetch Duplicate ResourcesError", GlobalConstants.WarewolfInfo);
             var serializer = new Dev2JsonSerializer();
             try
             {
@@ -45,7 +57,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Info("Fetch Duplicate ResourcesError", e);
+                Dev2Logger.Info("Fetch Duplicate ResourcesError", e, GlobalConstants.WarewolfInfo);
                 IExplorerRepositoryResult error = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
                 return serializer.SerializeToBuilder(error);
             }

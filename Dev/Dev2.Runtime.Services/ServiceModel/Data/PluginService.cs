@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,10 +9,12 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.DynamicServices;
 using Dev2.Runtime.Hosting;
@@ -27,7 +29,8 @@ namespace Dev2.Runtime.ServiceModel.Data
         // BUG 9500 - 2013.05.31 - TWR : added
         public string Namespace { get; set; }
         public string SerializedResult { get; set; }
-
+        public ServiceConstructor Constructor { get; set; }
+        public List<IDev2MethodInfo> MethodsToRun { get; set; }
         #region CTOR
 
         public PluginService()
@@ -36,6 +39,8 @@ namespace Dev2.Runtime.ServiceModel.Data
             ResourceType = "PluginService";
             Source = new PluginSource();
             Recordsets = new RecordsetList();
+            MethodsToRun = new List<IDev2MethodInfo>();
+            Constructor = new ServiceConstructor();
             Method = new ServiceMethod();
         }
 
@@ -46,6 +51,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             var action = xml.Descendants("Action").FirstOrDefault(); ;
             if(action == null)
             {
+                
                 if (xml.HasAttributes && xml.Attribute("Type").Value == "Plugin")
                 {
                     action = xml;

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +15,7 @@ using Dev2.Common.Interfaces.Scripting;
 using IronPython.Hosting;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
-// ReSharper disable NonLocalizedString
+
 
 namespace Dev2.Development.Languages.Scripting
 {
@@ -60,9 +60,13 @@ namespace Dev2.Development.Languages.Scripting
 
         private void AddScriptToContext(ScriptEngine pyEng, ScriptScope scope)
         {
-            if(_sources != null && _sources.GetFileScriptSources() != null)
-                foreach(var fileScriptSource in _sources.GetFileScriptSources())
+            if(_sources?.GetFileScriptSources() != null)
+            {
+                foreach (var fileScriptSource in _sources.GetFileScriptSources())
+                {
                     pyEng.Execute(fileScriptSource.GetReader().ReadToEnd(), scope);
+                }
+            }
         }
 
         public enScriptType HandlesType()

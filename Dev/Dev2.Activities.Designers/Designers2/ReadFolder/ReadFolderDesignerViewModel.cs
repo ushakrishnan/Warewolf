@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,9 @@
 
 using System.Activities.Presentation.Model;
 using Dev2.Activities.Designers2.Core;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
+
+
 
 namespace Dev2.Activities.Designers2.ReadFolder
 {
@@ -25,6 +27,7 @@ namespace Dev2.Activities.Designers2.ReadFolder
             {
                 IsFilesSelected = true;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_File_Read_Folder;
         }
 
         public override void Validate()
@@ -34,17 +37,14 @@ namespace Dev2.Activities.Designers2.ReadFolder
             ValidateInputPath();
         }
 
-        bool IsFilesAndFoldersSelected { set { SetProperty(value); } get { return GetProperty<bool>(); } }
-        bool IsFoldersSelected { set { SetProperty(value); } get { return GetProperty<bool>(); } }
-        bool IsFilesSelected { set { SetProperty(value); } get { return GetProperty<bool>(); } }
+        bool IsFilesAndFoldersSelected => GetProperty<bool>();
+        bool IsFoldersSelected => GetProperty<bool>();
+        bool IsFilesSelected { set => SetProperty(value); get => GetProperty<bool>(); }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

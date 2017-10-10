@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,10 +32,7 @@ namespace Warewolf.Studio.Views
         public string GetHeaderText()
         {
             BindingExpression be = HeaderTextBlock.GetBindingExpression(TextBlock.TextProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return HeaderTextBlock.Text;
         }
 
@@ -55,6 +52,8 @@ namespace Warewolf.Studio.Views
                     return viewModel != null && viewModel.SaveCommand.CanExecute(null);
                 case "Test Connection":
                     return TestConnection.Command.CanExecute(null);
+                default:
+                    break;
             }
             return false;
         }
@@ -76,20 +75,14 @@ namespace Warewolf.Studio.Views
         public Visibility GetUsernameVisibility()
         {
             BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
         public Visibility GetPasswordVisibility()
         {
             BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
@@ -101,19 +94,13 @@ namespace Warewolf.Studio.Views
         public void PerformSave()
         {
             var viewModel = DataContext as SharepointServerSourceViewModel;
-            if (viewModel != null)
-            {
-                viewModel.SaveCommand.Execute(null);
-            }
+            viewModel?.SaveCommand.Execute(null);
         }
 
         public string GetErrorMessage()
         {
-            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBlock.TextProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
+            be?.UpdateTarget();
             return ErrorTextBlock.Text;
         }
 

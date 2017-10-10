@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Common;
@@ -37,6 +36,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             var action = xml.Descendants("Action").FirstOrDefault();
             if (action == null)
             {
+                
                 if (xml.HasAttributes && xml.Attribute("Type").Value == "InvokeStoredProc")
                 {
                     action = xml;
@@ -64,7 +64,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         public override XElement ToXml()
         {
-            var actionName = Recordset == null || Recordset.Name == null ? string.Empty : Recordset.Name;
+            var actionName = Recordset?.Name == null ? string.Empty : Recordset.Name;
             var result = CreateXml(enActionType.InvokeStoredProc, actionName, Source, new RecordsetList { Recordset });
             return result;
         }
@@ -73,7 +73,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         #region Create
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static DbService Create()
         {
             var result = new DbService

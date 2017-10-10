@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,11 +15,11 @@ using System.Linq;
 using System.Parsing.Intellisense;
 using Dev2.Data.Exceptions;
 using Dev2.DataList.Contract;
-using Dev2.DataList.Contract.Interfaces;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
+using Dev2.Data.Interfaces;
 
 namespace Dev2.Utils
 {
@@ -35,8 +35,6 @@ namespace Dev2.Utils
         /// <returns></returns>
         public IList<string> FormatDsfActivityField(string activityField)
         {
-            //2013.06.10: Ashley Lewis for bug 9306 - handle the case of miss-matched region braces
-
             IList<string> result = new List<string>();
 
             var regions = DataListCleaningUtils.SplitIntoRegionsForFindMissing(activityField);
@@ -78,7 +76,7 @@ namespace Dev2.Utils
                 {
                     nodes[0].CollectNodes(allNodes);
 
-                    // ReSharper disable once ForCanBeConvertedToForeach
+                    
                     for(int i = 0; i < allNodes.Count; i++)
                     {
                         if(allNodes[i] is DatalistRecordSetNode)
@@ -112,17 +110,17 @@ namespace Dev2.Utils
         }
 
 
-        protected static IEnvironmentModel ActiveEnvironment { get; set; }
+        protected static IServer ActiveEnvironment { get; set; }
 
-        public static void CheckIfRemoteWorkflowAndSetProperties(DsfActivity dsfActivity, IContextualResourceModel resource, IEnvironmentModel contextEnv)
+        public static void CheckIfRemoteWorkflowAndSetProperties(DsfActivity dsfActivity, IContextualResourceModel resource, IServer contextEnv)
         {
             
             if(resource != null && resource.ResourceType == ResourceType.WorkflowService && contextEnv != null)
             {
-                if(contextEnv.ID != resource.Environment.ID)
+                if(contextEnv.EnvironmentID != resource.Environment.EnvironmentID)
                 {
                     dsfActivity.ServiceUri = resource.Environment.Connection.WebServerUri.AbsoluteUri;
-                    dsfActivity.ServiceServer = resource.Environment.ID;
+                    dsfActivity.ServiceServer = resource.Environment.EnvironmentID;
                   
                 }
                 dsfActivity.FriendlySourceName = new InArgument<string>(resource.Environment.Connection.WebServerUri.Host);

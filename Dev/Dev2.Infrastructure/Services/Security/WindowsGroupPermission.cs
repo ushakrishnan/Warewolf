@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -58,9 +57,9 @@ namespace Dev2.Services.Security
             }
         }
 
-        // ReSharper disable InconsistentNaming
+        
         public Guid ResourceID { get { return _resourceId; } set { OnPropertyChanged(ref _resourceId, value); } }
-// ReSharper restore InconsistentNaming
+
 
         public string ResourceName { get { return _resourceName; } set { OnPropertyChanged(ref _resourceName, value); } }
 
@@ -213,7 +212,7 @@ namespace Dev2.Services.Security
             };
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static WindowsGroupPermission CreateEveryone()
         {
             return new WindowsGroupPermission

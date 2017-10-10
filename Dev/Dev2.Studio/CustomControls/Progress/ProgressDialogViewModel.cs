@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -95,9 +95,9 @@ namespace Dev2.CustomControls.Progress
             }
             set
             {
-                // ReSharper disable CompareOfFloatsByEqualityOperator
+                
                 if(_progressValue != value)
-                // ReSharper restore CompareOfFloatsByEqualityOperator
+                
                 {
                     _progressValue = value;
                     OnPropertyChanged();
@@ -135,10 +135,7 @@ namespace Dev2.CustomControls.Progress
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if(handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

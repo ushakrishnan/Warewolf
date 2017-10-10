@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,9 +12,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Data.Interfaces.Enums;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.DataList.Contract
 {
     public class DefinitionBuilder

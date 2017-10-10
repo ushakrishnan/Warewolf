@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,18 +19,21 @@ using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Data.Decision;
 using Dev2.Data.SystemTemplates.Models;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Diagnostics.Debug;
 using Dev2.Interfaces;
 using Microsoft.CSharp.Activities;
 using Newtonsoft.Json;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
+
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
     public abstract class DsfFlowNodeActivity<TResult> : DsfActivityAbstract<TResult>, IFlowNodeActivity
     {
@@ -70,7 +73,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 _expression.ExpressionText = value;
             }
         }
-
         #endregion
 
         #region CacheMetadata
@@ -129,7 +131,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     DispatchDebugState(dataObject, StateType.After, 0);
                 }
 
-                OnExecutedCompleted(context, false, false);
+                OnExecutedCompleted(context);
             }
             finally
             {
@@ -150,7 +152,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 DispatchDebugState(dataObject, StateType.After, 0);
             }
-            OnExecutedCompleted(faultContext, true, false);
+            OnExecutedCompleted(faultContext);
         }
 
         #endregion
@@ -172,17 +174,16 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             try
             {
                 Dev2DecisionStack dds = DataListUtil.ConvertFromJsonToModel<Dev2DecisionStack>(val);
-                ErrorResultTO error;
-                string userModel = dds.GenerateUserFriendlyModel(env, dds.Mode, out error);
+                string userModel = dds.GenerateUserFriendlyModel(env, dds.Mode, out ErrorResultTO error);
                 allErrors.MergeErrors(error);
 
                 foreach (Dev2Decision dev2Decision in dds.TheStack)
                 {
-                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dds.Mode, dev2Decision.Col1, out  error);
+                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dev2Decision.Col1, out  error);
                     allErrors.MergeErrors(error);
-                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dds.Mode, dev2Decision.Col2, out error);
+                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dev2Decision.Col2, out error);
                     allErrors.MergeErrors(error);
-                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dds.Mode, dev2Decision.Col3, out error);
+                    AddInputDebugItemResultsAfterEvaluate(result, ref userModel, env, dev2Decision.Col3, out error);
                     allErrors.MergeErrors(error);
                 }
 
@@ -228,7 +229,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return result.Select(a => a as DebugItem).ToList();
         }
 
-        void AddInputDebugItemResultsAfterEvaluate(List<IDebugItem> result, ref string userModel, IExecutionEnvironment env, Dev2DecisionMode decisionMode, string expression, out ErrorResultTO error, DebugItem parent = null)
+        void AddInputDebugItemResultsAfterEvaluate(List<IDebugItem> result, ref string userModel, IExecutionEnvironment env, string expression, out ErrorResultTO error, DebugItem parent = null)
         {
             error = new ErrorResultTO();
             if(expression != null && DataListUtil.IsEvaluated(expression))
@@ -240,7 +241,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 }
                 else
                 {
-                    var expressiomToStringValue = ExecutionEnvironment.WarewolfEvalResultToString(env.Eval(expression, 0));// EvaluateExpressiomToStringValue(expression, decisionMode, dataList);
+                    var expressiomToStringValue = ExecutionEnvironment.WarewolfEvalResultToString(env.Eval(expression, 0));
                     userModel = userModel.Replace(expression, expressiomToStringValue);
                     debugResult = new DebugItemWarewolfAtomResult(expressiomToStringValue, expression, "");
                 }
@@ -288,21 +289,24 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 Dev2DecisionStack dds = DataListUtil.ConvertFromJsonToModel<Dev2DecisionStack>(val);
 
-                if(_theResult.ToString() == "True")
+                if (_theResult.ToString() == "True")
                 {
                     resultString = dds.TrueArmText;
                 }
-                else if(_theResult.ToString() == "False")
+                else
                 {
-                    resultString = dds.FalseArmText;
+                    if (_theResult.ToString() == "False")
+                    {
+                        resultString = dds.FalseArmText;
+                    }
                 }
 
                 itemToAdd.AddRange(new DebugItemStaticDataParams(resultString, "").GetDebugItemResult());
                 result.Add(itemToAdd);
             }
-                // ReSharper disable EmptyGeneralCatchClause
+                
             catch(Exception)
-                // ReSharper restore EmptyGeneralCatchClause
+                
             {
 
                     itemToAdd.AddRange(new DebugItemStaticDataParams(resultString, "").GetDebugItemResult());
@@ -348,8 +352,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             if (obj is IFlowNodeActivity)
             {
                 var flowNodeAct = this as IFlowNodeActivity;
-                var other = act as IFlowNodeActivity;
-                if (other != null)
+                if (act is IFlowNodeActivity other)
                 {
                     return UniqueID == act.UniqueID && flowNodeAct.ExpressionText.Equals(other.ExpressionText);
                 }

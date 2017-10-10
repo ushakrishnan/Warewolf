@@ -1,24 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Infrastructure;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class SaveComPluginSource : IEsbManagementEndpoint
     {
-        IExplorerServerResourceRepository _serverExplorerRepository;
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
+        private IResourceCatalog _resourceCatalog;
+
+        public SaveComPluginSource()
+        {
+            
+        }
+        public SaveComPluginSource(IResourceCatalog resourceCatalog)
+        {
+            _resourceCatalog = resourceCatalog;
+        }
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
@@ -26,18 +46,24 @@ namespace Dev2.Runtime.ESB.Management.Services
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
+                Dev2Logger.Info("Save Com Plugin Source", GlobalConstants.WarewolfInfo);
 
-                Dev2Logger.Info("Save Com Plugin Source");
-                StringBuilder resourceDefinition;
-
-                values.TryGetValue("ComPluginSource", out resourceDefinition);
+                values.TryGetValue("ComPluginSource", out StringBuilder resourceDefinition);
 
                 var src = serializer.Deserialize<ComPluginSourceDefinition>(resourceDefinition);
-                if(src.ResourcePath == null) 
+                if (src.ResourcePath == null)
+                {
                     src.ResourcePath = string.Empty;
+                }
+
                 if (src.ResourcePath.EndsWith("\\"))
+                {
                     src.ResourcePath = src.ResourcePath.Substring(0, src.ResourcePath.LastIndexOf("\\", StringComparison.Ordinal));
-                var res = new ComPluginSource
+                }
+
+                ComPluginSource res1;
+                var existingSource = ResourceCat.GetResource(GlobalConstants.ServerWorkspaceID, src.Name);
+                res1 = existingSource != null ? existingSource as ComPluginSource : new ComPluginSource
                 {
                     ResourceID = src.Id,
                     ClsId = src.ClsId,
@@ -45,7 +71,10 @@ namespace Dev2.Runtime.ESB.Management.Services
                     ComName = src.SelectedDll.Name,
                     ResourceName = src.ResourceName
                 };
-                ResourceCatalog.Instance.SaveResource(GlobalConstants.ServerWorkspaceID, res, src.ResourcePath);
+
+
+
+                ResourceCat.SaveResource(GlobalConstants.ServerWorkspaceID, res1, src.ResourcePath);
                 msg.HasError = false;
 
             }
@@ -53,8 +82,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
-                  
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
+
             }
 
             return serializer.SerializeToBuilder(msg);
@@ -68,10 +97,10 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             return newDs;
         }
-        public IExplorerServerResourceRepository ServerExplorerRepo
+        public IResourceCatalog ResourceCat
         {
-            get { return _serverExplorerRepository ?? ServerExplorerRepository.Instance; }
-            set { _serverExplorerRepository = value; }
+            get { return _resourceCatalog ?? ResourceCatalog.Instance; }
+            set { _resourceCatalog = value; }
         }
         public string HandlesType()
         {

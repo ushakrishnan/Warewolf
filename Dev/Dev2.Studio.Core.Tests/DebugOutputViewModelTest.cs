@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,33 +14,35 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
-using Dev2.Common.Interfaces;
+using Caliburn.Micro;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Infrastructure.Events;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Diagnostics.Debug;
-using Dev2.Interfaces;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core;
+using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Diagnostics;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.Diagnostics;
-using Dev2.ViewModels.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Dev2.Studio.Interfaces.Enums;
+
 
 namespace Dev2.Core.Tests
 {
     [ExcludeFromCodeCoverage]
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public partial class DebugOutputViewModelTest
     {
         static Mock<IResourceRepository> _resourceRepo = new Mock<IResourceRepository>();
-        private static Mock<IEnvironmentModel> _environmentModel;
-        private static IEnvironmentRepository _environmentRepo;
+        private static Mock<IServer> _environmentModel;
+        private static IServerRepository _serverRepo;
         private static Mock<IContextualResourceModel> _firstResource;
         const string _resourceName = "TestResource";
         const string _displayName = "test2";
@@ -89,7 +91,7 @@ namespace Dev2.Core.Tests
             Assert.AreEqual(default(int), vm.DepthMin);
             Assert.AreEqual(default(int), vm.DepthMax);
         }
-        
+
 
         [TestMethod]
         [Owner("Sanele Mthembu")]
@@ -106,18 +108,21 @@ namespace Dev2.Core.Tests
             var countBefore = contentItems.Count;
             Assert.IsTrue(countBefore > 0);
             foreach (var contentItem in contentItems)
+            {
                 Assert.AreEqual(default(DateTime), contentItem.EndTime);
+            }
+
             var content = new Mock<IDebugState>();
             content.SetupProperty(state => state.StateType, StateType.None);
             content.SetupProperty(state => state.EndTime, endTime);
             content.SetupProperty(state => state.SessionID, Guid.NewGuid());
             content.SetupProperty(state => state.EnvironmentID, Guid.NewGuid());
-            
+
             content.SetupProperty(state => state.Server, localhost);
             Assert.IsTrue(string.Equals(localhost, content.Object.Server));
             vm.AddItemToTree(content.Object);
             Assert.IsFalse(string.Equals(localhost, content.Object.Server));
-        }        
+        }
 
         [TestMethod]
         [Owner("Sanele Mthembu")]
@@ -128,7 +133,7 @@ namespace Dev2.Core.Tests
             var lineItem = new Mock<IDebugLineItem>();
             lineItem.SetupGet(l => l.MoreLink).Returns("Something");
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
             var mockHelpWindowViewModel = new Mock<IHelpWindowViewModel>();
             mainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpWindowViewModel.Object);
             vm.HighlightError = false;
@@ -145,14 +150,14 @@ namespace Dev2.Core.Tests
             var vm = DebugOutputViewModelMock();
             var lineItem = new Mock<IDebugLineItem>();
             lineItem.SetupGet(l => l.MoreLink).Returns("Something");
-            
-            var mainViewModel = new Mock<IMainViewModel>();
+
+            var mainViewModel = new Mock<IShellViewModel>();
             var mockHelpWindowViewModel = new Mock<IHelpWindowViewModel>();
             mainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpWindowViewModel.Object);
 
             var dbgS = new Mock<IDebugState>();
             dbgS.SetupProperty(state => state.SessionID, vm.SessionID);
-            dbgS.SetupProperty(state => state.StateType, StateType.Start);            
+            dbgS.SetupProperty(state => state.StateType, StateType.Start);
             dbgS.SetupProperty(state => state.EnvironmentID, Guid.NewGuid());
             vm.ShowVersion = true;
             vm.Append(dbgS.Object);
@@ -167,7 +172,7 @@ namespace Dev2.Core.Tests
             var lineItem = new Mock<IDebugLineItem>();
             lineItem.SetupGet(l => l.MoreLink).Returns("Something");
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
             var mockHelpWindowViewModel = new Mock<IHelpWindowViewModel>();
             mainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpWindowViewModel.Object);
             var dbgS = new Mock<IDebugState>();
@@ -181,17 +186,18 @@ namespace Dev2.Core.Tests
         public void Given_ShowOptionCommandShould_ShowOptions()
         {
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, GetEnvironmentRepository(),
-                new Mock<IDebugOutputFilterStrategy>().Object) {SkipOptionsCommandExecute = true};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { SkipOptionsCommandExecute = true };
             var lineItem = new Mock<IDebugLineItem>();
             lineItem.SetupGet(l => l.MoreLink).Returns("Something");
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
             var mockHelpWindowViewModel = new Mock<IHelpWindowViewModel>();
             mainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpWindowViewModel.Object);
 
             var dbgS = new Mock<IDebugState>();
             dbgS.SetupProperty(state => state.SessionID, vm.SessionID);
-            dbgS.SetupProperty(state => state.StateType, StateType.Start);            
+            dbgS.SetupProperty(state => state.StateType, StateType.Start);
             Assert.IsTrue(vm.SkipOptionsCommandExecute);
             vm.ShowOptionsCommand.Execute(null);
             Assert.IsFalse(vm.SkipOptionsCommandExecute);
@@ -206,7 +212,7 @@ namespace Dev2.Core.Tests
             var lineItem = new Mock<IDebugLineItem>();
             lineItem.SetupGet(l => l.MoreLink).Returns("Something");
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
             var mockHelpWindowViewModel = new Mock<IHelpWindowViewModel>();
             mainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpWindowViewModel.Object);
 
@@ -236,7 +242,8 @@ namespace Dev2.Core.Tests
             mock2.Setup(s => s.DisconnectedID).Returns(Guid.NewGuid());
             mock1.SetupSet(s => s.ErrorMessage = It.IsAny<string>())
                 .Callback<string>(s => Assert.IsTrue(s.Equals("Error Test")));
-            mock1.SetupSet(s => s.HasError = It.IsAny<bool>()).Callback<bool>(s => Assert.IsTrue(s.Equals(true)));
+            mock1.SetupSet(s => s.HasError = It.IsAny<bool>())
+                .Callback<bool>(s => Assert.IsTrue(s.Equals(true)));
 
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, GetEnvironmentRepository(),
                 new Mock<IDebugOutputFilterStrategy>().Object);
@@ -339,7 +346,7 @@ namespace Dev2.Core.Tests
         public void GivenSuccessAsSearchText_ShouldReturnSuccessFromMessage()
         {
             var vm = DebugOutputViewModelMock();
-            Assert.AreEqual(1, vm.RootItems.Count);                        
+            Assert.AreEqual(1, vm.RootItems.Count);
             vm.SearchText = "Success";
         }
 
@@ -351,7 +358,7 @@ namespace Dev2.Core.Tests
             var initialValForMinAndMax = default(int);
             var newAssignedVal = 250;
             Assert.AreEqual(initialValForMinAndMax, vm.DepthMin);
-            Assert.AreEqual(initialValForMinAndMax, vm.DepthMax);            
+            Assert.AreEqual(initialValForMinAndMax, vm.DepthMax);
             vm.DepthMax = newAssignedVal;
             vm.DepthMin = newAssignedVal;
             Assert.IsTrue(vm.DepthMin != initialValForMinAndMax && vm.DepthMax != initialValForMinAndMax);
@@ -377,15 +384,18 @@ namespace Dev2.Core.Tests
             var vm = DebugOutputViewModelMock();
             var privateObject = new PrivateObject(vm);
             Assert.IsNotNull(privateObject);
-                        
+
             var contentItems = privateObject.GetField("_contentItems") as List<IDebugState>;
             Assert.IsNotNull(contentItems);
             var countBefore = contentItems.Count;
             Assert.IsTrue(countBefore > 0);
             foreach (var contentItem in contentItems)
+            {
                 Assert.AreEqual(default(DateTime), contentItem.EndTime);
+            }
+
             var content = new Mock<IDebugState>();
-            content.SetupProperty(state => state.StateType, StateType.Duration);            
+            content.SetupProperty(state => state.StateType, StateType.Duration);
             content.SetupProperty(state => state.EndTime, endTime);
             vm.AddItemToTree(content.Object);
             Assert.AreEqual(countBefore, contentItems.Count);
@@ -438,7 +448,8 @@ namespace Dev2.Core.Tests
             mock2.SetupGet(m => m.ParentID).Returns(_firstResourceID);
 
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, GetEnvironmentRepository(),
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Stopping};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Stopping };
             vm.Append(mock1.Object);
             vm.Append(mock2.Object);
             Assert.AreEqual(0, vm.RootItems.Count);
@@ -458,7 +469,8 @@ namespace Dev2.Core.Tests
             mock2.SetupGet(m => m.ParentID).Returns(_firstResourceID);
 
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, GetEnvironmentRepository(),
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Finished};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Finished };
             vm.Append(mock1.Object);
             vm.Append(mock2.Object);
             Assert.AreEqual(0, vm.RootItems.Count);
@@ -507,15 +519,15 @@ namespace Dev2.Core.Tests
             const string ResourceName = "TestResource";
             var environmentID = Guid.NewGuid();
             var mockShellViewModel = new Mock<IShellViewModel>();
-            mockShellViewModel.Setup(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            mockShellViewModel.Setup(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(),It.IsAny<IServer>()))
                 .Verifiable();
             CustomContainer.Register(mockShellViewModel.Object);
-            var envList = new List<IEnvironmentModel>();
-            var envRepository = new Mock<IEnvironmentRepository>();
+            var envList = new List<IServer>();
+            var envRepository = new Mock<IServerRepository>();
             envRepository.Setup(e => e.All()).Returns(envList);
 
-            var env = new Mock<IEnvironmentModel>();
-            env.Setup(e => e.ID).Returns(environmentID);
+            var env = new Mock<IServer>();
+            env.Setup(e => e.EnvironmentID).Returns(environmentID);
             env.Setup(e => e.IsConnected).Returns(true);
 
             // If we get here then we've found the environment based on the environment ID!
@@ -537,7 +549,7 @@ namespace Dev2.Core.Tests
 
             model.OpenItemCommand.Execute(debugState);
 
-            mockShellViewModel.Verify(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>()));
+            mockShellViewModel.Verify(viewModel => viewModel.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(),It.IsAny<IServer>()));
         }
 
         [TestMethod]
@@ -590,7 +602,8 @@ namespace Dev2.Core.Tests
             var mock1 = new Mock<IDebugState>();
             mock1.Setup(m => m.IsFinalStep()).Returns(false);
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, GetEnvironmentRepository(),
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Ready};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Ready };
 
             //*********************Test********************
             vm.Append(mock1.Object);
@@ -609,11 +622,12 @@ namespace Dev2.Core.Tests
             var envRepo = GetEnvironmentRepository();
 
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Executing};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Executing };
             for (var i = 0; i < 10; i++)
             {
                 var state = new Mock<IDebugState>();
-                var stateType = i%2 == 0 ? StateType.Message : StateType.After;
+                var stateType = i % 2 == 0 ? StateType.Message : StateType.After;
                 state.Setup(s => s.StateType).Returns(stateType);
                 state.Setup(s => s.SessionID).Returns(vm.SessionID);
                 state.Setup(s => s.DisconnectedID).Returns(Guid.NewGuid());
@@ -638,7 +652,8 @@ namespace Dev2.Core.Tests
             var envRepo = GetEnvironmentRepository();
 
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Finished};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Finished };
 
             var state = new Mock<IDebugState>();
             state.Setup(s => s.StateType).Returns(StateType.After);
@@ -654,9 +669,9 @@ namespace Dev2.Core.Tests
             vm.Append(state.Object);
 
             Assert.AreEqual(3, vm.RootItems.Count);
-            Assert.IsInstanceOfType(vm.RootItems[0], typeof (DebugStringTreeViewItemViewModel));
-            Assert.IsInstanceOfType(vm.RootItems[1], typeof (DebugStateTreeViewItemViewModel));
-            Assert.IsInstanceOfType(vm.RootItems[2], typeof (DebugStringTreeViewItemViewModel));
+            Assert.IsInstanceOfType(vm.RootItems[0], typeof(DebugStringTreeViewItemViewModel));
+            Assert.IsInstanceOfType(vm.RootItems[1], typeof(DebugStateTreeViewItemViewModel));
+            Assert.IsInstanceOfType(vm.RootItems[2], typeof(DebugStringTreeViewItemViewModel));
         }
 
         [TestMethod]
@@ -668,7 +683,8 @@ namespace Dev2.Core.Tests
             var envRepo = GetEnvironmentRepository();
 
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Stopping};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Stopping };
 
             var state = new Mock<IDebugState>();
             state.Setup(s => s.StateType).Returns(StateType.After);
@@ -683,7 +699,7 @@ namespace Dev2.Core.Tests
         static void CreateFullExportsAndVm()
         {
             CreateEnvironmentModel();
-            _environmentRepo = GetEnvironmentRepository();
+            _serverRepo = GetEnvironmentRepository();
             _popupController = new Mock<IPopupController>();
 
         }
@@ -704,17 +720,17 @@ namespace Dev2.Core.Tests
             return result;
         }
 
-        public static IEnvironmentRepository GetEnvironmentRepository()
+        public static IServerRepository GetEnvironmentRepository()
         {
-            var models = new List<IEnvironmentModel> {_environmentModel.Object};
-            var mock = new Mock<IEnvironmentRepository>();
+            var models = new List<IServer> { _environmentModel.Object };
+            var mock = new Mock<IServerRepository>();
             mock.Setup(s => s.All()).Returns(models);
             mock.Setup(s => s.IsLoaded).Returns(true);
             mock.Setup(repository => repository.Source).Returns(_environmentModel.Object);
-            mock.Setup(repository => repository.FindSingle(It.IsAny<Expression<Func<IEnvironmentModel, bool>>>()))
+            mock.Setup(repository => repository.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>()))
                 .Returns(_environmentModel.Object);
-            _environmentRepo = mock.Object;
-            return _environmentRepo;
+            _serverRepo = mock.Object;
+            return _serverRepo;
         }
 
         static void CreateEnvironmentModel()
@@ -723,22 +739,22 @@ namespace Dev2.Core.Tests
             _resourceRepo = new Mock<IResourceRepository>();
 
             _firstResource = CreateResource(ResourceType.WorkflowService);
-            var coll = new Collection<IResourceModel> {_firstResource.Object};
+            var coll = new Collection<IResourceModel> { _firstResource.Object };
             _resourceRepo.Setup(c => c.All()).Returns(coll);
 
 
             _environmentModel.Setup(m => m.ResourceRepository).Returns(_resourceRepo.Object);
         }
 
-        public static Mock<IEnvironmentModel> CreateMockEnvironment(params string[] sources)
+        public static Mock<IServer> CreateMockEnvironment(params string[] sources)
         {
             var rand = new Random();
             var connection = CreateMockConnection(rand, sources);
 
-            var env = new Mock<IEnvironmentModel>();
+            var env = new Mock<IServer>();
             env.Setup(e => e.Connection).Returns(connection.Object);
             env.Setup(e => e.IsConnected).Returns(true);
-            env.Setup(e => e.ID).Returns(Guid.NewGuid());
+            env.Setup(e => e.EnvironmentID).Returns(Guid.NewGuid());
 
             env.Setup(e => e.Name).Returns($"Server_{rand.Next(1, 100)}");
 
@@ -769,7 +785,8 @@ namespace Dev2.Core.Tests
             //------------Setup for test--------------------------
             var envRepo = GetEnvironmentRepository();
             var viewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Stopping};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Stopping };
 
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
@@ -787,7 +804,8 @@ namespace Dev2.Core.Tests
             //------------Setup for test--------------------------
             var envRepo = GetEnvironmentRepository();
             var viewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Executing};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Executing };
 
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
@@ -815,7 +833,8 @@ namespace Dev2.Core.Tests
             //------------Setup for test--------------------------
             var envRepo = GetEnvironmentRepository();
             var viewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Executing};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Executing };
 
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
@@ -929,7 +948,7 @@ namespace Dev2.Core.Tests
         [TestCategory("DebugOutputViewModel_Constructor")]
         public void DebugOutputViewModel_Constructor_ViewModelSessionIDAndEnvironmentRepoProperlyInitialized()
         {
-            var mockedEnvRepo = new Mock<IEnvironmentRepository>();
+            var mockedEnvRepo = new Mock<IServerRepository>();
 
             //------------Execute Test---------------------------
             var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object,
@@ -937,7 +956,7 @@ namespace Dev2.Core.Tests
 
             // Assert View Model Session ID And Environment Repo Properly Initialized
             Assert.AreNotEqual(Guid.Empty, debugOutputViewModel.SessionID, "Session ID not properly initialized");
-            Assert.AreEqual(mockedEnvRepo.Object, debugOutputViewModel.EnvironmentRepository,
+            Assert.AreEqual(mockedEnvRepo.Object, debugOutputViewModel.ServerRepository,
                 "Environment Repo not initialized");
         }
 
@@ -947,9 +966,10 @@ namespace Dev2.Core.Tests
         public void DebugOutputViewModel_ProcessingText_ShouldReturnDescriptionOfDebugStatus()
         {
             //------------Setup for test--------------------------
-            var mockedEnvRepo = new Mock<IEnvironmentRepository>();
+            var mockedEnvRepo = new Mock<IServerRepository>();
             var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object,
-                new Mock<IDebugOutputFilterStrategy>().Object) {DebugStatus = DebugStatus.Finished};
+                new Mock<IDebugOutputFilterStrategy>().Object)
+            { DebugStatus = DebugStatus.Finished };
             //------------Execute Test---------------------------
             string processingText = debugOutputViewModel.ProcessingText;
             //------------Assert Results-------------------------
@@ -957,15 +977,330 @@ namespace Dev2.Core.Tests
         }
 
         [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void AddNewTestCommand_GivenIsNew_ShouldNotExecute()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object, resourceModel.Object) { DebugStatus = DebugStatus.Finished };
+            //---------------Assert Precondition----------------
+            Assert.IsNotNull(debugOutputViewModel.AddNewTestCommand);
+            //---------------Execute Test ----------------------
+            var canExecute = debugOutputViewModel.AddNewTestCommand.CanExecute(null);
+            //---------------Test Result -----------------------
+            Assert.IsFalse(canExecute);
+        }
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void AddNewTestCommand_GivenIsNewNoresourceCommand_ShouldNotExecute()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            //---------------Assert Precondition----------------
+            Assert.IsNotNull(debugOutputViewModel.AddNewTestCommand);
+            //---------------Execute Test ----------------------
+            var canExecute = debugOutputViewModel.AddNewTestCommand.CanExecute(null);
+            //---------------Test Result -----------------------
+            Assert.IsFalse(canExecute);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowDebugStatus_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowDebugStatus")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowDebugStatus);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowDebugStatus = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowAssertResult_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowAssertResult")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowAssertResult);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowAssertResult = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowOutputs_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowOutputs")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowOutputs);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowOutputs = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowInputs_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowInputs")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowInputs);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowInputs = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowDuration_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowDuration")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowDuration);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowDuration = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowTime_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowTime")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowTime);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowTime = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ShowServer_GivenHasChanged_ShouldFirePropertyChanged()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object) { DebugStatus = DebugStatus.Finished };
+            bool wasCalled=false;
+            debugOutputViewModel.PropertyChanged += (sender, args) =>
+            {
+                if(args.PropertyName == "ShowServer")
+                {
+                    wasCalled = true;
+                }
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsTrue(debugOutputViewModel.ShowServer);
+            //---------------Execute Test ----------------------
+            debugOutputViewModel.ShowServer = false;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(wasCalled);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void Constructor_GivenIsResourceModel_ShouldSetField()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var debugOutpuViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object, resourceModel.Object) ;
+            //---------------Assert Precondition----------------
+            Assert.IsNotNull(debugOutpuViewModel.AddNewTestCommand);
+            //---------------Execute Test ----------------------
+            var fieldInfo = typeof(DebugOutputViewModel).GetField("_contextualResourceModel", BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            var value =(IContextualResourceModel) fieldInfo.GetValue(debugOutpuViewModel);
+            //---------------Test Result -----------------------
+            Assert.IsNotNull(value);
+            Assert.IsTrue(ReferenceEquals(value, resourceModel.Object));
+        }
+
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void CanAddNewTest_GivenNoContextualResourceModel_ShouldReturnFalse()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var mock = new Mock<IEventAggregator>();
+            var newTestFromDebugMessage = new NewTestFromDebugMessage();
+            mock.Setup(aggregator => aggregator.Publish(newTestFromDebugMessage)).Verifiable();
+
+            var debugOutpuViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object);
+            var methodInfo = typeof(DebugOutputViewModel).GetMethod("CanAddNewTest", BindingFlags.Instance | BindingFlags.NonPublic);
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            var invoke = methodInfo.Invoke(debugOutpuViewModel, new object[] { });
+            //---------------Test Result -----------------------
+            Assert.IsFalse(bool.Parse(invoke.ToString()));
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void CanAddNewTest_GivenContextualResourceModelNoRootItems_ShouldReturnfalse()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var mock = new Mock<IEventAggregator>();
+            var newTestFromDebugMessage = new NewTestFromDebugMessage();
+            mock.Setup(aggregator => aggregator.Publish(newTestFromDebugMessage)).Verifiable();
+
+            var debugOutpuViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object, resourceModel.Object);
+            var methodInfo = typeof(DebugOutputViewModel).GetMethod("CanAddNewTest", BindingFlags.Instance | BindingFlags.NonPublic);
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            var invoke = methodInfo.Invoke(debugOutpuViewModel, new object[] { });
+            //---------------Test Result -----------------------
+            Assert.IsFalse(bool.Parse(invoke.ToString()));
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void CanAddNewTest_GivenContextualResourceModelAndRootItems_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var mock = new Mock<IEventAggregator>();
+            var newTestFromDebugMessage = new NewTestFromDebugMessage();
+            mock.Setup(aggregator => aggregator.Publish(newTestFromDebugMessage)).Verifiable();
+            resourceModel.Setup(model => model.IsWorkflowSaved).Returns(true);
+            var debugOutpuViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object, resourceModel.Object);
+            var methodInfo = typeof(DebugOutputViewModel).GetMethod("CanAddNewTest", BindingFlags.Instance | BindingFlags.NonPublic);
+            debugOutpuViewModel.RootItems.Add(new DebugStateTreeViewItemViewModel(new Mock<IServerRepository>().Object));
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            var invoke = methodInfo.Invoke(debugOutpuViewModel, new object[] { });
+            //---------------Test Result -----------------------
+            Assert.IsTrue(bool.Parse(invoke.ToString()));
+        }
+
+        [TestMethod]
+        [Owner("Hagshen Naidu")]
+        public void CanAddNewTest_GivenIsTestView_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var mock = new Mock<IEventAggregator>();
+            var newTestFromDebugMessage = new NewTestFromDebugMessage();
+            mock.Setup(aggregator => aggregator.Publish(newTestFromDebugMessage)).Verifiable();
+            resourceModel.Setup(model => model.IsWorkflowSaved).Returns(false);
+            var debugOutpuViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object, resourceModel.Object);
+            debugOutpuViewModel.IsTestView = true;
+            debugOutpuViewModel.RootItems.Add(new DebugStateTreeViewItemViewModel(new Mock<IServerRepository>().Object));
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            var execute = debugOutpuViewModel.AddNewTestCommand.CanExecute(null);
+            //---------------Test Result -----------------------
+            Assert.IsTrue(execute);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void AddNewTest_GivenEventAggregator_ShouldPublishCorrectly()
+        {
+            //---------------Set up test pack-------------------
+            var mockedEnvRepo = new Mock<IServerRepository>();
+            var resourceModel = new Mock<IContextualResourceModel>();
+            var mock = new Mock<IEventAggregator>();
+            var newTestFromDebugMessage = new NewTestFromDebugMessage();
+            mock.Setup(aggregator => aggregator.Publish(newTestFromDebugMessage)).Verifiable();
+
+            var debugOutpuViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object, resourceModel.Object);
+            var methodInfo = typeof(DebugOutputViewModel).GetMethod("AddNewTest", BindingFlags.Instance | BindingFlags.NonPublic);
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            methodInfo.Invoke(debugOutpuViewModel, new object[] { mock.Object });
+            //---------------Test Result -----------------------
+            mock.Verify(aggregator => aggregator.Publish(It.IsAny<IMessage>()), Times.Once);
+        }
+
+        [TestMethod]
         public void TestUpdateHelpDescriptor()
         {
             //arrange
-            var mockedEnvRepo = new Mock<IEnvironmentRepository>();
+            var mockedEnvRepo = new Mock<IServerRepository>();
             var debugOutputViewModel = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, mockedEnvRepo.Object,
                 new Mock<IDebugOutputFilterStrategy>().Object)
             { DebugStatus = DebugStatus.Finished };
 
-            var mainViewModelMock = new Mock<IMainViewModel>();
+            var mainViewModelMock = new Mock<IShellViewModel>();
             var helpViewModelMock = new Mock<IHelpWindowViewModel>();
             mainViewModelMock.SetupGet(it => it.HelpViewModel).Returns(helpViewModelMock.Object);
             CustomContainer.Register(mainViewModelMock.Object);
@@ -980,11 +1315,11 @@ namespace Dev2.Core.Tests
 
         #region Setup Methods
 
-        static IDebugTreeViewItemViewModel CreateItemViewModel<T>(IEnvironmentRepository envRepository, int n,
+        static IDebugTreeViewItemViewModel CreateItemViewModel<T>(IServerRepository envRepository, int n,
             bool isSelected, IDebugTreeViewItemViewModel parent)
             where T : IDebugTreeViewItemViewModel
         {
-            if (typeof (T) == typeof (DebugStateTreeViewItemViewModel))
+            if (typeof(T) == typeof(DebugStateTreeViewItemViewModel))
             {
                 var content = new DebugState
                 {
@@ -992,7 +1327,7 @@ namespace Dev2.Core.Tests
                     ID = Guid.NewGuid(),
                     ActivityType = ActivityType.Step
                 };
-                var viewModel = new DebugStateTreeViewItemViewModel(envRepository) {Parent = parent, Content = content};
+                var viewModel = new DebugStateTreeViewItemViewModel(envRepository) { Parent = parent, Content = content };
                 if (!isSelected)
                 {
                     // viewModel.IsSelected is true when the ActivityType is Step
@@ -1028,7 +1363,7 @@ namespace Dev2.Core.Tests
             mock1.SetupSet(s => s.HasError = It.IsAny<bool>()).Callback<bool>(s => Assert.IsTrue(s.Equals(true)));
             var vm = new DebugOutputViewModel(new Mock<IEventPublisher>().Object, GetEnvironmentRepository(),
                 new Mock<IDebugOutputFilterStrategy>().Object);
-            
+
             mock1.Setup(m => m.SessionID).Returns(vm.SessionID);
             mock2.Setup(m => m.SessionID).Returns(vm.SessionID);
 

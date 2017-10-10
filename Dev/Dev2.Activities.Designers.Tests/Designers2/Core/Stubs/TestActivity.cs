@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,6 +30,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
             UniqueID = Guid.NewGuid().ToString();
             IsWorkflow = true;
             IsSimulationEnabled = false;
+        }
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
         }
 
         protected override void OnExecute(NativeActivityContext context)

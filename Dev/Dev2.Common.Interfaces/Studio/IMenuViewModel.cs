@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,15 +30,10 @@ namespace Dev2.Common.Interfaces.Studio
         string NewLabel { get; }
         string SaveLabel { get; }
         string DeployLabel { get; }
-        string DatabaseLabel { get; }
-        string DLLLabel { get; }
-        string WebLabel { get; }
         string TaskLabel { get; }
         string DebugLabel { get; }
         string SettingsLabel { get; }
         string SupportLabel { get; }
-        string ForumsLabel { get; }
-        string ToursLabel { get; }
         string NewVersionLabel { get; }
         string LockLabel { get; }
         string LockImage { get; }
@@ -48,9 +43,6 @@ namespace Dev2.Common.Interfaces.Studio
         ICommand SupportCommand { get; }
         bool IsProcessing { get; set; }
         ICommand StartPageCommand { get; }
-        ICommand NewDatabaseSourceCommand { get; set; }
-        ICommand NewPluginSourceCommand { get; set; }
-        ICommand NewWebSourceCommand { get; set; }
 
         void Lock();
     }

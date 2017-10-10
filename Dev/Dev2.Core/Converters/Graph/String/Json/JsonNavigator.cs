@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -186,9 +186,8 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             else if (validPaths.Count == 1 &&
                      validPaths[0].ActualPath == JsonPath.EnumerableSymbol + JsonPath.SeperatorSymbol)
             {
-                var enumerableData = Data as IEnumerable;
 
-                if (enumerableData != null)
+                if (Data is IEnumerable enumerableData)
                 {
                     IEnumerator enumerator = enumerableData.GetEnumerator();
                     enumerator.Reset();
@@ -298,8 +297,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
                     else
                     {
                         bool isPrimitiveArray = false;
-                        var jObject = data as JObject;
-                        if (jObject != null)
+                        if (data is JObject jObject)
                         {
                             JProperty property = jObject.Property(pathSegment.ActualSegment);
                             isPrimitiveArray = property.IsEnumerableOfPrimitives();
@@ -354,14 +352,11 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             var jObject = data as JObject;
 
             JToken returnVal = null;
-            if (jObject != null)
-            {
-                JProperty property = jObject.Property(pathSegment.ActualSegment);
+            JProperty property = jObject?.Property(pathSegment.ActualSegment);
 
-                if (property != null)
-                {
-                    returnVal = property.Value;
-                }
+            if (property != null)
+            {
+                returnVal = property.Value;
             }
 
             return returnVal;
@@ -372,18 +367,14 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             var jObject = data as JObject;
 
             IEnumerable returnVal = null;
-            if (jObject != null)
-            {
-                JProperty property = jObject.Property(pathSegment.ActualSegment);
+            JProperty property = jObject?.Property(pathSegment.ActualSegment);
 
-                if (property != null && property.IsEnumerable())
-                {
-                    returnVal = property.Value as JArray;
-                }
+            if (property != null && property.IsEnumerable())
+            {
+                returnVal = property.Value as JArray;
             }
 
-            var jArray = data as JArray;
-            if(jArray != null)
+            if (data is JArray jArray)
             {
                 returnVal = jArray;
             }

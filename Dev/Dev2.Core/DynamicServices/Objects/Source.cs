@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -81,7 +81,6 @@ namespace Dev2.DynamicServices
         /// </summary>
         public string AssemblyLocation { get; set; }
 
-        //2013.04.29: Ashley Lewis PBI 8721 - The service now stores the namespace in this internal generic source
         /// <summary>
         ///     The namespace the server uses
         /// </summary>
@@ -146,6 +145,38 @@ namespace Dev2.DynamicServices
 
                 case enSourceType.Unknown:
                     WriteCompileError(Resources.CompilerError_InvalidSourceType);
+                    break;
+                case enSourceType.MySqlDatabase:
+                    break;
+                case enSourceType.ODBC:
+                    break;
+                case enSourceType.Oracle:
+                    break;
+                case enSourceType.PostgreSQL:
+                    break;
+                case enSourceType.DynamicService:
+                    break;
+                case enSourceType.ManagementDynamicService:
+                    break;
+                case enSourceType.Dev2Server:
+                    break;
+                case enSourceType.EmailSource:
+                    break;
+                case enSourceType.WebSource:
+                    break;
+                case enSourceType.OauthSource:
+                    break;
+                case enSourceType.SharepointServerSource:
+                    break;
+                case enSourceType.RabbitMQSource:
+                    break;
+                case enSourceType.ExchangeSource:
+                    break;
+                case enSourceType.WcfSource:
+                    break;
+                case enSourceType.ComPluginSource:
+                    break;
+                default:
                     break;
             }
 

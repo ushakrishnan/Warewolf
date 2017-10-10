@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,7 @@
 
 using System.Threading.Tasks;
 using System.Windows.Controls;
-using Dev2.Studio.Core.AppResources.Enums;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.Views.Help;
 using Dev2.ViewModels.Help;
@@ -20,7 +20,7 @@ using Moq;
 
 namespace Dev2.Core.Tests
 {
-    // ReSharper disable InconsistentNaming
+    
     [TestClass]
     public class HelpViewModelTests
     {
@@ -56,32 +56,7 @@ namespace Dev2.Core.Tests
             Assert.AreEqual(null, helpViewModel.HelpViewWrapper);
             Assert.IsFalse(helpViewModel.IsViewAvailable);
         }
-
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("HelpViewModel_OnViewLoaded")]
-        public async Task HelpViewModel_LoadBrowserUri_HasNoInternetConnection_NavigatesToOnDiskResource()
-        {
-            //------------Setup for test--------------------------
-            const string uri = "http://community.warewolf.io/";
-            var networkHelper = new Mock<INetworkHelper>();
-            var task = new Task<bool>(() => false);
-            task.RunSynchronously();
-            networkHelper.Setup(m => m.HasConnectionAsync(It.IsAny<string>()))
-                .Returns(task);
-            var helpViewWrapper = new Mock<IHelpViewWrapper>(); 
-            helpViewWrapper.Setup(m => m.Navigate(It.IsAny<string>())).Verifiable();
-            var helpViewModel = new HelpViewModel(networkHelper.Object,helpViewWrapper.Object, false);
-            HelpView helpView = new HelpView();
-            helpViewWrapper.SetupGet(m => m.HelpView).Returns(helpView);
-            //------------Execute Test---------------------------
-            await helpViewModel.LoadBrowserUri(uri);
-            //------------Assert Results-------------------------
-            helpViewWrapper.Verify(m => m.Navigate(It.IsAny<string>()), Times.Once());
-            Assert.IsNotNull(helpViewModel.Uri);
-            Assert.IsNotNull(helpViewModel.ResourcePath);
-        }
-
+        
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("HelpViewModel_OnViewLoaded")]
@@ -95,7 +70,7 @@ namespace Dev2.Core.Tests
             networkHelper.Setup(m => m.HasConnectionAsync(It.IsAny<string>()))
                 .Returns(task);
             var helpViewWrapper = new Mock<IHelpViewWrapper>();
-            WebBrowser webBrowser = new WebBrowser();   
+            Frame webBrowser = new Frame();   
             helpViewWrapper.SetupGet(m => m.WebBrowser).Returns(webBrowser);
             helpViewWrapper.Setup(m => m.Navigate(It.IsAny<string>())).Verifiable();
             var helpViewModel = new HelpViewModel(networkHelper.Object, helpViewWrapper.Object, false);

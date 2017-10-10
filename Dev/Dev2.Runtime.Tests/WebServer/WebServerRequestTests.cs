@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,7 +26,7 @@ namespace Dev2.Tests.Runtime.WebServer
         [Owner("Trevor Williams-Ros")]
         [TestCategory("WebServerRequest_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
-        // ReSharper disable InconsistentNaming
+        
         public void WebServerRequest_Constructor_RequestIsNull_ThrowsArgumentNullException()
         {
             //------------Setup for test--------------------------
@@ -60,12 +60,7 @@ namespace Dev2.Tests.Runtime.WebServer
         [TestCategory("WebServerRequest_Constructor")]
         public void WebServerRequest_Constructor_PropertiesInitialized()
         {
-            //------------Setup for test--------------------------            
-            string content;
-            NameValueCollection boundVars;
-            NameValueCollection queryStr;
-            NameValueCollection headers;
-            var request = CreateHttpRequest(out content, out boundVars, out queryStr, out headers);
+            var request = CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers);
 
             //------------Execute Test---------------------------
             var webServerRequest = new WebServerRequest(request, boundVars);
@@ -124,6 +119,6 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(expectedContent, content);
         }
 
-        // ReSharper restore InconsistentNaming
+
     }
 }

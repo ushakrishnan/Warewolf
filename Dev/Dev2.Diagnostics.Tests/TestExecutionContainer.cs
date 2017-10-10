@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Monitoring;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.PerformanceCounters.Counters;
 using Dev2.PerformanceCounters.Management;
+using Dev2.Runtime;
 using Dev2.Runtime.ESB.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Diagnostics.Test
 {
@@ -27,7 +28,7 @@ namespace Dev2.Diagnostics.Test
                 {
                     PerformanceCounterCategory.Delete("Warewolf");
                 }
-                // ReSharper disable once EmptyGeneralCatchClause
+                
                 catch { }
 
                 WarewolfPerformanceCounterRegister register = new WarewolfPerformanceCounterRegister(new List<IPerformanceCounter>
@@ -45,7 +46,7 @@ namespace Dev2.Diagnostics.Test
             catch (Exception err)
             {
                 // ignored
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
         }
 
@@ -80,13 +81,12 @@ namespace Dev2.Diagnostics.Test
         public void PerfmonContainer_Ctor_WrappedMethods()
         {
             var cont = new Cont();
-            ErrorResultTO err;
 
             //------------Setup for test--------------------------
             var perfmonContainer = new PerfmonExecutionContainer(cont);
 
             //------------Execute Test---------------------------
-            perfmonContainer.Execute(out err, 3);
+            perfmonContainer.Execute(out ErrorResultTO err, 3);
             //------------Assert Results-------------------------
             Assert.AreEqual(1, cont.CallCount);
             Assert.AreEqual(perfmonContainer.InstanceInputDefinition, "bob");

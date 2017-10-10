@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,9 +13,9 @@ using System.Activities.Expressions;
 using System.Text;
 using Dev2.Core.Tests.Environments;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -25,7 +25,7 @@ namespace Dev2.Core.Tests.Factories
     [TestClass]
     public class DsfActivityFactoryTests
     {
-        // ReSharper disable InconsistentNaming
+        
 
         [TestMethod]
         [TestCategory("DsfActivityFactory_CreateDsfActivity")]
@@ -38,8 +38,8 @@ namespace Dev2.Core.Tests.Factories
 
             var activity = new DsfActivity();
 
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(expectedEnvironmentID);
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(expectedEnvironmentID);
 
             var model = new Mock<IContextualResourceModel>();
             model.Setup(m => m.ResourceType).Returns(ResourceType.Service);
@@ -68,8 +68,8 @@ namespace Dev2.Core.Tests.Factories
 
             var activity = new DsfActivity();
 
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(expectedEnvironmentID);
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(expectedEnvironmentID);
 
             var model = new Mock<IContextualResourceModel>();
             model.Setup(m => m.ResourceType).Returns(ResourceType.Service);
@@ -96,8 +96,8 @@ namespace Dev2.Core.Tests.Factories
 
             var activity = new DsfActivity();
 
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(expectedEnvironmentID);
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(expectedEnvironmentID);
 
             var model = new Mock<IContextualResourceModel>();
             model.Setup(m => m.ResourceType).Returns(ResourceType.Service);
@@ -124,8 +124,8 @@ namespace Dev2.Core.Tests.Factories
 
             var activity = new DsfActivity();
 
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(expectedEnvironmentID);
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(expectedEnvironmentID);
 
             var model = new Mock<IContextualResourceModel>();
             model.Setup(m => m.ResourceType).Returns(ResourceType.Service);
@@ -152,8 +152,8 @@ namespace Dev2.Core.Tests.Factories
 
             var activity = new DsfActivity();
 
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(expectedEnvironmentID); // Set the active environment
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(expectedEnvironmentID); // Set the active environment
 
             var model = new Mock<IContextualResourceModel>();
             model.Setup(m => m.ResourceType).Returns(ResourceType.Service);
@@ -181,8 +181,8 @@ namespace Dev2.Core.Tests.Factories
 
             var activity = new DsfActivity();
 
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(expectedEnvironmentID);
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(expectedEnvironmentID);
 
             var model = new Mock<IContextualResourceModel>();
             model.Setup(m => m.ResourceType).Returns(ResourceType.Service);
@@ -199,26 +199,26 @@ namespace Dev2.Core.Tests.Factories
             Assert.AreEqual(expectedEnvironmentID.ToString(), activity.EnvironmentID.Expression.ToString());
         }
 
-        static IEnvironmentRepository SetupEnvironmentRepo(Guid environmentId)
+        static IServerRepository SetupEnvironmentRepo(Guid environmentId)
         {
             var mockResourceRepository = new Mock<IResourceRepository>();
-            Mock<IEnvironmentModel> mockEnvironment = EnviromentRepositoryTest.CreateMockEnvironment(mockResourceRepository.Object, "localhost");
-            mockEnvironment.Setup(model => model.ID).Returns(environmentId);
+            Mock<IServer> mockEnvironment = EnviromentRepositoryTest.CreateMockEnvironment(mockResourceRepository.Object, "localhost");
+            mockEnvironment.Setup(model => model.EnvironmentID).Returns(environmentId);
             return GetEnvironmentRepository(mockEnvironment);
         }
 
-        private static IEnvironmentRepository GetEnvironmentRepository(Mock<IEnvironmentModel> mockEnvironment)
+        private static IServerRepository GetEnvironmentRepository(Mock<IServer> mockEnvironment)
         {
 
-            var repo = new TestLoadEnvironmentRespository(mockEnvironment.Object) { IsLoaded = true };
-            // ReSharper disable ObjectCreationAsStatement
-            new EnvironmentRepository(repo);
-            // ReSharper restore ObjectCreationAsStatement
-            repo.ActiveEnvironment = mockEnvironment.Object;
+            var repo = new TestLoadServerRespository(mockEnvironment.Object) { IsLoaded = true };
+            
+            new ServerRepository(repo);
+            
+            repo.ActiveServer = mockEnvironment.Object;
 
             return repo;
         }
 
-        // ReSharper restore InconsistentNaming
+
     }
 }

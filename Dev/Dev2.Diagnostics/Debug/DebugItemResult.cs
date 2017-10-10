@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.Xml;
 using System.Xml.Schema;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Diagnostics
 {
     [Serializable]
@@ -28,7 +28,10 @@ namespace Dev2.Diagnostics
         public string GroupName { get; set; }
         public int GroupIndex { get; set; }
         public string MoreLink { get; set; }
-  
+        public bool HasError { get; set; }
+        public bool TestStepHasError { get; set; }
+        public bool MockSelected { get; set; }
+
         #region IXmlSerializable
 
         #region Equality members
@@ -88,13 +91,13 @@ namespace Dev2.Diagnostics
             unchecked
             {
                 var hashCode = (int)Type;
-                hashCode = (hashCode * 397) ^ (Label != null ? Label.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Variable != null ? Variable.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Operator != null ? Operator.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (GroupName != null ? GroupName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Label?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Variable?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Operator?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (GroupName?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ GroupIndex;
-                hashCode = (hashCode * 397) ^ (Value != null ? Value.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (MoreLink != null ? MoreLink.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Value?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (MoreLink?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }
@@ -126,8 +129,7 @@ namespace Dev2.Diagnostics
             reader.MoveToContent();
 
             GroupName = reader.GetAttribute("GroupName");
-            int idx;
-            int.TryParse(reader.GetAttribute("GroupIndex"), out idx);
+            int.TryParse(reader.GetAttribute("GroupIndex"), out int idx);
             GroupIndex = idx;
 
             while(reader.Read())
@@ -135,8 +137,7 @@ namespace Dev2.Diagnostics
                 if(reader.IsStartElement("Type"))
                 {
                     var result = reader.ReadElementString("Type");
-                    DebugItemResultType type;
-                    Enum.TryParse(result, out type);
+                    Enum.TryParse(result, out DebugItemResultType type);
                     Type = type;
                 }
 
@@ -165,13 +166,30 @@ namespace Dev2.Diagnostics
                     MoreLink = reader.ReadElementString("MoreLink");
                 }
 
-                if(reader.NodeType == XmlNodeType.EndElement && reader.Name == "DebugItemResult")
+                if (reader.IsStartElement("HasError"))
+                {
+                    bool.TryParse(reader.ReadElementString("HasError"), out bool hasError);
+                    HasError = hasError;
+                }
+
+                if (reader.IsStartElement("TestStepHasError"))
+                {
+                    bool.TryParse(reader.ReadElementString("TestStepHasError"), out bool testStepHasError);
+                    TestStepHasError = testStepHasError;
+                }
+
+                if (reader.IsStartElement("MockSelected"))
+                {
+                    bool.TryParse(reader.ReadElementString("MockSelected"), out bool mockSelected);
+                    MockSelected = mockSelected;
+                }
+
+                if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "DebugItemResult")
                 {
                     reader.ReadEndElement();
                     break;
                 }
             }
-
         }
 
         public void WriteXml(XmlWriter writer)
@@ -191,6 +209,9 @@ namespace Dev2.Diagnostics
             writer.WriteElementString("Variable", Variable);
             writer.WriteElementString("Operator", Operator);
             writer.WriteElementString("Value", Value);
+            writer.WriteElementString("HasError", HasError.ToString());
+            writer.WriteElementString("TestStepHasError", TestStepHasError.ToString());
+            writer.WriteElementString("MockSelected", MockSelected.ToString());
 
             if(!string.IsNullOrWhiteSpace(MoreLink))
             {

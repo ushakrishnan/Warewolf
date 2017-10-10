@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,8 +22,8 @@ using Dev2.Common.DateAndTime;
 using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Util;
@@ -32,12 +32,13 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
 
-    [ToolDescriptorInfo("Utility-DateTime", "Date Time", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Date Time_Tags")]
+    [ToolDescriptorInfo("Utility-DateTime", "Date Time", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Date_Time")]
     public class DsfDateTimeActivity : DsfActivityAbstract<string>, IDateTimeOperationTO
     {
 
@@ -120,6 +121,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             ExecuteTool(dataObject, 0);
         }
 
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
+
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
 
@@ -149,10 +156,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     if (fieldInfo != null)
                     {
                         var val = fieldInfo.GetValue(CultureInfo.CurrentCulture);
-                        var newCul = val as CultureInfo;
-                        if (newCul != null)
+                        if (val is CultureInfo newCul)
                         {
-                            Thread.CurrentThread.CurrentCulture = newCul;      
+                            Thread.CurrentThread.CurrentCulture = newCul;
                         }
                     }
                     var dateTimePattern = string.Format("{0} {1}", Thread.CurrentThread.CurrentCulture.DateTimeFormat.ShortDatePattern, Thread.CurrentThread.CurrentCulture.DateTimeFormat.LongTimePattern);
@@ -225,9 +231,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                                 );
 
                             IDateTimeFormatter format = DateTimeConverterFactory.CreateFormatter();
-                            string result;
-                            string error;
-                            if(format.TryFormat(transObj, out result, out error))
+                            if (format.TryFormat(transObj, out string result, out string error))
                             {
                                 string expression = Result;
                                 dataObject.Environment.Assign(expression, result, update);
@@ -246,7 +250,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("DSFDateTime", e);
+                Dev2Logger.Error("DSFDateTime", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -346,13 +350,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
@@ -22,10 +21,9 @@ namespace Dev2.Runtime.ServiceModel
     public interface IPluginServices
     {
         RecordsetList Test(string args, out string serializedResult);
-
         NamespaceList Namespaces(PluginSource args, Guid workspaceId, Guid dataListId);
-
         ServiceMethodList Methods(PluginService args, Guid workspaceId, Guid dataListId);
+        ServiceConstructorList Constructors(PluginService args, Guid workspaceId, Guid dataListId);
     }
 
     public class PluginServices : Services, IPluginServices
@@ -45,13 +43,13 @@ namespace Dev2.Runtime.ServiceModel
 
         #region DeserializeService
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         protected virtual Service DeserializeService(string args)
         {
             return JsonConvert.DeserializeObject<PluginService>(args);
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         protected virtual Service DeserializeService(XElement xml, string resourceType)
         {
             return xml == null ? new PluginService() : new PluginService(xml);
@@ -112,6 +110,31 @@ namespace Dev2.Runtime.ServiceModel
             }
             return result;
         }
+        
+        // POST: Service/PluginServices/Namespaces
+        public virtual NamespaceList NamespacesWithJsonObjects(PluginSource pluginSource, Guid workspaceId, Guid dataListId)
+        {
+            var result = new NamespaceList();
+            try
+            {
+
+                if (pluginSource != null)
+                {
+                    var broker = new PluginBroker();
+                    return broker.GetNamespacesWithJsonObjects(pluginSource);
+                }
+            }
+            catch (BadImageFormatException e)
+            {
+                RaiseError(e);
+                throw;
+            }
+            catch(Exception ex)
+            {
+                RaiseError(ex);
+            }
+            return result;
+        }
 
         #endregion
 
@@ -130,6 +153,42 @@ namespace Dev2.Runtime.ServiceModel
                 return result;
             }
             catch(Exception ex)
+            {
+                RaiseError(ex);
+            }
+            return result;
+        }
+        // POST: Service/PluginServices/MethodsWithReturns
+        public ServiceMethodList MethodsWithReturns(PluginService service, Guid workspaceId, Guid dataListId)
+        {
+            var result = new ServiceMethodList();
+            try
+            {
+                // BUG 9500 - 2013.05.31 - TWR : changed to use PluginService as args 
+              
+                var broker = new PluginBroker();
+                result = broker.GetMethodsWithReturns(((PluginSource)service.Source).AssemblyLocation, ((PluginSource)service.Source).AssemblyName, service.Namespace);
+                return result;
+            }
+            catch(Exception ex)
+            {
+                RaiseError(ex);
+            }
+            return result;
+        }
+
+        public ServiceConstructorList Constructors(PluginService service, Guid workspaceId, Guid dataListId)
+        {
+            var result = new ServiceConstructorList();
+            try
+            {
+                // BUG 9500 - 2013.05.31 - TWR : changed to use PluginService as args 
+
+                var broker = new PluginBroker();
+                result = broker.GetConstructors(((PluginSource)service.Source).AssemblyLocation, ((PluginSource)service.Source).AssemblyName, service.Namespace);
+                return result;
+            }
+            catch (Exception ex)
             {
                 RaiseError(ex);
             }

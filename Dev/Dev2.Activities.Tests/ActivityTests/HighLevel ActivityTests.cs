@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ using System.Linq;
 using System.Reflection;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable ReturnTypeCanBeEnumerable.Local
+
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -24,7 +24,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Tests that the Properties have not changed on the activities
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class HighLevel_ActivityTests : BaseActivityUnitTest
     {
         #region Fields
@@ -209,13 +209,37 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         public void DsfCountRecordsetActivity_Property_Check_Expected_No_Change_To_Properties()
         {
-            Type type = _activityList.FirstOrDefault(c => c.Name == "DsfCountRecordsetActivity");
+            Type type = _activityList.FirstOrDefault(c => c.Name == "DsfCountRecordsetNullHandlerActivity");
             if (type == null)
             {
-                Assert.Fail("Could not find DsfCountRecordsetActivity.");
+                Assert.Fail("Could not find DsfCountRecordsetNullHandlerActivity.");
             }
             PropertyInfo[] properties = GetPropertyInfo(type);
-            Assert.IsTrue(properties.Length == 2);
+            Assert.IsTrue(properties.Length == 3);
+        }
+
+        [TestMethod]
+        public void DsfDeleteRecordsetActivity_Property_Check_Expected_No_Change_To_Properties()
+        {
+            Type type = _activityList.FirstOrDefault(c => c.Name == "DsfDeleteRecordNullHandlerActivity");
+            if (type == null)
+            {
+                Assert.Fail("Could not find DsfDeleteRecordNullHandlerActivity.");
+            }
+            PropertyInfo[] properties = GetPropertyInfo(type);
+            Assert.IsTrue(properties.Length == 3);
+        }
+
+        [TestMethod]
+        public void DsfRecordsetLengthActivity_Property_Check_Expected_No_Change_To_Properties()
+        {
+            Type type = _activityList.FirstOrDefault(c => c.Name == "DsfRecordsetNullhandlerLengthActivity");
+            if (type == null)
+            {
+                Assert.Fail("Could not find DsfRecordsetNullhandlerLengthActivity.");
+            }
+            PropertyInfo[] properties = GetPropertyInfo(type);
+            Assert.IsTrue(properties.Length == 3);
         }
 
         [TestMethod]
@@ -334,10 +358,10 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         public void DsfCountRecordSetActivity_Property_Name_Check_Expected_No_Change_To_Properties()
         {
-            Type type = _activityList.FirstOrDefault(c => c.Name == "DsfCountRecordsetActivity");
+            Type type = _activityList.FirstOrDefault(c => c.Name == "DsfCountRecordsetNullHandlerActivity");
             if (type == null)
             {
-                Assert.Fail("Could not find DsfCountRecordsetActivity.");
+                Assert.Fail("Could not find DsfCountRecordsetNullHandlerActivity.");
             }
 
             MemberInfo[] RecordsetName = GetMembers(type, "RecordsetName");

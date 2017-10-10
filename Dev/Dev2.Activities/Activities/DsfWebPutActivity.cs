@@ -8,16 +8,17 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Warewolf.Core;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("WebMethods", "PUT", ToolType.Native, "6C5F6D7E-4B42-4874-8197-DBE86D4A9F2D", "Dev2.Acitivities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Put_Tags")]
+    [ToolDescriptorInfo("WebMethods", "PUT", ToolType.Native, "6C5F6D7E-4B42-4874-8197-DBE86D4A9F2D", "Dev2.Acitivities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Put")]
     public class DsfWebPutActivity : DsfWebActivityBase
     {
         public DsfWebPutActivity()
@@ -29,7 +30,10 @@ namespace Dev2.Activities
         
         public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
-            if (env == null) return _debugInputs;
+            if (env == null)
+            {
+                return _debugInputs;
+            }
 
             DebugItem debugItem = new DebugItem();
 
@@ -95,7 +99,7 @@ namespace Dev2.Activities
             catch (UriFormatException e)
             {
                 //CurrentDataObject.Environment.AddError(e.Message);// To investigate this
-                Dev2Logger.Error(e.Message, e); // Error must be added on the environment
+                Dev2Logger.Error(e.Message, e, GlobalConstants.WarewolfError); // Error must be added on the environment
                 return httpClient;
             }
 

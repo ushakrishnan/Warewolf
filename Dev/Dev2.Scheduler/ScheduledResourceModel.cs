@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,9 +20,6 @@ using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers;
 using Dev2.Communication;
 using Microsoft.Win32.TaskScheduler;
-// ReSharper disable NonLocalizedString
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable MemberCanBePrivate.Global
 
 namespace Dev2.Scheduler
 {
@@ -37,9 +34,6 @@ namespace Dev2.Scheduler
         private IFileHelper _fileHelper;
         private IDirectoryHelper _folderHelper;
         private readonly IDictionary<int, string> _taskStates;
-#pragma warning disable 169
-        private int _argCount;
-#pragma warning restore 169
         private readonly Func<IScheduledResource, string> _pathResolve;
         private const string Sebatchlogonright = "SeBatchLogonRight";
         private const char NameSeperator = ':';
@@ -101,7 +95,9 @@ namespace Dev2.Scheduler
         {
             ITaskFolder folder = TaskService.GetFolder(WarewolfFolderPath);
             if (folder.TaskExists(resource.Name))
+            {
                 folder.DeleteTask(resource.Name, false);
+            }
         }
 
         public bool Save(IScheduledResource resource, out string errorMessage)
@@ -123,25 +119,22 @@ namespace Dev2.Scheduler
         {
             if (!_securityWrapper.IsWindowsAuthorised(Sebatchlogonright, userName))
             {
-                throw new SecurityException(
-                    @"This task requires that the user account specified has 'Log On As Batch' job rights. 
-Please contact your Windows System Administrator.");
+                throw new SecurityException(Warewolf.Studio.Resources.Languages.Core.SchedulerLogOnAsBatchError);
             }
             if (!_securityWrapper.IsWarewolfAuthorised(Sebatchlogonright, userName, resource.ResourceId.ToString()))
             {
-                throw new SecurityException(
-                   String.Format(@"This Workflow requires that you have Execute permission on the '{0}' Workflow. 
-Please contact your Warewolf System Administrator.", resource.WorkflowName));
+                throw new SecurityException(String.Format(Warewolf.Studio.Resources.Languages.Core.SchedulerExecutePermissionError, resource.WorkflowName));
             }
             if (resource.Name.Any(a => "\\/:*?\"<>|".Contains(a)))
-                throw new Exception("The task name may not contain the following characters \\/:*?\"<>| .");
+            {
+                throw new Exception(Warewolf.Studio.Resources.Languages.Core.SchedulerInvalidCharactersError + " \\/:*?\"<>| .");
+            }
+
             var folder = TaskService.GetFolder(WarewolfFolderPath);
             var created = CreateNewTask(resource);
             created.Settings.Enabled = resource.Status == SchedulerStatus.Enabled;
-            folder.RegisterTaskDefinition(resource.Name, created, TaskCreation.CreateOrUpdate, userName, password,
-                                          TaskLogonType.InteractiveTokenOrPassword);
+            folder.RegisterTaskDefinition(resource.Name, created, TaskCreation.CreateOrUpdate, userName, password, TaskLogonType.InteractiveTokenOrPassword);
         }
-
 
         public ObservableCollection<IScheduledResource> ScheduledResources
         {
@@ -163,10 +156,7 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
             {
                 ITaskFolder folder = TaskService.GetFolder(WarewolfFolderPath);
                 IList<IDev2Task> allTasks = folder.ValidTasks; // we have the tasks with at least one action
-                return
-                    allTasks.Where(a => a.IsValidDev2Task())
-                            .Select(CreateScheduledResource)
-                            .ToObservableCollection();
+                return allTasks.Where(a => a.IsValidDev2Task()).Select(CreateScheduledResource).ToObservableCollection();
             }
             catch (FileNotFoundException)
             {
@@ -176,20 +166,14 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
             }
         }
 
-
         private IExecAction BuildAction(IScheduledResource resource)
         {
             return ConvertorFactory.CreateExecAction(WarewolfAgentPath,
-                                                     String.Format("\"Workflow:{0}\" \"TaskName:{1}\" \"ResourceId:{2}\"",
-                                                                   resource.WorkflowName.Trim(),
-                                                                   resource.Name.Trim(),
-                                                                   resource.ResourceId));
+                $"\"Workflow:{resource.WorkflowName.Trim()}\" \"TaskName:{resource.Name.Trim()}\" \"ResourceId:{resource.ResourceId}\"");
         }
-
 
         private IScheduledResource CreateScheduledResource(IDev2Task arg)
         {
-
             ITrigger trigger;
             DateTime nextDate;
             List<string> output;
@@ -205,29 +189,39 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
                 var split = output.SelectMany(a => a.Split(NameSeperator)).ToList();
                 try
                 {
-
                     var id = split[5];
-                    Guid resourceId;
-                    Guid.TryParse(id, out resourceId);
+                    Guid.TryParse(id, out Guid resourceId);
 
                     var res = new ScheduledResource(arg.Definition.Data,
-                                                 arg.Definition.Settings.Enabled
-                                                     ? SchedulerStatus.Enabled
-                                                     : SchedulerStatus.Disabled,
+                                                 arg.Definition.Settings.Enabled ? SchedulerStatus.Enabled : SchedulerStatus.Disabled,
                                                  nextDate,
                                                  new ScheduleTrigger(arg.State, _factory.SanitiseTrigger(trigger),
                                                                      _taskService, _factory), split[1], split[5])
                     {
-                        Status =
-                                arg.Definition.Settings.Enabled
-                                    ? SchedulerStatus.Enabled
-                                    : SchedulerStatus.Disabled,
+                        Status = arg.Definition.Settings.Enabled ? SchedulerStatus.Enabled : SchedulerStatus.Disabled,
                         RunAsapIfScheduleMissed = arg.Definition.Settings.StartWhenAvailable,
                         UserName = arg.Definition.UserName,
 
                     };
 
-                    res.WorkflowName = resourceId == Guid.Empty ? split[1] : _pathResolve(res);
+                    string resWorkflowName;
+                    if (resourceId == Guid.Empty)
+                    {
+                        resWorkflowName = split[1];
+                    }
+                    else
+                    {
+                        try
+                        {
+                            resWorkflowName = _pathResolve(res);
+                        }
+                        catch(NullReferenceException)
+                        {
+                            resWorkflowName = split[1];
+                            res.Errors.AddError($"Workflow: {resWorkflowName} not found. Task is invalid.");
+                        }
+                    }
+                    res.WorkflowName = resWorkflowName;
 
                     return res;
                 }
@@ -238,27 +232,18 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
             }
             if (output.Count == ArgCountOld && output.All(a => a.Contains(NameSeperator)))
             {
-
                 var split = output.SelectMany(a => a.Split(NameSeperator)).ToList();
                 try
                 {
-
-
                     return new ScheduledResource(arg.Definition.Data,
-                                                 arg.Definition.Settings.Enabled
-                                                     ? SchedulerStatus.Enabled
-                                                     : SchedulerStatus.Disabled,
+                                                 arg.Definition.Settings.Enabled ? SchedulerStatus.Enabled : SchedulerStatus.Disabled,
                                                  nextDate,
                                                  new ScheduleTrigger(arg.State, _factory.SanitiseTrigger(trigger),
                                                                      _taskService, _factory), split[1], Guid.Empty.ToString())
                     {
-                        Status =
-                            arg.Definition.Settings.Enabled
-                                ? SchedulerStatus.Enabled
-                                : SchedulerStatus.Disabled,
+                        Status = arg.Definition.Settings.Enabled ? SchedulerStatus.Enabled : SchedulerStatus.Disabled,
                         RunAsapIfScheduleMissed = arg.Definition.Settings.StartWhenAvailable,
-                        UserName = arg.Definition.UserName,
-
+                        UserName = arg.Definition.UserName
                     };
                 }
                 finally
@@ -267,9 +252,7 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
                 }
             }
 
-            throw new InvalidScheduleException(String.Format("Invalid resource found:{0}", arg.Definition.Data)); // this should not be reachable because isvaliddev2task checks same conditions
-
-
+            throw new InvalidScheduleException($"Invalid resource found:{arg.Definition.Data}"); // this should not be reachable because isvaliddev2task checks same conditions
         }
 
         public int ArgCount => 3;
@@ -278,14 +261,10 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
 
         public IList<IResourceHistory> CreateHistory(IScheduledResource resource)
         {
-            ITaskEventLog evt = _factory.CreateTaskEventLog(string.Format("\\{0}\\", _warewolfFolderPath) + resource.Name);
-            var groupings =
-                from a in
-                    evt.Where(x => !string.IsNullOrEmpty(x.Correlation) 
-                                && !string.IsNullOrEmpty(x.TaskCategory) 
-                                && _taskStates.Values.Contains(x.TaskCategory))
-                group a by a.Correlation                
-                    into corrGroup
+            ITaskEventLog evt = _factory.CreateTaskEventLog($"\\{_warewolfFolderPath}\\" + resource.Name);
+            var groupings = from a in evt.Where(x => !string.IsNullOrEmpty(x.Correlation) 
+                            && !string.IsNullOrEmpty(x.TaskCategory) && _taskStates.Values.Contains(x.TaskCategory))
+                group a by a.Correlation into corrGroup
                 select new
                 {
                     StartDate = corrGroup.Min(a => a.TimeCreated),
@@ -322,16 +301,21 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
             return result;
         }
 
-
         ScheduleRunStatus GetRunStatus(int eventId, string debugHistoryPath, string key)
         {
             bool debugExists = DebugHistoryExists(debugHistoryPath, key);
             bool debugHasErrors = DebugHasErrors(debugHistoryPath, key);
             bool winSuccess = eventId < 103;
             if (debugExists && !debugHasErrors && winSuccess)
+            {
                 return ScheduleRunStatus.Success;
+            }
+
             if (!debugExists)
+            {
                 return ScheduleRunStatus.Unknown;
+            }
+
             return ScheduleRunStatus.Error;
         }
 
@@ -356,7 +340,11 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
         private string GetUserName(string debugHistoryPath, string correlationId)
         {
             var file = DirectoryHelper.GetFiles(debugHistoryPath).FirstOrDefault(a => a.Contains(correlationId));
-            if (file != null) return file.Split('_').Last();
+            if (file != null)
+            {
+                return file.Split('_').Last();
+            }
+
             return "";
         }
 
@@ -376,21 +364,21 @@ Please contact your Warewolf System Administrator.", resource.WorkflowName));
         private IDev2TaskDefinition CreateNewTask(IScheduledResource resource)
         {
             IDev2TaskDefinition created = TaskService.NewTask();
-            created.Data = string.Format("{0}~{1}", resource.Name, resource.NumberOfHistoryToKeep);
+            created.Data = $"{resource.Name}~{resource.NumberOfHistoryToKeep}";
 
             var trigger = _factory.SanitiseTrigger(resource.Trigger.Trigger);
-
 
             created.AddTrigger(trigger);
             created.AddAction(BuildAction(resource));
             created.Settings.StartWhenAvailable = resource.RunAsapIfScheduleMissed;
-            created.Settings.MultipleInstances = resource.AllowMultipleIstances
-                                                     ? TaskInstancesPolicy.Parallel
-                                                    : TaskInstancesPolicy.Queue;
+            created.Settings.MultipleInstances = resource.AllowMultipleIstances ? TaskInstancesPolicy.Parallel : TaskInstancesPolicy.Queue;
             created.Settings.Hidden = true;
+            if (created.Instance?.Principal != null)
+            {
+                created.Instance.Principal.RunLevel = TaskRunLevel.Highest;
+            }
             return created;
         }
-
 
         public void Dispose()
         {

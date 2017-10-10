@@ -1,11 +1,28 @@
 ﻿using System;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Common.Interfaces.Core
 {
     public class RabbitMQServiceSourceDefinition : IRabbitMQServiceSourceDefinition, IEquatable<RabbitMQServiceSourceDefinition>
     {
+
+        public RabbitMQServiceSourceDefinition(IRabbitMQ source)
+        {
+            ResourceID = source.ResourceID;
+            ResourceName = source.ResourceName;
+            HostName = source.HostName;
+            Port = source.Port;
+            UserName = source.UserName;
+            ResourcePath = source.GetSavePath();
+            Password = source.Password;
+            VirtualHost = source.VirtualHost;
+        }
+
+        public RabbitMQServiceSourceDefinition()
+        {
+        }
+
         #region Equality members
 
         /// <summary>

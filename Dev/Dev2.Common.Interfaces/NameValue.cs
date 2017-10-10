@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using Microsoft.Practices.Prism.Commands;
 
 namespace Dev2.Common.Interfaces
 {
@@ -64,9 +65,9 @@ namespace Dev2.Common.Interfaces
         {
             unchecked
             {
-                // ReSharper disable NonReadonlyFieldInGetHashCode
-                return ((_name != null ? _name.GetHashCode() : 0) * 397) ^ (_value != null ? _value.GetHashCode() : 0);
-                // ReSharper restore NonReadonlyFieldInGetHashCode
+                
+                return ((_name?.GetHashCode() ?? 0) * 397) ^ (_value?.GetHashCode() ?? 0);
+                
             }
         }
 
@@ -89,20 +90,20 @@ namespace Dev2.Common.Interfaces
 
         public NameValue()
         {
-            // ReSharper disable DoNotCallOverridableMethodsInConstructor
+            
             Name = "";
 
             Value = "";
-            // ReSharper restore DoNotCallOverridableMethodsInConstructor
+            
         }
 
         public NameValue(string name, string value)
         {
-            // ReSharper disable DoNotCallOverridableMethodsInConstructor
+            
             Name = name;
 
             Value = value;
-            // ReSharper restore DoNotCallOverridableMethodsInConstructor
+            
         }
 
 
@@ -146,6 +147,13 @@ namespace Dev2.Common.Interfaces
         #endregion
 
         #endregion
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            var handler = PropertyChanged;
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
     public class ObservableAwareNameValue : NameValue
     {
@@ -156,13 +164,13 @@ namespace Dev2.Common.Interfaces
         {
             _sourceCollection = sourceCollection;
             _update = update;
-            // ReSharper disable DoNotCallOverridableMethodsInConstructor
+            
             Name = "";
 
             Value = "";
-            AddRowCommand = new DelegateCommand(AddRow);
-            RemoveRowCommand = new DelegateCommand(RemoveRow);
-            // ReSharper restore DoNotCallOverridableMethodsInConstructor
+            AddRowCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(AddRow);
+            RemoveRowCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(RemoveRow);
+            
         }
 
         void RemoveRow()
@@ -193,10 +201,7 @@ namespace Dev2.Common.Interfaces
                     _sourceCollection.Add(new ObservableAwareNameValue(_sourceCollection, _update));
                 }
                 _name = value;
-                if (_update != null)
-                {
-                    _update(_name);
-                }
+                _update?.Invoke(_name);
             }
         }
 
@@ -215,10 +220,7 @@ namespace Dev2.Common.Interfaces
                     _sourceCollection.Add(new ObservableAwareNameValue(_sourceCollection, _update));
                 }
                 _value = value;
-                if (_update != null)
-                {
-                    _update(_value);
-                }
+                _update?.Invoke(_value);
             }
         }
         public ICommand RemoveRowCommand { get; set; }

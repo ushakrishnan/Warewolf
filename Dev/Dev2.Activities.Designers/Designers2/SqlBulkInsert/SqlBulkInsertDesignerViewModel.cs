@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,6 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
 using Dev2.Activities.Designers2.Core.QuickVariableInput;
 using Dev2.Activities.Properties;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
@@ -28,7 +27,6 @@ using Dev2.Common.Interfaces.Threading;
 using Dev2.Data.Parsers;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -36,7 +34,7 @@ using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.TO;
 using Dev2.Validation;
@@ -45,11 +43,10 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 {
     public class SqlBulkInsertDesignerViewModel : ActivityCollectionDesignerViewModel<DataColumnMapping>
     {
-
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         readonly IEventAggregator _eventPublisher;
-        readonly IEnvironmentModel _environmentModel;
+        readonly IServer _server;
         readonly IAsyncWorker _asyncWorker;
 
         bool _isInitializing;
@@ -71,21 +68,19 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             TableName = "Select a Table..."
         };
 
-        //ModelItem Modelitem;
         public SqlBulkInsertDesignerViewModel(ModelItem modelItem)
-            : this(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment, EventPublishers.Aggregator)
+            : this(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer, EventPublishers.Aggregator)
         {
-           // Modelitem = modelItem;
             this.RunViewSetup();
         }
 
-        public SqlBulkInsertDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel environmentModel, IEventAggregator eventPublisher)
+        public SqlBulkInsertDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IServer server, IEventAggregator eventPublisher)
             : base(modelItem)
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             _asyncWorker = asyncWorker;
-            VerifyArgument.IsNotNull("environmentModel", environmentModel);
-            _environmentModel = environmentModel;
+            VerifyArgument.IsNotNull("environmentModel", server);
+            _server = server;
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             _eventPublisher = eventPublisher;
 
@@ -106,6 +101,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             {
                 IsSqlDatabase = SelectedDatabase.ServerType == enSourceType.SqlDatabase;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_SQL_Bulk_Insert;
         }
 
         #region Properties
@@ -380,10 +376,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     Databases.Add(database);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -393,10 +386,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
             if (!IsDatabaseSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -404,25 +394,15 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             var selectedDatabase = SelectedDatabase;
             _asyncWorker.Start(() => GetDatabaseTables(selectedDatabase), tableList =>
             {
-                if (tableList.HasErrors)
-                {
-                    Errors = new List<IActionableErrorInfo>
+                Errors = tableList.HasErrors ? new List<IActionableErrorInfo>
                     {
                         new ActionableErrorInfo(() => IsSelectedTableFocused = true) { ErrorType = ErrorType.Critical, Message = tableList.Errors }
-                    };
-                }
-                else
-                {
-                    Errors = null;
-                }
+                    } : null;
                 foreach (var table in tableList.Items.OrderBy(t => t.TableName))
                 {
                     Tables.Add(table);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -434,10 +414,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     ModelItemCollection.Clear();
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -445,35 +422,25 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             ModelItemCollection.Clear();
             var selectedDatabase = SelectedDatabase;
             var selectedTable = SelectedTable;
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             _asyncWorker.Start(() => GetDatabaseTableColumns(selectedDatabase, selectedTable), columnList =>
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             {
-                if (columnList.HasErrors)
-                {
-                    Errors = new List<IActionableErrorInfo>
+                Errors = columnList.HasErrors ? new List<IActionableErrorInfo>
                     {
                         new ActionableErrorInfo(() => IsSelectedTableFocused = true) { ErrorType = ErrorType.Critical, Message = columnList.Errors }
-                    };
-                }
-                else
-                {
-                    Errors = null;
-                }
+                    } : null;
                 foreach (var mapping in columnList.Items.Select(column => new DataColumnMapping { OutputColumn = column }))
                 {
                     var mapping1 = mapping;
                     var oldColumn = oldColumns.FirstOrDefault(c => c.OutputColumn.ColumnName == mapping1.OutputColumn.ColumnName);
-                    if (oldColumn != null)
+                    if (oldColumn?.InputColumn != null)
                     {
-                        if (oldColumn.InputColumn != null)
-                        {
-                            var inputcolumn = oldColumn.InputColumn;
-                            inputcolumn = inputcolumn.Replace("[", "");
-                            inputcolumn = inputcolumn.Replace("]", "");
-                            inputcolumn = inputcolumn.Replace(" ", "");
-                            mapping.InputColumn = string.Format("[[{0}]]", inputcolumn);
-                        }
+                        var inputcolumn = oldColumn.InputColumn;
+                        inputcolumn = inputcolumn.Replace("[", "");
+                        inputcolumn = inputcolumn.Replace("]", "");
+                        inputcolumn = inputcolumn.Replace(" ", "");
+                        mapping.InputColumn = string.Format("[[{0}]]", inputcolumn);
                     }
                     if (string.IsNullOrEmpty(mapping.InputColumn))
                     {
@@ -482,10 +449,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
                     ModelItemCollection.Add(mapping);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -494,31 +458,32 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             if(shellViewModel != null)
             {
-                shellViewModel.OpenResource(SelectedDatabase.ResourceID,_environmentModel.ID);
+                shellViewModel.OpenResource(SelectedDatabase.ResourceID,_server.EnvironmentID, shellViewModel.ActiveServer);
                 RefreshDatabases();
             }            
         }
 
         void CreateDbSource()
         {
-            CustomContainer.Get<IShellViewModel>().NewDatabaseSource(string.Empty);
+            CustomContainer.Get<IShellViewModel>().NewSqlServerSource(string.Empty);
             RefreshDatabases();
         }
 
         IEnumerable<DbSource> GetDatabases()
         {
-            return _environmentModel.ResourceRepository.FindSourcesByType<DbSource>(_environmentModel, enSourceType.SqlDatabase);
+            var dbSources = _server.ResourceRepository.FindSourcesByType<DbSource>(_server, enSourceType.SqlDatabase);
+            return dbSources.Where(source => source.ResourceType== "SqlDatabase" || source.ServerType==enSourceType.SqlDatabase);
         }
 
         DbTableList GetDatabaseTables(DbSource dbSource)
         {
-            var tables = _environmentModel.ResourceRepository.GetDatabaseTables(dbSource);
+            var tables = _server.ResourceRepository.GetDatabaseTables(dbSource);
             return tables ?? EmptyDbTables;
         }
 
         IDbColumnList GetDatabaseTableColumns(DbSource dbSource, DbTable dbTable)
         {
-            var columns = _environmentModel.ResourceRepository.GetDatabaseTableColumns(dbSource, dbTable);
+            var columns = _server.ResourceRepository.GetDatabaseTableColumns(dbSource, dbTable);
             return columns ?? EmptyDbColumns;
         }
 
@@ -552,7 +517,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
         static string GetTableName(DbTable table)
         {
-            return table == null ? null : table.FullName;
+            return table?.FullName;
         }
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
@@ -582,8 +547,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             var batchSize = BatchSize;
             if (!IsVariable(batchSize))
             {
-                int value;
-                if (!int.TryParse(batchSize, out value) || value < 0)
+                if (!int.TryParse(batchSize, out int value) || value < 0)
                 {
                     yield return new ActionableErrorInfo(() => IsBatchSizeFocused = true) { ErrorType = ErrorType.Critical, Message = ActivityResources.BatchsizeMustBeNumberMsg };
                 }
@@ -592,8 +556,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             var timeout = Timeout;
             if (!IsVariable(timeout))
             {
-                int value;
-                if (!int.TryParse(timeout, out value) || value < 0)
+                if (!int.TryParse(timeout, out int value) || value < 0)
                 {
                     yield return new ActionableErrorInfo(() => IsTimeoutFocused = true) { ErrorType = ErrorType.Critical, Message = ActivityResources.TimeoutMustBeNumberMsg };
                 }
@@ -674,7 +637,9 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                     List<IActionableErrorInfo> rs = GetRuleSet("InputColumn", inputColumn).ValidateRules("'Input Data or [[Variable]]'", () => ModelItem.SetProperty("IsMappingFieldFocused", true));
 
                     foreach(var looperror in rs)
+                    {
                         yield return looperror;
+                    }
                 }
 
 
@@ -706,6 +671,8 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 case "InputColumn":
                     ruleSet.Add(new IsValidExpressionRule(() => datalist, GetDatalistString(), "1"));
                     break;
+                default:
+                    break;
             }
             return ruleSet;
         }
@@ -734,11 +701,8 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         protected override void OnToggleCheckedChanged(string propertyName, bool isChecked)

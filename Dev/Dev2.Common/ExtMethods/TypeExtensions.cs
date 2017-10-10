@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,9 @@ namespace Dev2.Common.ExtMethods
         public static Type GetTypeFromSimpleName(string typeName)
         {
             if (typeName == null)
+            {
                 throw new ArgumentNullException("typeName");
+            }
 
             bool isArray = false, isNullable = false;
 
@@ -126,18 +128,26 @@ namespace Dev2.Common.ExtMethods
                 case "guid":
                     parsedTypeName = "System.Guid";
                     break;
+                default:
+                    break;
             }
 
             if (parsedTypeName != null)
             {
                 if (isArray)
+                {
                     parsedTypeName = parsedTypeName + "[]";
+                }
 
                 if (isNullable)
+                {
                     parsedTypeName = String.Concat("System.Nullable`1[", parsedTypeName, "]");
+                }
             }
             else
+            {
                 parsedTypeName = typeName;
+            }
 
             // Expected to throw an exception in case the type has not been recognized.
             return Type.GetType(parsedTypeName);

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,7 @@ using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.Ouput;
 using Unlimited.Framework.Converters.Graph.Output;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.ServiceModel.Utils
 {
@@ -187,7 +187,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
                     ResourceID = Guid.NewGuid(),
                     ResourceName = "CitiesDB",
                     ResourceType = "DbSource",
-                    Server = "RSAKLFSVRGENDEV",
+                    Server = "RSAKLFSVRDEV",
                     DatabaseName = "Cities",
                     AuthenticationType = AuthenticationType.Windows,
                 }

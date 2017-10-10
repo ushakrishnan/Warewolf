@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,11 +16,11 @@ using System.Windows.Input;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -28,13 +28,13 @@ namespace Dev2.Activities.Designers2.DataSplit
 {
     public class DataSplitDesignerViewModel : ActivityCollectionDesignerViewModel<DataSplitDTO>
     {
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public IList<string> ItemsList { get; private set; }
 
         public DataSplitDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            ProcessDirectionGroup = string.Format("ProcessDirectionGroup{0}", Guid.NewGuid());
+            ProcessDirectionGroup = $"ProcessDirectionGroup{Guid.NewGuid()}";
 
             AddTitleBarLargeToggle();
             AddTitleBarQuickVariableInputToggle();
@@ -57,6 +57,8 @@ namespace Dev2.Activities.Designers2.DataSplit
             {
                 OnSplitTypeChanged(i);
             }
+
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Data_Data_Split;
         }
 
         public override string CollectionName => "ResultsCollection";
@@ -81,7 +83,7 @@ namespace Dev2.Activities.Designers2.DataSplit
 
             var mi = ModelItemCollection[index];
             var splitType = mi.GetProperty("SplitType") as string;
-            switch(splitType)
+            switch (splitType)
             {
                 case DataSplitDTO.SplitTypeIndex:
                     mi.SetProperty("IsEscapeCharEnabled", false);
@@ -113,14 +115,16 @@ namespace Dev2.Activities.Designers2.DataSplit
                     mi.SetProperty("EnableAt", false);
                     mi.SetProperty("At", string.Empty);
                     break;
+                default:
+                    break;
             }
         }
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
-            // ReSharper disable LoopCanBeConvertedToQuery  InitialFocusElement
+         
             foreach(var error in GetRuleSet("SourceString").ValidateRules("'String to Split'", () => IsSourceStringFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
@@ -147,18 +151,15 @@ namespace Dev2.Activities.Designers2.DataSplit
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         IRuleSet GetRuleSet(string propertyName)
         {
             var ruleSet = new RuleSet();
 
-            switch(propertyName)
+            switch (propertyName)
             {
                 case "SourceString":
                     if (!string.IsNullOrEmpty(SourceString) && !string.IsNullOrWhiteSpace(SourceString))
@@ -167,7 +168,12 @@ namespace Dev2.Activities.Designers2.DataSplit
                         ruleSet.Add(inputExprRule);
                     }
                     else
+                    {
                         ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => SourceString));
+                    }
+
+                    break;
+                default:
                     break;
             }
             return ruleSet;

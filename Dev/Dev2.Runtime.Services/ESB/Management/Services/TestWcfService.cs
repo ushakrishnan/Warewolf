@@ -9,18 +9,30 @@ using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Runtime.Interfaces;
 using Unlimited.Framework.Converters.Graph.Ouput;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestWcfService : IEsbManagementEndpoint
     {
         private IResourceCatalog _rescat;
+
+
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
@@ -28,14 +40,13 @@ namespace Dev2.Runtime.ESB.Management.Services
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
-                Dev2Logger.Info("Test Wcf Service");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Test Wcf Service", GlobalConstants.WarewolfInfo);
 
-                values.TryGetValue("wcfService", out resourceDefinition);
+                values.TryGetValue("wcfService", out StringBuilder resourceDefinition);
                 IWcfService service = serializer.Deserialize<IWcfService>(resourceDefinition);
 
                 var source = ResourceCatalog.Instance.GetResource<WcfSource>(GlobalConstants.ServerWorkspaceID, service.Source.Id);
-                var parameters = service.Inputs == null ? new List<MethodParameter>() : service.Inputs.Select(a => new MethodParameter() { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value, TypeName = a.TypeName }).ToList();
+                var parameters = service.Inputs?.Select(a => new MethodParameter() { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value, TypeName = a.TypeName }).ToList() ?? new List<MethodParameter>();
 
                 var res = new WcfService
                 {
@@ -56,7 +67,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
 
             return serializer.SerializeToBuilder(msg);

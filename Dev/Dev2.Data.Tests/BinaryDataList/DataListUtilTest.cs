@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,18 +16,19 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using ServiceStack.Text;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Data.Tests.BinaryDataList
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class DataListUtilTest
     {
 
@@ -69,8 +70,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             //---------------Execute Test ----------------------
             try
             {
-                ErrorResultTO errorResultTO;
-                var operations = DataListUtil.GetAllPossibleExpressionsForFunctionOperations("[[a]]", env.Object, out errorResultTO, 1);
+                var operations = DataListUtil.GetAllPossibleExpressionsForFunctionOperations("[[a]]", env.Object, out ErrorResultTO errorResultTO, 1);
                 Assert.AreEqual(0, operations.Count);
                 env.Setup(environment => environment.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Throws(new Exception("error"));
                 DataListUtil.GetAllPossibleExpressionsForFunctionOperations("[[a]]", env.Object, out errorResultTO, 1);
@@ -257,6 +257,17 @@ namespace Dev2.Data.Tests.BinaryDataList
             var result = DataListUtil.ReplaceStarWithFixedIndex(exp, -1);
 
             Assert.AreEqual("[[rs(*).val]]", result, "Replaced with invalid index in recordset");
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("DataListUtil,UnitTest")]
+        public void DataListUtil_UnitTest_NotReplaceObjectBlankWithIndex()
+        {
+            const string exp = "[[@rs().val]]";
+            var result = DataListUtil.ReplaceObjectBlankWithIndex(exp, 1);
+
+            Assert.AreEqual("[[@rs(1).val]]", result, "Replaced with invalid index in recordset");
         }
 
 
@@ -447,7 +458,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             var target = new Collection<ObservablePair<string, string>>();
 
             //------------Execute Test---------------------------
-            DataListUtil.UpsertTokens(target, tokenizer.Object, "prefix");
+            DataListUtil.UpsertTokens(target, tokenizer.Object, "prefix", null, true);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(TokenCount, target.Count);
@@ -477,7 +488,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             var target = new Collection<ObservablePair<string, string>>();
 
             //------------Execute Test---------------------------
-            DataListUtil.UpsertTokens(target, tokenizer.Object, "prefix", "suffix");
+            DataListUtil.UpsertTokens(target, tokenizer.Object, "prefix", "suffix", true);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(TokenCount, target.Count);
@@ -504,9 +515,9 @@ namespace Dev2.Data.Tests.BinaryDataList
             var tokens = new List<string> { "f1", "", "f3", "f4", "" };
 
             var tokenizer = new Mock<IDev2Tokenizer>();
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             tokenizer.Setup(t => t.HasMoreOps()).Returns(() => tokenNumber < TokenCount);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             tokenizer.Setup(t => t.NextToken()).Returns(() => tokens[tokenNumber++]);
 
             var target = new Collection<ObservablePair<string, string>>();
@@ -542,15 +553,15 @@ namespace Dev2.Data.Tests.BinaryDataList
             var tokens = new List<string> { "f1", "", "f2", "f3", "" };
 
             var tokenizer = new Mock<IDev2Tokenizer>();
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             tokenizer.Setup(t => t.HasMoreOps()).Returns(() => tokenNumber < TokenCount);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             tokenizer.Setup(t => t.NextToken()).Returns(() => tokens[tokenNumber++]);
 
             var target = new Collection<ObservablePair<string, string>>();
 
             //------------Execute Test---------------------------
-            DataListUtil.UpsertTokens(target, tokenizer.Object, "rs(*).", "a");
+            DataListUtil.UpsertTokens(target, tokenizer.Object, "rs(*).", "a", true);
 
             //------------Assert Results-------------------------
             const int ExpectedCount = TokenCount - 2;
@@ -653,8 +664,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             const string exp = "rec(*).name";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            string newExp;
-            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out newExp);
+            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
             //---------------Test Result -----------------------
             Assert.IsFalse(isCalcEvaluation);
             Assert.AreEqual(string.Empty, newExp);
@@ -668,8 +678,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             const string exp = GlobalConstants.CalculateTextConvertPrefix + "rec(*).name" + GlobalConstants.CalculateTextConvertSuffix;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            string newExp;
-            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out newExp);
+            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
             //---------------Test Result -----------------------
             Assert.IsTrue(isCalcEvaluation);
             Assert.AreEqual("rec(*).name", newExp);
@@ -683,8 +692,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             const string exp = GlobalConstants.AggregateCalculateTextConvertPrefix + "rec(*).name" + GlobalConstants.AggregateCalculateTextConvertSuffix;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            string newExp;
-            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out newExp);
+            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
             //---------------Test Result -----------------------
             Assert.IsTrue(isCalcEvaluation);
             Assert.AreEqual("rec(*).name", newExp);
@@ -697,8 +705,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             const string exp = GlobalConstants.AggregateCalculateTextConvertPrefix + "rec(*).name";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            string newExp;
-            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out newExp);
+            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
             //---------------Test Result -----------------------
             Assert.IsFalse(isCalcEvaluation);
             Assert.AreEqual(string.Empty, newExp);
@@ -711,8 +718,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             const string exp = "rec(*).name" + GlobalConstants.AggregateCalculateTextConvertSuffix;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            string newExp;
-            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out newExp);
+            var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
             //---------------Test Result -----------------------
             Assert.IsFalse(isCalcEvaluation);
             Assert.AreEqual(string.Empty, newExp);
@@ -1304,8 +1310,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             var noXml = "kkk";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            bool isFragment;
-            var isXml = DataListUtil.IsXml(noXml, out isFragment);
+            var isXml = DataListUtil.IsXml(noXml, out bool isFragment);
             //---------------Test Result -----------------------
             Assert.IsFalse(isXml);
         }
@@ -1331,8 +1336,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             const string noXml = "<Person></Person>";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            bool isFragment;
-            var isXml = DataListUtil.IsXml(noXml, out isFragment);
+            var isXml = DataListUtil.IsXml(noXml, out bool isFragment);
             //---------------Test Result -----------------------
             Assert.IsTrue(isXml);
         }

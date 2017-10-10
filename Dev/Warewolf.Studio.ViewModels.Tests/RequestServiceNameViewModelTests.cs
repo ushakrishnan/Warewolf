@@ -6,11 +6,13 @@ using Dev2;
 using Dev2.Common.Interfaces;
 using Dev2.Communication;
 using Dev2.Controller;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Runtime.Hosting;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Warewolf.Studio.Core;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -37,6 +39,10 @@ namespace Warewolf.Studio.ViewModels.Tests
         public async Task RequestServiceNameViewModel_CreateAsync_ParametersPassed_ShouldConstructCorrectly()
         {
             //------------Setup for test--------------------------
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             //------------Execute Test---------------------------
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(new Mock<IEnvironmentViewModel>().Object, "", "");
             //------------Assert Results-------------------------
@@ -56,6 +62,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
             mockEnvironmentModel.Setup(model => model.LoadDialog(It.IsAny<Guid>())).Returns(Task.FromResult(true));
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
             requestServiceNameViewModel.Name = "TestResource";
@@ -76,6 +86,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
             requestServiceNameViewModel.Name = "TestResource";
@@ -101,6 +115,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
             requestServiceNameViewModel.Name = "TestResource";
@@ -122,7 +140,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(requestServiceNameViewModel.ResourceName);
             Assert.AreEqual("MyParentFolder\\MyFolder\\", requestServiceNameViewModel.ResourceName.Path);
             Assert.AreEqual("TestResource", requestServiceNameViewModel.ResourceName.Name);
-            Assert.AreEqual("", requestServiceNameViewModel.ErrorMessage);
+            Assert.AreEqual("Can only save to folders or root", requestServiceNameViewModel.ErrorMessage);
         }
 
 
@@ -132,10 +150,14 @@ namespace Warewolf.Studio.ViewModels.Tests
         public async Task RequestServiceNameViewModel_ShowSaveDialog_ItemSelectedHasDuplicateName_ShouldReturnError()
         {
             //------------Setup for test--------------------------
-            const string expectedErrorMessage = "An item with name \'TestResource\' already exists in this folder.";
+            const string expectedErrorMessage = "An item with this name already exists in this folder.";
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
 
@@ -165,10 +187,45 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RequestServiceNameViewModel_ShowSaveDialog")]
+        public async Task RequestServiceNameViewModel_ShowSaveDialog_ItemSelectedHasDuplicateName_WhenDuplicate_ShouldReturnError()
+        {
+            //------------Setup for test--------------------------
+            const string expectedErrorMessage = "An item with this name already exists in this folder.";
+
+            var mockExplorerTreeItem = new Mock<IExplorerItemViewModel>();
+            mockExplorerTreeItem.Setup(item => item.ResourceType).Returns("Folder");
+            mockExplorerTreeItem.Setup(item => item.ResourceName).Returns("MyFolder");
+            var childDuplicateExplorerTreeItem = new Mock<IExplorerItemViewModel>();
+            childDuplicateExplorerTreeItem.Setup(item => item.ResourceType).Returns("DbService");
+            childDuplicateExplorerTreeItem.Setup(item => item.Children).Returns(new ObservableCollection<IExplorerItemViewModel>());
+            childDuplicateExplorerTreeItem.Setup(item => item.ResourceName).Returns("TestResource");
+            childDuplicateExplorerTreeItem.Setup(model => model.Parent).Returns(mockExplorerTreeItem.Object);
+            var explorerItemViewModels = new ObservableCollection<IExplorerItemViewModel> { childDuplicateExplorerTreeItem.Object };
+            mockExplorerTreeItem.Setup(item => item.Children).Returns(explorerItemViewModels);
+
+            var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
+            CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
+            var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            mockEnvironmentModel.Setup(model => model.Children).Returns(new AsyncObservableCollection<IExplorerItemViewModel> { mockExplorerTreeItem.Object });
+            var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "", mockExplorerTreeItem.Object);
+            requestServiceNameViewModel.ShowSaveDialog();
+            
+            requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.SelectedItem = null;
+            //------------Execute Test---------------------------
+            requestServiceNameViewModel.Name = "MyFolder";
+            //------------Assert Results-------------------------
+            Assert.IsTrue(requestServiceNameViewModel.IsDuplicate);
+            Assert.AreEqual(expectedErrorMessage, requestServiceNameViewModel.ErrorMessage);
+            Assert.IsFalse(requestServiceNameViewModel.OkCommand.CanExecute(null));
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("RequestServiceNameViewModel_ShowSaveDialog")]
         public async Task RequestServiceNameViewModel_ShowSaveDialog_NoItemSelectedHasDuplicateName_ShouldReturnError()
         {
             //------------Setup for test--------------------------
-            const string expectedErrorMessage = "An item with name \'TestResource\' already exists in this folder.";
+            const string expectedErrorMessage = "An item with this name already exists in this folder.";
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
@@ -255,13 +312,17 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RequestServiceNameViewModel_ShowSaveDialog")]
-        public async Task RequestServiceNameViewModel_ShowSaveDialog_NameValidNotLoaded_CannotClickOk()
+        public async Task RequestServiceNameViewModel_ShowSaveDialog_NameValidNotLoaded_CanClickOk()
         {
             //------------Setup for test--------------------------
             var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
             mockEnvironmentModel.Setup(model => model.LoadDialog(It.IsAny<Guid>())).Returns(Task.FromResult(false));
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
             requestServiceNameViewModel.Name = "TesResource";
@@ -269,7 +330,8 @@ namespace Warewolf.Studio.ViewModels.Tests
             requestServiceNameViewModel.OkCommand.Execute(null);
             //------------Assert Results-------------------------
             Assert.AreEqual("", requestServiceNameViewModel.ErrorMessage);
-            Assert.IsFalse(requestServiceNameViewModel.OkCommand.CanExecute(null));
+            var canExecute = requestServiceNameViewModel.OkCommand.CanExecute(null);
+            Assert.IsTrue(canExecute);
         }
 
         [TestMethod]
@@ -283,6 +345,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
             mockEnvironmentModel.Setup(model => model.LoadDialog(It.IsAny<Guid>())).Returns(Task.FromResult(false));
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "") as RequestServiceNameViewModel;
             Assert.IsNotNull(requestServiceNameViewModel);
             requestServiceNameViewModel.PropertyChanged += (sender, args) =>
@@ -310,6 +376,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
             mockEnvironmentModel.Setup(model => model.LoadDialog(It.IsAny<Guid>())).Returns(Task.FromResult(false));
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
             //------------Execute Test---------------------------
@@ -330,6 +400,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockRequestServiceNameView.Setup(view => view.RequestClose()).Verifiable();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             //------------Execute Test---------------------------
             requestServiceNameViewModel.Name = "Test";
@@ -347,6 +421,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockRequestServiceNameView.Setup(view => view.RequestClose()).Verifiable();
             CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
             var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
             requestServiceNameViewModel.ShowSaveDialog();
             requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments = new ObservableCollection<IEnvironmentViewModel>();
@@ -354,6 +432,35 @@ namespace Warewolf.Studio.ViewModels.Tests
             requestServiceNameViewModel.Name = "Test";
             //------------Assert Results-------------------------
             Assert.AreEqual("", requestServiceNameViewModel.ErrorMessage);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("RequestServiceNameViewModel_CancelCommand")]
+        public async Task RequestServiceNameViewModel_HasLoadedFalse_CanDuplicateFalse()
+        {
+            //------------Setup for test--------------------------
+            var mockRequestServiceNameView = new Mock<IRequestServiceNameView>();
+            mockRequestServiceNameView.Setup(view => view.RequestClose()).Verifiable();
+            CustomContainer.RegisterInstancePerRequestType<IRequestServiceNameView>(() => mockRequestServiceNameView.Object);
+            var mockEnvironmentModel = new Mock<IEnvironmentViewModel>();
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
+            var requestServiceNameViewModel = await RequestServiceNameViewModel.CreateAsync(mockEnvironmentModel.Object, "", "");
+           
+            var fieldInfo = typeof(RequestServiceNameViewModel).GetField("_selectedPath", BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            fieldInfo.SetValue(requestServiceNameViewModel, "Hello World");
+            requestServiceNameViewModel.ShowSaveDialog();
+            requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments = new ObservableCollection<IEnvironmentViewModel>();
+            //------------Execute Test---------------------------
+            requestServiceNameViewModel.Name = "Test";
+            //------------Assert Results-------------------------
+            Assert.AreEqual("", requestServiceNameViewModel.ErrorMessage);
+            var canExecute = requestServiceNameViewModel.DuplicateCommand.CanExecute(null);
+            Assert.IsFalse(canExecute);
         }
 
         [TestMethod]
@@ -388,21 +495,24 @@ namespace Warewolf.Studio.ViewModels.Tests
             item.Setup(model => model.ResourceType).Returns("type");
             item.Setup(model => model.ResourceName).Returns("name");
             selectedItemMock.Setup(sitem => sitem.SelectedItem).Returns(item.Object);
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var viewModel = RequestServiceNameViewModel.CreateAsync(envModel.Object, "", "", itemObj.Object).Result;
-            
 
             controller.Setup(communicationController => communicationController.AddPayloadArgument("ResourceID", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.AddPayloadArgument("NewResourceName", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.AddPayloadArgument("FixRefs", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.ExecuteCommand<ExecuteMessage>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
             var lazyCon = typeof(RequestServiceNameViewModel).GetField("_lazyCon", BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic);
-            // ReSharper disable once PossibleNullReferenceException
+            
             lazyCon.SetValue(viewModel, envMock.Object);
             var lazyComs = typeof(RequestServiceNameViewModel).GetField("_lazyComs", BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic);
-            // ReSharper disable once PossibleNullReferenceException
+            
             lazyComs.SetValue(viewModel, controller.Object);
             var selectedItem = typeof(RequestServiceNameViewModel).GetProperty("SingleEnvironmentExplorerViewModel", BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.Public);
-            // ReSharper disable once PossibleNullReferenceException
+            
             selectedItem.SetValue(viewModel, selectedItemMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(viewModel);
@@ -419,9 +529,9 @@ namespace Warewolf.Studio.ViewModels.Tests
             //---------------Test Result -----------------------
             controller.Verify(communicationController => communicationController.AddPayloadArgument("ResourceID", It.IsAny<string>()));
             controller.Verify(communicationController => communicationController.AddPayloadArgument("NewResourceName", It.IsAny<string>()));
-            controller.Verify(communicationController => communicationController.ExecuteCommand<ExecuteMessage>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
+            controller.Verify(communicationController => communicationController.ExecuteCommand<ResourceCatalogDuplicateResult>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
         }
-        
+
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void CallDuplicateCommand_GivenNoItemPassed_ShouldSetCanExecuteFalse()
@@ -431,13 +541,16 @@ namespace Warewolf.Studio.ViewModels.Tests
             var envMock = new Mock<IEnvironmentConnection>();
             var controller = new Mock<ICommunicationController>();
             var envModel = new Mock<IEnvironmentViewModel>();
-            envModel.Setup(model => model.Server.UpdateRepository.FireItemSaved(true)).Verifiable("Explorer Not Refreshed");
             var selectedItemMock = new Mock<IExplorerViewModel>();
             var item = new Mock<IExplorerTreeItem>();
             item.Setup(model => model.ResourceName).Returns("name");
             item.Setup(model => model.ResourceType).Returns("type");
             item.Setup(model => model.ResourceName).Returns("name");
             selectedItemMock.Setup(sitem => sitem.SelectedItem).Returns(item.Object);
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var viewModel = RequestServiceNameViewModel.CreateAsync(envModel.Object, "", "").Result;
 
             controller.Setup(communicationController => communicationController.AddPayloadArgument("ResourceID", It.IsAny<string>()));
@@ -445,13 +558,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             controller.Setup(communicationController => communicationController.AddPayloadArgument("FixRefs", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.ExecuteCommand<ExecuteMessage>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
             var lazyCon = typeof(RequestServiceNameViewModel).GetField("_lazyCon", BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic);
-            // ReSharper disable once PossibleNullReferenceException
+            
             lazyCon.SetValue(viewModel, envMock.Object);
             var lazyComs = typeof(RequestServiceNameViewModel).GetField("_lazyComs", BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic);
-            // ReSharper disable once PossibleNullReferenceException
+            
             lazyComs.SetValue(viewModel, controller.Object);
             var selectedItem = typeof(RequestServiceNameViewModel).GetProperty("SingleEnvironmentExplorerViewModel", BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.Public);
-            // ReSharper disable once PossibleNullReferenceException
+            
             selectedItem.SetValue(viewModel, selectedItemMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(viewModel);
@@ -472,7 +585,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             var envMock = new Mock<IEnvironmentConnection>();
             var controller = new Mock<ICommunicationController>();
             var envModel = new Mock<IEnvironmentViewModel>();
-            envModel.Setup(model => model.Server.UpdateRepository.FireItemSaved(true)).Verifiable("Explorer Not Refreshed");
             var selectedItemMock = new Mock<IExplorerViewModel>();
             var itemObj = new Mock<IExplorerItemViewModel>();
             itemObj.Setup(model => model.IsFolder).Returns(true);
@@ -482,6 +594,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             item.Setup(model => model.ResourceName).Returns("name");
             item.Setup(model => model.IsFolder).Returns(true);
             selectedItemMock.Setup(sitem => sitem.SelectedItem).Returns(item.Object);
+            var serverRepo = new Mock<IServerRepository>();
+            var connectionObject = new Mock<IEnvironmentConnection>();
+            serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
+            CustomContainer.Register(serverRepo.Object);
             var viewModel = RequestServiceNameViewModel.CreateAsync(envModel.Object, "", "", itemObj.Object).Result;
 
             controller.Setup(communicationController => communicationController.AddPayloadArgument("ResourceID", It.IsAny<string>()));
@@ -489,28 +605,28 @@ namespace Warewolf.Studio.ViewModels.Tests
             controller.Setup(communicationController => communicationController.AddPayloadArgument("FixRefs", It.IsAny<string>()));
             controller.Setup(communicationController => communicationController.ExecuteCommand<ExecuteMessage>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()));
             var lazyCon = typeof(RequestServiceNameViewModel).GetField("_lazyCon", BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic);
-            // ReSharper disable once PossibleNullReferenceException
+            
             lazyCon.SetValue(viewModel, envMock.Object);
             var lazyComs = typeof(RequestServiceNameViewModel).GetField("_lazyComs", BindingFlags.Instance | BindingFlags.GetField | BindingFlags.NonPublic);
-            // ReSharper disable once PossibleNullReferenceException
+            
             lazyComs.SetValue(viewModel, controller.Object);
             var selectedItem = typeof(RequestServiceNameViewModel).GetProperty("SingleEnvironmentExplorerViewModel", BindingFlags.Instance | BindingFlags.GetProperty | BindingFlags.Public);
-            // ReSharper disable once PossibleNullReferenceException
+            
             selectedItem.SetValue(viewModel, selectedItemMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(viewModel);
-           
-            
+
+
             //---------------Execute Test ----------------------
             var canExecute = viewModel.DuplicateCommand.CanExecute(null);
             try
             {
                 viewModel.DuplicateCommand.Execute(null);
-               
+
             }
-            catch(Exception f) when(f is NullReferenceException)
+            catch (Exception f) when (f is NullReferenceException)
             {
-               // Console.WriteLine(e);
+                // Console.WriteLine(e);
             }
             catch (Exception)
             {

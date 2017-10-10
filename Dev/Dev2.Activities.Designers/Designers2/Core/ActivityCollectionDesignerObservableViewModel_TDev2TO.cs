@@ -7,10 +7,10 @@ using System.ComponentModel;
 using System.Linq;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-// ReSharper disable NonLocalizedString
-// ReSharper disable ConvertToAutoProperty
+
+
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -44,6 +44,8 @@ namespace Dev2.Activities.Designers2.Core
                 case 1:
                     AddDto(2);
                     break;
+                default:
+                    break;
             }
 
             AddBlankRow();
@@ -59,17 +61,13 @@ namespace Dev2.Activities.Designers2.Core
 
         public override void OnSelectionChanged(ModelItem oldItem, ModelItem newItem)
         {
-            if(oldItem != null)
+            if (oldItem?.GetCurrentValue() is TDev2TOFn dto && dto.CanRemove())
             {
-                var dto = oldItem.GetCurrentValue() as TDev2TOFn;
-                if(dto != null && dto.CanRemove())
-                {
-                    // old row is blank so remove
-                    var index = Collection.IndexOf(dto) + 1;
-                    RemoveDto(dto, index);
-                }
+                // old row is blank so remove
+                var index = Collection.IndexOf(dto) + 1;
+                RemoveDto(dto, index);
             }
-            if(newItem != null)
+            if (newItem != null)
             {
                 CurrentModelItem = newItem;
             }
@@ -94,10 +92,7 @@ namespace Dev2.Activities.Designers2.Core
         {
             var result = new List<IActionableErrorInfo>();
             result.AddRange(ValidateThis());
-
             ProcessModelItemCollection(0, mi => result.AddRange(ValidateCollectionItem(mi)));
-
-            //Errors = result.Count == 0 ? 0 : result;
             Errors = result.Count == 0 ? null : result;
         }
 
@@ -259,17 +254,11 @@ namespace Dev2.Activities.Designers2.Core
                 var idx = indexNumber - 1;
                 if(idx >= Collection.Count)
                 {
-                    if(Collection != null)
-                    {
-                        Collection.Add(dto);
-                    }
+                    Collection?.Add(dto);
                 }
                 else
                 {
-                    if(Collection != null)
-                    {
-                        Collection.Insert(idx, dto);
-                    }
+                    Collection?.Insert(idx, dto);
                 }
             }
            UpdateDto(dto);
@@ -339,8 +328,7 @@ namespace Dev2.Activities.Designers2.Core
         {
             ProcessModelItemCollection(startIndex, mi =>
             {
-                var dto = mi as TDev2TOFn;
-                if(dto != null)
+                if (mi is TDev2TOFn dto)
                 {
                     AttachEvents(dto);
                 }
@@ -375,8 +363,7 @@ namespace Dev2.Activities.Designers2.Core
           
             ProcessModelItemCollection(0, mi =>
             {
-                var dto = mi as TDev2TOFn;
-                if(dto != null)
+                if (mi is TDev2TOFn dto)
                 {
                     CEventHelper.RemoveAllEventHandlers(dto);
                 }

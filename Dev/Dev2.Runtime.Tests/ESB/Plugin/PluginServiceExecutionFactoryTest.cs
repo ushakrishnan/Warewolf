@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +9,8 @@
 */
 
 using System;
+using System.Linq;
+using Dev2.Runtime;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin;
 using DummyNamespaceForTest;
@@ -38,9 +40,27 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             //------------Setup for test--------------------------
             var source = CreatePluginSource();
             //------------Execute Test---------------------------
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            //using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
+
                 var result = PluginServiceExecutionFactory.GetNamespaces(source);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
+        public void PluginRuntimeHandler_GetNamespacesWithJsonObjects_WhenValidDll_ExpectNamespaces()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            //------------Execute Test---------------------------
+            //using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+
+                var result = PluginServiceExecutionFactory.GetNamespacesWithJsonObjects(source);
                 //------------Assert Results-------------------------
                 Assert.IsTrue(result.Count > 0);
             }
@@ -56,7 +76,17 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             PluginServiceExecutionFactory.GetNamespaces(null);
         }
 
-        
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
+        [ExpectedException(typeof(NullReferenceException))]
+        public void PluginRuntimeHandler_GetNamespacesWithJsonObjects_WhenNullDll_ExpectException()
+        {
+            //------------Execute Test---------------------------
+            PluginServiceExecutionFactory.GetNamespacesWithJsonObjects(null);
+        }
+
+
         [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetMethods")]
@@ -71,7 +101,59 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
                 var result = PluginServiceExecutionFactory.GetMethods(source.AssemblyLocation, source.AssemblyName, service.Namespace);
                 //------------Assert Results-------------------------
                 Assert.IsTrue(result.Count > 0);
-            }            
+            }
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetMethods")]
+        public void PluginRuntimeHandler_GetConstructors_WhenValidDll_ExpectValidResults()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            var service = CreatePluginService();
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = PluginServiceExecutionFactory.GetConstructors(source.AssemblyLocation, source.AssemblyName, service.Namespace);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetMethods")]
+        public void PluginRuntimeHandler_GetMethodsWithReturns_WhenValidDll_ExpectValidResults()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            var service = CreatePluginService();
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = PluginServiceExecutionFactory.GetMethodsWithReturns(source.AssemblyLocation, source.AssemblyName, service.Namespace);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetMethods")]
+        public void PluginRuntimeHandler_GetMethodsWithReturns_WhenValidDllMethodIsVoid_ExpectValidResultsWithVoidMethod()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            var service = CreatePluginService();
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = PluginServiceExecutionFactory.GetMethodsWithReturns(source.AssemblyLocation, source.AssemblyName, service.Namespace);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+                Assert.IsTrue(result.Any(method => method.IsVoid));
+            }
         }
 
         [TestMethod]
@@ -82,16 +164,27 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             //------------Setup for test--------------------------
             var source = CreatePluginSource();
             var svc = CreatePluginService();
-                     
-            
+
+
 
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = source.AssemblyLocation, AssemblyName = "Foo", Fullname = svc.Namespace, Method = svc.Method.Name, Parameters = svc.Method.Parameters };
+                PluginInvokeArgs args = new PluginInvokeArgs
+                {
+                    AssemblyLocation = source.AssemblyLocation
+                    ,
+                    AssemblyName = "Foo"
+                    ,
+                    Fullname = svc.Namespace
+                    ,
+                    Method = svc.Method.Name
+                    ,
+                    Parameters = svc.Method.Parameters
+                };
                 var result = PluginServiceExecutionFactory.InvokePlugin(args);
-                var castResult = JsonConvert.DeserializeObject(result.ToString()) as dynamic;
                 //------------Assert Results-------------------------
+                var castResult = JsonConvert.DeserializeObject(result.ToString()) as dynamic;
                 if (castResult != null)
                 {
                     StringAssert.Contains(castResult.Name.ToString(), "test data");
@@ -100,8 +193,8 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
                 {
                     Assert.Fail("Failed Conversion for Assert");
                 }
-            }  
-            
+            }
+
         }
 
         #region Helper Methods
@@ -112,13 +205,13 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             var assembly = type.Assembly;
 
             string loc = null;
-            if(!nullLocation)
+            if (!nullLocation)
             {
                 loc = assembly.Location;
             }
 
             Guid resourceID = Guid.Empty;
-            if(!invalidResourceID)
+            if (!invalidResourceID)
             {
                 resourceID = Guid.NewGuid();
             }

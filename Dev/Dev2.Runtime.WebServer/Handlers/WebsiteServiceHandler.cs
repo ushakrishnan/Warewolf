@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -40,15 +40,13 @@ namespace Dev2.Runtime.WebServer.Handlers
               
             try
             {
-                Guid workspaceGuid;
-                Guid.TryParse(workspaceID, out workspaceGuid);
+                Guid.TryParse(workspaceID, out Guid workspaceGuid);
 
-                Guid dataListGuid;
-                Guid.TryParse(dataListID, out dataListGuid);
+                Guid.TryParse(dataListID, out Guid dataListGuid);
 
-                
+
                 Thread.CurrentPrincipal = userPrinciple;
-                Dev2Logger.Info("WEB EXECUTION USER CONTEXT [ " + userPrinciple.Identity.Name + " ]");
+                Dev2Logger.Info("WEB EXECUTION USER CONTEXT [ " + userPrinciple.Identity.Name + " ]", GlobalConstants.WarewolfInfo);
                 Common.Utilities.PerformActionInsideImpersonatedContext(userPrinciple, () => { result = _serviceInvoker.Invoke(className, methodName, args, workspaceGuid, dataListGuid); });
                 
 

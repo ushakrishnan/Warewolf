@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Exchange;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -14,9 +14,19 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestExchangeServiceSource : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             ExecuteMessage msg = new ExecuteMessage();
@@ -24,10 +34,9 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             try
             {
-                Dev2Logger.Info("Save Resource Service");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Save Resource Service", GlobalConstants.WarewolfInfo);
 
-                values.TryGetValue("ExchangeSource", out resourceDefinition);
+                values.TryGetValue("ExchangeSource", out StringBuilder resourceDefinition);
 
                 var src = serializer.Deserialize<ExchangeSourceDefinition>(resourceDefinition);
 
@@ -42,8 +51,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var testMessage = new ExchangeTestMessage()
                 {
                     Tos = new List<string>{ src.EmailTo, },
-                    CCs = new List<string> { String.Empty},
-                    BcCs = new List<string> { String.Empty },
+                    CCs = new List<string> { string.Empty},
+                    BcCs = new List<string> { string.Empty },
                     Subject = "Exchange Email Test",
                     Body = "Test Exchange email service source",
                 };
@@ -54,7 +63,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
 
             return serializer.SerializeToBuilder(msg);

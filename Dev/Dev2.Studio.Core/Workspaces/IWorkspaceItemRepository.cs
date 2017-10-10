@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,10 +10,10 @@
 
 using System.Collections.Generic;
 using Dev2.Communication;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Workspaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Workspaces
 {
     public interface IWorkspaceItemRepository
@@ -24,5 +24,6 @@ namespace Dev2.Studio.Core.Workspaces
         ExecuteMessage UpdateWorkspaceItem(IContextualResourceModel resource, bool isLocalSave);
         void Remove(IContextualResourceModel resourceModel);
         void UpdateWorkspaceItemIsWorkflowSaved(IContextualResourceModel resourceModel);
+        void ClearWorkspaceItems(IContextualResourceModel resourceModel);
     }
 }

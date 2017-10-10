@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,27 +16,29 @@ using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Script
 {
     public class ScriptDesignerViewModel : ActivityDesignerViewModel
     {
         readonly IEventAggregator _eventPublisher;
+        readonly IScriptChooser _scriptChooser;
         public ScriptDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
             _eventPublisher = EventPublishers.Aggregator;
             _eventPublisher.Subscribe(this);
 
+            _scriptChooser = new ScriptChooser();
             EscapeScript = true;
             ScriptTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enScriptType>();
             SelectedScriptType = Dev2EnumConverter.ConvertEnumValueToString(ScriptType);
             ChooseScriptSourceCommand = new DelegateCommand(o => ChooseScriptSources());
             AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Scripting_Script;
         }
 
         public string IncludeFile
@@ -54,7 +56,7 @@ namespace Dev2.Activities.Designers2.Script
             get { return (string)GetValue(SelectedScriptTypeProperty); }
             set { SetValue(SelectedScriptTypeProperty, value); }
         }
-        
+
         public static readonly DependencyProperty SelectedScriptTypeProperty =
             DependencyProperty.Register("SelectedScriptType", typeof(string), typeof(ScriptDesignerViewModel), new PropertyMetadata(null, OnSelectedScriptTypeChanged));
 
@@ -101,38 +103,16 @@ namespace Dev2.Activities.Designers2.Script
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel?.UpdateHelpText(helpText);
         }
 
         public void ChooseScriptSources()
         {
-            const string separator = @";";
-            var chooserMessage = new FileChooserMessage();
-            if (IncludeFile == null)
-            {
-                IncludeFile = "";
-            }
-            chooserMessage.SelectedFiles = IncludeFile?.Split(separator.ToCharArray());
-            chooserMessage.PropertyChanged += (sender, args) =>
-            {
-                if (args.PropertyName == @"SelectedFiles")
-                {
-                    if (chooserMessage.SelectedFiles != null)
-                    {
-                        if (string.IsNullOrEmpty(IncludeFile))
-                        {
-                            IncludeFile = string.Join(separator, chooserMessage.SelectedFiles);
-                        }
-                        else
-                        {
-                            IncludeFile += separator + string.Join(separator, chooserMessage.SelectedFiles);
-                        }
-                    }
-                }
-            };
-            _eventPublisher.Publish(chooserMessage);
+            var fileChooserMessage = _scriptChooser.ChooseScriptSources(IncludeFile);
+            fileChooserMessage.Filter = "js";
+            _eventPublisher.Publish(fileChooserMessage);
+            IncludeFile = string.Join(";", fileChooserMessage.SelectedFiles);
         }
-
     }
 }

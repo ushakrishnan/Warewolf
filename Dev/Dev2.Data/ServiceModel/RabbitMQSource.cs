@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,11 +16,11 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 using Warewolf.Security.Encryption;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Data.ServiceModel
 {
-    public class RabbitMQSource : Resource, IResourceSource
+    public class RabbitMQSource : Resource, IResourceSource, IRabbitMQ
     {
         private const int DefaultPort = 5672;
         private const string DefaultVirtualHost = "/";
@@ -68,8 +68,7 @@ namespace Dev2.Data.ServiceModel
             UserName = properties["UserName"];
             Password = properties["Password"];
 
-            int port;
-            Port = Int32.TryParse(properties["Port"], out port) ? port : DefaultPort;
+            Port = Int32.TryParse(properties["Port"], out int port) ? port : DefaultPort;
             VirtualHost = !string.IsNullOrWhiteSpace(properties["VirtualHost"]) ? properties["VirtualHost"] : DefaultVirtualHost;
         }
 
@@ -81,11 +80,11 @@ namespace Dev2.Data.ServiceModel
         {
             var result = base.ToXml();
             var connectionString = string.Join(";",
-                string.Format("HostName={0}", HostName),
-                string.Format("Port={0}", Port),
-                string.Format("UserName={0}", UserName),
-                string.Format("Password={0}", Password),
-                string.Format("VirtualHost={0}", VirtualHost)
+                $"HostName={HostName}",
+                $"Port={Port}",
+                $"UserName={UserName}",
+                $"Password={Password}",
+                $"VirtualHost={VirtualHost}"
                 );
 
             result.Add(

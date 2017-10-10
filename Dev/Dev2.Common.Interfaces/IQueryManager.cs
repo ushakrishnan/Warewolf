@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading.Tasks;
 using Dev2.Common.Interfaces.DB;
@@ -19,12 +18,12 @@ namespace Dev2.Common.Interfaces
     public interface IQueryManager
     {
         
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         IExecuteMessage FetchDependencies(Guid resourceId);
         IExecuteMessage FetchDependants(Guid resourceId);
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         StringBuilder FetchResourceXaml(Guid resourceId);
-        Task<IExplorerItem> Load(bool reloadCatalogue = false);
+        Task<IExplorerItem> Load(bool reloadCatalogue);
         IList<IToolDescriptor> FetchTools();
         IList<IExchangeSource> FetchExchangeSources();
         IList<string> GetComputerNames();
@@ -34,16 +33,19 @@ namespace Dev2.Common.Interfaces
         IList<IPluginSource> FetchPluginSources();
         IList<IComPluginSource> FetchComPluginSources();
         IList<IPluginAction> PluginActions(IPluginSource source, INamespaceItem ns);
+        IList<IPluginAction> PluginActionsWithReturns(IPluginSource source, INamespaceItem ns);
+        IList<IPluginConstructor> PluginConstructors(IPluginSource source, INamespaceItem ns);
         IList<IPluginAction> PluginActions(IComPluginSource source, INamespaceItem ns);
         List<IFileListing> GetDllListings(IFileListing listing);
         List<IFileListing> GetComDllListings(IFileListing listing);
         ICollection<INamespaceItem> FetchNamespaces(IPluginSource source);
+        ICollection<INamespaceItem> FetchNamespacesWithJsonRetunrs(IPluginSource source);
         ICollection<INamespaceItem> FetchNamespaces(IComPluginSource source);
         IList<IFileListing> FetchFiles();
         IList<IFileListing> FetchFiles(IFileListing file);
         IList<Guid> FetchDependenciesOnList(IEnumerable<Guid> values);
         List<IWindowsGroupPermission> FetchPermissions();
-        // ReSharper disable once InconsistentNaming
+
         IEnumerable<IRabbitMQServiceSourceDefinition> FetchRabbitMQServiceSources();
         IList<IWcfServerSource> FetchWcfSources();
         IList<IWcfAction> WcfActions(IWcfServerSource source);

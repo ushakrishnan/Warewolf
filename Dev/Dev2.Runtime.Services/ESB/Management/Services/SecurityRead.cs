@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -23,6 +24,7 @@ using Dev2.Runtime.Interfaces;
 using Dev2.Services.Security;
 using Dev2.Workspaces;
 using Newtonsoft.Json;
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
@@ -40,9 +42,19 @@ namespace Dev2.Runtime.ESB.Management.Services
             WindowsGroupPermission.CreateGuests()
         };
 
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2Logger.Debug("Start Security Read");
+            Dev2Logger.Debug("Start Security Read", GlobalConstants.WarewolfDebug);
             var serverSecuritySettingsFile = EnvironmentVariables.ServerSecuritySettingsFile;
             if(File.Exists(serverSecuritySettingsFile))
             {
@@ -54,11 +66,11 @@ namespace Dev2.Runtime.ESB.Management.Services
                         encryptedData = reader.ReadToEnd();
                     }
                 }
-                Dev2Logger.Debug("Security Data Read");
+                Dev2Logger.Debug("Security Data Read", GlobalConstants.WarewolfDebug);
                 try
                 {
                     var decryptData = SecurityEncryption.Decrypt(encryptedData);
-                    Dev2Logger.Debug(decryptData);
+                    Dev2Logger.Debug(decryptData, GlobalConstants.WarewolfDebug);
                     var currentSecuritySettingsTo = JsonConvert.DeserializeObject<SecuritySettingsTO>(decryptData);
                     if(currentSecuritySettingsTo.WindowsGroupPermissions.Any(a=>a.ResourceID!= Guid.Empty))
                     {
@@ -99,7 +111,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 catch(Exception e)
                 {
-                    Dev2Logger.Error("SecurityRead", e);
+                    Dev2Logger.Error("SecurityRead", e, GlobalConstants.WarewolfError);
                 }
             }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +10,12 @@
 
 using System;
 using System.Collections.Generic;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers
 {
-    public class EnvironmentModelEqualityComparer : IEqualityComparer<IEnvironmentModel>
+    public class EnvironmentModelEqualityComparer : IEqualityComparer<IServer>
     {
         #region Class Members
 
@@ -30,7 +30,7 @@ namespace Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers
 
         #region Methods
 
-        public bool Equals(IEnvironmentModel x, IEnvironmentModel y)
+        public bool Equals(IServer x, IServer y)
         {
             if(x == null || y == null)
             {
@@ -39,7 +39,7 @@ namespace Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers
             return x.Equals(y);
         }
 
-        public int GetHashCode(IEnvironmentModel obj)
+        public int GetHashCode(IServer obj)
         {
             return obj.GetHashCode();
         }

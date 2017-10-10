@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,12 +14,12 @@ using Dev2.Common.Interfaces.Infrastructure.Events;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Diagnostics.Debug;
 using Dev2.Services.Security;
+using Dev2.Studio.Core;
 using Dev2.Studio.ViewModels.Diagnostics;
-using Dev2.ViewModels.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests
 {
     public partial class DebugOutputViewModelTest
@@ -181,17 +181,17 @@ namespace Dev2.Core.Tests
             Assert.AreEqual(2, viewModel.RootItems.Count);
             var child = viewModel.RootItems[0] as DebugStateTreeViewItemViewModel;
             Assert.IsNotNull(child);
-            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+            
             if(child != null)
-            // ReSharper restore ConditionIsAlwaysTrueOrFalse
+            
             {
                 Assert.AreEqual("Content", child.Content.DisplayName);
             }
             var child2 = viewModel.RootItems[1] as DebugStateTreeViewItemViewModel;
             Assert.IsNotNull(child2);
-            // ReSharper disable ConditionIsAlwaysTrueOrFalse
+            
             if(child2 != null)
-            // ReSharper restore ConditionIsAlwaysTrueOrFalse
+            
             {
                 Assert.AreEqual("Content2", child2.Content.DisplayName);
             }
@@ -294,8 +294,7 @@ namespace Dev2.Core.Tests
             //------------Execute Test---------------------------
             viewModel.Append(content);
 
-            // Assert Nothing Appended
-            Assert.AreEqual(0, viewModel.RootItems.Count);
+            Assert.AreEqual(1, viewModel.RootItems.Count);
         }
 
         [TestMethod]

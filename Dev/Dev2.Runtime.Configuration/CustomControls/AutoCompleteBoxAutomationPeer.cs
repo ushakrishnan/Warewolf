@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -114,18 +114,18 @@ namespace System.Windows.Automation.Peers
             {
                 iface = this;
             }
-            else if(owner.SelectionAdapter != null)
+            else
             {
-                AutomationPeer peer = owner.SelectionAdapter.CreateAutomationPeer();
+                AutomationPeer peer = owner.SelectionAdapter?.CreateAutomationPeer();
                 if(peer != null)
                 {
                     iface = peer.GetPattern(patternInterface);
                 }
             }
 
-            // ReSharper disable ConvertIfStatementToNullCoalescingExpression
+            
             if(iface == null)
-            // ReSharper restore ConvertIfStatementToNullCoalescingExpression
+            
             {
                 iface = base.GetPattern(patternInterface);
             }
@@ -245,17 +245,11 @@ namespace System.Windows.Automation.Peers
             }
 
             // Include SelectionAdapter's children.
-            if(owner.SelectionAdapter != null)
+            AutomationPeer selectionAdapterPeer = owner.SelectionAdapter?.CreateAutomationPeer();
+            List<AutomationPeer> listChildren = selectionAdapterPeer?.GetChildren();
+            if(listChildren != null)
             {
-                AutomationPeer selectionAdapterPeer = owner.SelectionAdapter.CreateAutomationPeer();
-                if(selectionAdapterPeer != null)
-                {
-                    List<AutomationPeer> listChildren = selectionAdapterPeer.GetChildren();
-                    if(listChildren != null)
-                    {
-                        children.AddRange(listChildren);
-                    }
-                }
+                children.AddRange(listChildren);
             }
 
             return children;
@@ -272,20 +266,13 @@ namespace System.Windows.Automation.Peers
         /// </remarks>
         IRawElementProviderSimple[] ISelectionProvider.GetSelection()
         {
-            if(OwnerAutoCompleteBox.SelectionAdapter != null)
+            object selectedItem = OwnerAutoCompleteBox.SelectionAdapter?.SelectedItem;
+            if (selectedItem is UIElement uie)
             {
-                object selectedItem = OwnerAutoCompleteBox.SelectionAdapter.SelectedItem;
-                if(selectedItem != null)
+                AutomationPeer peer = CreatePeerForElement(uie);
+                if (peer != null)
                 {
-                    UIElement uie = selectedItem as UIElement;
-                    if(uie != null)
-                    {
-                        AutomationPeer peer = CreatePeerForElement(uie);
-                        if(peer != null)
-                        {
-                            return new[] { ProviderFromPeer(peer) };
-                        }
-                    }
+                    return new[] { ProviderFromPeer(peer) };
                 }
             }
 

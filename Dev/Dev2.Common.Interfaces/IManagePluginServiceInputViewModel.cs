@@ -12,6 +12,21 @@ namespace Dev2.Common.Interfaces
         ICollection<IServiceInput> Inputs { get; set; }
         string TestResults { get; set; }
         bool OkSelected { get; set; }
+        IGenerateOutputArea OutputArea { get; }
+        IOutputDescription Description { get; set; }
+        IGenerateInputArea InputArea { get; }
+        bool PasteResponseVisible { get; set; }
+        bool PasteResponseAvailable { get; }
+        bool OutputCountExpandAllowed { get; set; }
+        bool InputCountExpandAllowed { get; set; }
+        bool IsGenerateInputsEmptyRows { get; set; }
+    }
+
+    public interface IManageEnhancedPluginServiceInputViewModel : IToolRegion, IManageServiceInputViewModel<IPluginService>
+    {
+        ICollection<IConstructorParameter> Inputs { get; set; }
+        string TestResults { get; set; }
+        bool OkSelected { get; set; }
         IGenerateOutputArea OutputArea { get; set; }
         IOutputDescription Description { get; set; }
         IGenerateInputArea InputArea { get; set; }
@@ -27,9 +42,9 @@ namespace Dev2.Common.Interfaces
         ICollection<IServiceInput> Inputs { get; set; }
         string TestResults { get; set; }
         bool OkSelected { get; set; }
-        IGenerateOutputArea OutputArea { get; set; }
+        IGenerateOutputArea OutputArea { get; }
         IOutputDescription Description { get; set; }
-        IGenerateInputArea InputArea { get; set; }
+        IGenerateInputArea InputArea { get; }
         bool PasteResponseVisible { get; set; }
         bool PasteResponseAvailable { get; }
         bool OutputCountExpandAllowed { get; set; }
@@ -42,9 +57,9 @@ namespace Dev2.Common.Interfaces
         string TestResults { get; set; }
         bool OkSelected { get; set; }
         ICommand PasteResponseCommand { get; }
-        IGenerateOutputArea OutputArea { get; set; }
+        IGenerateOutputArea OutputArea { get; }
         IOutputDescription Description { get; set; }
-        IGenerateInputArea InputArea { get; set; }
+        IGenerateInputArea InputArea { get; }
         bool PasteResponseVisible { get; set; }
         bool PasteResponseAvailable { get; }
         bool OutputCountExpandAllowed { get; set; }

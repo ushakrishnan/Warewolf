@@ -5,7 +5,6 @@
                                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                                xmlns:core="clr-namespace:Dev2.Activities.Designers2.Core"
                                xmlns:ui="clr-namespace:Dev2.UI;assembly=Dev2.Intellisense"
-                               
                                xmlns:attachedProperties="clr-namespace:Dev2.Studio.AppResources.AttachedProperties"
                                xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
                                xmlns:errors="clr-namespace:Dev2.Activities.Designers2.Core.Errors"
@@ -13,14 +12,12 @@
                                xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
                                xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
                                xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
-                               xmlns:attachedProperties1="clr-namespace:Dev2.Activities.AttachedProperties"
                                xmlns:interfaceImplementors="clr-namespace:Dev2.Studio.InterfaceImplementors;assembly=Dev2.Intellisense"
-                               xmlns:provider="clr-namespace:Dev2.Intellisense.Provider;assembly=Dev2.Intellisense"
                                mc:Ignorable="d" 
                                MinWidth="250"
                                MinHeight="50"
                                Width="250"
-                               MaxWidth="350"
+                               MaxWidth="700"
                                MaxHeight="700"
                                d:DesignHeight="300" d:DesignWidth="300"
                                d:DataContext="{d:DesignInstance comment:CommentDesignerViewModel}">
@@ -38,16 +35,17 @@
                                 Grid.Column="0"
                                 Grid.Row="0" 
                                 VerticalAlignment="Stretch"
+                                VerticalContentAlignment="Top"
                                 AllowMultilinePaste="True"
                                 AcceptsReturn="True"
                                 AllowUserInsertLine="True"
                                 TextWrapping="Wrap"
                                 Height="Auto"
+                                MinHeight="40"
                                 WrapInBrackets="False" 
-                                VerticalScrollBarVisibility="Auto"
                                 HorizontalScrollBarVisibility="Auto"
-                                VerticalContentAlignment="Top"
-                                ToolTip="{x:Static languages:Core.CommentToolTipComment}"
+                                Style="{StaticResource AutoCompleteBoxWithWrapStyle}"
+                                ToolTip="{x:Static languages:Tooltips.CommentToolTipComment}"
                                 Text="{Binding Path=ModelItem.Text, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Commenttxt_AutoID}"
                                 attachedProperties:WizardEngineAttachedProperties.DontOpenWizard="True">
@@ -57,7 +55,7 @@
                 </interfaceImplementors:CompositeIntellisenseProvider>
             </ui:IntellisenseTextBox.IntellisenseProvider>
             <i:Interaction.Behaviors>
-                <core1:HelpSetter Text="{x:Static languages:Core.CommentHelpComment}" DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.CommentHelpComment}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ModelItem.Text"
                                      SourcePropertyValue="{Binding  ModelItem.Text, UpdateSourceTrigger=PropertyChanged}"

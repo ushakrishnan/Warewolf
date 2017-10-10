@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -62,6 +62,10 @@ namespace Dev2.Runtime.Security
                 return _theInstance;
             }
         }
+
+        public RSACryptoServiceProvider SystemKey => _systemKey;
+
+        public RSACryptoServiceProvider ServerKey => _serverKey;
 
         #endregion
 
@@ -160,10 +164,7 @@ namespace Dev2.Runtime.Security
 
         void SetServerID(XmlDocument doc)
         {
-            if (doc.DocumentElement != null)
-            {
-                doc.DocumentElement.SetAttribute("ServerID", ServerID.ToString());
-            }
+            doc.DocumentElement?.SetAttribute("ServerID", ServerID.ToString());
         }
 
         #endregion
@@ -185,7 +186,7 @@ namespace Dev2.Runtime.Security
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Error(e);
+                    Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 }
             }
             else

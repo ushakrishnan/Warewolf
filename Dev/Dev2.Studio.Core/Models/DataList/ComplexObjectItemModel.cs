@@ -1,10 +1,13 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
-using Dev2.Data.Binary_Objects;
+using Dev2.Common.Common;
+using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Parsers;
 using Dev2.Data.Util;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces.DataList;
 
 namespace Dev2.Studio.Core.Models.DataList
 {
@@ -14,8 +17,24 @@ namespace Dev2.Studio.Core.Models.DataList
         private IComplexObjectItemModel _parent;
         private bool _isParentObject;
         private bool _isArray;
+        private string _searchText;
 
-        public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent = null, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection = enDev2ColumnArgumentDirection.None, string description = "", OptomizedObservableCollection<IComplexObjectItemModel> children = null, bool hasError = false, string errorMessage = "", bool isEditable = true, bool isVisible = true, bool isSelected = false, bool isExpanded = true) 
+        public ComplexObjectItemModel(string displayname)
+            : this(displayname, null, enDev2ColumnArgumentDirection.None, "", null, false, "", true, true, false, true)
+        {
+        }
+
+        public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent)
+            : this(displayname, parent, enDev2ColumnArgumentDirection.None, "", null, false, "", true, true, false, true)
+        {
+        }
+
+        public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection)
+            : this(displayname, parent, dev2ColumnArgumentDirection, "", null, false, "", true, true, false, true)
+        {
+        }
+
+        public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, OptomizedObservableCollection<IComplexObjectItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected, bool isExpanded) 
             : base(displayname, dev2ColumnArgumentDirection, description, hasError, errorMessage, isEditable, isVisible, isSelected, isExpanded)
         {
             Children = children;
@@ -58,6 +77,13 @@ namespace Dev2.Studio.Core.Models.DataList
         {
             get
             {
+                if (!string.IsNullOrEmpty(_searchText))
+                {
+                    if (_children != null)
+                    {
+                        return _children.Where(model => model.IsVisible).ToObservableCollection();
+                    }
+                }
                 return _children ?? (_children = new ObservableCollection<IComplexObjectItemModel>());
             }
             set
@@ -131,6 +157,34 @@ namespace Dev2.Studio.Core.Models.DataList
                 }
             }
             return jsonString.ToString();
+        }
+
+        public void Filter(string searchText)
+        {
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                if (_children != null)
+                {
+                    foreach (var itemModel in _children)
+                    {
+                        itemModel.Filter(searchText);
+                    }
+                }
+                IsVisible = _children != null && _children.Any(model => model.IsVisible) ? true : !string.IsNullOrEmpty(DisplayName) && DisplayName.ToLower().Contains(searchText.ToLower());
+            }
+            else
+            {
+                IsVisible = true;
+                if (_children != null)
+                {
+                    foreach (var itemModel in _children)
+                    {
+                        itemModel.IsVisible = true;
+                    }
+                }
+            }
+            _searchText = searchText;
+            NotifyOfPropertyChange(() => Children);
         }
 
         private void AppendCloseArrayChar(StringBuilder jsonString)

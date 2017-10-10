@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,13 +20,19 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
-    public class DbSource : Resource, IResourceSource
+    public class DbSource : Resource, IResourceSource, IDb
     {
         #region CTOR
 
         public DbSource()
         {
             ResourceType = "DbSource";
+        }
+
+        public DbSource(enSourceType sourceType)
+        {
+            ResourceType = "DbSource";
+            ServerType = sourceType;
         }
 
         public DbSource(XElement xml)
@@ -57,13 +63,13 @@ namespace Dev2.Runtime.ServiceModel.Data
                     
                     break;
                 default:
+                    ResourceType = "DbSource";
                     ServerType = enSourceType.Unknown;
                     break;
             }
             var conString = xml.AttributeSafe("ConnectionString");
             var connectionString = conString.CanBeDecrypted() ? DpapiWrapper.Decrypt(conString) : conString;
             ResourceType = ServerType.ToString();
-            ResourceType = "DbSource";
             ConnectionString = connectionString;
         }
 
@@ -83,9 +89,9 @@ namespace Dev2.Runtime.ServiceModel.Data
         [JsonConverter(typeof(StringEnumConverter))]
         public AuthenticationType AuthenticationType { get; set; }
 
-// ReSharper disable InconsistentNaming
+
         public string UserID { get; set; }
-// ReSharper restore InconsistentNaming
+
 
         public string Password { get; set; }
 
@@ -94,7 +100,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             get
             {
                 var stringBuilder = base.DataList;
-                return stringBuilder != null ? stringBuilder.ToString() : null;
+                return stringBuilder?.ToString();
             }
             set
             {
@@ -113,7 +119,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             //
             get
             {
-                switch(ServerType)
+                switch (ServerType)
                 {
                     case enSourceType.SqlDatabase:
                         var isNamedInstance = Server != null && Server.Contains('\\');
@@ -136,9 +142,9 @@ namespace Dev2.Runtime.ServiceModel.Data
                             Port > 0 ? string.Format("Port={0};", Port) : string.Empty);
 
                     case enSourceType.Oracle:
-                     //database refers to owner/schema in oracle
+                        //database refers to owner/schema in oracle
                         return string.Format("User Id={2};Password={3};Data Source={0};{1}",
-                          Server,( DatabaseName  !=null ? string.Format("Database={0};", DatabaseName) : string.Empty) , UserID, Password,
+                          Server, (DatabaseName != null ? string.Format("Database={0};", DatabaseName) : string.Empty), UserID, Password,
                          Port > 0 ? string.Format(":{0}", Port) : string.Empty);
 
                     case enSourceType.ODBC:
@@ -147,11 +153,42 @@ namespace Dev2.Runtime.ServiceModel.Data
                     case enSourceType.PostgreSQL:
 
                         if (string.IsNullOrEmpty(DatabaseName))
+                        {
                             DatabaseName = string.Empty;
+                        }
 
                         return string.Format(@"Host={0};Username={1};Password={2};Database={3}", Server, UserID, Password,
                             DatabaseName);
-
+                    case enSourceType.WebService:
+                        break;
+                    case enSourceType.DynamicService:
+                        break;
+                    case enSourceType.ManagementDynamicService:
+                        break;
+                    case enSourceType.PluginSource:
+                        break;
+                    case enSourceType.Unknown:
+                        break;
+                    case enSourceType.Dev2Server:
+                        break;
+                    case enSourceType.EmailSource:
+                        break;
+                    case enSourceType.WebSource:
+                        break;
+                    case enSourceType.OauthSource:
+                        break;
+                    case enSourceType.SharepointServerSource:
+                        break;
+                    case enSourceType.RabbitMQSource:
+                        break;
+                    case enSourceType.ExchangeSource:
+                        break;
+                    case enSourceType.WcfSource:
+                        break;
+                    case enSourceType.ComPluginSource:
+                        break;
+                    default:
+                        break;
                 }
                 return string.Empty;
             }
@@ -168,16 +205,16 @@ namespace Dev2.Runtime.ServiceModel.Data
                 foreach (var prm in value.Split(';').Select(p => p.Split('=')))
                 {
                     int port;
-                    switch(prm[0].ToLowerInvariant())
+                    switch (prm[0].ToLowerInvariant())
                     {
                         case "server":
                         case "host":
                         case "data source":
                             var arr = prm[1].Split(','); // may include port number after comma
                             Server = arr[0];
-                            if(arr.Length > 1)
+                            if (arr.Length > 1)
                             {
-                                if(Int32.TryParse(arr[1], out port))
+                                if (Int32.TryParse(arr[1], out port))
                                 {
                                     Port = port;
                                 }
@@ -185,11 +222,11 @@ namespace Dev2.Runtime.ServiceModel.Data
                             }
                             break;
                         case "port":
-                            if(Int32.TryParse(prm[1], out port))
+                            if (Int32.TryParse(prm[1], out port))
                             {
                                 Port = port;
                             }
-                          
+
                             break;
                         case "database":
                         case "dsn":
@@ -208,6 +245,8 @@ namespace Dev2.Runtime.ServiceModel.Data
                         case "password":
                         case "pwd":
                             Password = prm[1];
+                            break;
+                        default:
                             break;
                     }
                 }

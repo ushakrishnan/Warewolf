@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,17 +25,12 @@ using System.Xaml;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Data.Decision;
-using Microsoft.VisualBasic.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Utilities
 {
-    // BUG 9304 - 2013.05.08 - TWR - .NET 4.5 upgrade
     public class WorkflowHelper : IWorkflowHelper
     {
-        #region Singleton Instance
-
-        //
         // Multi-threaded implementation - see http://msdn.microsoft.com/en-us/library/ff650316.aspx
         //
         // This approach ensures that only one instance is created and only when the instance is needed. 
@@ -46,14 +41,9 @@ namespace Dev2.Utilities
 
         // NOTE : This singleton instance causes memory leaks ;)
 
-
-        #endregion
-
-        #region SerializeWorkflow
-
         public StringBuilder SerializeWorkflow(ModelService modelService)
         {
-            var builder = EnsureImplementation(modelService);
+            var builder = GetActivityBuilder(modelService);
             var text = GetXamlDefinition(builder);
 
             return text;
@@ -70,7 +60,8 @@ namespace Dev2.Utilities
                     using(var sw = new StringWriter(sb))
                     {
                         var xamlXmlWriterSettings = new XamlXmlWriterSettings { AssumeValidInput = true };
-                        var xw = ActivityXamlServices.CreateBuilderWriter(new XamlXmlWriter(sw, new XamlSchemaContext(),xamlXmlWriterSettings));                    
+                        var xamlSchemaContext = new XamlSchemaContext();
+                        var xw = ActivityXamlServices.CreateBuilderWriter(new XamlXmlWriter(sw, xamlSchemaContext,xamlXmlWriterSettings));                    
                         XamlServices.Save(xw, builder);
                         text = sb.Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "");
                     }
@@ -79,14 +70,32 @@ namespace Dev2.Utilities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("Error loading XAML: ",e);
+                Dev2Logger.Error("Error loading XAML: ",e, GlobalConstants.WarewolfError);
             }
             return text;
         }
 
-        #endregion
-
-        #region CreateWorkflow
+        public ActivityBuilder ReadXamlDefinition(StringBuilder xaml)
+        {
+            try
+            {
+                if(xaml != null && xaml.Length!=0)
+                {
+                    using(var sw = new StringReader(xaml.ToString()))
+                    {
+                        var xamlXmlWriterSettings = new XamlXmlReaderSettings();
+                        var xw = ActivityXamlServices.CreateBuilderReader(new XamlXmlReader(sw, new XamlSchemaContext(),xamlXmlWriterSettings));
+                        var load = XamlServices.Load(xw);
+                        return load as ActivityBuilder;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Dev2Logger.Error("Error loading XAML: ",e, GlobalConstants.WarewolfError);
+            }
+            return null;
+        }
 
         public ActivityBuilder CreateWorkflow(string displayName)
         {
@@ -111,11 +120,18 @@ namespace Dev2.Utilities
             return builder;
         }
 
-        #endregion
-
-        #region EnsureImplementation
-
         public ActivityBuilder EnsureImplementation(ModelService modelService)
+        {
+            var builder = GetActivityBuilder(modelService);
+            var chart = builder?.Implementation as Flowchart;
+            if(chart != null)
+            {
+                EnsureImplementation(builder, chart);
+            }
+            return builder;
+        }
+
+        private static ActivityBuilder GetActivityBuilder(ModelService modelService)
         {
             if(modelService?.Root == null)
             {
@@ -125,81 +141,19 @@ namespace Dev2.Utilities
             var root = modelService.Root.GetCurrentValue();
 
             var builder = root as ActivityBuilder;
-            var chart = builder?.Implementation as Flowchart;
-            if(chart != null)
-            {
-                EnsureImplementation(builder, chart);
-            }
             return builder;
         }
 
         void EnsureImplementation(ActivityBuilder builder, Flowchart chart)
         {
-            SetProperties(builder.Properties);
             FixExpressions(chart);
             SetVariables(chart.Variables);
             SetNamespaces(builder);
         }
 
-        #endregion
-
-        #region CompileExpressionsImpl
-
         public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache = GlobalConstants.Resultscache;
-       
- 
-        #endregion
 
-
-        #region SetProperties
-
-        public void SetProperties(ICollection<DynamicActivityProperty> properties)
-        {
-
-            if (properties == null)
-            {
-                throw new ArgumentNullException(nameof(properties));
-            }
-            try
-            {
-                properties.Clear();
-
-                properties.Add(new DynamicActivityProperty { Name = "AmbientDataList", Type = typeof(InOutArgument<List<string>>) });
-                properties.Add(new DynamicActivityProperty { Name = "ParentWorkflowInstanceId", Type = typeof(InOutArgument<Guid>) });
-                properties.Add(new DynamicActivityProperty { Name = "ParentServiceName", Type = typeof(InOutArgument<string>) });
-            }
-            catch (Exception e)
-            {
-                Dev2Logger.Error(e.Message, e);
-            }
-        }
-
-        #endregion
-
-        #region SetVariables
-
-        public void SetVariables(Collection<Variable> variables)
-        {
-            if(variables == null)
-            {
-                throw new ArgumentNullException(nameof(variables));
-            }
-
-            variables.Clear();
-            variables.Add(new Variable<List<string>> { Name = "InstructionList" });
-            variables.Add(new Variable<string> { Name = "LastResult" });
-            variables.Add(new Variable<bool> { Name = "HasError" });
-            variables.Add(new Variable<string> { Name = "ExplicitDataList" });
-            variables.Add(new Variable<bool> { Name = "IsValid" });
-            variables.Add(new Variable<Unlimited.Applications.BusinessDesignStudio.Activities.Util> { Name = "t" });
-            variables.Add(new Variable<Dev2DataListDecisionHandler> { Name = "Dev2DecisionHandler" });
-        }
-
-        #endregion
-
-        #region SetNamespaces
-
-        public void SetNamespaces(object target)
+        private void SetNamespaces(object target)
         {
             var dev2ActivitiesAssembly = typeof(WorkflowHelper).Assembly;
             var dev2CommonAssembly = typeof(GlobalConstants).Assembly;
@@ -227,32 +181,7 @@ namespace Dev2.Utilities
             AttachablePropertyServices.SetProperty(target, impl, namespaces.Keys.ToList());
 
             #endregion
-
-            #region Set VB assembly references
-
-            var vbSettings = VisualBasic.GetSettings(target) ?? new VisualBasicSettings();
-            vbSettings.ImportReferences.Clear();
-
-            foreach(var ns in namespaces.Keys)
-            {
-                try
-                {
-                    vbSettings.ImportReferences.Add(new VisualBasicImportReference { Assembly = namespaces[ns].GetName().Name, Import = ns });
-                }
-                catch(Exception e)
-                {
-                    Dev2Logger.Error(e.Message,e);
-                }
-            }
-
-            VisualBasic.SetSettings(target, vbSettings);
-
-            #endregion
         }
-
-        #endregion
-
-        #region FixExpressions
 
         void FixExpressions(Flowchart chart, bool isServerInvocation = false)
         {
@@ -262,19 +191,12 @@ namespace Dev2.Utilities
                 if(fd != null)
                 {
                     var decisionActivity = fd.Condition as DsfFlowDecisionActivity;
-                    //TryFixExpression(decisionActivity, GlobalConstants.InjectedDecisionHandlerOld, GlobalConstants.InjectedDecisionHandler);
                     if(isServerInvocation)
                     {
                         // CompileExpressionsImpl will strip out backslashes!!
                         TryFixExpression(decisionActivity, "\\", "\\\\");
                     }
                 }
-
-                //var fs = node as FlowSwitch<string>;
-                //if(fs != null)
-                //{
-                //    TryFixExpression(fs.Expression as DsfFlowSwitchActivity, GlobalConstants.InjectedSwitchDataFetchOld, GlobalConstants.InjectedSwitchDataFetch);
-                //}
             }
         }
 
@@ -286,23 +208,11 @@ namespace Dev2.Utilities
             }
         }
 
-        #endregion
-
-        #region SanitizeXaml
-
         public StringBuilder SanitizeXaml(StringBuilder workflowXaml)
         {
-            // A rehosted designer generates the following exception when trying to export (serialize) a workflow:
-            //
-            //    System.Xaml.XamlDuplicateMemberException: 'Symbol' property has already been set on 'Flowchart' 
-            //
             // Clearing the following element resolves the issue
             return RemoveNodeValue(workflowXaml, "<sads:DebugSymbol.Symbol>");
         }
-
-        #endregion
-
-        #region RemoveNodeValue
 
         StringBuilder RemoveNodeValue(StringBuilder xml, string nodeName)
         {
@@ -323,7 +233,29 @@ namespace Dev2.Utilities
             return length > 0 ? xml.Remove(startIdx, length) : xml;
         }
 
-        #endregion
+        private void SetVariables(Collection<Variable> variables)
+        {
+            try
+            {
+                if (variables == null)
+                {
+                    throw new ArgumentNullException(nameof(variables));
+                }
 
+                variables.Clear();
+                variables.Add(new Variable<List<string>> { Name = "InstructionList" });
+                variables.Add(new Variable<string> { Name = "LastResult" });
+                variables.Add(new Variable<bool> { Name = "HasError" });
+                variables.Add(new Variable<string> { Name = "ExplicitDataList" });
+                variables.Add(new Variable<bool> { Name = "IsValid" });
+                variables.Add(new Variable<Unlimited.Applications.BusinessDesignStudio.Activities.Util> { Name = "t" });
+                variables.Add(new Variable<Dev2DataListDecisionHandler> { Name = "Dev2DecisionHandler" });
+            }
+            catch(Exception)
+            {
+                variables = new Collection<Variable>();
+                variables.Clear();
+            }
+        }
     }
 }

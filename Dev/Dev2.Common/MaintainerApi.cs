@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -68,16 +68,16 @@ namespace Dev2.Common
         {
             unchecked
             {
-                var hashCode = Fn != null ? Fn.GetHashCode() : 0;
-                hashCode = (hashCode * 397) ^ (Email != null ? Email.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Url != null ? Url.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Org != null ? Org.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Adr != null ? Adr.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Tel != null ? Tel.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (XTwitter != null ? XTwitter.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (XGithub != null ? XGithub.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Photo != null ? Photo.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (VCard != null ? VCard.GetHashCode() : 0);
+                var hashCode = Fn?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (Email?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Url?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Org?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Adr?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Tel?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (XTwitter?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (XGithub?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Photo?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (VCard?.GetHashCode() ?? 0);
                 return hashCode;
             }
         }

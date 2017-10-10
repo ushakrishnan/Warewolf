@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ using System;
 using System.Text;
 using Dev2.Runtime.Interfaces;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Runtime.ServiceModel
 {
     public class RabbitMQSources : ExceptionManager
@@ -101,7 +101,7 @@ namespace Dev2.Runtime.ServiceModel
                 return new ValidationResult
                 {
                     IsValid = false,
-                    ErrorMessage = e.Message
+                    ErrorMessage = e.InnerException!=null? string.Join(Environment.NewLine,e.Message,e.InnerException.Message) : e.Message
                 };
             }
         }

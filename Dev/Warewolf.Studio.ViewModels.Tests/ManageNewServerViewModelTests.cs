@@ -11,16 +11,15 @@ using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Common.Interfaces.Threading;
-using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
-
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.PubSubEvents;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Moq;
-// ReSharper disable MethodSupportsCancellation
-// ReSharper disable ConvertToConstant.Local
-// ReSharper disable InconsistentNaming
+
+
+
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -82,6 +81,18 @@ namespace Warewolf.Studio.ViewModels.Tests
                                 errorAction(ex);
                             }
                         });
+
+            _updateManagerMock.Setup(model => model.FetchSource(It.IsAny<Guid>()))
+              .Returns(_serverSourceMock.Object);
+            _asyncWorkerMock.Setup(worker =>
+                                   worker.Start(
+                                            It.IsAny<Func<IServerSource>>(),
+                                            It.IsAny<Action<IServerSource>>()))
+                            .Callback<Func<IServerSource>, Action<IServerSource>>((func, action) =>
+                            {
+                                var dbSource = func.Invoke();
+                                action(dbSource);
+                            });
             _updateManagerMock.Setup(it => it.GetComputerNames())
                 .Returns(new List<string> { "computerName1", "computerName2" });
             _asyncWorkerMock.Setup(
@@ -109,7 +120,10 @@ namespace Warewolf.Studio.ViewModels.Tests
                 _aggregatorMock.Object,
                 _asyncWorkerMock.Object,
                 _executorMock.Object);
-            _target.PropertyChanged += (sender, args) => { _changedProperties.Add(args.PropertyName); };
+            _target.PropertyChanged += (sender, args) =>
+            {
+                _changedProperties.Add(args.PropertyName);
+            };
 
             _changedPropertiesSource = new List<string>();
             _targetSource = new ManageNewServerViewModel(
@@ -118,7 +132,10 @@ namespace Warewolf.Studio.ViewModels.Tests
                 _serverSourceMock.Object,
                 _asyncWorkerMock.Object,
                 _executorMock.Object);
-            _targetSource.PropertyChanged += (sender, args) => { _changedPropertiesSource.Add(args.PropertyName); };
+            _targetSource.PropertyChanged += (sender, args) =>
+            {
+                _changedPropertiesSource.Add(args.PropertyName);
+            };
 
             _changedPropertiesRequestServiceViewModel = new List<string>();
             _targetRequestServiceViewModel = new ManageNewServerViewModel(
@@ -226,13 +243,17 @@ namespace Warewolf.Studio.ViewModels.Tests
                             task = Task.Factory.StartNew(
                                 () =>
                                     {
-                                        while (!token.IsCancellationRequested) ;
+                                        while (!token.IsCancellationRequested)
+                                        {
+                                            ;
+                                        }
+
                                         isCancelled = true;
                                     });
                         });
             _target.Protocol = "http";
             _target.SelectedPort = "3412";
-            _target.ServerName = new ComputerName {Name = "localhost"};
+            _target.ServerName = new ComputerName { Name = "localhost" };
             _target.Address = "http://localhost/";
             _target.TestCommand.Execute(null);
 
@@ -344,7 +365,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         public void TestTestCommandExecutePassWorkerFailedException()
         {
             //arrange
-            var expectedExceptionMessage = "someExceptionMessage";
+            var expectedExceptionMessage = "Exception: someExceptionMessage";
             _asyncWorkerMock.Setup(
                 it =>
                 it.Start(
@@ -366,7 +387,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.TestCommand.Execute(null);
 
             //assert
-            Assert.AreEqual(expectedExceptionMessage, _target.TestMessage);
+            Assert.AreEqual("Exception: " + expectedExceptionMessage, _target.TestMessage);
             Assert.IsFalse(_target.TestPassed);
             Assert.IsFalse(_target.Testing);
         }
@@ -441,7 +462,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _targetRequestServiceViewModel.AuthenticationType = expectedAuthenticationType;
             _targetRequestServiceViewModel.Password = expectedPassword;
             _targetRequestServiceViewModel.UserName = expectedUserName;
-            _targetRequestServiceViewModel.ServerName = new ComputerName() { Name = "somecomputer" };
+            _targetRequestServiceViewModel.ServerName = new ComputerName { Name = "somecomputer" };
             _targetRequestServiceViewModel.Protocol = "http";
             _targetRequestServiceViewModel.SelectedPort = "8080";
             _targetRequestServiceViewModel.SelectedGuid = Guid.NewGuid();
@@ -450,7 +471,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //assert
             _requestServiceNameViewModelMock.Verify(it => it.ShowSaveDialog());
-            Assert.IsInstanceOfType(_targetRequestServiceViewModel.Item,typeof(ServerSource));
+            Assert.IsInstanceOfType(_targetRequestServiceViewModel.Item, typeof(ServerSource));
             _updateManagerMock.Verify(it => it.Save(_targetRequestServiceViewModel.Item));
             Assert.AreEqual(expectedAuthenticationType, _targetRequestServiceViewModel.Item.AuthenticationType);
             Assert.AreEqual(expectedAddress, _targetRequestServiceViewModel.Item.Address);
@@ -461,7 +482,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreNotEqual(Guid.Empty, _targetRequestServiceViewModel.Item.ID);
 
             Assert.AreEqual(expectedHeaderText, _targetRequestServiceViewModel.HeaderText);
-            Assert.AreEqual(expectedHeader, _targetRequestServiceViewModel.Header);
         }
 
         #endregion Test commands
@@ -491,7 +511,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.Protocol = "http";
             _target.SelectedPort = "3142";
             _changedProperties.Clear();
-            
+
             //act
             _target.ServerName = expectedValue;
             var actualValue = _target.ServerName;
@@ -672,7 +692,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedValue, actualValue);
             Assert.IsTrue(_changedProperties.Contains("TestFailed"));
         }
-       
+
         [TestMethod]
         public void TestTesting()
         {
@@ -713,64 +733,91 @@ namespace Warewolf.Studio.ViewModels.Tests
         public void TestProtocol()
         {
             //arrange
-            var expectedValue = "someValue";
-            _changedProperties.Clear();
-
+          var   target = new ManageNewServerViewModel(
+                _updateManagerMock.Object,
+                _aggregatorMock.Object,
+                _asyncWorkerMock.Object,
+                _executorMock.Object);
+            var changed = false;
+            target.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName == "Protocol")
+                {
+                    changed = true;
+                }
+            };
             //act
-            _target.Protocol = expectedValue;
-            var actualValue = _target.Protocol;
+            target.Protocol = "expectedValue";
+            var actualValue = target.Protocol;
 
             //assert
-            Assert.AreEqual(expectedValue, actualValue);
-            Assert.IsTrue(_changedProperties.Contains(_target.Protocol));
-            Assert.IsFalse(_target.TestPassed);
-            Assert.IsTrue(string.IsNullOrEmpty(_target.TestMessage));
-            Assert.IsFalse(_target.TestPassed);
-            Assert.IsFalse(_target.Testing);
+            Assert.AreEqual("expectedValue", actualValue);
+            Assert.IsTrue(changed);
+            Assert.IsFalse(target.TestPassed);
+            Assert.IsTrue(string.IsNullOrEmpty(target.TestMessage));
+            Assert.IsFalse(target.TestPassed);
+            Assert.IsFalse(target.Testing);
         }
 
         [TestMethod]
         public void TestProtocolCorrect3143()
         {
             //arrange
+            var target = new ManageNewServerViewModel(_updateManagerMock.Object, _aggregatorMock.Object, _asyncWorkerMock.Object, _executorMock.Object);
+            var changed = false;
+            target.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName == "Protocol")
+                {
+                    changed = true;
+                }
+            };
             var expectedValue = "https";
-            _target.SelectedPort = "3142";
-            _target.Protocol = "";
-            _changedProperties.Clear();
+            target.SelectedPort = "3142";
+            target.Protocol = "";
 
             //act
-            _target.Protocol = expectedValue;
-            var actualValue = _target.Protocol;
+            target.Protocol = expectedValue;
+            var actualValue = target.Protocol;
 
             //assert
             Assert.AreEqual(expectedValue, actualValue);
-            Assert.IsTrue(_changedProperties.Contains(_target.Protocol));
-            Assert.IsFalse(_target.TestPassed);
-            Assert.IsTrue(string.IsNullOrEmpty(_target.TestMessage));
-            Assert.IsFalse(_target.Testing);
-            Assert.AreEqual("3143", _target.SelectedPort);
+            Assert.IsTrue(changed);
+            Assert.IsFalse(target.TestPassed);
+            Assert.IsTrue(string.IsNullOrEmpty(target.TestMessage));
+            Assert.IsFalse(target.Testing);
+            Assert.AreEqual("3143", target.SelectedPort);
         }
 
         [TestMethod]
         public void TestProtocolCorrect3142()
         {
             //arrange
+           
+            var target = new ManageNewServerViewModel(_updateManagerMock.Object,_aggregatorMock.Object,_asyncWorkerMock.Object,_executorMock.Object);
+            var changed = false;
+            target.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName == "Protocol")
+                {
+                    changed = true;
+                }
+            };
             var expectedValue = "http";
-            _target.SelectedPort = "3143";
-            _changedProperties.Clear();
+            target.SelectedPort = "3143";
 
             //act
-            _target.Protocol = expectedValue;
-            var actualValue = _target.Protocol;
+            target.Protocol = expectedValue;
+            var actualValue = target.Protocol;
 
             //assert
             Assert.AreEqual(expectedValue, actualValue);
-            Assert.IsTrue(_changedProperties.Contains(_target.Protocol));
-            Assert.IsFalse(_target.TestPassed);
-            Assert.IsTrue(string.IsNullOrEmpty(_target.TestMessage));
-            Assert.IsFalse(_target.TestPassed);
-            Assert.IsFalse(_target.Testing);
-            Assert.AreEqual("3142", _target.SelectedPort);
+            Assert.IsTrue(changed);
+            Assert.IsFalse(target.TestPassed);
+            Assert.IsTrue(string.IsNullOrEmpty(target.TestMessage));
+            Assert.IsFalse(target.TestPassed);
+            Assert.IsFalse(target.Testing);
+            Assert.AreEqual("3142", target.SelectedPort);
         }
 
         [TestMethod]
@@ -778,7 +825,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         {
             //arrange
             _target.AuthenticationType = AuthenticationType.User;
-            
+
             //act
             var actualValue = _target.UserAuthenticationSelected;
 
@@ -873,7 +920,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         public void TestUpdateHelpDescriptor()
         {
             //arrange
-            var mainViewModelMock = new Mock<IMainViewModel>();
+            var mainViewModelMock = new Mock<IShellViewModel>();
             var helpViewModelMock = new Mock<IHelpWindowViewModel>();
             mainViewModelMock.SetupGet(it => it.HelpViewModel).Returns(helpViewModelMock.Object);
             CustomContainer.Register(mainViewModelMock.Object);
@@ -949,7 +996,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreNotEqual(Guid.Empty, _targetRequestServiceViewModel.Item.ID);
             _updateManagerMock.Verify(it => it.Save(It.IsAny<IServerSource>()));
             Assert.AreEqual(expectedHeaderText, _targetRequestServiceViewModel.HeaderText);
-            Assert.AreEqual(expectedHeader, _targetRequestServiceViewModel.Header);
         }
 
 
@@ -965,7 +1011,32 @@ namespace Warewolf.Studio.ViewModels.Tests
             serverSource.SetupGet(source => source.Address).Returns(expectedAddress);
             serverSource.SetupGet(source => source.ID).Returns(sourceId);
             serverSource.SetupGet(source => source.AuthenticationType).Returns(AuthenticationType.Public);
+            serverSourceModel.Setup(model => model.FetchSource(It.IsAny<Guid>()))
+                .Returns(serverSource.Object);
+            serverSourceModel.Setup(it => it.GetComputerNames())
+                .Returns(new List<string> { "computerName1", "computerName2" });
             var asyncWorker = new Mock<IAsyncWorker>();
+            asyncWorker.Setup(worker => worker.Start(It.IsAny<Func<IServerSource>>(), It.IsAny<Action<IServerSource>>()))
+             .Callback<Func<IServerSource>, Action<IServerSource>>((func, action) =>
+             {
+                 var dbSource = func.Invoke();
+                 action(dbSource);
+             });
+            asyncWorker.Setup(it =>it.Start(It.IsAny<Func<List<ComputerName>>>(),
+                                            It.IsAny<Action<List<ComputerName>>>(),
+                                            It.IsAny<Action<Exception>>()))
+                                    .Callback<Func<List<ComputerName>>, Action<List<ComputerName>>, Action<Exception>>(
+                                        (progress, success, errorAction) =>
+                                        {
+                                            try
+                                            {
+                                                success(progress());
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                errorAction(ex);
+                                            }
+                                        });
             var executor = new Mock<IExternalProcessExecutor>();
             var vm = new ManageNewServerViewModel(serverSourceModel.Object, evtAggregator.Object, serverSource.Object, asyncWorker.Object, executor.Object);
             //---------------Assert Precondition----------------
@@ -984,7 +1055,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         {
             //assert          
             Assert.IsNotNull(_targetSource.ComputerNames);
-            Assert.IsTrue(_targetSource.ComputerNames.Any(it=>it.Name== "computerName1"));
+            Assert.IsTrue(_targetSource.ComputerNames.Any(it => it.Name == "computerName1"));
             Assert.IsTrue(_targetSource.ComputerNames.Any(it => it.Name == "computerName2"));
         }
 
@@ -1065,7 +1136,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var expectedAddress = expectedProtocol + "://" + expectedServerName + ":" + expectedSelectedPort;
             var expectedPassword = "somePassword";
             var expectedHeader = expectedResourceName + " *";
-            _target.ComputerNames = new List<ComputerName>() {new ComputerName() {Name=expectedServerName} };
+            _target.ComputerNames = new List<ComputerName>() { new ComputerName() { Name = expectedServerName } };
             source.SetupGet(it => it.Name).Returns(expectedResourceName);
             source.SetupGet(it => it.ServerName).Returns(expectedServerName);
             source.SetupGet(it => it.AuthenticationType).Returns(expectedAuthenticationType);
@@ -1086,7 +1157,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedSelectedPort, _target.SelectedPort);
             Assert.AreEqual(expectedAddress, _target.Address);
             Assert.AreEqual(expectedPassword, _target.Password);
-            Assert.AreEqual(expectedHeader, _target.Header);
         }
 
         [TestMethod]
@@ -1125,7 +1195,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedSelectedPort, _target.SelectedPort);
             Assert.AreEqual(expectedAddress, _target.Address);
             Assert.AreEqual(expectedPassword, _target.Password);
-            Assert.AreEqual(expectedHeader, _target.Header);
         }
 
         [TestMethod]
@@ -1158,7 +1227,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedPassword, value.Password);
             Assert.AreEqual(expectedName, value.Name);
             Assert.AreNotEqual(Guid.Empty, value.ID);
-            Assert.AreEqual(value.ID,gd);
+            Assert.AreEqual(value.ID, gd);
         }
 
         [TestMethod]

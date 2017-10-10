@@ -142,6 +142,8 @@
                         <TextBox Text="{Binding ModelItem.DisplayName}" 
                                  Visibility="{Binding IsSelected, PresentationTraceSources.TraceLevel=High, Converter={StaticResource BoolToVisibilityConverterPositive}}"
                                  ToolTip="{Binding ModelItem.ServiceName}"
+                                 IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type sap:ActivityDesigner}}}"
+                                 x:Name="ActivityToolDisplayNameTextBox"
                                  VerticalAlignment="Center" 
                                  HorizontalContentAlignment="Left"
                                  Height="20"
@@ -165,7 +167,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <!-- QUICK VARIABLE INPUT BUTTON -->
-                                <customControls:ActivityDesignerToggleButton Width="20"
+                                <customControls:ActivityDesignerToggleButton x:Name="QuickVariableButton" Width="20"
                                                                    Height="20"
                                                                    Margin="0,0,7,0"
                                                                    ToolTip="{Binding ToolTip}"
@@ -182,7 +184,7 @@
                     </ItemsControl>
                 </Grid>
 
-                <ContentPresenter x:Name="PART_ContentPresenter"
+                <ContentPresenter IsEnabled="{Binding IsServiceTestView}" x:Name="PART_ContentPresenter"
                                   Grid.Row="1"
                                   Content="{Binding Path=Content, RelativeSource={RelativeSource AncestorType={x:Type sap:WorkflowViewElement}}}" />
 
@@ -264,5 +266,6 @@
         <Setter Property="MinWidth" Value="200" />
         <Setter Property="MinHeight" Value="20" />
         <Setter Property="BorderThickness" Value="2" />
+        
     </Style>
 </ResourceDictionary>

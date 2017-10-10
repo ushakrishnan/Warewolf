@@ -12,13 +12,14 @@ using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase.Database;
-using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
+using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Core;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Activities.Designers.Tests.MySql
 {
@@ -35,7 +36,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(),new ViewPropertyBuilder());
             mySql.Validate();
 
             //------------Assert Results-------------------------
@@ -52,7 +53,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var mod = new MySqlModel();
             var act = new DsfMySqlDatabaseActivity();
 
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             //------------Execute Test---------------------------
             mySql.ClearValidationMemoWithNoFoundError();
             //------------Assert Results-------------------------
@@ -70,7 +71,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
 
             //------------Assert Results-------------------------
             Assert.IsTrue(mySql.SourceRegion.IsEnabled);
@@ -89,7 +90,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             mySql.ManageServiceInputViewModel = new InputViewForTest(mySql, mod);
             mySql.SourceRegion.SelectedSource = mySql.SourceRegion.Sources.First();
 
@@ -110,7 +111,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             mySql.ManageServiceInputViewModel = new InputViewForTest(mySql, mod);
             mySql.SourceRegion.SelectedSource = mySql.SourceRegion.Sources.First();
 #pragma warning disable 4014
@@ -143,7 +144,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             mySql.ManageServiceInputViewModel = new InputViewForTest(mySql, mod);
             mySql.SourceRegion.SelectedSource = mySql.SourceRegion.Sources.First();
 #pragma warning disable 4014
@@ -156,7 +157,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
 
             //------------Assert Results-------------------------
             Assert.IsTrue(mySql.ErrorRegion.IsEnabled);
-            Assert.AreEqual(1, mySql.ManageServiceInputViewModel.Errors.Count);
+            Assert.AreNotEqual(0, mySql.ManageServiceInputViewModel.Errors.Count);
         }
 
         [TestMethod]
@@ -165,7 +166,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
         public void MySql_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -174,7 +175,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var mod = new MySqlModel();
             mod.HasRecError = true;
             var act = new DsfMySqlDatabaseActivity();
-            var viewModel = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var viewModel = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             //------------Execute Test---------------------------
             viewModel.UpdateHelpDescriptor("help");
             //------------Assert Results-------------------------
@@ -191,7 +192,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             mySql.ManageServiceInputViewModel = new InputViewForTest(mySql, mod);
             mySql.SourceRegion.SelectedSource = mySql.SourceRegion.Sources.First();
             mySql.ActionRegion.SelectedAction = mySql.ActionRegion.Actions.First();
@@ -209,7 +210,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             Assert.IsTrue(mySql.OutputsRegion.IsEnabled);
             Assert.IsTrue(mySql.InputArea.IsEnabled);
             Assert.IsTrue(mySql.ErrorRegion.IsEnabled);
-            Assert.AreEqual(2, mySql.ManageServiceInputViewModel.InputArea.Inputs.Count);
+            Assert.AreEqual(1, mySql.ManageServiceInputViewModel.InputArea.Inputs.Count);
             Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.First().Name == "[[a]]");
             Assert.AreEqual(0, mySql.ManageServiceInputViewModel.Errors.Count);
         }
@@ -223,7 +224,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             mySql.ManageServiceInputViewModel = new InputViewForTest(mySql, mod);
             mySql.SourceRegion.SelectedSource = mySql.SourceRegion.Sources.First();
             mySql.ActionRegion.SelectedAction = mySql.ActionRegion.Actions.First();
@@ -241,7 +242,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             Assert.IsTrue(mySql.OutputsRegion.IsEnabled);
             Assert.IsTrue(mySql.InputArea.IsEnabled);
             Assert.IsTrue(mySql.ErrorRegion.IsEnabled);
-            Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Count == 2);
+            Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Count == 1);
             Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.First().Name == "[[a]]");
             Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Last().Name == "[[a]]");
             Assert.AreEqual(0, mySql.ManageServiceInputViewModel.Errors.Count);
@@ -257,15 +258,16 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var id = Guid.NewGuid();
             var mod = new MySqlModel();
             var act = new DsfMySqlDatabaseActivity();
-            var sqlServer = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var sqlServer = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             sqlServer.ManageServiceInputViewModel = new InputViewForTest(sqlServer, mod);
             sqlServer.SourceRegion.SelectedSource = sqlServer.SourceRegion.Sources.First();
+            sqlServer.ActionRegion.IsRefreshing = false;
             //------------Execute Test---------------------------
             sqlServer.ActionRegion.RefreshActionsCommand.Execute(null);
 
             //------------Assert Results-------------------------
             Assert.IsTrue(sqlServer.SourceRegion.IsEnabled);
-            Assert.AreEqual(2, sqlServer.ActionRegion.Actions.Count);
+            Assert.AreEqual(1, sqlServer.ActionRegion.Actions.Count);
         }
 
 
@@ -279,7 +281,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             var act = new DsfMySqlDatabaseActivity();
 
             //------------Execute Test---------------------------
-            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod);
+            var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder());
             mySql.ManageServiceInputViewModel = new InputViewForTest(mySql, mod);
             mySql.SourceRegion.SelectedSource = mySql.SourceRegion.Sources.First();
             mySql.ActionRegion.SelectedAction = mySql.ActionRegion.Actions.First();
@@ -297,7 +299,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             Assert.IsTrue(mySql.OutputsRegion.IsEnabled);
             Assert.IsTrue(mySql.InputArea.IsEnabled);
             Assert.IsTrue(mySql.ErrorRegion.IsEnabled);
-            Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Count == 2);
+            Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Count == 1);
             Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.First().Name == "[[a]]");
             Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Last().Name == "[[a]]");
         }
@@ -376,17 +378,24 @@ namespace Dev2.Activities.Designers.Tests.MySql
         public ICollection<IDbAction> Actions => _actions;
         public ICollection<IDbAction> RefreshActionsList => _refreshActions;
 
-        public void CreateNewSource()
+        public void CreateNewSource(enSourceType type)
         {
         }
-        public void EditSource(IDbSource selectedSource)
+        public void EditSource(IDbSource selectedSource, enSourceType type)
         {
         }
 
         public DataTable TestService(IDatabaseService inputValues)
         {
             if (ThrowsTestError)
+            {
                 throw new Exception("bob");
+            }
+
+            if (HasRecError)
+            {
+                return null;
+            }
             DataTable dt = new DataTable();
             dt.Columns.Add("a");
             dt.Columns.Add("b");
@@ -405,13 +414,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
     {
         public InputViewForTest(IDatabaseServiceViewModel model, IDbServiceModel serviceModel)
             : base(model, serviceModel)
-        {
-            var sqlModel = serviceModel as MySqlModel;
-            if (sqlModel != null && sqlModel.HasRecError)
-            {
-                OkCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(() =>
-                            { throw new Exception("Error in mappings."); });
-            }
+        {            
         }
 
 

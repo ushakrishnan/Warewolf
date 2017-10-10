@@ -3,20 +3,26 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase;
+using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.Activities.Utils;
 using Warewolf.Core;
-// ReSharper disable ExplicitCallerInfoArgument
+
+
+
+
+
+
 
 namespace Dev2.Activities.Designers2.Core.ActionRegion
 {
-    public class DbActionRegion : IActionToolRegion<IDbAction>
+    public class DbActionRegion : IDbActionToolRegion<IDbAction>
     {
         private readonly ModelItem _modelItem;
         private readonly ISourceToolRegion<IDbSource> _source;
@@ -31,13 +37,14 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         private bool _isRefreshing;
         private double _labelWidth;
         private IList<string> _errors;
+        private readonly IAsyncWorker _worker;
 
         public DbActionRegion()
         {
             ToolRegionName = "DbActionRegion";
         }
 
-        public DbActionRegion(IDbServiceModel model, ModelItem modelItem, ISourceToolRegion<IDbSource> source)
+        public DbActionRegion(IDbServiceModel model, ModelItem modelItem, ISourceToolRegion<IDbSource> source,IAsyncWorker worker)
         {
             try
             {
@@ -48,29 +55,22 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 _modelItem = modelItem;
                 _model = model;
                 _source = source;
+                _worker = worker;
                 _source.SomethingChanged += SourceOnSomethingChanged;
                 Dependants = new List<IToolRegion>();
-                IsRefreshing = false;
-                IsEnabled = false;
                 if (_source.SelectedSource != null)
                 {
-                    Actions = model.GetActions(_source.SelectedSource);
+                    LoadActions(model);
                 }
-                if (!string.IsNullOrEmpty(ProcedureName))
+                
+                RefreshActionsCommand = new DelegateCommand(o =>
                 {
-                    IsActionEnabled = true;
-                    IsEnabled = true;
-                    SelectedAction = Actions.FirstOrDefault(action => action.Name == ProcedureName);
-                }
-                RefreshActionsCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(() =>
-                {
-                    IsRefreshing = true;
                     if (_source.SelectedSource != null)
                     {
-                        Actions = model.RefreshActions(_source.SelectedSource);
+                        _source.SelectedSource.ReloadActions = true;
+                        LoadActions(model);
                     }
-                    IsRefreshing = false;
-                }, CanRefresh);
+                }, o=>CanRefresh());
 
                 _modelItem = modelItem;
             }
@@ -80,22 +80,36 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             }
         }
 
+        private void LoadActions(IDbServiceModel model)
+        {
+            IsRefreshing = true;
+            SelectedAction = null;
+            IsActionEnabled = false;
+            IsEnabled = false;
+            _worker.Start(() => model.GetActions(_source.SelectedSource), delegate(ICollection<IDbAction> actions)
+            {
+                Actions = actions;
+                IsRefreshing = false;
+                IsActionEnabled = true;
+                IsEnabled = true;
+                if (!string.IsNullOrEmpty(ProcedureName))
+                {
+                    SelectedAction = Actions.FirstOrDefault(action => action.Name == ProcedureName);
+                }
+            });
+        }
+
         private void SourceOnSomethingChanged(object sender, IToolRegion args)
         {
             try
             {
                 Errors.Clear();
-                IsRefreshing = true;
-                // ReSharper disable once ExplicitCallerInfoArgument
-                if (_source != null && _source.SelectedSource != null)
+                
+                if (_source?.SelectedSource != null)
                 {
-                    Actions = _model.GetActions(_source.SelectedSource);
-                    SelectedAction = null;
-                    IsActionEnabled = true;
-                    IsEnabled = true;
+                    LoadActions(_model);                   
                 }
-                IsRefreshing = false;
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 OnPropertyChanged(@"IsEnabled");
             }
             catch (Exception e)
@@ -112,13 +126,18 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         private void CallErrorsEventHandler()
         {
-            if (ErrorsHandler != null)
+            ErrorsHandler?.Invoke(this, new List<string>(Errors));
+        }
+
+        string ExecuteActionString
+        {
+            set
             {
-                ErrorsHandler(this, new List<string>(Errors));
+                _modelItem.SetProperty("ExecuteActionString", value);
             }
         }
 
-        string ProcedureName
+        public string ProcedureName
         {
             get { return _modelItem.GetProperty<string>("ProcedureName"); }
             set
@@ -129,8 +148,9 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         public bool CanRefresh()
         {
-            IsActionEnabled = _source.SelectedSource != null;
-            return _source.SelectedSource != null;
+            var isActionEnabled = _source.SelectedSource != null && !IsRefreshing;
+            IsActionEnabled = isActionEnabled;
+            return isActionEnabled;
         }
 
         public IDbAction SelectedAction
@@ -144,16 +164,19 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 if (!Equals(value, _selectedAction) && _selectedAction != null)
                 {
                     if (!String.IsNullOrEmpty(_selectedAction.Name))
+                    {
                         StorePreviousValues(_selectedAction.GetIdentifier());
-                }
-                var outputs = Dependants.FirstOrDefault(a => a is IOutputsToolRegion);
-                var region = outputs as OutputsRegion;
-                if (region != null)
-                {
-                    region.Outputs = new ObservableCollection<IServiceOutputMapping>();
-                    region.RecordsetName = String.Empty;
+                    }
 
+                    var outputs = Dependants.FirstOrDefault(a => a is IOutputsToolRegion);
+                    if (outputs is OutputsRegion region)
+                    {
+                        region.Outputs = new ObservableCollection<IServiceOutputMapping>();
+                        region.RecordsetName = String.Empty;
+                        region.IsEnabled = false;
+                    }
                 }
+                
                 RestoreIfPrevious(value);
                 OnPropertyChanged();
             }
@@ -172,11 +195,8 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 SourceChangedAction();
                 OnSomethingChanged(this);
             }
-            var delegateCommand = RefreshActionsCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
-            if (delegateCommand != null)
-            {
-                delegateCommand.RaiseCanExecuteChanged();
-            }
+            var delegateCommand = RefreshActionsCommand as DelegateCommand;
+            delegateCommand?.RaiseCanExecuteChanged();
 
             _selectedAction = value;
         }
@@ -216,6 +236,8 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             {
                 _isRefreshing = value;
                 OnPropertyChanged();
+                var delegateCommand = RefreshActionsCommand as DelegateCommand;
+                delegateCommand?.RaiseCanExecuteChanged();
             }
         }
 
@@ -268,7 +290,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 IsEnabled = IsEnabled,
                 SelectedAction = SelectedAction == null ? null : new DbAction
                 {
-                    Inputs = SelectedAction == null ? null : SelectedAction.Inputs.Select(a => new ServiceInput(a.Name, a.Value) as IServiceInput).ToList(),
+                    Inputs = SelectedAction?.Inputs.Select(a => new ServiceInput(a.Name, a.Value) as IServiceInput).ToList(),
                     Name = SelectedAction.Name,
                     SourceId = SelectedAction.SourceId
                 }
@@ -278,8 +300,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as DbActionMemento;
-            if (region != null)
+            if (toRestore is DbActionMemento region)
             {
                 SelectedAction = region.SelectedAction;
                 RestoreIfPrevious(region.SelectedAction);
@@ -305,6 +326,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             if (value != null)
             {
                 ProcedureName = value.Name;
+                ExecuteActionString = value.ExecuteAction;
             }
 
             OnPropertyChanged("SelectedAction");
@@ -339,10 +361,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             {
                 _errors = value;
                 OnPropertyChanged();
-                if(ErrorsHandler != null)
-                {
-                    ErrorsHandler.Invoke(this, new List<string>(value));
-                }
+                ErrorsHandler?.Invoke(this, new List<string>(value));
             }
         }
 
@@ -365,101 +384,13 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
-        }
-    }
-
-    public class DbActionMemento : IActionToolRegion<IDbAction>
-    {
-        private IDbAction _selectedAction;
-
-        #region Implementation of INotifyPropertyChanged
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        #endregion
-
-        #region Implementation of IToolRegion
-
-        public string ToolRegionName { get; set; }
-        public bool IsEnabled { get; set; }
-        public IList<IToolRegion> Dependants { get; set; }
-        public IList<string> Errors { get; set; }
-
-        public IToolRegion CloneRegion()
-        {
-            return null;
-        }
-
-        public void RestoreRegion(IToolRegion toRestore)
-        {
-        }
-
-        public EventHandler<List<string>> ErrorsHandler
-        {
-            get
-            {
-                return null;
-            }
-            set
-            {
-            }
-        }
-
-        #endregion
-
-        #region Implementation of IActionToolRegion<IDbAction>
-
-        public IDbAction SelectedAction
-        {
-            get
-            {
-                return _selectedAction;
-            }
-            set
-            {
-                _selectedAction = value;
-            }
-        }
-        public ICollection<IDbAction> Actions { get; set; }
-        public ICommand RefreshActionsCommand { get; set; }
-        public bool IsActionEnabled { get; set; }
-        public bool IsRefreshing { get; set; }
-        public event SomethingChanged SomethingChanged;
-        public double LabelWidth { get; set; }
-
-        #endregion
-
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        protected virtual void OnSomethingChanged(IToolRegion args)
-        {
-            var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
-        }
-
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, args);
         }
     }
 }

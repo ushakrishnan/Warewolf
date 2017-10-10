@@ -1,20 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using Caliburn.Micro;
 using Dev2;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Deploy;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Interfaces;
+using Dev2.Data.ServiceModel;
 using Microsoft.Practices.Prism.Commands;
 using Microsoft.Practices.Prism.Mvvm;
 using Dev2.Studio.Core;
-
-// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
-// ReSharper disable MemberCanBeProtected.Global
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Deploy;
+using Dev2.Common.Interfaces.Threading;
+using Dev2.Threading;
+using System.Threading.Tasks;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -24,15 +28,14 @@ namespace Warewolf.Studio.ViewModels
         readonly IDeployStatsViewerViewModel _stats;
         IDeployDestinationExplorerViewModel _destination;
         IConnectControlViewModel _sourceconnectControlViewModel;
-
         IConnectControlViewModel _destinationConnectControlViewModel;
         string _sourcesCount;
         string _servicesCount;
-
         string _newResourcesCount;
         string _overridesCount;
         bool _showConflicts;
         bool _isDeploying;
+        bool _deployInProgress;
         bool _deploySuccessfull;
         string _conflictNewResourceText;
         readonly IShellViewModel _shell;
@@ -43,16 +46,20 @@ namespace Warewolf.Studio.ViewModels
         IList<IExplorerTreeItem> _newItems;
         string _errorMessage;
         string _deploySuccessMessage;
-        
-        #region Implementation of IDeployViewModel
+        readonly IAsyncWorker _asyncWorker;
 
-
+        #region Implementation of IDeployViewModel       
 
         public SingleExplorerDeployViewModel(IDeployDestinationExplorerViewModel destination, IDeploySourceExplorerViewModel source, IEnumerable<IExplorerTreeItem> selectedItems, IDeployStatsViewerViewModel stats, IShellViewModel shell, IPopupController popupController)
+            : this(destination, source, selectedItems, stats, shell, popupController, null)
+        {
+        }
+
+        public SingleExplorerDeployViewModel(IDeployDestinationExplorerViewModel destination, IDeploySourceExplorerViewModel source, IEnumerable<IExplorerTreeItem> selectedItems, IDeployStatsViewerViewModel stats, IShellViewModel shell, IPopupController popupController, IAsyncWorker asyncWorker)
         {
             VerifyArgument.AreNotNull(new Dictionary<string, object> { { "destination", destination }, { "source", source }, { "selectedItems", selectedItems }, { "stats", stats }, { "popupController", popupController } });
             _destination = destination;
-            // ReSharper disable once VirtualMemberCallInContructor
+            
             PopupController = popupController;
 
             _source = source;
@@ -62,19 +69,14 @@ namespace Warewolf.Studio.ViewModels
             _shell = shell;
             _stats.CalculateAction = () =>
             {
-
                 ServicesCount = _stats.Services.ToString();
                 SourcesCount = _stats.Sources.ToString();
-
                 NewResourcesCount = _stats.NewResources.ToString();
                 OverridesCount = _stats.Overrides.ToString();
                 ConflictItems = _stats.Conflicts;
                 NewItems = _stats.New;
                 ShowConflicts = false;
-                if (!string.IsNullOrEmpty(_stats.RenameErrors))
-                {
-                    PopupController.ShowDeployNameConflict(_stats.RenameErrors);
-                }
+                ViewModelUtils.RaiseCanExecuteChanged(DeployCommand);
             };
             SourceConnectControlViewModel = _source.ConnectControlViewModel;
             DestinationConnectControlViewModel = _destination.ConnectControlViewModel;
@@ -85,8 +87,18 @@ namespace Warewolf.Studio.ViewModels
             SelectDependenciesCommand = new DelegateCommand(SelectDependencies, () => CanSelectDependencies);
             NewResourcesViewCommand = new DelegateCommand(ViewNewResources);
             OverridesViewCommand = new DelegateCommand(ViewOverrides);
+            _asyncWorker = asyncWorker ?? new AsyncWorker();
             Destination.ServerStateChanged += DestinationServerStateChanged;
+            Destination.PropertyChanged += DestinationOnPropertyChanged;
             ShowConflicts = false;
+        }
+
+        private void DestinationOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
+        {
+            if (propertyChangedEventArgs.PropertyName == "IsConnected")
+            {
+                ViewModelUtils.RaiseCanExecuteChanged(DeployCommand);
+            }
         }
 
         void DestinationServerStateChanged(object sender, IServer server)
@@ -96,10 +108,28 @@ namespace Warewolf.Studio.ViewModels
             {
                 _stats.Calculate(_source?.SourceLoadedItems?.ToList());
             }
-            _stats.Calculate(_source?.SourceLoadedItems?.ToList());
-        }        
+            else
+            {
+                _stats.Calculate(Source?.SourceLoadedItems?.ToList());
+                if (Source?.SelectedItems?.Count > 0)
+                {
+                    _stats.Calculate(Source?.SelectedItems?.ToList());
+                }
+            }
+        }
 
-        private bool CanSelectDependencies => Source.SelectedItems.Count > 0;
+        public bool CanSelectDependencies
+        {
+            get
+            {
+                var canSelectDependencies = Source.SelectedItems.Count > 0;
+                _canDeployTests = canSelectDependencies;
+                OnPropertyChanged(() => CanDeployTests);
+                return canSelectDependencies;
+            }
+        }
+        private bool _canDeployTests;
+        public bool CanDeployTests => _canDeployTests;
 
         public IList<IExplorerTreeItem> NewItems
         {
@@ -134,11 +164,9 @@ namespace Warewolf.Studio.ViewModels
             SourcesCount = _stats.Sources.ToString();
             NewResourcesCount = _stats.NewResources.ToString();
             OverridesCount = _stats.Overrides.ToString();
-            //if (Destination.SelectedEnvironment != null && Destination.SelectedEnvironment.IsConnected)
-            //    Destination.SelectedEnvironment.Children.AddRange(Source.SelectedEnvironment.Children.Where(a => a.IsResourceChecked == true));
             ViewModelUtils.RaiseCanExecuteChanged(DeployCommand);
             _stats.Calculate(Source?.SourceLoadedItems?.ToList());
-            OnPropertyChanged(() => CanDeploy);            
+            OnPropertyChanged(() => CanDeploy);
         }
 
         void ViewOverrides()
@@ -212,13 +240,30 @@ namespace Warewolf.Studio.ViewModels
         async void Deploy()
         {
             IsDeploying = true;
+            DeployInProgress = true;
 
             try
             {
                 ErrorMessage = "";
 
+                var serverInformation = Source.SelectedServer.GetServerInformation();
+                var supportsDirectServerDeploy = false;
+                if (serverInformation != null)
+                {
+                    supportsDirectServerDeploy = serverInformation.ContainsKey("SupportsDirectServerDeploy") && bool.Parse(serverInformation["SupportsDirectServerDeploy"]);
+                }
                 CheckVersionConflict();
+                if (!IsDeploying)
+                {
+                    DeployInProgress = false;
+                    return;
+                }
                 CheckResourceNameConflict();
+                if (!IsDeploying)
+                {
+                    DeployInProgress = false;
+                    return;
+                }
 
                 var canDeploy = false;
                 if (ConflictItems != null && ConflictItems.Count >= 1)
@@ -239,15 +284,54 @@ namespace Warewolf.Studio.ViewModels
                 }
                 else
                 {
-                    var selected = Source.SelectedItems.Where(a => a.ResourceType != "Folder");
-                    var notfolders = selected.Select(a => a.ResourceId).ToList();
-                    _shell.DeployResources(Source.Environments.First().Server.EnvironmentID, Destination.ConnectControlViewModel.SelectedConnection.EnvironmentID, notfolders);
+                    var selectedItems = Source.SelectedItems.Where(a => a.ResourceType != "Folder");
+                    var explorerTreeItems = selectedItems as IExplorerTreeItem[] ?? selectedItems.ToArray();
+
+                    var destinationEnvironmentId = Destination.ConnectControlViewModel.SelectedConnection.EnvironmentID;
+                    var sourceEnv = Source.Environments.First();
+                    var sourceEnvServer = sourceEnv.Server;
+                    var notfolders = explorerTreeItems.Select(a => a.ResourceId).ToList();
+                    var destEnv = Destination.ConnectControlViewModel.SelectedConnection;
+
+                    if (destEnv?.ProxyLayer?.UpdateManagerProxy != null && ConflictItems != null)
+                    {
+                        foreach (var conflictItem in ConflictItems)
+                        {
+                            await destEnv.ProxyLayer.UpdateManagerProxy.MoveItem(
+                                conflictItem.DestinationId, conflictItem.DestinationName,
+                                conflictItem.SourceName);
+                        }
+                    }
+
+                    var deployResponse = new List<IDeployResult>();
+                    if (supportsDirectServerDeploy && destEnv != null)
+                    {
+                        var destConnection = new Connection
+                        {
+                            Address = destEnv.Connection.AppServerUri.ToString(),
+                            AuthenticationType = destEnv.Connection.AuthenticationType,
+                            UserName = destEnv.Connection.UserName,
+                            Password = destEnv.Connection.Password
+                        };
+                        deployResponse = sourceEnvServer.UpdateRepository.Deploy(notfolders, Destination.DeployTests, destConnection);
+                    }
+                    if (!supportsDirectServerDeploy || deployResponse.Any(r => r.HasError))
+                    {
+                        _shell.DeployResources(sourceEnvServer.EnvironmentID, destinationEnvironmentId, notfolders, Destination.DeployTests);
+                    }
+                    Source.SelectedEnvironment.AsList().Apply(o => o.IsResourceChecked = false);
+                    Source.SelectedEnvironment.IsResourceChecked = false;
+                    await Destination.RefreshSelectedEnvironment();
                     DeploySuccessfull = true;
                     DeploySuccessMessage = $"{notfolders.Count} Resource{(notfolders.Count == 1 ? "" : "s")} Deployed Successfully.";
-                    await Destination.RefreshSelectedEnvironment();
+                    var showDeploySuccessful = PopupController.ShowDeploySuccessful(DeploySuccessMessage);
+                    if (showDeploySuccessful == MessageBoxResult.OK)
+                    {
+                        DeploySuccessfull = false;
+                    }
+
                     UpdateServerCompareChanged(this, Guid.Empty);
                     _stats.ReCalculate();
-                    Source.SelectedEnvironment.AsList().Apply(o => o.IsResourceChecked = false);
                 }
             }
             catch (Exception e)
@@ -255,7 +339,7 @@ namespace Warewolf.Studio.ViewModels
                 ErrorMessage = "Deploy error. " + e.Message;
             }
             IsDeploying = false;
-            
+            DeployInProgress = false;
         }
 
         void CheckResourceNameConflict()
@@ -279,7 +363,7 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-         void CheckVersionConflict()
+        void CheckVersionConflict()
         {
             Version sourceVersionNumber = Source.ServerVersion;
 
@@ -317,7 +401,8 @@ namespace Warewolf.Studio.ViewModels
             if (Source?.SelectedEnvironment?.Server != null)
             {
                 var guids = Source.SelectedEnvironment.Server.QueryProxy.FetchDependenciesOnList(Source.SelectedItems.Select(a => a.ResourceId));
-                Source.SelectedEnvironment.AsList().Where(a => guids.Contains(a.ResourceId)).Apply(a => a.IsResourceChecked = true);
+                var explorerItemViewModels = Source.SelectedEnvironment.UnfilteredChildren.Flatten(model => model.UnfilteredChildren);
+                explorerItemViewModels.Where(a => guids.Contains(a.ResourceId)).Apply(a => a.IsResourceChecked = true);
             }
         }
 
@@ -353,6 +438,22 @@ namespace Warewolf.Studio.ViewModels
                 OnPropertyChanged(() => CanDeploy);
             }
         }
+
+        /// <summary>
+        /// Used to indicate if a deploy is in progress
+        /// </summary>
+        public bool DeployInProgress
+        {
+            get
+            {
+                return _deployInProgress;
+            }
+            private set
+            {
+                _deployInProgress = value;
+                OnPropertyChanged(() => DeployInProgress);
+            }
+        }
         /// <summary>
         /// Can Deploy test to enable button
         /// </summary>
@@ -361,43 +462,90 @@ namespace Warewolf.Studio.ViewModels
             get
             {
                 if (IsDeploying)
-                    return false;                
-                if (Source.SelectedEnvironment == null || !Source.SelectedEnvironment.IsConnected)
                 {
-                    ErrorMessage = Resources.Languages.Core.DeploySourceNotConnected;
                     return false;
                 }
-                if (Destination.SelectedEnvironment == null || !Destination.ConnectControlViewModel.SelectedConnection.IsConnected)
+                if (!SetErrorMessage())
                 {
-                    ErrorMessage = Resources.Languages.Core.DeployDestinationNotConnected;
-                    return false;
-                }
-
-                if (Source.SelectedEnvironment.Server.EnvironmentID == Destination.ConnectControlViewModel.SelectedConnection.EnvironmentID)
-                {
-                    ErrorMessage = Resources.Languages.Core.DeploySourceDestinationAreSame;
-                    return false;
-                }
-
-                if (Source.SelectedItems == null || Source.SelectedItems.Count <= 0)
-                {
-                    ErrorMessage = Resources.Languages.Core.DeploySourceDestinationAreSame;
-                    return false;
-                }
-
-                if (Source.ConnectControlViewModel.SelectedConnection.Permissions == null || !Source.ConnectControlViewModel.SelectedConnection.CanDeployFrom)
-                {
-                    ErrorMessage = StringResources.SourcePermission_Error;
-                    return false;
-                }
-                if (Destination.ConnectControlViewModel.SelectedConnection.Permissions == null || !Destination.ConnectControlViewModel.SelectedConnection.CanDeployTo)
-                {
-                    ErrorMessage = StringResources.DestinationPermission_Error;
                     return false;
                 }
                 ErrorMessage = string.Empty;
                 return true;
             }
+        }
+
+        private bool SetErrorMessage()
+        {
+            if (!SetDeploySourceNotConnectedMessage())
+            {
+                return false;
+            }
+            if (!SetDeployDestinationNotConnectedMessage())
+            {
+                return false;
+            }
+            if (Source.SelectedEnvironment.Server.EnvironmentID == Destination.ConnectControlViewModel.SelectedConnection.EnvironmentID)
+            {
+                ErrorMessage = Resources.Languages.Core.DeploySourceDestinationAreSame;
+                return false;
+            }
+
+            if (Source.SelectedItems == null || Source.SelectedItems.Count <= 0)
+            {
+                ErrorMessage = Resources.Languages.Core.DeployNoResourcesSelected;
+                return false;
+            }
+
+            if (!SetDeployPermissionsErrorMessage())
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private bool SetDeploySourceNotConnectedMessage()
+        {
+            if (SourceConnectControlViewModel.SelectedConnection != null && !SourceConnectControlViewModel.SelectedConnection.IsConnected)
+            {
+                ErrorMessage = Resources.Languages.Core.DeploySourceNotConnected;
+                return false;
+            }
+            if (Source.SelectedEnvironment == null || !Source.SelectedEnvironment.IsConnected)
+            {
+                ErrorMessage = Resources.Languages.Core.DeploySourceNotConnected;
+                return false;
+            }
+            return true;
+        }
+
+        private bool SetDeployDestinationNotConnectedMessage()
+        {
+            if (Destination.SelectedEnvironment == null || !Destination.ConnectControlViewModel.SelectedConnection.IsConnected)
+            {
+                ErrorMessage = Resources.Languages.Core.DeployDestinationNotConnected;
+                return false;
+            }
+            if (DestinationConnectControlViewModel.SelectedConnection != null && !DestinationConnectControlViewModel.SelectedConnection.IsConnected)
+            {
+                ErrorMessage = Resources.Languages.Core.DeployDestinationNotConnected;
+                return false;
+            }
+            return true;
+        }
+
+        private bool SetDeployPermissionsErrorMessage()
+        {
+            if (Source.ConnectControlViewModel.SelectedConnection.Permissions == null || !Source.ConnectControlViewModel.SelectedConnection.CanDeployFrom)
+            {
+                ErrorMessage = StringResources.SourcePermission_Error;
+                return false;
+            }
+            if (Destination.ConnectControlViewModel.SelectedConnection.Permissions == null || !Destination.ConnectControlViewModel.SelectedConnection.CanDeployTo)
+            {
+                ErrorMessage = StringResources.DestinationPermission_Error;
+                return false;
+            }
+            return true;
         }
 
         public string OverridesCount
@@ -444,8 +592,6 @@ namespace Warewolf.Studio.ViewModels
                 }
             }
         }
-
-
 
         public string SourcesCount
         {
@@ -595,9 +741,9 @@ namespace Warewolf.Studio.ViewModels
             set
             {
                 _errorMessage = value;
-                if (!String.IsNullOrEmpty(DeploySuccessMessage) && !String.IsNullOrEmpty(value))
+                if (!string.IsNullOrEmpty(DeploySuccessMessage) && !string.IsNullOrEmpty(value))
                 {
-                    DeploySuccessMessage = String.Empty;
+                    DeploySuccessMessage = string.Empty;
                     DeploySuccessfull = false;
                 }
                 OnPropertyChanged(() => ErrorMessage);
@@ -618,8 +764,8 @@ namespace Warewolf.Studio.ViewModels
 
         public void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel?.UpdateHelpText(helpText);
         }
 
         #endregion

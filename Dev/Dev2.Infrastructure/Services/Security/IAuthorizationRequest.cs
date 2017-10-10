@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,14 @@
 
 using System;
 using System.Security.Principal;
+using Dev2.Common.Interfaces.Enums;
 using Microsoft.AspNet.SignalR.Hosting;
 
 namespace Dev2.Services.Security
 {
     public interface IAuthorizationRequest
     {
-        Tuple<string, string> Key { get; }
+        Tuple<string, string, AuthorizationContext> Key { get; }
         WebServerRequestType RequestType { get; }
         IPrincipal User { get; }
         Uri Url { get; }

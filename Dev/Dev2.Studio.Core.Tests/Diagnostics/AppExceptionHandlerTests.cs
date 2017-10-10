@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +11,10 @@
 using System;
 using System.Threading;
 using Caliburn.Micro;
-using Dev2.Interfaces;
 using Dev2.Studio;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Diagnostics;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Moq.Protected;
@@ -156,7 +156,7 @@ namespace Dev2.Core.Tests.Diagnostics
             mockApp.Setup(c => c.Shutdown()).Verifiable();
             mockApp.SetupProperty(c => c.ShouldRestart);
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
 
             //Execute
             var handler = new MockExceptionHandler(mockApp.Object, mainViewModel.Object);
@@ -178,7 +178,7 @@ namespace Dev2.Core.Tests.Diagnostics
             mockApp.Setup(c => c.Shutdown()).Verifiable();
             mockApp.SetupProperty(c => c.ShouldRestart);
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
 
             //Execute
             var handler = new MockExceptionHandler(mockApp.Object, mainViewModel.Object);

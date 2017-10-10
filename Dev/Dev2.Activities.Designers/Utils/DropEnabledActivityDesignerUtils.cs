@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces;
 using Warewolf.Studio.Core.Popup;
 
 namespace Dev2.Activities.Utils
@@ -36,10 +36,9 @@ namespace Dev2.Activities.Utils
             if(!string.IsNullOrEmpty(modelItemString))
             {
                 var innnerObjectData = data.GetData(modelItemString);
-                var modelList = innnerObjectData as List<ModelItem>;
-                if(modelList != null && modelList.Count > 1)
+                if (innnerObjectData is List<ModelItem> modelList && modelList.Count > 1)
                 {
-                    if(modelList.FirstOrDefault(c => c.ItemType == typeof(FlowDecision) || c.ItemType == typeof(FlowSwitch<string>)) != null)
+                    if (modelList.FirstOrDefault(c => c.ItemType == typeof(FlowDecision) || c.ItemType == typeof(FlowSwitch<string>)) != null)
                     {
                         return false;
                     }

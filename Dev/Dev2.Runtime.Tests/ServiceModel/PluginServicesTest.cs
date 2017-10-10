@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,6 @@ using System;
 using Dev2.Common;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Tests.Runtime.JSON;
 using Dev2.Tests.Runtime.Plugins;
 using Dev2.Tests.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
@@ -146,10 +145,28 @@ namespace Dev2.Tests.Runtime.ServiceModel
         }
 
         [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PluginServicesMethodsWithReturnsNullArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.MethodsWithReturns(null, Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod]
         public void PluginServicesMethodsWithInvalidArgsExpectedReturnsEmptyList()
         {
             var services = new PluginServices();
             var result = services.Methods(new PluginService(), Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PluginServicesMethodsWithReturnsWithInvalidArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.MethodsWithReturns(new PluginService(), Guid.Empty, Guid.Empty);
             Assert.AreEqual(0, result.Count);
         }
 
@@ -164,7 +181,56 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var services = new PluginServices();
             var result = services.Methods(service, workspaceID, Guid.Empty);
 
+            Assert.AreEqual(9, result.Count);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PluginServicesMethodsWithReturnsWithValidArgsExpectedReturnsList()
+        {
+            var service = CreatePluginService();
+            var workspaceID = Guid.NewGuid();
+
+            EnvironmentVariables.GetWorkspacePath(workspaceID);
+
+            var services = new PluginServices();
+            var result = services.MethodsWithReturns(service, workspaceID, Guid.Empty);
+
             Assert.AreEqual(7, result.Count);
+        }
+
+        #endregion
+
+        #region Constuctors
+
+        [TestMethod]
+        public void PluginServicesConstuctorsWithNullArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.Constructors(null, Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod]
+        public void PluginServicesConstuctorsWithInvalidArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.Constructors(new PluginService(), Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod]
+        public void PluginServicesConstructorsWithValidArgsExpectedReturnsList()
+        {
+            var service = CreatePluginService();
+            var workspaceID = Guid.NewGuid();
+
+            EnvironmentVariables.GetWorkspacePath(workspaceID);
+
+            var services = new PluginServices();
+            var result = services.Constructors(service, workspaceID, Guid.Empty);
+
+            Assert.AreEqual(2, result.Count);
         }
 
         #endregion
@@ -188,8 +254,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningBool");
 
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = pluginServices.Test(serviceDef, out serializedResult);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
@@ -215,8 +280,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningDouble");
 
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = pluginServices.Test(serviceDef, out serializedResult);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
@@ -242,8 +306,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningPlainString");
 
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = pluginServices.Test(serviceDef, out serializedResult);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
@@ -269,8 +332,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningXmlString");
 
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = pluginServices.Test(serviceDef, out serializedResult);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "Message");
@@ -296,8 +358,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningJsonString");
 
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = pluginServices.Test(serviceDef, out serializedResult);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "message");
@@ -312,8 +373,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             //------------Setup for test--------------------------
             var services = new PluginServicesMock();
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = services.Test(null, out serializedResult);
+            var result = services.Test(null, out string serializedResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result[0].HasErrors);
         }
@@ -324,8 +384,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             //------------Setup for test--------------------------
             var services = new PluginServicesMock();
             //------------Execute Test---------------------------
-            string serializedResult;
-            var result = services.Test("xxx", out serializedResult);
+            var result = services.Test("xxx", out string serializedResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result[0].HasErrors);
         }

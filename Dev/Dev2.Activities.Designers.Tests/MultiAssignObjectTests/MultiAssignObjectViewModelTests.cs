@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,10 +16,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System.Activities.Presentation.Model;
 using Dev2.Common.Interfaces.Help;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.MultiAssignObjectTests
 {
     [TestClass]
@@ -55,7 +55,7 @@ namespace Dev2.Activities.Designers.Tests.MultiAssignObjectTests
         public void MultiAssignObjectActivityViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -70,9 +70,9 @@ namespace Dev2.Activities.Designers.Tests.MultiAssignObjectTests
         [TestMethod]
         [Owner("Clint Stedman")]
         [TestCategory("MultiAssignObjectActivityViewModel_Constructor")]
-        // ReSharper disable InconsistentNaming
+        
         public void MultiAssignObjectActivityViewModel_Constructor_CollectionNameInitialized()
-        // ReSharper restore InconsistentNaming
+
         {
             //init
             const string ExpectedCollectionName = "FieldsCollection";
@@ -104,6 +104,10 @@ namespace Dev2.Activities.Designers.Tests.MultiAssignObjectTests
 
         public static MultiAssignObjectDesignerViewModel CreateDsfMultiAssignObjectActivityViewModel()
         {
+            if (CustomContainer.Get<IShellViewModel>() == null)
+            {
+                CustomContainer.Register(new Mock<IShellViewModel>().Object);
+            }
             var dsfMultiAssignObjectActivityViewModel = new MultiAssignObjectDesignerViewModel(ModelItemUtils.CreateModelItem(new DsfMultiAssignObjectActivity()));
             return dsfMultiAssignObjectActivityViewModel;
         }

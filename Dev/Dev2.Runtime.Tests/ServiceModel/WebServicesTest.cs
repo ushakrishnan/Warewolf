@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,19 +9,19 @@
 */
 
 using System;
+using System.Collections.Generic;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Tests.Runtime.JSON;
 using Dev2.Tests.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.ServiceModel
 {
     // PBI 1220 - 2013.05.27 - TWR - Created
@@ -190,18 +190,18 @@ namespace Dev2.Tests.Runtime.ServiceModel
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServicesContructorWithNullResourceCatalogExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WebServices(null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         [TestMethod]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServicesContructorWithNullWebExectueExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WebServices(new Mock<IResourceCatalog>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         #endregion
@@ -428,8 +428,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             _requestResponse = "{\"results\" : [{\"address_components\": [{\"long_name\" :\"Address:\",\"short_name\" :\"Address:\",\"types\" : [\"point_of_interest\",\"establishment\" ]}]}],\"status\" : \"OK\"}";
             service.RequestResponse = _requestResponse;
             //------------Execute Test---------------------------
-            ErrorResultTO errors;
-            WebServices.ExecuteRequest(service, false, out errors, DummyWebExecute);
+            WebServices.ExecuteRequest(service, false, out ErrorResultTO errors, DummyWebExecute);
             //------------Assert Results-------------------------
             Assert.AreEqual("[{\"address_components\":[{\"long_name\":\"Address:\",\"short_name\":\"Address:\",\"types\":[\"point_of_interest\",\"establishment\"]}]}]", service.JsonPathResult);
         }
@@ -441,7 +440,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
         {
             //------------Setup for test--------------------------
             var service = CreateDummyWebService();
-            service.RequestHeaders = "[[test1]]";
+            service.Headers = new List<NameValue>() {new NameValue {Name="Accept",Value = "[[test1]]" } };
             service.RequestBody = "[[test2]]";
             service.RequestUrl = "[[test3]]";
             service.Method.Parameters.Add(new MethodParameter { Name = "test1", Value = "val1" });
@@ -449,10 +448,9 @@ namespace Dev2.Tests.Runtime.ServiceModel
             service.Method.Parameters.Add(new MethodParameter { Name = "test3", Value = "val3" });
 
             //------------Execute Test---------------------------
-            ErrorResultTO errors;
-            WebServices.ExecuteRequest(service, false, out errors, DummyWebExecute);
+            WebServices.ExecuteRequest(service, false, out ErrorResultTO errors, DummyWebExecute);
             //------------Assert Results-------------------------
-            Assert.AreEqual("val1", _requestHeadersEvaluated[0]);
+            Assert.AreEqual("Accept:val1", _requestHeadersEvaluated[0]);
             Assert.AreEqual("val2", _requestBodyEvaluated);
             Assert.AreEqual("val3", _requestUrlEvaluated);
         }

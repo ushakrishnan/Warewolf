@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,9 +16,9 @@ using Dev2.Common.Interfaces;
 using Dev2.Data.Interfaces;
 using Dev2.Data.TO;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.DataList.Contract
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Used studio side for funky stuff?!
@@ -40,9 +40,9 @@ namespace Dev2.DataList.Contract
             IList<IDev2DataLanguageIntellisensePart> result = new List<IDev2DataLanguageIntellisensePart>();
 
             XmlDocument xDoc = new XmlDocument();
-            // ReSharper disable TooWideLocalVariableScope
+            
             string rawRecsetName;
-            // ReSharper restore TooWideLocalVariableScope
+            
             if (FilterTO == null)
             {
                 FilterTO = new IntellisenseFilterOpsTO();
@@ -60,9 +60,9 @@ namespace Dev2.DataList.Contract
                 }
                 if (rawRecsetName.Contains("()"))
                 {
-                    // ReSharper disable RedundantAssignment
+                    
                     rawRecsetName = rawRecsetName.Replace("()", "");
-                    // ReSharper restore RedundantAssignment
+                    
                 }
             }
 
@@ -78,7 +78,7 @@ namespace Dev2.DataList.Contract
                 }
                 catch (Exception ex)
                 {
-                    Dev2Logger.Error(ex);
+                    Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 }
 
                 if (tmpRootNl != null)
@@ -169,18 +169,15 @@ namespace Dev2.DataList.Contract
 
             try
             {
-                if (node.Attributes != null)
+                XmlAttribute attribute = node.Attributes?[DescAttribute];
+                if (attribute != null)
                 {
-                    XmlAttribute attribute = node.Attributes[DescAttribute];
-                    if (attribute != null)
-                    {
-                        result = attribute.Value;
-                    }
+                    result = attribute.Value;
                 }
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
 
             return result;

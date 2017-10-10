@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Scheduler;
@@ -33,12 +34,39 @@ namespace Dev2.Tests.Runtime.Services
 
 
         private Mock<IServerSchedulerFactory> _factory;
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getScheduledResources = new GetScheduledResources();
+
+            //------------Execute Test---------------------------
+            var resId = getScheduledResources.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getScheduledResources = new GetScheduledResources();
+
+            //------------Execute Test---------------------------
+            var resId = getScheduledResources.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
 
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Get")]
         [TestMethod]
-// ReSharper disable InconsistentNaming
+
         public void GetScheduledResources_Execute_ReturnsScheduledResources()
 
         {
@@ -94,8 +122,7 @@ namespace Dev2.Tests.Runtime.Services
 
             var first = result.First().Trigger;
             Assert.IsNotNull(first.Trigger);
-            var dailyTrigger = first.Trigger.Instance as DailyTrigger;
-            if(dailyTrigger != null)
+            if (first.Trigger.Instance is DailyTrigger dailyTrigger)
             {
                 Assert.AreEqual(21, dailyTrigger.DaysInterval);
             }
@@ -124,5 +151,5 @@ namespace Dev2.Tests.Runtime.Services
             return output;
         }
     }
-    // ReSharper restore InconsistentNaming
+    
 }

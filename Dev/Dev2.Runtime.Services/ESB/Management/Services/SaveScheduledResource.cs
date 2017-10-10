@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.DynamicServices;
@@ -24,6 +25,8 @@ using Dev2.Scheduler;
 using Dev2.Workspaces;
 using Warewolf.Resource.Errors;
 
+
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class SaveScheduledResource : IEsbManagementEndpoint
@@ -31,6 +34,15 @@ namespace Dev2.Runtime.ESB.Management.Services
         private IServerSchedulerFactory _schedulerFactory;
         ISecurityWrapper _securityWrapper;
         private IResourceCatalog _catalog;
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
 
         public string HandlesType()
         {
@@ -40,23 +52,20 @@ namespace Dev2.Runtime.ESB.Management.Services
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             var result = new ExecuteMessage { HasError = false };
-            StringBuilder tmp;
-            values.TryGetValue("Resource", out tmp);
+            values.TryGetValue("Resource", out StringBuilder tmp);
             var serializer = new Dev2JsonSerializer();
             try
             {
-                if(tmp != null)
+                if (tmp != null)
                 {
 
                     var res = serializer.Deserialize<IScheduledResource>(tmp);
-                    Dev2Logger.Info("Save Scheduled Resource. Scheduled Resource:" +res);
+                    Dev2Logger.Info("Save Scheduled Resource. Scheduled Resource:" +res, GlobalConstants.WarewolfInfo);
                     using(var model = SchedulerFactory.CreateModel(GlobalConstants.SchedulerFolderId, SecurityWrapper))
                     {
-                        StringBuilder userName;
-                        StringBuilder password;
 
-                        values.TryGetValue("UserName", out userName);
-                        values.TryGetValue("Password", out password);
+                        values.TryGetValue("UserName", out StringBuilder userName);
+                        values.TryGetValue("Password", out StringBuilder password);
                         if(userName == null || password == null)
                         {
                             result.Message.Append(ErrorResource.NoUserNameAndPassword);
@@ -64,11 +73,10 @@ namespace Dev2.Runtime.ESB.Management.Services
                         }
                         else
                         {
-                            StringBuilder previousTask;
-                            values.TryGetValue("PreviousResource", out previousTask);
+                            values.TryGetValue("PreviousResource", out StringBuilder previousTask);
 
                             model.Save(res, userName.ToString(), password.ToString());
-                            if(previousTask != null && !String.IsNullOrEmpty(previousTask.ToString()) && previousTask.ToString() != res.Name)
+                            if(!string.IsNullOrEmpty(previousTask?.ToString()) && previousTask.ToString() != res.Name)
                             {
                                 model.DeleteSchedule(new ScheduledResource(previousTask.ToString(), SchedulerStatus.Disabled, DateTime.MaxValue, null, null,Guid.NewGuid().ToString()));
                             }
@@ -83,8 +91,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception e)
             {
-                Dev2Logger.Error(e);
-                result.Message.Append(string.Format("Error while saving: {0}", e.Message.Remove(e.Message.IndexOf('.'))));
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                result.Message.Append($"Error while saving: {e.Message.Remove(e.Message.IndexOf('.'))}");
                 result.HasError = true;
             }
             return serializer.SerializeToBuilder(result);

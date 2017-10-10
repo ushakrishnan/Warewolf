@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.AppResources.ExtensionMethods
 {
     public static class StringExtensions
@@ -36,10 +36,10 @@ namespace Dev2.Studio.AppResources.ExtensionMethods
             StringBuilder sb = new StringBuilder();
             foreach(char c in str)
             {
-                // ReSharper disable PossibleMultipleEnumeration
-                if(!toExclude.Contains(c))
-                    // ReSharper restore PossibleMultipleEnumeration
+                                if(!toExclude.Contains(c))
+                {
                     sb.Append(c);
+                }
             }
             return sb.ToString();
         }

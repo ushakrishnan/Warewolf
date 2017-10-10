@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.TOTests
 {
     /// <summary>
@@ -299,7 +299,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "[[h&]]", At = "1" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "OutputVariable", "Variable name [[h&]] contains invalid character(s)");
+            Verify_RuleSet(dto, "OutputVariable", "Variable name [[h&]] contains invalid character(s). Only use alphanumeric _ and - ");
         }
 
 

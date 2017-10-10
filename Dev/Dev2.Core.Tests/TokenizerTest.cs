@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,13 +9,11 @@
 */
 
 using System;
-using System.Diagnostics;
 using Dev2.Common;
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
-using Dev2.Tests.Properties;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable InconsistentNaming
-// ReSharper disable LocalizableElement
+
+
 
 namespace Dev2.Tests {
     /// <summary>
@@ -370,63 +368,6 @@ namespace Dev2.Tests {
             catch (Exception) {
                 Assert.IsTrue(true);
             }
-        }
-
-        #endregion
-
-        #region Performance Test
-
-        [TestMethod]
-        public void Single_Token_Perfomance_Op() {
-            Dev2TokenizerBuilder dtb = new Dev2TokenizerBuilder { ToTokenize = TestStrings.tokenizerBase };
-
-
-            dtb.AddTokenOp("-", false);
-
-            IDev2Tokenizer dt = dtb.Generate();
-
-            int opCnt = 0;
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            while (dt.HasMoreOps() && opCnt < 100000) {
-                dt.NextToken();
-                opCnt++;
-            }
-            sw.Stop();
-
-            long exeTime = sw.ElapsedMilliseconds;
-
-            // can we do 100k ops in less then 100s? 
-            // I sure hope so ;)
-            Console.WriteLine(@"Total Time : " + exeTime);
-            Assert.IsTrue(opCnt == 100000 && exeTime < 1000, "It took [ " + exeTime + " ]");
-        }
-
-        [TestMethod]
-        public void Three_Token_Perfomance_Op() {
-            Dev2TokenizerBuilder dtb = new Dev2TokenizerBuilder { ToTokenize = TestStrings.tokenizerBase };
-
-
-            dtb.AddTokenOp("AB-", false);
-
-            IDev2Tokenizer dt = dtb.Generate();
-
-            int opCnt = 0;
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            while (dt.HasMoreOps() && opCnt < 35000)
-            {
-                dt.NextToken();
-                opCnt++;
-            }
-            sw.Stop();
-
-            long exeTime = sw.ElapsedMilliseconds;
-
-            // can we do it in less then 2.5s? 
-            // I sure hope so ;)
-            Console.WriteLine("Total Time : " + exeTime);
-            Assert.IsTrue(opCnt == 35000 && exeTime < 2500, "It took [ " + exeTime + " ]");
         }
 
         #endregion

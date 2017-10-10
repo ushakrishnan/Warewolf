@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -22,8 +23,10 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
+    
     public class DeleteLog : IEsbManagementEndpoint
     {
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             string filePath = null;
@@ -31,9 +34,8 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             ExecuteMessage msg = new ExecuteMessage { HasError = false };
 
-            StringBuilder tmp;
-            values.TryGetValue("ResourcePath", out tmp);
-            if(tmp != null)
+            values.TryGetValue("ResourcePath", out StringBuilder tmp);
+            if (tmp != null)
             {
                 filePath = tmp.ToString();
             }
@@ -42,24 +44,23 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 directory = tmp.ToString();
             }
-
-            if(String.IsNullOrWhiteSpace(filePath))
+            if (string.IsNullOrWhiteSpace(filePath))
             {
                 msg.HasError = true;
                 msg.SetMessage(FormatMessage(ErrorResource.CannotDeleteFileWithoutFilename, filePath, directory));
-                Dev2Logger.Info(msg.Message.ToString());
+                Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
             }
-            else if(String.IsNullOrWhiteSpace(directory))
+            else if(string.IsNullOrWhiteSpace(directory))
             {
                 msg.HasError = true;
                 msg.SetMessage(FormatMessage(ErrorResource.CannotDeleteFileWithoughtDirectory, filePath, directory));
-                Dev2Logger.Info(msg.Message.ToString());
+                Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
             }
             else if(!Directory.Exists(directory))
             {
                 msg.HasError = true;
                 msg.SetMessage(FormatMessage(string.Format(ErrorResource.DirectoryDoesNotExist,directory), filePath, directory));
-                Dev2Logger.Info(msg.Message.ToString());
+                Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
             }
             else
             {
@@ -69,7 +70,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     msg.HasError = true;
                     msg.SetMessage(FormatMessage(ErrorResource.FileDoesNotExist, filePath, directory));
-                    Dev2Logger.Info(msg.Message.ToString());
+                    Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
                 }
                 else
                 {
@@ -82,7 +83,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     {
                         msg.HasError = true;
                         msg.SetMessage(FormatMessage(ex.Message, filePath, directory));
-                        Dev2Logger.Error(ex);
+                        Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                     }
                 }
             }
@@ -109,7 +110,17 @@ namespace Dev2.Runtime.ESB.Management.Services
 
         static string FormatMessage(string message, string filePath, string directory)
         {
-            return string.Format("DeleteLog: Error deleting '{0}' from '{1}'...{2}", filePath, directory, message);
+            return $"DeleteLog: Error deleting '{filePath}' from '{directory}'...{message}";
+        }
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Administrator;
         }
     }
 }

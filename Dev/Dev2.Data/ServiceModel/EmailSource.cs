@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,11 +17,11 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Warewolf.Security.Encryption;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Runtime.ServiceModel.Data
 {
     // PBI 953 - 2013.05.16 - TWR - Created
-    public class EmailSource : Resource, IResourceSource
+    public class EmailSource : Resource, IResourceSource,IEmailSource
     {
         public static int DefaultTimeout = 100000; // (100 seconds)
         public static int DefaultPort = 25;
@@ -97,14 +97,11 @@ namespace Dev2.Runtime.ServiceModel.Data
             UserName = properties["UserName"];
             Password = properties["Password"];
 
-            int port;
-            Port = Int32.TryParse(properties["Port"], out port) ? port : DefaultPort;
+            Port = Int32.TryParse(properties["Port"], out int port) ? port : DefaultPort;
 
-            bool enableSsl;
-            EnableSsl = bool.TryParse(properties["EnableSsl"], out enableSsl) && enableSsl;
+            EnableSsl = bool.TryParse(properties["EnableSsl"], out bool enableSsl) && enableSsl;
 
-            int timeout;
-            Timeout = Int32.TryParse(properties["Timeout"], out timeout) ? timeout : DefaultTimeout;
+            Timeout = Int32.TryParse(properties["Timeout"], out int timeout) ? timeout : DefaultTimeout;
         }
 
         public void Send(MailMessage mailMessage)

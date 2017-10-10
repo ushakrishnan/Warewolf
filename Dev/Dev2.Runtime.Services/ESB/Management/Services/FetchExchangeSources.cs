@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -14,9 +15,19 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class FetchExchangeSources : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public string HandlesType()
         {
             return "FetchExchangeSources";
@@ -26,7 +37,7 @@ namespace Dev2.Runtime.ESB.Management.Services
         {
             var serializer = new Dev2JsonSerializer();
 
-            // ReSharper disable MaximumChainedReferences
+            
             var list = Resources.GetResourceList(GlobalConstants.ServerWorkspaceID).Where(a => a.ResourceType == "ExchangeSource").Select(a =>
             {
                 var res = Resources.GetResource<ExchangeSource>(GlobalConstants.ServerWorkspaceID, a.ResourceID);
@@ -36,7 +47,6 @@ namespace Dev2.Runtime.ESB.Management.Services
                     {
                         ResourceID = res.ResourceID,
                         ResourceName = res.ResourceName,
-                        Name = res.ResourceName,
                         Path = res.GetSavePath(),
                         UserName = res.UserName,
                         Password = res.Password,
@@ -49,7 +59,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 return null;
             }).ToList();
             return serializer.SerializeToBuilder(new ExecuteMessage() { HasError = false, Message = serializer.SerializeToBuilder(list) });
-            // ReSharper restore MaximumChainedReferences
+            
         }
 
         public DynamicService CreateServiceEntry()
@@ -63,6 +73,6 @@ namespace Dev2.Runtime.ESB.Management.Services
             return findServices;
         }
 
-        public ResourceCatalog Resources => ResourceCatalog.Instance;
+        private ResourceCatalog Resources => ResourceCatalog.Instance;
     }
 }

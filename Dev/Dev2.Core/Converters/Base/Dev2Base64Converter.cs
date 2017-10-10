@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,14 +21,14 @@ namespace Dev2.Converters
             bool result = false;
             try
             {
-                // ReSharper disable ReturnValueOfPureMethodIsNotUsed
+                
                 Convert.FromBase64String(payload);
-                // ReSharper restore ReturnValueOfPureMethodIsNotUsed
+                
                 result = true;
             }
-                // ReSharper disable EmptyGeneralCatchClause
+                
             catch
-                // ReSharper restore EmptyGeneralCatchClause
+                
             {
                 // if error is thrown we know it is not a valid base64 string
             }

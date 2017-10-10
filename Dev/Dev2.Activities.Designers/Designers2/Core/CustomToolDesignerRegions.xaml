@@ -15,6 +15,9 @@
                     xmlns:customControls="clr-namespace:Dev2.CustomControls;assembly=Dev2.CustomControls"
                     xmlns:fa="http://schemas.fontawesome.io/icons/"
                     xmlns:interfaceImplementors="clr-namespace:Dev2.Studio.InterfaceImplementors;assembly=Dev2.Intellisense"
+                    xmlns:netDllEnhanced="clr-namespace:Dev2.Activities.Designers2.Net_Dll_Enhanced"
+                    xmlns:actionRegion="clr-namespace:Dev2.Activities.Designers2.Core.ActionRegion"
+                    xmlns:inputRegion="clr-namespace:Dev2.Activities.Designers2.Core.InputRegion"
                     mc:Ignorable="d"
                     x:Class="CustomToolDesignerRegions"
                     d:DataContext="{d:DesignInstance core1:CustomToolWithRegionBase}">
@@ -22,6 +25,7 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="/Warewolf.Studio.Themes.Luna;component/Theme.xaml"/>
     </ResourceDictionary.MergedDictionaries>
+    <core1:DotNetActionsWidthConverter x:Key="DotNetActionsWidthConverter" />
 
     <ControlTemplate x:Key="NewSelectionGrid">
         <Grid x:Name="SourcesGrid">
@@ -66,7 +70,7 @@
             </Button>
         </Grid>
     </ControlTemplate>
-    
+
     <ControlTemplate x:Key="NewActionGrid">
         <Grid x:Name="ActionsGrid" Margin="{StaticResource ControlBorderTop}" >
             <Grid.ColumnDefinitions>
@@ -81,11 +85,18 @@
                               ItemsSource="{Binding ActionRegion.Actions}"
                               DisplayMemberPath="Name" 
                               IsEnabled="{Binding ActionRegion.IsActionEnabled}"
-                              ToolTip="{x:Static languages:Core.ManageDbServiceActionsTooltip}"
-                              IsEditable="False"
+                              ToolTip="{x:Static languages:Tooltips.ManageDbServiceActionsTooltip}"
+                              IsEditable="False" Style="{StaticResource ComboBoxFixedDropDownWidthStyle}"
+                              VirtualizingStackPanel.IsVirtualizing="True" 
+                              VirtualizingStackPanel.VirtualizationMode="Recycling"
                               SelectedItem="{Binding ActionRegion.SelectedAction}">
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate >
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.DatabaseServiceSelectActionHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.DatabaseServiceSelectActionHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
             </ComboBox>
             <Button x:Name="ActionRefreshButton" 
@@ -93,7 +104,7 @@
                             Command="{Binding ActionRegion.RefreshActionsCommand, Mode=TwoWay}"
                             Visibility="{Binding ActionRegion.IsRefreshing, Converter={StaticResource BoolToVisibilityConverterNegative}}">
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.DatabaseServiceRefreshHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.DatabaseServiceRefreshHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
                 <Button.Content>
                     <fa:FontAwesome Icon="Refresh"/>
@@ -120,7 +131,7 @@
             <ui:IntellisenseTextBox x:Name="ActionsComboBox"
                                     Grid.Column="1"
                                     Grid.Row="0"
-                                    ToolTip="{x:Static languages:Core.ManageOdbcServiceActionsTooltip}"
+                                    ToolTip="{x:Static languages:Tooltips.ManageOdbcServiceActionsTooltip}"
                                     Height="Auto"
                                     MinLines="5"
                                     VerticalContentAlignment="Top"
@@ -144,7 +155,7 @@
                     </interfaceImplementors:CompositeIntellisenseProvider>
                 </ui:IntellisenseTextBox.IntellisenseProvider>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.ManageOdbcServiceActionsHelpText}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.ManageOdbcServiceActionsHelpText}" DataContext="{Binding}" />
                     <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ActionRegion.CommandText"
                                      SourcePropertyValue="{Binding  ActionRegion.CommandText, UpdateSourceTrigger=PropertyChanged}"
@@ -158,11 +169,11 @@
                     Width="Auto" 
                     IsEnabled="{Binding ActionRegion.IsGenerateOutputsEnabled}"
                     Margin="{StaticResource ControlBorderTop}"
-                    ToolTip="{x:Static languages:Core.ManageDbServiceTestActionTooltip}"
+                    ToolTip="{x:Static languages:Tooltips.ManageDbServiceTestActionTooltip}"
                     HorizontalAlignment="Right"
                     Command="{Binding Path=TestInputCommand, Mode=TwoWay}">
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.InputGenerateOutputsDefaultHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.InputGenerateOutputsDefaultHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                 </i:Interaction.Behaviors>
             </Button>
         </Grid>
@@ -182,11 +193,18 @@
                               ItemsSource="{Binding ActionRegion.Actions}"
                               DisplayMemberPath="Method" 
                               IsEnabled="{Binding ActionRegion.IsActionEnabled}"
-                              ToolTip="{x:Static languages:Core.PluginServiceSelectActionToolTip}"
+                              ToolTip="{x:Static languages:Tooltips.PluginServiceSelectActionToolTip}"
                               IsEditable="False"
+                              VirtualizingStackPanel.IsVirtualizing="True" 
+                              VirtualizingStackPanel.VirtualizationMode="Recycling"
                               SelectedItem="{Binding ActionRegion.SelectedAction}">
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate >
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.PluginServiceSelectActionHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.PluginServiceSelectActionHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
             </ComboBox>
             <Button x:Name="ActionRefreshButton" 
@@ -194,7 +212,7 @@
                             Command="{Binding Path=ActionRegion.RefreshActionsCommand, Mode=TwoWay}"
                             Visibility="{Binding Path=ActionRegion.IsRefreshing, Converter={StaticResource BoolToVisibilityConverterNegative}}">
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.PluginServiceRefreshHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.PluginServiceRefreshHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
                 <Button.Content>
                     <fa:FontAwesome Icon="Refresh"/>
@@ -222,11 +240,18 @@
                               ItemsSource="{Binding NamespaceRegion.Namespaces}"
                               DisplayMemberPath="FullName" 
                               IsEnabled="{Binding NamespaceRegion.IsNamespaceEnabled}"
-                              ToolTip="{x:Static languages:Core.PluginServiceSelectNamespaceToolTip}"
-                              IsEditable="False"
+                              ToolTip="{x:Static languages:Tooltips.PluginServiceSelectNamespaceToolTip}"
+                              IsEditable="False" Style="{StaticResource ComboBoxFixedDropDownWidthStyle}"
+                              VirtualizingStackPanel.IsVirtualizing="True" 
+                              VirtualizingStackPanel.VirtualizationMode="Recycling"
                               SelectedItem="{Binding NamespaceRegion.SelectedNamespace}">
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate >
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.PluginServiceSelectNamespaceHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.PluginServiceSelectNamespaceHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
             </ComboBox>
             <Button x:Name="NamespaceRefreshButton" 
@@ -234,7 +259,7 @@
                             Command="{Binding Path=NamespaceRegion.RefreshNamespaceCommand, Mode=TwoWay}"
                             Visibility="{Binding Path=NamespaceRegion.IsRefreshing, Converter={StaticResource BoolToVisibilityConverterNegative}}">
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.PluginServiceRefreshHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.PluginServiceRefreshHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
                 <Button.Content>
                     <fa:FontAwesome Icon="Refresh"/>
@@ -247,7 +272,7 @@
                                                         Visibility="{Binding Path=NamespaceRegion.IsRefreshing, Converter={StaticResource BoolToVis}}"/>
         </Grid>
     </ControlTemplate>
-    
+
     <ControlTemplate x:Key="NewDotNetNamespaceGrid">
         <Grid x:Name="ActionsGrid" 
                       Margin="{StaticResource ControlBorderTop}" >
@@ -263,11 +288,18 @@
                               ItemsSource="{Binding NamespaceRegion.Namespaces}"
                               DisplayMemberPath="FullName" 
                               IsEnabled="{Binding NamespaceRegion.IsNamespaceEnabled}"
-                              ToolTip="{x:Static languages:Core.DotNetPluginServiceSelectNamespaceToolTip}"
-                              IsEditable="False"
+                              ToolTip="{x:Static languages:Tooltips.DotNetPluginServiceSelectNamespaceToolTip}"
+                              IsEditable="False" Style="{StaticResource ComboBoxFixedDropDownWidthStyle}"
+                              VirtualizingStackPanel.IsVirtualizing="True" 
+                              VirtualizingStackPanel.VirtualizationMode="Recycling"
                               SelectedItem="{Binding NamespaceRegion.SelectedNamespace}">
+                <ComboBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ComboBox.ItemsPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.DotNetPluginServiceSelectNamespaceHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.DotNetPluginServiceSelectNamespaceHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
             </ComboBox>
             <Button x:Name="NamespaceRefreshButton" 
@@ -275,7 +307,7 @@
                             Command="{Binding Path=NamespaceRegion.RefreshNamespaceCommand, Mode=TwoWay}"
                             Visibility="{Binding Path=NamespaceRegion.IsRefreshing, Converter={StaticResource BoolToVisibilityConverterNegative}}">
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.PluginServiceRefreshHelp}" DataContext="{Binding}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.PluginServiceRefreshHelp}" DataContext="{Binding}" />
                 </i:Interaction.Behaviors>
                 <Button.Content>
                     <fa:FontAwesome Icon="Refresh"/>
@@ -288,7 +320,7 @@
                                                         Visibility="{Binding Path=NamespaceRegion.IsRefreshing, Converter={StaticResource BoolToVis}}"/>
         </Grid>
     </ControlTemplate>
-    
+
     <ControlTemplate x:Key="NewSelectionActionGrid">
         <Grid>
             <Grid.RowDefinitions>
@@ -340,21 +372,8 @@
             <Control Template="{StaticResource NewDotNetActionGrid}" Grid.Row="2"/>
         </Grid>
     </ControlTemplate>
-    <ControlTemplate x:Key="NewDotNetSelectionNamespaceGrid">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
 
-            <Control Template="{StaticResource NewSelectionGrid}"/>
 
-            <Control Template="{StaticResource NewDotNetNamespaceGrid}" Grid.Row="1"/>
-
-            <Control Template="{StaticResource NewDotNetActionGrid}" Grid.Row="2"/>
-        </Grid>
-    </ControlTemplate>
     <ControlTemplate x:Key="NewInputsGrid">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -373,7 +392,7 @@
                 <controls:Dev2DataGrid x:Name="LargeDataGrid"
                                    Grid.Row="1"
                                    ItemsSource="{Binding InputArea.Inputs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                   Style="{StaticResource ActivityMapppingDataGridStyle}"
+                                   Style="{StaticResource ActivityMappingDataGridStyle}"
                                    Height="Auto"
                                    Margin="{StaticResource ControlBorderTop}">
 
@@ -382,7 +401,7 @@
                         <DataGridTemplateColumn Width="*"
                                         MinWidth="125"
                                         Header="Input Data or [[Variable]]"
-                                        HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                        HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                         d:DataContext="{d:DesignInstance Type=common:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -394,11 +413,11 @@
                                                     Margin="0,0,1,1"
                                                     TextWrapping="Wrap"
                                                     WrapInBrackets="False"
-                                                    ToolTip="{x:Static languages:Core.InputDefaultValueToolTip}"
+                                                    ToolTip="{x:Static languages:Tooltips.InputDefaultValueToolTip}"
                                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Style="{StaticResource ActivityMapppingDataGridIntellisenseTextBoxStyle}">
+                                                    Style="{StaticResource ActivityMappingDataGridIntellisenseTextBoxStyle}">
                                         <i:Interaction.Behaviors>
-                                            <core:HelpSetter Text="{x:Static languages:Core.InputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                            <core:HelpSetter Text="{x:Static languages:HelpText.InputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                                             <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="Value"
                                                          SourcePropertyValue="{Binding Path=Value, UpdateSourceTrigger=PropertyChanged}"
@@ -418,7 +437,7 @@
                         <DataGridTemplateColumn Width="SizeToCells"
                                             MinWidth="65"
                                             Header="Parameter"
-                                            HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                             d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -443,7 +462,7 @@
                         <DataGridTemplateColumn Width="SizeToCells"
                                             MinWidth="90"
                                             Header="Empty Is Null"
-                                            HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                             d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -454,9 +473,9 @@
                                         <CheckBox 
                                             IsChecked="{Binding Path=EmptyIsNull}" 
                                             HorizontalAlignment="Center"
-                                            ToolTip="{x:Static languages:Core.InputEmptyIsNullToolTip}">
+                                            ToolTip="{x:Static languages:Tooltips.InputEmptyIsNullToolTip}">
                                             <i:Interaction.Behaviors>
-                                                <core:HelpSetter Text="{x:Static languages:Core.InputEmptyIsNullDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                                <core:HelpSetter Text="{x:Static languages:HelpText.InputEmptyIsNullDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                                             </i:Interaction.Behaviors>
                                         </CheckBox>
                                     </Grid>
@@ -478,16 +497,195 @@
                     Width="Auto" 
                     IsEnabled="{Binding InputArea.IsEnabled}"
                     Margin="{StaticResource ControlBorderTop}"
-                    ToolTip="{x:Static languages:Core.ServiceTestActionTooltip}"
+                    ToolTip="{x:Static languages:Tooltips.ServiceTestActionTooltip}"
                     HorizontalAlignment="Right"
                     Command="{Binding Path=TestInputCommand, Mode=TwoWay}">
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.InputGenerateOutputsDefaultHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.InputGenerateOutputsDefaultHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                 </i:Interaction.Behaviors>
             </Button>
         </Grid>
     </ControlTemplate>
-   
+    <ControlTemplate x:Key="NewDotNetConstructorInputsGrid" >
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Column="0" x:Name="InputsLabel" Text="Inputs - None" 
+                       Visibility="{Binding InputArea.IsInputsEmptyRows, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            <controls:Dev2DataGrid x:Name="LargeDataGrid"
+                                    ItemsSource="{Binding InputArea.Inputs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Style="{StaticResource TransparentActivityMappingDataGridStyle}"
+                                    Height="Auto"
+                                   BorderBrush="Transparent"
+                                   Background="Transparent"
+                                   Margin="3,0,3,0"
+                                   AutoGenerateColumns="False"
+                                   Visibility="{Binding InputArea.IsInputsEmptyRows, Converter={StaticResource BoolToVisibilityConverterNegative}}">
+
+                <!-- DO NOT override ItemsPanel - doing so causes column sizing issues on first drop -->
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="*"
+                                            MinWidth="125"
+                                            Header="Input Data or [[Variable]]"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
+                                            d:DataContext="{d:DesignInstance Type=common:DataColumnMapping}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ui:IntellisenseTextBox DefaultText="[[Variable]]"
+                                                        AllowMultilinePaste="True"
+                                                        AcceptsReturn="True"
+                                                        AllowUserInsertLine="True"
+                                                        FilterType="{Binding IntellisenseFilter}"
+                                                        MaxHeight="80"
+                                                        Margin="0,0,1,1"
+                                                        TextWrapping="Wrap"
+                                                        WrapInBrackets="False"
+                                                        ToolTip="{x:Static languages:Tooltips.InputDefaultValueToolTip}"
+                                                        IntellisenseProvider="{StaticResource CalculateCompositeIntellisenseProvider}"
+                                                        Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Style="{StaticResource ActivityMappingDataGridIntellisenseTextBoxStyle}">
+                                    <i:Interaction.Behaviors>
+                                        <core:HelpSetter Text="{x:Static languages:HelpText.InputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                        <errors:ErrorsSetter Source="{Binding}"
+                                                            SourcePropertyName="Value"
+                                                            SourcePropertyValue="{Binding Path=Value, UpdateSourceTrigger=PropertyChanged}"
+                                                            Target="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                    </i:Interaction.Behaviors>
+                                        <AutomationProperties.AutomationId>
+                                        <MultiBinding StringFormat="UI_{0}_Row{1}_InputColumn_AutoID">
+                                            <Binding Path="DataContext.ModelItem.AutomationID" RelativeSource="{RelativeSource AncestorType=core1:ActivityDesignerTemplate}" />
+                                            <Binding Path="IndexNumber" />
+                                        </MultiBinding>
+                                    </AutomationProperties.AutomationId>
+                                </ui:IntellisenseTextBox>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Width="SizeToCells"
+                                            MinWidth="65"
+                                            Header="Parameter"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
+                                            d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid Background="{StaticResource DataGridColumnHeaderBackgroundBrush}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="{Binding Path=FullName}"
+                                                TextTrimming="CharacterEllipsis"
+                                                VerticalAlignment="Center"
+                                                Padding="3,0"
+                                               Grid.Column="0"
+                                                ToolTip="{Binding Path=FullName}">                               
+                            <AutomationProperties.AutomationId>
+                                <MultiBinding StringFormat="UI_{0}_Row{1}_OutputColumnName_AutoID">
+                                    <Binding Path="DataContext.ModelItem.AutomationID" RelativeSource="{RelativeSource AncestorType=core1:ActivityDesignerTemplate}" />
+                                    <Binding Path="IndexNumber" />
+                                </MultiBinding>
+                            </AutomationProperties.AutomationId>
+                                    </TextBlock>
+                                    <Button Width="Auto" 
+                                            Content="..." 
+                                            HorizontalAlignment="Right" 
+                                            Grid.Column="1"
+                                            Command="{Binding RelativeSource={RelativeSource AncestorType=DataGrid}, Path=DataContext.InputArea.ViewObjectResult}"
+                                            CommandParameter="{Binding .}"
+                                            Visibility="{Binding Path=IsObject, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </Grid>
+                            </DataTemplate>
+
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Width="SizeToCells"
+                                            MinWidth="90"
+                                            Header="Empty Is Null"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
+                                            d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid Background="{StaticResource DataGridColumnHeaderBackgroundBrush}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox IsChecked="{Binding Path=EmptyIsNull}" HorizontalAlignment="Center" ToolTip="{x:Static languages:Tooltips.InputEmptyIsNullToolTip}">
+                                        <i:Interaction.Behaviors>
+                                            <core:HelpSetter Text="{x:Static languages:HelpText.InputEmptyIsNullDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                        </i:Interaction.Behaviors>
+                                    </CheckBox>
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </controls:Dev2DataGrid>
+
+        </Grid>
+    </ControlTemplate>
+    <ControlTemplate x:Key="NewDotNetConstructorOutputsGrid" >
+        <Grid x:Name="OutputsTemplate" VerticalAlignment="Stretch" Margin="0,0,3,0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock x:Name="OutputsNoneLabel" Text="Outputs - None" HorizontalAlignment="Left" 
+                           Visibility="{Binding OutputsRegion.IsOutputsEmptyRows, Converter={StaticResource BoolToVisibilityConverterNegative}}"/>
+                <Grid Visibility="{Binding OutputsRegion.IsOutputsEmptyRows, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="OutputsLabel" Text="Outputs" HorizontalAlignment="Left" />
+                    <Button x:Name="ViewOutputsBtn" Width="Auto" Grid.Column="1" Content="View Outputs" 
+                            HorizontalAlignment="Right" Command="{Binding OutputsRegion.ViewObjectResult}"/>
+                </Grid>
+            </Grid>
+            <!-- OBJECT NAME -->
+            <Grid Grid.Row="1" Margin="{StaticResource ControlBorderTop}" Visibility="{Binding OutputsRegion.IsOutputsEmptyRows, Converter={StaticResource bool2VisibilityConverter} }">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Object Name" />
+                <ui:IntellisenseTextBox Grid.Column="1" 
+                                        WrapInBrackets="True"
+                                        Padding="3"
+                                        FilterType="JsonObject"
+                                        Text="{Binding OutputsRegion.ObjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        IntellisenseProvider="{StaticResource CalculateCompositeIntellisenseProvider}"
+                                        Style="{StaticResource DatagridIntellisenseTextBoxStyle}"
+                                        AutomationProperties.AutomationId="UI_TextBox_AutoID"
+                                        ToolTip="{x:Static languages:Tooltips.MappingsObjectNameTooltip}">
+                    <i:Interaction.Behaviors>
+                        <core:HelpSetter Text="{x:Static languages:HelpText.MappingsObjectNameHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                        <errors:ErrorsSetter Source="{Binding}"
+                                             SourcePropertyName="ObjectName"
+                                             SourcePropertyValue="{Binding OutputsRegion.ObjectName, UpdateSourceTrigger=PropertyChanged}"
+                                             Target="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                    </i:Interaction.Behaviors>
+                </ui:IntellisenseTextBox>
+            </Grid>
+        </Grid>
+    </ControlTemplate>
+
     <ControlTemplate x:Key="NewOutputsGrid" d:DataContext="{d:DesignInstance core1:OutputsRegion}" >
         <Grid x:Name="OutputsTemplate" VerticalAlignment="Stretch" >
             <Grid.ColumnDefinitions>
@@ -514,12 +712,12 @@
                               Grid.Column="1"
                               IsChecked="{Binding IsObject}" 
                               IsEnabled="{Binding IsEnabled}"
-                              ToolTip="{x:Static languages:Core.MappingsObjectOutputTooltip}"
+                              ToolTip="{x:Static languages:Tooltips.MappingsObjectOutputTooltip}"
                               Visibility="{Binding IsObjectOutputUsed, Converter={StaticResource BoolToVisibilityConverterPositive}}"
                               Content="Output to Object"
                               HorizontalAlignment="Left">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.MappingsObjectOutputHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.MappingsObjectOutputHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </CheckBox>
                 </Grid>
@@ -528,7 +726,7 @@
                 <Grid Grid.Row="1" Visibility="{Binding IsObject, Converter={StaticResource BoolToVisibilityConverterNegative}}">
                     <controls:Dev2DataGrid x:Name="OutputsMappingDataGrid"
                                        ItemsSource="{Binding Outputs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                       Style="{StaticResource ActivityMapppingDataGridStyle}"
+                                       Style="{StaticResource ActivityMappingDataGridStyle}"
                                        Height="Auto">
 
                         <!-- DO NOT override ItemsPanel - doing so causes column sizing issues on first drop -->
@@ -536,7 +734,7 @@
                             <DataGridTemplateColumn Width="SizeToCells"
                                             MinWidth="100"
                                             Header="Mapped From"
-                                            HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                             d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -560,7 +758,7 @@
                             <DataGridTemplateColumn Width="*"
                                         MinWidth="125"
                                         Header="Mapped To"
-                                        HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                        HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                         d:DataContext="{d:DesignInstance Type=common:DataColumnMapping}">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
@@ -571,11 +769,11 @@
                                                     MaxHeight="80"
                                                     Margin="0,0,1,1"
                                                     TextWrapping="Wrap"
-                                                    ToolTip="{x:Static languages:Core.MappingsDefaultValueHelp}"
+                                                    ToolTip="{x:Static languages:HelpText.MappingsDefaultValueHelp}"
                                                     Text="{Binding Path=MappedTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Style="{StaticResource ActivityMapppingDataGridIntellisenseTextBoxStyle}">
+                                                    Style="{StaticResource ActivityMappingDataGridIntellisenseTextBoxStyle}">
                                             <i:Interaction.Behaviors>
-                                                <core:HelpSetter Text="{x:Static languages:Core.MappingsDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                                <core:HelpSetter Text="{x:Static languages:HelpText.MappingsDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                                                 <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="MappedTo"
                                                          SourcePropertyValue="{Binding Path=MappedTo, UpdateSourceTrigger=PropertyChanged}"
@@ -625,7 +823,7 @@
                 <TextBox Grid.Column="1" x:Name="RecordSetTextBox" Text="{Binding RecordsetName, UpdateSourceTrigger=PropertyChanged}" 
                          IsEnabled="{Binding IsEnabled}">
                     <i:Interaction.Behaviors>
-                        <core:HelpSetter Text="{x:Static languages:Core.MappingsRecordsetNameHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                        <core:HelpSetter Text="{x:Static languages:HelpText.MappingsRecordsetNameHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                     </i:Interaction.Behaviors>
                 </TextBox>
             </Grid>
@@ -644,9 +842,9 @@
                                         IntellisenseProvider="{StaticResource CalculateCompositeIntellisenseProvider}"
                                         Style="{StaticResource DatagridIntellisenseTextBoxStyle}"
                                         AutomationProperties.AutomationId="UI_TextBox_AutoID"
-                                        ToolTip="{x:Static languages:Core.MappingsObjectNameTooltip}">
+                                        ToolTip="{x:Static languages:Tooltips.MappingsObjectNameTooltip}">
                     <i:Interaction.Behaviors>
-                        <core:HelpSetter Text="{x:Static languages:Core.MappingsObjectNameHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                        <core:HelpSetter Text="{x:Static languages:HelpText.MappingsObjectNameHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         <errors:ErrorsSetter Source="{Binding}"
                                              SourcePropertyName="ObjectName"
                                              SourcePropertyValue="{Binding ObjectName, UpdateSourceTrigger=PropertyChanged}"
@@ -654,6 +852,19 @@
                     </i:Interaction.Behaviors>
                 </ui:IntellisenseTextBox>
             </Grid>
+        </Grid>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="NewDotNetSelectionNamespaceGrid">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Control Template="{StaticResource NewSelectionGrid}"/>
+
+            <Control Template="{StaticResource NewDotNetNamespaceGrid}" Grid.Row="1"/>
         </Grid>
     </ControlTemplate>
 
@@ -748,11 +959,11 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Text="{x:Static languages:Core.InputsHeader}" FontWeight="Bold" />
-                
+
                 <controls:Dev2DataGrid x:Name="LargeDataGrid"
                                    Grid.Row="1"
                                    ItemsSource="{Binding InputArea.Inputs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                   Style="{StaticResource ActivityMapppingDataGridStyle}"
+                                   Style="{StaticResource ActivityMappingDataGridStyle}"
                                    Height="Auto"
                                    MinHeight="100"
                                    Margin="{StaticResource ControlBorderTop}">
@@ -762,7 +973,7 @@
                         <DataGridTemplateColumn Width="SizeToCells"
                                             MinWidth="65"
                                             Header="Parameter"
-                                            HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                             d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -786,7 +997,7 @@
                         <DataGridTemplateColumn Width="*"
                                         MinWidth="125"
                                         Header="Test Data"
-                                        HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                        HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                         d:DataContext="{d:DesignInstance Type=common:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -798,11 +1009,11 @@
                                                     Margin="0,0,1,1"
                                                     TextWrapping="Wrap"
                                                     WrapInBrackets="False"
-                                                    ToolTip="{x:Static languages:Core.DbInsertToolTipColumn}"
+                                                    ToolTip="{x:Static languages:Tooltips.DbInsertToolTipColumn}"
                                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Style="{StaticResource ActivityMapppingDataGridIntellisenseTextBoxStyle}">
+                                                    Style="{StaticResource ActivityMappingDataGridIntellisenseTextBoxStyle}">
                                         <i:Interaction.Behaviors>
-                                            <core:HelpSetter Text="{x:Static languages:Core.DbInputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                            <core:HelpSetter Text="{x:Static languages:HelpText.DbInputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                                             <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="Value"
                                                          SourcePropertyValue="{Binding Path=Value, UpdateSourceTrigger=PropertyChanged}"
@@ -827,6 +1038,25 @@
                            Style="{StaticResource MenuTextBlockStyle}"
                            Visibility="{Binding IsGenerateInputsEmptyRows, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource ControlBorderTop}">
+                    <TextBlock TextWrapping="WrapWithOverflow" 
+                               x:Name="ErrorTextBlock" 
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding TestMessage}" 
+                               Visibility="{Binding ShowTestMessage,Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding TestPassed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Check" 
+                             HorizontalAlignment="Right" />
+                    <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding TestFailed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Ban" 
+                             HorizontalAlignment="Right" />
                     <customControls:CircularProgressBar Width="25"
                                                         HorizontalAlignment="Right" 
                                                         Margin="{StaticResource ControlBorderRight}"
@@ -836,11 +1066,11 @@
                     <Button x:Name="TestActionButton" 
                             HorizontalAlignment="Right" 
                             Command="{Binding TestCommand}" 
-                            ToolTip="{x:Static languages:Core.ServiceTestActionTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ServiceTestActionTooltip}"
                             Content="Test"
                             Width="46">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                 </StackPanel>
@@ -854,7 +1084,7 @@
 
                 <Control Grid.Row="0" Template="{StaticResource NewGenerateOutputsDataTableTemplate}" 
                      Visibility="{Binding TestResultsAvailable,Converter={StaticResource BoolToVisibilityConverterPositive}}"/>
-                
+
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="{StaticResource ControlBorderTop}" VerticalAlignment="Bottom" HorizontalAlignment="Right">
                     <Button x:Name="GenerateOutputsDoneButton" 
                             HorizontalAlignment="Right" 
@@ -864,7 +1094,7 @@
                             Width="46"
                             Content="Done">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestDoneButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestDoneButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                     <Button HorizontalAlignment="Right" 
@@ -873,7 +1103,7 @@
                             Width="46"
                             Content="Cancel">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestCancelButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestCancelButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                 </StackPanel>
@@ -936,10 +1166,10 @@
                          customControls:WatermarkTextBox.Watermark="Paste response here"
                          SnapsToDevicePixels="True" 
                          VerticalScrollBarVisibility="Auto"
-                         ToolTip="{x:Static languages:Core.ManageWebPasteResponseTooltip}"
+                         ToolTip="{x:Static languages:Tooltips.ManageWebPasteResponseTooltip}"
                          HorizontalScrollBarVisibility="Disabled" >
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter Text="{x:Static languages:Core.WebServicePasteInputHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                    <core:HelpSetter Text="{x:Static languages:HelpText.WebServicePasteInputHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                 </i:Interaction.Behaviors>
             </TextBox>
         </Grid>
@@ -976,7 +1206,7 @@
                 <controls:Dev2DataGrid x:Name="LargeDataGrid"
                                    Grid.Row="1"
                                    ItemsSource="{Binding InputArea.Inputs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                   Style="{StaticResource ActivityMapppingDataGridStyle}"
+                                   Style="{StaticResource ActivityMappingDataGridStyle}"
                                    Height="Auto"
                                    MinHeight="100"
                                    Margin="{StaticResource ControlBorderTop}">
@@ -986,7 +1216,7 @@
                         <DataGridTemplateColumn Width="SizeToCells"
                                             MinWidth="65"
                                             Header="Parameter"
-                                            HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                             d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -1010,7 +1240,7 @@
                         <DataGridTemplateColumn Width="*"
                                         MinWidth="125"
                                         Header="Test Data"
-                                        HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                        HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                         d:DataContext="{d:DesignInstance Type=common:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -1022,11 +1252,11 @@
                                                     Margin="0,0,1,1"
                                                     TextWrapping="Wrap"
                                                     WrapInBrackets="False"
-                                                    ToolTip="{x:Static languages:Core.WebInsertToolTipColumn}"
+                                                    ToolTip="{x:Static languages:Tooltips.WebInsertToolTipColumn}"
                                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Style="{StaticResource ActivityMapppingDataGridIntellisenseTextBoxStyle}">
+                                                    Style="{StaticResource ActivityMappingDataGridIntellisenseTextBoxStyle}">
                                         <i:Interaction.Behaviors>
-                                            <core:HelpSetter Text="{x:Static languages:Core.WebInputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                            <core:HelpSetter Text="{x:Static languages:HelpText.WebInputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" />
                                             <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="Value"
                                                          SourcePropertyValue="{Binding Path=Value, UpdateSourceTrigger=PropertyChanged}"
@@ -1050,6 +1280,20 @@
                            Style="{StaticResource MenuTextBlockStyle}"
                            Visibility="{Binding IsGenerateInputsEmptyRows, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource ControlBorderTop}">
+                    <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding TestPassed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Check" 
+                             HorizontalAlignment="Right" />
+                    <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding TestFailed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Ban" 
+                             HorizontalAlignment="Right" />
                     <customControls:CircularProgressBar Width="25"
                                                     HorizontalAlignment="Right" 
                                                     Margin="{StaticResource ControlBorderRight}"
@@ -1061,7 +1305,7 @@
                             x:Name="PasteButton"
                             Margin="{StaticResource ControlBorderRight}"
                             Command="{Binding PasteResponseCommand}" 
-                            ToolTip="{x:Static languages:Core.ManageWebServicePasteTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ManageWebServicePasteTooltip}"
                             Visibility="{Binding PasteResponseAvailable, Converter={StaticResource BoolToVis}}"
                             VerticalAlignment="Top">
                         <fa:FontAwesome TextOptions.TextFormattingMode="Display" 
@@ -1071,17 +1315,17 @@
                                     VerticalAlignment="Top" 
                                     HorizontalAlignment="Center"/>
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.WebServicePasteHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.WebServicePasteHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                     <Button x:Name="TestActionButton" 
                             HorizontalAlignment="Right" 
                             Command="{Binding TestCommand}" 
-                            ToolTip="{x:Static languages:Core.ServiceTestActionTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ServiceTestActionTooltip}"
                             Content="Test"
                             Width="46">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                 </StackPanel>
@@ -1098,28 +1342,28 @@
 
                 <Control Grid.Row="0" Template="{StaticResource NewGenerateResponseTemplate}" 
                          Visibility="{Binding PasteResponseVisible,Converter={StaticResource BoolToVisibilityConverterPositive}}"/>
-                
+
                 <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="{StaticResource ControlBorderTop}" VerticalAlignment="Bottom" HorizontalAlignment="Right">
                     <Button x:Name="GenerateOutputsDoneButton" 
                             HorizontalAlignment="Right" 
                             VerticalAlignment="Bottom"
                             Margin="{StaticResource ControlBorderRight}"
                             Command="{Binding OkCommand}"
-                            ToolTip="{x:Static languages:Core.ServiceTestDoneButtonTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ServiceTestDoneButtonTooltip}"
                             Width="46"
                             Content="Done">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestDoneButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestDoneButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                     <Button HorizontalAlignment="Right" 
                             VerticalAlignment="Bottom"
                             Command="{Binding CloseCommand}"
-                            ToolTip="{x:Static languages:Core.ServiceTestCancelButtonTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ServiceTestCancelButtonTooltip}"
                             Width="46"
                             Content="Cancel">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestCancelButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestCancelButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                 </StackPanel>
@@ -1171,7 +1415,7 @@
                 <controls:Dev2DataGrid x:Name="LargeDataGrid"
                                    Grid.Row="1"
                                    ItemsSource="{Binding InputArea.Inputs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                   Style="{StaticResource ActivityMapppingDataGridStyle}"
+                                   Style="{StaticResource ActivityMappingDataGridStyle}"
                                    Height="Auto"
                                    MinHeight="100"
                                    Margin="{StaticResource ControlBorderTop}">
@@ -1181,7 +1425,7 @@
                         <DataGridTemplateColumn Width="SizeToCells"
                                             MinWidth="65"
                                             Header="Parameter"
-                                            HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                            HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                             d:DataContext="{d:DesignInstance Type=to:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -1205,7 +1449,7 @@
                         <DataGridTemplateColumn Width="*"
                                         MinWidth="125"
                                         Header="Test Data"
-                                        HeaderStyle="{StaticResource ActivityMapppingDataGridHeaderStyle}"
+                                        HeaderStyle="{StaticResource ActivityMappingDataGridHeaderStyle}"
                                         d:DataContext="{d:DesignInstance Type=common:DataColumnMapping}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
@@ -1217,11 +1461,11 @@
                                                     Margin="0,0,1,1"
                                                     TextWrapping="Wrap"
                                                     WrapInBrackets="False"
-                                                    ToolTip="{x:Static languages:Core.DotNetInsertToolTipColumn}"
+                                                    ToolTip="{x:Static languages:Tooltips.DotNetInsertToolTipColumn}"
                                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                    Style="{StaticResource ActivityMapppingDataGridIntellisenseTextBoxStyle}">
+                                                    Style="{StaticResource ActivityMappingDataGridIntellisenseTextBoxStyle}">
                                         <i:Interaction.Behaviors>
-                                            <core:HelpSetter Text="{x:Static languages:Core.DotNetInputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                                            <core:HelpSetter Text="{x:Static languages:HelpText.DotNetInputDefaultValueHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                                             <errors:ErrorsSetter Source="{Binding}"
                                                          SourcePropertyName="Value"
                                                          SourcePropertyValue="{Binding Path=Value, UpdateSourceTrigger=PropertyChanged}"
@@ -1239,13 +1483,27 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </controls:Dev2DataGrid>
-                
+
                 <TextBlock Text="None"
                            Grid.Row="1" 
                            HorizontalAlignment="Center"
                            Style="{StaticResource MenuTextBlockStyle}"
                            Visibility="{Binding IsGenerateInputsEmptyRows, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="{StaticResource ControlBorderTop}">
+                    <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding TestPassed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Check" 
+                             HorizontalAlignment="Right" />
+                    <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding TestFailed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Ban" 
+                             HorizontalAlignment="Right" />
                     <customControls:CircularProgressBar Width="25"
                                                     HorizontalAlignment="Right" 
                                                     Margin="{StaticResource ControlBorderRight}"
@@ -1255,11 +1513,11 @@
                     <Button x:Name="TestActionButton" 
                             HorizontalAlignment="Right" 
                             Command="{Binding TestCommand}" 
-                            ToolTip="{x:Static languages:Core.ManageDbServiceTestActionTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ManageDbServiceTestActionTooltip}"
                             Content="Test"
                             Width="46">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                 </StackPanel>
@@ -1283,7 +1541,7 @@
                             Width="46"
                             Content="Done">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestDoneButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestDoneButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                     <Button HorizontalAlignment="Right" 
@@ -1292,7 +1550,7 @@
                             Width="46"
                             Content="Cancel">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ServiceTestCancelButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ServiceTestCancelButtonHelp}" DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=core1:ActivityDesignerTemplate}}" />
                         </i:Interaction.Behaviors>
                     </Button>
                 </StackPanel>

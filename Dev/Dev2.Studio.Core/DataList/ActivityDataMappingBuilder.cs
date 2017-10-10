@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,12 +15,13 @@ using System.Xml;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Data;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Models.DataList;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.DataList;
 
 namespace Dev2.DataList
@@ -46,9 +47,8 @@ namespace Dev2.DataList
         /// <returns></returns>
         internal string FetchMatch(string token,string recset)
         {
-            string result;
 
-            RecordsetColumnsToName.TryGetValue(new Tuple<string, string>(token,recset), out result);
+            RecordsetColumnsToName.TryGetValue(new Tuple<string, string>(token, recset), out string result);
 
             return result;
         }
@@ -179,13 +179,10 @@ namespace Dev2.DataList
                         if (!DataListUtil.IsSystemTag(c.Name))
                         {
                             var jsonAttribute = false;
-                            if (c.Attributes != null)
+                            var xmlAttribute = c.Attributes?["IsJson"];
+                            if (xmlAttribute != null)
                             {
-                                var xmlAttribute = c.Attributes["IsJson"];
-                                if (xmlAttribute != null)
-                                {
-                                    bool.TryParse(xmlAttribute.Value, out jsonAttribute);
-                                }
+                                bool.TryParse(xmlAttribute.Value, out jsonAttribute);
                             }
                             if (jsonAttribute)
                             {
@@ -197,7 +194,7 @@ namespace Dev2.DataList
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, "Warewolf Error");
             }
         }
 
@@ -239,7 +236,7 @@ namespace Dev2.DataList
             return result;
         }
         private enDev2ColumnArgumentDirection ParseColumnIODirection(XmlAttribute attr)
-        // ReSharper restore InconsistentNaming
+
         {
             enDev2ColumnArgumentDirection result = enDev2ColumnArgumentDirection.None;
 

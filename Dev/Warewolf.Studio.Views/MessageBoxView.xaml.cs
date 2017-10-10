@@ -5,8 +5,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Navigation;
 using Warewolf.Studio.Core;
+using Warewolf.Studio.ViewModels;
 
 namespace Warewolf.Studio.Views
 {
@@ -38,8 +40,7 @@ namespace Warewolf.Studio.Views
 
         private void Hyperlink_OnRequestNavigate(object sender, RequestNavigateEventArgs e)
         {
-            var resourcePath = sender as Hyperlink;
-            if (resourcePath != null)
+            if (sender is Hyperlink resourcePath)
             {
                 var listStrLineElements = resourcePath.NavigateUri.OriginalString.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
@@ -48,6 +49,82 @@ namespace Warewolf.Studio.Views
                     Process.Start("explorer.exe", "/select," + listStrLineElements[i]);
                 }
             }
+        }
+
+        private void MessageBoxView_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            var messageBoxViewModel = DataContext as MessageBoxViewModel;
+            if (messageBoxViewModel != null && messageBoxViewModel.IsYesButtonVisible)
+            {
+                BtnYesCommand.Focusable = true;
+                BtnYesCommand.Focus();
+            }
+            if (messageBoxViewModel != null && messageBoxViewModel.IsOkButtonVisible)
+            {
+                BtnOkCommand.Focusable = true;
+                BtnOkCommand.Focus();
+            }
+        }
+
+        private void MessageBoxView_OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Close();
+            }
+        }
+
+        private void MessageBoxView_OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
+            {
+                if (Application.Current != null)
+                {
+                    var windowCollection = Application.Current.Windows;
+
+                    foreach (var window in windowCollection)
+                    {
+
+                        if (window is Window window1 && window1.Name != "MainViewWindow")
+                        {
+                            window1.Close();
+                        }
+                    }
+                }
+            }
+            if (e.Key == Key.Escape)
+            {
+                var messageBoxViewModel = DataContext as MessageBoxViewModel;
+                if (messageBoxViewModel != null && messageBoxViewModel.IsYesButtonVisible)
+                {
+                    BtnYesCommand.Focusable = false;
+                    BtnYesCommand.Focus();
+                }
+                if (messageBoxViewModel != null && messageBoxViewModel.IsOkButtonVisible)
+                {
+                    BtnOkCommand.Focusable = false;
+                    BtnOkCommand.Focus();
+                }
+                if (messageBoxViewModel != null && messageBoxViewModel.IsCancelButtonVisible)
+                {
+                    BtnCancelCommand.Focusable = true;
+                    BtnCancelCommand.Focus();
+                }
+                if (messageBoxViewModel != null && messageBoxViewModel.IsNoButtonVisible)
+                {
+                    BtnNoCommand.Focusable = true;
+                    BtnNoCommand.Focus();
+                }
+            }
+        }
+
+        private void BtnDeleteAll_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is MessageBoxViewModel messageBoxViewModel)
+            {
+                messageBoxViewModel.IsDeleteAnywaySelected = true;
+            }
+            DialogResult = false;
         }
     }
 }

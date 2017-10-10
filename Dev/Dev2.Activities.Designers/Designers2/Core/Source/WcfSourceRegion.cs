@@ -9,7 +9,7 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
-// ReSharper disable ExplicitCallerInfoArgument
+
 
 namespace Dev2.Activities.Designers2.Core.Source
 {
@@ -41,13 +41,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             IsEnabled = true;
             _modelItem = modelItem;
             SourceId = modelItem.GetProperty<Guid>("SourceId");
-            SourcesHelpText = Warewolf.Studio.Resources.Languages.Core.WcfServiceSourcesHelp;
-            EditSourceHelpText = Warewolf.Studio.Resources.Languages.Core.WcfServiceEditSourceHelp;
-            NewSourceHelpText = Warewolf.Studio.Resources.Languages.Core.WcfServiceNewSourceHelp;
+            SourcesHelpText = Warewolf.Studio.Resources.Languages.HelpText.WcfServiceSourcesHelp;
+            EditSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.WcfServiceEditSourceHelp;
+            NewSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.WcfServiceNewSourceHelp;
 
-            SourcesTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWcfServiceSourcesTooltip;
-            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWcfServiceEditSourceTooltip;
-            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManageWcfServiceNewSourceTooltip;
+            SourcesTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWcfServiceSourcesTooltip;
+            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWcfServiceEditSourceTooltip;
+            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManageWcfServiceNewSourceTooltip;
 
             if (SourceId != Guid.Empty)
             {
@@ -144,10 +144,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 _sourceId = value;
-                if (_modelItem != null)
-                {
-                    _modelItem.SetProperty("SourceId", value);
-                }
+                _modelItem?.SetProperty("SourceId", value);
             }
         }
 
@@ -200,8 +197,7 @@ namespace Dev2.Activities.Designers2.Core.Source
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as WcfSourceRegion;
-            if (region != null)
+            if (toRestore is WcfSourceRegion region)
             {
                 SelectedSource = region.SelectedSource;
             }
@@ -229,10 +225,7 @@ namespace Dev2.Activities.Designers2.Core.Source
                 SourceChangedAction();
                 OnSomethingChanged(this);
                 var delegateCommand = EditSourceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
-                if (delegateCommand != null)
-                {
-                    delegateCommand.RaiseCanExecuteChanged();
-                }
+                delegateCommand?.RaiseCanExecuteChanged();
             }
         }
 
@@ -281,19 +274,13 @@ namespace Dev2.Activities.Designers2.Core.Source
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            handler?.Invoke(this, args);
         }
     }
 }

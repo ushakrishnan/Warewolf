@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -109,9 +109,7 @@ namespace Dev2.Data.Util
 
                 if (result.Contains("<") && result.Contains(">"))
                 {
-                    bool isFragment;
-                    bool isHtml;
-                    var isXml = IsXml(result, out isFragment, out isHtml);
+                    var isXml = IsXml(result, out bool isFragment, out bool isHtml);
                     if (!(isXml && !isFragment && !isHtml))
                     {
                         // We need to replace DataList if present ;)
@@ -160,16 +158,7 @@ namespace Dev2.Data.Util
                             {
                                 string canidate = result.Substring(start, end - start + myTag.Length);
                                 string tmpResult = canidate.Replace(myTag, "").Replace(toRemove[loc], "");
-                                if (tmpResult.IndexOf("</", StringComparison.Ordinal) >= 0 || tmpResult.IndexOf("/>", StringComparison.Ordinal) >= 0)
-                                {
-                                    // replace just the tags
-                                    result = result.Replace(myTag, "").Replace(toRemove[loc], "");
-                                }
-                                else
-                                {
-                                    // replace any tag and it's contents as long as it is not XML in side
-                                    result = result.Replace(canidate, "");
-                                }
+                                result = tmpResult.IndexOf("</", StringComparison.Ordinal) >= 0 || tmpResult.IndexOf("/>", StringComparison.Ordinal) >= 0 ? result.Replace(myTag, "").Replace(toRemove[loc], "") : result.Replace(canidate, "");
                             }
                         }
                     }

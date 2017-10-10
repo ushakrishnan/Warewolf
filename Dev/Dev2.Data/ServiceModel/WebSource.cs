@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,12 +18,12 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Warewolf.Security.Encryption;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Runtime.ServiceModel.Data
-// ReSharper restore CheckNamespace
+
 {
     // PBI 5656 - 2013.05.20 - TWR - Created
-    public class WebSource : Resource, IDisposable,IResourceSource
+    public class WebSource : Resource, IDisposable,IResourceSource, IWebSource
     {
         bool _disposed;
 
@@ -83,8 +83,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             UserName = properties["UserName"];
             Password = properties["Password"];
 
-            AuthenticationType authType;
-            AuthenticationType = Enum.TryParse(properties["AuthenticationType"], true, out authType) ? authType : AuthenticationType.Windows;
+            AuthenticationType = Enum.TryParse(properties["AuthenticationType"], true, out AuthenticationType authType) ? authType : AuthenticationType.Windows;
         }
 
         #endregion
@@ -95,17 +94,17 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             var result = base.ToXml();
             var connectionString = string.Join(";",
-                string.Format("Address={0}", Address),
-                string.Format("DefaultQuery={0}", DefaultQuery),
-                string.Format("AuthenticationType={0}", AuthenticationType)
+                $"Address={Address}",
+                $"DefaultQuery={DefaultQuery}",
+                $"AuthenticationType={AuthenticationType}"
                 );
 
             if(AuthenticationType == AuthenticationType.User)
             {
                 connectionString = string.Join(";",
                     connectionString,
-                    string.Format("UserName={0}", UserName),
-                    string.Format("Password={0}", Password)
+                    $"UserName={UserName}",
+                    $"Password={Password}"
                     );
             }
 

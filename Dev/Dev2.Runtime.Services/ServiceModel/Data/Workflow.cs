@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -60,17 +60,15 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             var result = base.ToXml();
             var serviceDefinition = XamlDefinition.ToXElement();
-            
-            result.AddFirst(new XElement("Action",
-                new XAttribute("Name", "InvokeWorkflow"),
-                new XAttribute("Type", "Workflow"),
-                serviceDefinition
-                ));
+            serviceDefinition.Name = "XamlDefinition";
             result.Add(new XElement("Comment", Comment ?? string.Empty));
             result.Add(new XElement("IconPath", IconPath ?? string.Empty));
             result.Add(new XElement("Tags", Tags ?? string.Empty));
             result.Add(new XElement("HelpLink", HelpLink ?? string.Empty));
             result.Add(DataList);
+            result.Add(new XElement("Action", new XAttribute("Name", "InvokeWorkflow"),new XAttribute("Type", "Workflow"),
+                serviceDefinition)
+                );
             return result;
         }
 

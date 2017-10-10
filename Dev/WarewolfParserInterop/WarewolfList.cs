@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Common.Common;
 using Warewolf.Resource.Errors;
 
 namespace WarewolfParserInterop
 {
-  public class WarewolfAtomList<T>:IEnumerable<T>
+    public class WarewolfAtomList<T>:IEnumerable<T>
     {
         private T[] _values;
         private int _count;
@@ -20,7 +19,11 @@ namespace WarewolfParserInterop
         {
            _count= 32;
             _values = new T[32];
-            for (int a = 0; a < _count;a++) _values[a] = defaultValue;
+            for (int a = 0; a < _count;a++)
+            {
+                _values[a] = defaultValue;
+            }
+
             _count = 0;
             _defaultValue = defaultValue;
         }
@@ -39,7 +42,11 @@ namespace WarewolfParserInterop
             {
                 _count = 32;
                 _values = new T[32];
-                for (int a = 0; a < _count; a++) _values[a] = defaultValue;
+                for (int a = 0; a < _count; a++)
+                {
+                    _values[a] = defaultValue;
+                }
+
                 _count = 0;
                 _defaultValue = defaultValue;
             }
@@ -59,7 +66,11 @@ namespace WarewolfParserInterop
             {
                 count = 32;
                 _values = new T[32];
-                for (int a = 0; a < count; a++) _values[a] = defaultValue;
+                for (int a = 0; a < count; a++)
+                {
+                    _values[a] = defaultValue;
+                }
+
                 _defaultValue = defaultValue;
                 _count = 0;
             }
@@ -94,9 +105,10 @@ namespace WarewolfParserInterop
             if (_count >= _values.Length - 1)
             {
                 Array.Resize(ref _values, _values.Length * 2);
-                for (int a = _count+1; a < _values.Length; a++) 
+                for (int a = _count+1; a < _values.Length; a++)
+                {
                     _values[a] = _defaultValue;
-            
+                }
             }
         }
 
@@ -122,13 +134,10 @@ namespace WarewolfParserInterop
 
       public void ResetCurrentEnumerator()
       {
-          if (_currentEnumerator != null)
-          {
-              _currentEnumerator.Reset();
-          }
+          _currentEnumerator?.Reset();
       }
 
-      [SuppressMessage("ReSharper", "UnusedMember.Global")]
+  
       public bool Apply (Func<T,T> action )
       {
           for(int i = 0; i < _count; i++)
@@ -144,7 +153,7 @@ namespace WarewolfParserInterop
         }
 
 
-      // ReSharper restore FunctionNeverReturns
+      
 
         IEnumerator IEnumerable.GetEnumerator()
         {
@@ -156,16 +165,25 @@ namespace WarewolfParserInterop
             get
             {
                 if (i < _count)
+                {
                     return _values[i];
+                }
+
                 throw new NullValueInVariableException("the recordset does not have the row"+i,"");
             }
             set {
                 if (i < _count)
+                {
                     _values[i] = value;
+                }
                 else if (i == Count)
+                {
                     AddSomething(value);
-                else throw new NullValueInVariableException(ErrorResource.RecordsetDoesNotHaveRow + i, "");
-                
+                }
+                else
+                {
+                    throw new NullValueInVariableException(ErrorResource.RecordsetDoesNotHaveRow + i, "");
+                }
             }
         }
 
@@ -173,21 +191,23 @@ namespace WarewolfParserInterop
 
       public int Length => _values.Length;
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public WarewolfAtomList<T> DeletePosition(int position)
       {
           var lst = new WarewolfAtomList<T>(_defaultValue);
           for(int i = 0;i< Count;i++)
           {
               if(i!= position)
-                  lst.AddSomething(this[i]);
-          }
+                {
+                    lst.AddSomething(this[i]);
+                }
+            }
 
           return lst;
       }
 
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public IEnumerable<int> Where(Func<T, bool> func)
       {
 

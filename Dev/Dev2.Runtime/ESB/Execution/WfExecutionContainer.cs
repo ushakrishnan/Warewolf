@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,13 @@
 
 using System;
 using System.Activities;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
+using Dev2.Common.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.WF;
@@ -29,7 +29,8 @@ namespace Dev2.Runtime.ESB.Execution
 {
     public class WfExecutionContainer : EsbExecutionContainer
     {
-        // BUG 9304 - 2013.05.08 - TWR - Added IWorkflowHelper parameter to facilitate testing
+        
+
         public WfExecutionContainer(ServiceAction sa, IDSFDataObject dataObj, IWorkspace theWorkspace, IEsbChannel esbChannel)
             : base(sa, dataObj, theWorkspace, esbChannel)
         {
@@ -43,32 +44,29 @@ namespace Dev2.Runtime.ESB.Execution
         /// <returns></returns>
         public override Guid Execute(out ErrorResultTO errors, int update)
         {
-
             errors = new ErrorResultTO();
-            // WorkflowApplicationFactory wfFactor = new WorkflowApplicationFactory();
             Guid result = GlobalConstants.NullDataListID;
-
-
-            Dev2Logger.Debug("Entered Wf Container");
-
-            // Set Service Name
+            DataObject.ExecutionID = DataObject.ExecutionID ?? Guid.NewGuid();
+            var user = Thread.CurrentPrincipal;
+            if (string.IsNullOrEmpty(DataObject.WebUrl))
+            {
+                DataObject.WebUrl = $"{EnvironmentVariables.WebServerUri}secure/{DataObject.ServiceName}.{DataObject.ReturnType}?" + DataObject.QueryString;
+            }
+            string dataObjectExecutionId = DataObject.ExecutionID.ToString();
+            if (!DataObject.IsSubExecution)
+            {
+                Dev2Logger.Debug(string.Format(GlobalConstants.ExecuteWebRequestString, DataObject.ServiceName, user?.Identity?.Name, user?.Identity?.AuthenticationType, user?.Identity?.IsAuthenticated, DataObject.RawPayload), dataObjectExecutionId);
+                Dev2Logger.Debug("Request URL [ " + DataObject.WebUrl + " ]", dataObjectExecutionId);
+            }
+            Dev2Logger.Debug("Entered Wf Container", dataObjectExecutionId);
             DataObject.ServiceName = ServiceAction.ServiceName;
 
-            // Set server ID, only if not set yet - original server;
             if (DataObject.ServerID == Guid.Empty)
+            {
                 DataObject.ServerID = HostSecurityProvider.Instance.ServerID;
-
-            // Set resource ID, only if not set yet - original resource;
-            if (DataObject.ResourceID == Guid.Empty && ServiceAction?.Service != null)
-                DataObject.ResourceID = ServiceAction.Service.ID;
-
-            // Travis : Now set Data List
-            DataObject.DataList = ServiceAction.DataListSpecification;
-            // Set original instance ID, only if not set yet - original resource;
-            if (DataObject.OriginalInstanceID == Guid.Empty)
-                DataObject.OriginalInstanceID = DataObject.DataListID;
-            Dev2Logger.Info($"Started Execution for Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}");
-            //Set execution origin
+            }
+            string executionForServiceString = string.Format(GlobalConstants.ExecutionForServiceString, DataObject.ServiceName, DataObject.ResourceID, (DataObject.IsDebug ? "Debug" : "Execute"));
+            Dev2Logger.Info("Started " + executionForServiceString, dataObjectExecutionId);
             if (!string.IsNullOrWhiteSpace(DataObject.ParentServiceName))
             {
                 DataObject.ExecutionOrigin = ExecutionOrigin.Workflow;
@@ -83,8 +81,7 @@ namespace Dev2.Runtime.ESB.Execution
                 DataObject.ExecutionOrigin = ExecutionOrigin.External;
             }
             var userPrinciple = Thread.CurrentPrincipal;
-            ErrorResultTO to = errors;
-            Common.Utilities.PerformActionInsideImpersonatedContext(userPrinciple, () => { result = ExecuteWf(to); });
+            Common.Utilities.PerformActionInsideImpersonatedContext(userPrinciple, () => { result = ExecuteWf(); });
             foreach (var err in DataObject.Environment.Errors)
             {
                 errors.AddError(err, true);
@@ -94,13 +91,15 @@ namespace Dev2.Runtime.ESB.Execution
                 errors.AddError(err, true);
             }
 
-            Dev2Logger.Info($"Completed Execution for Service Name:{DataObject.ServiceName} Resource Id: {DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}");
+            string executionTypeString = DataObject.IsSubExecution ? "Completed Sub " : "Completed ";
+            Dev2Logger.Info(executionTypeString + executionForServiceString, dataObjectExecutionId);
             return result;
         }
 
-        Guid ExecuteWf(ErrorResultTO to)
+        Guid ExecuteWf()
         {
             Guid result = new Guid();
+            DataObject.StartTime = DateTime.Now;
             var wfappUtils = new WfApplicationUtils();
             ErrorResultTO invokeErrors;
             try
@@ -110,9 +109,12 @@ namespace Dev2.Runtime.ESB.Execution
 
                 if (DataObject.IsDebugMode())
                 {
-                    wfappUtils.DispatchDebugState(DataObject, StateType.Start, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DateTime.Now, true, false, false);
+                    wfappUtils.DispatchDebugState(DataObject, StateType.Start, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DataObject.StartTime, true, false, false);
                 }
-                Eval(DataObject.ResourceID, DataObject);
+                if (CanExecute(DataObject.ResourceID, DataObject, AuthorizationContext.Execute))
+                {
+                    Eval(DataObject.ResourceID, DataObject);
+                }
                 if (DataObject.IsDebugMode())
                 {
                     wfappUtils.DispatchDebugState(DataObject, StateType.End, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DataObject.StartTime, false, true);
@@ -121,22 +123,34 @@ namespace Dev2.Runtime.ESB.Execution
             }
             catch (InvalidWorkflowException iwe)
             {
-                Dev2Logger.Error(iwe);
+                Dev2Logger.Error(iwe, DataObject.ExecutionID.ToString());
                 var msg = iwe.Message;
 
                 int start = msg.IndexOf("Flowchart ", StringComparison.Ordinal);
-                to.AddError(start > 0 ? GlobalConstants.NoStartNodeError : iwe.Message);
+                var errorMessage = start > 0 ? GlobalConstants.NoStartNodeError : iwe.Message;
+                DataObject.Environment.AddError(errorMessage);
+                wfappUtils.DispatchDebugState(DataObject, StateType.End, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DataObject.StartTime, false, true);
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex);
-                to.AddError(ex.Message);
+                Dev2Logger.Error(ex, DataObject.ExecutionID.ToString());
+                DataObject.Environment.AddError(ex.Message);
                 wfappUtils.DispatchDebugState(DataObject, StateType.End, DataObject.Environment.HasErrors(), DataObject.Environment.FetchErrors(), out invokeErrors, DataObject.StartTime, false, true);
             }
             return result;
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+        public override bool CanExecute(Guid resourceID, IDSFDataObject dataObject, AuthorizationContext authorizationContext)
+        {
+            var isAuthorized = ServerAuthorizationService.Instance.IsAuthorized(authorizationContext, resourceID.ToString());
+            if (!isAuthorized)
+            {
+                dataObject.Environment.AddError(Warewolf.Resource.Errors.ErrorResource.NotAuthorizedToExecuteException);
+            }
+            return isAuthorized;
+        }
+
+    
         public void Eval(DynamicActivity flowchartProcess, IDSFDataObject dsfDataObject, int update)
         {
             IDev2Activity resource = new ActivityParser().Parse(flowchartProcess);
@@ -146,14 +160,12 @@ namespace Dev2.Runtime.ESB.Execution
 
         private void Eval(Guid resourceID, IDSFDataObject dataObject)
         {
-            Dev2Logger.Debug("Getting Resource to Execute");
-            IDev2Activity resource = ResourceCatalog.Instance.Parse(TheWorkspace.ID, resourceID);
-            Dev2Logger.Debug("Got Resource to Execute");
+            Dev2Logger.Debug("Getting Resource to Execute", dataObject.ExecutionID.ToString());
+            IDev2Activity resource = ResourceCatalog.Instance.Parse(TheWorkspace.ID, resourceID, dataObject.ExecutionID.ToString());
+            Dev2Logger.Debug("Got Resource to Execute", dataObject.ExecutionID.ToString());
             EvalInner(dataObject, resource, dataObject.ForEachUpdateValue);
 
         }
-
-
         public override IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity)
         {
             return null;
@@ -161,30 +173,52 @@ namespace Dev2.Runtime.ESB.Execution
 
         static void EvalInner(IDSFDataObject dsfDataObject, IDev2Activity resource, int update)
         {
-            if (resource == null)
+            try
             {
-                throw new InvalidOperationException(GlobalConstants.NoStartNodeError);
-            }
-            WorkflowExecutionWatcher.HasAWorkflowBeenExecuted = true;
-            var next = resource.Execute(dsfDataObject, update);
-            while (next != null)
-            {
-                if (!dsfDataObject.StopExecution)
+                var exe = CustomContainer.Get<IExecutionManager>();
+                Dev2Logger.Debug("Got Execution Manager", GlobalConstants.WarewolfDebug);
+                if (exe != null)
                 {
-                    next = next.Execute(dsfDataObject, update);
-                    if (dsfDataObject.Environment.Errors.Count > 0)
+                    if (!exe.IsRefreshing || dsfDataObject.IsSubExecution)
                     {
-                        foreach (var e in dsfDataObject.Environment.Errors)
-                        {
-                            dsfDataObject.Environment.AllErrors.Add(e);
-                        }
+                        Dev2Logger.Debug("Adding Execution to Execution Manager", GlobalConstants.WarewolfDebug);
+                        exe.AddExecution();
+                        Dev2Logger.Debug("Added Execution to Execution Manager", GlobalConstants.WarewolfDebug);
+                    }
+                    else
+                    {
+                        Dev2Logger.Debug("Waiting", GlobalConstants.WarewolfDebug);
+                        exe.Wait();
+                        Dev2Logger.Debug("Continued Execution", GlobalConstants.WarewolfDebug);
 
                     }
                 }
-                else
+                if (resource == null)
                 {
-                    break;
+                    throw new InvalidOperationException(GlobalConstants.NoStartNodeError);
                 }
+                WorkflowExecutionWatcher.HasAWorkflowBeenExecuted = true;
+                Dev2Logger.Debug("Starting Execute", GlobalConstants.WarewolfDebug);
+                var next = resource.Execute(dsfDataObject, update);
+                Dev2Logger.Debug("Executed first node", GlobalConstants.WarewolfDebug);
+                while (next != null)
+                {
+                    if (!dsfDataObject.StopExecution)
+                    {
+                        next = next.Execute(dsfDataObject, update);
+                        dsfDataObject.Environment.AllErrors.UnionWith(dsfDataObject.Environment?.Errors);                                                
+                    }
+                    else
+                    {
+                        next = null;
+                    }
+                }
+                
+            }
+            finally
+            {
+                var exe = CustomContainer.Get<IExecutionManager>();
+                exe?.CompleteExecution();
             }
         }
     }

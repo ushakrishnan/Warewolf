@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,14 +10,13 @@
 
 using System.Activities.Presentation.Model;
 using Dev2.Activities.Designers2.Core;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.WriteFile
 {
     public class WriteFileDesignerViewModel : FileActivityDesignerViewModel
     {
-
-        public ModelItem Modelitem;
+        readonly ModelItem Modelitem;
 
         public WriteFileDesignerViewModel(ModelItem modelItem)
             : base(modelItem, string.Empty, "File Name")
@@ -30,6 +29,7 @@ namespace Dev2.Activities.Designers2.WriteFile
             }
 
             Modelitem = modelItem;
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_File_Write_File;
         }
 
         public override void Validate()
@@ -42,18 +42,15 @@ namespace Dev2.Activities.Designers2.WriteFile
             
         }
 
-        string FileContents { set { SetProperty(value); } get { return GetProperty<string>(); } }
-        bool Overwrite { set { SetProperty(value); } get { return GetProperty<bool>(); } }
-        bool AppendTop { set { SetProperty(value); } get { return GetProperty<bool>(); } }
-        bool AppendBottom { set { SetProperty(value); } get { return GetProperty<bool>(); } }
+        string FileContents { get { return GetProperty<string>(); } }
+        bool Overwrite { set => SetProperty(value); get => GetProperty<bool>(); }
+        bool AppendTop { get { return GetProperty<bool>(); } }
+        bool AppendBottom { get { return GetProperty<bool>(); } }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

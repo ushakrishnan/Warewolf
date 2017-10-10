@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,16 +19,14 @@ using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
 using Dev2.Common.Common;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Communication;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Util;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -36,8 +34,8 @@ using Dev2.Runtime.Diagnostics;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.Util;
 using Dev2.Validation;
@@ -51,26 +49,26 @@ namespace Dev2.Activities.Designers2.Email
         static readonly EmailSource SelectEmailSource = new EmailSource { ResourceID = Guid.NewGuid(), ResourceName = "Select an Email Source..." };
 
         readonly IEventAggregator _eventPublisher;
-        readonly IEnvironmentModel _environmentModel;
+        readonly IServer _server;
         readonly IAsyncWorker _asyncWorker;
 
         bool _isInitializing;
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         public EmailDesignerViewModel(ModelItem modelItem)
-            : this(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment, EventPublishers.Aggregator)
+            : this(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer, EventPublishers.Aggregator)
         {
             this.RunViewSetup();
         }
 
-        public EmailDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel environmentModel, IEventAggregator eventPublisher)
+        public EmailDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IServer server, IEventAggregator eventPublisher)
             : base(modelItem)
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
-            VerifyArgument.IsNotNull("environmentModel", environmentModel);
+            VerifyArgument.IsNotNull("environmentModel", server);
             _asyncWorker = asyncWorker;
-            _environmentModel = environmentModel;
+            _server = server;
             _eventPublisher = eventPublisher;
             _eventPublisher.Subscribe(this);
 
@@ -84,6 +82,7 @@ namespace Dev2.Activities.Designers2.Email
             ChooseAttachmentsCommand = new DelegateCommand(o => ChooseAttachments());
 
             RefreshSources(true);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Email_SMTP_Send;
         }
 
         public EmailSource SelectedEmailSource
@@ -107,15 +106,15 @@ namespace Dev2.Activities.Designers2.Email
             viewModel.OnSelectedEmailSourceChanged();
         }
 
-        public RelayCommand EditEmailSourceCommand { get; private set; }
-        public RelayCommand TestEmailAccountCommand { get; private set; }
+        public RelayCommand EditEmailSourceCommand { get; }
+        public RelayCommand TestEmailAccountCommand { get; }
         public ICommand ChooseAttachmentsCommand { get; private set; }
 
         public bool IsEmailSourceSelected => SelectedEmailSource != SelectEmailSource;
 
         public bool CanEditSource { get; set; }
 
-        public ObservableCollection<EmailSource> EmailSources { get; private set; }
+        public ObservableCollection<EmailSource> EmailSources { get; }
         public ObservableCollection<enMailPriorityEnum> Priorities { get; private set; }
 
         public bool IsRefreshing { get { return (bool)GetValue(IsRefreshingProperty); } set { SetValue(IsRefreshingProperty, value); } }
@@ -171,16 +170,16 @@ namespace Dev2.Activities.Designers2.Email
 
         EmailSource EmailSource
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             get { return GetProperty<EmailSource>("SelectedEmailSource"); }
-            // ReSharper restore ExplicitCallerInfoArgument
+            
             set
             {
                 if(!_isInitializing)
                 {
-                    // ReSharper disable ExplicitCallerInfoArgument
+                    
                     SetProperty(value, "SelectedEmailSource");
-                    // ReSharper restore ExplicitCallerInfoArgument
+                    
                 }
             }
         }
@@ -259,14 +258,7 @@ namespace Dev2.Activities.Designers2.Email
             if(DataListUtil.IsFullyEvaluated(FromAccount))
             {
                 var errorMessage = "Variable " + FromAccount + " cannot be used while testing.";
-                if(string.IsNullOrEmpty(postResult))
-                {
-                    postResult += errorMessage;
-                }
-                else
-                {
-                    postResult += Environment.NewLine + errorMessage;
-                }
+                postResult += string.IsNullOrEmpty(postResult) ? errorMessage : Environment.NewLine + errorMessage;
                 hasVariable = true;
             }
             if(hasVariable)
@@ -364,37 +356,32 @@ namespace Dev2.Activities.Designers2.Email
                 {
                     EmailSources.Add(source);
                 }
-                if(continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
         IEnumerable<EmailSource> GetEmailSources()
         {
-            return _environmentModel.ResourceRepository.FindSourcesByType<EmailSource>(_environmentModel, enSourceType.EmailSource);
+            return _server.ResourceRepository.FindSourcesByType<EmailSource>(_server, enSourceType.EmailSource);
         }
 
         void ChooseAttachments()
         {
-
             const string Separator = @";";
-            var message = new FileChooserMessage();
-            message.SelectedFiles = Attachments.Split(Separator.ToCharArray());
+            var message = new FileChooserMessage { SelectedFiles = Attachments.Split(Separator.ToCharArray()) };
             message.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == @"SelectedFiles")
                 {
-                    if (message.SelectedFiles != null)
+                    if (message.SelectedFiles == null || !message.SelectedFiles.Any())
                     {
-                        if(string.IsNullOrEmpty(Attachments))
+                        Attachments = "";
+                    }
+                    else
+                    {
+                        if (message.SelectedFiles != null)
                         {
                             Attachments = string.Join(Separator, message.SelectedFiles);
-                        }
-                        else
-                        {
-                            Attachments +=Separator+string.Join(Separator, message.SelectedFiles);
                         }
                     }
                 }
@@ -453,7 +440,7 @@ namespace Dev2.Activities.Designers2.Email
         {
             var ruleSet = new RuleSet();
 
-            switch(propertyName)
+            switch (propertyName)
             {
                 case "EmailSource":
                     ruleSet.Add(new IsNullRule(() => EmailSource));
@@ -492,6 +479,8 @@ namespace Dev2.Activities.Designers2.Email
                 case "SubjectAndBody":
                     ruleSet.Add(new HasAtLeastOneRule(() => Subject, () => Body));
                     break;
+                default:
+                    break;
             }
             return ruleSet;
         }
@@ -515,11 +504,8 @@ namespace Dev2.Activities.Designers2.Email
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,9 +10,9 @@
 
 using System;
 using System.Activities.Presentation.Model;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core
 {
     public class WebActivity : IWebActivity
@@ -74,12 +74,7 @@ namespace Dev2.Studio.Core
         {
             get
             {
-                if(WebActivityObject is ModelItem)
-                {
-                    return (WebActivityObject as ModelItem).ItemType;
-                }
-
-                return null;
+                return (WebActivityObject as ModelItem)?.ItemType;
             }
         }
 
@@ -88,8 +83,7 @@ namespace Dev2.Studio.Core
 
         private string GetPropertyValue(object modelItemObject, string propertyName)
         {
-            var modelItem = modelItemObject as ModelItem;
-            if(modelItem != null && modelItem.Properties[propertyName] != null)
+            if (modelItemObject is ModelItem modelItem && modelItem.Properties[propertyName] != null)
             {
                 return modelItem.Properties[propertyName].ComputedValue == null
                            ? string.Empty
@@ -100,8 +94,7 @@ namespace Dev2.Studio.Core
 
         private void SetPropertyValue(object modelItemObject, string propertyName, object value)
         {
-            var modelItem = modelItemObject as ModelItem;
-            if(modelItem != null && modelItem.Properties[propertyName] != null)
+            if (modelItemObject is ModelItem modelItem && modelItem.Properties[propertyName] != null)
             {
                 modelItem.Properties[propertyName].SetValue(value);
             }

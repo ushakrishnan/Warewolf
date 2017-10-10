@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -15,7 +16,7 @@ namespace Warewolf.Studio.ViewModels
             _updateRepository = updateRepository;
             _queryProxy = queryProxy;
             _shell = shell;
-            shell.SetActiveServer(server);
+            shell.SetActiveServer(server.EnvironmentID);
         }
         public ObservableCollection<IExchangeSource> RetrieveSources()
         {
@@ -31,11 +32,7 @@ namespace Warewolf.Studio.ViewModels
         {
             _shell.EditResource(selectedSource);
         }
-
-        public void SaveService(IExchangeSource model)
-        {
-            _updateRepository.Save(model);
-        }
+        
 
         public IStudioUpdateManager UpdateRepository => _updateRepository;
     }

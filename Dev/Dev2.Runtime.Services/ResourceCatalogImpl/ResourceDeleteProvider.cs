@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Common.Interfaces.Versioning;
@@ -31,7 +32,10 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         }
 
         #region Implementation of IResourceDeleteProvider
-        public ResourceCatalogResult DeleteResource(Guid workspaceID, string resourceName, string type, bool deleteVersions = true)
+
+        public ResourceCatalogResult DeleteResource(Guid workspaceID, string resourceName, string type) => DeleteResource(workspaceID, resourceName, type, true);
+
+        public ResourceCatalogResult DeleteResource(Guid workspaceID, string resourceName, string type, bool deleteVersions)
         {
             var @lock = Common.GetWorkspaceLock(workspaceID);
             lock (@lock)
@@ -69,37 +73,56 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             }
         }
 
-        public ResourceCatalogResult DeleteResource(Guid workspaceID, Guid resourceID, string type, bool deleteVersions = true)
+        public ResourceCatalogResult DeleteResource(Guid workspaceID, Guid resourceID, string type) => DeleteResource(workspaceID, resourceID, type, true);
+
+        public ResourceCatalogResult DeleteResource(Guid workspaceID, Guid resourceID, string type, bool deleteVersions)
         {
             try
             {
-                var @lock = Common.GetWorkspaceLock(workspaceID);
-                lock (@lock)
+                if (workspaceID != GlobalConstants.ServerWorkspaceID)
                 {
-                    if (resourceID == Guid.Empty || string.IsNullOrEmpty(type))
-                    {
-                        throw new InvalidDataContractException(ErrorResource.ResourceNameAndTypeMissing);
-                    }
-
-                    var workspaceResources = _resourceCatalog.GetResources(workspaceID);
-                    var resources = workspaceResources.FindAll(r => Equals(r.ResourceID, resourceID));
-
-                    var commands = GetDeleteCommands(workspaceID, resourceID, type, deleteVersions, resources, workspaceResources);
-                    if (commands.ContainsKey(resources.Count))
-                    {
-                        var resourceCatalogResult = commands[resources.Count];
-                        return resourceCatalogResult;
-                    }
-                    return ResourceCatalogResultBuilder.CreateDuplicateMatchResult($"<Result>Multiple matches found for {type} '{resourceID}'.</Result>");
+                    return DeleteFromWorkspace(workspaceID, resourceID, type, deleteVersions);
                 }
+                foreach(var wid in _resourceCatalog.WorkspaceResources.Keys)
+                {
+                    var result = DeleteFromWorkspace(wid, resourceID, type, deleteVersions);                    
+                    if(wid==GlobalConstants.ServerWorkspaceID && result.Status != ExecStatus.Success)
+                    {
+                        return result;
+                    }
+                }
+                return ResourceCatalogResultBuilder.CreateSuccessResult("Success");
             }
             catch (Exception err)
             {
-                Dev2Logger.Error("Delete Error", err);
+                Dev2Logger.Error("Delete Error", err, GlobalConstants.WarewolfError);
                 throw;
             }
+        
         }
 
+        private ResourceCatalogResult DeleteFromWorkspace(Guid workspaceID, Guid resourceID, string type, bool deleteVersions)
+        {
+            var @lock = Common.GetWorkspaceLock(workspaceID);
+            lock(@lock)
+            {
+                if(resourceID == Guid.Empty || string.IsNullOrEmpty(type))
+                {
+                    throw new InvalidDataContractException(ErrorResource.ResourceNameAndTypeMissing);
+                }
+
+                var workspaceResources = _resourceCatalog.GetResources(workspaceID);
+                var resources = workspaceResources.FindAll(r => Equals(r.ResourceID, resourceID));
+
+                var commands = GetDeleteCommands(workspaceID, resourceID, type, deleteVersions, resources, workspaceResources);
+                if(commands.ContainsKey(resources.Count))
+                {
+                    var resourceCatalogResult = commands[resources.Count];
+                    return resourceCatalogResult;
+                }
+                return ResourceCatalogResultBuilder.CreateDuplicateMatchResult($"<Result>Multiple matches found for {type} '{resourceID}'.</Result>");
+            }
+        }
 
         #endregion
 
@@ -110,11 +133,13 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             IResource resource = resources.FirstOrDefault();
 
             if (workspaceID == Guid.Empty && deleteVersions)
+            {
                 if (resource != null)
                 {
                     var explorerItems = _serverVersionRepository.GetVersions(resource.ResourceID);
                     explorerItems?.ForEach(a => _serverVersionRepository.DeleteVersion(resource.ResourceID, a.VersionInfo.VersionNumber, resource.GetResourcePath(workspaceID)));
                 }
+            }
 
             workspaceResources.Remove(resource);
             if (resource != null && _dev2FileWrapper.Exists(resource.FilePath))
@@ -140,9 +165,11 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             {
                 if (resource != null)
                 {
+                    ServiceActionRepo.Instance.RemoveFromCache(resource.ResourceID);
                     ServerAuthorizationService.Instance.Remove(resource.ResourceID);
                 }
             }
+            
             ((ResourceCatalog)_resourceCatalog).RemoveFromResourceActivityCache(workspaceID, resource);
             return ResourceCatalogResultBuilder.CreateSuccessResult("Success");
         }

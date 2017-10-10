@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,7 @@ using System.Activities.Presentation.Hosting;
 using System.Windows;
 using System.Windows.Media.Animation;
 
-// ReSharper disable CheckNamespace
+
 namespace System.Activities.Core.Presentation
 {
     public partial class VerticalConnector
@@ -81,8 +81,11 @@ namespace System.Activities.Core.Presentation
         private void CheckAnimate(DragEventArgs e, string storyboardResourceName)
         {
             if(e.Handled)
+            {
                 return;
-            if(Context != null && !Context.Items.GetValue<ReadOnlyState>().IsReadOnly)
+            }
+
+            if (Context != null && !Context.Items.GetValue<ReadOnlyState>().IsReadOnly)
             {
                 if(DragDropHelper.AllowDrop(e.Data, Context, AllowedItemType))
                 {

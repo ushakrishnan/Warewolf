@@ -4,8 +4,8 @@ using System.Xml;
 using Dev2.Common;
 using Dev2.Data.Interfaces;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Dev2.Studio.ViewModels.DataList;
 
 namespace Dev2.Studio.Core.DataList
@@ -23,15 +23,23 @@ namespace Dev2.Studio.Core.DataList
 
         public void FindMissingForScalar(IDataListVerifyPart part, List<IDataListVerifyPart> missingDataParts)
         {
-            if (!part.IsScalar) return;
+            if (!part.IsScalar)
+            {
+                return;
+            }
+
             if (_vm. ScalarCollection.Count(c => c.DisplayName == part.Field) == 0)
+            {
                 missingDataParts.Add(part);
+            }
         }
 
         public void SetScalarItemsAsUsed()
         {
             foreach (var dataListItemModel in _vm.ScalarCollection.Where(model => !model.IsUsed))
+            {
                 dataListItemModel.IsUsed = true;
+            }
         }
 
         public void AddScalars(XmlNode xmlNode)
@@ -43,7 +51,9 @@ namespace Dev2.Studio.Core.DataList
                 {
                     scalar.IsEditable = Common.ParseIsEditable(xmlNode.Attributes[Common.IsEditable]);
                     if (string.IsNullOrEmpty(_vm.SearchText))
+                    {
                         _vm.ScalarCollection.Add(scalar);
+                    }
                     else if (scalar.DisplayName.ToUpper().StartsWith(_vm.SearchText.ToUpper()))
                     {
                         _vm.ScalarCollection.Add(scalar);
@@ -57,7 +67,9 @@ namespace Dev2.Studio.Core.DataList
                 {
                     scalar.IsEditable = Common.ParseIsEditable(null);
                     if (string.IsNullOrEmpty(_vm.SearchText))
+                    {
                         _vm.ScalarCollection.Add(scalar);
+                    }
                     else if (scalar.DisplayName.ToUpper().StartsWith(_vm.SearchText.ToUpper()))
                     {
                         _vm.ScalarCollection.Add(scalar);
@@ -66,15 +78,13 @@ namespace Dev2.Studio.Core.DataList
             }
         }
 
-        public void SortScalars(bool @ascending)
+        public void SortScalars(bool ascending)
         {
-            IList<IScalarItemModel> newScalarCollection = @ascending ? _vm.ScalarCollection.OrderBy(c => c.DisplayName).Where(c => !c.IsBlank).ToList() : _vm.ScalarCollection.OrderByDescending(c => c.DisplayName).Where(c => !c.IsBlank).ToList();
-            _vm.ScalarCollection.Clear();
-            foreach (var item in newScalarCollection)
+            IList<IScalarItemModel> newScalarCollection = @ascending ? _vm.ScalarCollection.Where(c => !c.IsBlank).OrderBy(c => c.DisplayName).ToList() : _vm.ScalarCollection.Where(c => !c.IsBlank).OrderByDescending(c => c.DisplayName).ToList();
+            for (int i = 0; i < newScalarCollection.Count; i++)
             {
-                _vm.ScalarCollection.Add(item);
-            }
-            _vm.ScalarCollection.Add(DataListItemModelFactory.CreateScalarItemModel(string.Empty));
+                _vm.ScalarCollection.Move(_vm.ScalarCollection.IndexOf(newScalarCollection[i]), i);
+            }            
         }
 
         public void FixNamingForScalar(IDataListItemModel scalar)
@@ -89,7 +99,10 @@ namespace Dev2.Studio.Core.DataList
         public void AddRowToScalars()
         {
             List<IScalarItemModel> blankList = _vm.ScalarCollection.Where(c => c.IsBlank).ToList();
-            if (blankList.Count != 0) return;
+            if (blankList.Count != 0)
+            {
+                return;
+            }
 
             var scalar = DataListItemModelFactory.CreateScalarItemModel(string.Empty);
             _vm.ScalarCollection.Add(scalar);
@@ -98,13 +111,17 @@ namespace Dev2.Studio.Core.DataList
         public void RemoveBlankScalars()
         {
             List<IScalarItemModel> blankList = _vm.ScalarCollection.Where(c => c.IsBlank).ToList();
-            if (blankList.Count <= 1) return;
+            if (blankList.Count <= 1)
+            {
+                return;
+            }
+
             _vm.ScalarCollection.Remove(blankList.First());
         }
 
         public void RemoveUnusedScalars()
         {
-            var unusedScalars = _vm.ScalarCollection.Where(c => c.IsUsed == false).ToList();
+            var unusedScalars = _vm.ScalarCollection.Where(c => !c.IsUsed).ToList();
             if (unusedScalars.Any())
             {
                 foreach (var dataListItemModel in unusedScalars)
@@ -120,9 +137,13 @@ namespace Dev2.Studio.Core.DataList
             {
                 var scalar = DataListItemModelFactory.CreateScalarItemModel(part.Field, part.Description);
                 if (_vm.ScalarCollection.Count > 0)
+                {
                     _vm.ScalarCollection.Insert(_vm.ScalarCollection.Count - 1, scalar);
+                }
                 else
+                {
                     _vm.ScalarCollection.Add(scalar);
+                }
             }
         }
 

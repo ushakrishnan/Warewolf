@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
@@ -24,10 +25,24 @@ using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 using Warewolf.Resource.Errors;
 
+
+
+
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class GetDirectoriesRelativeToServer : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         IExplorerServerResourceRepository _serverExplorerRepository;
 
         #region Implementation of ISpookyLoadable<string>
@@ -59,17 +74,16 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 throw new InvalidDataContractException(ErrorResource.NoParameter);
             }
-            StringBuilder tmp;
-            values.TryGetValue("Directory", out tmp);
-            if(tmp != null)
+                values.TryGetValue("Directory", out StringBuilder tmp);
+                if (tmp != null)
             {
                 directory = tmp.ToString();
             }
-            if(String.IsNullOrEmpty(directory))
+            if(string.IsNullOrEmpty(directory))
             {
                 throw new InvalidDataContractException(ErrorResource.DirectoryIsRequired);
             }
-            Dev2Logger.Info("Get Directories Relative to Server. "+directory);
+            Dev2Logger.Info("Get Directories Relative to Server. "+directory, GlobalConstants.WarewolfInfo);
             result.Append("<JSON>");
             var explorerItem = ServerExplorerRepo.Load("Folder", string.Empty);
             var jsonTreeNode = new JsonTreeNode(explorerItem);
@@ -81,7 +95,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 throw;
             }
         }
@@ -142,7 +156,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        // ReSharper disable InconsistentNaming
+        
         public string title { get; set; }
         public bool isFolder { get; set; }
         public string key { get; set; }

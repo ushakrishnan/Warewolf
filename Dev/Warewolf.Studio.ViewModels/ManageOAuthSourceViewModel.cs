@@ -1,8 +1,6 @@
 using Dev2;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Data.ServiceModel;
-using Dev2.Interfaces;
 using Dropbox.Api;
 using Microsoft.Practices.Prism.Commands;
 using System;
@@ -11,7 +9,10 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
 using System.Windows.Input;
+using Dev2.Common.Interfaces.Threading;
+using Dev2.Studio.Interfaces;
 using Warewolf.Studio.Core;
+using Dev2.Common;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -40,11 +41,11 @@ namespace Warewolf.Studio.ViewModels
         {
             if (updateManager == null)
             {
-                throw new ArgumentNullException("updateManager");
+                throw new ArgumentNullException(nameof(updateManager));
             }
             if (requestServiceNameViewModel == null)
             {
-                throw new ArgumentNullException("requestServiceNameViewModel");
+                throw new ArgumentNullException(nameof(requestServiceNameViewModel));
             }
             _updateManager = updateManager;
             RequestServiceNameViewModel = requestServiceNameViewModel;
@@ -59,28 +60,34 @@ namespace Warewolf.Studio.ViewModels
             SetupCommands();
         }
 
-        public ManageOAuthSourceViewModel(IManageOAuthSourceModel updateManager, IOAuthSource oAuthSource)
+        public ManageOAuthSourceViewModel(IManageOAuthSourceModel updateManager, IOAuthSource oAuthSource,IAsyncWorker asyncWorker)
             : base("OAuth")
         {
             if (updateManager == null)
             {
-                throw new ArgumentNullException("updateManager");
+                throw new ArgumentNullException(nameof(updateManager));
             }
             if (oAuthSource == null)
             {
-                throw new ArgumentNullException("oAuthSource");
+                throw new ArgumentNullException(nameof(oAuthSource));
             }
-            _oAuthSource = oAuthSource;
             _updateManager = updateManager;
             Types = new List<string>
             {
                 "Dropbox"
             };
-            // ReSharper disable once VirtualMemberCallInContructor
-            FromModel(oAuthSource);
-            SetupHeaderTextFromExisting();
-            SetupCommands();
-            SetupAuthorizeUri();
+
+
+            asyncWorker.Start(() => updateManager.FetchSource(oAuthSource.ResourceID), source =>
+            {
+                _oAuthSource = source;
+                _oAuthSource.ResourcePath = oAuthSource.ResourcePath;
+                
+                FromModel(_oAuthSource);
+                SetupHeaderTextFromExisting();
+                SetupCommands();
+                SetupAuthorizeUri();
+            });
         }
 
         private void SetupCommands()
@@ -102,7 +109,7 @@ namespace Warewolf.Studio.ViewModels
 
         public override bool CanSave()
         {
-            return TestPassed && !String.IsNullOrEmpty(AccessToken);
+            return TestPassed && !string.IsNullOrEmpty(AccessToken);
         }
 
         private bool CanTest()
@@ -138,8 +145,9 @@ namespace Warewolf.Studio.ViewModels
                     {
                         result = DropboxOAuth2Helper.ParseTokenFragment(uri);
                     }
-                    catch (ArgumentException)
+                    catch (ArgumentException e)
                     {
+                        Dev2Logger.Warn(e.Message, "Warewolf Warn");
                     }
 
                     if (result != null)
@@ -177,7 +185,7 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        // ReSharper disable once ConvertToAutoProperty
+        
         public List<string> Types
         {
             get
@@ -330,7 +338,7 @@ namespace Warewolf.Studio.ViewModels
 
         #region Overrides of SourceBaseImpl<IOAuthSource>
 
-        // ReSharper disable once ConvertToAutoProperty
+        
         public override string Name
         {
             get
@@ -354,11 +362,8 @@ namespace Warewolf.Studio.ViewModels
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void Save()
@@ -407,14 +412,19 @@ namespace Warewolf.Studio.ViewModels
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                    var res = requestServiceNameViewModel.ShowSaveDialog();
 
                     if (res == MessageBoxResult.OK)
                     {
                         var src = ToSource();
-                        src.ResourceName = RequestServiceNameViewModel.Result.ResourceName.Name;
-                        src.ResourcePath = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                        src.ResourceName = requestServiceNameViewModel.ResourceName.Name;
+                        src.ResourcePath = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(src);
+                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                        {
+                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ResourceID);
+                        }
 
                         _oAuthSource = src;
                         Path = _oAuthSource.ResourcePath;
@@ -463,14 +473,15 @@ namespace Warewolf.Studio.ViewModels
         private IOAuthSource ToSource()
         {
             if (_oAuthSource == null)
+            {
                 return new DropBoxSource
                 {
                     AppKey = AppKey,
                     AccessToken = AccessToken,
-                    ResourceID = _oAuthSource == null ? Guid.NewGuid() : _oAuthSource.ResourceID
+                    ResourceID = _oAuthSource?.ResourceID ?? Guid.NewGuid()
                 }
             ;
-            // ReSharper disable once RedundantIfElseBlock
+            }
             else
             {
                 _oAuthSource.AppKey = AppKey;

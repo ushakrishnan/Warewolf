@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
-using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Deploy;
+using System.Threading.Tasks;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Deploy;
 using Microsoft.Practices.Prism.PubSubEvents;
 
 namespace Warewolf.Studio.ViewModels
@@ -9,32 +10,41 @@ namespace Warewolf.Studio.ViewModels
     public class DeployDestinationViewModel : ExplorerViewModel, IDeployDestinationExplorerViewModel
     {
         bool _isLoading;
+        private bool _deployTests;
+        private Version _serverVersion;
         public IDeployStatsViewerViewModel StatsArea { private get; set; }
 
-        #region Implementation of IDeployDestinationExplorerViewModel
-
         public DeployDestinationViewModel(IShellViewModel shellViewModel, IEventAggregator aggregator)
-            : base(shellViewModel, aggregator)
+            : base(shellViewModel, aggregator,false)
         {
-            ConnectControlViewModel.SelectedEnvironmentChanged += DeploySourceExplorerViewModelSelectedEnvironmentChanged;
-            ConnectControlViewModel.ServerConnected+=ServerConnected;
+            ConnectControlViewModel = new ConnectControlViewModel(shellViewModel.LocalhostServer, aggregator, shellViewModel.ExplorerViewModel.ConnectControlViewModel.Servers);
+            ConnectControlViewModel.ServerConnected += async (sender, server) => { await ServerConnected(sender, server); };
+            ConnectControlViewModel.ServerDisconnected += ServerDisconnected;
             SelectedEnvironment = _environments.FirstOrDefault();
+            RefreshCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(() => RefreshEnvironment(SelectedEnvironment.ResourceId));
         }
 
-        private void ServerConnected(object sender, IServer server)
+        private void ServerDisconnected(object sender, IServer server)
         {
-            var environmentViewModel = _environments.FirstOrDefault(a => a.Server.EnvironmentID == server.EnvironmentID);
-            SelectedEnvironment = environmentViewModel;           
+            if (SelectedEnvironment != null)
+            {
+                ServerStateChanged?.Invoke(this, SelectedEnvironment.Server);
+            }
         }
 
-        void DeploySourceExplorerViewModelSelectedEnvironmentChanged(object sender, Guid environmentid)
+        private async Task<IEnvironmentViewModel> ServerConnected(object sender, IServer server)
         {
-            var environmentViewModel = _environments.FirstOrDefault(a => a.Server.EnvironmentID == environmentid);
+            var environmentViewModel = await CreateEnvironmentViewModel(sender, server.EnvironmentID, true);
+            environmentViewModel?.Server?.GetServerVersion();
+            environmentViewModel?.Server?.GetMinSupportedVersion();
             SelectedEnvironment = environmentViewModel;
             StatsArea?.ReCalculate();
+            if (environmentViewModel != null)
+            {
+                AfterLoad(environmentViewModel.ResourceId);
+            }
+            return environmentViewModel;
         }
-
-        #region Overrides of ExplorerViewModel
 
         public override bool IsLoading
         {
@@ -48,11 +58,6 @@ namespace Warewolf.Studio.ViewModels
                 OnPropertyChanged(() => IsLoading);
             }
         }
-
-        #endregion
-
-        #region Overrides of ExplorerViewModel
-
         protected override void AfterLoad(Guid environmentId)
         {
             var environmentViewModel = _environments.FirstOrDefault(a => a.Server.EnvironmentID == environmentId);
@@ -67,18 +72,22 @@ namespace Warewolf.Studio.ViewModels
             }
             StatsArea?.ReCalculate();
         }
-
-        #endregion
-
-        #endregion
-
-        #region Implementation of IDeployDestinationExplorerViewModel
-
         public event ServerSate ServerStateChanged;
         public virtual Version MinSupportedVersion => Version.Parse(SelectedEnvironment.Server.GetMinSupportedVersion());
 
-        public virtual Version ServerVersion => Version.Parse(SelectedEnvironment.Server.GetServerVersion());
+        public virtual Version ServerVersion => _serverVersion ?? (_serverVersion = Version.Parse(SelectedEnvironment.Server.GetServerVersion()));
 
-        #endregion
+        public bool DeployTests
+        {
+            get
+            {
+                return _deployTests;
+            }
+            set
+            {
+                _deployTests = value;
+                OnPropertyChanged(()=> DeployTests);
+            }
+        }
     }
 }

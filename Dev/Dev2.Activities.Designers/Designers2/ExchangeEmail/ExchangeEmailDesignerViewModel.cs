@@ -7,57 +7,47 @@ using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Source;
 using Dev2.Common.Exchange;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
 using Dev2.Threading;
 using Dev2.Validation;
 using Warewolf.Resource.Errors;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable NotAccessedField.Local
-// ReSharper disable UnusedAutoPropertyAccessor.Local
-// ReSharper disable UseNullPropagation
-// ReSharper disable ConvertPropertyToExpressionBody
-// ReSharper disable ArrangeTypeMemberModifiers
-// ReSharper disable MergeSequentialChecks
+
+
+
+
+
+
+
 
 namespace Dev2.Activities.Designers2.ExchangeEmail
 {
     public class ExchangeEmailDesignerViewModel : CustomToolWithRegionBase, IExchangeServiceViewModel
     {
-        // ReSharper disable UnusedMember.Local
-        readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
 
         readonly IEventAggregator _eventPublisher;
-        readonly IEnvironmentModel _environmentModel;
-        public IAsyncWorker AsyncWorker;
+        readonly IServer _server;
+        readonly IAsyncWorker _asyncWorker;
         private ISourceToolRegion<IExchangeSource> _sourceRegion;
 
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
+        
         public RelayCommand TestEmailAccountCommand { get; private set; }
         public ICommand ChooseAttachmentsCommand { get; private set; }
 
         public ExchangeEmailDesignerViewModel(ModelItem modelItem)
-            : this(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment, EventPublishers.Aggregator)
+            : this(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer, EventPublishers.Aggregator)
         {
         }
 
@@ -66,19 +56,18 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             TestEmailAccountCommand = new RelayCommand(o => TestEmailAccount(), o => CanTestEmailAccount);
             ChooseAttachmentsCommand = new DelegateCommand(o => ChooseAttachments());
             _eventPublisher = eventPublisher;
-            AsyncWorker = asyncWorker;
+            _asyncWorker = asyncWorker;
             Model = model;
             SetupCommonProperties();
         }
 
-        public ExchangeEmailDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel environmentModel, IEventAggregator eventPublisher)
+        public ExchangeEmailDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IServer server, IEventAggregator eventPublisher)
             : base(modelItem)
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
-            VerifyArgument.IsNotNull("environmentModel", environmentModel);
-            AsyncWorker = asyncWorker;
-            _environmentModel = environmentModel;
+            _asyncWorker = asyncWorker;
+            _server = server;
             _eventPublisher = eventPublisher;
             _eventPublisher.Subscribe(this);
 
@@ -88,10 +77,10 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             ChooseAttachmentsCommand = new DelegateCommand(o => ChooseAttachments());
 
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
-            var server = shellViewModel.ActiveServer;
             var model = CustomContainer.CreateInstance<IExchangeServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
             Model = model;
             SetupCommonProperties();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Email_Exchange_Send;
         }
 
         private void SetupCommonProperties()
@@ -116,7 +105,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         void InitializeProperties()
         {
             Properties = new List<KeyValuePair<string, string>>();
-            AddProperty("Source :", SourceRegion.SelectedSource == null ? "" : SourceRegion.SelectedSource.Name);
+            AddProperty("Source :", SourceRegion.SelectedSource == null ? "" : SourceRegion.SelectedSource.ResourceName);
         }
 
         public void AddProperty(string key, string value)
@@ -220,8 +209,11 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         public void TestEmailAccount()
         {
 
-            if (Errors != null && Errors.Count > 0)return;
-           
+            if (Errors != null && Errors.Count > 0)
+            {
+                return;
+            }
+
             Testing = true;
             StatusMessage = string.Empty;
 
@@ -280,7 +272,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
 
         private void SendEmail(ExchangeSource testSource, ExchangeTestMessage testMessage)
         {
-            AsyncWorker.Start(() =>
+            _asyncWorker.Start(() =>
             {
                 try
                 {
@@ -306,7 +298,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         void ChooseAttachments()
         {
 
-            // ReSharper disable once InconsistentNaming
+    
             const string Separator = ";";
             var message = new FileChooserMessage();
             message.SelectedFiles = Attachments.Split(Separator.ToCharArray());
@@ -337,7 +329,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             Errors = result.Count == 0 ? null : result;
         }
 
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         IEnumerable<IActionableErrorInfo> ValidateThis()
         {
@@ -406,23 +398,23 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
                 case "SubjectAndBody":
                     ruleSet.Add(new HasAtLeastOneRule(() => Subject, () => Body));
                     break;
+                default:
+                    break;
             }
             return ruleSet;
         }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-
-            if (mainViewModel != null)
-            {
-                SetHelpModelHelpText(helpText, mainViewModel);
-            }
-        }
-
-        private void SetHelpModelHelpText(string helpText, IMainViewModel mainViewModel)
-        {
-            mainViewModel.HelpViewModel.UpdateHelpText(helpText);
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel?.UpdateHelpText(helpText);
         }
     }
 }
+
+
+
+
+
+
+

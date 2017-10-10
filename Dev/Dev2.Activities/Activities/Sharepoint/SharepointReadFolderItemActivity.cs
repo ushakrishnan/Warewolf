@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Activities;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.ServiceModel;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
@@ -18,10 +19,11 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities.Sharepoint
 {
-    [ToolDescriptorInfo("SharepointLogo", "Read Folder", ToolType.Native, "8222E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Sharepoint", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_SharePoint_Read Folder_Tags")]
+    [ToolDescriptorInfo("SharepointLogo", "Read Folder", ToolType.Native, "8222E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Sharepoint", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_SharePoint_Read_Folder")]
     public class SharepointReadFolderItemActivity : DsfAbstractFileActivity
     {
         public SharepointReadFolderItemActivity() : base("SharePoint Read Folder Items")
@@ -29,8 +31,8 @@ namespace Dev2.Activities.Sharepoint
             ServerInputPath = string.Empty;
         }
 
-        // ReSharper disable MemberCanBePrivate.Global
-        // ReSharper disable UnusedAutoPropertyAccessor.Global
+        
+        
         /// <summary>
         /// Gets or sets the files option.
         /// </summary>
@@ -57,7 +59,7 @@ namespace Dev2.Activities.Sharepoint
         /// <summary>
         /// Gets or sets the files and folders option.
         /// </summary>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         [Inputs("Files & Folders")]
         [FindMissing]
         public bool IsFilesAndFoldersSelected

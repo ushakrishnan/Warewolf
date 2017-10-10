@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Util;
 using Dev2.Utilities;
@@ -29,7 +29,17 @@ namespace Dev2.TO
         {
         }
 
-        public SharepointSearchTo(string fieldName,string searchType, string valueToMatch, int indexNum, bool inserted = false, string from = "", string to = "")
+        public SharepointSearchTo(string fieldName, string searchType, string valueToMatch, int indexNum)
+            : this(fieldName, searchType, valueToMatch, indexNum, false, "", "")
+        {
+        }
+
+        public SharepointSearchTo(string fieldName, string searchType, string valueToMatch, int indexNum, bool inserted)
+            : this(fieldName, searchType, valueToMatch, indexNum, inserted, "", "")
+        {
+        }
+
+        public SharepointSearchTo(string fieldName,string searchType, string valueToMatch, int indexNum, bool inserted, string from, string to)
         {
             FieldName = fieldName;
             Inserted = inserted;
@@ -117,10 +127,10 @@ namespace Dev2.TO
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
 
         public bool IsSearchCriteriaEnabled
@@ -186,7 +196,10 @@ namespace Dev2.TO
             }
             set
             {
-                if (value == null) return;
+                if (value == null)
+                {
+                    return;
+                }
 
                 _fieldName = value;
                 OnPropertyChanged();
@@ -202,8 +215,11 @@ namespace Dev2.TO
             }
             set
             {
-                if(value==null) return;
-                
+                if(value==null)
+                {
+                    return;
+                }
+
                 _internalName = value;
                 OnPropertyChanged();
                 RaiseCanAddRemoveChanged();
@@ -226,21 +242,21 @@ namespace Dev2.TO
             switch (propertyName)
             {
                 case "FieldName":
-                    if(FieldName.Length == 0)
+                    if (FieldName.Length == 0)
                     {
                         ruleSet.Add(new IsStringEmptyRule(() => FieldName));
                     }
-                    break;
+                    return ruleSet;
                 case "ValueToMatch":
-                    if(ValueToMatch.Length == 0)
+                    if (ValueToMatch.Length == 0)
                     {
                         ruleSet.Add(new IsStringEmptyRule(() => ValueToMatch));
                     }
                     ruleSet.Add(new IsValidExpressionRule(() => ValueToMatch, datalist, "1"));
-                    break;
+                    return ruleSet;
+                default:
+                    return ruleSet;
             }
-
-            return ruleSet;
         }
     }
 
@@ -265,7 +281,7 @@ namespace Dev2.TO
 
         public static string GetStartTagForSearchOption(string searchOption)
         {
-            switch(searchOption)
+            switch (searchOption)
             {
                 case "Begins With":
                     return "<BeginsWith>";
@@ -285,9 +301,11 @@ namespace Dev2.TO
                     return "<Leq>";
                 case "<>":
                     return "<Neq>";
+                default:
+                    return null;
             }
-            return null;
         }
+
         public static string GetEndTagForSearchOption(string searchOption)
         {
             switch (searchOption)
@@ -310,8 +328,9 @@ namespace Dev2.TO
                     return "</Leq>";
                 case "<>":
                     return "</Neq>";
+                default:
+                    return null;
             }
-            return null;
         }
     }
 }

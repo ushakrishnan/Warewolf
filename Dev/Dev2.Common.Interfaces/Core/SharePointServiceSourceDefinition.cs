@@ -5,6 +5,23 @@ namespace Dev2.Common.Interfaces.Core
 {
     public class SharePointServiceSourceDefinition : ISharepointServerSource, IEquatable<SharePointServiceSourceDefinition>
     {
+
+        public SharePointServiceSourceDefinition(ISharepointSource db)
+        {
+            AuthenticationType = db.AuthenticationType;
+            Server = db.Server;
+            Path = db.GetSavePath();
+            Id = db.ResourceID;
+            Name = db.ResourceName;
+            Password = db.Password;
+            UserName = db.UserName;
+
+        }
+
+        public SharePointServiceSourceDefinition()
+        {
+        }
+
         public string UserName { get; set; }
         public string Password { get; set; }
         public AuthenticationType AuthenticationType { get; set; }
@@ -82,9 +99,9 @@ namespace Dev2.Common.Interfaces.Core
         {
             unchecked
             {
-                var hashCode = Server != null ? Server.GetHashCode() : 0;
-                hashCode = (hashCode * 397) ^ (UserName != null ? UserName.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (Password != null ? Password.GetHashCode() : 0);
+                var hashCode = Server?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (UserName?.GetHashCode() ?? 0);
+                hashCode = (hashCode * 397) ^ (Password?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ (int)AuthenticationType;
                 return hashCode;
             }

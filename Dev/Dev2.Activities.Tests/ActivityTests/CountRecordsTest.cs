@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +17,7 @@ using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     /// <summary>
@@ -42,9 +42,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = @"5";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -61,9 +59,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string expected = "";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -83,9 +79,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = "5";
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset1", "field1", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset1", "field1", out IList<string> actual, out string error);
             string actualSet = actual.First(c =>  !string.IsNullOrEmpty(c));
 
             // remove test datalist ;)
@@ -112,6 +106,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Assert Results-------------------------
             Assert.AreEqual(recordsetName, act.RecordsetName);
         }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfCountRecordsetActivity_GetOutputs")]
+        public void DsfCountRecordsetActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string recordsetName = "[[Customers()]]";
+            var act = new DsfCountRecordsetActivity { RecordsetName = recordsetName, CountNumber = "[[res]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
+        }
+
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -234,9 +244,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual(Expected, actual);
         }
@@ -252,9 +260,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual(Expected, actual);
         }
@@ -270,9 +276,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual(Expected, actual);
         }
@@ -288,9 +292,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual(Expected, actual);
         }

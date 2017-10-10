@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,18 +10,18 @@
 
 using System;
 using Dev2.Common.Interfaces.Security;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Models;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Utils;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.Factories
-// ReSharper restore CheckNamespace
+
 {
     public static class ResourceModelFactory
     {
-        public static IContextualResourceModel CreateResourceModel(IEnvironmentModel environment)
+        public static IContextualResourceModel CreateResourceModel(IServer environment)
         {
             return new ResourceModel(environment)
             {
@@ -29,28 +29,21 @@ namespace Dev2.Studio.Core.Factories
             };
         }
 
-        public static IContextualResourceModel CreateResourceModel(IEnvironmentModel environment, string resourceType, string displayName)
+        public static IContextualResourceModel CreateResourceModel(IServer environment, string resourceType, string displayName)
         {
             return CreateResourceModel(environment, resourceType, "", displayName);
         }
 
-        public static IContextualResourceModel CreateResourceModel(IEnvironmentModel environment, string resourceType, string resourceName, string displayName)
+        public static IContextualResourceModel CreateResourceModel(IServer environment, string resourceType, string resourceName, string displayName)
         {
             try
             {
                 IContextualResourceModel resource = CreateResourceModel(environment);
                 resource.ResourceName = string.Empty;
                 resource.ID = Guid.NewGuid();
-                if(environment.AuthorizationService != null)
-                {
-                    resource.UserPermissions = environment.AuthorizationService.GetResourcePermissions(resource.ID);
-                }
-                else
-                {
-                    resource.UserPermissions = Permissions.Contribute;
-                }
+                resource.UserPermissions = environment.AuthorizationService != null ? environment.AuthorizationService.GetResourcePermissions(resource.ID) : Permissions.Contribute;
 
-                switch(resourceType)
+                switch (resourceType)
                 {
                     case "Service":
                         resource.ResourceType = ResourceType.Service;
@@ -160,10 +153,12 @@ namespace Dev2.Studio.Core.Factories
                         resource.ResourceName = resourceName;
                         resource.ID = Guid.Empty;
                         break;
+                    default:
+                        break;
                 }
                 return resource;
             }
-            catch(SystemException exception)
+            catch (SystemException exception)
             {
                 HelperUtils.ShowTrustRelationshipError(exception);
             }

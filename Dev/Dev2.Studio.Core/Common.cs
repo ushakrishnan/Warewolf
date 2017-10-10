@@ -1,6 +1,6 @@
 using System;
 using System.Xml;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Studio.Core
 {
@@ -32,9 +32,9 @@ namespace Dev2.Studio.Core
             }
             return result;
         }
-        // ReSharper disable InconsistentNaming
+        
         public static enDev2ColumnArgumentDirection ParseColumnIODirection(XmlAttribute attr)
-            // ReSharper restore InconsistentNaming
+    
         {
             enDev2ColumnArgumentDirection result = enDev2ColumnArgumentDirection.None;
 

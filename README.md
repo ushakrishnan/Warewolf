@@ -31,13 +31,11 @@ Release notes are available at http://warewolf.io/release-notes.php
 
 You can download the latest compiled release from https://warewolf.io
 
-Please note that Warewolf is built for Windows 7, Windows 8.1, Windows 10, Windows Server 2008 and Windows Server 2012. This repo includes an F# project which requires [Visual FSharp](http://www.microsoft.com/en-us/download/details.aspx?id=48179)
+Please note that Warewolf is built for Windows 7, Windows 8.1, Windows 10, Windows Server 2008, Windows Server 2012 and Windows Server 2016. Compiling Warewolf requires at least [Visual Studio 2017](www.visualstudio.com/en-us/downloads/download-visual-studio-vs) with the ".NET desktop development" and "ASP.NET and web development" workloads and the "F# language support" individual component also installed.
 
 
-**LICENCE:** Licensed under [GNU Affero General Public License 3.0](http://www.gnu.org/licenses/agpl-3.0.html) or later
+**License and Software Versions:** 
 
-Developed with the help of ReSharper
+Should you have installed the open source version of the Software that version of the Software is subject to this [EULA](https://warewolf.io/eula.php) as well as the terms of the [GNU Affero General Public License version 3 or later](http://www.gnu.org/licenses/agpl-3.0.html). Please note, however, that as an end user of the Software the provisions of this [EULA](https://warewolf.io/eula.php) shall prevail. Should You wish to change or distribute the Software the provisions of the GNU Affero General Public License shall take precedence.
 
-
-[![Resharper Logo](http://warewolf.io/images/NewResharper%20Logo.png)](https://www.jetbrains.com/resharper/)
 

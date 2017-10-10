@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,7 @@ namespace Dev2.AppResources.Converters
 {
     public class ExplorerItemModelToIconConverter : IMultiValueConverter
     {
-        ResourceDictionary _dict;
+        readonly ResourceDictionary _dict;
 
         #region Implementation of IMultiValueConverter
 
@@ -50,8 +50,16 @@ namespace Dev2.AppResources.Converters
                     return _dict[CustomMenuIcons.PluginService] as DrawingImage;
                 case "WebService":
                     return _dict[CustomMenuIcons.WebService] as DrawingImage;
-                case "DbSource":
-                    return _dict[CustomMenuIcons.DbSource] as DrawingImage;
+                case "SqlServerSource":
+                    return _dict[CustomMenuIcons.SqlServerSource] as DrawingImage;
+                case "MySqlSource":
+                    return _dict[CustomMenuIcons.MySqlSource] as DrawingImage;
+                case "PostgreSqlSource":
+                    return _dict[CustomMenuIcons.PostgreSqlSource] as DrawingImage;
+                case "OracleSource":
+                    return _dict[CustomMenuIcons.OracleSource] as DrawingImage;
+                case "OdbcSource":
+                    return _dict[CustomMenuIcons.OdbcSource] as DrawingImage;
                 case "PluginSource":
                     return _dict[CustomMenuIcons.PluginSource] as DrawingImage;
                 case "WebSource":

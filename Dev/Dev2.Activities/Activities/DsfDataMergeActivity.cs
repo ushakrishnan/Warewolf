@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,21 +22,23 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
 using Dev2.Data.Operations;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    [ToolDescriptorInfo("Data-DataMerge", "Data Merge", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Data Merge_Tags")]
+    [ToolDescriptorInfo("Data-DataMerge", "Data Merge", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Data_Merge")]
     public class DsfDataMergeActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Class Members
@@ -89,12 +91,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         #endregion
 
         #region Overridden NativeActivity Methods
-        // ReSharper disable RedundantOverridenMember
+        
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
         }
-        // ReSharper restore RedundantOverridenMember
+        
 
         protected override void OnExecute(NativeActivityContext context)
         {
@@ -215,12 +217,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                                                 allErrors.AddError(ErrorResource.BlankUSINGValue);
                                             }
 
-                                            int atValue;
-                                            if(!Int32.TryParse(at, out atValue) || atValue < 0)
+                                            if (!Int32.TryParse(at, out int atValue) || atValue < 0)
                                             {
                                                 allErrors.AddError(ErrorResource.USINGMustBeARealNumber);
                                             }
-                                            if(pad.Length > 1)
+                                            if (pad.Length > 1)
                                             {
                                                 allErrors.AddError(ErrorResource.PADDINGMustBeSingleCharecter);
                                             }
@@ -262,7 +263,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("DSFDataMerge", e);
+                Dev2Logger.Error("DSFDataMerge", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -387,8 +388,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             var modelProperty = modelItem.Properties["DisplayName"];
             if(modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }
@@ -448,13 +449,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
@@ -500,5 +498,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
     }
 }

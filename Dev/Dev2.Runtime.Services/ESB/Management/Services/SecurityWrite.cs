@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -29,6 +30,16 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// </summary>
     public class SecurityWrite : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             if(values == null)
@@ -36,12 +47,10 @@ namespace Dev2.Runtime.ESB.Management.Services
                 throw new InvalidDataException(ErrorResource.EmptyValuesPassed);
             }
 
-            StringBuilder securitySettings;
-            values.TryGetValue("SecuritySettings", out securitySettings);
-            StringBuilder timeoutPeriodString;
-            values.TryGetValue("TimeoutPeriod", out timeoutPeriodString);
+            values.TryGetValue("SecuritySettings", out StringBuilder securitySettings);
+            values.TryGetValue("TimeoutPeriod", out StringBuilder timeoutPeriodString);
 
-            if(securitySettings == null || securitySettings.Length == 0)
+            if (securitySettings == null || securitySettings.Length == 0)
             {
                 throw new InvalidDataException(ErrorResource.EmptySecuritySettingsPassed);
             }
@@ -61,7 +70,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception e)
             {
-                throw new InvalidDataException(ErrorResource.InvalidSecuritySettings + string.Format(" Error: {0}", e.Message));
+                throw new InvalidDataException(ErrorResource.InvalidSecuritySettings + $" Error: {e.Message}");
             }
 
             ExecuteMessage msg = new ExecuteMessage { HasError = false };

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,9 +22,8 @@ namespace Dev2.Common
         public static bool IsEnumerableOfPrimitives(this JProperty property)
         {
             bool returnValue = false;
-            var array = property.Value as JArray;
 
-            if (array != null && array.Count > 0)
+            if (property.Value is JArray array && array.Count > 0)
             {
                 returnValue = array[0].IsPrimitive();
             }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,13 +13,13 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using Dev2.Activities.Designers2.DataSplit;
 using Dev2.Common.Interfaces.Help;
-using Dev2.Interfaces;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.DataSplit
 {
     [TestClass]
@@ -62,7 +62,7 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
         public void DataSplitDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -148,13 +148,13 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
             var modelItem = ModelItemUtils.CreateModelItem(new DsfDataSplitActivity());
             modelItem.SetProperty("DisplayName", displayName);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var modelItemCollection = modelItem.Properties["ResultsCollection"].Collection;
             foreach(var dto in items)
             {
                 modelItemCollection.Add(dto);
             }
-            // ReSharper restore PossibleNullReferenceException
+            
             return modelItem;
         }
 
@@ -221,10 +221,10 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
 
             var dto = new DataSplitDTO("a]]", DataSplitDTO.SplitTypeIndex, "a", 0);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["ResultsCollection"].Collection;
             var dtoModelItem = miCollection.Add(dto);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new DataSplitDesignerViewModel(mi);
             viewModel.GetDatalistString = () =>
@@ -278,10 +278,10 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
 
             var dto = new DataSplitDTO("a]]", DataSplitDTO.SplitTypeIndex, "a", 0);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["ResultsCollection"].Collection;
             miCollection.Add(dto);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new DataSplitDesignerViewModel(mi);
             return viewModel;

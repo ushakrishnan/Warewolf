@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,17 +28,17 @@ using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Threading;
-// ReSharper disable NonLocalizedString
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedMember.Global
-// ReSharper disable MemberCanBeProtected.Global
-// ReSharper disable EventNeverSubscribedTo.Global
-// ReSharper disable VirtualMemberNeverOverriden.Global
-// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
-// ReSharper disable CheckNamespace
+
+
+
+
+
+
+
+
 namespace System.Windows.Controls
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Represents a control that provides a text box for user input and a
@@ -242,7 +242,7 @@ namespace System.Windows.Controls
 
             if(newValue < 0 && newValue != -1)
             {
-                // ReSharper disable once NotResolvedInText
+                
                 throw new ArgumentOutOfRangeException("MinimumPrefixLength");
             }
         }
@@ -313,7 +313,7 @@ namespace System.Windows.Controls
                 d.SetValue(e.Property, e.OldValue);
 
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture,
-                    // ReSharper disable once NotResolvedInText
+                    
                     Dev2.Runtime.Configuration.Properties.Resources.AutoComplete_OnMinimumPopulateDelayPropertyChanged_InvalidValue, newValue), "value");
             }
 
@@ -588,7 +588,7 @@ namespace System.Windows.Controls
                     source.SetValue(e.Property, e.OldValue);
                 }
 
-                // ReSharper disable once NotResolvedInText
+                
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Dev2.Runtime.Configuration.Properties.Resources.AutoComplete_OnMaxDropDownHeightPropertyChanged_InvalidValue, e.NewValue), "value");
             }
 
@@ -973,7 +973,7 @@ namespace System.Windows.Controls
         /// <param name="e">Event arguments.</param>
         [SuppressMessage("Microsoft.Usage", "CA2208:InstantiateArgumentExceptionsCorrectly", Justification = "The exception will be thrown when the CLR setter is used in most situations.")]
         [ExcludeFromCodeCoverage]
-        // ReSharper disable once CyclomaticComplexity
+        
         private static void OnFilterModePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             AutoCompleteBox source = d as AutoCompleteBox;
@@ -996,7 +996,7 @@ namespace System.Windows.Controls
             {
                 source?.SetValue(e.Property, e.OldValue);
 
-                // ReSharper disable once NotResolvedInText
+                
                 throw new ArgumentException(Dev2.Runtime.Configuration.Properties.Resources.AutoComplete_OnFilterModePropertyChanged_InvalidValue, "value");
             }
 
@@ -1484,7 +1484,9 @@ namespace System.Windows.Controls
             // Creating the view here ensures that View is always != null
             ClearView();
             if (Application.Current != null)
+            {
                 Style = Application.Current.TryFindResource("AutoCompleteBoxStyle") as Style;
+            }
         }
 
         /// <summary>
@@ -1528,8 +1530,7 @@ namespace System.Windows.Controls
 
             // Set the template parts. Individual part setters remove and add 
             // any event handlers.
-            Popup popup = GetTemplateChild(ElementPopup) as Popup;
-            if(popup != null)
+            if (GetTemplateChild(ElementPopup) is Popup popup)
             {
                 DropDownPopup = new PopupHelper(this, popup) { MaxDropDownHeight = MaxDropDownHeight };
                 DropDownPopup.AfterOnApplyTemplate();
@@ -1728,10 +1729,7 @@ namespace System.Windows.Controls
 
             if(hasFocus)
             {
-                if(TextBox != null && TextBox.SelectionLength == 0)
-                {
-                    TextBox.SelectAll();
-                }
+                
             }
             else
             {
@@ -1772,8 +1770,7 @@ namespace System.Windows.Controls
                 if(parent == null)
                 {
                     // Try the logical parent.
-                    FrameworkElement element = focused as FrameworkElement;
-                    if(element != null)
+                    if (focused is FrameworkElement element)
                     {
                         parent = element.Parent;
                     }
@@ -1832,10 +1829,10 @@ namespace System.Windows.Controls
             if(!isEnabled)
             {
                 IsDropDownOpen = false;
-                if(TextBox != null)
-                {
-                    TextBox.Text = string.Empty;
-                }
+                //if (TextBox != null)
+                //{
+                //    TextBox.Text = string.Empty;
+                //}
             }
         }
 
@@ -1849,19 +1846,18 @@ namespace System.Windows.Controls
         /// if possible. Otherwise, null.
         /// </returns>
         [SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate", Justification = "Following the GetTemplateChild pattern for the method.")]
-        // ReSharper disable once VirtualMemberNeverOverriden.Global
+        
         [ExcludeFromCodeCoverage]
         protected virtual ISelectionAdapter GetSelectionAdapterPart()
         {
             ISelectionAdapter adapter = null;
-            Selector selector = GetTemplateChild(ElementSelector) as Selector;
-            if(selector != null)
+            if (GetTemplateChild(ElementSelector) is Selector selector)
             {
                 // Check if it is already an IItemsSelector
-                // ReSharper disable once SuspiciousTypeConversion.Global
+
                 adapter = selector as ISelectionAdapter ?? new SelectorSelectionAdapter(selector);
             }
-            // ReSharper disable once SuspiciousTypeConversion.Global
+
             return adapter ?? GetTemplateChild(ElementSelectionAdapter) as ISelectionAdapter;
         }
 
@@ -1903,7 +1899,7 @@ namespace System.Windows.Controls
         /// <param name="e">A
         /// <see cref="T:System.Windows.Controls.PopulatingEventArgs" /> that
         /// contains the event data.</param>
-        // ReSharper disable once VirtualMemberNeverOverriden.Global
+        
         protected virtual void OnPopulating(PopulatingEventArgs e)
         {
 #if SILVERLIGHT
@@ -2154,7 +2150,7 @@ namespace System.Windows.Controls
         /// <param name="value">The new string value.</param>
         private void UpdateTextValue(string value)
         {
-            // ReSharper disable once IntroduceOptionalParameters.Local
+            
             UpdateTextValue(value, null);
         }
 
@@ -2245,6 +2241,7 @@ namespace System.Windows.Controls
             _userCalledPopulate = populateReady && userInitiated;
 
             // Update the interface and values only as necessary
+            newText = newText.Replace("\r\n","\n");
             UpdateTextValue(newText, userInitiated);
 
             if(populateReady)
@@ -2306,7 +2303,7 @@ namespace System.Windows.Controls
 #endif
             OnPopulated(populated);
 
-            // ReSharper disable once PossibleUnintendedReferenceComparison
+            
             if(SelectionAdapter != null && SelectionAdapter.ItemsSource != _view)
             {
                 SelectionAdapter.ItemsSource = _view;
@@ -2457,7 +2454,7 @@ namespace System.Windows.Controls
         /// Walks through the items enumeration. Performance is not going to be 
         /// perfect with the current implementation.
         /// </summary>
-        // ReSharper disable once CyclomaticComplexity
+        
         private void RefreshView()
         {
             if(_items == null)
@@ -2541,16 +2538,14 @@ namespace System.Windows.Controls
         private void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
         {
             // Remove handler for oldValue.CollectionChanged (if present)
-            INotifyCollectionChanged oldValueINotifyCollectionChanged = oldValue as INotifyCollectionChanged;
-            if(null != oldValueINotifyCollectionChanged && null != _collectionChangedWeakEventListener)
+            if (oldValue is INotifyCollectionChanged oldValueINotifyCollectionChanged && null != _collectionChangedWeakEventListener)
             {
                 _collectionChangedWeakEventListener.Detach();
                 _collectionChangedWeakEventListener = null;
             }
 
             // Add handler for newValue.CollectionChanged (if possible)
-            INotifyCollectionChanged newValueINotifyCollectionChanged = newValue as INotifyCollectionChanged;
-            if(null != newValueINotifyCollectionChanged)
+            if (newValue is INotifyCollectionChanged newValueINotifyCollectionChanged)
             {
                 _collectionChangedWeakEventListener = new WeakEventListener<AutoCompleteBox, object, NotifyCollectionChangedEventArgs>(this) { OnEventAction = (instance, source, eventArgs) => instance.ItemsSourceCollectionChanged(eventArgs), OnDetachAction = weakEventListener => newValueINotifyCollectionChanged.CollectionChanged -= weakEventListener.OnEvent };
                 newValueINotifyCollectionChanged.CollectionChanged += _collectionChangedWeakEventListener.OnEvent;
@@ -2561,7 +2556,7 @@ namespace System.Windows.Controls
 
             // Clear and set the view on the selection adapter
             ClearView();
-            // ReSharper disable once PossibleUnintendedReferenceComparison
+            
             if(SelectionAdapter != null && SelectionAdapter.ItemsSource != _view)
             {
                 SelectionAdapter.ItemsSource = _view;
@@ -2576,7 +2571,7 @@ namespace System.Windows.Controls
         /// Method that handles the ObservableCollection.CollectionChanged event for the ItemsSource property.
         /// </summary>
         /// <param name="e">The event data.</param>
-        // ReSharper disable once CyclomaticComplexity
+        
         [ExcludeFromCodeCoverage]
         private void ItemsSourceCollectionChanged(NotifyCollectionChangedEventArgs e)
         {
@@ -2768,7 +2763,7 @@ namespace System.Windows.Controls
         {
             if(e == null)
             {
-                // ReSharper disable once UseNameofExpression
+                
                 throw new ArgumentNullException("e");
             }
 
@@ -2811,6 +2806,350 @@ namespace System.Windows.Controls
                         OnAdapterSelectionComplete(this, new RoutedEventArgs());
                         e.Handled = true;
                         break;
+                    case Key.None:
+                        break;
+                    case Key.Cancel:
+                        break;
+                    case Key.Back:
+                        break;
+                    case Key.Tab:
+                        break;
+                    case Key.LineFeed:
+                        break;
+                    case Key.Clear:
+                        break;
+                    case Key.Pause:
+                        break;
+                    case Key.Capital:
+                        break;
+                    case Key.KanaMode:
+                        break;
+                    case Key.JunjaMode:
+                        break;
+                    case Key.FinalMode:
+                        break;
+                    case Key.HanjaMode:
+                        break;
+                    case Key.Escape:
+                        break;
+                    case Key.ImeConvert:
+                        break;
+                    case Key.ImeNonConvert:
+                        break;
+                    case Key.ImeAccept:
+                        break;
+                    case Key.ImeModeChange:
+                        break;
+                    case Key.Space:
+                        break;
+                    case Key.Prior:
+                        break;
+                    case Key.Next:
+                        break;
+                    case Key.End:
+                        break;
+                    case Key.Home:
+                        break;
+                    case Key.Left:
+                        break;
+                    case Key.Up:
+                        break;
+                    case Key.Right:
+                        break;
+                    case Key.Down:
+                        break;
+                    case Key.Select:
+                        break;
+                    case Key.Print:
+                        break;
+                    case Key.Execute:
+                        break;
+                    case Key.Snapshot:
+                        break;
+                    case Key.Insert:
+                        break;
+                    case Key.Delete:
+                        break;
+                    case Key.Help:
+                        break;
+                    case Key.D0:
+                        break;
+                    case Key.D1:
+                        break;
+                    case Key.D2:
+                        break;
+                    case Key.D3:
+                        break;
+                    case Key.D4:
+                        break;
+                    case Key.D5:
+                        break;
+                    case Key.D6:
+                        break;
+                    case Key.D7:
+                        break;
+                    case Key.D8:
+                        break;
+                    case Key.D9:
+                        break;
+                    case Key.A:
+                        break;
+                    case Key.B:
+                        break;
+                    case Key.C:
+                        break;
+                    case Key.D:
+                        break;
+                    case Key.E:
+                        break;
+                    case Key.F:
+                        break;
+                    case Key.G:
+                        break;
+                    case Key.H:
+                        break;
+                    case Key.I:
+                        break;
+                    case Key.J:
+                        break;
+                    case Key.K:
+                        break;
+                    case Key.L:
+                        break;
+                    case Key.M:
+                        break;
+                    case Key.N:
+                        break;
+                    case Key.O:
+                        break;
+                    case Key.P:
+                        break;
+                    case Key.Q:
+                        break;
+                    case Key.R:
+                        break;
+                    case Key.S:
+                        break;
+                    case Key.T:
+                        break;
+                    case Key.U:
+                        break;
+                    case Key.V:
+                        break;
+                    case Key.W:
+                        break;
+                    case Key.X:
+                        break;
+                    case Key.Y:
+                        break;
+                    case Key.Z:
+                        break;
+                    case Key.LWin:
+                        break;
+                    case Key.RWin:
+                        break;
+                    case Key.Apps:
+                        break;
+                    case Key.Sleep:
+                        break;
+                    case Key.NumPad0:
+                        break;
+                    case Key.NumPad1:
+                        break;
+                    case Key.NumPad2:
+                        break;
+                    case Key.NumPad3:
+                        break;
+                    case Key.NumPad4:
+                        break;
+                    case Key.NumPad5:
+                        break;
+                    case Key.NumPad6:
+                        break;
+                    case Key.NumPad7:
+                        break;
+                    case Key.NumPad8:
+                        break;
+                    case Key.NumPad9:
+                        break;
+                    case Key.Multiply:
+                        break;
+                    case Key.Add:
+                        break;
+                    case Key.Separator:
+                        break;
+                    case Key.Subtract:
+                        break;
+                    case Key.Decimal:
+                        break;
+                    case Key.Divide:
+                        break;
+                    case Key.F1:
+                        break;
+                    case Key.F2:
+                        break;
+                    case Key.F3:
+                        break;
+                    case Key.F5:
+                        break;
+                    case Key.F6:
+                        break;
+                    case Key.F7:
+                        break;
+                    case Key.F8:
+                        break;
+                    case Key.F9:
+                        break;
+                    case Key.F10:
+                        break;
+                    case Key.F11:
+                        break;
+                    case Key.F12:
+                        break;
+                    case Key.F13:
+                        break;
+                    case Key.F14:
+                        break;
+                    case Key.F15:
+                        break;
+                    case Key.F16:
+                        break;
+                    case Key.F17:
+                        break;
+                    case Key.F18:
+                        break;
+                    case Key.F19:
+                        break;
+                    case Key.F20:
+                        break;
+                    case Key.F21:
+                        break;
+                    case Key.F22:
+                        break;
+                    case Key.F23:
+                        break;
+                    case Key.F24:
+                        break;
+                    case Key.NumLock:
+                        break;
+                    case Key.Scroll:
+                        break;
+                    case Key.LeftShift:
+                        break;
+                    case Key.RightShift:
+                        break;
+                    case Key.LeftCtrl:
+                        break;
+                    case Key.RightCtrl:
+                        break;
+                    case Key.LeftAlt:
+                        break;
+                    case Key.RightAlt:
+                        break;
+                    case Key.BrowserBack:
+                        break;
+                    case Key.BrowserForward:
+                        break;
+                    case Key.BrowserRefresh:
+                        break;
+                    case Key.BrowserStop:
+                        break;
+                    case Key.BrowserSearch:
+                        break;
+                    case Key.BrowserFavorites:
+                        break;
+                    case Key.BrowserHome:
+                        break;
+                    case Key.VolumeMute:
+                        break;
+                    case Key.VolumeDown:
+                        break;
+                    case Key.VolumeUp:
+                        break;
+                    case Key.MediaNextTrack:
+                        break;
+                    case Key.MediaPreviousTrack:
+                        break;
+                    case Key.MediaStop:
+                        break;
+                    case Key.MediaPlayPause:
+                        break;
+                    case Key.LaunchMail:
+                        break;
+                    case Key.SelectMedia:
+                        break;
+                    case Key.LaunchApplication1:
+                        break;
+                    case Key.LaunchApplication2:
+                        break;
+                    case Key.Oem1:
+                        break;
+                    case Key.OemPlus:
+                        break;
+                    case Key.OemComma:
+                        break;
+                    case Key.OemMinus:
+                        break;
+                    case Key.OemPeriod:
+                        break;
+                    case Key.Oem2:
+                        break;
+                    case Key.Oem3:
+                        break;
+                    case Key.AbntC1:
+                        break;
+                    case Key.AbntC2:
+                        break;
+                    case Key.Oem4:
+                        break;
+                    case Key.Oem5:
+                        break;
+                    case Key.Oem6:
+                        break;
+                    case Key.Oem7:
+                        break;
+                    case Key.Oem8:
+                        break;
+                    case Key.Oem102:
+                        break;
+                    case Key.ImeProcessed:
+                        break;
+                    case Key.System:
+                        break;
+                    case Key.OemAttn:
+                        break;
+                    case Key.OemFinish:
+                        break;
+                    case Key.OemCopy:
+                        break;
+                    case Key.OemAuto:
+                        break;
+                    case Key.OemEnlw:
+                        break;
+                    case Key.OemBackTab:
+                        break;
+                    case Key.Attn:
+                        break;
+                    case Key.CrSel:
+                        break;
+                    case Key.ExSel:
+                        break;
+                    case Key.EraseEof:
+                        break;
+                    case Key.Play:
+                        break;
+                    case Key.Zoom:
+                        break;
+                    case Key.NoName:
+                        break;
+                    case Key.Pa1:
+                        break;
+                    case Key.OemClear:
+                        break;
+                    case Key.DeadCharProcessed:
+                        break;
+                    default:
+                        break;
                 }
             }
             else
@@ -2824,7 +3163,7 @@ namespace System.Windows.Controls
             }
 
             // Standard drop down navigation
-            
+
         }
 
         /// <summary>

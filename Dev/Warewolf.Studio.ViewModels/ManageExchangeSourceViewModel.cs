@@ -3,17 +3,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Dev2;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.SaveDialog;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
-using Dev2.Interfaces;
-using Microsoft.Practices.Prism.Commands;
 using Microsoft.Practices.Prism.PubSubEvents;
-// ReSharper disable MergeConditionalExpression
+using Dev2.Runtime.Configuration.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+
+
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -45,20 +45,25 @@ namespace Warewolf.Studio.ViewModels
             RequestServiceNameViewModel = requestServiceNameViewModel;
             HeaderText = Resources.Languages.Core.ExchangeSourceNewHeaderLabel;
             Header = Resources.Languages.Core.ExchangeSourceNewHeaderLabel;
-            AutoDiscoverUrl = String.Empty;
-            UserName = String.Empty;
-            Password = String.Empty;
+            AutoDiscoverUrl = string.Empty;
+            UserName = string.Empty;
+            Password = string.Empty;
             Timeout = 10000;
         }
 
-        public ManageExchangeSourceViewModel(IManageExchangeSourceModel updateManager, IEventAggregator aggregator, IExchangeSource exchangeSource)
+        public ManageExchangeSourceViewModel(IManageExchangeSourceModel updateManager, IEventAggregator aggregator, IExchangeSource exchangeSource, IAsyncWorker AsyncWorker)
             : this(updateManager, aggregator)
         {
             VerifyArgument.IsNotNull("exchangeSource", exchangeSource);
-            _emailServiceSource = exchangeSource;
-            // ReSharper disable once VirtualMemberCallInContructor
-            FromModel(exchangeSource);
-            SetupHeaderTextFromExisting();
+            AsyncWorker.Start(() => updateManager.FetchSource(exchangeSource.ResourceID), source =>
+            {
+                _emailServiceSource = source;
+                _emailServiceSource.Path = exchangeSource.Path;
+                
+                FromModel(_emailServiceSource);
+                SetupHeaderTextFromExisting();
+            });
+
         }
 
         public ManageExchangeSourceViewModel(IManageExchangeSourceModel updateManager, IEventAggregator aggregator)
@@ -67,8 +72,8 @@ namespace Warewolf.Studio.ViewModels
             VerifyArgument.IsNotNull("updateManager", updateManager);
             VerifyArgument.IsNotNull("aggregator", aggregator);
             _updateManager = updateManager;
-            SendCommand = new DelegateCommand(TestConnection, CanTest);
-            OkCommand = new DelegateCommand(SaveConnection, CanSave);
+            SendCommand = new DelegateCommand(p=>TestConnection(), p => CanTest());
+            OkCommand = new DelegateCommand(p => SaveConnection(), p => CanSave());
             Testing = false;
             _testPassed = false;
             _testFailed = false;
@@ -98,15 +103,14 @@ namespace Warewolf.Studio.ViewModels
             UserName = emailServiceSource.UserName;
             Password = emailServiceSource.Password;
             Timeout = emailServiceSource.Timeout;
-
         }
 
         void SetupHeaderTextFromExisting()
         {
             if (_emailServiceSource != null)
             {
-                HeaderText = (_emailServiceSource.Name ?? ResourceName).Trim();
-                Header = (_emailServiceSource.Name ?? ResourceName).Trim();
+                HeaderText = (_emailServiceSource.ResourceName ?? ResourceName).Trim();
+                Header = (_emailServiceSource.ResourceName ?? ResourceName).Trim();
             }
         }
 
@@ -118,8 +122,11 @@ namespace Warewolf.Studio.ViewModels
         public bool CanTest()
         {
             if (Testing)
+            {
                 return false;
-            if (String.IsNullOrEmpty(AutoDiscoverUrl) && String.IsNullOrEmpty(UserName) && String.IsNullOrEmpty(Password))
+            }
+
+            if (string.IsNullOrEmpty(AutoDiscoverUrl) && string.IsNullOrEmpty(UserName) && string.IsNullOrEmpty(Password))
             {
                 return false;
             }
@@ -128,12 +135,8 @@ namespace Warewolf.Studio.ViewModels
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
-
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel?.UpdateHelpText(helpText);
         }
 
         public override void Save()
@@ -150,7 +153,7 @@ namespace Warewolf.Studio.ViewModels
             set
             {
                 _resourceName = value;
-                if (!String.IsNullOrEmpty(value))
+                if (!string.IsNullOrEmpty(value))
                 {
                     SetupHeaderTextFromExisting();
                 }
@@ -162,25 +165,29 @@ namespace Warewolf.Studio.ViewModels
         {
             if (_emailServiceSource == null)
             {
-                var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                var res = requestServiceNameViewModel.ShowSaveDialog();
 
                 if (res == MessageBoxResult.OK)
                 {
                     var src = ToSource();
-                    src.Name = RequestServiceNameViewModel.Result.ResourceName.Name;
-                    src.Path = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                    src.ResourceName = requestServiceNameViewModel.ResourceName.Name;
+                    src.Path = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                     Save(src);
+                    if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                    {
+                        AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ResourceID);
+                    }
+
                     Item = src;
                     _emailServiceSource = src;
-                    ResourceName = _emailServiceSource.Name;
+                    ResourceName = _emailServiceSource.ResourceName;
                     SetupHeaderTextFromExisting();
                 }
             }
             else
             {
                 var src = ToSource();
-                src.Path = Item.Path ?? "";
-                src.Name = Item.Name;
                 Save(src);
                 Item = src;
                 _emailServiceSource = src;
@@ -204,7 +211,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _autoDiscoverUrl)
                 {
                     _autoDiscoverUrl = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => AutoDiscoverUrl);
                     OnPropertyChanged(() => Header);
@@ -224,7 +231,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _userName)
                 {
                     _userName = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => UserName);
                     OnPropertyChanged(() => Header);
@@ -244,7 +251,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _password)
                 {
                     _password = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     OnPropertyChanged(() => Password);
                     OnPropertyChanged(() => Header);
@@ -264,7 +271,7 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _timeout)
                 {
                     _timeout = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     if (!_timeout.ToString().IsNumeric())
                     {
@@ -289,14 +296,14 @@ namespace Warewolf.Studio.ViewModels
                 if (value != _emailTo)
                 {
                     _emailTo = value;
-                    TestMessage = String.Empty;
+                    TestMessage = string.Empty;
 
                     EnableSend = true;
                     if (!_emailTo.IsEmail())
                     {
                         EnableSend = false;
                     }
-                    
+
                     OnPropertyChanged(() => EmailTo);
                     OnPropertyChanged(() => Header);
                     OnPropertyChanged(() => EnableSend);
@@ -338,9 +345,10 @@ namespace Warewolf.Studio.ViewModels
             var t = new Task(
                 SetupProgressSpinner, _token.Token);
 
-            t.ContinueWith(a => Dispatcher.CurrentDispatcher.Invoke(() =>
+            t.ContinueWith(a => Application.Current?.Dispatcher.Invoke(() =>
             {
                 if (!_token.IsCancellationRequested)
+                {
                     switch (t.Status)
                     {
                         case TaskStatus.Faulted:
@@ -348,7 +356,7 @@ namespace Warewolf.Studio.ViewModels
                                 TestFailed = true;
                                 TestPassed = false;
                                 Testing = false;
-                                TestMessage = t.Exception != null ? t.Exception.Message : "Failed";
+                                TestMessage = GetExceptionMessage(t.Exception);
                                 break;
                             }
                         case TaskStatus.RanToCompletion:
@@ -359,26 +367,41 @@ namespace Warewolf.Studio.ViewModels
                                 Testing = false;
                                 break;
                             }
+
+                        case TaskStatus.Created:
+                            break;
+                        case TaskStatus.WaitingForActivation:
+                            break;
+                        case TaskStatus.WaitingToRun:
+                            break;
+                        case TaskStatus.Running:
+                            break;
+                        case TaskStatus.WaitingForChildrenToComplete:
+                            break;
+                        case TaskStatus.Canceled:
+                            break;
+                        default:
+                            break;
                     }
+                }
             }));
             t.Start();
         }
 
         void SetupProgressSpinner()
         {
-            Dispatcher.CurrentDispatcher.Invoke(() =>
+            Application.Current?.Dispatcher.Invoke(() =>
             {
                 Testing = true;
                 TestFailed = false;
                 TestPassed = false;
             });
-
             _updateManager.TestConnection(ToNewSource());
-
         }
 
         IExchangeSource ToNewSource()
         {
+            var resourceID = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID;
             return new ExchangeSourceDefinition()
             {
                 AutoDiscoverUrl = AutoDiscoverUrl,
@@ -388,38 +411,38 @@ namespace Warewolf.Studio.ViewModels
                 EmailTo = EmailTo,
                 ResourceName = Name,
                 ResourceType = "ExchangeSource",
-                Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID,
-                ResourceID = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID,
+                Id = resourceID,
+                ResourceID = resourceID,
             };
         }
 
         public IExchangeSource ToSource()
         {
             if (_emailServiceSource == null)
-                return new ExchangeSourceDefinition()
-                {
-                    AutoDiscoverUrl = AutoDiscoverUrl,
-                    Password = Password,
-                    UserName = UserName,
-                    Timeout = Timeout,
-                    EmailTo = EmailTo,
-                    ResourceName = Name,
-                    ResourceType = "ExchangeSource",
-                    Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID,
-                    ResourceID = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID,
-                }
-            ;
-            // ReSharper disable once RedundantIfElseBlock
+            {
+                var resourceID = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID;
+                return new ExchangeSourceDefinition
+                    {
+                        AutoDiscoverUrl = AutoDiscoverUrl,
+                        Password = Password,
+                        UserName = UserName,
+                        Timeout = Timeout,
+                        EmailTo = EmailTo,
+                        ResourceName = ResourceName,
+                        ResourceType = "ExchangeSource",
+                        Id = resourceID,
+                        ResourceID = resourceID,
+                    }
+                    ;
+            }
+            
             else
             {
                 _emailServiceSource.AutoDiscoverUrl = AutoDiscoverUrl;
                 _emailServiceSource.UserName = UserName;
                 _emailServiceSource.Password = Password;
                 _emailServiceSource.Timeout = Timeout;
-                _emailServiceSource.ResourceType = "ExchangeSource";
-                _emailServiceSource.Name = Name;
                 return _emailServiceSource;
-
             }
         }
 
@@ -430,6 +453,7 @@ namespace Warewolf.Studio.ViewModels
                 Item = ToSource();
                 return Item;
             }
+            var resourceID = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID;
             return new ExchangeSourceDefinition()
             {
                 AutoDiscoverUrl = AutoDiscoverUrl,
@@ -439,8 +463,8 @@ namespace Warewolf.Studio.ViewModels
                 EmailTo = EmailTo,
                 ResourceType = "ExchangeSource",
                 ResourceName = ResourceName,
-                Id = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID,
-                ResourceID = _emailServiceSource == null ? Guid.NewGuid() : _emailServiceSource.ResourceID,
+                Id = resourceID,
+                ResourceID = resourceID,
             };
         }
 
@@ -473,9 +497,9 @@ namespace Warewolf.Studio.ViewModels
         public string TestMessage
         {
             get { return _testMessage; }
-            // ReSharper disable UnusedMember.Local
+            
             set
-            // ReSharper restore UnusedMember.Local
+            
             {
                 _testMessage = value;
                 OnPropertyChanged(() => TestMessage);
@@ -502,7 +526,6 @@ namespace Warewolf.Studio.ViewModels
 
         public string PasswordLabel => Resources.Languages.Core.PasswordLabel;
 
-
         public string TimeoutLabel => Resources.Languages.Core.EmailSourceTimeoutLabel;
 
         public string TestLabel => Resources.Languages.Core.TestConnectionLabel;
@@ -515,7 +538,7 @@ namespace Warewolf.Studio.ViewModels
         {
             if (RequestServiceNameViewModel != null)
             {
-                if (RequestServiceNameViewModel.Result != null) RequestServiceNameViewModel.Result.Dispose();
+                RequestServiceNameViewModel.Result?.Dispose();
                 RequestServiceNameViewModel.Dispose();
             }
             Dispose(true);
@@ -539,7 +562,7 @@ namespace Warewolf.Studio.ViewModels
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    if (_token != null) _token.Dispose();
+                    _token?.Dispose();
                 }
 
                 // Dispose unmanaged resources.

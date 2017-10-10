@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,8 @@
 */
 
 using System;
-using Dev2.DataList.Contract;
+using Dev2.Common.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Services.Execution;
@@ -17,7 +18,6 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Execution
 {
-    // BUG 9619 - 2013.06.05 - TWR - Refactored
     public class WebServiceContainer : EsbExecutionContainer
     {
         private readonly IServiceExecution _webserviceExecution;
@@ -39,6 +39,11 @@ namespace Dev2.Runtime.ESB.Execution
             _webserviceExecution.InstanceOutputDefintions = InstanceOutputDefinition;
             var result = _webserviceExecution.Execute(out errors, update);
             return result;
+        }
+
+        public override bool CanExecute(Guid resourceId, IDSFDataObject dataObject, AuthorizationContext authorizationContext)
+        {
+            return true;
         }
 
         public override IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity)

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,10 +10,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
@@ -25,9 +25,18 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class RenameFolderService : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
         public string HandlesType()
         {
             return "RenameFolderService";
@@ -40,28 +49,26 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 if(values == null)
                 {
-                    throw new ArgumentNullException("values");
+                    throw new ArgumentNullException(nameof(values));
                 }
                 if(theWorkspace == null)
                 {
-                    throw new ArgumentNullException("theWorkspace");
+                    throw new ArgumentNullException(nameof(theWorkspace));
                 }
-                StringBuilder path;
-                if(!values.TryGetValue("path", out path))
+                if (!values.TryGetValue("path", out StringBuilder path))
                 {
                     throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "path"));
                 }
-                StringBuilder newPath;
-                if(!values.TryGetValue("newPath", out newPath))
+                if (!values.TryGetValue("newPath", out StringBuilder newPath))
                 {
                     throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "newPath"));
                 }
-                Dev2Logger.Info(String.Format("Reanme Folder. Path:{0} NewPath:{1}",path,newPath));
+                Dev2Logger.Info($"Reanme Folder. Path:{path} NewPath:{newPath}", GlobalConstants.WarewolfInfo);
                 item = ServerExplorerRepository.Instance.RenameFolder(path.ToString(), newPath.ToString(), theWorkspace.ID);
             }
             catch(Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 item = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
             }
             var serializer = new Dev2JsonSerializer();

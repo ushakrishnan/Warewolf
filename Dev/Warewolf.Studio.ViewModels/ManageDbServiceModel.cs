@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,8 +12,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -30,7 +32,7 @@ namespace Warewolf.Studio.ViewModels
             _updateRepository = updateRepository;
             _queryProxy = queryProxy;
             _shell = shell;
-            shell.SetActiveServer(server);
+            shell.SetActiveServer(server.EnvironmentID);
         }
 
         public IStudioUpdateManager UpdateRepository => _updateRepository;
@@ -45,35 +47,113 @@ namespace Warewolf.Studio.ViewModels
             return _queryProxy.FetchDbActions(source);
         }
 
-        public ICollection<IDbAction> RefreshActions(IDbSource source)
+        public void CreateNewSource(enSourceType type)
         {
-            source.ReloadActions = true;
-            return _queryProxy.FetchDbActions(source);
+            switch (type)
+            {
+                case enSourceType.SqlDatabase:
+                    _shell.NewSqlServerSource(string.Empty);
+                    break;
+                case enSourceType.MySqlDatabase:
+                    _shell.NewMySqlSource(string.Empty);
+                    break;
+                case enSourceType.PostgreSQL:
+                    _shell.NewPostgreSqlSource(string.Empty);
+                    break;
+                case enSourceType.Oracle:
+                    _shell.NewOracleSource(string.Empty);
+                    break;
+                case enSourceType.ODBC:
+                    _shell.NewOdbcSource(string.Empty);
+                    break;
+                case enSourceType.WebService:
+                    break;
+                case enSourceType.DynamicService:
+                    break;
+                case enSourceType.ManagementDynamicService:
+                    break;
+                case enSourceType.PluginSource:
+                    break;
+                case enSourceType.Unknown:
+                    break;
+                case enSourceType.Dev2Server:
+                    break;
+                case enSourceType.EmailSource:
+                    break;
+                case enSourceType.WebSource:
+                    break;
+                case enSourceType.OauthSource:
+                    break;
+                case enSourceType.SharepointServerSource:
+                    break;
+                case enSourceType.RabbitMQSource:
+                    break;
+                case enSourceType.ExchangeSource:
+                    break;
+                case enSourceType.WcfSource:
+                    break;
+                case enSourceType.ComPluginSource:
+                    break;
+                default:
+                    break;
+            }
         }
 
-        public void CreateNewSource()
+        public void EditSource(IDbSource selectedSource, enSourceType type)
         {
-            _shell.NewDatabaseSource(string.Empty);
-        }
-
-        public void EditSource(IDbSource selectedSource)
-        {
-            _shell.EditResource(selectedSource);
+            switch (type)
+            {
+                case enSourceType.SqlDatabase:
+                    _shell.EditSqlServerResource(selectedSource);
+                    break;
+                case enSourceType.MySqlDatabase:
+                    _shell.EditMySqlResource(selectedSource);
+                    break;
+                case enSourceType.PostgreSQL:
+                    _shell.EditPostgreSqlResource(selectedSource);
+                    break;
+                case enSourceType.Oracle:
+                    _shell.EditOracleResource(selectedSource);
+                    break;
+                case enSourceType.ODBC:
+                    _shell.EditOdbcResource(selectedSource);
+                    break;
+                case enSourceType.WebService:
+                    break;
+                case enSourceType.DynamicService:
+                    break;
+                case enSourceType.ManagementDynamicService:
+                    break;
+                case enSourceType.PluginSource:
+                    break;
+                case enSourceType.Unknown:
+                    break;
+                case enSourceType.Dev2Server:
+                    break;
+                case enSourceType.EmailSource:
+                    break;
+                case enSourceType.WebSource:
+                    break;
+                case enSourceType.OauthSource:
+                    break;
+                case enSourceType.SharepointServerSource:
+                    break;
+                case enSourceType.RabbitMQSource:
+                    break;
+                case enSourceType.ExchangeSource:
+                    break;
+                case enSourceType.WcfSource:
+                    break;
+                case enSourceType.ComPluginSource:
+                    break;
+                default:
+                    break;
+            }
         }
 
         public DataTable TestService(IDatabaseService inputValues)
         {
             return _updateRepository.TestDbService(inputValues);
-        }
-
-        public IEnumerable<IServiceOutputMapping> GetDbOutputMappings(IDbAction action)
-        {
-            return new List<IServiceOutputMapping>();
-        }
-
-        public void SaveService(IDatabaseService toModel)
-        {
-            _updateRepository.Save(toModel);
         }
 
         #endregion

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,22 +16,22 @@ using System.Text;
 using System.Xml.Linq;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Infrastructure.Events;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data;
 using Dev2.Data.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList.Contract.Binary_Objects;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Models;
 using Dev2.Studio.Core.Models.DataList;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.Diagnostics;
 using Dev2.Studio.ViewModels.Workflow;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-//ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests.Workflows
 {
     /// <summary>
@@ -113,9 +113,7 @@ namespace Dev2.Core.Tests.Workflows
             workflowInputDataviewModel.LoadWorkflowInputs();
             Assert.IsTrue(workflowInputDataviewModel.WorkflowInputs.Count == 0);
         }
-
-
-        //2013.01.22: Ashley Lewis - Bug 7837 
+        
         [TestMethod]
         public void Save_EmptyDataList_Expected_NoErrors()
         {
@@ -276,8 +274,7 @@ namespace Dev2.Core.Tests.Workflows
             var inputs = workflowInputDataViewModel.WorkflowInputs;
             Assert.AreEqual(1, inputs.Count);
             inputs[0].Value = "1"; // trick it into thinking this happened from the UI ;)
-            int indexToSelect;
-            workflowInputDataViewModel.AddBlankRow(inputs[0],out indexToSelect);
+            workflowInputDataViewModel.AddBlankRow(inputs[0], out int indexToSelect);
 
 
             //------------Assert Results-------------------------
@@ -315,8 +312,7 @@ namespace Dev2.Core.Tests.Workflows
             var inputs = workflowInputDataViewModel.WorkflowInputs;
             Assert.AreEqual(1, inputs.Count);
             inputs[0].Value = "1"; // trick it into thinking this happened from the UI ;)
-            int indexToSelect;
-            workflowInputDataViewModel.AddBlankRow(inputs[0], out indexToSelect);
+            workflowInputDataViewModel.AddBlankRow(inputs[0], out int indexToSelect);
 
             //------------Execute Test---------------------------
             workflowInputDataViewModel.RemoveRow(inputs[0], out indexToSelect);
@@ -359,8 +355,7 @@ namespace Dev2.Core.Tests.Workflows
             var inputs = workflowInputDataViewModel.WorkflowInputs;
             Assert.AreEqual(1, inputs.Count);
             inputs[0].Value = "1"; // trick it into thinking this happened from the UI ;)
-            int indexToSelect;
-            workflowInputDataViewModel.AddBlankRow(inputs[0], out indexToSelect);
+            workflowInputDataViewModel.AddBlankRow(inputs[0], out int indexToSelect);
 
             //------------Execute Test---------------------------
             var dataListItem = workflowInputDataViewModel.GetNextRow(inputs[0]);
@@ -399,8 +394,7 @@ namespace Dev2.Core.Tests.Workflows
             var inputs = workflowInputDataViewModel.WorkflowInputs;
             Assert.AreEqual(1, inputs.Count);
             inputs[0].Value = "1"; // trick it into thinking this happened from the UI ;)
-            int indexToSelect;
-            workflowInputDataViewModel.AddBlankRow(inputs[0], out indexToSelect);
+            workflowInputDataViewModel.AddBlankRow(inputs[0], out int indexToSelect);
 
             //------------Execute Test---------------------------
             var dataListItem = workflowInputDataViewModel.GetPreviousRow(inputs[1]);
@@ -500,9 +494,9 @@ namespace Dev2.Core.Tests.Workflows
             rm.Setup(r => r.ID).Returns(_resourceID);
             rm.Setup(r => r.DataList).Returns(Shape);
             var mockDataListViewModel = new Mock<IDataListViewModel>();
-            var personObject = new ComplexObjectItemModel("Person",null,enDev2ColumnArgumentDirection.Input);
-            personObject.Children.Add(new ComplexObjectItemModel("Age",personObject,enDev2ColumnArgumentDirection.Input));
-            personObject.Children.Add(new ComplexObjectItemModel("Name",personObject,enDev2ColumnArgumentDirection.Input));
+            var personObject = new ComplexObjectItemModel("Person", null, enDev2ColumnArgumentDirection.Input);
+            personObject.Children.Add(new ComplexObjectItemModel("Age", personObject, enDev2ColumnArgumentDirection.Input));
+            personObject.Children.Add(new ComplexObjectItemModel("Name", personObject, enDev2ColumnArgumentDirection.Input));
             var complexObjectItemModels = new ObservableCollection<IComplexObjectItemModel> { personObject};
             mockDataListViewModel.Setup(model => model.ComplexObjectCollection).Returns(complexObjectItemModels);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -635,8 +629,8 @@ namespace Dev2.Core.Tests.Workflows
             rm.Setup(r => r.WorkflowXaml).Returns(new StringBuilder(StringResourcesTest.DebugInputWindow_WorkflowXaml));
             rm.Setup(r => r.ID).Returns(_resourceID);
             rm.Setup(r => r.DataList).Returns(StringResourcesTest.DebugInputWindow_DataList);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
-            mockEnvironmentModel.Setup(model => model.ID).Returns(Guid.Empty);
+            var mockEnvironmentModel = new Mock<IServer>();
+            mockEnvironmentModel.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
             var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
             mockEnvironmentModel.Setup(model => model.Connection).Returns(mockEnvironmentConnection.Object);
             rm.Setup(model => model.Environment).Returns(mockEnvironmentModel.Object);
@@ -684,8 +678,8 @@ namespace Dev2.Core.Tests.Workflows
             rm.Setup(r => r.WorkflowXaml).Returns(new StringBuilder(StringResourcesTest.DebugInputWindow_WorkflowXaml));
             rm.Setup(r => r.ID).Returns(_resourceID);
             rm.Setup(r => r.DataList).Returns(datalist);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
-            mockEnvironmentModel.Setup(model => model.ID).Returns(Guid.Empty);
+            var mockEnvironmentModel = new Mock<IServer>();
+            mockEnvironmentModel.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
             var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
             mockEnvironmentModel.Setup(model => model.Connection).Returns(mockEnvironmentConnection.Object);
             rm.Setup(model => model.Environment).Returns(mockEnvironmentModel.Object);
@@ -726,8 +720,8 @@ namespace Dev2.Core.Tests.Workflows
             rm.Setup(r => r.WorkflowXaml).Returns(new StringBuilder(StringResourcesTest.DebugInputWindow_WorkflowXaml));
             rm.Setup(r => r.ID).Returns(_resourceID);
             rm.Setup(r => r.DataList).Returns(datalist);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
-            mockEnvironmentModel.Setup(model => model.ID).Returns(Guid.Empty);
+            var mockEnvironmentModel = new Mock<IServer>();
+            mockEnvironmentModel.Setup(model => model.EnvironmentID).Returns(Guid.Empty);
             var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
             mockEnvironmentModel.Setup(model => model.Connection).Returns(mockEnvironmentConnection.Object);
             rm.Setup(model => model.Environment).Returns(mockEnvironmentModel.Object);
@@ -849,11 +843,11 @@ namespace Dev2.Core.Tests.Workflows
 
         static DebugOutputViewModel CreateDebugOutputViewModel()
         {
-            var models = new List<IEnvironmentModel>();
-            var envRepo = new Mock<IEnvironmentRepository>();
+            var models = new List<IServer>();
+            var envRepo = new Mock<IServerRepository>();
             envRepo.Setup(s => s.All()).Returns(models);
             envRepo.Setup(s => s.IsLoaded).Returns(true);
-            envRepo.Setup(repository => repository.Source).Returns(new Mock<IEnvironmentModel>().Object);
+            envRepo.Setup(repository => repository.Source).Returns(new Mock<IServer>().Object);
 
             return new DebugOutputViewModel(new Mock<IEventPublisher>().Object, envRepo.Object, new Mock<IDebugOutputFilterStrategy>().Object);
         }

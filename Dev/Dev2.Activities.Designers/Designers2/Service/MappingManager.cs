@@ -12,10 +12,10 @@ using Dev2.Communication;
 using Dev2.DataList.Contract;
 using Dev2.Providers.Errors;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Factory;
 using Dev2.Studio.ViewModels.DataList;
-// ReSharper disable NonLocalizedString
+using Dev2.Studio.Interfaces;
+
 
 namespace Dev2.Activities.Designers2.Service
 {
@@ -105,14 +105,17 @@ namespace Dev2.Activities.Designers2.Service
                 case "MapsTo":
                     SetInputs();
                     break;
-
                 case "Value":
                     SetOuputs();
+                    break;
+                default:
                     break;
             }
         }
 
-        public void UpdateLastValidationMemo(DesignValidationMemo memo, bool checkSource = true)
+        public void UpdateLastValidationMemo(DesignValidationMemo memo) => UpdateLastValidationMemo(memo, true);
+
+        public void UpdateLastValidationMemo(DesignValidationMemo memo, bool checkSource)
         {
             _serviceDesignerViewModel.ValidationMemoManager.LastValidationMemo = memo;
 
@@ -239,7 +242,7 @@ namespace Dev2.Activities.Designers2.Service
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Error(e);
+                    Dev2Logger.Error(e, "Warewolf Error");
                 }
             }
 
@@ -288,7 +291,7 @@ namespace Dev2.Activities.Designers2.Service
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, "Warewolf Error");
             }
 
             return new List<IInputOutputViewModel>();

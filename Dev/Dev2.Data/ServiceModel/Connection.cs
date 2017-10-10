@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +21,9 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Data.ServiceModel
 {
-    public class Connection : Resource, IResourceSource
+    public class Connection : Resource, IConnection
     {
-        public const int DefaultWebServerPort = 3142;
+        static readonly int DefaultWebServerPort = 3142;
 
         public string Address { get; set; }
 
@@ -62,7 +62,7 @@ namespace Dev2.Data.ServiceModel
             var props = connectionString.Split(';');
             foreach(var p in props.Select(prop => prop.Split('=')).Where(p => p.Length >= 1))
             {
-                switch(p[0].ToLowerInvariant())
+                switch (p[0].ToLowerInvariant())
                 {
                     case "appserveruri":
                         Address = p[1];
@@ -81,6 +81,8 @@ namespace Dev2.Data.ServiceModel
                     case "password":
                         Password = p[1];
                         break;
+                    default:
+                        break;
                 }
             }
         }
@@ -94,20 +96,10 @@ namespace Dev2.Data.ServiceModel
         {
             var result = Address;
 
-            if(result != null)
+            if(result?.IndexOf("dsf", StringComparison.Ordinal) < 0)
             {
-                if(result.IndexOf("dsf", StringComparison.Ordinal) < 0)
-                {
-                    if(result.EndsWith("/"))
-                    {
-                        result += "dsf";
-                    }
-                    else
-                    {
-                        result += "/dsf";
-                    }
+                result += result.EndsWith("/") ? "dsf" : "/dsf";
 
-                }
             }
 
             return result;
@@ -119,16 +111,16 @@ namespace Dev2.Data.ServiceModel
         {
             var result = base.ToXml();
             var connectionString = string.Join(";",
-                string.Format("AppServerUri={0}", Address),
-                string.Format("WebServerPort={0}", WebServerPort),
-                string.Format("AuthenticationType={0}", AuthenticationType)
+                $"AppServerUri={Address}",
+                $"WebServerPort={WebServerPort}",
+                $"AuthenticationType={AuthenticationType}"
                 );
             if(AuthenticationType == AuthenticationType.User)
             {
                 connectionString = string.Join(";",
                     connectionString,
-                    string.Format("UserName={0}", UserName),
-                    string.Format("Password={0}", Password)
+                    $"UserName={UserName}",
+                    $"Password={Password}"
                     );
             }
 

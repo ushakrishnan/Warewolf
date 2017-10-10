@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,7 @@ namespace Dev2.Tests.Activities.TOTests
     /// Summary description for DataMergeTOTests
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class DataMergeTOTests
     {
         [TestMethod]
@@ -174,7 +174,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataMergeDTO { InputVariable = "[[ddd&]]", MergeType = DataMergeDTO.MergeTypeNone, Alignment = "Right", At = "1", Padding = " " };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "Input", "Variable name [[ddd&]] contains invalid character(s)");
+            Verify_RuleSet(dto, "Input", "Variable name [[ddd&]] contains invalid character(s). Only use alphanumeric _ and - ");
 
         }
 

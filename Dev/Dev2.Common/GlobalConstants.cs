@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,7 +31,7 @@ namespace Dev2.Common
         {
             SystemEvents.TimeChanged += (sender, args) =>
             {
-                // ReSharper disable once ConvertToLambdaExpression
+
                 CultureInfo.CurrentCulture.ClearCachedData();
             };
 
@@ -44,17 +44,25 @@ namespace Dev2.Common
              */
             SystemEvents.UserPreferenceChanged += (sender, args) =>
             {
-                // ReSharper disable once ConvertToLambdaExpression
+
                 CultureInfo.CurrentCulture.ClearCachedData();
             };
         }
 
-        // ReSharper disable InconsistentNaming
-        //Default TimeoutValue
-        // ReSharper disable UnusedMember.Global
-        public static readonly TimeSpan DefaultTimeoutValue = new TimeSpan(0, 0, 20, 0);
+        public static string ExecutionLoggingResultStartTag = "Execution Result [ ";
+        public static string ExecutionLoggingResultEndTag = " ]";
 
-        // ReSharper restore UnusedMember.Global
+        public static string ArmResultText = "Flow Arm";
+
+        //Default TimeoutValue
+
+        public static readonly TimeSpan DefaultTimeoutValue = new TimeSpan(0, 0, 20, 0);
+        public static string LogFileDateFormat = "yyyy-MM-dd HH:mm:ss,fff";
+
+
+
+        public static string LogFileRegex = @"(\d+[-.\/]\d+[-.\/]\d+ \d+[:]\d+[:]\d+,\d+)\s+(\w+)\s+[-]\s+[[](\w+[-]\w+[-]\w+[-]\w+[-]\w+)[]]\s+[-]\s+"
+            ;
 
         public static string DefaultServerLogFileConfig = "<log4net>" +
                                              "<appender name=\"LogFileAppender\" type=\"Log4Net.Async.AsyncRollingFileAppender,Log4Net.Async\">" +
@@ -70,7 +78,7 @@ namespace Dev2.Common
     "<layout type=\"log4net.Layout.PatternLayout\">" +
     "<header value=\"[Header]&#xD;&#xA;\" />" +
                                              "<footer value=\"[Footer]&#xD;&#xA;\" />" +
-                                             "<conversionPattern value=\"%date [%thread] %-5level - %message%newline\" />" +
+                                             "<conversionPattern value=\"%date %-5level - %message%newline\" />" +
                                              "</layout>" +
                                              "<!-- Alternate layout using XML			" +
                                              "<layout type=\"log4net.Layout.XMLLayout\" /> -->" +
@@ -96,7 +104,7 @@ namespace Dev2.Common
                                              "<logName value=\"Warewolf\"/>" +
                                              "<applicationName value=\"Warewolf Server\"/>" +
                                              "<layout type=\"log4net.Layout.PatternLayout\">" +
-                                                "<conversionPattern value=\"%date [%thread] %-5level - %message%newline\" />" +
+                                                "<conversionPattern value=\"%date %-5level - %message%newline\" />" +
                                               "</layout>" +
                                              "</appender>" +
                                              "<!-- Setup the root category, add the appenders and set the default level -->" +
@@ -121,7 +129,7 @@ namespace Dev2.Common
     "<layout type=\"log4net.Layout.PatternLayout\">" +
     "<header value=\"[Header]&#xD;&#xA;\" />" +
                                              "<footer value=\"[Footer]&#xD;&#xA;\" />" +
-                                             "<conversionPattern value=\"%date [%thread] %-5level - %message%newline\" />" +
+                                             "<conversionPattern value=\"%date %-5level - %message%newline\" />" +
                                              "</layout>" +
                                              "<!-- Alternate layout using XML			" +
                                              "<layout type=\"log4net.Layout.XMLLayout\" /> -->" +
@@ -147,7 +155,7 @@ namespace Dev2.Common
                                              "<logName value=\"Warewolf\"/>" +
                                              "<applicationName value=\"Warewolf Studio\"/>" +
                                              "<layout type=\"log4net.Layout.PatternLayout\">" +
-                                                "<conversionPattern value=\"%date [%thread] %-5level - %message%newline\" />" +
+                                                "<conversionPattern value=\"%date %-5level - %message%newline\" />" +
                                               "</layout>" +
                                              "</appender>" +
                                              "<!-- Setup the root category, add the appenders and set the default level -->" +
@@ -159,21 +167,21 @@ namespace Dev2.Common
                                              "</log4net>";
 
         // Max String Size
-        // ReSharper disable InconsistentNaming
+
         public const double MAX_SIZE_FOR_STRING = 1 << 12; // = 4K
 
-        // ReSharper restore InconsistentNaming
+
 
         // Max storage buffer size to avoid LOH ;)
-        // ReSharper disable InconsistentNaming
+
         public const int MAX_BUFFER_SIZE = 35000;
 
-        // ReSharper restore InconsistentNaming
+
 
         public const double DesignHeightTolerance = 0.00000001;
 
         // Force Webserver Constants
-        // ReSharper disable UnusedMember.Global
+
         public const int ViewInBrowserForceDownloadSize = 51200; // 500 KB and a file must be downloaded
 
         //Runtime Configuration
@@ -185,16 +193,16 @@ namespace Dev2.Common
         public const string Dev2MessageBoxNoInputsWhenHyperlinkClickedDialog = "2";
 
         // WF Constants
-        // ReSharper disable InconsistentNaming
+
         public const int _xamlPoolSize = 5;
 
-        // ReSharper restore InconsistentNaming
+
 
         // Constant for unique batch size processing
-        // ReSharper disable InconsistentNaming
+
         public const int _uniqueBatchSize = 1000;
 
-        // ReSharper restore InconsistentNaming
+
 
         //Network
         public const int NetworkTimeOut = 30000; //Bug 8796
@@ -220,14 +228,14 @@ namespace Dev2.Common
         public const string WebserverReplaceTag = "[[Dev2WebServer]]";
 
         // JSON constants
-        // ReSharper disable InconsistentNaming
+
         public const string OpenJSON = "<JSON>";
 
-        // ReSharper restore InconsistentNaming
-        // ReSharper disable InconsistentNaming
+
+
         public const string CloseJSON = "</JSON>";
 
-        // ReSharper restore InconsistentNaming
+
 
         // Service Action Constants
         public const string OutputDefOpenTag = "<Outputs>";
@@ -244,14 +252,14 @@ namespace Dev2.Common
         public const string ManagementServicePayload = "Dev2System.ManagmentServicePayload";
         public const string ErrorPayload = "Dev2System.Dev2Error";
 
-        // ReSharper disable InconsistentNaming
+
         public const string ActivityRSResult = "Dev2ActivityResults";
 
-        // ReSharper restore InconsistentNaming
-        // ReSharper disable InconsistentNaming
+
+
         public const string ActivityRSField = "Dev2Result";
 
-        // ReSharper restore InconsistentNaming
+
         public const string StarExpression = "*";
 
         public const string EqualsExpression = "=";
@@ -278,6 +286,7 @@ namespace Dev2.Common
 
         // Storage Cache Constants
         public const int DefaultColumnSizeLvl1 = 10;
+        public const int LogFileNumberOfLines = 15;
 
         public const int DefaultStorageSegments = 1;
         public const int DefaultStorageSegmentSize = 8 * 1024 * 1024; // 8 MB default buffer size ;)
@@ -301,10 +310,10 @@ namespace Dev2.Common
         public const string DefaultTrueArmText = "True";
         public const string DefaultFalseArmText = "False";
 
-        // ReSharper disable InconsistentNaming
+
         public const string VBSerializerToken = "__!__";
 
-        // ReSharper restore InconsistentNaming
+
 
         public const string DisplayNamePropertyText = "DisplayName"; // PBI 9220 - 2013.04.29 - TWR
 
@@ -327,10 +336,10 @@ namespace Dev2.Common
         // Brendon Hack Constants
         public const string PostData = "postData";
 
-        // ReSharper disable InconsistentNaming
+
         public const string DLID = "dlid";
 
-        // ReSharper restore InconsistentNaming
+
 
         public const string DecisionWizardErrorString = "Couldn't find the resource needed to configure the Decision.";
         public const string DecisionWizardErrorHeading = "Missing System Model Dev2DecisionStack";
@@ -384,11 +393,18 @@ or type_desc LIKE '%Procedure%'";
 
         public const string SchemaQueryMySql = @"SHOW PROCEDURE STATUS;";
 
-        public const string SchemaQueryPostgreSql = @"SELECT  p.proname as Name, current_database() as Db
-FROM    pg_catalog.pg_namespace n
-JOIN    pg_catalog.pg_proc p
-ON      p.pronamespace = n.oid
-WHERE   n.nspname = 'public'
+        public const string SchemaQueryPostgreSql = @"
+select 
+    pp.proname as Name,
+    current_database() as Db,    
+    pg_get_functiondef(pp.oid),
+    pp.proretset,
+    t.typname
+from pg_proc pp
+inner join pg_namespace pn on (pp.pronamespace = pn.oid)
+inner join pg_language pl on (pp.prolang = pl.oid)
+inner join pg_type t on (pp.prorettype = t.oid)
+where pn.nspname = 'public';
 ";
 
         public const string SchemaQueryOracle = @"SELECT OBJECT_NAME AS Name,OWNER AS Db,OBJECT_TYPE as ROUTINE_TYPE FROM ALL_OBJECTS WHERE OWNER = '{0}' AND OBJECT_TYPE IN('FUNCTION','PROCEDURE')";
@@ -397,61 +413,53 @@ WHERE   n.nspname = 'public'
         public const string VersionDownloadPath = "Installers\\";
         public const string VersionFolder = "VersionControl";
         public static readonly Guid NullDataListID = Guid.Empty;
-
-        // Server WorkspaceID
+        
         public static readonly Guid ServerWorkspaceID = Guid.Empty;
 
         public static readonly string NullPluginValue = "NULL";
-
-        // Resource Catalog Constants
+        
         public static int ResourceCatalogCapacity = 150;
 
         public static int ResourceCatalogPruneAmt = 15;
 
-        // Security
-        //public const string BuiltInAdministrator = "BuiltIn\\Administrators";
-        // ReSharper disable ConvertToConstant.Global
-        // ReSharper disable FieldCanBeMadeReadOnly.Global
         public static String PublicUsername = @"\";
-
-        // GAC
+        
         public static readonly string GACPrefix = "GAC:";
-
-        // Used both Resource's LoadDependencies method
+        
         public static readonly string EmptyDependcyListElement = "<XamlDefinition />";
-
-        // Remote workflow custom header attribute ;)
+        
         public static readonly string RemoteServerInvoke = "RemoteWarewolfServer";
-
-        // Remote workflow custom header attribute ;)
+        
         public static readonly string RemoteDebugServerInvoke = "RemoteWarewolfServerDebug";
 
-        // Date Time
-        // ReSharper disable MemberCanBePrivate.Global
         public static readonly string LongTimePattern = CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern;
 
         public static readonly string ShortTimePattern = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
         public static readonly string Dev2DotNetDefaultDateTimeFormat = ShortTimePattern + " " + LongTimePattern;
         public static readonly string Dev2CustomDefaultDateTimeFormat = "d MM yyyy 24h:min.ss sp";
         public const string GlobalDefaultNowFormat = "yyyy/MM/dd hh:mm:ss.fff tt";
-
-        // Query Network Computer Names
+        
         public static readonly int NetworkComputerNameQueryFreq = 900000;
 
         public static TimeSpan TransactionTimeout = new TimeSpan(1, 0, 0, 0);
 
         public static string AnythingToXmlPathSeperator = ",";
         public static string AnytingToXmlCommaToken = "__COMMA__";
+        
+        public static string ExecuteWebRequestString = "About to execute web request [ '{0}' ] for User [ '{1}' : '{2}' : '{3}' ] with DataObject Payload [ '{4}' ]";
+        public static string ExecutionForServiceString = "Execution for Service Name: '{0}' Resource Id: '{1}' Mode: '{2}'";
 
-        // Resource Picker
+        public static string WarewolfInfo = "Warewolf Info";
+        public static string WarewolfError = "Warewolf Error";
+        public static string WarewolfDebug = "Warewolf Debug";
+        
         public static string ResourcePickerWorkflowString = "DsfWorkflowActivity";
 
         public static string SerializableResourceQuote = "__QUOTE__";
         public static string SerializableResourceSingleQuote = "__SQUOTE__";
 
         public static int MemoryItemCountCompactLevel = 500;
-
-        //Calculate expressions
+        
         public static string CalcExpressionNow = "!~calculation~!now()!~~calculation~!";
 
         public static string NotEqualsUnicodeChar = "?";
@@ -500,14 +508,13 @@ WHERE   n.nspname = 'public'
             "There is An Error"
         };
 
-        // ReSharper disable UnusedAutoPropertyAccessor.Global
+
         public static int VersionCount = 20;
 
-        // ReSharper restore UnusedAutoPropertyAccessor.Global
+
         public static string WebServiceTimeoutMessage =
             "Output mapping took too long. More then 10 seconds. Please use the JSONPath feature ( green icon above ) to reduce your dataset complexity. You can find out more on JSONPath at http://goessner.net/articles/JsonPath/";
-
-        // Limit WF execution
+        
         public static int MaxWorkflowsToExecute = 1010;
 
         public static int MaxNumberOfWorkflowWaits = 10000;
@@ -521,8 +528,7 @@ WHERE   n.nspname = 'public'
         {
             if (Resultscache.ContainsKey(resourceId))
             {
-                TextExpressionCompilerResults val;
-                bool removed = Resultscache.TryRemove(resourceId, out val);
+                bool removed = Resultscache.TryRemove(resourceId, out TextExpressionCompilerResults val);
                 if (!removed)
                 {
                     Resultscache.TryRemove(resourceId, out val);
@@ -574,10 +580,6 @@ WHERE   n.nspname = 'public'
         {
             get
             {
-                //#if DEBUG
-                //                return Assembly.GetExecutingAssembly().GetName().Version.Minor-1;
-                //#endif
-                // ReSharper disable once HeuristicUnreachableCode
 #pragma warning disable 162
                 return 7;
 #pragma warning restore 162
@@ -588,25 +590,27 @@ WHERE   n.nspname = 'public'
         {
             get
             {
-                //#if DEBUG
-                //                return Assembly.GetExecutingAssembly().GetName().Version.Major-1;
-                //#endif
-                // ReSharper disable once HeuristicUnreachableCode
 #pragma warning disable 162
                 return 0;
 #pragma warning restore 162
             }
         }
 
+        public static string ApplicationJsonHeader { get; } = "application/json";
+        public static string ApplicationXmlHeader { get; } = "application/xml";
+        public static string ApplicationTextHeader { get; } = "text/plain";
+        public static string ContentType { get;}= "Content-Type";
+        public static string SaveReasonForDeploy { get; } = "Deploy";
+
         public static string DropboxPathNotFoundException = "Dropbox location cannot be found";
         public static string DropboxPathNotFileException = "Please specify the path of a file in Dropbox";
-        public static string DropBoxSucces = "Success";
+        public static string DropBoxSuccess = "Success";
         public static string DropBoxFailure = "Failed";
         public static string GlobalCounterName = "All";
         public static string Warewolf = "Warewolf";
         public static string WarewolfServices = "Warewolf Services";
         public static string UserEchoURL = "http://community.warewolf.io/topics/249-https-connection-from-localhost-to-a-remote-server/";
-        // ReSharper restore InconsistentNaming
+
         public static void HandleEmptyParameters(object paramaTer, string name)
         {
             try
@@ -629,13 +633,5 @@ WHERE   n.nspname = 'public'
                 }
             }
         }
-
-        
-
-
-        // ReSharper restore UnusedMember.Global
-        // ReSharper restore ConvertToConstant.Global
-        // ReSharper restore FieldCanBeMadeReadOnly.Global
-        // ReSharper restore MemberCanBePrivate.Global
     }
 }

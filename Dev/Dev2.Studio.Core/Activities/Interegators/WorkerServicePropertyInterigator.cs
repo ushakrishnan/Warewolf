@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +11,10 @@
 using System;
 using System.Xml;
 using Dev2.Common.Common;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Activities.Interegators
 {
     public static class WorkerServicePropertyInterigator
@@ -45,28 +45,26 @@ namespace Dev2.Studio.Core.Activities.Interegators
                         if(document.DocumentElement != null)
                         {
                             XmlNode node = document.SelectSingleNode("//Action");
-                            if(node != null)
+                            if(node?.Attributes != null)
                             {
-                                if(node.Attributes != null)
+                                var attr = node.Attributes["SourceName"];
+                                if(attr != null)
                                 {
-                                    var attr = node.Attributes["SourceName"];
-                                    if(attr != null)
+                                    if (resourceRepository != null && node.Attributes["SourceID"] != null)
                                     {
-                                        if (resourceRepository != null && node.Attributes["SourceID"] != null)
-                                        {
-                                            Guid sourceId;
-                                            Guid.TryParse( node.Attributes["SourceID"].Value, out sourceId);
-                                            activity.FriendlySourceName = resourceRepository.LoadContextualResourceModel(sourceId).DisplayName;
-                                        }
-                                        else
+                                        Guid.TryParse(node.Attributes["SourceID"].Value, out Guid sourceId);
+                                        activity.FriendlySourceName = resourceRepository.LoadContextualResourceModel(sourceId).DisplayName;
+                                    }
+                                    else
+                                    {
                                         activity.FriendlySourceName = attr.Value;
                                     }
+                                }
 
-                                    attr = node.Attributes["SourceMethod"];
-                                    if(attr != null)
-                                    {
-                                        activity.ActionName = attr.Value;
-                                    }
+                                attr = node.Attributes["SourceMethod"];
+                                if(attr != null)
+                                {
+                                    activity.ActionName = attr.Value;
                                 }
                             }
                         }

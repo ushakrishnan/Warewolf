@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +16,8 @@ using System.Linq;
 using System.Xml.Serialization;
 using Dev2.Common;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.PathOperations;
 
 namespace Dev2.Session
@@ -69,16 +71,9 @@ namespace Dev2.Session
             }
 
 
-            if (to.DataList != null)
-            {
-                to.DataListHash = to.DataList.GetHashCode(); // set incoming DL hash
-            }
-            else
-            {
-                to.DataListHash = -1; // default value
-            }
+            to.DataListHash = to.DataList != null ? to.DataList.GetHashCode() : -1;
 
-            lock(SettingsLock)
+            lock (SettingsLock)
             {
                 if (_debugPersistSettings.TryGetValue(to.WorkflowID, out tmp))
                 {
@@ -96,7 +91,7 @@ namespace Dev2.Session
                 to.BinaryDataList.Create(to.XmlData, to.DataList);
             }
 
-            if (tmp != null) tmp.CleanUp();
+            tmp?.CleanUp();
             return to;
         }
 
@@ -110,8 +105,9 @@ namespace Dev2.Session
             lock (SettingsLock)
             {
                 if (to.DataList != null)
+                {
                     to.DataListHash = to.DataList.GetHashCode();
-                        // set incoming hash //2013.01.22: Ashley Lewis - Added condition for Bug 7837
+                }
                 to.Error = string.Empty;
 
                 if (to.RememberInputs)
@@ -122,11 +118,10 @@ namespace Dev2.Session
                 else
                 {
                     // no longer relavent, remove it
-                    DebugTO tmp;
 
-                    if (_debugPersistSettings.TryGetValue(to.WorkflowID, out tmp))
+                    if (_debugPersistSettings.TryGetValue(to.WorkflowID, out DebugTO tmp))
                     {
-                         _debugPersistSettings[to.WorkflowID].CleanUp();
+                        _debugPersistSettings[to.WorkflowID].CleanUp();
                         _debugPersistSettings.Remove(to.WorkflowID);
                     }
                 }
@@ -136,9 +131,8 @@ namespace Dev2.Session
                 // build the list
                 foreach (string key in _debugPersistSettings.Keys)
                 {
-                    DebugTO tmp;
 
-                    if (key.Length > 0 && _debugPersistSettings.TryGetValue(key, out tmp))
+                    if (key.Length > 0 && _debugPersistSettings.TryGetValue(key, out DebugTO tmp))
                     {
                         SaveDebugTO that = tmp.CopyToSaveDebugTO();
                         settingList.Add(that);
@@ -170,14 +164,7 @@ namespace Dev2.Session
                         _rootPath = baseDir;
                     }
 
-                    if (_rootPath.EndsWith("\\"))
-                    {
-                        _debugPersistPath = _rootPath + SavePath;
-                    }
-                    else
-                    {
-                        _debugPersistPath = _rootPath + "\\" + SavePath;
-                    }
+                    _debugPersistPath = _rootPath.EndsWith("\\") ? _rootPath + SavePath : _rootPath + "\\" + SavePath;
 
                     _debugPath = ActivityIOFactory.CreatePathFromString(_debugPersistPath, "", "");
                     _debugOptsEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(_debugPath);
@@ -216,7 +203,7 @@ namespace Dev2.Session
                                 // now push back into the Dictionary
                                 foreach (SaveDebugTO dto in settings)
                                 {
-                                    if (dto.ServiceName.Length > 0)
+                                    if (!string.IsNullOrEmpty(dto.ServiceName))
                                     {
                                         var tmp = new DebugTO();
                                         tmp.CopyFromSaveDebugTO(dto);
@@ -226,12 +213,12 @@ namespace Dev2.Session
                             }
                             catch (Exception e)
                             {
-                                Dev2Logger.Error(e);
+                                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                             }
                         }
                         else
                         {
-                            Dev2Logger.Error("No debug data stream [ " + _debugPath + " ] ");
+                            Dev2Logger.Error("No debug data stream [ " + _debugPath + " ] ", GlobalConstants.WarewolfError);
                         }
 
                         s.Close();

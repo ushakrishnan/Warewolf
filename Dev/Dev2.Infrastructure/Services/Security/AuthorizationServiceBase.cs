@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,20 +16,19 @@ using System.Linq;
 using System.Security.Principal;
 using System.Threading;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Security;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.Services.Security
 {
-
-
     public abstract class AuthorizationServiceBase : DisposableObject, IAuthorizationService
     {
-        // ReSharper disable once InconsistentNaming
+
         protected readonly ISecurityService _securityService;
         readonly bool _isLocalConnection;
 
-        public Func<bool> AreAdministratorsMembersOfWarewolfAdministrators;
+        internal Func<bool> AreAdministratorsMembersOfWarewolfAdministrators;
 
         protected AuthorizationServiceBase(ISecurityService securityService, bool isLocalConnection)
         {
@@ -40,7 +39,6 @@ namespace Dev2.Services.Security
             _securityService.PermissionsChanged += (s, e) => RaisePermissionsChanged();
             _securityService.PermissionsModified += (s, e) => OnPermissionsModified(e);
 
-            // set up the func for normal use ;)
             AreAdministratorsMembersOfWarewolfAdministrators = delegate
             {
                 var adGroup = FindGroup(new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null));
@@ -76,7 +74,7 @@ namespace Dev2.Services.Security
 
         }
 
-        public static string FindGroup(SecurityIdentifier searchSid)
+        private static string FindGroup(SecurityIdentifier searchSid)
         {
             using(var ad = new DirectoryEntry("WinNT://" + Environment.MachineName + ",computer"))
             {
@@ -105,9 +103,9 @@ namespace Dev2.Services.Security
             }
             remove
             {
-                // ReSharper disable DelegateSubtraction
+                
                 _permissionsModifedHandler -= value;
-                // ReSharper restore DelegateSubtraction
+                
             }
         }
 
@@ -139,61 +137,53 @@ namespace Dev2.Services.Security
 
         public ISecurityService SecurityService => _securityService;
 
+        public Func<bool> AreAdministratorsMembersOfWarewolfAdministrators1 => AreAdministratorsMembersOfWarewolfAdministrators;
+
         public abstract bool IsAuthorized(AuthorizationContext context, string resource);
         public abstract bool IsAuthorized(IAuthorizationRequest request);
 
         protected virtual void RaisePermissionsChanged()
         {
-            if(PermissionsChanged != null)
-            {
-                PermissionsChanged(this, EventArgs.Empty);
-            }
+            PermissionsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         protected virtual void OnPermissionsModified(PermissionsModifiedEventArgs e)
         {
-            if(_permissionsModifedHandler != null)
-            {
-                _permissionsModifedHandler(this, e);
-            }
+            _permissionsModifedHandler?.Invoke(this, e);
         }
 
         protected bool IsAuthorizedToConnect(IPrincipal principal)
         {
-            return IsAuthorized(AuthorizationContext.Any, () => GetGroupPermissions(principal));
+            return IsAuthorized(AuthorizationContext.Any, principal, () => GetGroupPermissions(principal));
         }
 
         public bool IsAuthorized(IPrincipal principal, AuthorizationContext context, string resource)
         {
-            return IsAuthorized(context, () => GetGroupPermissions(principal, resource));
+            return IsAuthorized(context,principal, () => GetGroupPermissions(principal, resource));
         }
 
-        public void DumpPermissionsOnError(IPrincipal principal)
+        protected void DumpPermissionsOnError(IPrincipal principal)
         {
-            // ReSharper disable ConditionIsAlwaysTrueOrFalse
-            if(principal.Identity != null)
-            // ReSharper restore ConditionIsAlwaysTrueOrFalse
-            {
-                Dev2Logger.Error("PERM DUMP FOR [ " + principal.Identity.Name + " ]");
-            }
-            else
-            // ReSharper disable HeuristicUnreachableCode
-            {
-                Dev2Logger.Error("PERM DUMP FOR [ NULL USER ]");
-            }
-            // ReSharper restore HeuristicUnreachableCode
 
-            foreach(var perm in _securityService.Permissions)
+            Dev2Logger.Error(principal.Identity != null ? "PERM DUMP FOR [ " + principal.Identity.Name + " ]" : "PERM DUMP FOR [ NULL USER ]", GlobalConstants.WarewolfError);
+
+
+            foreach (var perm in _securityService.Permissions)
             {
-                Dev2Logger.Error("PERM -> " + perm.WindowsGroup);
-                Dev2Logger.Error("IS USER IN IT [ " + principal.IsInRole(perm.WindowsGroup) + " ]");
+                Dev2Logger.Error("PERM -> " + perm.WindowsGroup, GlobalConstants.WarewolfError);
+                Dev2Logger.Error("IS USER IN IT [ " + principal.IsInRole(perm.WindowsGroup) + " ]", GlobalConstants.WarewolfError);
             }
         }
 
-        static bool IsAuthorized(AuthorizationContext context, Func<IEnumerable<WindowsGroupPermission>> getGroupPermissions)
+        bool IsAuthorized(AuthorizationContext context,IPrincipal principal, Func<IEnumerable<WindowsGroupPermission>> getGroupPermissions)
         {
             var contextPermissions = context.ToPermissions();
             var groupPermissions = getGroupPermissions();
+            if (context == AuthorizationContext.Any)
+            {
+                groupPermissions = _securityService.Permissions.Where(p => IsInRole(principal, p)).ToList();
+                return groupPermissions.Any(p => (p.Permissions & contextPermissions) != 0);
+            }
             return groupPermissions.Any(p => (p.Permissions & contextPermissions) != 0);
         }
 
@@ -202,7 +192,7 @@ namespace Dev2.Services.Security
             var serverPermissions = _securityService.Permissions;
             var resourcePermissions = serverPermissions.Where(p => IsInRole(principal, p) && p.Matches(resource) && !p.IsServer).ToList();
             var groupPermissions = new List<WindowsGroupPermission>();
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var permission in serverPermissions)
             {
                 if(resourcePermissions.Any(groupPermission => groupPermission.WindowsGroup == permission.WindowsGroup))
@@ -214,14 +204,13 @@ namespace Dev2.Services.Security
                     groupPermissions.Add(permission);
                 }
             }
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
 
             groupPermissions.AddRange(resourcePermissions);
-            //FilterAdminGroupForRemote(groupPermissions);
             return groupPermissions;
         }
 
-        protected virtual bool IsInRole(IPrincipal principal, WindowsGroupPermission p)
+        private bool IsInRole(IPrincipal principal, WindowsGroupPermission p)
         {
             var isInRole = false;
             if(principal == null)
@@ -230,27 +219,17 @@ namespace Dev2.Services.Security
             }
             try
             {
-                // If its our admin group ( Warewolf ), we need to check membership differently 
-                // Prefixing with computer name does not work with Warewolf and IsInRole
-                // Plain does not work with IsInRole
-                // Hence this conditional check and divert
                 var windowsGroup = p.WindowsGroup;
                 if(windowsGroup == WindowsGroupPermission.BuiltInAdministratorsText)
                 {
-                    // We need to get the group as it is local then look for principle's membership
                     var principleName = principal.Identity.Name;
                     if(!string.IsNullOrEmpty(principleName))
-                    {
-                        // Examine if BuiltIn\Administrators is still present as a Member
-                        // Then inspect BuiltIn\Administrators
-
-                        // Examine group for this member ;)  
+                    { 
                         isInRole = principal.IsInRole(windowsGroup);
                         if (!isInRole)
                         {
                             isInRole = DoFallBackCheck(principal);
                         }
-                        // if that fails, check Administrators group membership in the Warewolf Administrators group
                         if(!isInRole)
                         {
                             var sid = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
@@ -280,7 +259,6 @@ namespace Dev2.Services.Security
                                             catch(Exception)
                                             {
                                                 return false;
-                                                //Complete failure
                                             }
                                             return false;
                                         });
@@ -290,13 +268,10 @@ namespace Dev2.Services.Security
                             else
                             {
 
-                                if(AreAdministratorsMembersOfWarewolfAdministrators.Invoke())
+                                if(AreAdministratorsMembersOfWarewolfAdministrators1.Invoke())
                                 {
-                                    // Check user's administrator membership
                                     isInRole = principal.IsInRole(sid.Value);
                                 }
-
-                                //Check regardless. Not installing the software can create a situation where the "Administrators" group is not part of Warewolf
                                 isInRole = principal.IsInRole(sid.Value);
                             }
                         }
@@ -309,55 +284,48 @@ namespace Dev2.Services.Security
                 }
                 else
                 {
-                    // THIS TRY-CATCH IS HERE TO AVOID THE EXPLORER NOT LOADING ANYTHING WHEN THE DOMAIN CANNOT BE CONTACTED!
                     isInRole = principal.IsInRole(windowsGroup);
                 }
+            }            
+            catch (Exception e)
+            {
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
-            // ReSharper disable EmptyGeneralCatchClause
-            catch { }
-            // ReSharper restore EmptyGeneralCatchClause
+            
             
             return isInRole || p.IsBuiltInGuestsForExecution;
         }
 
         bool DoFallBackCheck(IPrincipal principal)
         {
-            if (principal != null)
+            var username = principal?.Identity?.Name;
+            if (username != null)
             {
-                if (principal.Identity != null)
+                var theUser = username;
+                var domainChar = username.IndexOf("\\", StringComparison.Ordinal);
+                if (domainChar >= 0)
                 {
-                    var username = principal.Identity.Name;
-                    if (username != null)
+                    theUser = username.Substring(domainChar + 1);
+                }
+                var windowsBuiltInRole = WindowsBuiltInRole.Administrator.ToString();
+                using (var ad = new DirectoryEntry("WinNT://" + Environment.MachineName + ",computer"))
+                {
+                    ad.Children.SchemaFilter.Add("group");
+                    foreach (DirectoryEntry dChildEntry in ad.Children)
                     {
-                        var theUser = username;
-                        var domainChar = username.IndexOf("\\", StringComparison.Ordinal);
-                        if (domainChar >= 0)
+                        if (dChildEntry.Name == WindowsGroupPermission.BuiltInAdministratorsText || dChildEntry.Name == windowsBuiltInRole || dChildEntry.Name=="Administrators" || dChildEntry.Name=="BUILTIN\\Administrators")
                         {
-                            theUser = username.Substring(domainChar + 1);
-                        }
-                        var windowsBuiltInRole = WindowsBuiltInRole.Administrator.ToString();
-                        using (var ad = new DirectoryEntry("WinNT://" + Environment.MachineName + ",computer"))
-                        {
-                            ad.Children.SchemaFilter.Add("group");
-                            foreach (DirectoryEntry dChildEntry in ad.Children)
+                            var members = dChildEntry.Invoke("Members");
+
+                            if (members != null)
                             {
-
-                                if (dChildEntry.Name == WindowsGroupPermission.BuiltInAdministratorsText || dChildEntry.Name == windowsBuiltInRole || dChildEntry.Name=="Administrators" || dChildEntry.Name=="BUILTIN\\Administrators")
+                                foreach (var member in (IEnumerable)members)
                                 {
-                                    // Now check group membership ;)
-                                    var members = dChildEntry.Invoke("Members");
-
-                                    if (members != null)
+                                    using (var memberEntry = new DirectoryEntry(member))
                                     {
-                                        foreach (var member in (IEnumerable)members)
+                                        if (memberEntry.Name == theUser)
                                         {
-                                            using (var memberEntry = new DirectoryEntry(member))
-                                            {
-                                                if (memberEntry.Name == theUser)
-                                                {
-                                                    return true;
-                                                }
-                                            }
+                                            return true;
                                         }
                                     }
                                 }

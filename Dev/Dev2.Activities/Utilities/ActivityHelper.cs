@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,10 @@ namespace Dev2.Utilities
     {
         public static string InjectExpression(Dev2Switch ds, ModelProperty activityExpression)
         {
-            if(ds == null) return null;
+            if(ds == null)
+            {
+                return null;
+            }
 
             // FetchSwitchData
             string expressionToInject = String.Join("", GlobalConstants.InjectedSwitchDataFetch,
@@ -36,7 +39,10 @@ namespace Dev2.Utilities
 
         public static string InjectExpression(Dev2DecisionStack ds, ModelProperty activityExpression)
         {
-            if(ds == null) return null;
+            if(ds == null)
+            {
+                return null;
+            }
 
             string modelData = ds.ToVBPersistableModel();
             string expressionToInject = String.Join("", GlobalConstants.InjectedDecisionHandler, "(\"",

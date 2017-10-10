@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -39,7 +39,7 @@ namespace Dev2.Core.Tests
         #region Tests
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void Filter_Where_ContentIsNull_Expected_False()
         {
             bool actual = _debugOutputFilterStrategy.Filter(null, "");
@@ -188,6 +188,6 @@ namespace Dev2.Core.Tests
 
         #endregion Tests
 
-        // ReSharper restore InconsistentNaming
+
     }
 }

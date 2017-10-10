@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,20 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
             {
                 return PluginServiceExecutionFactory.GetNamespaces(pluginSource);
             }
-            // ReSharper disable once RedundantCatchClause
+            
+            catch (BadImageFormatException)
+            {
+                throw;
+            }
+        }
+
+        public NamespaceList GetNamespacesWithJsonObjects(PluginSource pluginSource)
+        {
+            try
+            {
+                return PluginServiceExecutionFactory.GetNamespacesWithJsonObjects(pluginSource);
+            }
+            
             catch (BadImageFormatException)
             {
                 throw;
@@ -39,6 +52,16 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
         public ServiceMethodList GetMethods(string assemblyLocation, string assemblyName, string fullName)
         {
             return PluginServiceExecutionFactory.GetMethods(assemblyLocation, assemblyName, fullName);
+        }
+
+        public ServiceMethodList GetMethodsWithReturns(string assemblyLocation, string assemblyName, string fullName)
+        {
+            return PluginServiceExecutionFactory.GetMethodsWithReturns(assemblyLocation, assemblyName, fullName);
+        }
+
+        public ServiceConstructorList GetConstructors(string assemblyLocation, string assemblyName, string fullName)
+        {
+            return PluginServiceExecutionFactory.GetConstructors(assemblyLocation, assemblyName, fullName); 
         }
 
         public IOutputDescription TestPlugin(PluginService pluginService)
@@ -52,8 +75,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
                 Parameters = pluginService.Method.Parameters
             };
 
-            string serializedResult;
-            var pluginResult = PluginServiceExecutionFactory.TestPlugin(args, out serializedResult);
+            var pluginResult = PluginServiceExecutionFactory.TestPlugin(args, out string serializedResult);
             pluginService.SerializedResult = serializedResult;
             return pluginResult;
         }

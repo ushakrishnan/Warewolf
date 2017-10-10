@@ -1,7 +1,8 @@
 ﻿using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable InconsistentNaming
+
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -69,7 +70,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             manageRabbitMQSourceModel.EditSource(src.Object);
             //------------Assert Results-------------------------
 
-            shellViewModel.Verify(a => a.EditResource(src.Object,null), Times.Once);
+            shellViewModel.Verify(a => a.EditResource(src.Object), Times.Once);
         }
 
 

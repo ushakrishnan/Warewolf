@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -19,7 +18,7 @@ using Dev2.Providers.Errors;
 using Newtonsoft.Json;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
@@ -43,13 +42,12 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         protected ResourceBase(XElement xml)
         {
-            if(xml == null)
+            if (xml == null)
             {
-                throw new ArgumentNullException("xml");
+                throw new ArgumentNullException(nameof(xml));
             }
 
-            Guid resourceId;
-            if(!Guid.TryParse(xml.AttributeSafe("ID"), out resourceId))
+            if (!Guid.TryParse(xml.AttributeSafe("ID"), out Guid resourceId))
             {
                 // This is here for legacy XML!
                 resourceId = Guid.NewGuid();
@@ -62,7 +60,7 @@ namespace Dev2.Runtime.ServiceModel.Data
                 ResourceType = "WorkflowService";
             }
             ResourceName = xml.AttributeSafe("Name");
-            VersionInfo = String.IsNullOrEmpty( xml.ElementStringSafe("VersionInfo"))?null: new VersionInfo(xml.ElementStringSafe("VersionInfo"), ResourceID);
+            VersionInfo = String.IsNullOrEmpty(xml.ElementStringSafe("VersionInfo")) ? null : new VersionInfo(xml.ElementStringSafe("VersionInfo"), ResourceID);
             AuthorRoles = xml.ElementSafe("AuthorRoles");
 
             // This is here for legacy XML!
@@ -81,7 +79,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
                 var action = actions != null ? actions.Descendants().FirstOrDefault() : xml.Element("Action");
 
-                if(action != null)
+                if (action != null)
                 {
                     var actionTypeStr = action.AttributeSafe("Type");
                     ResourceType = GetResourceTypeFromString(actionTypeStr);
@@ -91,8 +89,7 @@ namespace Dev2.Runtime.ServiceModel.Data
                 #endregion
             }
             var isValidStr = xml.AttributeSafe("IsValid");
-            bool isValid;
-            if(bool.TryParse(isValidStr, out isValid))
+            if (bool.TryParse(isValidStr, out bool isValid))
             {
                 IsValid = isValid;
             }
@@ -103,7 +100,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             SetIsNew(xml);
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public Version Version { get; set; }
         [JsonIgnore]
         public bool IsUpgraded { get; set; }
@@ -160,7 +157,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             {
                 return ResourceName;
             }
-            return FilePath?.Replace(EnvironmentVariables.GetWorkspacePath(workspaceID)+"\\","").Replace(".xml","") ?? "";
+            return FilePath?.Replace(EnvironmentVariables.GetWorkspacePath(workspaceID) + "\\", "").Replace(".xml", "") ?? "";
         }
 
         public string GetSavePath()
@@ -183,8 +180,10 @@ namespace Dev2.Runtime.ServiceModel.Data
             }
             set
             {
-                if(value!= null)
+                if (value != null)
+                {
                     _versionInfo = value;
+                }
             }
         }
 
@@ -196,11 +195,10 @@ namespace Dev2.Runtime.ServiceModel.Data
         public void SetIsNew(XElement xml)
         {
             var xElement = xml.Element("IsNewWorkflow");
-            if(xElement != null)
+            if (xElement != null)
             {
                 var tmp = xElement.Value;
-                bool isNew;
-                Boolean.TryParse(tmp, out isNew);
+                Boolean.TryParse(tmp, out bool isNew);
                 IsNewResource = isNew;
             }
         }
@@ -209,11 +207,11 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             var tmpB = xml.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionsRootTag);
             var tmpA = xml.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-            if(tmpB != null)
+            if (tmpB != null)
             {
                 tmpA = tmpB.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
             }
-            if(tmpA != null)
+            if (tmpA != null)
             {
                 Inputs = tmpA.ElementStringSafe(GlobalConstants.InputRootTag);
                 Outputs = tmpA.ElementStringSafe(GlobalConstants.OutputRootTag);
@@ -224,21 +222,17 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             var errorMessagesElement = xml.Element("ErrorMessages");
             Errors = new List<IErrorInfo>();
-            if(errorMessagesElement != null)
+            if (errorMessagesElement != null)
             {
                 var errorMessageElements = errorMessagesElement.Elements("ErrorMessage");
-                foreach(var errorMessageElement in errorMessageElements)
+                foreach (var errorMessageElement in errorMessageElements)
                 {
-                    FixType fixType;
                     var fixTypeString = errorMessageElement.AttributeSafe("FixType");
-                    Enum.TryParse(fixTypeString, true, out fixType);
-                    ErrorType errorType;
+                    Enum.TryParse(fixTypeString, true, out FixType fixType);
                     var errorTypeString = errorMessageElement.AttributeSafe("ErrorType");
-                    Enum.TryParse(errorTypeString, true, out errorType);
-                    Guid instanceId;
-                    Guid.TryParse(errorMessageElement.AttributeSafe("InstanceID"), out instanceId);
-                    CompileMessageType messageType;
-                    Enum.TryParse(errorMessageElement.AttributeSafe("MessageType"), true, out messageType);
+                    Enum.TryParse(errorTypeString, true, out ErrorType errorType);
+                    Guid.TryParse(errorMessageElement.AttributeSafe("InstanceID"), out Guid instanceId);
+                    Enum.TryParse(errorMessageElement.AttributeSafe("MessageType"), true, out CompileMessageType messageType);
                     Errors.Add(new ErrorInfo
                     {
                         InstanceID = instanceId,
@@ -254,10 +248,9 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         private string GetResourceTypeFromString(string actionTypeStr)
         {
-            enActionType actionType;
-            if(Enum.TryParse(actionTypeStr, out actionType))
+            if (Enum.TryParse(actionTypeStr, out enActionType actionType))
             {
-                switch(actionType)
+                switch (actionType)
                 {
                     case enActionType.InvokeWebService:
                         return "WebService";
@@ -267,6 +260,24 @@ namespace Dev2.Runtime.ServiceModel.Data
                         return "PluginService";
                     case enActionType.Workflow:
                         return "WorkflowService";
+                    case enActionType.BizRule:
+                        break;
+                    case enActionType.InvokeDynamicService:
+                        break;
+                    case enActionType.InvokeManagementDynamicService:
+                        break;
+                    case enActionType.InvokeServiceMethod:
+                        break;
+                    case enActionType.ComPlugin:
+                        break;
+                    case enActionType.Switch:
+                        break;
+                    case enActionType.Unknown:
+                        break;
+                    case enActionType.RemoteService:
+                        break;
+                    default:
+                        break;
                 }
             }
             return "Unknown";
@@ -282,9 +293,9 @@ namespace Dev2.Runtime.ServiceModel.Data
                 new XAttribute("IsValid", IsValid),
                 new XElement("DisplayName", ResourceName ?? string.Empty),
                 new XElement("AuthorRoles", AuthorRoles ?? string.Empty),
-                // ReSharper disable ConstantNullCoalescingCondition
+                
                 new XElement("ErrorMessages", WriteErrors() ?? null)
-                // ReSharper restore ConstantNullCoalescingCondition
+                
                 );
         }
 
@@ -317,9 +328,13 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         private XElement WriteErrors()
         {
-            if(Errors == null || Errors.Count == 0) return null;
+            if (Errors == null || Errors.Count == 0)
+            {
+                return null;
+            }
+
             XElement xElement = null;
-            foreach(var errorInfo in Errors)
+            foreach (var errorInfo in Errors)
             {
                 xElement = new XElement("ErrorMessage");
                 xElement.Add(new XAttribute("InstanceID", errorInfo.InstanceID));
@@ -336,57 +351,37 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             return JsonConvert.SerializeObject(this);
         }
-
-        /// <summary>
-        /// Indicates whether the current object is equal to another object of the same type.
-        /// </summary>
-        /// <returns>
-        /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
-        /// </returns>
-        /// <param name="other">An object to compare with this object.</param>
+        
         public bool Equals(IResource other)
         {
-            if(ReferenceEquals(null, other))
+            if (ReferenceEquals(null, other))
             {
                 return false;
             }
-            if(ReferenceEquals(this, other))
+            if (ReferenceEquals(this, other))
             {
                 return true;
             }
-            return ResourceID.Equals(other.ResourceID); //&& Version.Equals(other.Version);
+            return ResourceID.Equals(other.ResourceID);
         }
-
-        /// <summary>
-        /// Determines whether the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>.
-        /// </summary>
-        /// <returns>
-        /// true if the specified <see cref="T:System.Object"/> is equal to the current <see cref="T:System.Object"/>; otherwise, false.
-        /// </returns>
-        /// <param name="obj">The <see cref="T:System.Object"/> to compare with the current <see cref="T:System.Object"/>. </param>
+        
         public override bool Equals(object obj)
         {
-            if(ReferenceEquals(null, obj))
+            if (ReferenceEquals(null, obj))
             {
                 return false;
             }
-            if(ReferenceEquals(this, obj))
+            if (ReferenceEquals(this, obj))
             {
                 return true;
             }
-            if(obj.GetType() != GetType())
+            if (obj.GetType() != GetType())
             {
                 return false;
             }
             return Equals((IResource)obj);
         }
-
-        /// <summary>
-        /// Serves as a hash function for a particular type. 
-        /// </summary>
-        /// <returns>
-        /// A hash code for the current <see cref="T:System.Object"/>.
-        /// </returns>
+        
         public override int GetHashCode()
         {
             unchecked
@@ -404,29 +399,23 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             return !Equals(left, right);
         }
-
-        /// <summary>
-        /// If this instance <see cref="IsUpgraded"/> then sets the ID, Version, Name and ResourceType attributes on the given XML.
-        /// </summary>
-        /// <param name="xml">The XML to be upgraded.</param>
-        /// <param name="resource"></param>
-        /// <returns>The XML with the additional attributes set.</returns>
+        
         public XElement UpgradeXml(XElement xml, IResource resource)
         {
-            if(IsUpgraded)
+            if (IsUpgraded)
             {
                 xml.SetAttributeValue("ID", ResourceID);
                 xml.SetAttributeValue("Name", ResourceName ?? string.Empty);
                 xml.SetAttributeValue("ResourceType", ResourceType);
             }
-            if(!xml.Descendants("VersionInfo").Any() && resource.VersionInfo != null)
+            if (!xml.Descendants("VersionInfo").Any() && resource.VersionInfo != null)
             {
                 var versionInfo = new XElement("VersionInfo");
-                versionInfo.SetAttributeValue("DateTimeStamp",DateTime.Now);
-                versionInfo.SetAttributeValue("Reason",resource.VersionInfo.Reason);
-                versionInfo.SetAttributeValue("User",resource.VersionInfo.User);
-                versionInfo.SetAttributeValue("VersionNumber",resource.VersionInfo.VersionNumber);
-                versionInfo.SetAttributeValue("ResourceId",ResourceID);
+                versionInfo.SetAttributeValue("DateTimeStamp", DateTime.Now);
+                versionInfo.SetAttributeValue("Reason", resource.VersionInfo.Reason);
+                versionInfo.SetAttributeValue("User", resource.VersionInfo.User);
+                versionInfo.SetAttributeValue("VersionNumber", resource.VersionInfo.VersionNumber);
+                versionInfo.SetAttributeValue("ResourceId", ResourceID);
                 versionInfo.SetAttributeValue("VersionId", resource.VersionInfo.VersionId);
                 xml.Add(versionInfo);
             }
@@ -448,42 +437,43 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         public void LoadDependencies(XElement xml)
         {
-            if(xml == null)
+            if (xml == null)
             {
                 return;
             }
             if (ResourceType == "WorkflowService")
             {
                 GetDependenciesForWorkflowService(xml);
-            }            
+            }
         }
 
         private void GetDependenciesForWorkflowService(XElement xml)
         {
             var loadXml = xml.Descendants("XamlDefinition").ToList();
-            if(loadXml.Count != 1)
+            if (loadXml.Count != 1)
             {
                 return;
             }
 
-            using(var textReader = new StringReader(loadXml[0].Value))
+            using (var textReader = new StringReader(loadXml[0].Value))
             {
                 var errors = new StringBuilder();
                 try
                 {
                     var elementToUse = loadXml[0].HasElements ? loadXml[0] : XElement.Load(textReader, LoadOptions.None);
                     var dependenciesFromXml = from desc in elementToUse.Descendants()
-                        where
-                            (desc.Name.LocalName.Contains("DsfMySqlDatabaseActivity") ||
-                             desc.Name.LocalName.Contains("DsfSqlServerDatabaseActivity") ||
-                             desc.Name.LocalName.Contains("DsfDotNetDllActivity") ||
-                             desc.Name.LocalName.Contains("DsfWebGetActivity") ||
-                             desc.Name.LocalName.Contains("DsfActivity")) &&
-                            desc.Attribute("UniqueID") != null
-                        select desc;
+                                              where
+                                                  (desc.Name.LocalName.Contains("DsfMySqlDatabaseActivity") ||
+                                                   desc.Name.LocalName.Contains("DsfSqlServerDatabaseActivity") ||
+                                                   desc.Name.LocalName.Contains("DsfDotNetDllActivity") ||
+                                                   desc.Name.LocalName.Contains("DsfWebGetActivity") ||
+                                                   desc.Name.LocalName.Contains("DsfActivity")) &&
+                                                  desc.Attribute("UniqueID") != null
+                                              select desc;
                     var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
                     var count = xElements.Count;
-                    if(count > 0)
+                    
+                    if (count > 0)
                     {
                         Dependencies = new List<IResourceForTree>();
                         xElements.ForEach(element =>
@@ -497,19 +487,20 @@ namespace Dev2.Runtime.ServiceModel.Data
                             }
                             var resourceIdAsString = element.AttributeSafe(resourceType == "WorkflowService" ? "ResourceID" : "SourceId");
                             var resourceName = element.AttributeSafe("ServiceName");
-                            Guid uniqueId;
-                            Guid.TryParse(uniqueIdAsString, out uniqueId);
-                            Guid resId;
-                            Guid.TryParse(resourceIdAsString, out resId);
+                            Guid.TryParse(uniqueIdAsString, out Guid uniqueId);
+                            Guid.TryParse(resourceIdAsString, out Guid resId);
                             Dependencies.Add(CreateResourceForTree(resId, uniqueId, resourceName, resourceType));
                             AddRemoteServerDependencies(element);
                         });
                     }
                     AddEmailSources(elementToUse);
+                    AddWebSources(elementToUse);
+                    AddSharepointSources(elementToUse);
+                    AddDotnetSources(elementToUse);
                     AddRabbitMqSources(elementToUse);
                     AddDatabaseSourcesForSqlBulkInsertTool(elementToUse);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     var resName = xml.AttributeSafe("Name");
                     errors.AppendLine("Loading dependencies for [ " + resName + " ] caused " + e.Message);
@@ -519,110 +510,221 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         private string GetResourceTypeFromName(string localName)
         {
-            switch(localName)
+            switch (localName)
             {
                 case "DsfMySqlDatabaseActivity":
                 case "DsfSqlServerDatabaseActivity":
                     return "DbService";
                 case "DsfDotNetDllActivity":
+                case "DsfEnhancedDotNetDllActivity":
                     return "PluginService";
                 case "DsfWebGetActivity":
                     return "WebService";
+                default:
+                    return "Unknown";
             }
-            return "Unknown";
         }
 
         private void AddDatabaseSourcesForSqlBulkInsertTool(XElement elementToUse)
         {
-            if(elementToUse == null)
+            if (elementToUse == null)
             {
                 return;
             }
-            if(Dependencies == null)
+            if (Dependencies == null)
             {
                 Dependencies = new List<IResourceForTree>();
             }
             var dependenciesFromXml = from desc in elementToUse.Descendants()
-                where desc.Name.LocalName.Contains("DbSource") && desc.HasAttributes
-                select desc;
+                                      where desc.Name.LocalName.Contains("DbSource") && desc.HasAttributes
+                                      select desc;
             var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
-            var count = xElements.Count;
-            if(count == 1)
+            foreach (var element in xElements)
             {
-                var element = xElements[0];
                 var resourceIdAsString = element.AttributeSafe("ResourceID");
                 var resourceName = element.AttributeSafe("ResourceName");
                 var actionTypeStr = element.AttributeSafe("Type");
                 var resourceType = GetResourceTypeFromString(actionTypeStr);
-                Guid resId;
-                Guid.TryParse(resourceIdAsString, out resId);
-                Dependencies.Add(CreateResourceForTree(resId, Guid.Empty, resourceName, resourceType));
-            }
+                Guid.TryParse(resourceIdAsString, out Guid resId);
+                var resourceForTree = Dependencies.FirstOrDefault(tree => tree.ResourceID == resId);
+                if (resourceForTree == null)
+                {
+                    Dependencies.Add(CreateResourceForTree(resId, Guid.Empty, resourceName, resourceType));
+                }
+            }           
         }
 
         private void AddEmailSources(XElement elementToUse)
         {
-            if(elementToUse == null)
+            if (elementToUse == null)
             {
                 return;
             }
-            if(Dependencies == null)
+            if (Dependencies == null)
             {
                 Dependencies = new List<IResourceForTree>();
             }
             var dependenciesFromXml = from desc in elementToUse.Descendants()
-                where desc.Name.LocalName.Contains("EmailSource") && desc.HasAttributes
-                select desc;
+                                      where desc.Name.LocalName.Contains("EmailSource") && desc.HasAttributes
+                                      select desc;
             var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
-            var count = xElements.Count;
-            if(count == 1)
+            foreach (var element in xElements)
             {
-                var element = xElements[0];
                 var resourceIdAsString = element.AttributeSafe("ResourceID");
                 var resourceName = element.AttributeSafe("ResourceName");
                 var actionTypeStr = element.AttributeSafe("Type");
                 var resourceType = GetResourceTypeFromString(actionTypeStr);
-                Guid resId;
-                Guid.TryParse(resourceIdAsString, out resId);
-                Dependencies.Add(CreateResourceForTree(resId, Guid.Empty, resourceName, resourceType));
+                Guid.TryParse(resourceIdAsString, out Guid resId);
+                var resourceForTree = Dependencies.FirstOrDefault(tree => tree.ResourceID == resId);
+                if (resourceForTree == null)
+                {
+                    Dependencies.Add(CreateResourceForTree(resId, Guid.Empty, resourceName, resourceType));
+                }
+            }
+        }
+
+        private void AddDotnetSources(XElement elementToUse)
+        {
+            if (elementToUse == null)
+            {
+                return;
+            }
+            if (Dependencies == null)
+            {
+                Dependencies = new List<IResourceForTree>();
+            }
+            var dependenciesFromXml = from desc in elementToUse.Descendants()
+                                      where (desc.Name.LocalName.Contains("DsfEnhancedDotNetDllActivity")) && desc.HasAttributes
+                                      select desc;
+            var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
+
+            foreach (var element in xElements)
+            {
+                var resourceIdAsString = element.AttributeSafe("SourceId");
+                var resourceName = element.AttributeSafe("ResourceName");
+                var actionTypeStr = element.AttributeSafe("Type");
+                var resourceType = GetResourceTypeFromString(actionTypeStr);
+                Guid.TryParse(resourceIdAsString, out Guid resId);
+                var resourceForTree = Dependencies.FirstOrDefault(tree => tree.ResourceID == resId);
+                if (resourceForTree == null)
+                {
+                    Dependencies.Add(CreateResourceForTree(resId, Guid.Empty, resourceName, resourceType));
+                }
             }
         }
 
         private void AddRabbitMqSources(XElement elementToUse)
         {
-            if(elementToUse == null)
+            if (elementToUse == null)
             {
                 return;
             }
-            if(Dependencies == null)
+            if (Dependencies == null)
             {
                 Dependencies = new List<IResourceForTree>();
             }
             var dependenciesFromXml = from desc in elementToUse.Descendants()
-                where (desc.Name.LocalName.Contains("DsfPublishRabbitMQActivity") || desc.Name.LocalName.Contains("DsfConsumeRabbitMQActivity")) && desc.HasAttributes
-                select desc;
+                                      where (desc.Name.LocalName.Contains("DsfPublishRabbitMQActivity") || desc.Name.LocalName.Contains("DsfConsumeRabbitMQActivity")) && desc.HasAttributes
+                                      select desc;
             var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
-            var count = xElements.Count;
-            if(count == 1)
+            foreach (var element in xElements)
             {
-                var element = xElements[0];
                 var resourceIdAsString = element.AttributeSafe("RabbitMQSourceResourceId");
                 var uniqueIdAsString = element.AttributeSafe("UniqueID");
-                Guid uniqueId;
-                Guid.TryParse(uniqueIdAsString, out uniqueId);
-                Guid resId;
-                Guid.TryParse(resourceIdAsString, out resId);
-                Dependencies.Add(CreateResourceForTree(resId, uniqueId, "", "RabbitMQSource"));
+                Guid.TryParse(uniqueIdAsString, out Guid uniqueId);
+                Guid.TryParse(resourceIdAsString, out Guid resId);
+                var resourceForTree = Dependencies.FirstOrDefault(tree => tree.ResourceID == resId);
+                if (resourceForTree == null)
+                {
+                    Dependencies.Add(CreateResourceForTree(resId, uniqueId, "", "RabbitMQSource"));
+                }
+            }
+        }
+
+        private void AddWebSources(XElement elementToUse)
+        {
+            if (elementToUse == null)
+            {
+                return;
+            }
+            if (Dependencies == null)
+            {
+                Dependencies = new List<IResourceForTree>();
+            }
+            var dependenciesFromXml = from desc in elementToUse.Descendants()
+                                      where (desc.Name.LocalName.Contains("DsfWebDeleteActivity") 
+                                            || desc.Name.LocalName.Contains("DsfWebGetActivity")
+                                            || desc.Name.LocalName.Contains("DsfWebPostActivity")
+                                            || desc.Name.LocalName.Contains("DsfWebPutActivity")
+                                            
+                                            ) && desc.HasAttributes
+                                      select desc;
+            var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
+            foreach (var element in xElements)
+            {
+                var resourceIdAsString = element.AttributeSafe("SourceId");
+                var uniqueIdAsString = element.AttributeSafe("UniqueID");
+                var resourceName = element.AttributeSafe("ResourceName");
+                Guid.TryParse(uniqueIdAsString, out Guid uniqueId);
+                Guid.TryParse(resourceIdAsString, out Guid resId);
+                var resourceForTree = Dependencies.FirstOrDefault(tree => tree.ResourceID == resId);
+                if (resourceForTree == null)
+                {
+                    Dependencies.Add(CreateResourceForTree(resId, uniqueId, resourceName, "WebSource"));
+                }
+            }
+        }
+
+        private void AddSharepointSources(XElement elementToUse)
+        {
+            if (elementToUse == null)
+            {
+                return;
+            }
+            if (Dependencies == null)
+            {
+                Dependencies = new List<IResourceForTree>();
+            }
+            var dependenciesFromXml = from desc in elementToUse.Descendants()
+                                      where (desc.Name.LocalName.Contains("SharepointCopyFileActivity") 
+                                            || desc.Name.LocalName.Contains("SharepointCreateListItemActivity")
+                                            || desc.Name.LocalName.Contains("SharepointDeleteFileActivity")
+                                            || desc.Name.LocalName.Contains("SharepointDeleteListItemActivity")
+                                            || desc.Name.LocalName.Contains("SharepointFileDownLoadActivity")
+                                            || desc.Name.LocalName.Contains("SharepointFileUploadActivity")
+                                            || desc.Name.LocalName.Contains("SharepointMoveFileActivity")
+                                            || desc.Name.LocalName.Contains("SharepointReadFolderItemActivity")
+                                            || desc.Name.LocalName.Contains("SharepointReadListActivity")
+                                            || desc.Name.LocalName.Contains("SharepointUpdateListItemActivity")
+                                            
+                                            ) && desc.HasAttributes
+                                      select desc;
+            var xElements = dependenciesFromXml as List<XElement> ?? dependenciesFromXml.ToList();
+            foreach (var element in xElements)
+            {
+                var resourceIdAsString = element.AttributeSafe("SharepointServerResourceId");
+                var uniqueIdAsString = element.AttributeSafe("UniqueID");
+                var resourceName = element.AttributeSafe("ResourceName");
+                Guid.TryParse(uniqueIdAsString, out Guid uniqueId);
+                Guid.TryParse(resourceIdAsString, out Guid resId);
+                var resourceForTree = Dependencies.FirstOrDefault(tree => tree.ResourceID == resId);
+                if (resourceForTree == null)
+                {
+                    Dependencies.Add(CreateResourceForTree(resId, uniqueId, resourceName, "SharepointSource"));
+                }
             }
         }
 
         private void AddRemoteServerDependencies(XElement element)
         {
             var environmentIdString = element.AttributeSafe("EnvironmentID");
-            Guid environmentId;
-            if(Guid.TryParse(environmentIdString, out environmentId) && environmentId != Guid.Empty)
+            if (Guid.TryParse(environmentIdString, out Guid environmentId) && environmentId != Guid.Empty)
             {
-                if(environmentId == Guid.Empty) return;
+                if (environmentId == Guid.Empty)
+                {
+                    return;
+                }
+
                 var resourceName = element.AttributeSafe("FriendlySourceName");
                 Dependencies.Add(CreateResourceForTree(environmentId, Guid.Empty, resourceName, "Server"));
             }
@@ -641,20 +743,20 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         public static void ParseProperties(string s, Dictionary<string, string> properties)
         {
-            if(s == null)
+            if (s == null)
             {
-                throw new ArgumentNullException("s");
+                throw new ArgumentNullException(nameof(s));
             }
-            if(properties == null)
+            if (properties == null)
             {
-                throw new ArgumentNullException("properties");
+                throw new ArgumentNullException(nameof(properties));
             }
 
             var props = s.Split(';');
-            foreach(var p in props.Select(prop => prop.Split('=')).Where(p => p.Length >= 1))
+            foreach (var p in props.Select(prop => prop.Split('=')).Where(p => p.Length >= 1))
             {
                 var key = p[0];
-                if(!properties.ContainsKey(key))
+                if (!properties.ContainsKey(key))
                 {
                     continue;
                 }

@@ -10,6 +10,7 @@
              xmlns:views="clr-namespace:Warewolf.Studio.Views"
              xmlns:interfaces="clr-namespace:Dev2.Common.Interfaces;assembly=Dev2.Common.Interfaces"
              xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
+             xmlns:fa="http://schemas.fontawesome.io/icons/"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance Type=interfaces:IManageEmailSourceViewModel, IsDesignTimeCreatable=False}">
@@ -68,10 +69,10 @@
                     <TextBox x:Name="HostTextBox" 
                              Grid.Row="0" 
                              Grid.Column="1" 
-                             ToolTip="{x:Static languages:Core.ManageEmailHostNameTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ManageEmailHostNameTooltip}"
                              Text="{Binding HostName, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.EmailSourceHostNameHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceHostNameHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
 
@@ -80,10 +81,10 @@
                              Grid.Row="1" 
                              Grid.Column="1" 
                              Margin="{StaticResource ControlBorderTop}"
-                             ToolTip="{x:Static languages:Core.ManageEmailUserNameTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ManageEmailUserNameTooltip}"
                              Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.UserNameAuthenticationHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.UserNameAuthenticationHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
 
@@ -92,11 +93,11 @@
                                  Grid.Row="2" 
                                  Grid.Column="1"
                                  Margin="{StaticResource ControlBorderTop}"
-                                 ToolTip="{x:Static languages:Core.ManageEmailPasswordTooltip}"
+                                 ToolTip="{x:Static languages:Tooltips.ManageEmailPasswordTooltip}"
                                  customControls:PasswordBoxAssistant.BindPassword="true"
                                  customControls:PasswordBoxAssistant.BoundPassword="{Binding Path=Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.PasswordAuthenticationHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.PasswordAuthenticationHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </PasswordBox>
 
@@ -110,11 +111,11 @@
                                      x:Name="EnableSslYes"
                                      VerticalAlignment="Center" 
                                      HorizontalAlignment="Left" 
-                                     ToolTip="{x:Static languages:Core.ManageEmailEnableSslYesTooltip}"
+                                     ToolTip="{x:Static languages:Tooltips.ManageEmailEnableSslYesTooltip}"
                                      Margin="{StaticResource ControlBorderRight}"
                                      IsChecked="{Binding EnableSslYes, UpdateSourceTrigger=PropertyChanged}">Yes
                             <i:Interaction.Behaviors>
-                                <core:HelpSetter Text="{x:Static languages:Core.EmailSourceEnableSslHelp}" DataContext="{Binding}" />
+                                <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceEnableSslHelp}" DataContext="{Binding}" />
                             </i:Interaction.Behaviors>
                         </RadioButton>
                         <RadioButton Grid.Column="1" 
@@ -122,11 +123,11 @@
                                      x:Name="EnableSslNo"
                                      VerticalAlignment="Center" 
                                      HorizontalAlignment="Left" 
-                                     ToolTip="{x:Static languages:Core.ManageEmailEnableSslNoTooltip}"
+                                     ToolTip="{x:Static languages:Tooltips.ManageEmailEnableSslNoTooltip}"
                                      Margin="{StaticResource ControlBorderRight}"
                                      IsChecked="{Binding EnableSslNo, UpdateSourceTrigger=PropertyChanged}">No
                             <i:Interaction.Behaviors>
-                                <core:HelpSetter Text="{x:Static languages:Core.EmailSourceEnableSslHelp}" DataContext="{Binding}" />
+                                <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceEnableSslHelp}" DataContext="{Binding}" />
                             </i:Interaction.Behaviors>
                         </RadioButton>
                     </Grid>
@@ -135,10 +136,10 @@
                     <TextBox x:Name="PortTextBox" 
                              Grid.Row="4" 
                              Grid.Column="1" 
-                             ToolTip="{x:Static languages:Core.ManageEmailPortTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ManageEmailPortTooltip}"
                              Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.EmailSourcePortHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourcePortHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
 
@@ -146,11 +147,11 @@
                     <TextBox x:Name="TimeoutTextBox" 
                              Grid.Row="5" 
                              Grid.Column="1" 
-                             ToolTip="{x:Static languages:Core.ManageEmailTimeoutTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ManageEmailTimeoutTooltip}"
                              Margin="{StaticResource ControlBorderTop}"
                              Text="{Binding Timeout, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.EmailSourceTimeoutHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceTimeoutHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
                 </Grid>
@@ -179,11 +180,11 @@
                     <TextBox x:Name="FromTextBox" 
                              Grid.Row="1" 
                              Grid.Column="1" 
-                             ToolTip="{x:Static languages:Core.ManageEmailFromTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ManageEmailFromTooltip}"
                              Margin="{StaticResource ElementBorderTop}"
                              Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.EmailSourceEmailFromHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceEmailFromHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
                     <TextBlock Grid.Column="0" Grid.Row="2" VerticalAlignment="Center" Text="{Binding EmailToLabel}" Margin="{StaticResource ControlBorderTop}"/>
@@ -191,10 +192,10 @@
                              Grid.Row="2" 
                              Grid.Column="1" 
                              Margin="{StaticResource ControlBorderTop}"
-                             ToolTip="{x:Static languages:Core.ManageEmailToTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ManageEmailToTooltip}"
                              Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.EmailSourceEmailToHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceEmailToHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
                     <StackPanel Grid.Column="1" Grid.Row="3" 
@@ -202,10 +203,20 @@
                                 Orientation="Horizontal" 
                                 HorizontalAlignment="Right" 
                                 VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource ErrorTextBlockStyle}" 
-                                   TextAlignment="Right" 
-                                   Margin="{StaticResource ControlBorderRight}"
-                                   Text="{Binding TestMessage}"></TextBlock>
+                        <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding Path=TestPassed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Check" 
+                             HorizontalAlignment="Right" />
+                        <fa:ImageAwesome Width="14" 
+                             Height="14" 
+                             Margin="{StaticResource ControlBorderRight}" 
+                             Foreground="{StaticResource WareWolfOrangeBrush}" 
+                             Visibility="{Binding Path=TestFailed,Converter={StaticResource BoolToVisibilityConverter}}" 
+                             Icon="Ban" 
+                             HorizontalAlignment="Right" />
                         <views:CircularProgressBar Width="14" Height="14" Margin="{StaticResource ControlBorderRight}" 
                                                    Visibility="{Binding Path=Testing,Converter={StaticResource BoolToVisibilityConverter}}" />
                         <Button x:Name="TestSendCommand"
@@ -214,14 +225,26 @@
                                 Height="30" 
                                 IsEnabled="{Binding EnableSend}"
                                 Content="{x:Static languages:Core.TestConnectionLabel}" 
-                                ToolTip="{x:Static languages:Core.ManageEmailSendTooltip}"
+                                ToolTip="{x:Static languages:Tooltips.ManageEmailSendTooltip}"
                                 Command="{Binding Path=SendCommand}">
                             <i:Interaction.Behaviors>
-                                <core:HelpSetter Text="{x:Static languages:Core.ServerTestConnectionHelp}" DataContext="{Binding}" />
+                                <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceTestHelp}" DataContext="{Binding}" />
                             </i:Interaction.Behaviors>
                         </Button>
                     </StackPanel>
                 </Grid>
+                <TextBox TextWrapping="WrapWithOverflow" 
+                         Grid.Row="3"
+                         VerticalAlignment="Top"
+                         HorizontalAlignment="Left"
+                         x:Name="ErrorTextBlock" 
+                         Text="{Binding TestMessage}" 
+                         Style="{StaticResource ErrorMessageTextboxStyle}"
+                         Visibility="{Binding Path=TestFailed,Converter={StaticResource BoolToVisibilityConverter}}">
+                    <i:Interaction.Behaviors>
+                        <customControls:DoubleClickBehavior/>
+                    </i:Interaction.Behaviors>
+                </TextBox>
             </Grid>
         </Grid>
     </ScrollViewer>

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System.ComponentModel;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.DataList.Contract.Binary_Objects
 {
@@ -157,10 +158,7 @@ namespace Dev2.DataList.Contract.Binary_Objects
 
         protected void OnNotifyPropertyChange(string propertyName)
         {
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
 

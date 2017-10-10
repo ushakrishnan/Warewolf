@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,24 +18,24 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Sql;
 using MySql.Data.MySqlClient;
-using Warewolf.Storage;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Odbc;
+using System.Linq;
 using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Services.Sql;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 using Npgsql;
 using Warewolf.Resource.Errors;
-
-// ReSharper disable InconsistentNaming
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Services.Execution
 {
-    public class DatabaseServiceExecution : ServiceExecutionAbstract<DbService, DbSource>
+    public class DatabaseServiceExecution : ServiceExecutionAbstract<DbService, DbSource>, IDisposable
     {
         public DatabaseServiceExecution(IDSFDataObject dataObj)
             : base(dataObj, true)
@@ -43,10 +43,7 @@ namespace Dev2.Services.Execution
             _sqlServer = new SqlServer();
         }
 
-
-
-
-        private IDbServer _sqlServer; 
+        private IDbServer _sqlServer;
         public string ProcedureName { private get; set; }
 
         private void SetupSqlServer(IErrorResultTO errors)
@@ -57,7 +54,7 @@ namespace Dev2.Services.Execution
                 if (!connected)
                 {
                     Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
-                        Source.ConnectionString));
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
                 }
             }
             catch (SqlException sex)
@@ -72,12 +69,12 @@ namespace Dev2.Services.Execution
                                          "Procedure: " + sex.Errors[i].Procedure + Environment.NewLine);
                 }
                 errors.AddError(errorMessages.ToString());
-                Dev2Logger.Error(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
             }
             catch (Exception ex)
             {
                 errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
         }
 
@@ -90,7 +87,7 @@ namespace Dev2.Services.Execution
                 if (!connected)
                 {
                     Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
-                        Source.ConnectionString));
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
                 }
                 return server;
             }
@@ -99,12 +96,12 @@ namespace Dev2.Services.Execution
                 var errorMessages = new StringBuilder();
                 errorMessages.Append(sex.Message);
                 errors.AddError(errorMessages.ToString());
-                Dev2Logger.Error(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
             }
             catch (Exception ex)
             {
                 errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
             return server;
         }
@@ -134,19 +131,31 @@ namespace Dev2.Services.Execution
                 DestroySqlServer();
             }
         }
-
-        // ReSharper disable once OptionalParameterHierarchyMismatch
-        protected override object ExecuteService(int update, out ErrorResultTO errors, IOutputFormatter formater = null)
+        
+        protected override object ExecuteService(int update, out ErrorResultTO errors, IOutputFormatter formater)
         {
             errors = new ErrorResultTO();
             var invokeErrors = new ErrorResultTO();
+            if (Source == null)
+            {
+                GetSource(SourceId);
+            }
             switch (Source.ServerType)
             {
                 case enSourceType.SqlDatabase:
                     {
-                        SqlExecution(invokeErrors, update);
-                        ErrorResult.MergeErrors(invokeErrors);
-                        return Guid.NewGuid();
+                        try
+                        {
+                            SqlExecution(invokeErrors, update);
+                            ErrorResult.MergeErrors(invokeErrors);
+                            return Guid.NewGuid();
+                        }
+                        catch (Exception e)
+                        {
+                            Dev2Logger.Error(e, DataObj.ExecutionID.ToString());
+                            return Guid.NewGuid();
+                        }
+
                     }
                 case enSourceType.MySqlDatabase:
                     {
@@ -174,6 +183,37 @@ namespace Dev2.Services.Execution
                         ErrorResult.MergeErrors(invokeErrors);
                         return result;
                     }
+
+                case enSourceType.WebService:
+                    break;
+                case enSourceType.DynamicService:
+                    break;
+                case enSourceType.ManagementDynamicService:
+                    break;
+                case enSourceType.PluginSource:
+                    break;
+                case enSourceType.Unknown:
+                    break;
+                case enSourceType.Dev2Server:
+                    break;
+                case enSourceType.EmailSource:
+                    break;
+                case enSourceType.WebSource:
+                    break;
+                case enSourceType.OauthSource:
+                    break;
+                case enSourceType.SharepointServerSource:
+                    break;
+                case enSourceType.RabbitMQSource:
+                    break;
+                case enSourceType.ExchangeSource:
+                    break;
+                case enSourceType.WcfSource:
+                    break;
+                case enSourceType.ComPluginSource:
+                    break;
+                default:
+                    break;
             }
             return null;
         }
@@ -186,82 +226,108 @@ namespace Dev2.Services.Execution
                 if (executeService.Rows != null)
                 {
 
-                    var rowIdx = 1;
-                    foreach (DataRow row in executeService.Rows)
+                    try
                     {
-                        foreach (var serviceOutputMapping in Outputs)
+                        var rowIdx = 1;
+                        foreach (DataRow row in executeService.Rows)
                         {
-                            var rsType = DataListUtil.GetRecordsetIndexType(serviceOutputMapping.MappedTo);
-                            var rowIndex = DataListUtil.ExtractIndexRegionFromRecordset(serviceOutputMapping.MappedTo);
-                            var rs = serviceOutputMapping.RecordSetName;
+                            foreach (var serviceOutputMapping in Outputs)
+                            {
+                                if (!string.IsNullOrEmpty(serviceOutputMapping?.MappedTo))
+                                {
+                                    var rsType = DataListUtil.GetRecordsetIndexType(serviceOutputMapping.MappedTo);
+                                    var rowIndex = DataListUtil.ExtractIndexRegionFromRecordset(serviceOutputMapping.MappedTo);
+                                    var rs = serviceOutputMapping.RecordSetName;
 
-                            if (environment.HasRecordSet(rs))
-                            {
-                                if (started)
-                                {
-                                    rowIdx = environment.GetLength(rs) + 1;
-                                    started = false;
+                                    if (!string.IsNullOrEmpty(rs) && environment.HasRecordSet(rs))
+                                    {
+                                        if (started)
+                                        {
+                                            rowIdx = environment.GetLength(rs) + 1;
+                                            started = false;
+                                        }
+                                    }
+                                    else
+                                    {
+
+                                        try
+                                        {
+                                            environment.AssignDataShape(serviceOutputMapping.MappedTo);
+                                        }
+                                        catch (Exception e)
+                                        {
+                                            Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                                        }
+                                    }
+                                    if (rsType == enRecordsetIndexType.Star && started)
+                                    {
+                                        rowIdx = 1;
+                                        started = false;
+                                    }
+                                    if (rsType == enRecordsetIndexType.Numeric)
+                                    {
+                                        rowIdx = int.Parse(rowIndex);
+                                    }
+                                    if (!executeService.Columns.Contains(serviceOutputMapping.MappedFrom))
+                                    {
+                                        continue;
+                                    }
+                                    var value = row[serviceOutputMapping.MappedFrom];
+                                    if (update != 0)
+                                    {
+                                        rowIdx = update;
+                                    }
+                                    var displayExpression = DataListUtil.ReplaceRecordsetBlankWithIndex(DataListUtil.AddBracketsToValueIfNotExist(serviceOutputMapping.MappedTo), rowIdx);
+                                    if (rsType == enRecordsetIndexType.Star)
+                                    {
+                                        displayExpression = DataListUtil.ReplaceStarWithFixedIndex(displayExpression, rowIdx);
+                                    }
+                                    environment.Assign(displayExpression, value.ToString(), update);
                                 }
                             }
-                            else
-                            {
-                                environment.AssignDataShape(serviceOutputMapping.MappedTo);
-                            }
-                            if (rsType == enRecordsetIndexType.Star && started)
-                            {
-                                rowIdx = 1;
-                                started = false;
-                            }
-                            if (rsType == enRecordsetIndexType.Numeric)
-                            {
-                                rowIdx = int.Parse(rowIndex);
-                            }
-                            if (!executeService.Columns.Contains(serviceOutputMapping.MappedFrom))
-                            {
-                                continue;
-                            }
-                            var value = row[serviceOutputMapping.MappedFrom];
-                            {
-                                if (update != 0)
-                                {
-                                    rowIdx = update;
-                                }
-                                var displayExpression = DataListUtil.ReplaceRecordsetBlankWithIndex(DataListUtil.AddBracketsToValueIfNotExist(serviceOutputMapping.MappedTo), rowIdx);
-                                if (rsType == enRecordsetIndexType.Star)
-                                {
-                                    displayExpression = DataListUtil.ReplaceStarWithFixedIndex(displayExpression, rowIdx);
-                                }
-                                environment.Assign(displayExpression, value.ToString(), update);
-                            }
+                            rowIdx++;
                         }
-                        rowIdx++;
+                    }
+                    catch (Exception e)
+                    {
+                        Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                     }
                 }
             }
         }
-
         private void SqlExecution(ErrorResultTO errors, int update)
         {
             try
             {
                 if (_sqlServer != null)
                 {
+
                     var parameters = GetSqlParameters();
                     if (parameters != null)
                     {
-                        // ReSharper disable CoVariantArrayConversion
-                        using (var dataSet = ((SqlServer)_sqlServer).FetchDataTable(parameters.ToArray()))
-                        // ReSharper restore CoVariantArrayConversion
+                        var dataSet = (SqlServer)_sqlServer;
+                        using (dataSet)
                         {
-                            TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
+
+                            var dbDataParameters = parameters.Cast<IDbDataParameter>().ToArray();
+
+                            var dataTable = dataSet.FetchDataTable(dbDataParameters);
+
+                            TranslateDataTableToEnvironment(dataTable, DataObj.Environment, update);
                         }
+
+
                     }
                 }
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error("Sql Error:", ex);
-                errors.AddError($"{"Sql Error: "}{ex.Message}");
+                Dev2Logger.Error("SQL Error:", ex, GlobalConstants.WarewolfError);
+                errors.AddError($"SQL Error: {ex.StackTrace}");
+            }
+            finally
+            {
+                _sqlServer?.Dispose();
             }
         }
 
@@ -276,9 +342,9 @@ namespace Dev2.Services.Execution
 
                     if (parameters != null)
                     {
-                        // ReSharper disable CoVariantArrayConversion
+
                         using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
-                        // ReSharper restore CoVariantArrayConversion
+
                         {
                             TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
                             return true;
@@ -301,16 +367,9 @@ namespace Dev2.Services.Execution
             {
                 foreach (var parameter in Inputs)
                 {
-                    if (parameter.EmptyIsNull &&
+                    sqlParameters.Add(parameter.EmptyIsNull &&
                         (parameter.Value == null ||
-                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0))
-                    {
-                        sqlParameters.Add(new SqlParameter($"@{parameter.Name}", DBNull.Value));
-                    }
-                    else
-                    {
-                        sqlParameters.Add(new SqlParameter($"@{parameter.Name}", parameter.Value));
-                    }
+                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0) ? new SqlParameter($"@{parameter.Name}", DBNull.Value) : new SqlParameter($"@{parameter.Name}", parameter.Value));
                 }
             }
             return sqlParameters;
@@ -324,16 +383,10 @@ namespace Dev2.Services.Execution
             {
                 foreach (var parameter in methodParameters)
                 {
-                    if (parameter.EmptyIsNull &&
+                    var parameterName = parameter.Name.Replace("`", "");
+                    sqlParameters.Add(parameter.EmptyIsNull &&
                         (parameter.Value == null ||
-                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0))
-                    {
-                        sqlParameters.Add(new MySqlParameter($"@{parameter.Name}", DBNull.Value));
-                    }
-                    else
-                    {
-                        sqlParameters.Add(new MySqlParameter($"@{parameter.Name}", parameter.Value));
-                    }
+                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0) ? new MySqlParameter($"@{parameterName}", DBNull.Value) : new MySqlParameter($"@{parameterName}", parameter.Value));
                 }
             }
             return sqlParameters;
@@ -348,7 +401,7 @@ namespace Dev2.Services.Execution
                 if (!connected)
                 {
                     Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
-                        Source.ConnectionString));
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
                 }
                 return server;
             }
@@ -357,12 +410,12 @@ namespace Dev2.Services.Execution
                 var errorMessages = new StringBuilder();
                 errorMessages.Append(oex.Message);
                 errors.AddError(errorMessages.ToString());
-                Dev2Logger.Error(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
             }
             catch (Exception ex)
             {
                 errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
             return server;
         }
@@ -378,9 +431,9 @@ namespace Dev2.Services.Execution
 
                     if (parameters != null)
                     {
-                        // ReSharper disable CoVariantArrayConversion
+
                         using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
-                        // ReSharper restore CoVariantArrayConversion
+
                         {
                             TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
                             return true;
@@ -409,7 +462,7 @@ namespace Dev2.Services.Execution
                          string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0))
                     {
                         dbDataParameter.Value = DBNull.Value;
-                    }                    
+                    }
                     sqlParameters.Add(dbDataParameter);
 
                 }
@@ -426,7 +479,7 @@ namespace Dev2.Services.Execution
                 if (!connected)
                 {
                     Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
-                        Source.ConnectionString));
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
                 }
                 return server;
             }
@@ -435,12 +488,12 @@ namespace Dev2.Services.Execution
                 var errorMessages = new StringBuilder();
                 errorMessages.Append(oex.Message);
                 errors.AddError(errorMessages.ToString());
-                Dev2Logger.Error(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
             }
             catch (Exception ex)
             {
                 errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
             return server;
         }
@@ -456,9 +509,9 @@ namespace Dev2.Services.Execution
 
                     if (parameters != null)
                     {
-                        // ReSharper disable CoVariantArrayConversion
+
                         using (var dataSet = server.FetchDataTable())
-                        //// ReSharper restore CoVariantArrayConversion
+
                         {
                             TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
                             return true;
@@ -484,16 +537,9 @@ namespace Dev2.Services.Execution
             {
                 foreach (var parameter in methodParameters)
                 {
-                    if (parameter.EmptyIsNull &&
+                    sqlParameters.Add(parameter.EmptyIsNull &&
                         (parameter.Value == null ||
-                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0))
-                    {
-                        sqlParameters.Add(new OdbcParameter($"@{parameter.Name}", DBNull.Value));
-                    }
-                    else
-                    {
-                        sqlParameters.Add(new OdbcParameter($"@{parameter.Name}", parameter.Value));
-                    }
+                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0) ? new OdbcParameter($"@{parameter.Name}", DBNull.Value) : new OdbcParameter($"@{parameter.Name}", parameter.Value));
                 }
             }
             return sqlParameters;
@@ -508,7 +554,7 @@ namespace Dev2.Services.Execution
                 if (!connected)
                 {
                     Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
-                        Source.ConnectionString));
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
                 }
                 return server;
             }
@@ -517,12 +563,12 @@ namespace Dev2.Services.Execution
                 var errorMessages = new StringBuilder();
                 errorMessages.Append(ex.Message);
                 errors.AddError(errorMessages.ToString());
-                Dev2Logger.Error(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
             }
             catch (Exception ex)
             {
                 errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
             return server;
         }
@@ -537,9 +583,9 @@ namespace Dev2.Services.Execution
 
                     if (parameters != null)
                     {
-                        // ReSharper disable CoVariantArrayConversion
-                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
-                        // ReSharper restore CoVariantArrayConversion
+
+                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName)))
+
                         {
                             TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
                             return true;
@@ -564,23 +610,19 @@ namespace Dev2.Services.Execution
                 {
                     if (!string.IsNullOrEmpty(parameter.Name))
                     {
-                        if (parameter.EmptyIsNull &&
+                        sqlParameters.Add(parameter.EmptyIsNull &&
                             (parameter.Value == null ||
                              string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) ==
-                             0))
-                        {
-                            sqlParameters.Add(new NpgsqlParameter($"@{parameter.Name}", DBNull.Value));
-                        }
-                        else
-                        {
-                            sqlParameters.Add(new NpgsqlParameter($"@{parameter.Name}", parameter.Value));
-                        }
+                             0) ? new NpgsqlParameter($"@{parameter.Name}", DBNull.Value) : new NpgsqlParameter($"@{parameter.Name}", parameter.Value));
                     }
                 }
             }
             return sqlParameters;
         }
-    }
 
-    
+        public void Dispose()
+        {
+            _sqlServer.Dispose();
+        }
+    }
 }

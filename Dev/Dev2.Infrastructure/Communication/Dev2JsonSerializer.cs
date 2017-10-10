@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,6 @@
 
 using System;
 using System.IO;
-using System.Runtime.Serialization.Formatters;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
@@ -24,18 +23,22 @@ namespace Dev2.Communication
     /// </summary>
     public class Dev2JsonSerializer : ISerializer
     {
-// ReSharper disable RedundantNameQualifier
+
         const Formatting Formatting = Newtonsoft.Json.Formatting.Indented;
-// ReSharper restore RedundantNameQualifier
+
         readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+            TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects
             };
         readonly JsonSerializerSettings _deSerializerSettings = new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Auto,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+            TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+            ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
             };
         public string Serialize<T>(T message)
         {
@@ -61,9 +64,16 @@ namespace Dev2.Communication
 
             using(StringWriter sw = new StringWriter(result))
             {
-                var jsonSerializer = new JsonSerializer { TypeNameHandling = _serializerSettings.TypeNameHandling, TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat };
-                using(var jsonTextWriter = new JsonTextWriter(sw))
+                var jsonSerializer = new JsonSerializer
                 {
+                    TypeNameHandling = _serializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormatHandling = _serializerSettings.TypeNameAssemblyFormatHandling,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };                
+                using (var jsonTextWriter = new JsonTextWriter(sw))
+                {
+                    
                     jsonSerializer.Serialize(jsonTextWriter, obj);
                     jsonTextWriter.Flush();
                     jsonTextWriter.Close();
@@ -73,12 +83,17 @@ namespace Dev2.Communication
             return result;
         }
 
-        // Please use this for all your deserialize needs ;)
-        public T Deserialize<T>(StringBuilder message)
+        public T Deserialize<T>(StringBuilder message) where T : class
         {
             if(message != null && message.Length > 0)
             {
-                JsonSerializer serializer = new JsonSerializer { TypeNameHandling = _deSerializerSettings.TypeNameHandling, TypeNameAssemblyFormat = _serializerSettings.TypeNameAssemblyFormat };
+                JsonSerializer serializer = new JsonSerializer
+                {
+                    TypeNameHandling = _deSerializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormatHandling = _serializerSettings.TypeNameAssemblyFormatHandling,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };
                 using(MemoryStream ms = new MemoryStream(message.Length))
                 {
                     // now load the stream ;)
@@ -112,14 +127,14 @@ namespace Dev2.Communication
                         {
                             using(JsonReader jr = new JsonTextReader(sr))
                             {
-                                var result = serializer.Deserialize<T>(jr);
-                                return result;
+                                var result = serializer.Deserialize(jr,typeof(T));
+                                return result as T;
                             }
                         }
                     }
-                    // ReSharper disable EmptyGeneralCatchClause
+                    
                     catch
-                    // ReSharper restore EmptyGeneralCatchClause
+                    
                     {
                         // Do nothing default(T) returned below ;)
                     }
@@ -130,5 +145,43 @@ namespace Dev2.Communication
             return default(T);
         }
 
+        public void Serialize(StreamWriter streamWriter, object obj)
+        {
+            using (streamWriter)
+            {
+                var jsonSerializer = new JsonSerializer
+                {
+                    TypeNameHandling = _serializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormatHandling = _serializerSettings.TypeNameAssemblyFormatHandling,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };
+                using (var jsonTextWriter = new JsonTextWriter(streamWriter))
+                {
+                    jsonSerializer.Serialize(jsonTextWriter, obj);
+                    jsonTextWriter.Flush();
+                    jsonTextWriter.Close();
+                }
+            }
+        }
+
+        public T Deserialize<T>(StreamReader streamWriter)
+        {
+            using (streamWriter)
+            {
+                var jsonSerializer = new JsonSerializer
+                {
+                    TypeNameHandling = _serializerSettings.TypeNameHandling,
+                    TypeNameAssemblyFormatHandling = _serializerSettings.TypeNameAssemblyFormatHandling,
+                    ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
+                    PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
+                };
+                using (var reader = new JsonTextReader(streamWriter))
+                {
+                    var result = jsonSerializer.Deserialize<T>(reader);
+                    return result;
+                }
+            }
+        }
     }
 }

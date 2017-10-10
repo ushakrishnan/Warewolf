@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,8 +19,8 @@ using Dev2;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Data.Decision;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -33,15 +33,16 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace ActivityUnitTests
-// ReSharper restore CheckNamespace
+
 {
     [TestClass]
     public class BaseActivityUnitTest
     {
-        // ReSharper disable once MemberInitializerValueIgnored
+        
        
 
         public BaseActivityUnitTest()
@@ -55,7 +56,7 @@ namespace ActivityUnitTests
       
         }
 
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        
         protected Guid ExecutionId { get; set; }
 
         protected string TestData { get; set; }
@@ -135,9 +136,7 @@ namespace ActivityUnitTests
         }
 
         protected IDSFDataObject ExecuteProcess(IDSFDataObject dataObject = null, bool isDebug = false, IEsbChannel channel = null, bool isRemoteInvoke = false, bool throwException = true, bool isDebugMode = false, Guid currentEnvironmentId = default(Guid), bool overrideRemote = false)
-        {
-
-            
+        {            
                 var svc = new ServiceAction { Name = "TestAction", ServiceName = "UnitTestService" };
                 svc.SetActivity(FlowchartProcess);
                 Mock<IEsbChannel> mockChannel = new Mock<IEsbChannel>();
@@ -364,9 +363,12 @@ namespace ActivityUnitTests
                 result = env.FetchErrors();
                 return;
             }
+            var brackettedField = DataListUtil.AddBracketsToValueIfNotExist(fieldToRetrieve);
+            CommonFunctions.WarewolfEvalResult evalResult;
             try
             {
-                result = ExecutionEnvironment.WarewolfEvalResultToString(env.Eval(DataListUtil.AddBracketsToValueIfNotExist(fieldToRetrieve), 0, true));
+                evalResult = env.Eval(brackettedField, 0, true);
+                result = ExecutionEnvironment.WarewolfEvalResultToString(evalResult);
             }
             catch( Exception err)
             {
@@ -391,14 +393,13 @@ namespace ActivityUnitTests
                 {
                     return;
                 }
-                var listResult = warewolfEvalResult as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
-                if (listResult != null)
+                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult listResult)
                 {
-                    foreach(var res in listResult.Item)
+                    foreach (var res in listResult.Item)
                     {
                         result.Add(ExecutionEnvironment.WarewolfAtomToString(res));
                     }
-                }               
+                }
             }
             catch(Exception e)
             {

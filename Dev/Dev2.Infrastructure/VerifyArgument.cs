@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Warewolf.Resource.Errors;
-// ReSharper disable InconsistentNaming
-// ReSharper disable UnusedParameter.Global
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+
+
+
 
 namespace Dev2
 {
@@ -53,7 +52,7 @@ namespace Dev2
         /// </summary>
         /// <param name="name">The argument name.</param>
         /// <param name="value">The value.</param>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static void IsNotNullOrWhitespace([NotNull] string name, string value)
         {
             if(string.IsNullOrWhiteSpace(value) || string.IsNullOrEmpty(value))

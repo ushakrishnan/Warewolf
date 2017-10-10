@@ -21,7 +21,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         public Guid Id { get; set; }
         public string Path { get; set; }
         public enSourceType Type { get; set; }
-        public IWcfProxyService ProxyService;
+        readonly IWcfProxyService ProxyService;
 
         public WcfSource()
         {
@@ -128,7 +128,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             get
             {
                 var stringBuilder = base.DataList;
-                return stringBuilder != null ? stringBuilder.ToString() : null;
+                return stringBuilder?.ToString();
             }
             set
             {

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +21,8 @@ namespace Dev2.Converters.Graph.DataTable
         {
             VerifyArgument.IsNotNull("data", data);
 
-            var tmp = data as System.Data.DataTable;
 
-            if (tmp != null)
+            if (data is System.Data.DataTable tmp)
             {
                 string tblName = tmp.TableName;
 
@@ -31,9 +30,9 @@ namespace Dev2.Converters.Graph.DataTable
 
                 var result = new List<IPath>();
 
-                // ReSharper disable LoopCanBeConvertedToQuery
+
                 foreach (DataColumn col in cols)
-                    // ReSharper restore LoopCanBeConvertedToQuery
+
                 {
                     string colName = col.ColumnName;
                     result.Add(new DataTablePath(tblName, colName));

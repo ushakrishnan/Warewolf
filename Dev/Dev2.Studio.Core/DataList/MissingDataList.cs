@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Dev2.Data.Interfaces;
 using Dev2.DataList.Contract;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces.DataList;
 
 namespace Dev2.Studio.Core.DataList
 {
@@ -38,10 +38,15 @@ namespace Dev2.Studio.Core.DataList
                         dataListItem.IsEditable)
                     {
                         if (excludeUnusedItems && !dataListItem.IsUsed)
+                        {
                             continue;
+                        }
+
                         AddMissingWorkFlowRecordsetPart(missingWorkflowParts, dataListItem);
                         foreach (var child in dataListItem.Children.Where(p => !string.IsNullOrEmpty(p.DisplayName)))
+                        {
                             AddMissingWorkFlowRecordsetPart(missingWorkflowParts, dataListItem, child);
+                        }
                     }
                     else
                     {
@@ -57,7 +62,10 @@ namespace Dev2.Studio.Core.DataList
                 {
                     // skip it if unused and exclude is on ;)
                     if (excludeUnusedItems && !dataListItem.IsUsed)
+                    {
                         continue;
+                    }
+
                     missingWorkflowParts.Add(
                         IntellisenseFactory.CreateDataListValidationScalarPart(dataListItem.DisplayName,
                             dataListItem.Description));
@@ -82,17 +90,9 @@ namespace Dev2.Studio.Core.DataList
         {
             if (dataListItem.IsEditable)
             {
-                if (child != null)
-                {
-                    missingWorkflowParts.Add(
-                        IntellisenseFactory.CreateDataListValidationRecordsetPart(dataListItem.DisplayName,
-                            child.DisplayName, child.Description));
-                }
-                else
-                {
-                    missingWorkflowParts.Add(IntellisenseFactory.CreateDataListValidationRecordsetPart(dataListItem.DisplayName,
+                missingWorkflowParts.Add(child != null ? IntellisenseFactory.CreateDataListValidationRecordsetPart(dataListItem.DisplayName,
+                            child.DisplayName, child.Description) : IntellisenseFactory.CreateDataListValidationRecordsetPart(dataListItem.DisplayName,
                                     string.Empty, dataListItem.Description));
-                }
             }
         }
     }

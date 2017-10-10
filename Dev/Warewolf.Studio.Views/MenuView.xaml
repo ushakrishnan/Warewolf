@@ -48,10 +48,6 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -104,7 +100,7 @@
                     HorizontalAlignment="Left"
                     Command="{Binding NewServiceCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuNewServiceToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuNewServiceToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -124,7 +120,7 @@
                                Text="{Binding Path=NewLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding}" Text="{x:Static languages:Core.MenuNewServiceHelp}" />
+                    <core:HelpSetter DataContext="{Binding}" Text="{x:Static languages:HelpText.MenuNewServiceHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
@@ -135,7 +131,7 @@
                     HorizontalAlignment="Left"
                     Command="{Binding SaveCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuSaveToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuSaveToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -155,7 +151,7 @@
                                Text="{Binding Path=SaveLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuSaveTabHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuSaveTabHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
@@ -166,7 +162,7 @@
                     HorizontalAlignment="Left"
                     Command="{Binding DeployCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuDeployToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuDeployToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -186,7 +182,7 @@
                                Text="{Binding Path=DeployLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuDeployHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuDeployHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
@@ -196,182 +192,14 @@
                        Margin="0,5,0,5"
                        Style="{StaticResource MenuSeparator}" />
 
-            <!--  DB  -->
-            <Button Grid.Row="7"
-                    Grid.Column="1"
-                    Width="{Binding ButtonWidth}"
-                    HorizontalAlignment="Left"
-                    Command="{Binding NewDatabaseSourceCommand}"
-                    Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuDatabaseToolTip}">
-                <DockPanel Width="{Binding ButtonWidth}"
-                           Height="35"
-                           HorizontalAlignment="Stretch"
-                           VerticalAlignment="Stretch"
-                           Background="Transparent">
-                    <Image Name="ImageDbSourceCreate"
-                           Width="20"
-                           Height="20"
-                           Margin="7.5,7.5,7.5,7.5"
-                           Source="{StaticResource Explorer-Db-MenuCreate}">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="True">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                    <Image Name="ImageDbSourceCreateMouseOver"
-                           Width="20"
-                           Height="20"
-                           Margin="7.5,7.5,7.5,7.5"
-                           Source="{StaticResource Explorer-Db-MenuCreate-MouseOver}">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                    <TextBlock Padding="15,8,0,5"
-                               Style="{StaticResource MenuTextBlockStyle}"
-                               Text="{Binding Path=DatabaseLabel}" />
-                </DockPanel>
-                <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuNewDatabaseConnectorHelp}" />
-                </i:Interaction.Behaviors>
-            </Button>
-
-            <!--  PLUGIN  -->
-            <Button Grid.Row="8"
-                    Grid.Column="1"
-                    Width="{Binding ButtonWidth}"
-                    HorizontalAlignment="Left"
-                    Command="{Binding NewPluginSourceCommand}"
-                    Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuPluginToolTip}">
-                <DockPanel Width="{Binding ButtonWidth}"
-                           Height="35"
-                           HorizontalAlignment="Stretch"
-                           VerticalAlignment="Stretch"
-                           Background="Transparent">
-                    <Image Name="ImagePluginSourceCreate"
-                           Width="20"
-                           Height="20"
-                           Margin="7.5,7.5,7.5,7.5"
-                           Source="{StaticResource Explorer-Dll-MenuCreate}">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="True">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                    <Image Name="ImagePluginSourceCreateMouseOver"
-                           Width="20"
-                           Height="20"
-                           Margin="7.5,7.5,7.5,7.5"
-                           Source="{StaticResource Explorer-Dll-MenuCreate-MouseOver}">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                    <TextBlock Padding="15,8,0,5"
-                               Style="{StaticResource MenuTextBlockStyle}"
-                               Text="{Binding Path=DLLLabel}" />
-                </DockPanel>
-                <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuNewPluginConnectorHelp}" />
-                </i:Interaction.Behaviors>
-            </Button>
-
-            <!--  WEB  -->
-            <Button Grid.Row="9"
-                    Grid.Column="1"
-                    Width="{Binding ButtonWidth}"
-                    HorizontalAlignment="Left"
-                    Command="{Binding NewWebSourceCommand}"
-                    Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuWebServiceToolTip}">
-                <DockPanel Width="{Binding ButtonWidth}"
-                           Height="35"
-                           HorizontalAlignment="Stretch"
-                           VerticalAlignment="Stretch"
-                           Background="Transparent">
-                    <Image Name="ImageWebServiceCreate"
-                           Width="20"
-                           Height="20"
-                           Margin="7.5,7.5,7.5,7.5"
-                           Source="{StaticResource Explorer-WebService-MenuCreate}">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Visibility" Value="Visible" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="True">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                    <Image Name="ImageWebServiceCreateMouseOver"
-                           Width="20"
-                           Height="20"
-                           Margin="7.5,7.5,7.5,7.5"
-                           Source="{StaticResource Explorer-WebService-MenuCreate-MouseOver}">
-                        <Image.Style>
-                            <Style TargetType="Image">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Path=IsMouseOver, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Button}}" Value="True">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Image.Style>
-                    </Image>
-                    <TextBlock Padding="16,8,0,5"
-                               Style="{StaticResource MenuTextBlockStyle}"
-                               Text="{Binding Path=WebLabel}" />
-                </DockPanel>
-                <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuNewWebConnectorHelp}" />
-                </i:Interaction.Behaviors>
-            </Button>
-
-            <Separator Grid.Row="10"
-                       Grid.Column="0"
-                       Grid.ColumnSpan="3"
-                       Margin="0,5,0,5"
-                       Style="{StaticResource MenuSeparator}" />
-
             <!--  TASK  -->
-            <Button Grid.Row="11"
+            <Button Grid.Row="7"
                     Grid.Column="1"
                     Width="{Binding ButtonWidth}"
                     HorizontalAlignment="Left"
                     Command="{Binding OpenSchedulerCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuSchedulerToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuSchedulerToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -391,18 +219,18 @@
                                Text="{Binding Path=TaskLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuSchedulerHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuSchedulerHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
             <!--  DEBUG  -->
-            <Button Grid.Row="12"
+            <Button Grid.Row="8"
                     Grid.Column="1"
                     Width="{Binding ButtonWidth}"
                     HorizontalAlignment="Left"
                     Command="{Binding ExecuteServiceCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.DebugToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.DebugToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -422,24 +250,24 @@
                                Text="{Binding Path=DebugLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuDebugHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuDebugHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
-            <Separator Grid.Row="13"
+            <Separator Grid.Row="9"
                        Grid.Column="0"
                        Grid.ColumnSpan="3"
                        Margin="0,5,0,5"
                        Style="{StaticResource MenuSeparator}" />
 
             <!--  SETTINGS  -->
-            <Button Grid.Row="14"
+            <Button Grid.Row="10"
                     Grid.Column="1"
                     Width="{Binding ButtonWidth}"
                     HorizontalAlignment="Left"
                     Command="{Binding OpenSettingsCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuSettingsToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuSettingsToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -459,24 +287,24 @@
                                Text="{Binding Path=SettingsLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuSettingsHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuSettingsHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
-            <Separator Grid.Row="15"
+            <Separator Grid.Row="11"
                        Grid.Column="0"
                        Grid.ColumnSpan="3"
                        Margin="0,5,0,5"
                        Style="{StaticResource MenuSeparator}" />
 
             <!--  HELP  -->
-            <Button Grid.Row="16"
+            <Button Grid.Row="12"
                     Grid.Column="1"
                     Width="{Binding ButtonWidth}"
                     HorizontalAlignment="Left"
                     Command="{Binding SupportCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuHelpToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuHelpToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -496,19 +324,19 @@
                                Text="{Binding Path=SupportLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
             <Button x:Name="VersionButton"
-                    Grid.Row="17"
+                    Grid.Row="13"
                     Grid.Column="1"
                     Width="{Binding ButtonWidth}"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Bottom"
                     Command="{Binding CheckForNewVersionCommand}"
                     Style="{StaticResource SideMenuPulseStyle}"
-                    ToolTip="{x:Static languages:Core.MenuDownloadToolTip}"
+                    ToolTip="{x:Static languages:Tooltips.MenuDownloadToolTip}"
                     Visibility="{Binding HasNewVersion,
                                          Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel Width="{Binding ButtonWidth}"
@@ -534,24 +362,24 @@
                                Text="{Binding Path=NewVersionLabel}" />
                 </DockPanel>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuNewVersionHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuNewVersionHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
-            <Separator Grid.Row="18"
+            <Separator Grid.Row="14"
                        Grid.Column="0"
                        Grid.ColumnSpan="3"
                        Margin="0,5,0,5"
                        Style="{StaticResource MenuSeparator}" />
 
-            <Button Grid.Row="19"
+            <Button Grid.Row="15"
                     Grid.Column="1"
                     Width="{Binding ButtonWidth}"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
                     Command="{Binding LockCommand}"
                     Style="{StaticResource SideMenuButtonStyle}"
-                    ToolTip="{x:Static languages:Core.MenuLockToolTip}">
+                    ToolTip="{x:Static languages:Tooltips.MenuLockToolTip}">
                 <DockPanel Width="{Binding ButtonWidth}"
                            Height="35"
                            HorizontalAlignment="Stretch"
@@ -578,11 +406,11 @@
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
                 <i:Interaction.Behaviors>
-                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:Core.MenuLockMenuHelp}" />
+                    <core:HelpSetter DataContext="{Binding .}" Text="{x:Static languages:HelpText.MenuLockMenuHelp}" />
                 </i:Interaction.Behaviors>
             </Button>
 
-            <Image Grid.Row="20"
+            <Image Grid.Row="16"
                    Grid.Column="0"
                    Grid.ColumnSpan="3"
                    Width="15"

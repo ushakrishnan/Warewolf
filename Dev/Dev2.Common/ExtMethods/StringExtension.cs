@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -72,8 +71,7 @@ namespace Dev2.Common.ExtMethods
         /// </returns>
         public static bool IsWholeNumber(this string payload)
         {
-            int value;
-            return IsWholeNumber(payload, out value);
+            return IsWholeNumber(payload, out int value);
         }
 
         /// <summary>
@@ -122,8 +120,7 @@ namespace Dev2.Common.ExtMethods
             //                          This change was made because it is fatser and to add support for decimal points.
             //                          IsWholeNumber has been added for instances where a whole number is required.
             //                          IsAlphaNumeric has been updated to use IsWholeNumber.
-            decimal value;
-            return IsNumeric(payload, out value);
+            return IsNumeric(payload, out decimal value);
         }
 
         /// <summary>
@@ -216,14 +213,14 @@ namespace Dev2.Common.ExtMethods
             bool result = false;
             try
             {
-                // ReSharper disable ReturnValueOfPureMethodIsNotUsed
+                
                 Convert.FromBase64String(payload);
-                // ReSharper restore ReturnValueOfPureMethodIsNotUsed
+                
                 result = true;
             }
-            // ReSharper disable EmptyGeneralCatchClause
+            
             catch (Exception)
-            // ReSharper restore EmptyGeneralCatchClause
+            
             {
                 // if error is thrown we know it is not a valid base64 string
             }
@@ -276,12 +273,15 @@ namespace Dev2.Common.ExtMethods
             const string Accellerator = "_"; // This is the default WPF accellerator symbol - used to be & in WinForms
 
             // If it already contains an accellerator, do nothing
-            if (input.Contains(Accellerator)) return input;
+            if (input.Contains(Accellerator))
+            {
+                return input;
+            }
 
             return Accellerator + input;
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static string RemoveWhiteSpace(this string value)
         {
             var cleanString = new StringBuilder(value.Trim()).Replace(" ", "");

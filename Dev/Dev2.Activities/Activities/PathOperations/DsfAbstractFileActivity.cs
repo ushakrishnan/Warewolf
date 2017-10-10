@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,21 +17,21 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.PathOperations;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Data.Interfaces;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
-using Dev2.PathOperations;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Security.Encryption;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
-// ReSharper disable ConvertToAutoProperty
+
+
 {
     /// <summary>
     /// PBI : 1172
@@ -61,9 +61,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
- 
-
             ErrorResultTO allErrors = new ErrorResultTO();
             ErrorResultTO errors = new ErrorResultTO();
 
@@ -98,7 +95,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                                     else
                                     {
                                         foreach (var region in DataListCleaningUtils.SplitIntoRegions(output.OutPutDescription))
-                                        {
+                                        {                                            
                                             dataObject.Environment.Assign(region, value, update);
                                         }
                                     }
@@ -219,6 +216,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             set;
         }
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
         /// <summary>
         /// Gets or sets a value indicating whether this instance is not cert verifiable.
         /// </summary>

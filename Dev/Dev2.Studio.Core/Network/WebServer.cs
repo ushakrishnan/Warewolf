@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,6 @@
 using Dev2.Common;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Controller;
-using Dev2.Studio.Core.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -20,22 +19,26 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Text;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable CheckNamespace
+
+
+
 namespace Dev2.Studio.Core.Network
 {
     public enum UrlType
     {
         Xml,
         Json,
-        API
+        API,
+        Tests
     }
 
     public static class WebServer
     {
         public static void Send(IContextualResourceModel resourceModel, string payload, IAsyncWorker asyncWorker)
         {
-            if (resourceModel == null || resourceModel.Environment == null || !resourceModel.Environment.IsConnected)
+            if (resourceModel?.Environment == null || !resourceModel.Environment.IsConnected)
             {
                 return;
             }
@@ -47,11 +50,18 @@ namespace Dev2.Studio.Core.Network
             }
             asyncWorker.Start(() =>
             {
-                var controller = new CommunicationController { ServiceName = string.IsNullOrEmpty(resourceModel.Category) ? resourceModel.ResourceName : resourceModel.Category };
+                var controller = new CommunicationController
+                {
+                    ServiceName = string.IsNullOrEmpty(resourceModel.Category) ? resourceModel.ResourceName : resourceModel.Category,
+                    ServicePayload =
+                    {
+                        ResourceID = resourceModel.ID
+                    },
+                };
                 controller.AddPayloadArgument("DebugPayload", payload);
                 controller.ExecuteCommand<string>(clientContext, clientContext.WorkspaceID);
             }, () => { });
-        }
+        }        
 
         public static void OpenInBrowser(IContextualResourceModel resourceModel, string xmlData)
         {
@@ -63,7 +73,7 @@ namespace Dev2.Studio.Core.Network
             }
         }
 
-        public static void SendErrorOpenInBrowser(List<string> exceptionList, string description, string url)
+        public static void SendErrorOpenInBrowser(IEnumerable<string> exceptionList, string description, string url)
         {
             ServicePointManager.ServerCertificateValidationCallback = (senderX, certificate, chain, sslPolicyErrors) => true;
             const string PayloadFormat = "\"header\":{0},\"description\":{1},\"type\":3,\"category\":27";
@@ -93,8 +103,7 @@ namespace Dev2.Studio.Core.Network
                 reader.Close();
                 dataStream.Close();
                 response.Close();
-                var responseObj = JsonConvert.DeserializeObject(responseFromServer) as JObject;
-                if (responseObj != null)
+                if (JsonConvert.DeserializeObject(responseFromServer) is JObject responseObj)
                 {
                     var urlToOpen = ((dynamic)responseObj).data.url;
 
@@ -108,7 +117,9 @@ namespace Dev2.Studio.Core.Network
             }
         }
 
-        public static Uri GetWorkflowUri(IContextualResourceModel resourceModel, string xmlData, UrlType urlType)
+        public static Uri GetWorkflowUri(IContextualResourceModel resourceModel, string xmlData, UrlType urlType) => GetWorkflowUri(resourceModel, xmlData, urlType, true);
+
+        public static Uri GetWorkflowUri(IContextualResourceModel resourceModel, string xmlData, UrlType urlType, bool addworkflowId)
         {
             if (resourceModel?.Environment?.Connection == null || !resourceModel.Environment.IsConnected)
             {
@@ -129,6 +140,9 @@ namespace Dev2.Studio.Core.Network
                     case UrlType.API:
                     urlExtension = "api";
                     break;
+                case UrlType.Tests:
+                    urlExtension = "tests";
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException("urlType");
             }
@@ -139,13 +153,15 @@ namespace Dev2.Studio.Core.Network
                 category = resourceModel.ResourceName;
             }
             var relativeUrl = $"/secure/{category}.{urlExtension}";
-            if (urlType != UrlType.API)
+            if (urlType != UrlType.API && urlType != UrlType.Tests)
             {
                 relativeUrl += "?"+xmlData;
-                relativeUrl += "&wid=" + environmentConnection.WorkspaceID;
+                if (addworkflowId)
+                {
+                    relativeUrl += "&wid=" + environmentConnection.WorkspaceID;
+                }
             }
-            Uri url;
-            Uri.TryCreate(environmentConnection.WebServerUri, relativeUrl, out url);
+            Uri.TryCreate(environmentConnection.WebServerUri, relativeUrl, out Uri url);
             return url;
         }
 
@@ -157,8 +173,7 @@ namespace Dev2.Studio.Core.Network
             }
 
             var relativeUrl = string.Format("/internal/{0}", serviceName);
-            Uri url;
-            Uri.TryCreate(connection.WebServerUri, relativeUrl, out url);
+            Uri.TryCreate(connection.WebServerUri, relativeUrl, out Uri url);
             return url;
         }
     }

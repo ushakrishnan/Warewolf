@@ -144,13 +144,16 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
                 try
                 {
                     var command = CommandFromServiceMethod(server, dbService.Method);
-                    // ReSharper disable PossibleNullReferenceException
-                    var outParams = server.GetProcedureOutParams(command.CommandText,
-                        (dbService.Source as DbSource).DatabaseName);
-                    // ReSharper restore PossibleNullReferenceException
+                    
+                    var outParams = server.GetProcedureOutParams(command.CommandText);
+                    
                     foreach (var dbDataParameter in outParams)
                     {
-                        if (command.Parameters.Contains(dbDataParameter)) continue;
+                        if (command.Parameters.Contains(dbDataParameter))
+                        {
+                            continue;
+                        }
+
                         command.Parameters.Add(dbDataParameter);
                     }
                     var dataTable = server.FetchDataTable(command);
@@ -164,7 +167,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
                 }
                 catch (Exception ex)
                 {
-                    Dev2Logger.Error(ex.Message);
+                    Dev2Logger.Error(ex.Message, GlobalConstants.WarewolfError);
                     return new OutputDescription();
                 }
                 finally

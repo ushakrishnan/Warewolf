@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -44,8 +44,7 @@ namespace Dev2.Activities.AttachedProperties
         {
             var fe = (FrameworkElement)d;
             var isFocused = e.NewValue is Boolean && (bool)e.NewValue;
-            var autoCompleteBox = fe as AutoCompleteBox;
-            if (autoCompleteBox != null)
+            if (fe is AutoCompleteBox autoCompleteBox)
             {
                 if (isFocused)
                 {
@@ -58,7 +57,7 @@ namespace Dev2.Activities.AttachedProperties
                 return;
             }
 
-            if(e.OldValue == null)
+            if (e.OldValue == null)
             {
                 fe.GotFocus += FrameworkElementGotFocus;
                 fe.LostFocus += FrameworkElementLostFocus;

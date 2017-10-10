@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,6 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.Operations;
 using Dev2.Data.TO;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Util;
 using Dev2.Validation;
@@ -24,25 +23,27 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
+using Dev2.Data.Interfaces;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    [ToolDescriptorInfo("Utility-FormatNumber", "Format Number", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Format Number_Tags")]
+    [ToolDescriptorInfo("Utility-FormatNumber", "Format Number", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Format Number")]
     public class DsfNumberFormatActivity : DsfActivityAbstract<string>
     {
         #region Class Members
 
-        // ReSharper disable InconsistentNaming
+        
         private static readonly IDev2NumberFormatter _numberFormatter; //  REVIEW : Should this not be an instance variable....
 
-        // ReSharper restore InconsistentNaming
+
 
         #endregion Class Members
 
@@ -86,6 +87,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #endregion Properties
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
+
         #region Override Methods
 
         protected override void OnExecute(NativeActivityContext context)
@@ -119,9 +125,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 var counter = 1;
                 while (colItr.HasMoreData())
                 {
-                    int decimalPlacesToShowValue;
                     var tmpDecimalPlacesToShow = colItr.FetchNextValue(decimalPlacesToShowIterator);
-                    var adjustDecimalPlaces = tmpDecimalPlacesToShow.IsRealNumber(out decimalPlacesToShowValue);
+                    var adjustDecimalPlaces = tmpDecimalPlacesToShow.IsRealNumber(out int decimalPlacesToShowValue);
                     if (!string.IsNullOrEmpty(tmpDecimalPlacesToShow) && !adjustDecimalPlaces)
                     {
                         throw new Exception(ErrorResource.DecimalsNotValid);
@@ -159,7 +164,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
             catch (Exception e)
             {
-                Dev2Logger.Error("DSFNumberFormatActivity", e);
+                Dev2Logger.Error("DSFNumberFormatActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -278,13 +283,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

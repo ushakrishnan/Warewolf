@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,8 +15,8 @@ using System.Linq;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.Data.Enums;
-using Dev2.Interfaces;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Foreach
 {
@@ -28,6 +28,7 @@ namespace Dev2.Activities.Designers2.Foreach
             ForeachTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enForEachType>();
             SelectedForeachType = Dev2EnumConverter.ConvertEnumValueToString(ForEachType);
             AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_LoopConstruct_For_Each;
         }
 
         public IList<string> ForeachTypes { get; private set; }
@@ -154,9 +155,8 @@ namespace Dev2.Activities.Designers2.Foreach
                 if(!String.IsNullOrEmpty(modelItemString))
                 {
                     var objectData = dataObject.GetData(modelItemString);
-                    var data = objectData as List<ModelItem>;
 
-                    if(data != null && data.Count > 1)
+                    if (objectData is List<ModelItem> data && data.Count > 1)
                     {
                         return true;
                     }
@@ -175,11 +175,8 @@ namespace Dev2.Activities.Designers2.Foreach
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

@@ -6,16 +6,27 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
-// ReSharper disable UnusedMember.Global
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class FileResourceBuilder : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         private readonly IResourceHolder _resourceHolder;
 
         public FileResourceBuilder(IResourceHolder resourceHolder)
@@ -66,12 +77,12 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception ex) when (ex is AccessViolationException)
             {
-                Dev2Logger.Error(ex.Message,ex);
+                Dev2Logger.Error(ex.Message,ex, GlobalConstants.WarewolfError);
                 throw;
             }
             catch (Exception ex) when (ex is IOException)
             {
-                Dev2Logger.Error(ex.Message, ex);
+                Dev2Logger.Error(ex.Message, ex, GlobalConstants.WarewolfError);
                 throw;
             }
         }

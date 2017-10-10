@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +24,7 @@ namespace Dev2.Runtime.ESB.Control
     /// </summary>
     public class ServiceLocator : IServiceLocator
     {
-        readonly IPerformanceCounter _perfCounter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Count of requests for workflows which don’t exist");
+        readonly IPerformanceCounter _perfCounter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Count of requests for workflows which don't exist");
         private readonly IResourceCatalog _resourceCatalog = ResourceCatalog.Instance;
         #region New Mgt Methods
 
@@ -38,10 +38,24 @@ namespace Dev2.Runtime.ESB.Control
         public DynamicService FindService(string serviceName, Guid workspaceID)
         {
             if(string.IsNullOrEmpty(serviceName))
+            {
                 throw new InvalidDataException(ErrorResource.ServiceIsNull);
-            var ret = _resourceCatalog.GetDynamicObjects<DynamicService>(workspaceID, serviceName).FirstOrDefault();
+            }
+
+            var res = _resourceCatalog.GetResource(workspaceID, serviceName);
+            DynamicService ret = null;
+            if (res != null)
+            {
+                ret = ServiceActionRepo.Instance.ReadCache(res.ResourceID);
+            }
             if (ret == null)
-                _perfCounter.Increment();
+            {
+                ret = _resourceCatalog.GetDynamicObjects<DynamicService>(workspaceID, serviceName).FirstOrDefault();                
+                if (ret == null)
+                {
+                    _perfCounter.Increment();
+                }
+            }
             return ret;
         }
 
@@ -55,18 +69,28 @@ namespace Dev2.Runtime.ESB.Control
         public DynamicService FindService(Guid serviceID, Guid workspaceID)
         {
             if(serviceID == Guid.Empty)
-                throw new InvalidDataException(ErrorResource.ServiceIsNull);
-            var firstOrDefault = _resourceCatalog.GetDynamicObjects<DynamicService>(workspaceID, serviceID).FirstOrDefault();
-            if (firstOrDefault != null)
             {
-                firstOrDefault.ServiceId = serviceID;
-                firstOrDefault.Actions.ForEach(action =>
-                {
-                    action.ServiceID = serviceID;
-                });
+                throw new InvalidDataException(ErrorResource.ServiceIsNull);
             }
+
+            var firstOrDefault = ServiceActionRepo.Instance.ReadCache(serviceID);
+                        
             if (firstOrDefault == null)
-                _perfCounter.Increment();
+            {
+                firstOrDefault = _resourceCatalog.GetDynamicObjects<DynamicService>(workspaceID, serviceID).FirstOrDefault();
+                if (firstOrDefault != null)
+                {
+                    firstOrDefault.ServiceId = serviceID;
+                    firstOrDefault.Actions.ForEach(action =>
+                    {
+                        action.ServiceID = serviceID;
+                    });
+                }
+                if (firstOrDefault == null)
+                {
+                    _perfCounter.Increment();
+                }
+            }
 
             return firstOrDefault;
         }
@@ -81,7 +105,10 @@ namespace Dev2.Runtime.ESB.Control
         public Source FindSourceByName(string sourceName, Guid workspaceID)
         {
             if (string.IsNullOrEmpty(sourceName))
+            {
                 throw new InvalidDataException(ErrorResource.ServiceIsNull);
+            }
+
             return _resourceCatalog.GetDynamicObjects<Source>(workspaceID, sourceName).FirstOrDefault();
         }
 

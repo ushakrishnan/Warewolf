@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -37,8 +37,13 @@ namespace Dev2
             Errors = new Dictionary<string, List<IActionableErrorInfo>>();
         }
 
+        public CaseConvertTO(string stringToConvert, string convertType, string result, int indexNumber)
+            : this(stringToConvert, convertType, result, indexNumber, false)
+        {
+        }
+
         public CaseConvertTO(string stringToConvert, string convertType, string result, int indexNumber,
-            bool inserted = false)
+            bool inserted)
         {
             Inserted = inserted;
             StringToConvert = stringToConvert;
@@ -140,10 +145,7 @@ namespace Dev2
 
         protected void OnPropertyChanged(string propertyName)
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion
@@ -165,11 +167,11 @@ namespace Dev2
         /// <returns>
         ///     An error message indicating what is wrong with this object. The default is an empty string ("").
         /// </returns>
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        
+        
         public string Error { get; private set; }
 
-        // ReSharper restore UnusedAutoPropertyAccessor.Local
+        
 
         #endregion
 
@@ -202,8 +204,7 @@ namespace Dev2
                 Errors[propertyName] = actionableErrorInfos;
             }
             OnPropertyChanged("Errors");
-            List<IActionableErrorInfo> errorList;
-            if (Errors.TryGetValue(propertyName, out errorList))
+            if (Errors.TryGetValue(propertyName, out List<IActionableErrorInfo> errorList))
             {
                 return errorList.Count == 0;
             }
@@ -219,6 +220,8 @@ namespace Dev2
                     ruleSet = GetFieldNameRuleSet();
                     break;
                 case "FieldValue":
+                    break;
+                default:
                     break;
             }
             return Validate(propertyName, ruleSet);

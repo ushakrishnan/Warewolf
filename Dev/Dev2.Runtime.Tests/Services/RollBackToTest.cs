@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
@@ -25,10 +26,39 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class RollBackToTest
     {
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var rollbackTo = new RollbackTo();
+
+            //------------Execute Test---------------------------
+            var resId = rollbackTo.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var rollbackTo = new RollbackTo();
+
+            //------------Execute Test---------------------------
+            var resId = rollbackTo.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RolbackTo_Name")]
-// ReSharper disable InconsistentNaming
+
         public void RolbackTo_Name_GetName()
 
         {
@@ -113,5 +143,5 @@ namespace Dev2.Tests.Runtime.Services
             server.Verify(a=>a.RollbackTo(res,"1"));
         }
     }
-    // ReSharper restore InconsistentNaming
+    
 }

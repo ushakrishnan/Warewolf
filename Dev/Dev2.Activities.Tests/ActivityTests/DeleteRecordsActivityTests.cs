@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for CountRecordsTest
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class DeleteRecordsActivityTest : BaseActivityUnitTest
     {
         /// <summary>
@@ -40,9 +40,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string Expected = @"Success";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
 
             // remove test datalist ;)
@@ -64,9 +62,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string Expected = @"Success";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
             // remove test datalist ;)
 
@@ -85,9 +81,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string Expected = @"Success";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
 
             // remove test datalist ;)
@@ -151,9 +145,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             const string Expected = @"Success";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
 
             // remove test datalist ;)
@@ -174,9 +166,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "", "[[res]]");
 
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
 
             // remove test datalist ;)
@@ -193,9 +183,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
             string expected = string.Empty;
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
             // remove test datalist ;)
 
@@ -211,9 +199,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[res]]", "[[res]]");
 
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
             // remove test datalist ;)
 
@@ -228,9 +214,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1(8)]]", "[[res]]");
 
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
             // remove test datalist ;)
 
@@ -245,9 +229,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1(-1)]]", "[[res]]");
 
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
             // remove test datalist ;)
 
@@ -262,9 +244,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1(0)]]", "[[res]]");
 
             IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             List<string> recsetData = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error);
 
             // remove test datalist ;)
@@ -307,6 +287,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             act.UpdateForEachInputs(null);
             //------------Assert Results-------------------------
             Assert.AreEqual(recordsetName, act.RecordsetName);
+        }
+
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfDeleteRecordActivity_GetOutputs")]
+        public void DsfDeleteRecordActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string recordsetName = "[[Numeric()]]";
+            var act = new DsfDeleteRecordActivity { RecordsetName = recordsetName, Result = "[[res]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]
@@ -425,10 +421,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "", "[[res]]");
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            //------------Assert Results-------------------------
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual("Failure", actual);
         }
@@ -442,10 +435,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1().field1]]", "[[res]]");
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            //------------Assert Results-------------------------
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual("Failure", actual);
         }
@@ -459,10 +449,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1(8)]]", "[[res]]");
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            //------------Assert Results-------------------------
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual("Failure", actual);
         }
@@ -476,10 +463,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1()]][[recset1()]]", "[[res]]");
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            //------------Assert Results-------------------------
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual("Failure", actual);
         }
@@ -493,10 +477,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1]]", "[[res]]");
             //------------Execute Test---------------------------
             IDSFDataObject result = ExecuteProcess();
-            //------------Assert Results-------------------------
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
             Assert.AreEqual("Failure", actual);
         }

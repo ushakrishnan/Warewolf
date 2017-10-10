@@ -56,11 +56,11 @@ namespace Warewolf.Studio.Core
                     case "ExchangeSource":    
                         return _dict[CustomMenuIcons.ExchangeSource] as DrawingImage;
                     case "SqlDatabase":
-                        return _dict["MicrosoftSQLSource"] as DrawingImage;
-                    case "DbSource":
+                        return _dict[CustomMenuIcons.SqlServerSource] as DrawingImage;
                     case "Oracle":
+                        return _dict[CustomMenuIcons.OracleSource] as DrawingImage;
                     case "MySqlDatabase":
-                        return _dict[CustomMenuIcons.DbSource] as DrawingImage;
+                        return _dict[CustomMenuIcons.MySqlSource] as DrawingImage;
                     case "PostgreSQL":
                         return _dict["PostgreSource"] as DrawingImage;
                     case "ODBC":
@@ -83,6 +83,8 @@ namespace Warewolf.Studio.Core
                         return Application.Current.Resources["DropboxSource"];
                     case "Scheduler":
                         return ImageAwesome.CreateImageSource(FontAwesomeIcon.History, _brush);
+                    case "ServiceTestsViewer":
+                        return ImageAwesome.CreateImageSource(FontAwesomeIcon.Flask, _brush);
                     case "Settings":
                         return ImageAwesome.CreateImageSource(FontAwesomeIcon.Cogs, _brush);
                     case "DependencyViewer":

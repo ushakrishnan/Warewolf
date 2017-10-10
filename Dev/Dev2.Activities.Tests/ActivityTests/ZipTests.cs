@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Data.Interfaces;
 using Dev2.Diagnostics;
 using Dev2.PathOperations;
 using Dev2.Tests.Activities;
@@ -19,15 +19,15 @@ using Dev2.Tests.Activities.Mocks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable CheckNamespace
+
 namespace ActivityUnitTests.ActivityTests
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class ZipTests : BaseActivityUnitTest
     {
         static TestContext myTestContext;
@@ -128,9 +128,9 @@ namespace ActivityUnitTests.ActivityTests
 
             foreach(string fileName in fileNames)
             {
-                // ReSharper disable LocalizableElement
+                
                 File.WriteAllText(fileName, "TestData");
-                // ReSharper restore LocalizableElement
+                
             }
 
             var activityOperationBrokerMock = new ActivityOperationBrokerMock();
@@ -147,11 +147,8 @@ namespace ActivityUnitTests.ActivityTests
                 GetOperationBroker = () => activityOperationBrokerMock
             };
 
-            List<DebugItem> inRes;
-            List<DebugItem> outRes;
-
             CheckPathOperationActivityDebugInputOutput(preact, ActivityStrings.DebugDataListShape,
-                                                                ActivityStrings.DebugDataListWithData, out inRes, out outRes);
+                                                                ActivityStrings.DebugDataListWithData, out List<DebugItem> inRes, out List<DebugItem> outRes);
 
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Password, "destPWord");
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Username, "destUName");

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,12 +42,14 @@ namespace Dev2.Data.Util
             {
                 return text;
             }
-            switch(scrubType)
+            switch (scrubType)
             {
                 case ScrubType.Xml:
                     return ScrubXml(text);
                 case ScrubType.JSon:
                     return ScrubJson(text);
+                default:
+                    break;
             }
             return text;
         }
@@ -87,7 +89,7 @@ namespace Dev2.Data.Util
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error("Scrubber", ex);
+                Dev2Logger.Error("Scrubber", ex, GlobalConstants.WarewolfError);
             }
 
             return result;

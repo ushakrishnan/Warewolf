@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,9 +13,9 @@ using System.ComponentModel;
 using System.Linq;
 using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Newtonsoft.Json;
-// ReSharper disable NonLocalizedString
+
 
 namespace Dev2.Scheduler
 {
@@ -35,6 +35,7 @@ namespace Dev2.Scheduler
         string _oldName;
         private IErrorResultTO _errors;
         DateTime _nextRunDate;
+        private bool _isNew;
 
         public ScheduledResource(string name, SchedulerStatus status, DateTime nextRunDate, IScheduleTrigger trigger, string workflowName, string resourceId)
         {
@@ -48,7 +49,10 @@ namespace Dev2.Scheduler
             _status = status;
             Name = history.First();
             if(history.Length == 2)
+            {
                 NumberOfHistoryToKeep = int.Parse(history[1]);
+            }
+
             IsDirty = false;
             _errors = new ErrorResultTO();
             if(!String.IsNullOrEmpty(resourceId) )
@@ -142,7 +146,7 @@ namespace Dev2.Scheduler
             {
                 return _status;
             }
-            // ReSharper disable once ValueParameterNotUsed
+            
             set
             {
             
@@ -258,7 +262,18 @@ namespace Dev2.Scheduler
                 OnPropertyChanged("Errors");
             }
         }
-        public bool IsNew { get; set; }
+        public bool IsNew
+        {
+            get
+            {
+                return _isNew;
+            }
+            set
+            {
+                IsDirty = value;
+                _isNew = value;
+            }
+        }
         public bool IsNewItem { get; set; }
 
         #region INotifyPropertyChanged
@@ -267,13 +282,95 @@ namespace Dev2.Scheduler
 
         protected void OnPropertyChanged(string propertyName)
         {
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion INotifyPropertyChanged
+
+        public bool Equals(IScheduledResource other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            if (IsNew)
+            {
+                return false;
+            }
+            var nameEqual = other.Name.Equals(Name, StringComparison.CurrentCultureIgnoreCase);
+            var statusEqual = other.Status == Status;
+            var nextRunDateEqual = other.NextRunDate == NextRunDate;
+            var triggerEqual = TriggerEqual(other.Trigger, Trigger);
+            var numberOfHistoryToKeepEqual = other.NumberOfHistoryToKeep == NumberOfHistoryToKeep;
+            var workflowNameEqual = other.WorkflowName.Equals(WorkflowName,StringComparison.InvariantCultureIgnoreCase);
+            var runAsapIfMissedEqual = other.RunAsapIfScheduleMissed == RunAsapIfScheduleMissed;
+            var allowMultipleInstancesEqual = other.AllowMultipleIstances == AllowMultipleIstances;
+            var userNameEqual = !string.IsNullOrEmpty(other.UserName) && !string.IsNullOrEmpty(UserName) ? other.UserName.Equals(UserName,StringComparison.InvariantCultureIgnoreCase) : string.IsNullOrEmpty(other.UserName) && string.IsNullOrEmpty(UserName);
+            return nameEqual && statusEqual && nextRunDateEqual && triggerEqual && numberOfHistoryToKeepEqual && workflowNameEqual
+                    && runAsapIfMissedEqual && allowMultipleInstancesEqual && userNameEqual;
+        }
+
+        private bool TriggerEqual(IScheduleTrigger otherTrigger, IScheduleTrigger trigger)
+        {
+            if (otherTrigger.State != trigger.State)
+            {
+                return false;
+            }
+            if (otherTrigger.Trigger == null && trigger.Trigger!=null)
+            {
+                return false;
+            }
+            if (otherTrigger.Trigger != null && trigger.Trigger == null)
+            {
+                return false;
+            }
+            if (otherTrigger.Trigger != null && trigger.Trigger != null)
+            {
+                if (otherTrigger.Trigger.Enabled != trigger.Trigger.Enabled)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.EndBoundary != trigger.Trigger.EndBoundary)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.StartBoundary != trigger.Trigger.StartBoundary)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.TriggerType != trigger.Trigger.TriggerType)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.Repetition == null)
+                {
+                    if (otherTrigger.Trigger.Repetition != null)
+                    {
+                        return false;
+                    }
+                }
+                if (otherTrigger.Trigger.Repetition != null && otherTrigger.Trigger.Repetition == null)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.Repetition != null && trigger.Trigger.Repetition != null)
+                {
+                    if (otherTrigger.Trigger.Repetition.Duration != trigger.Trigger.Repetition.Duration)
+                    {
+                        return false;
+                    }
+                    if (otherTrigger.Trigger.Repetition.Interval != trigger.Trigger.Repetition.Interval)
+                    {
+                        return false;
+                    }
+                    if (otherTrigger.Trigger.Repetition.StopAtDurationEnd != trigger.Trigger.Repetition.StopAtDurationEnd)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
 
         public override string ToString()
         {

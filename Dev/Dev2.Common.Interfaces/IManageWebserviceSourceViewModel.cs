@@ -1,4 +1,6 @@
-﻿using System.Windows.Input;
+﻿using System;
+using System.ComponentModel;
+using System.Windows.Input;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Runtime.ServiceModel.Data;
 
@@ -80,9 +82,9 @@ namespace Dev2.Common.Interfaces
         /// <summary>
         /// The name of the resource
         /// </summary>
-        // ReSharper disable UnusedMemberInSuper.Global
+        
         string ResourceName { get; set; }
-        // ReSharper restore UnusedMemberInSuper.Global
+        
 
         /// <summary>
         /// The authentications Type
@@ -99,9 +101,11 @@ namespace Dev2.Common.Interfaces
 
 
         string ServerName { get; set; }
+
+        IWebServiceSource FetchSource(Guid id);
     }
 
-    public interface INameValue
+    public interface INameValue: INotifyPropertyChanged
     {
         string Name { get; set; }
         string Value { get; set; }

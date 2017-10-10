@@ -5,8 +5,9 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Deploy;
 using Dev2.Common.Interfaces.Explorer;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Deploy;
 using Microsoft.Practices.Prism.PubSubEvents;
 using Moq;
 
@@ -18,7 +19,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         #region Fields
 
         private DeploySourceExplorerViewModel _target;
-
+        private Mock<IEnvironmentViewModel> _selectedEnvironment;
         private Mock<IShellViewModel> _shellViewModelMock;
         private Mock<IServer> _serverMock;
         private Mock<IEventAggregator> _eventAggregatorMock;
@@ -33,18 +34,24 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestInitialize]
         public void TestInitialize()
         {
+            _selectedEnvironment = new Mock<IEnvironmentViewModel>();
+            _selectedEnvironment.Setup(p => p.DisplayName).Returns("someResName");
             _shellViewModelMock = new Mock<IShellViewModel>();
+            var mockExplorerViewModel = new Mock<IExplorerViewModel>();
+            _shellViewModelMock.Setup(model => model.ExplorerViewModel).Returns(mockExplorerViewModel.Object);
+            _shellViewModelMock.Setup(model => model.ExplorerViewModel.ConnectControlViewModel).Returns(new Mock<IConnectControlViewModel>().Object);
             _serverMock = new Mock<IServer>();
+            _serverMock.Setup(server => server.GetServerVersion()).Returns("1.1.2");
             _studioUpdateManagerMock = new Mock<IStudioUpdateManager>();
-            _explorerItemMock=new Mock<IExplorerItem>();
+            _explorerItemMock = new Mock<IExplorerItem>();
             _explorerItemMock.SetupGet(it => it.Children).Returns(new ObservableCollection<IExplorerItem>());
             _serverMock.Setup(it => it.LoadExplorer(false)).ReturnsAsync(_explorerItemMock.Object);
             _serverMock.SetupGet(it => it.UpdateRepository).Returns(_studioUpdateManagerMock.Object);
-            _serverMock.SetupGet(it => it.ResourceName).Returns("someResName");
+            _serverMock.SetupGet(it => it.DisplayName).Returns("someResName");
             _shellViewModelMock.SetupGet(it => it.LocalhostServer).Returns(_serverMock.Object);
             _eventAggregatorMock = new Mock<IEventAggregator>();
             _deployStatsViewerViewModel = new Mock<IDeployStatsViewerViewModel>();
-            _target = new DeploySourceExplorerViewModel(_shellViewModelMock.Object, _eventAggregatorMock.Object, _deployStatsViewerViewModel.Object);
+            _target = new DeploySourceExplorerViewModel(_shellViewModelMock.Object, _eventAggregatorMock.Object, _deployStatsViewerViewModel.Object, _selectedEnvironment.Object);
         }
 
         #endregion Test initialize
@@ -59,6 +66,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var env = _target.Environments;
 
             //assert
+            Assert.IsNotNull(env);
         }
 
         [TestMethod]
@@ -118,7 +126,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child.SetupGet(it => it.IsResourceChecked).Returns(true);
             var childNotChecked = new Mock<IExplorerItemViewModel>();
             childNotChecked.SetupGet(it => it.IsResourceChecked).Returns(false);
-            selectedEnvironmentMock.Setup(it => it.AsList()).Returns(new List<IExplorerItemViewModel>()
+            selectedEnvironmentMock.SetupGet(it => it.UnfilteredChildren).Returns(new ObservableCollection<IExplorerItemViewModel>()
             {
                 child.Object,
                 childNotChecked.Object
@@ -150,7 +158,7 @@ namespace Warewolf.Studio.ViewModels.Tests
                 child2.Object
             });
             _target.SelectedEnvironment = selectedEnvironmentMock.Object;
-            var selectedItemsValue = new List<IExplorerTreeItem>() {child1.Object, child2.Object, child3.Object};
+            var selectedItemsValue = new List<IExplorerTreeItem>() { child1.Object, child2.Object, child3.Object };
 
             //act
             _target.SelectedItems = selectedItemsValue;
@@ -213,20 +221,27 @@ namespace Warewolf.Studio.ViewModels.Tests
             var serverMock = new Mock<IServer>();
             var serverId = Guid.NewGuid();
             serverMock.SetupGet(it => it.EnvironmentID).Returns(serverId);
+            serverMock.SetupGet(it => it.DisplayName).Returns("newServerName");
             environmentViewModelMock.SetupGet(it => it.IsVisible).Returns(true);
             environmentViewModelMock.SetupGet(it => it.Server).Returns(serverMock.Object);
             var env = _target.Environments.First();
             var explorerItemViewModelMock = new Mock<IExplorerItemViewModel>();
             explorerItemViewModelMock.SetupGet(it => it.IsVisible).Returns(true);
+            explorerItemViewModelMock.SetupGet(it => it.ResourceType).Returns("Dev2Server");
+            explorerItemViewModelMock.SetupGet(it => it.ResourceName).Returns("newServerName");
+            explorerItemViewModelMock.SetupGet(it => it.ResourceId).Returns(serverId);
+            explorerItemViewModelMock.SetupGet(it => it.Children).Returns(new ObservableCollection<IExplorerItemViewModel>());
             env.AddChild(explorerItemViewModelMock.Object);
+            env.ResourceId = serverId;
             var environmentViewModels = _target.Environments.Union(new[] { environmentViewModelMock.Object }).ToList();
-            _target.Environments = new ObservableCollection<IEnvironmentViewModel>(environmentViewModels );
+            _target.Environments = new ObservableCollection<IEnvironmentViewModel>(environmentViewModels);
+
+            _shellViewModelMock.Setup(model => model.ExplorerViewModel.Environments).Returns(_target.Environments);
 
             //act
-            _target.ConnectControlViewModel.SelectedConnection = _serverMock.Object;
+            _target.ConnectControlViewModel.SelectedConnection = serverMock.Object;
 
             //assert
-            environmentViewModelMock.VerifySet(it => it.IsVisible = false);
 
             explorerItemViewModelMock.VerifySet(it => it.CanExecute = false);
             explorerItemViewModelMock.VerifySet(it => it.CanEdit = false);
@@ -236,27 +251,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             explorerItemViewModelMock.VerifySet(it => it.AllowResourceCheck = true);
             explorerItemViewModelMock.VerifySet(it => it.CanDrop = false);
             explorerItemViewModelMock.VerifySet(it => it.CanDrag = false);
-        }
-
-        [TestMethod]
-        public void TestServerСonnect()
-        {
-            //arrange
-            var isEnvironmentChanged = false;
-            _target.PropertyChanged += (s, e) =>
-            {
-                isEnvironmentChanged = isEnvironmentChanged || e.PropertyName == "Environments";
-            };
-            _serverMock.SetupGet(it => it.IsConnected).Returns(false);
-            _serverMock.SetupGet(it => it.HasLoaded).Returns(false);
-            _serverMock.Setup(it => it.ConnectAsync()).ReturnsAsync(true);
-
-            //act
-            _target.ConnectControlViewModel.ToggleConnectionStateCommand.Execute(null);
-
-            //assert
-            Assert.IsTrue(isEnvironmentChanged);
-            Assert.AreEqual(2, _target.Environments.Count);
         }
 
         [TestMethod]
@@ -282,43 +276,24 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
         [TestMethod]
-        public void TestServerDisconnect()
-        {
-            //arrange
-            var isEnvironmentChanged = false;
-            _target.PropertyChanged += (s, e) =>
-            {
-                isEnvironmentChanged = isEnvironmentChanged || e.PropertyName == "Environments";
-            };
-            _serverMock.SetupGet(it => it.IsConnected).Returns(true);
-            _serverMock.SetupGet(it => it.HasLoaded).Returns(true);
-
-            //act
-            _target.ConnectControlViewModel.ToggleConnectionStateCommand.Execute(null);
-
-            //assert
-            Assert.IsTrue(isEnvironmentChanged);
-            Assert.IsFalse(_target.Environments.Any());
-        }
-
-        [TestMethod]
         public void TestEnvironmentSelectAll()
         {
             //arrange
             var env = _target.Environments.First();
             var explorerItemViewModelMock = new Mock<IExplorerItemViewModel>();
             explorerItemViewModelMock.SetupGet(it => it.IsVisible).Returns(true);
+            explorerItemViewModelMock.SetupGet(it => it.ResourceName).Returns("Resource1");
             var explorerItemViewModelResourceCheckedMock = new Mock<IExplorerItemViewModel>();
             explorerItemViewModelResourceCheckedMock.SetupGet(it => it.IsVisible).Returns(true);
             explorerItemViewModelResourceCheckedMock.SetupGet(it => it.IsResourceChecked).Returns(true);
+            explorerItemViewModelResourceCheckedMock.SetupGet(it => it.ResourceName).Returns("Resource2");
             env.AddChild(explorerItemViewModelMock.Object);
             env.AddChild(explorerItemViewModelResourceCheckedMock.Object);
-
             //act
             env.SelectAll();
 
             //assert
-            _deployStatsViewerViewModel.Verify(it=>it.Calculate(It.Is<IList<IExplorerTreeItem>>(list=>list.Count==1 && list.Contains(explorerItemViewModelResourceCheckedMock.Object))));
+            _deployStatsViewerViewModel.Verify(it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(list => list.Count == 1 && list.Contains(explorerItemViewModelResourceCheckedMock.Object))));
         }
 
         [TestMethod]
@@ -330,13 +305,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             axMock.SetupGet(it => it.IsResourceChecked).Returns(true);
             axMock.SetupGet(it => it.ResourceType).Returns("Folder");
             axMock.Setup(it => it.Children)
-                .Returns(new ObservableCollection<IExplorerItemViewModel> {childMock.Object});
+                .Returns(new ObservableCollection<IExplorerItemViewModel> { childMock.Object });
 
             //act
             _target.Environments.First().SelectAction(axMock.Object);
 
             //assert
-            
+
             _deployStatsViewerViewModel.Verify(
                 it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
         }
@@ -385,8 +360,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             axParentMock.VerifySet(it => it.IsFolderChecked = true);
             _deployStatsViewerViewModel.Verify(
                 it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
-        }
-
+        }        
         #endregion Test methods
     }
 }

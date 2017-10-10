@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,57 +10,103 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Delete a resource ;)
-    /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
-    public class DeleteResource : IEsbManagementEndpoint
 
-{
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+    public class DeleteResource : IEsbManagementEndpoint
+    {
+        private readonly IResourceCatalog _resourceCatalog;
+        private readonly ITestCatalog _testCatalog;
+
+        public DeleteResource(IResourceCatalog resourceCatalog, ITestCatalog testCatalog)
         {
-            string type = null;
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-            StringBuilder tmp;
-            values.TryGetValue("ResourceID", out tmp);
-            Guid resourceId = Guid.Empty;
-            if(tmp != null)
+            _resourceCatalog = resourceCatalog;
+            _testCatalog = testCatalog;
+        }
+
+        public DeleteResource()
+        {
+            
+        }
+
+        ITestCatalog MyTestCatalog => _testCatalog ?? TestCatalog.Instance;
+        IResourceCatalog MyResourceCatalog => _resourceCatalog ?? ResourceCatalog.Instance;
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            requestArgs.TryGetValue("ResourceID", out StringBuilder tmp);
+            if (tmp != null)
             {
-                if(!Guid.TryParse(tmp.ToString(), out resourceId))
+                if (Guid.TryParse(tmp.ToString(), out Guid resourceId))
                 {
-                    Dev2Logger.Info("Delete Resource Service. Invalid Parameter Guid:");
-                    var failureResult = new ExecuteMessage { HasError = true };
-                    failureResult.SetMessage("Invalid guid passed for ResourceID");
-                    return serializer.SerializeToBuilder(failureResult);
+                    return resourceId;
                 }
             }
-            values.TryGetValue("ResourceType", out tmp);
-            if(tmp != null)
+
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
+        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        {
+            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            try
             {
-                type = tmp.ToString();
+                string type = null;
+
+                values.TryGetValue("ResourceID", out StringBuilder tmp);
+                Guid resourceId = Guid.Empty;
+                if (tmp != null)
+                {
+                    if (!Guid.TryParse(tmp.ToString(), out resourceId))
+                    {
+                        Dev2Logger.Info("Delete Resource Service. Invalid Parameter Guid:", GlobalConstants.WarewolfInfo);
+                        var failureResult = new ExecuteMessage { HasError = true };
+                        failureResult.SetMessage("Invalid guid passed for ResourceID");
+                        return serializer.SerializeToBuilder(failureResult);
+                    }
+                }
+                values.TryGetValue("ResourceType", out tmp);
+                if (tmp != null)
+                {
+                    type = tmp.ToString();
+                }
+                Dev2Logger.Info("Delete Resource Service. Resource:" + resourceId, GlobalConstants.WarewolfInfo);
+
+                var msg = MyResourceCatalog.DeleteResource(theWorkspace.ID, resourceId, type);
+                if (theWorkspace.ID == GlobalConstants.ServerWorkspaceID)
+                {
+                    MyTestCatalog.DeleteAllTests(resourceId);
+                    MyTestCatalog.Load();
+                }
+                
+                var result = new ExecuteMessage { HasError = false };
+                result.SetMessage(msg.Message);
+                result.HasError = msg.Status != ExecStatus.Success;
+                return serializer.SerializeToBuilder(result);
             }
-
-            Dev2Logger.Info("Delete Resource Service. Resource:" + resourceId);
-            // BUG 7850 - TWR - 2013.03.11 - ResourceCatalog refactor
-            var msg = ResourceCatalog.Instance.DeleteResource(theWorkspace.ID, resourceId, type);
-
-            var result = new ExecuteMessage { HasError = false };
-            result.SetMessage(msg.Message);
-            result.HasError = msg.Status != ExecStatus.Success;
-            return serializer.SerializeToBuilder(result);
+            catch (ServiceNotAuthorizedException ex)
+            {
+                var result = new ExecuteMessage { HasError = true };
+                result.SetMessage(ex.Message);
+                return serializer.SerializeToBuilder(result);
+            }
         }
 
         public string HandlesType()

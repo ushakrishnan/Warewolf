@@ -1,5 +1,8 @@
 using System;
+using System.Linq;
+using Dev2;
 using Dev2.Common.Interfaces.DB;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Mvvm;
 
 namespace Warewolf.Studio.ViewModels
@@ -76,6 +79,21 @@ namespace Warewolf.Studio.ViewModels
         
         public abstract void Save();
 
+        public void AfterSave(Guid environmentId, Guid resourceId)
+        {
+            var explorerViewModel = CustomContainer.Get<IShellViewModel>().ExplorerViewModel;
+            var environmentViewModel = explorerViewModel.Environments.FirstOrDefault(model => model.Server.EnvironmentID == environmentId);
+            if (environmentViewModel != null)
+            {
+                var env = CustomContainer.Get<IServerRepository>().Get(environmentId);
+                var resource = env.ResourceRepository.LoadContextualResourceModel(resourceId);
+                var item = environmentViewModel.FindByPath(resource.GetSavePath());
+                var viewModel = environmentViewModel as EnvironmentViewModel;
+                var savedItem = viewModel?.CreateExplorerItemFromResource(environmentViewModel.Server, item, false, false, resource);
+                item.AddChild(savedItem);
+            }
+        }
+
         public Guid SelectedGuid { get; set; }
 
         public void Dispose()
@@ -87,5 +105,25 @@ namespace Warewolf.Studio.ViewModels
         {
         }
 
+        public string GetExceptionMessage(Exception exception)
+        {
+            if (exception == null)
+            {
+                return "Failed";
+            }
+            string exceptionMsg = Resources.Languages.Core.ExceptionErrorLabel + exception.Message;
+
+            if (exception.InnerException != null)
+            {
+                string innerExpceptionMsg = Resources.Languages.Core.InnerExceptionErrorLabel + exception.InnerException.Message;
+                return exceptionMsg + Environment.NewLine + Environment.NewLine + innerExpceptionMsg;
+            }
+            return exceptionMsg;
+        }
+
+        protected virtual void OnIsActiveChanged()
+        {
+            IsActiveChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

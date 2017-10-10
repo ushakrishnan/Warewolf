@@ -2,7 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -14,7 +14,7 @@ namespace Warewolf.Studio.ViewModels
         {
             _selectedId = selectedId;
             environmentViewModel.SetPropertiesForDialog();
-            // ReSharper disable once VirtualMemberCallInContructor
+            
             Environments = new ObservableCollection<IEnvironmentViewModel>
             {
                 environmentViewModel
@@ -24,26 +24,22 @@ namespace Warewolf.Studio.ViewModels
             IsRefreshing = false;
             ShowConnectControl = false;
             SelectItem(_selectedId);
+            Filter();
         }
 
         public override string SearchText
         {
             get
             {
-                return _searchText;
+                return base.SearchText;
             }
             set
             {
-                if (_searchText == value)
-                {
-                    return;
-                }
-                _searchText = value;
-                Environments.First().Filter(a => a.ResourceName.ToUpper().Contains(SearchText.ToUpper()) && (a.ResourceType == "Folder" || a.ResourceType == "WorkflowService"));
-
-                OnPropertyChanged(() => SearchText);
+                base.SearchText = value;
+                Filter();
             }
         }
+
         private bool FilterByType { get; set; }
 
         protected override async Task Refresh(bool refresh)
@@ -56,9 +52,15 @@ namespace Warewolf.Studio.ViewModels
                     await environmentViewModel.LoadDialog(_selectedId);
                 }
             }
-            if (!string.IsNullOrEmpty(SearchText))
+            Filter();
+            IsRefreshing = false;
+        }
+
+        private void Filter()
+        {
+            if(!string.IsNullOrEmpty(SearchText))
             {
-                if (FilterByType)
+                if(FilterByType)
                 {
                     Environments.First().Filter(a => a.ResourceName.ToUpper().Contains(SearchText.ToUpper()) && (a.ResourceType == "Folder" || a.ResourceType == "WorkflowService"));
                 }
@@ -69,10 +71,11 @@ namespace Warewolf.Studio.ViewModels
             }
             else
             {
-                if (FilterByType)
+                if(FilterByType)
+                {
                     Environments.First().Filter(a => a.ResourceType == "Folder" || a.ResourceType == "WorkflowService");
+                }
             }
-            IsRefreshing = false;
         }
     }
 }

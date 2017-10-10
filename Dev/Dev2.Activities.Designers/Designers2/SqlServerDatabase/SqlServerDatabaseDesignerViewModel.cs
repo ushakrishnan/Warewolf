@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,17 +25,17 @@ using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.Database;
 using Dev2.Communication;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-using Warewolf.Resource.Errors;
 
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+
 
 namespace Dev2.Activities.Designers2.SqlServerDatabase
 {
@@ -44,26 +44,21 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
         private IOutputsToolRegion _outputsRegion;
         private IDatabaseInputRegion _inputArea;
         private ISourceToolRegion<IDbSource> _sourceRegion;
-        private IActionToolRegion<IDbAction> _actionRegion;
+        private IDbActionToolRegion<IDbAction> _actionRegion;
 
         private IErrorInfo _worstDesignError;
 
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        // ReSharper disable UnusedMember.Local
+
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
-
-        public SqlServerDatabaseDesignerViewModel(ModelItem modelItem)
+        public SqlServerDatabaseDesignerViewModel(ModelItem modelItem, IAsyncWorker worker, IViewPropertyBuilder propertyBuilder)
             : base(modelItem)
         {
+            _worker = worker;
+            _propertyBuilder = propertyBuilder;
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             var server = shellViewModel.ActiveServer;
             var model = CustomContainer.CreateInstance<IDbServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
@@ -71,6 +66,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_SQL_Server;
         }
 
         Guid UniqueID => GetProperty<Guid>();
@@ -107,7 +103,6 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             DesignValidationErrors = new ObservableCollection<IErrorInfo>();
             FixErrorsCommand = new Runtime.Configuration.ViewModels.Base.DelegateCommand(o =>
             {
-                FixErrors();
                 IsWorstErrorReadOnly = true;
             });
 
@@ -115,8 +110,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             OutputsRegion.OutputMappingEnabled = true;
             TestInputCommand = new DelegateCommand(TestProcedure);
 
-            InitializeProperties();
-
+            Properties = _propertyBuilder.BuildProperties(ActionRegion, SourceRegion, Type);
             if (OutputsRegion != null && OutputsRegion.IsEnabled)
             {
                 var recordsetItem = OutputsRegion.Outputs.FirstOrDefault(mapping => !string.IsNullOrEmpty(mapping.RecordSetName));
@@ -171,10 +165,12 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             UpdateWorstError();
         }
 
-        public SqlServerDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model)
+        public SqlServerDatabaseDesignerViewModel(ModelItem modelItem, IDbServiceModel model, IAsyncWorker worker, IViewPropertyBuilder propertyBuilder)
             : base(modelItem)
         {
             Model = model;
+            _propertyBuilder = propertyBuilder;
+            _worker = worker;
             SetupCommonProperties();
         }
 
@@ -189,10 +185,6 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             Errors.Clear();
 
             Errors = Regions.SelectMany(a => a.Errors).Select(a => new ActionableErrorInfo(new ErrorInfo() { Message = a, ErrorType = ErrorType.Critical }, () => { }) as IActionableErrorInfo).ToList();
-            if (!OutputsRegion.IsEnabled)
-            {
-                Errors = new List<IActionableErrorInfo>() { new ActionableErrorInfo() { Message = string.Format(ErrorResource.ValidateBeforeMinimising, "Database get")} };
-            }
             if (SourceRegion.Errors.Count > 0)
             {
                 foreach (var designValidationError in SourceRegion.Errors)
@@ -206,7 +198,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
                 ClearValidationMemoWithNoFoundError();
             }
             UpdateWorstError();
-            InitializeProperties();
+            Properties = _propertyBuilder.BuildProperties(ActionRegion, SourceRegion, Type);
         }
 
         void UpdateWorstError()
@@ -231,15 +223,13 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
 
         IErrorInfo WorstDesignError
         {
-            // ReSharper disable once UnusedMember.Local
-            get { return _worstDesignError; }
             set
             {
                 if (_worstDesignError != value)
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -247,22 +237,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
         public int LabelWidth { get; set; }
 
         public List<KeyValuePair<string, string>> Properties { get; private set; }
-        void InitializeProperties()
-        {
-            Properties = new List<KeyValuePair<string, string>>();
-            AddProperty("Source :", SourceRegion.SelectedSource == null ? "" : SourceRegion.SelectedSource.Name);
-            AddProperty("Type :", Type);
-            AddProperty("Procedure :", ActionRegion.SelectedAction == null ? "" : ActionRegion.SelectedAction.Name);
-        }
-
-        void AddProperty(string key, string value)
-        {
-            if (!string.IsNullOrEmpty(value))
-            {
-                Properties.Add(new KeyValuePair<string, string>(key, value));
-            }
-        }
-
+        
         public IManageDatabaseInputViewModel ManageServiceInputViewModel { get; set; }
 
         public void TestProcedure()
@@ -305,15 +280,13 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
         DependencyProperty.Register("WorstError", typeof(ErrorType), typeof(SqlServerDatabaseDesignerViewModel), new PropertyMetadata(ErrorType.None));
 
         bool _generateOutputsVisible;
+        private readonly IAsyncWorker _worker;
+        private readonly IViewPropertyBuilder _propertyBuilder;
 
         public ICommand TestInputCommand { get; set; }
 
         private string Type => GetProperty<string>();
-        // ReSharper disable InconsistentNaming
 
-        private void FixErrors()
-        {
-        }
 
         void AddTitleBarMappingToggle()
         {
@@ -328,11 +301,8 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -344,12 +314,12 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             IList<IToolRegion> regions = new List<IToolRegion>();
             if (SourceRegion == null)
             {
-                SourceRegion = new DatabaseSourceRegion(Model, ModelItem,enSourceType.SqlDatabase) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
+                SourceRegion = new DatabaseSourceRegion(Model, ModelItem, enSourceType.SqlDatabase) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 regions.Add(SourceRegion);
-                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
+                ActionRegion = new DbActionRegion(Model, ModelItem, SourceRegion, _worker);
                 ActionRegion.ErrorsHandler += (sender, list) =>
                 {
-                    List<ActionableErrorInfo> errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error },()=>{})).ToList();
+                    var errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
                     UpdateDesignValidationErrors(errorInfos);
                     Errors = new List<IActionableErrorInfo>(errorInfos);
                 };
@@ -380,7 +350,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
 
         #region Implementation of IDatabaseServiceViewModel
 
-        public IActionToolRegion<IDbAction> ActionRegion
+        public IDbActionToolRegion<IDbAction> ActionRegion
         {
             get
             {
@@ -437,19 +407,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             set
             {
                 _generateOutputsVisible = value;
-                if (value)
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = true;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(false);
-                }
-                else
-                {
-                    ManageServiceInputViewModel.InputArea.IsEnabled = false;
-                    ManageServiceInputViewModel.OutputArea.IsEnabled = false;
-                    SetRegionVisibility(true);
-                }
-
+                OutputVisibilitySetter.SetGenerateOutputsVisible(ManageServiceInputViewModel.InputArea, ManageServiceInputViewModel.OutputArea, SetRegionVisibility, value);
                 OnPropertyChanged();
             }
         }
@@ -473,7 +431,9 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
         {
             Errors = new List<IActionableErrorInfo>();
             if (hasError)
+            {
                 Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo(new ErrorInfo() { ErrorType = ErrorType.Critical, FixData = "", FixType = FixType.None, Message = exception.Message, StackTrace = exception.StackTrace }, () => { }) };
+            }
         }
 
         public void SetDisplayName(string outputFieldName)
@@ -510,6 +470,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
         #endregion
     }
 }
+
 
 
 

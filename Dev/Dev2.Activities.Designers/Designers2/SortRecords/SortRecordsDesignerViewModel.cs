@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 
 namespace Dev2.Activities.Designers2.SortRecords
@@ -26,6 +26,7 @@ namespace Dev2.Activities.Designers2.SortRecords
             SortOrderTypes = new List<string> { "Forward", "Backwards" };
             SelectedSelectedSort = string.IsNullOrEmpty(SelectedSort) ? SortOrderTypes[0] : SelectedSort;
             AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Recordset_Sort;
         }
 
         public List<string> SortOrderTypes { get; private set; }
@@ -53,26 +54,24 @@ namespace Dev2.Activities.Designers2.SortRecords
 
         public override void Validate()
         {
-
-
-            // ReSharper disable once ExplicitCallerInfoArgument
+            
             IsSingleRecordSetRule rule = new IsSingleRecordSetRule(() => GetProperty<string>("SortField"));
             var single = rule.Check();
             if (single != null)
             {
                 if (Errors == null )
+                {
                     Errors = new List<IActionableErrorInfo>();
+                }
+
                 Errors.Add(single);
             }
         }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

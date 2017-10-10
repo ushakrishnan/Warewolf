@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +15,7 @@ using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.Poco;
 using Unlimited.UnitTest.Framework.ConverterTests.GraphTests;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
 {
@@ -516,7 +516,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
             string separator = "|";
             for (int i = 0; i < maxCount; i++)
             {
-                if (i == maxCount - 1) separator = "";
+                if (i == maxCount - 1)
+                {
+                    separator = "";
+                }
 
                 if (i < testData.EnumerableData.Count)
                 {
@@ -578,7 +581,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
             {
                 for (int innerCount = 0; innerCount < testData.EnumerableData[outerCount].EnumerableData.Count; innerCount++)
                 {
-                    if (outerCount == testData.EnumerableData.Count - 1 && innerCount == testData.EnumerableData[outerCount].EnumerableData.Count - 1) separator = "";
+                    if (outerCount == testData.EnumerableData.Count - 1 && innerCount == testData.EnumerableData[outerCount].EnumerableData.Count - 1)
+                    {
+                        separator = "";
+                    }
+
                     if (outerCount < testData.EnumerableData.Count)
                     {
                         tmpExpected += testData.EnumerableData[outerCount].Name + separator;

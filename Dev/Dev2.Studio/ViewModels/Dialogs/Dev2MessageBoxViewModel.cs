@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,13 +14,15 @@ using System.IO;
 using System.Windows;
 using System.Xml.Linq;
 using Caliburn.Micro;
-using Dev2.Studio.Core.Interfaces;
 using FontAwesome.WPF;
 using Warewolf.Studio.ViewModels;
 using Warewolf.Studio.Views;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable CheckNamespace
+
+
+
 namespace Dev2.Studio.ViewModels.Dialogs
 {
     public class Dev2MessageBoxViewModel : Screen
@@ -35,6 +37,7 @@ namespace Dev2.Studio.ViewModels.Dialogs
         private readonly MessageBoxResult _defaultResult;
         private readonly string _dontShowAgainKey;
         private bool _dontShowAgain;
+        private static bool _deleteAnyway;
 
         private static Dictionary<string, MessageBoxResult> _dontShowAgainOptions;
 
@@ -147,13 +150,22 @@ namespace Dev2.Studio.ViewModels.Dialogs
 
         public string DontShowAgainKey => _dontShowAgainKey;
 
+        public bool DeleteAnyway
+        {
+            get { return _deleteAnyway; }
+            set
+            {
+                _deleteAnyway = value; 
+            }
+        }
+
         #endregion Properties
 
         #region Static Methods
 
         private static string GetDontShowAgainPersistencePath()
         {
-            string path = Path.Combine(new[] 
+            var path = Path.Combine(new[] 
                 { 
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
                     StringResources.App_Data_Directory, 
@@ -168,19 +180,27 @@ namespace Dev2.Studio.ViewModels.Dialogs
             return Path.Combine(path, "DontShowAgainOptions.xml");
         }
 
-        private static void LoadDontShowAgainOptions()
+                private static void LoadDontShowAgainOptions()
         {
             try
             {
-                IFilePersistenceProvider filePersistenceProviderInst = CustomContainer.Get<IFilePersistenceProvider>();
-                string data = filePersistenceProviderInst.Read(GetDontShowAgainPersistencePath());
+                var filePersistenceProviderInst = CustomContainer.Get<IFilePersistenceProvider>();
+                var data = filePersistenceProviderInst.Read(GetDontShowAgainPersistencePath());
                 _dontShowAgainOptions = new Dictionary<string, MessageBoxResult>();
 
-                foreach(XElement element in XElement.Parse(data).Elements())
+                foreach(var element in XElement.Parse(data).Elements())
                 {
-                    string key = element.Attribute("Key").Value;
-                    MessageBoxResult val = (MessageBoxResult)Enum.Parse(typeof(MessageBoxResult), element.Attribute("Value").Value);
-                    _dontShowAgainOptions.Add(key, val);
+                    var xAttribute = element.Attribute("Key");
+                    if(xAttribute != null)
+                    {
+                        string key = xAttribute.Value;
+                        var attribute = element.Attribute("Value");
+                        if(attribute != null)
+                        {
+                            MessageBoxResult val = (MessageBoxResult)Enum.Parse(typeof(MessageBoxResult), attribute.Value);
+                            _dontShowAgainOptions.Add(key, val);
+                        }
+                    }
                 }
             }
             catch(Exception)
@@ -206,25 +226,17 @@ namespace Dev2.Studio.ViewModels.Dialogs
 
             // Check if there an option for the key
             Tuple<bool, MessageBoxResult> result;
-            MessageBoxResult tmp;
-            if(_dontShowAgainOptions != null && _dontShowAgainOptions.TryGetValue(dontShowAgainKey, out tmp))
-            {
-                result = new Tuple<bool, MessageBoxResult>(true, tmp);
-            }
-            else
-            {
-                result = new Tuple<bool, MessageBoxResult>(false, MessageBoxResult.None);
-            }
+            result = _dontShowAgainOptions != null && _dontShowAgainOptions.TryGetValue(dontShowAgainKey, out MessageBoxResult tmp) ? new Tuple<bool, MessageBoxResult>(true, tmp) : new Tuple<bool, MessageBoxResult>(false, MessageBoxResult.None);
 
             return result;
         }
 
-        public static MessageBoxResult Show(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon, string dontShowAgainKey, bool isDependenciesButtonVisible,
-            bool isError, bool isInfo, bool isQuestion, List<string> urlsFound)
+        public static MessageBoxViewModel Show(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon, string dontShowAgainKey, bool isDependenciesButtonVisible,
+            bool isError, bool isInfo, bool isQuestion, List<string> urlsFound, bool isDeleteAnywayButtonVisible, bool applyToAll)
         {
             // Claculate the appropriate default result
             var defaultResult = MessageBoxResult.OK;
-            switch(button)
+            switch (button)
             {
                 case MessageBoxButton.OK:
                 case MessageBoxButton.OKCancel:
@@ -234,29 +246,31 @@ namespace Dev2.Studio.ViewModels.Dialogs
                 case MessageBoxButton.YesNoCancel:
                     defaultResult = MessageBoxResult.Yes;
                     break;
+                default:
+                    break;
             }
 
-            return Show(messageBoxText, caption, button, icon, defaultResult, dontShowAgainKey, isDependenciesButtonVisible, isError, isInfo, isQuestion, urlsFound);
+            return Show(messageBoxText, caption, button, icon, defaultResult, dontShowAgainKey, isDependenciesButtonVisible, isError, isInfo, isQuestion, urlsFound, isDeleteAnywayButtonVisible, applyToAll);
         }
 
-        public static MessageBoxResult Show(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon,
+        public static MessageBoxViewModel Show(string messageBoxText, string caption, MessageBoxButton button, MessageBoxImage icon,
                                             MessageBoxResult defaultResult, string dontShowAgainKey, bool isDependenciesButtonVisible,
-            bool isError, bool isInfo, bool isQuestion, List<string> urlsFound)
+            bool isError, bool isInfo, bool isQuestion, List<string> urlsFound, bool isDeleteAnywayButtonVisible, bool applyToAll)
         {
             // Check for don't show again option
-            Tuple<bool, MessageBoxResult> dontShowAgainOption = GetDontShowAgainOption(dontShowAgainKey);
-            if(dontShowAgainOption.Item1)
+            var dontShowAgainOption = GetDontShowAgainOption(dontShowAgainKey);
+            var msgBoxViewModel = new MessageBoxViewModel(messageBoxText, caption, button, FontAwesomeIcon.ExclamationTriangle, isDependenciesButtonVisible, isError, isInfo, isQuestion, urlsFound, isDeleteAnywayButtonVisible, applyToAll);
+            if (dontShowAgainOption.Item1)
             {
                 // Return the remembered option
-                return dontShowAgainOption.Item2;
+                msgBoxViewModel.Result = dontShowAgainOption.Item2;
+                return msgBoxViewModel;
             }
 
             if (caption != "Duplicated Resources")
             {
                 urlsFound = new List<string>();
-            }
-
-            var msgBoxViewModel = new MessageBoxViewModel(messageBoxText, caption, button, FontAwesomeIcon.ExclamationTriangle, isDependenciesButtonVisible, isError, isInfo, isQuestion, urlsFound);
+            }            
 
             var msgBoxView = new MessageBoxView
             {
@@ -267,9 +281,12 @@ namespace Dev2.Studio.ViewModels.Dialogs
             msgBoxViewModel.IsInfo = isInfo;
             msgBoxViewModel.IsQuestion = isQuestion;
             msgBoxViewModel.IsDependenciesButtonVisible = isDependenciesButtonVisible;
+            msgBoxViewModel.IsDeleteAnywayButtonVisible = isDeleteAnywayButtonVisible;
+            msgBoxViewModel.ApplyToAll = applyToAll;
+
             msgBoxView.ShowDialog();
 
-            return msgBoxViewModel.Result;
+            return msgBoxViewModel;
         }
 
         #endregion Static Methods

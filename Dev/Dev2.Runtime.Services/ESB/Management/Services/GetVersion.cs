@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Versioning;
@@ -26,10 +27,21 @@ using Dev2.Util;
 using Dev2.Workspaces;
 using Warewolf.Resource.Errors;
 
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class GetVersion : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         #region Implementation of ISpookyLoadable<string>
         private IServerVersionRepository _serverExplorerRepository;
         IResourceCatalog _resourceCatalog   ;
@@ -61,16 +73,15 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 if (!values.ContainsKey("versionInfo"))
                 {
-// ReSharper disable NotResolvedInText
+
                     throw new ArgumentNullException(ErrorResource.NoResourceIdInTheIncomingData);
-// ReSharper restore NotResolvedInText
+
                 }
                
                 var version = serializer.Deserialize<IVersionInfo>(values["versionInfo"]);
-                Dev2Logger.Info("Get Version. " + version);
-                StringBuilder tmp;
+                Dev2Logger.Info("Get Version. " + version, GlobalConstants.WarewolfInfo);
                 Guid resourceId = Guid.Empty;
-                values.TryGetValue("resourceId", out tmp);
+                values.TryGetValue("resourceId", out StringBuilder tmp);
                 if (tmp != null)
                 {
                     resourceId = Guid.Parse(tmp.ToString());
@@ -87,7 +98,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 IExplorerRepositoryResult error = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
                 return serializer.SerializeToBuilder(error);
             }
@@ -119,5 +130,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             get { return _resourceCatalog ?? Hosting.ResourceCatalog.Instance; }
             set { _resourceCatalog = value; }
         }
+
+
     }
 }

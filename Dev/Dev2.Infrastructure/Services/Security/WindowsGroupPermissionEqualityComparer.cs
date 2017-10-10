@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,24 +9,23 @@
 */
 
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Dev2.Services.Security
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class WindowsGroupPermissionEqualityComparer : IEqualityComparer<WindowsGroupPermission>
     {
         #region Implementation of IEqualityComparer<in WindowsGroupPermission>
 
+        
         /// <summary>
         /// Determines whether the specified objects are equal.
         /// </summary>
         /// <returns>
         /// true if the specified objects are equal; otherwise, false.
         /// </returns>
-        // ReSharper disable CSharpWarnings::CS1584
-        /// <param name="x">The first object of type <paramref name="T"/> to compare.</param><param name="y">The second object of type <paramref name="T"/> to compare.</param>
-        // ReSharper restore CSharpWarnings::CS1584
+        /// <param name="x">The first object to compare.</param><param name="y">The second object to compare.</param>
+        
         public bool Equals(WindowsGroupPermission x, WindowsGroupPermission y)
         {
             var isEqual = x.Permissions.Equals(y.Permissions) && x.ResourceID.Equals(y.ResourceID);

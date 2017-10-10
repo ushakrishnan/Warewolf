@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,20 +10,19 @@
 
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.TO;
 using Dev2.Util;
 using Dev2.Validation;
-
-// ReSharper disable CheckNamespace
+using System;
 
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    // ReSharper disable InconsistentNaming
+    
     public class DataSplitDTO : ValidatedObject, IDev2TOFn, IOutputTOConvert
-    // ReSharper restore InconsistentNaming
+    
     {
         public const string SplitTypeIndex = "Index";
         public const string SplitTypeChars = "Chars";
@@ -52,7 +51,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             _isEscapeCharEnabled = true;
         }
 
-        public DataSplitDTO(string outputVariable, string splitType, string at, int indexNum, bool include = false, bool inserted = false)
+        public DataSplitDTO(string outputVariable, string splitType, string at, int indexNum)
+            : this(outputVariable, splitType, at, indexNum, false, false)
+        {
+        }
+
+        public DataSplitDTO(string outputVariable, string splitType, string at, int indexNum, bool include, bool inserted)
         {
             Inserted = inserted;
             OutputVariable = outputVariable;
@@ -60,14 +64,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             At = string.IsNullOrEmpty(at) ? string.Empty : at;
             IndexNumber = indexNum;
             Include = include;
-            if(splitType == "Index" || splitType == "Chars")
-            {
-                _enableAt = true;
-            }
-            else
-            {
-                _enableAt = false;
-            }
+            _enableAt = splitType == "Index" || splitType == "Chars";
             _isEscapeCharEnabled = true;
             OutList = new List<string>();
         }
@@ -76,10 +73,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
 
         public bool EnableAt { get { return _enableAt; } set { OnPropertyChanged(ref _enableAt, value); } }
@@ -199,7 +196,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                         ruleSet.Add(new IsValidExpressionRule(() => outputExprRule.ExpressionValue, datalist));
                     }
                     break;
-
                 case "At":
                     switch(SplitType)
                     {
@@ -213,8 +209,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                             ruleSet.Add(atCharsExprRule);
                             ruleSet.Add(new IsStringEmptyRule(() => atCharsExprRule.ExpressionValue));
                             break;
+                        default:
+                            throw new ArgumentException("Unrecognized split type: " + SplitType);
                     }
                     break;
+                default:
+                    return ruleSet;
             }
             return ruleSet;
         }

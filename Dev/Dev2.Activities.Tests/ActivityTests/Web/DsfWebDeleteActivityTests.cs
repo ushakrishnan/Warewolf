@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Activities;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Activities;
 using Dev2.Common.Interfaces;
@@ -23,7 +22,7 @@ using Warewolf.Storage;
 namespace Dev2.Tests.Activities.ActivityTests.Web
 {
     [TestClass]
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
+
     public class DsfWebDeleteActivityTests
     {
         [TestMethod]
@@ -216,7 +215,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             dsfWebDeleteActivity.Inputs = serviceInputs;
             dsfWebDeleteActivity.Outputs = serviceOutputs;
             var serviceXml = XmlResource.Fetch("WebService");
-            // ReSharper disable once ObjectCreationAsStatement
+            
             new WebService(serviceXml) { RequestResponse = response };
             dsfWebDeleteActivity.OutputDescription = new OutputDescription();
             dsfWebDeleteActivity.ResourceCatalog = new Mock<IResourceCatalog>().Object;
@@ -241,7 +240,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("DsfWebDeleteActivity_Execute")]
-        public void DsfWebDeleteActivity_Execute_WithInValidWebResponse_ShouldError()
+        public void DsfWebDeleteActivity_Execute_WithInValidWebResponse_ShouldNotError()
         {
             //------------Setup for test--------------------------
             const string response = "{\"Location\": \"Paris\",\"Time\": \"May 29, 2013 - 09:00 AM EDT / 2013.05.29 1300 UTC\"," +
@@ -281,8 +280,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             dsfWebDeleteActivity.Execute(dataObjectMock.Object, 0);
             //------------Assert Results-------------------------
             Assert.IsNotNull(dsfWebDeleteActivity.OutputDescription);
-            Assert.AreEqual(1, environment.Errors.Count);
-            StringAssert.Contains(environment.Errors.ToList()[0], "No Web Response received");
+            Assert.AreEqual(0, environment.Errors.Count);
         }
 
 

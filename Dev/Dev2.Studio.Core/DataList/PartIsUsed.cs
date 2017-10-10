@@ -2,8 +2,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Dev2.Common;
 using Dev2.Data.Interfaces;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using ServiceStack.Common.Extensions;
 
 namespace Dev2.Studio.Core.DataList
@@ -47,7 +47,11 @@ namespace Dev2.Studio.Core.DataList
 
         private static void ProcessFoundRecordSets(IDataListVerifyPart part, IRecordSetItemModel recsetToRemove, bool isUsed)
         {
-            if (recsetToRemove == null) return;
+            if (recsetToRemove == null)
+            {
+                return;
+            }
+
             if (string.IsNullOrEmpty(part.Field))
             {
                 recsetToRemove.IsUsed = isUsed;

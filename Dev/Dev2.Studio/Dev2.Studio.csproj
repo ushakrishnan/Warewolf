@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -21,6 +21,10 @@
     <SccProvider>SAK</SccProvider>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <SccAuxPath>SAK</SccAuxPath>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -35,10 +39,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Warewolf.ico</ApplicationIcon>
@@ -51,16 +51,16 @@
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\Debug\</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>Dev2.Studio.ruleset</CodeAnalysisRuleSet>
     <DefineConstants>DEBUG</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>Dev2.Studio.ruleset</CodeAnalysisRuleSet>
     <DefineConstants>DEBUG</DefineConstants>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdornedControl">
@@ -70,15 +70,16 @@
       <HintPath>..\packages\AeroWizard.2.1.7\lib\net40\AeroWizard.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Caliburn.Micro">
-      <HintPath>..\packages\Caliburn.Micro.1.4\lib\net40\Caliburn.Micro.dll</HintPath>
+    <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="CubicOrange.Windows.Forms.ActiveDirectory, Version=2.5.2.0, Culture=neutral, PublicKeyToken=4d9365c354fd6f36, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\CubicOrange.Windows.Forms.ActiveDirectory.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Dropbox.Api, Version=0.1.5906.37642, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dropbox.Api.3.0.2\lib\net45\Dropbox.Api.dll</HintPath>
+    <Reference Include="Dropbox.Api, Version=4.0.0.0, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dropbox.Api.4.2.4\lib\net45\Dropbox.Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FontAwesome.WPF, Version=4.5.0.37524, Culture=neutral, PublicKeyToken=0758b07a11a4f466, processorArchitecture=MSIL">
@@ -100,6 +101,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\InfragisticsWPF4.Calculations.XamCalculationManager.v15.1.dll</HintPath>
     </Reference>
+    <Reference Include="InfragisticsWPF4.Controls.Editors.XamComboEditor.v15.1, Version=15.1.20151.2055, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Binaries\InfragisticsWPF4.Controls.Editors.XamComboEditor.v15.1.dll</HintPath>
+    </Reference>
     <Reference Include="InfragisticsWPF4.Controls.Grids.XamGrid.v15.1, Version=15.1.20151.2055, Culture=neutral, PublicKeyToken=7dd5c3163f2cd0cb, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\InfragisticsWPF4.Controls.Grids.XamGrid.v15.1.dll</HintPath>
@@ -115,6 +120,10 @@
     <Reference Include="InfragisticsWPF4.Controls.Menus.XamDataTree.v15.1, Version=15.1.20151.2055, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\InfragisticsWPF4.Controls.Menus.XamDataTree.v15.1.dll</HintPath>
+    </Reference>
+    <Reference Include="InfragisticsWPF4.Controls.Menus.XamMenu.v15.1, Version=15.1.20151.2055, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Binaries\InfragisticsWPF4.Controls.Menus.XamMenu.v15.1.dll</HintPath>
     </Reference>
     <Reference Include="InfragisticsWPF4.DataManager.v15.1, Version=15.1.20151.2055, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -200,7 +209,6 @@
       <HintPath>..\packages\Unity.3.5.1404.0\lib\net45\Microsoft.Practices.Unity.RegistrationByConvention.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.Win32.TaskScheduler, Version=2.5.20.0, Culture=neutral, PublicKeyToken=0d013ddd5178a2ae, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskScheduler.2.5.20\lib\net40\Microsoft.Win32.TaskScheduler.dll</HintPath>
       <Private>True</Private>
@@ -209,12 +217,8 @@
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\Microsoft.Win32.TaskSchedulerEditor.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.Windows.Design.Interaction">
-      <HintPath>%vs140comntools%\..\IDE\PublicAssemblies\Microsoft.Windows.Design.Interaction.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="policy.2.3.FSharp.Core">
       <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\policy.2.3.FSharp.Core.dll</HintPath>
@@ -254,7 +258,7 @@
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Expression.Blend.Sdk.1.0.2\lib\net45\System.Windows.Interactivity.dll</HintPath>
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml" />
@@ -293,9 +297,13 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\Run Tests.ps1">
+      <Visible>False</Visible>
+      <Link>Run Tests.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="ActivityDesigners\ActivityDesignerHelper.cs" />
     <Compile Include="AppResources\AttachedProperties\FocusAttachedProperty.cs" />
-    <Compile Include="AppResources\Behaviors\ActivityDesignerAugmentationBehavior.cs" />
     <Compile Include="AppResources\Behaviors\ButtonPopupWorkaroundBehavior.cs" />
     <Compile Include="AppResources\Behaviors\PopupBuildVisualTreeOnLoad.cs" />
     <Compile Include="AppResources\Behaviors\TabGroupPaneBindingBehavior.cs" />
@@ -306,6 +314,7 @@
     <Compile Include="AppResources\Behaviors\WorkflowDesignerLinkBehaviours.cs" />
     <Compile Include="AppResources\Comparers\WorkSurfaceKeyEqualityComparerWithContextKey.cs" />
     <Compile Include="AppResources\Converters\ExplorerItemModelToIconConverter.cs" />
+    <Compile Include="AppResources\Converters\InverseScheduleStatusConverter.cs" />
     <Compile Include="AppResources\Converters\NavigationViewModelPermissionToBooleanConverter.cs" />
     <Compile Include="AppResources\Converters\CustomIcons.cs" />
     <Compile Include="AppResources\Converters\EmailSourceToDisplayTextConverter.cs" />
@@ -333,18 +342,12 @@
     <Compile Include="Diagnostics\AppExceptionHandlerAbstract.cs" />
     <Compile Include="Diagnostics\AppExceptionPopupController.cs" />
     <Compile Include="Diagnostics\AppExceptionPopupControllerAbstract.cs" />
-    <Compile Include="Diagnostics\DebugLineGroup.cs" />
-    <Compile Include="Diagnostics\DebugLineGroupRow.cs" />
-    <Compile Include="Diagnostics\DebugLineItem.cs" />
-    <Compile Include="Diagnostics\DebugLine.cs" />
     <Compile Include="Diagnostics\DebugStyleSelector.cs" />
     <Compile Include="Diagnostics\AppExceptionHandler.cs" />
     <Compile Include="Diagnostics\ErrorSeverity.cs" />
     <Compile Include="Diagnostics\IAppExceptionHandler.cs" />
     <Compile Include="Diagnostics\IAppExceptionPopupController.cs" />
-    <Compile Include="Diagnostics\JsonDebugProvider.cs" />
     <Compile Include="Diagnostics\DebugLineTemplateSelector.cs" />
-    <Compile Include="Diagnostics\IDebugLineItem.cs" />
     <Compile Include="Dock\BindingHelper.cs" />
     <Compile Include="Dock\ContainerFactory.cs" />
     <Compile Include="Dock\ContentPaneFactory.cs" />
@@ -360,13 +363,14 @@
       <DependentUpon>ProgressDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="CustomControls\Progress\ProgressFileDownloader.cs" />
-    <Compile Include="Properties\Annotations.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings\Logging\EnumHelper.cs" />
+    <Compile Include="Settings\Logging\ILogSettings.cs" />
     <Compile Include="Settings\Logging\LoggingView.xaml.cs">
       <DependentUpon>LoggingView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Dialogs\IResourcePickerDialog.cs" />
     <Compile Include="Dialogs\ResourcePickerDialog.cs" />
+    <Compile Include="Settings\Logging\LogLevel.cs" />
     <Compile Include="Settings\Logging\LogSettingsViewModel.cs" />
     <Compile Include="Settings\Perfcounters\PerfCountersToUtilities.cs" />
     <Compile Include="Settings\Perfcounters\PerfCounterView.xaml.cs">
@@ -394,25 +398,22 @@
     <Compile Include="Settings\SettingsViewModel.cs" />
     <Compile Include="Utils\OpeningWorkflowsHelper.cs" />
     <Compile Include="Utils\ResourceChangeHandler.cs" />
+    <Compile Include="ViewFactory.cs" />
     <Compile Include="ViewModels\Administration\DialogueViewModel.cs" />
     <Compile Include="ViewModels\DeployWorksurfaceViewModel.cs" />
     <Compile Include="ViewModels\Diagnostics\DebugOutputViewModelUtil.cs" />
     <Compile Include="ViewModels\Diagnostics\DebugStatus.cs" />
     <Compile Include="ViewModels\Diagnostics\IDebugOutputViewModelUtil.cs" />
-    <Compile Include="ViewModels\Diagnostics\ReportsViewerViewModel.cs" />
     <Compile Include="ViewModels\Help\IHelpViewWrapper.cs" />
     <Compile Include="ViewModels\Help\HelpViewWrapper.cs" />
     <Compile Include="ViewModels\SourceViewModel.cs" />
-    <Compile Include="ViewModels\Workflow\DataListConversionUtils.cs" />
+    <Compile Include="ViewModels\StudioTestViewModel.cs" />
     <Compile Include="ViewModels\Workflow\WorkflowDesignerDataPartUtils.cs" />
     <Compile Include="ViewModels\WorksurfaceContextManager.cs" />
     <Compile Include="ViewModels\WorkSurface\IWorkSurfaceContextViewModel.cs" />
     <Compile Include="Views\DependencyVisualization\DependencyVisualiserView.xaml.cs">
       <DependentUpon>DependencyVisualiserView.xaml</DependentUpon>
       <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Views\Dialog\Dev2MessageBoxWithCustomButtons.xaml.cs">
-      <DependentUpon>Dev2MessageBoxWithCustomButtons.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Help\HelpViewModel.cs" />
     <Compile Include="ViewModels\Workflow\WorkflowInputDataViewModel.cs" />
@@ -471,7 +472,7 @@
     <Compile Include="Model\ExceptionUIModel.cs" />
     <Compile Include="ViewModels\Diagnostics\ExceptionViewModel.cs" />
     <Compile Include="ViewModels\Diagnostics\IExceptionViewModel.cs" />
-    <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\ShellViewModel.cs" />
     <Compile Include="ViewModels\Workflow\WorkflowDesignerViewModel.cs" />
     <Compile Include="Views\DataList\DataListView.xaml.cs">
       <DependentUpon>DataListView.xaml</DependentUpon>
@@ -482,9 +483,6 @@
     <Compile Include="Views\Help\FeedbackView.xaml.cs">
       <DependentUpon>FeedbackView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\UIAutomation\AutomationIdCreaterView.xaml.cs">
-      <DependentUpon>AutomationIdCreaterView.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\Administration\DialogueView.xaml.cs">
       <DependentUpon>DialogueView.xaml</DependentUpon>
     </Compile>
@@ -494,11 +492,9 @@
     <Compile Include="Views\Administration\StartPageWindow.xaml.cs">
       <DependentUpon>StartPageWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\DataList\InvertSign.cs" />
     <Compile Include="Views\DataMapping\DataMapping.xaml.cs">
       <DependentUpon>DataMapping.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ViewModels\Diagnostics\DebugTreeViewItemViewModel.cs" />
     <Compile Include="Views\Diagnostics\DebugOutputView.xaml.cs">
       <DependentUpon>DebugOutputView.xaml</DependentUpon>
     </Compile>
@@ -509,8 +505,8 @@
     <Compile Include="Views\Global\SearchWindow.xaml.cs">
       <DependentUpon>SearchWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\MainView.xaml.cs">
-      <DependentUpon>MainView.xaml</DependentUpon>
+    <Compile Include="Views\ShellView.xaml.cs">
+      <DependentUpon>ShellView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ResourceManagement\DeleteResourceDialog.xaml.cs">
       <DependentUpon>DeleteResourceDialog.xaml</DependentUpon>
@@ -616,10 +612,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\Dialog\Dev2MessageBoxWithCustomButtons.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Views\Diagnostics\ReportsViewerView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -656,10 +648,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\UIAutomation\AutomationIdCreaterView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="Views\Administration\DialogueView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -692,7 +680,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\MainView.xaml">
+    <Page Include="Views\ShellView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -736,13 +724,17 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <None Include="Achitecture\EnvironmentRepositoryRelationships.cd" />
+    <None Include="App.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="app.manifest" />
+    <None Include="Dev2.Studio.ruleset" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="Warewolf Studio.exe.config">
+    <None Include="userStudioSettings.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <SubType>Designer</SubType>
     </None>
     <None Include="Properties\licenses.licx" />
     <None Include="Properties\Settings.settings">
@@ -809,6 +801,10 @@
       <Project>{f5162bdb-d3db-480e-92e4-fd732904a247}</Project>
       <Name>Dev2.CustomControls</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Data.Interfaces\Dev2.Data.Interfaces.csproj">
+      <Project>{D7189600-3C18-4D35-97A4-8095DE1A4504}</Project>
+      <Name>Dev2.Data.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Data\Dev2.Data.csproj">
       <Project>{4bd0c970-ecd6-470b-b9ee-17ecfe53e5fb}</Project>
       <Name>Dev2.Data</Name>
@@ -861,6 +857,10 @@
       <Project>{a58b157b-960b-4e84-8957-24e4884c5c77}</Project>
       <Name>Dev2.Studio.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Studio.Interfaces\Dev2.Studio.Interfaces.csproj">
+      <Project>{37149E8E-FEF2-47C0-8391-80DCCE86D26D}</Project>
+      <Name>Dev2.Studio.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.TaskScheduler.Wrappers\Dev2.TaskScheduler.Wrappers.csproj">
       <Project>{1B229665-1631-4275-AFBD-CB5B7775E4CA}</Project>
       <Name>Dev2.TaskScheduler.Wrappers</Name>
@@ -869,7 +869,7 @@
       <Project>{1990550d-ea6f-4dac-9b5e-8571e86923ed}</Project>
       <Name>Dev2.Util</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Dev2.Warewolf.Security\Warewolf.Security.csproj">
+    <ProjectReference Include="..\Warewolf.Security\Warewolf.Security.csproj">
       <Project>{ca5e9373-46fe-41b9-ab2e-bd637f48b456}</Project>
       <Name>Warewolf.Security</Name>
     </ProjectReference>
@@ -905,10 +905,6 @@
       <Project>{CB565C94-8833-4911-B20F-0921EE3C286C}</Project>
       <Name>Warewolf.Studio.Resources</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Warewolf.Studio.ServerProxyLayer\Warewolf.Studio.ServerProxyLayer.csproj">
-      <Project>{C35C7C88-1EAE-4421-AC03-CEFA26461D6C}</Project>
-      <Name>Warewolf.Studio.ServerProxyLayer</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Studio.CustomControls\Warewolf.Studio.CustomControls.csproj">
       <Project>{1bd5cc42-66c7-4a1b-af1f-e6f2d4372b44}</Project>
       <Name>Warewolf.Studio.CustomControls</Name>
@@ -931,7 +927,17 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Views\Dialogs\" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Help\PageNotAvailable.htm">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Help\PageNotAvailable.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">

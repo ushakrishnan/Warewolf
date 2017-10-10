@@ -11,25 +11,28 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Activities.Debug;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities.DropBox2016.DropboxFileActivity
 {
-    [ToolDescriptorInfo("Dropbox", "List Contents", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_List Contents_Tags")]
+    [ToolDescriptorInfo("Dropbox", "List Contents", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_List_Contents")]
     public class DsfDropboxFileListActivity : DsfBaseActivity
     {
-        // ReSharper disable MemberCanBePrivate.Global
+        
         public IDropboxFactory DropboxFactory { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        
         public OauthSource SelectedSource { get; set; }
 
         public List<string> Files { get; set; }
         private DropboxClient _dropboxClient;
+        private IDropboxClientWrapper _dropboxClientWrapper;
         public Exception Exception { get; set; }
 
         [FindMissing]
@@ -54,13 +57,12 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
         [FindMissing]
         public bool IsFilesAndFoldersSelected { get; set; }
 
-        public override string DisplayName { get; set; }
-        // ReSharper restore MemberCanBePrivate.Global
+        
 
         private DsfDropboxFileListActivity(IDropboxFactory dropboxFactory)
         {
             DropboxFactory = dropboxFactory;
-            // ReSharper disable VirtualMemberCallInContructor
+            
             DisplayName = "List Dropbox Contents";
             Files = new List<string>();
             IsFilesSelected = true;
@@ -74,6 +76,11 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
         {
         }
 
+        protected DsfDropboxFileListActivity(IDropboxClientWrapper dropboxClientWrapper)
+            :this()
+        {
+            _dropboxClientWrapper = dropboxClientWrapper;
+        }
         public DropboxClient GetDropboxClient()
         {
             if (_dropboxClient != null)
@@ -98,15 +105,15 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
             return singleExecutor;
         }
 
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
-            var toPath = evaluatedValues["ToPath"];
+            evaluatedValues.TryGetValue("ToPath", out string toPath);
 
             IDropboxSingleExecutor<IDropboxResult> dropboxFileRead = new DropboxFileRead(IsRecursive, toPath, IncludeMediaInfo, IncludeDeleted);
             var dropboxSingleExecutor = GetDropboxSingleExecutor(dropboxFileRead);
-            var dropboxExecutionResult = dropboxSingleExecutor.ExecuteTask(GetDropboxClient());
-            var dropboxSuccessResult = dropboxExecutionResult as DropboxListFolderSuccesResult;
-            if (dropboxSuccessResult != null)
+            _dropboxClientWrapper = _dropboxClientWrapper ?? new DropboxClientWrapper(GetDropboxClient());
+            var dropboxExecutionResult = dropboxSingleExecutor.ExecuteTask(_dropboxClientWrapper);
+            if (dropboxExecutionResult is DropboxListFolderSuccesResult dropboxSuccessResult)
             {
                 var listFolderResult = dropboxSuccessResult.GetListFolderResulResult();
                 var metadatas = listFolderResult.Entries;
@@ -115,23 +122,28 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
                     Files.AddRange(listFolderResult.Entries.Where(metadata => metadata.IsDeleted).Select(metadata => metadata.PathLower).ToList());
                 }
                 if (IsFoldersSelected)
+                {
                     Files.AddRange(metadatas.Where(metadata => metadata.IsFolder).Select(metadata => metadata.PathLower).ToList());
+                }
+
                 if (IsFilesSelected)
+                {
                     Files.AddRange(metadatas.Where(metadata => metadata.IsFile).Select(metadata => metadata.PathLower).ToList());
+                }
+
                 if (IsFilesAndFoldersSelected)
                 {
                     Files.AddRange(metadatas.Where(metadata => metadata.IsFolder).Select(metadata => metadata.PathLower).ToList());
                     Files.AddRange(metadatas.Where(metadata => metadata.IsFile).Select(metadata => metadata.PathLower).ToList());
                 }
 
-                return GlobalConstants.DropBoxSucces;
+                return new List<string> { GlobalConstants.DropBoxSuccess };
             }
-            var dropboxFailureResult = dropboxExecutionResult as DropboxFailureResult;
-            if (dropboxFailureResult != null)
+            if (dropboxExecutionResult is DropboxFailureResult dropboxFailureResult)
             {
                 Exception = dropboxFailureResult.GetException();
             }
-            var executionError = Exception.InnerException == null ? Exception.Message : Exception.InnerException.Message;
+            var executionError = Exception.InnerException?.Message ?? Exception.Message;
 
             throw new Exception(executionError);
         }

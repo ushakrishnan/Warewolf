@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,19 +20,19 @@ using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Core.Convertors.Case;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Validation;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    [ToolDescriptorInfo("Data-CaseConversion", "Case Convert", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Case Convert_Tags")]
+    [ToolDescriptorInfo("Data-CaseConversion", "Case Convert", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Case_Convert")]
     public class DsfCaseConvertActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Properties
@@ -56,12 +56,12 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Overridden NativeActivity Methods
 
-        // ReSharper disable RedundantOverridenMember
+        
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
         }
-        // ReSharper restore RedundantOverridenMember
+        
 
         /// <summary>
         /// The execute method that is called when the activity is executed at run time and will hold all the logic of the activity
@@ -148,21 +148,19 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         private Func<DataStorage.WarewolfAtom,DataStorage.WarewolfAtom> TryConvertFunc(ICaseConvertTO conversionType,IExecutionEnvironment env,int update)
         {
             var convertFunct = CaseConverter.GetFuncs();
-            Func<string, string> returnedFunc;
 
-            if (convertFunct.TryGetValue(conversionType.ConvertType, out returnedFunc))
+            if (convertFunct.TryGetValue(conversionType.ConvertType, out Func<string, string> returnedFunc))
             {
                 if (returnedFunc != null)
                 {
-                    return a=>
+                    return a =>
                     {
                         var upper = returnedFunc.Invoke(a.ToString());
                         var evalled = env.Eval(upper, update);
-                    
-                        if(evalled.IsWarewolfAtomResult)
+
+                        if (evalled.IsWarewolfAtomResult)
                         {
-                            var warewolfAtomResult = evalled as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                            if(warewolfAtomResult != null)
+                            if (evalled is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult warewolfAtomResult)
                             {
 
                                 return warewolfAtomResult.Item;
@@ -170,7 +168,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                             return DataStorage.WarewolfAtom.Nothing;
                         }
 
-                        return DataStorage.WarewolfAtom.NewDataString( CommonFunctions.evalResultToString(evalled));
+                        return DataStorage.WarewolfAtom.NewDataString(CommonFunctions.evalResultToString(evalled));
                     };
                 }
             }
@@ -199,9 +197,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             ICaseConvertTO[] workItems = new ICaseConvertTO[ConvertCollection.Count];
             ConvertCollection.CopyTo(workItems, 0);
 
-            // ReSharper disable ForCanBeConvertedToForeach
+            
             for(var i = 0; i < workItems.Length; i++)
-            // ReSharper restore ForCanBeConvertedToForeach
+            
             {
                 var convertResult = workItems[i].Result;
                 var convertTarget = workItems[i].StringToConvert;
@@ -312,8 +310,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             var modelProperty = modelItem.Properties["DisplayName"];
             if(modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }
@@ -393,9 +391,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             var result = new List<DsfForEachItem>();
 
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var item in ConvertCollection)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 if(!string.IsNullOrEmpty(item.StringToConvert) && item.StringToConvert.Contains("[["))
                 {
@@ -410,9 +408,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             var result = new List<DsfForEachItem>();
 
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var item in ConvertCollection)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 if(!string.IsNullOrEmpty(item.StringToConvert) && item.StringToConvert.Contains("[["))
                 {
@@ -445,5 +443,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion
+
+        public override List<string> GetOutputs()
+        {
+            return ConvertCollection.Select(to => to.Result).ToList();
+        }
     }
 }

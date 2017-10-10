@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,10 +20,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Tests.Runtime.ServiceModel
 {
     // PBI 953 - 2013.05.16 - TWR - Created
-    [TestClass]    
+    [TestClass]
     public class WebSourcesTests
     {
-        // ReSharper disable InconsistentNaming
+        
         #region CTOR
 
         [TestMethod]
@@ -31,9 +31,9 @@ namespace Dev2.Tests.Runtime.ServiceModel
         public void WebSourcesConstructorWithNullResourceCatalogExpectedThrowsArgumentNullException()
         {
 #pragma warning disable 168
-            // ReSharper disable UnusedVariable
+            
             var handler = new WebSources(null);
-            // ReSharper restore UnusedVariable
+            
 #pragma warning restore 168
         }
 
@@ -64,19 +64,19 @@ namespace Dev2.Tests.Runtime.ServiceModel
         {
             var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.Anonymous };
 
-            WebSources.EnsureWebClient(source, new List<string>());
+            WebSources.CreateWebClient(source, new List<string>());
 
             var client = source.Client;
             var agent = client.Headers["user-agent"];
             Assert.IsNotNull(agent);
-            Assert.AreEqual(agent,GlobalConstants.UserAgentString);
+            Assert.AreEqual(agent, GlobalConstants.UserAgentString);
         }
         [TestMethod]
         public void WebSourcesAssertUserAgentHeaderSet_SetsOtherHeaders()
         {
             var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.Anonymous };
 
-            WebSources.EnsureWebClient(source, new List<string> { "a:x", "b:e" });
+            WebSources.CreateWebClient(source, new List<string> { "a:x", "b:e" });
 
             var client = source.Client;
             var agent = client.Headers["user-agent"];
@@ -90,16 +90,16 @@ namespace Dev2.Tests.Runtime.ServiceModel
         public void WebSourcesAssertUserAgentHeaderSet_SetsUserNameAndPassword()
 
         {
-            var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.User,UserName = "User",Password = "pwd"};
+            var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.User, UserName = "User", Password = "pwd" };
 
-            WebSources.EnsureWebClient(source, new List<string> { "a:x", "b:e" });
+            WebSources.CreateWebClient(source, new List<string> { "a:x", "b:e" });
 
             var client = source.Client;
-            // ReSharper disable PossibleNullReferenceException
+            
             Assert.IsTrue((client.Credentials as NetworkCredential).UserName == "User");
-          
+
             Assert.IsTrue((client.Credentials as NetworkCredential).Password == "pwd");
-            // ReSharper restore PossibleNullReferenceException
+            
         }
 
         #endregion
@@ -124,6 +124,39 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             Assert.IsNotNull(result);
             Assert.AreEqual(Guid.Empty, result.ResourceID);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        public void GetAddress_Given_Null_Source_And_NoRelativeUri_Should_Return_relativeUri()
+        {
+            //------------Setup for test-------------------------
+            var webSource = new PrivateType(typeof(WebSources));
+            //------------Execute Test---------------------------
+            object[] args = { null, string.Empty };
+            var invokeStaticResults = webSource.InvokeStatic("GetAddress", args);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(invokeStaticResults);
+            var results = invokeStaticResults as string;
+            Assert.IsNotNull(results);
+            Assert.IsTrue(string.IsNullOrEmpty(results));
+        }
+
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        public void GetAddress_Given_Null_Source_And_relativeUri_Should_Return_relativeUri()
+        {
+            //------------Setup for test-------------------------
+            var webSource = new PrivateType(typeof(WebSources));
+            //------------Execute Test---------------------------
+            object[] args = { null, "some url" };
+            var invokeStaticResults = webSource.InvokeStatic("GetAddress", args);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(invokeStaticResults);
+            var results = invokeStaticResults as string;
+            Assert.IsNotNull(results);
+            Assert.AreEqual("some url", results);
         }
 
         #endregion

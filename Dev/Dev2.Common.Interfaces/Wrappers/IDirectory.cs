@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ namespace Dev2.Common.Interfaces.Wrappers
     public interface IDirectory
     {
         string[] GetFiles(string path);
-        string CreateIfNotExists(string debugOutputPath);
+        string CreateIfNotExists(string path);
         string[] GetLogicalDrives();
         bool Exists(string path);
         string[] GetFileSystemEntries(string path);

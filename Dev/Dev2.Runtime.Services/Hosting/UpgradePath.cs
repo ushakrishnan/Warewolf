@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,10 +25,8 @@ namespace Dev2.Runtime.Hosting
             UpgradesFrom = upgradesFrom;
         }
 
-        #region Implementation of IUpgradePath
-
-        public Version UpgradesFrom { get; private set; }
-        public Version UpgradesTo { get; private set; }
+        public Version UpgradesFrom { get; }
+        public Version UpgradesTo { get; }
 
         public bool CanUpgrade(XElement sourceVersion)
         {
@@ -38,11 +36,13 @@ namespace Dev2.Runtime.Hosting
         private Version GetVersionFromXML(XElement resource)
         {
             if (resource.Attribute("ServerVersion") == null)
+            {
                 return new Version();
+            }
+
             return Version.Parse(resource.Attribute("ServerVersion").Value);
         }
-        public IResourceUpgrade Upgrade { get; private set; }
+        public IResourceUpgrade Upgrade { get; }
 
-        #endregion
     }
 }

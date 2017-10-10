@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,14 +12,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList;
-using Dev2.DataList.Contract;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.ViewModels.DataList
 {
     public class DataMappingViewModel : SimpleBaseViewModel, IDataMappingViewModel
@@ -27,9 +27,9 @@ namespace Dev2.Studio.ViewModels.DataList
         #region Locals
 
         private IWebActivity _activity;
-// ReSharper disable InconsistentNaming
-        public bool _isInitialLoad;
-// ReSharper restore InconsistentNaming
+
+        private bool _isInitialLoad;
+
         private string _activityName;
         private string _xmlOutput;
 
@@ -43,9 +43,14 @@ namespace Dev2.Studio.ViewModels.DataList
         #endregion Imports
 
         #region Ctor
-        public DataMappingViewModel(IWebActivity activity, NotifyCollectionChangedEventHandler mappingCollectionChangedEventHandler = null)
-        {
 
+        public DataMappingViewModel(IWebActivity activity)
+            : this(activity, null)
+        {
+        }
+
+        public DataMappingViewModel(IWebActivity activity, NotifyCollectionChangedEventHandler mappingCollectionChangedEventHandler)
+        {
             _activity = activity;
             Inputs = new ObservableCollection<IInputOutputViewModel>();
             Outputs = new ObservableCollection<IInputOutputViewModel>();
@@ -57,13 +62,13 @@ namespace Dev2.Studio.ViewModels.DataList
             }
             Initialize(_activity);
         }
+
         #endregion Ctor
 
         #region Initialize
+
         internal void Initialize(IWebActivity activity)
         {
-            // -- NEW ;)
-
             Activity = activity;
             ActivityName = activity.ServiceName;
 
@@ -81,21 +86,15 @@ namespace Dev2.Studio.ViewModels.DataList
 
             ioBuilder.SetupActivityData(activity);
 
-            var mappingData = ioBuilder.Generate();
-
-            // save model data
-            //Outputs = mappingData.Outputs.ToObservableCollection();
+            var mappingData = ioBuilder.Generate();            
             foreach(var ioViewModel in mappingData.Outputs)
             {
                 Outputs.Add(ioViewModel);
             }
-            //Inputs = mappingData.Inputs.ToObservableCollection();
             foreach(var ioViewModel in mappingData.Inputs)
             {
                 Inputs.Add(ioViewModel);
             }
-
-            // update special fields on the model?!
             var toSaveOutputMapping = ioBuilder.SavedOutputMapping;
             var toSaveInputMapping = ioBuilder.SavedInputMapping;
 

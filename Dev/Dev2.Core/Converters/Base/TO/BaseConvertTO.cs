@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Util;
 
 namespace Dev2
@@ -34,8 +34,13 @@ namespace Dev2
         {
         }
 
+        public BaseConvertTO(string fromExpression, string fromType, string toType, string toExpression, int indexNumber)
+            : this(fromExpression, fromType, toType, toExpression, indexNumber, false)
+        {
+        }
+
         public BaseConvertTO(string fromExpression, string fromType, string toType, string toExpression, int indexNumber,
-            bool inserted = false)
+            bool inserted)
         {
             Inserted = inserted;
             ToType = string.IsNullOrEmpty(toType) ? "Base 64" : toType;
@@ -149,10 +154,7 @@ namespace Dev2
 
         protected void OnPropertyChanged(string propertyName)
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion
@@ -174,11 +176,11 @@ namespace Dev2
         /// <returns>
         ///     An error message indicating what is wrong with this object. The default is an empty string ("").
         /// </returns>
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        
+        
         public string Error { get; private set; }
 
-        // ReSharper restore UnusedAutoPropertyAccessor.Local
+        
 
         #endregion
 

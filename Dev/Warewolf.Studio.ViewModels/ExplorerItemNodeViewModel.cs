@@ -2,8 +2,8 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using Dev2;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -11,9 +11,9 @@ namespace Warewolf.Studio.ViewModels
     {
         bool _textVisibility;
         bool _isMainNode;
-        // ReSharper disable TooManyDependencies
+        
         public ExplorerItemNodeViewModel(IServer server, IExplorerItemViewModel parent,IPopupController controller)
-            // ReSharper restore TooManyDependencies
+            
             : base(server, parent,a=>{},CustomContainer.Get<IShellViewModel>(),controller)
         {
             Self = this;
@@ -26,9 +26,9 @@ namespace Warewolf.Studio.ViewModels
 
         public IExplorerItemNodeViewModel Self { get; set; }
         public int Weight { get; set; }
-        // ReSharper disable ReturnTypeCanBeEnumerable.Global
+        
         public ObservableCollection<ExplorerItemNodeViewModel> NodeChildren
-        // ReSharper restore ReturnTypeCanBeEnumerable.Global
+        
         {
             get
             {

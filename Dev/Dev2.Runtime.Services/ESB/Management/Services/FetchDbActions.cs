@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,14 +22,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 using Warewolf.Core;
 
-// ReSharper disable UnusedMember.Global
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class FetchDbActions : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
         public string HandlesType()
         {
             return "FetchDbActions";
@@ -41,20 +52,23 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
                 var dbSource = serializer.Deserialize<IDbSource>(values["source"]);
-                // ReSharper disable MaximumChainedReferences
+                
                 ServiceModel.Services services = new ServiceModel.Services();
 
                 var src = ResourceCatalog.Instance.GetResource<DbSource>(GlobalConstants.ServerWorkspaceID, dbSource.Id);
                 src.ReloadActions = dbSource.ReloadActions;
                 if (dbSource.Type == enSourceType.ODBC)
                 {
-                    DbSource db = new DbSource();
-                    db.DatabaseName = dbSource.DbName;
-                    db.ResourceID = dbSource.Id;
-                    db.ServerType = dbSource.Type;
-                    db.ResourceName = dbSource.Name;
+                    DbSource db = new DbSource
+                    {
+                        DatabaseName = dbSource.DbName,
+                        ResourceID = dbSource.Id,
+                        ServerType = dbSource.Type,
+                        ResourceName = dbSource.Name
+                    };
 
-                    var methods = services.FetchMethods(src).Select(method => CreateDbAction(method, src)).OrderBy(a => a.Name);
+                    IOrderedEnumerable<DbAction> methods = null;
+                    Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.OrginalExecutingUser, () => { methods = services.FetchMethods(db).Select(method => CreateDbAction(method, src)).OrderBy(a => a.Name); });
                     return serializer.SerializeToBuilder(new ExecuteMessage
                     {
                         HasError = false,
@@ -63,7 +77,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 else
                 {
-                    var methods = services.FetchMethods(src).Select(method => CreateDbAction(method, src)).OrderBy(a => a.Name);
+                    IOrderedEnumerable<DbAction> methods = null;
+                    Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.OrginalExecutingUser, () => { methods = services.FetchMethods(src).Select(method => CreateDbAction(method, src)).OrderBy(a => a.Name); });
                     return serializer.SerializeToBuilder(new ExecuteMessage
                     {
                         HasError = false,
@@ -71,7 +86,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     });
                 }
 
-                // ReSharper restore MaximumChainedReferences
+                
             }
             catch (Exception e)
             {
@@ -85,12 +100,13 @@ namespace Dev2.Runtime.ESB.Management.Services
 
         private DbAction CreateDbAction(ServiceMethod a, DbSource src)
         {
-            // ReSharper disable MaximumChainedReferences
-            var inputs = a.Parameters.Select(b => new ServiceInput(b.Name, b.DefaultValue ?? "") as IServiceInput).ToList();
-            // ReSharper restore MaximumChainedReferencse
+            
+            var inputs = a.Parameters.Select(b => new ServiceInput(b.Name, b.DefaultValue ?? "") { ActionName = a.Name } as IServiceInput).ToList();
+            
             return new DbAction
             {
                 Name = a.Name,
+                ExecuteAction = a.ExecuteAction,
                 Inputs = inputs,
                 SourceId = src.ResourceID
             };

@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Settings.Scheduler
 {
@@ -14,7 +14,7 @@ namespace Dev2.Settings.Scheduler
         private static extern void CoTaskMemFree(IntPtr ptr);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        // ReSharper disable once InconsistentNaming
+
         private struct CREDUI_INFO
         {
             public int cbSize;
@@ -56,16 +56,14 @@ namespace Dev2.Settings.Scheduler
             };
             credui.cbSize = Marshal.SizeOf(credui);
             uint authPackage = 0;
-            IntPtr outCredBuffer;
-            uint outCredSize;
             bool save = false;
             int result = CredUIPromptForWindowsCredentials(ref credui,
                 0,
                 ref authPackage,
                 IntPtr.Zero,
                 0,
-                out outCredBuffer,
-                out outCredSize,
+                out IntPtr outCredBuffer,
+                out uint outCredSize,
                 ref save,
                 1 /* Generic */);
 

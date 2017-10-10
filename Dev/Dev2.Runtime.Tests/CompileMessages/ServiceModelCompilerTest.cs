@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Text;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Runtime.Compiler;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.CompileMessages
 {
@@ -39,7 +39,7 @@ namespace Dev2.Tests.Runtime.CompileMessages
 
             Assert.AreEqual(1, msgs.Count);
             Assert.AreEqual(CompileMessageType.MappingChange, msgs[0].MessageType);
-            var expected = @"<Args><Input>[{""Name"":""a"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false},{""Name"":""b"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false}]</Input><Output>[{""Name"":""a"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false},{""Name"":""b"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false}]</Output></Args>";
+            var expected = @"<Args><Input>[{""Name"":""a"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false},{""Name"":""b"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false}]</Input><Output>[{""Name"":""a"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false},{""Name"":""b"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false}]</Output></Args>";
             var actual = msgs[0].MessagePayload;
             FixBreaks(ref expected, ref actual);
             Assert.AreEqual(expected, actual);
@@ -60,7 +60,7 @@ namespace Dev2.Tests.Runtime.CompileMessages
 
             Assert.AreEqual(1, msgs.Count);
             Assert.AreEqual(CompileMessageType.MappingChange, msgs[0].MessageType);
-            var expected = @"<Args><Input>[{""Name"":""A"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false}]</Input><Output>[{""Name"":""A"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false}]</Output></Args>";
+            var expected = @"<Args><Input>[{""Name"":""A"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false}]</Input><Output>[{""Name"":""A"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false}]</Output></Args>";
             var actual = msgs[0].MessagePayload;
             FixBreaks(ref expected, ref actual);
             Assert.AreEqual(expected, actual);
@@ -81,7 +81,7 @@ namespace Dev2.Tests.Runtime.CompileMessages
 
             Assert.AreEqual(1, msgs.Count);
             Assert.AreEqual(CompileMessageType.MappingChange, msgs[0].MessageType);
-            var expected = @"<Args><Input>[{""Name"":""a"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false},{""Name"":""b"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false}]</Input><Output>[]</Output></Args>";
+            var expected = @"<Args><Input>[{""Name"":""a"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false},{""Name"":""b"",""MapsTo"":"""",""Value"":"""",""IsRecordSet"":false,""RecordSetName"":"""",""IsEvaluated"":false,""DefaultValue"":"""",""IsRequired"":false,""RawValue"":"""",""EmptyToNull"":false,""IsTextResponse"":false,""IsObject"":false,""IsJsonArray"":false}]</Input><Output>[]</Output></Args>";
             var actual = msgs[0].MessagePayload;
             FixBreaks(ref expected, ref actual);
             Assert.AreEqual(expected, actual);

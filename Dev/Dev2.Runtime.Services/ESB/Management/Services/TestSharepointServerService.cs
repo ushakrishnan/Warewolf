@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
 using Dev2.DynamicServices;
@@ -14,9 +14,21 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestSharepointServerService : IEsbManagementEndpoint
     {
+
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
         #region Implementation of ISpookyLoadable<string>
 
         public string HandlesType()
@@ -41,9 +53,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                 throw new InvalidDataContractException(ErrorResource.NoParameter);
             }
             string serializedSource = null;
-            StringBuilder tmp;
             ExecuteMessage msg = new ExecuteMessage();
-            values.TryGetValue("SharepointServer", out tmp);
+            values.TryGetValue("SharepointServer", out StringBuilder tmp);
             if(tmp != null)
             {
                 serializedSource = tmp.ToString();
@@ -53,10 +64,9 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             if(string.IsNullOrEmpty(serializedSource))
             {
-                var res = new ExecuteMessage();
-                res.HasError = true;
+                var res = new ExecuteMessage { HasError = true };
                 res.SetMessage(ErrorResource.NoSharepointServerSet);
-                Dev2Logger.Debug(ErrorResource.NoSharepointServerSet);
+                Dev2Logger.Debug(ErrorResource.NoSharepointServerSet, GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
             try
@@ -81,7 +91,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 msg.Message = serializer.SerializeToBuilder(ex.Message);
             }
             return serializer.SerializeToBuilder(msg);

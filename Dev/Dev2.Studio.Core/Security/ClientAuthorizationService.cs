@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,9 +13,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+
 
 namespace Dev2.Security
 {
@@ -26,8 +28,7 @@ namespace Dev2.Security
         public ClientAuthorizationService(ISecurityService securityService, bool isLocalConnection)
             : base(securityService, isLocalConnection)
         {
-            var clientSecurityService = securityService as ClientSecurityService;
-            if(clientSecurityService != null)
+            if (securityService is ClientSecurityService clientSecurityService)
             {
                 _environmentConnection = clientSecurityService.EnvironmentConnection;
             }
@@ -50,8 +51,7 @@ namespace Dev2.Security
             {
                 serverOnlyPermissions= serverOnlyPermissions.Where(permission => permission.IsBuiltInGuests);
             }
-            Guid resourceId;
-            if (Guid.TryParse(resource, out resourceId))
+            if (Guid.TryParse(resource, out Guid resourceId))
             {
                 if (resourceId == Guid.Empty)
                 {

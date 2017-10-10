@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,9 +27,9 @@ namespace Dev2.Intellisense.Helper
     {
         Disk,
         Device ,
-// ReSharper disable InconsistentNaming
+
         IPC,
-// ReSharper restore InconsistentNaming
+
         Special = -2147483648
     }
 
@@ -151,9 +151,9 @@ namespace Dev2.Intellisense.Helper
 
         #region Enumerate shares
 
-// ReSharper disable InconsistentNaming
+
         static void EnumerateSharesNT(string server, ShareCollection shares)
-// ReSharper restore InconsistentNaming
+
         {
             int level = 2;
             int hResume = 0;
@@ -161,12 +161,10 @@ namespace Dev2.Intellisense.Helper
 
             try
             {
-                int entriesRead;
-                int totalEntries;
                 int nRet = NetShareEnum(server, level, out pBuffer, -1,
-                    out entriesRead, out totalEntries, ref hResume);
+                    out int entriesRead, out int totalEntries, ref hResume);
 
-                if(ErrorAccessDenied == nRet)
+                if (ErrorAccessDenied == nRet)
                 {
                     level = 1;
                     nRet = NetShareEnum(server, level, out pBuffer, -1,
@@ -267,10 +265,6 @@ namespace Dev2.Intellisense.Helper
 
             [MarshalAs(UnmanagedType.LPWStr)]
             public readonly string Remark;
-
-            public readonly int Permissions;
-            public readonly int MaxUsers;
-            public readonly int CurrentUsers;
 
             [MarshalAs(UnmanagedType.LPWStr)]
             public readonly string Path;

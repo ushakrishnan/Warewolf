@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,7 +25,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
 
         public EncryptionResourceUpgraderTests()
         {
-            _connectionString = @"Data Source=RSAKLFSVRGENDEV,1433;Initial Catalog=Dev2TestingDB;User ID=testuser;Password=test007;";
+            _connectionString = @"Data Source=RSAKLFSVRDEV,1433;Initial Catalog=Dev2TestingDB;User ID=testuser;Password=test007;";
             _beforeContainingSource = @"<first><second><third><Source ID=""ebba47dc-e5d4-4303-a203-09e2e9761d16"" Version=""1.0"" Name=""testingDBSrc"" ResourceType=""DbSource"" IsValid=""false"" ServerType=""SqlDatabase"" Type=""SqlDatabase"" ConnectionString=""" + _connectionString + @""" ServerID=""51a58300-7e9d-4927-a57b-e5d700b11b55"" ServerVersion=""0.4.2.2""></third></second></first>";
             _beforeWithoutSource = @"<first><second><third><xSource ID=""ebba47dc-e5d4-4303-a203-09e2e9761d16"" Version=""1.0"" Name=""testingDBSrc"" ResourceType=""DbSource"" IsValid=""false"" ServerType=""SqlDatabase"" Type=""SqlDatabase"" ConnectionString=""" + _connectionString + @""" ServerID=""51a58300-7e9d-4927-a57b-e5d700b11b55"" ServerVersion=""0.4.2.2""></third></second></first>";
         }
@@ -34,7 +34,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
         [TestMethod]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
-        // ReSharper disable InconsistentNaming
+        
         public void EncryptionResourceUpgrader_Upgrade_HasMatchin_ExpectReplace()
         {
             _matchAndReplaceWhereAppropriate(_beforeContainingSource, _beforeWithoutSource, _connectionString);
@@ -74,7 +74,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
         [TestMethod]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
-        // ReSharper disable InconsistentNaming
+        
         public void EncryptionResourceUpgrader_Upgrade_CanDecrypt()
         {
             //------------Setup for test--------------------------
@@ -98,7 +98,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
         [TestMethod]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
-        // ReSharper disable InconsistentNaming
+        
         public void EncryptionResourceUpgrader_TwiceUpgrade_DoesNotEncrypt()
         {
             //------------Setup for test--------------------------

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,15 +9,13 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Studio.AppResources.Comparers;
-using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Factory
 {
     /// <summary>
@@ -71,8 +69,9 @@ namespace Dev2.Factory
         /// <returns></returns>
         /// <author>Jurie.smit</author>
         /// <date>2/28/2013</date>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid resourceID, Guid serverID, Guid? environmentID = null)
+
+        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid resourceID, Guid serverID) => CreateKey(context, resourceID, serverID, null);
+        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid resourceID, Guid serverID, Guid? environmentID)
         {
             return new WorkSurfaceKey
             {
@@ -98,18 +97,19 @@ namespace Dev2.Factory
                 WorkSurfaceContext = context,
                 ResourceID = resourceModel.ID,
                 ServerID = resourceModel.ServerID,
-                EnvironmentID = resourceModel.Environment.ID
+                EnvironmentID = resourceModel.Environment.EnvironmentID
             };
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static WorkSurfaceKey CreateKey(IDebugState debugState)
         {
             var origin = debugState.WorkspaceID;
             if (origin != Guid.Empty)
             {
-                IEnvironmentModel environmentModel = EnvironmentRepository.Instance.FindSingle(model => model.Connection.WorkspaceID == origin);
-                Guid environmentID = environmentModel.ID;
+                var serverRepository = CustomContainer.Get<IServerRepository>();
+                IServer server = serverRepository.FindSingle(model => model.Connection.WorkspaceID == origin);
+                Guid environmentID = server.EnvironmentID;
                 return new WorkSurfaceKey
                 {
                     WorkSurfaceContext = WorkSurfaceContext.Workflow,

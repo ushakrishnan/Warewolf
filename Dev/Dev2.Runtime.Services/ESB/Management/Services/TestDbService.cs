@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,12 +11,12 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -27,9 +27,21 @@ using Unlimited.Framework.Converters.Graph.Ouput;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestDbService : IEsbManagementEndpoint
     {
+
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             ExecuteMessage msg = new ExecuteMessage();
@@ -37,54 +49,55 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
 
-                Dev2Logger.Info("Test DB Connection Service");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Test DB Connection Service", GlobalConstants.WarewolfInfo);
 
-                values.TryGetValue("DbService", out resourceDefinition);
+                values.TryGetValue("DbService", out StringBuilder resourceDefinition);
 
                 IDatabaseService src = serializer.Deserialize<IDatabaseService>(resourceDefinition);
-                // ReSharper disable MaximumChainedReferences
-                var parameters = src.Inputs?.Select(a => new MethodParameter() { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value }).ToList() ?? new List<MethodParameter>();
-                // ReSharper restore MaximumChainedReferences
-                var source = ResourceCatalog.Instance.GetResource<DbSource>(GlobalConstants.ServerWorkspaceID, src.Source.Id);
-                if (source == null)
-                {
-                    source = new DbSource();
-                    source.DatabaseName = src.Source.DbName;
-                    source.ResourceID = src.Source.Id;
-                    source.ServerType = src.Source.Type;
-                    source.ResourceType = "DbSource";
-                }
                 
+                var parameters = src.Inputs?.Select(a => new MethodParameter() { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value }).ToList() ?? new List<MethodParameter>();
+                
+                var source = ResourceCatalog.Instance.GetResource<DbSource>(GlobalConstants.ServerWorkspaceID, src.Source.Id) ?? new DbSource
+                             {
+                                 DatabaseName = src.Source.DbName,
+                                 ResourceID = src.Source.Id,
+                                 ServerType = src.Source.Type,
+                                 ResourceType = "DbSource"
+                             };
+
                 var res = new DbService
                 {
-                    Method = new ServiceMethod(src.Name, src.Name, parameters, new OutputDescription(), new List<MethodOutput>(), src.Action.Name),
+                    Method = new ServiceMethod(src.Name, src.Name, parameters, new OutputDescription(), new List<MethodOutput>(), src.Action.ExecuteAction),
                     ResourceName = src.Name,
                     ResourceID = src.Id,
                     Source = source
                 };
 
                 ServiceModel.Services services = new ServiceModel.Services();
-                var output = services.DbTest(res, GlobalConstants.ServerWorkspaceID, Guid.Empty);
-                if(output.HasErrors)
+                Recordset output = null;
+                Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.OrginalExecutingUser, () =>
                 {
-                    msg.HasError = true;
-                    var errorMessage = output.ErrorMessage;
-                    msg.Message = new StringBuilder(errorMessage);
-                    Dev2Logger.Error(errorMessage);
-                }
-                else
-                {
-                    var result = ToDataTable(output);
-                    msg.HasError = false;
-                    msg.Message = serializer.SerializeToBuilder(result);
-                }
+                    output = services.DbTest(res, GlobalConstants.ServerWorkspaceID, Guid.Empty);
+                    if (output.HasErrors)
+                    {
+                        msg.HasError = true;
+                        var errorMessage = output.ErrorMessage;
+                        msg.Message = new StringBuilder(errorMessage);
+                        Dev2Logger.Error(errorMessage, GlobalConstants.WarewolfError);
+                    }
+                    else
+                    {
+                        var result = ToDataTable(output);
+                        msg.HasError = false;
+                        msg.Message = serializer.SerializeToBuilder(result);
+                    }
+                });
             }
             catch (Exception err)
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
 
             }
 

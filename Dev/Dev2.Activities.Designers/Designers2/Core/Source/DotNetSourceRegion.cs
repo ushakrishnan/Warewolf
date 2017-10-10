@@ -11,7 +11,6 @@ using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
 using Microsoft.Practices.Prism.Commands;
 
-// ReSharper disable ExplicitCallerInfoArgument
 
 namespace Dev2.Activities.Designers2.Core.Source
 {
@@ -21,8 +20,6 @@ namespace Dev2.Activities.Designers2.Core.Source
         private IPluginSource _selectedSource;
         private ICollection<IPluginSource> _sources;
         private readonly ModelItem _modelItem;
-        // ReSharper disable once UnusedMember.Local
-        readonly Dictionary<Guid, IList<IToolRegion>> _previousRegions = new Dictionary<Guid, IList<IToolRegion>>();
         private Guid _sourceId;
         private Action _sourceChangedAction;
         private double _labelWidth;
@@ -35,7 +32,7 @@ namespace Dev2.Activities.Designers2.Core.Source
 
         public DotNetSourceRegion(IPluginServiceModel model, ModelItem modelItem)
         {
-            LabelWidth = 70;
+            LabelWidth = 74;
             ToolRegionName = "DotNetSourceRegion";
             SetInitialValues();
             Dependants = new List<IToolRegion>();
@@ -46,13 +43,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             IsEnabled = true;
             _modelItem = modelItem;
             SourceId = modelItem.GetProperty<Guid>("SourceId");
-            SourcesHelpText = Warewolf.Studio.Resources.Languages.Core.PluginServiceSourcesHelp;
-            EditSourceHelpText = Warewolf.Studio.Resources.Languages.Core.PluginServiceEditSourceHelp;
-            NewSourceHelpText = Warewolf.Studio.Resources.Languages.Core.PluginServiceNewSourceHelp;
+            SourcesHelpText = Warewolf.Studio.Resources.Languages.HelpText.PluginServiceSourcesHelp;
+            EditSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.PluginServiceEditSourceHelp;
+            NewSourceHelpText = Warewolf.Studio.Resources.Languages.HelpText.PluginServiceNewSourceHelp;
 
-            SourcesTooltip = Warewolf.Studio.Resources.Languages.Core.ManagePluginServiceSourcesTooltip;
-            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManagePluginServiceEditSourceTooltip;
-            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Core.ManagePluginServiceNewSourceTooltip;
+            SourcesTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManagePluginServiceSourcesTooltip;
+            EditSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManagePluginServiceEditSourceTooltip;
+            NewSourceTooltip = Warewolf.Studio.Resources.Languages.Tooltips.ManagePluginServiceNewSourceTooltip;
 
             if (SourceId != Guid.Empty)
             {
@@ -168,10 +165,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 _sourceId = value;
-                if (_modelItem != null)
-                {
-                    _modelItem.SetProperty("SourceId", value);
-                }
+                _modelItem?.SetProperty("SourceId", value);
             }
         }
 
@@ -224,8 +218,7 @@ namespace Dev2.Activities.Designers2.Core.Source
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as DotNetSourceRegion;
-            if (region != null)
+            if (toRestore is DotNetSourceRegion region)
             {
                 SelectedSource = region.SelectedSource;
                 IsEnabled = region.IsEnabled;

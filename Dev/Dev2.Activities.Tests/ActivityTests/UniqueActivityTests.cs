@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +17,7 @@ using Dev2.Activities;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable AccessToModifiedClosure
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     /// <summary>
@@ -39,10 +39,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             const string DataList = "<ADL><recset1>\r\n\t\t<field1/>\r\n\t</recset1>\r\n\t<recset2>\r\n\t\t<field2/>\r\n\t</recset2>\r\n\t<OutVar1/>\r\n\t<OutVar2/>\r\n\t<OutVar3/>\r\n\t<OutVar4/>\r\n\t<OutVar5/>\r\n</ADL>";
             SetupArguments("<root>" + DataList + "</root>", DataList, "", "[[recset1().field1]]", "[[OutVar1]]");
             IDSFDataObject result = ExecuteProcess();
-
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "OutVar1", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -78,10 +75,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
 
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
 
             // remove test datalist ;)
 
@@ -119,10 +113,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
 
-            string actual;
-            string error;
-
-            GetScalarValueFromEnvironment(result.Environment, "OutVar1", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
             Assert.AreEqual(1,result.Environment.Errors.Count);
             Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.UniqueResultCannotBeScalarErrorTest, result.Environment.FetchErrors());
@@ -161,10 +152,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
 
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
 
             // remove test datalist ;)
 
@@ -204,10 +192,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
 
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
             List<string> actualRet = new List<string>();
 
             actual.ToList().ForEach(d => actualRet.Add(d));
@@ -257,10 +242,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
 
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
             List<string> actualRet = new List<string>();
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
@@ -310,10 +292,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             IDSFDataObject result = ExecuteProcess();
 
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
             List<string> actualRet = new List<string>();
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
@@ -338,7 +317,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             CollectionAssert.AreEqual(expectedValue, actualRet, comparer);
         }
 
-        // ReSharper disable InconsistentNaming
+        
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -472,8 +451,25 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(Result, dsfForEachItems[0].Value);
         }
 
-       
-        
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string InFields = "[[Numeric(1).num]]";
+            const string ResultFields = "Up";
+            const string Result = "[[res]]";
+            var act = new DsfUniqueActivity { InFields = InFields, ResultFields = ResultFields, Result = Result };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
+        }
+
+
         #region Private Test Methods
 
         private void SetupArguments(string currentDL, string testData, string inFields, string resultFields, string result)

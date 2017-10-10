@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,13 @@
 
 using System;
 using System.Collections.Generic;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests.Utils
 {
     /// <summary>
@@ -72,8 +72,7 @@ namespace Dev2.Core.Tests.Utils
 
             Assert.AreEqual(1, result.Count, "Strange behaviors parsing normal regions, I was expecting 1 result");
         }
-
-        //2013.06.10: Ashley Lewis for bug 9306 - Format DsfActivity handles mismatched region braces better
+        
         [TestMethod]
         public void CanFormatDsfActivityFieldWithMissmatchedRegionBracesExpectedNotParsed()
         {
@@ -91,14 +90,14 @@ namespace Dev2.Core.Tests.Utils
         {
 
             var x = new Mock<IContextualResourceModel>();
-            var mockEnv = new Mock<IEnvironmentModel>();
+            var mockEnv = new Mock<IServer>();
             var mockCon = new Mock<IEnvironmentConnection>();
             mockEnv.Setup(a => a.Connection).Returns(mockCon.Object);
             mockCon.Setup(a => a.WebServerUri).Returns(new Uri("http://rsaklf/bob"));
             var envGuid = Guid.NewGuid();
 
             x.Setup(a => a.Environment).Returns(mockEnv.Object);
-            mockEnv.Setup(a => a.ID).Returns(envGuid);
+            mockEnv.Setup(a => a.EnvironmentID).Returns(envGuid);
             x.Setup(a => a.Environment).Returns(mockEnv.Object);
             var act = new DsfActivity("a", "b", "c", "d", "e", "f");
             //------------Execute Test---------------------------
@@ -118,8 +117,8 @@ namespace Dev2.Core.Tests.Utils
         {
 
             var x = new Mock<IContextualResourceModel>();
-            var mockEnv = new Mock<IEnvironmentModel>();
-            var mockEnvRes = new Mock<IEnvironmentModel>();
+            var mockEnv = new Mock<IServer>();
+            var mockEnvRes = new Mock<IServer>();
             var mockCon = new Mock<IEnvironmentConnection>();
             var mockConRes = new Mock<IEnvironmentConnection>();
             mockEnv.Setup(a => a.Connection).Returns(mockCon.Object);
@@ -128,8 +127,8 @@ namespace Dev2.Core.Tests.Utils
             var envGuid = Guid.NewGuid();
             var envGuidRes = Guid.NewGuid();
             x.Setup(a => a.Environment).Returns(mockEnvRes.Object);
-            mockEnv.Setup(a => a.ID).Returns(envGuid);
-            mockEnv.Setup(a => a.ID).Returns(envGuidRes);
+            mockEnv.Setup(a => a.EnvironmentID).Returns(envGuid);
+            mockEnv.Setup(a => a.EnvironmentID).Returns(envGuidRes);
             x.Setup(a => a.Environment).Returns(mockEnv.Object);
             var act = new DsfActivity("a", "b", "c", "d", "e", "f");
             //------------Execute Test---------------------------

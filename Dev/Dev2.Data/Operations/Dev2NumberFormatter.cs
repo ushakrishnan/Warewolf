@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,9 @@
 using System;
 using System.Globalization;
 using Dev2.Common.ExtMethods;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.MathOperations;
-using Dev2.Data.TO;
-using Dev2.DataList.Contract;
 using Dev2.MathOperations;
 using Warewolf.Resource.Errors;
 
@@ -23,10 +23,10 @@ namespace Dev2.Data.Operations
     {
         #region Class Members
 
-        // ReSharper disable InconsistentNaming
+        
         const string _decimalSeperator = ".";
         private static readonly IFunctionEvaluator _functionEvaluator = MathOpsFactory.CreateFunctionEvaluator();
-        // ReSharper restore InconsistentNaming
+
 
         #endregion Class Members
 
@@ -38,9 +38,9 @@ namespace Dev2.Data.Operations
         /// <param name="formatNumberTO">The information on how to format the number.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">formatNumberTO</exception>
-        // ReSharper disable InconsistentNaming
-        public string Format(FormatNumberTO formatNumberTO)
-        // ReSharper restore InconsistentNaming
+        
+        public string Format(IFormatNumberTO formatNumberTO)
+
         {
             if(formatNumberTO == null)
             {
@@ -66,9 +66,9 @@ namespace Dev2.Data.Operations
 
         #region Private Methods
 
-        // ReSharper disable InconsistentNaming
-        private string BuildRoundingExpression(FormatNumberTO formatNumberTO)
-        // ReSharper restore InconsistentNaming
+        
+        private string BuildRoundingExpression(IFormatNumberTO formatNumberTO)
+
         {
             string expression;
 
@@ -95,15 +95,13 @@ namespace Dev2.Data.Operations
             return expression;
         }
 
-        // ReSharper disable InconsistentNaming
-        private string Round(FormatNumberTO formatNumberTO)
-        // ReSharper restore InconsistentNaming
-        {
-            string error;
-            string result;
-            _functionEvaluator.TryEvaluateFunction(BuildRoundingExpression(formatNumberTO), out result, out error);
+        
+        private string Round(IFormatNumberTO formatNumberTO)
 
-            if(!string.IsNullOrWhiteSpace(error))
+        {
+            _functionEvaluator.TryEvaluateFunction(BuildRoundingExpression(formatNumberTO), out string result, out string error);
+
+            if (!string.IsNullOrWhiteSpace(error))
             {
                 throw new InvalidOperationException(error);
             }
@@ -113,8 +111,7 @@ namespace Dev2.Data.Operations
 
         private decimal Parse(string numberString)
         {
-            decimal number;
-            if(!numberString.IsNumeric(out number))
+            if (!numberString.IsNumeric(out decimal number))
             {
                 throw new InvalidOperationException(string.Format(ErrorResource.ErrorWhileFormattingANumber, numberString));
             }

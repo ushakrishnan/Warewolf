@@ -82,7 +82,7 @@ namespace Warewolf.Studio.ViewModels.Help
             if (string.IsNullOrWhiteSpace(helpText))
             {
                 var textToDisplay = Resources.Languages.Core.StandardStyling.Replace("\r\n", "") +
-                                    Resources.Languages.Core.WarewolfDefaultHelpDescription +
+                                    Resources.Languages.HelpText.WarewolfDefaultHelpDescription +
                                     Resources.Languages.Core.StandardBodyParagraphClosing;
                 CurrentHelpText = new HelpDescriptorViewModel(new HelpDescriptor("", textToDisplay, null));
                 WebPageVisible = true;
@@ -102,19 +102,19 @@ namespace Warewolf.Studio.ViewModels.Help
 
         #region Implementation of IDisposable
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        // ReSharper disable once UnusedParameter.Local
+        
         void Dispose(bool disposing)
         {
-            HelpModel.OnHelpTextReceived -= OnHelpTextReceived;
+            if (disposing)
+            {
+                HelpModel.OnHelpTextReceived -= OnHelpTextReceived;
+            }
         }
 
         #endregion

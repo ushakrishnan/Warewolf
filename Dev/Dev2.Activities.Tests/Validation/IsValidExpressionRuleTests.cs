@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Tests.Activities.Validation
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class IsValidExpressionRuleTests
     {
         [TestMethod]
@@ -28,7 +28,7 @@ namespace Dev2.Tests.Activities.Validation
             var errorInfo = validator.Check();
             //------------Assert Results-------------------------
             Assert.IsNotNull(errorInfo);
-            Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.IsValidExpressionRuleInvalidCharactersErrorTest, errorInfo.Message);
+            Assert.AreEqual("Variable name [[res#]] contains invalid character(s). Only use alphanumeric _ and - ", errorInfo.Message);
         }
 
         [TestMethod]
@@ -160,7 +160,7 @@ namespace Dev2.Tests.Activities.Validation
             var errorInfo = rule.Check();
             //------------Assert Results-------------------------
             Assert.IsNotNull(errorInfo);
-            Assert.AreEqual("MyVar - Variable name [[a$]] contains invalid character(s)", errorInfo.Message);
+            Assert.AreEqual("MyVar - Variable name [[a$]] contains invalid character(s). Only use alphanumeric _ and - ", errorInfo.Message);
         }
 
         [TestMethod]
@@ -178,7 +178,7 @@ namespace Dev2.Tests.Activities.Validation
             var errorInfo = rule.Check();
             //------------Assert Results-------------------------
             Assert.IsNotNull(errorInfo);
-            Assert.AreEqual("MyRecSet - Recordset name [[rec#]] contains invalid character(s)", errorInfo.Message);
+            Assert.AreEqual("MyRecSet - Recordset name [[rec#]] contains invalid character(s). Only use alphanumeric _ and - ", errorInfo.Message);
         }
 
         [TestMethod]

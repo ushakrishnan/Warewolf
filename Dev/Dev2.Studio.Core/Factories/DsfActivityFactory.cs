@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,18 +11,18 @@
 using System;
 using Dev2.Activities;
 using Dev2.Studio.Core.Activities.Interegators;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.Factories
-// ReSharper restore CheckNamespace
+
 {
     public static class DsfActivityFactory
     {
         public static DsfActivity CreateDsfActivity(IContextualResourceModel resource, DsfActivity activity,
-                    bool ifNullCreateNew, IEnvironmentRepository environmentRepository, bool isDesignerLocalhost)
+                    bool ifNullCreateNew, IServerRepository serverRepository, bool isDesignerLocalhost)
         {
             var activityToUpdate = activity;
             if(activityToUpdate == null)
@@ -54,7 +54,7 @@ namespace Dev2.Studio.Core.Factories
 
             if(resource != null)
             {
-                var activeEnvironment = environmentRepository.ActiveEnvironment;
+                var activeEnvironment = serverRepository.ActiveServer;
                 activityToUpdate.ResourceID = resource.ID;
                 SetCorrectEnvironmentId(resource, activityToUpdate, isDesignerLocalhost, activeEnvironment);
                 activityToUpdate = SetActivityProperties(resource, activityToUpdate);
@@ -64,14 +64,14 @@ namespace Dev2.Studio.Core.Factories
             return activityToUpdate;
         }
 
-        static void SetCorrectEnvironmentId(IContextualResourceModel resource, DsfActivity activity, bool isDesignerLocalhost, IEnvironmentModel activeEnvironment)
+        static void SetCorrectEnvironmentId(IContextualResourceModel resource, DsfActivity activity, bool isDesignerLocalhost, IServer activeEnvironment)
         {
             if(resource.Environment != null)
             {
-                var idToUse = resource.Environment.ID;
+                var idToUse = resource.Environment.EnvironmentID;
 
                 //// when we have an active remote environment that we are designing against, set it as local to that environment ;)
-                if(activeEnvironment.ID == resource.Environment.ID && idToUse != Guid.Empty && !isDesignerLocalhost)
+                if(activeEnvironment.EnvironmentID == resource.Environment.EnvironmentID && idToUse != Guid.Empty && !isDesignerLocalhost)
                 {
                     idToUse = Guid.Empty;
                 }
@@ -82,14 +82,22 @@ namespace Dev2.Studio.Core.Factories
 
         static DsfActivity SetActivityProperties(IContextualResourceModel resource, DsfActivity activity)
         {
-            
-            switch(resource.ResourceType)
+
+            switch (resource.ResourceType)
             {
                 case ResourceType.WorkflowService:
                     WorkflowPropertyInterigator.SetActivityProperties(resource, ref activity);
                     break;
                 case ResourceType.Service:
-                    WorkerServicePropertyInterigator.SetActivityProperties(resource, ref activity,resource.Environment.ResourceRepository);
+                    WorkerServicePropertyInterigator.SetActivityProperties(resource, ref activity, resource.Environment.ResourceRepository);
+                    break;
+                case ResourceType.Source:
+                    break;
+                case ResourceType.Unknown:
+                    break;
+                case ResourceType.Server:
+                    break;
+                default:
                     break;
             }
             return activity;

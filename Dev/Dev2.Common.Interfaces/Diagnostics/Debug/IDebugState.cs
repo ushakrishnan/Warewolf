@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Xml.Serialization;
 
 namespace Dev2.Common.Interfaces.Diagnostics.Debug
 {
@@ -19,8 +17,8 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
     ///     Defines the requirements for a class whose state can be written to a <see cref="IDebugWriter" />
     /// </summary>
 
-    // ReSharper disable InconsistentNaming
-    public interface IDebugState : IEquatable<IDebugState>, IXmlSerializable
+    
+    public interface IDebugState : IEquatable<IDebugState>
     {
         /// <summary>
         ///     Gets or sets the workspace ID.
@@ -41,7 +39,12 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
         /// <summary>
         ///     Gets or sets the parent ID.
         /// </summary>
-        Guid ParentID { get; set; }
+        Guid? ParentID { get; set; } 
+        
+        /// <summary>
+        ///     Gets or sets the Source Resource ID.
+        /// </summary>
+        Guid SourceResourceID { get; set; }
 
         /// <summary>
         ///     Gets or sets the type of the state.
@@ -72,6 +75,8 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
         ///     Gets or sets a value indicating whether this instance is simulation.
         /// </summary>
         bool IsSimulation { get; set; }
+
+        bool IsAdded { get; set; }
 
         /// <summary>
         ///     Gets or sets a value indicating whether this instance has an error.
@@ -117,6 +122,11 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
         ///     Gets the outputs.
         /// </summary>
         List<IDebugItem> Outputs { get; }
+        
+        /// <summary>
+        ///     Gets the outputs.
+        /// </summary>
+        List<IDebugItem> AssertResultList { get; }
 
         /// <summary>
         ///     Gets or sets the start time.
@@ -152,18 +162,14 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
 
         Guid SessionID { get; set; }
         Guid WorkSurfaceMappingId { get; set; }
-
-        /// <summary>
-        ///     Writes this instance to the specified writer.
-        /// </summary>
-        /// <param name="writer">The writer to which this instance is written.</param>
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
-        void Write(IByteWriterBase writer);
-
+        
         bool IsFinalStep();
 
         bool IsFirstStep();
 
         bool IsDurationVisible { get; set; }
+        string ActualType  { get; set; }
+
+        List<IDebugState> Children { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,11 +19,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
 
-// ReSharper disable CheckNamespace
+
+
 namespace ActivityUnitTests.ActivityTest
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Summary description for CountRecordsTest
@@ -171,9 +171,7 @@ namespace ActivityUnitTests.ActivityTest
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
             mock.Verify(sender => sender.ExecuteRequest(activity.Method, Url, It.IsAny<List<Tuple<string, string>>>(), It.IsAny<int>()), Times.Never());
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "Res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "Res", out string actual, out string error);
             Assert.AreNotEqual(ExpectedResult, actual);
             Assert.IsNotNull(error);
         }
@@ -201,9 +199,7 @@ namespace ActivityUnitTests.ActivityTest
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
             mock.Verify(sender => sender.ExecuteRequest(activity.Method, Url, It.IsAny<List<Tuple<string, string>>>(), It.IsAny<int>()), Times.Once());
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "Res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "Res", out string actual, out string error);
             Assert.AreEqual(ExpectedResult, actual);
         }
 
@@ -221,6 +217,23 @@ namespace ActivityUnitTests.ActivityTest
             act.UpdateForEachInputs(null);
             //------------Assert Results-------------------------
             Assert.AreEqual(Url, act.Url);
+        }
+
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string Url = "[[CompanyName]]";
+            const string result = "[[res]]";
+            var act = new DsfWebGetRequestWithTimeoutActivity { Url = Url, Result = result };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]

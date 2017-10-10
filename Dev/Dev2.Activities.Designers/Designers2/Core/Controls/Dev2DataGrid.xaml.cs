@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.UI;
 
 namespace Dev2.Activities.Designers2.Core.Controls
@@ -27,7 +27,8 @@ namespace Dev2.Activities.Designers2.Core.Controls
     public partial class Dev2DataGrid
     {
         readonly Func<Visual, FrameworkElement> _getVisualChild;
-        static int _skipNumber;
+        int _skipNumber;
+        static int _staticSkipNumber;
 
         public Dev2DataGrid()
             : this(GetVisualChild<IntellisenseTextBox>)
@@ -51,30 +52,29 @@ namespace Dev2.Activities.Designers2.Core.Controls
         public bool SetFocusToInserted(DataGridRow row)
         {
             var modelItem = row.DataContext as ModelItem;
-            if(modelItem != null)
+            if (modelItem?.GetCurrentValue() is IDev2TOFn toFn && toFn.Inserted)
             {
-                var toFn = modelItem.GetCurrentValue() as IDev2TOFn;
-                if(toFn != null && toFn.Inserted)
-                {
-                    return SetFocus(row);
-                }
+                return SetFocus(row);
             }
             return false;
         }
 
-        public IInputElement GetFocusElement(int rowIndex, int inputsToSkip=0)
+        public IInputElement GetFocusElement(int rowIndex, int inputsToSkip)
         {
             if(rowIndex >= 0 && rowIndex < Items.Count)
             {
                 var row = GetRow(rowIndex);
-                return GetFocusElement(row,inputsToSkip);
+                return GetFocusElement(row, inputsToSkip);
             }
             return null;
         }
 
-        public IInputElement GetFocusElement(DataGridRow row, int inputsToSkip = 0)
+        public IInputElement GetFocusElement(int rowIndex) => GetFocusElement(rowIndex, 0);
+        public IInputElement GetFocusElement() => GetFocusElement(0, 0);
+
+        public IInputElement GetFocusElement(DataGridRow row, int inputsToSkip)
         {
-            return GetVisualChild(row,inputsToSkip);
+            return GetVisualChild(row, inputsToSkip: inputsToSkip);
         }
 
         bool SetFocus(Visual row)
@@ -82,7 +82,7 @@ namespace Dev2.Activities.Designers2.Core.Controls
             // Wait for the UI to be fully rendered BEFORE trying to set the focus
             Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(() =>
             {
-                var visualChild = GetVisualChild(row);
+                var visualChild = GetVisualChild(row, 0);
                 if(visualChild != null)
                 {
                     Keyboard.Focus(visualChild);
@@ -91,7 +91,7 @@ namespace Dev2.Activities.Designers2.Core.Controls
             return true;
         }
 
-        FrameworkElement GetVisualChild(Visual row, int inputsToSkip = 0)
+        FrameworkElement GetVisualChild(Visual row, int inputsToSkip)
         {
             _skipNumber = inputsToSkip;
             return row != null ? _getVisualChild(row) : null;
@@ -111,19 +111,18 @@ namespace Dev2.Activities.Designers2.Core.Controls
         {
             var child = default(T);
             var numVisuals = VisualTreeHelper.GetChildrenCount(parent);
-            for (var i = 0; i < numVisuals; i++)
+            var i = 0;
+            while (i < numVisuals && child != null && _staticSkipNumber != 0)
             {
                 var v = (Visual)VisualTreeHelper.GetChild(parent, i);
                 child = v as T ?? GetVisualChild<T>(v);
-                if(child != null)
+                if(child != null && _staticSkipNumber != 0)
                 {
-                    if (_skipNumber == 0)
-                    {
-                        break;
-                    }
-                    _skipNumber--;
+
+                    _staticSkipNumber--;
                     child = null;
-                }                
+                }
+                i++;
             }
             return child;
         }

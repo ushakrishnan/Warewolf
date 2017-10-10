@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,8 +13,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Dev2;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.DB;
-using Warewolf.Core;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -38,7 +37,7 @@ namespace Warewolf.Studio.ViewModels
             _updateRepository = updateRepository;
             _queryProxy = queryProxy;
             _shell = shell;
-            shell.SetActiveServer(server);
+            shell.SetActiveServer(server.EnvironmentID);
         }
 
         public IStudioUpdateManager UpdateRepository => _updateRepository;
@@ -53,9 +52,24 @@ namespace Warewolf.Studio.ViewModels
             return _queryProxy.PluginActions(source, ns).Where(a => a.Method != "GetType").ToList();
         }
 
+        public ICollection<IPluginAction> GetActionsWithReturns(IPluginSource source, INamespaceItem ns)
+        {
+            return _queryProxy.PluginActionsWithReturns(source, ns).Where(a => a.Method != "GetType").ToList();
+        }
+
+        public ICollection<IPluginConstructor> GetConstructors(IPluginSource source, INamespaceItem ns)
+        {
+            return _queryProxy.PluginConstructors(source, ns).ToList();
+        }
+
         public ICollection<INamespaceItem> GetNameSpaces(IPluginSource source)
         {
             return _queryProxy.FetchNamespaces(source);
+        }
+
+        public ICollection<INamespaceItem> GetNameSpacesWithJsonRetunrs(IPluginSource source)
+        {
+            return _queryProxy.FetchNamespacesWithJsonRetunrs(source);
         }
 
         public void CreateNewSource()
@@ -71,16 +85,6 @@ namespace Warewolf.Studio.ViewModels
         public string TestService(IPluginService inputValues)
         {
             return _updateRepository.TestPluginService(inputValues);
-        }
-
-        public IEnumerable<IServiceOutputMapping> GetPluginOutputMappings(IPluginAction action)
-        {
-            return new List<IServiceOutputMapping> { new ServiceOutputMapping("bob", "The", ""), new ServiceOutputMapping("dora", "The",""), new ServiceOutputMapping("Tree", "The","") };
-        }
-
-        public void SaveService(IPluginService toModel)
-        {
-            _updateRepository.Save(toModel);
         }
 
         #endregion

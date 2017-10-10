@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ using Dev2.Explorer;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.Security;
 using Dev2.Services.Security;
-// ReSharper disable MemberCanBePrivate.Global
+
 
 namespace Dev2.Runtime.Hosting
 {
@@ -42,12 +42,18 @@ namespace Dev2.Runtime.Hosting
             var duplicateList = new List<string>();
             var resourceList = Catalogue.GetDuplicateResources();
             if (resourceList == null ||resourceList.Count <= 0)
-                return new List<string>();            
+            {
+                return new List<string>();
+            }
+
             foreach (var duplicateResource in resourceList)
             {
                 var res = new StringBuilder();
                 foreach (var path in duplicateResource.ResourcePath)
+                {
                     res.AppendLine(path);
+                }
+
                 var format = string.Format("Resource: {0}"+ Environment.NewLine + "{1}", duplicateResource.ResourceName, res);
                 duplicateList.Add(format);
             }
@@ -75,15 +81,15 @@ namespace Dev2.Runtime.Hosting
         }
         private void AddChildren(IExplorerItem rootNode, IEnumerable<IResource> resourceList, string type, Guid workSpaceId)
         {
-            // ReSharper disable PossibleMultipleEnumeration
+            
 
             var children = resourceList.Where(a => GetResourceParent(a.GetResourcePath(workSpaceId)) == rootNode.ResourcePath && a.ResourceType == type.ToString());
-            // ReSharper restore PossibleMultipleEnumeration
+            
             foreach (var node in rootNode.Children)
             {
-                // ReSharper disable PossibleMultipleEnumeration
+                
                 AddChildren(node, resourceList, type, workSpaceId);
-                // ReSharper restore PossibleMultipleEnumeration
+                
             }
             foreach (var resource in children)
             {
@@ -103,14 +109,14 @@ namespace Dev2.Runtime.Hosting
 
         private void AddChildren(IExplorerItem rootNode, IEnumerable<IResource> resourceList, Guid workSpaceId)
         {
-            // ReSharper disable PossibleMultipleEnumeration
+            
             var children = resourceList.Where(a => GetResourceParent(a.GetResourcePath(workSpaceId)).Equals(rootNode.ResourcePath, StringComparison.InvariantCultureIgnoreCase));
-            // ReSharper restore PossibleMultipleEnumeration
+            
             foreach (var node in rootNode.Children)
             {
-                // ReSharper disable PossibleMultipleEnumeration
+                
                 AddChildren(node, resourceList, workSpaceId);
-                // ReSharper restore PossibleMultipleEnumeration
+                
             }
             foreach (var resource in children)
             {
@@ -123,12 +129,11 @@ namespace Dev2.Runtime.Hosting
             }
         }
 
-        public ServerExplorerItem CreateResourceItem(IResource resource, Guid workSpaceId)
+        public IExplorerItem CreateResourceItem(IResource resource, Guid workSpaceId)
         {
             Guid resourceId = resource.ResourceID;
-            var childNode = new ServerExplorerItem(resource.ResourceName, resourceId, resource.ResourceType, null, _authService.GetResourcePermissions(resourceId), resource.GetResourcePath(workSpaceId), "", "")
+            var childNode = new ServerExplorerItem(resource.ResourceName, resourceId, resource.ResourceType, null, _authService.GetResourcePermissions(resourceId), resource.GetResourcePath(workSpaceId))
             {
-                IsReservedService = resource.IsReservedService,
                 IsService = resource.IsService,
                 IsSource = resource.IsSource,
                 IsFolder = resource.IsFolder,
@@ -159,7 +164,7 @@ namespace Dev2.Runtime.Hosting
             {
                 var resourcePath = resource.Replace(rootPath, "").Substring(1);
 
-                var node = new ServerExplorerItem(new DirectoryInfo(resource).Name, Guid.NewGuid(), "Folder", null, _authService.GetResourcePermissions(Guid.Empty), resourcePath, "", "")
+                var node = new ServerExplorerItem(new DirectoryInfo(resource).Name, Guid.NewGuid(), "Folder", null, _authService.GetResourcePermissions(Guid.Empty), resourcePath)
                 {
                     IsFolder = true
                 };
@@ -174,7 +179,7 @@ namespace Dev2.Runtime.Hosting
 
         public IExplorerItem BuildRoot()
         {
-            ServerExplorerItem serverExplorerItem = new ServerExplorerItem(RootName, Guid.Empty, "Server", new List<IExplorerItem>(), _authService.GetResourcePermissions(Guid.Empty), "", "", "")
+            ServerExplorerItem serverExplorerItem = new ServerExplorerItem(RootName, Guid.Empty, "Server", new List<IExplorerItem>(), _authService.GetResourcePermissions(Guid.Empty), "")
             {
                 ServerId = HostSecurityProvider.Instance.ServerID,
                 WebserverUri = EnvironmentVariables.WebServerUri,

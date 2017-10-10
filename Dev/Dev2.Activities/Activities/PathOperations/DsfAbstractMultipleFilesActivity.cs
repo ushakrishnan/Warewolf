@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,15 +16,19 @@ using System.Linq;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
 using Dev2.PathOperations;
 using Dev2.Util;
+using Newtonsoft.Json;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Security.Encryption;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities.PathOperations
 {
@@ -175,7 +179,8 @@ namespace Dev2.Activities.PathOperations
         protected abstract string ExecuteBroker(IActivityOperationsBroker broker, IActivityIOOperationsEndPoint scrEndPoint, IActivityIOOperationsEndPoint dstEndPoint);
         protected abstract void MoveRemainingIterators();
 
-        public Func<IActivityOperationsBroker> GetOperationBroker = () => ActivityIOFactory.CreateOperationsBroker();
+        [JsonIgnore]
+        internal Func<IActivityOperationsBroker> GetOperationBroker = () => ActivityIOFactory.CreateOperationsBroker();
         string _destPassword;
 
         #region Properties
@@ -236,7 +241,7 @@ namespace Dev2.Activities.PathOperations
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        // ReSharper disable once MemberCanBePrivate.Global
+        
         protected string DecryptedDestinationPassword => DataListUtil.NotEncrypted(DestinationPassword) ? DestinationPassword : DpapiWrapper.Decrypt(DestinationPassword);
 
         #endregion Properties
@@ -263,13 +268,10 @@ namespace Dev2.Activities.PathOperations
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

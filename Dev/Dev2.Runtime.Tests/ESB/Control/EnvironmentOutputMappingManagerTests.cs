@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Reflection;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Data.Builders;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Control;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json.Linq;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.ESB.Control
 {
@@ -72,9 +73,8 @@ namespace Dev2.Tests.Runtime.ESB.Control
         public void EvalAssignRecordSets_GivenValidArgs_ShouldEvaluateCorrectlyAndAssignCorreclty()
         {
             //---------------Set up test pack-------------------
-            //EvalAssignRecordSets(IExecutionEnvironment innerEnvironment, IExecutionEnvironment environment, int update, IRecordSetCollection outputRecSets, IList<IDev2Definition> outputs)
             var innerEnvironment = new Mock<IExecutionEnvironment>();
-            innerEnvironment.Setup(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(),false))
+            innerEnvironment.Setup(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>()))
                 .Returns(CommonFunctions.WarewolfEvalResult.NewWarewolfAtomListresult(new WarewolfAtomList<DataStorage.WarewolfAtom>(DataStorage.WarewolfAtom.NewDataString("Value"))))
                 .Verifiable();
             var environment = new Mock<IExecutionEnvironment>();
@@ -94,19 +94,11 @@ namespace Dev2.Tests.Runtime.ESB.Control
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var methodInfo = typeof(EnvironmentOutputMappingManager).GetMethod("EvalAssignRecordSets", BindingFlags.NonPublic | BindingFlags.Static);
-            try
-            {
-                //---------------Test Result -----------------------
-                methodInfo.Invoke(null, new object[] { innerEnvironment.Object, environment.Object, 1, outputRecSets, outputs });
-                environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedStar(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
-                environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedLast(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
-                environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedNumeric(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-
-            }
+            //---------------Test Result -----------------------
+            methodInfo.Invoke(null, new object[] { innerEnvironment.Object, environment.Object, 1, outputRecSets, outputs });
+            environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedStar(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
+            environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedLast(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
+            environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedNumeric(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
         }
 
         [TestMethod]
@@ -114,9 +106,8 @@ namespace Dev2.Tests.Runtime.ESB.Control
         public void EvalAssignScalars_GivenValidArgs_ShouldEvaluateCorrectlyAndAssignCorreclty()
         {
             //---------------Set up test pack-------------------
-            //EvalAssignScalars(IExecutionEnvironment innerEnvironment, IExecutionEnvironment environment, int update, IEnumerable<IDev2Definition> outputScalarList)
             var innerEnvironment = new Mock<IExecutionEnvironment>();
-            innerEnvironment.Setup(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), false))
+            innerEnvironment.Setup(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>()))
                 .Returns(CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.NewDataString("")))
                 .Verifiable();
             var environment = new Mock<IExecutionEnvironment>();
@@ -133,18 +124,10 @@ namespace Dev2.Tests.Runtime.ESB.Control
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var methodInfo = typeof(EnvironmentOutputMappingManager).GetMethod("EvalAssignScalars", BindingFlags.NonPublic | BindingFlags.Static);
-            try
-            {
-                //---------------Test Result -----------------------
-                methodInfo.Invoke(null, new object[] { innerEnvironment.Object, environment.Object, 1, scalars });
-                environment.Verify(executionEnvironment => executionEnvironment.Assign(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Exactly(3));
-                innerEnvironment.Verify(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<bool>(), false));
-            }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-
-            }
+            //---------------Test Result -----------------------
+            methodInfo.Invoke(null, new object[] { innerEnvironment.Object, environment.Object, 1, scalars });
+            environment.Verify(executionEnvironment => executionEnvironment.Assign(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Exactly(3));
+            innerEnvironment.Verify(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>()));
         }
 
         [TestMethod]

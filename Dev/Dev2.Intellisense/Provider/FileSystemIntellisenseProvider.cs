@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Intellisense.Helper;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Intellisense.Provider
 {
@@ -48,7 +48,9 @@ namespace Dev2.Intellisense.Provider
             int caretPosition = context.CaretPosition;  
 
             if (caretPosition < 0 || caretPosition>inputText.Length)
+            {
                 return string.Empty;
+            }
 
             var regions = inputText.Split(' '); // we can safely do this because the default provider handles the language features
 

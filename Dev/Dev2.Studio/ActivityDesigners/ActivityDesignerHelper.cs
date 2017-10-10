@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,6 @@ using Dev2.Activities.Designers2.CaseConvert;
 using Dev2.Activities.Designers2.CommandLine;
 using Dev2.Activities.Designers2.Comment;
 using Dev2.Activities.Designers2.Copy;
-using Dev2.Activities.Designers2.CountRecords;
 using Dev2.Activities.Designers2.Create;
 using Dev2.Activities.Designers2.CreateJSON;
 using Dev2.Activities.Designers2.DataMerge;
@@ -24,7 +23,6 @@ using Dev2.Activities.Designers2.DataSplit;
 using Dev2.Activities.Designers2.DateTime;
 using Dev2.Activities.Designers2.DateTimeDifference;
 using Dev2.Activities.Designers2.Delete;
-using Dev2.Activities.Designers2.DeleteRecords;
 using Dev2.Activities.Designers2.DropBox2016.Delete;
 using Dev2.Activities.Designers2.DropBox2016.Download;
 using Dev2.Activities.Designers2.DropBox2016.DropboxFile;
@@ -41,7 +39,6 @@ using Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout;
 using Dev2.Activities.Designers2.Move;
 using Dev2.Activities.Designers2.MultiAssign;
 using Dev2.Activities.Designers2.MySqlDatabase;
-using Dev2.Activities.Designers2.Net_DLL;
 using Dev2.Activities.Designers2.ODBC;
 using Dev2.Activities.Designers2.Oracle;
 using Dev2.Activities.Designers2.PostgreSql;
@@ -50,7 +47,6 @@ using Dev2.Activities.Designers2.RabbitMQ.Publish;
 using Dev2.Activities.Designers2.Random;
 using Dev2.Activities.Designers2.ReadFile;
 using Dev2.Activities.Designers2.ReadFolder;
-using Dev2.Activities.Designers2.RecordsLength;
 using Dev2.Activities.Designers2.Rename;
 using Dev2.Activities.Designers2.Replace;
 using Dev2.Activities.Designers2.Script;
@@ -92,17 +88,23 @@ using Dev2.Activities.Sharepoint;
 using Dev2.Activities.WcfEndPoint;
 using Dev2.Studio.ViewModels.Workflow;
 using System;
+using System.Activities.Presentation;
+using System.Collections;
 using System.Collections.Generic;
+using System.Windows;
 using Dev2.Activities.Designers2.ComDLL;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Dev2.Activities.Designers2.MultiAssignObject;
+using Dev2.Activities.Scripting;
 
-// ReSharper disable CheckNamespace
+
+
+
 namespace Dev2.Studio.ActivityDesigners
 {
     public static class ActivityDesignerHelper
     {
-        static readonly Dictionary<Type, Type> DesignerAttributes = new Dictionary<Type, Type>
+        public static readonly Dictionary<Type, Type> DesignerAttributes = new Dictionary<Type, Type>
             {
                 { typeof(DsfMultiAssignActivity), typeof(MultiAssignDesigner) },
                 { typeof(DsfMultiAssignObjectActivity), typeof(MultiAssignObjectDesigner) },
@@ -112,9 +114,12 @@ namespace Dev2.Studio.ActivityDesigners
                 { typeof(DsfFindRecordsMultipleCriteriaActivity), typeof(FindRecordsMultipleCriteriaDesigner) },
                 { typeof(DsfSqlBulkInsertActivity), typeof(SqlBulkInsertDesigner) },
                 { typeof(DsfSortRecordsActivity), typeof(SortRecordsDesigner) },
-                { typeof(DsfCountRecordsetActivity), typeof(CountRecordsDesigner) },
-                { typeof(DsfRecordsetLengthActivity), typeof(RecordsLengthDesigner) },
-                { typeof(DsfDeleteRecordActivity), typeof(DeleteRecordsDesigner) },
+                { typeof(DsfCountRecordsetNullHandlerActivity), typeof(Activities.Designers2.CountRecordsNullHandler.CountRecordsDesigner) },
+                { typeof(DsfCountRecordsetActivity), typeof(Activities.Designers2.CountRecords.CountRecordsDesigner) },
+                { typeof(DsfRecordsetLengthActivity), typeof(Dev2.Activities.Designers2.RecordsLength.RecordsLengthDesigner) },
+                { typeof(DsfRecordsetNullhandlerLengthActivity), typeof(Dev2.Activities.Designers2.RecordsLengthNullHandler.RecordsLengthDesigner) },
+                { typeof(DsfDeleteRecordNullHandlerActivity), typeof(Dev2.Activities.Designers2.DeleteRecordsNullHandler.DeleteRecordsDesigner) },
+                { typeof(DsfDeleteRecordActivity), typeof(Dev2.Activities.Designers2.DeleteRecords.DeleteRecordsDesigner) },
                 { typeof(DsfUniqueActivity), typeof(UniqueRecordsDesigner) },
                 { typeof(DsfCalculateActivity), typeof(CalculateDesigner) },
                 { typeof(DsfAggregateCalculateActivity), typeof(AggregateCalculateDesigner) },
@@ -139,6 +144,9 @@ namespace Dev2.Studio.ActivityDesigners
                 { typeof(DsfRandomActivity), typeof(RandomDesigner) },
                 { typeof(DsfReplaceActivity), typeof(ReplaceDesigner) },
                 { typeof(DsfScriptingActivity), typeof(ScriptDesigner) },
+                { typeof(DsfJavascriptActivity), typeof(Dev2.Activities.Designers2.Script_Javascript.ScriptDesigner) },
+                { typeof(DsfRubyActivity), typeof(Dev2.Activities.Designers2.Script_Ruby.ScriptDesigner) },
+                { typeof(DsfPythonActivity), typeof(Dev2.Activities.Designers2.Script_Python.ScriptDesigner) },
                 { typeof(DsfForEachActivity), typeof(ForeachDesigner) },
                 { typeof(DsfCaseConvertActivity), typeof(CaseConvertDesigner) },
                 { typeof(DsfDataMergeActivity), typeof(DataMergeDesigner) },
@@ -152,7 +160,8 @@ namespace Dev2.Studio.ActivityDesigners
                   { typeof(DsfODBCDatabaseActivity), typeof(ODBCDatabaseDesigner) },
                   { typeof(DsfPostgreSqlActivity), typeof(PostgreSqlDatabaseDesigner) },
                 {typeof(DsfExchangeEmailActivity),typeof(ExchangeEmailDesigner) },
-                { typeof(DsfDotNetDllActivity), typeof(DotNetDllDesigner) },
+                { typeof(DsfDotNetDllActivity), typeof(Activities.Designers2.Net_DLL.DotNetDllDesigner) },
+                { typeof(DsfEnhancedDotNetDllActivity), typeof(Dev2.Activities.Designers2.Net_Dll_Enhanced.DotNetDllDesigner) },
                 { typeof(DsfComDllActivity), typeof(ComDllDesigner) },
                 { typeof(DsfWebGetActivity), typeof(WebServiceGetDesigner) },
                 { typeof(DsfWebPostActivity), typeof(WebServicePostDesigner) },
@@ -180,7 +189,53 @@ namespace Dev2.Studio.ActivityDesigners
                 { typeof(DsfSelectAndApplyActivity), typeof(SelectAndApplyDesigner) },
                 { typeof(DsfConsumeRabbitMQActivity), typeof(RabbitMQConsumeDesigner) },
             };
-        public static void AddDesignerAttributes(WorkflowDesignerViewModel workflowVm, bool liteInit = false)
+        private static Hashtable _hashTable;
+
+        public static Hashtable GetDesignerHashTable()
+        {
+            if (_hashTable == null)
+            {
+                _hashTable = new Hashtable
+                {
+                    {WorkflowDesignerColors.FontFamilyKey, Application.Current.Resources["DefaultFontFamily"]},
+                    {WorkflowDesignerColors.FontWeightKey, Application.Current.Resources["DefaultFontWeight"]},
+                    {WorkflowDesignerColors.RubberBandRectangleColorKey, Application.Current.Resources["DesignerBackground"]},
+                    {
+                        WorkflowDesignerColors.WorkflowViewElementBackgroundColorKey,
+                        Application.Current.Resources["WorkflowBackgroundBrush"]
+                    },
+                    {
+                        WorkflowDesignerColors.WorkflowViewElementSelectedBackgroundColorKey,
+                        Application.Current.Resources["WorkflowBackgroundBrush"]
+                    },
+                    {
+                        WorkflowDesignerColors.WorkflowViewElementSelectedBorderColorKey,
+                        Application.Current.Resources["WorkflowSelectedBorderBrush"]
+                    },
+                    {
+                        WorkflowDesignerColors.DesignerViewShellBarControlBackgroundColorKey,
+                        Application.Current.Resources["ShellBarViewBackground"]
+                    },
+                    {
+                        WorkflowDesignerColors.DesignerViewShellBarColorGradientBeginKey,
+                        Application.Current.Resources["ShellBarViewBackground"]
+                    },
+                    {
+                        WorkflowDesignerColors.DesignerViewShellBarColorGradientEndKey,
+                        Application.Current.Resources["ShellBarViewBackground"]
+                    },
+                    {WorkflowDesignerColors.OutlineViewItemSelectedTextColorKey, Application.Current.Resources["SolidWhite"]},
+                    {
+                        WorkflowDesignerColors.OutlineViewItemHighlightBackgroundColorKey,
+                        Application.Current.Resources["DesignerBackground"]
+                    },
+                };
+            }
+            return _hashTable;
+        }
+
+        public static void AddDesignerAttributes(WorkflowDesignerViewModel workflowVm) => AddDesignerAttributes(workflowVm, false);
+        public static void AddDesignerAttributes(WorkflowDesignerViewModel workflowVm, bool liteInit)
         {
             workflowVm.InitializeDesigner(DesignerAttributes, liteInit);
         }

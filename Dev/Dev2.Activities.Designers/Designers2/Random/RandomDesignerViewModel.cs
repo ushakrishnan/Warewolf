@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Random
 {
@@ -26,6 +26,7 @@ namespace Dev2.Activities.Designers2.Random
             RandomTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enRandomType>();
             SelectedRandomType = Dev2EnumConverter.ConvertEnumValueToString(RandomType);
             AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Random;
         }
 
         public IList<string> RandomTypes { get; private set; }
@@ -108,11 +109,8 @@ namespace Dev2.Activities.Designers2.Random
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

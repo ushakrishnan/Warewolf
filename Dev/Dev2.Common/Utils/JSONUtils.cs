@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,7 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-// ReSharper disable InconsistentNaming
+
 
 using System;
 using System.Text;
@@ -42,38 +42,55 @@ namespace Dev2.Common.Utils
 
         public static string Format(string text)
         {
-            if (String.IsNullOrEmpty(text)) return String.Empty;
+            if (String.IsNullOrEmpty(text))
+            {
+                return String.Empty;
+            }
+
             text = text.Replace(Environment.NewLine, String.Empty).Replace("\t", String.Empty);
 
             var offset = 0;
             var output = new StringBuilder();
             Action<StringBuilder, int> tabs = (sb, pos) => { for (var i = 0; i < pos; i++) { sb.Append("\t"); } };
-            Func<string, int, Nullable<Char>> previousNotEmpty = (s, i) =>
+            Func<string, int, char?> previousNotEmpty = (s, i) =>
             {
-                if (String.IsNullOrEmpty(s) || i <= 0) return null;
+                if (string.IsNullOrEmpty(s) || i <= 0)
+                {
+                    return null;
+                }
 
-                Nullable<Char> prev = null;
+                char? prev = null;
 
                 while (i > 0 && prev == null)
                 {
                     prev = s[i - 1];
-                    if (prev.ToString() == " ") prev = null;
+                    if (prev.ToString() == " ")
+                    {
+                        prev = null;
+                    }
+
                     i--;
                 }
 
                 return prev;
             };
-            Func<string, int, Nullable<Char>> nextNotEmpty = (s, i) =>
+            Func<string, int, char?> nextNotEmpty = (s, i) =>
             {
-                if (String.IsNullOrEmpty(s) || i >= (s.Length - 1)) return null;
+                if (String.IsNullOrEmpty(s) || i >= (s.Length - 1))
+                {
+                    return null;
+                }
 
-                Nullable<Char> next = null;
+                char? next = null;
                 i++;
 
                 while (i < (s.Length - 1) && next == null)
                 {
                     next = s[i++];
-                    if (next.ToString() == " ") next = null;
+                    if (next.ToString() == " ")
+                    {
+                        next = null;
+                    }
                 }
 
                 return next;
@@ -130,7 +147,9 @@ namespace Dev2.Common.Utils
                     output.Append(chr);
                 }
                 else
+                {
                     output.Append(chr);
+                }
             }
 
             return output.ToString().Trim();

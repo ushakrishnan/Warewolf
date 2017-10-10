@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ namespace Dev2.Activities.Designers2.Core
     {
 
         #region Fields
-        // ReSharper disable once InconsistentNaming
+
         private static readonly Lazy<IsItemDragged> _instance = new Lazy<IsItemDragged>(() => new IsItemDragged());
 
 
@@ -37,7 +37,7 @@ namespace Dev2.Activities.Designers2.Core
 
         public static IsItemDragged Instance => _instance.Value;
 
-        // ReSharper disable once ConvertToAutoProperty
+        
         public bool IsDragged
         {
             get

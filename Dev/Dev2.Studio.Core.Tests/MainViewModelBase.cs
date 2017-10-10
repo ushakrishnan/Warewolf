@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,16 +22,18 @@ using Dev2.Core.Tests.Utils;
 using Dev2.Providers.Events;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
+using Dev2.Studio.Core;
 using Dev2.Studio.Core.AppResources.Browsers;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Helpers;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.Workspaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels;
 using Dev2.Workspaces;
 using Moq;
 using Newtonsoft.Json;
+using Dev2.Studio.Interfaces.Enums;
+using Microsoft.Practices.Prism.Mvvm;
 
 namespace Dev2.Core.Tests
 {
@@ -45,11 +47,11 @@ namespace Dev2.Core.Tests
         protected readonly Guid WorkspaceId = Guid.NewGuid();
         protected const string DisplayName = "test2";
         protected Mock<IEnvironmentConnection> EnvironmentConnection;
-        protected Mock<IEnvironmentModel> EnvironmentModel;
-        protected IEnvironmentRepository EnvironmentRepo;
+        protected Mock<IServer> EnvironmentModel;
+        protected IServerRepository ServerRepo;
         protected Mock<IEventAggregator> EventAggregator;
         protected Mock<IContextualResourceModel> FirstResource;
-        protected MainViewModel MainViewModel;
+        protected ShellViewModel ShellViewModel;
         protected Mock<IWorkspaceItemRepository> MockWorkspaceRepo;
         public Mock<IPopupController> PopupController;
         protected const string ResourceName = "TestResource";
@@ -59,23 +61,23 @@ namespace Dev2.Core.Tests
 
         protected Mock<IWindowManager> WindowManager;
         protected Mock<IAuthorizationService> AuthorizationService;
-        protected Mock<IEnvironmentModel> ActiveEnvironment;
+        protected Mock<IServer> ActiveEnvironment;
 
         #endregion Variables
 
         #region Methods used by tests
-        protected Mock<IEnvironmentRepository> EmptyEnvRepo { get; set; } 
+        protected Mock<IServerRepository> EmptyEnvRepo { get; set; }
         protected void CreateFullExportsAndVmWithEmptyRepo()
         {
             CreateResourceRepo();
-            var mockEnv = new Mock<IEnvironmentRepository>();
-            mockEnv.SetupProperty(g => g.ActiveEnvironment); // Start tracking changes
-            mockEnv.Setup(g => g.All()).Returns(new List<IEnvironmentModel>());
-            
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
+            var mockEnv = new Mock<IServerRepository>();
+            mockEnv.SetupProperty(g => g.ActiveServer); // Start tracking changes
+            mockEnv.Setup(g => g.All()).Returns(new List<IServer>());
+            CustomContainer.Register(mockEnv.Object);
+            var mockEnvironmentModel = new Mock<IServer>();
             mockEnvironmentModel.Setup(model => model.AuthorizationService).Returns(new Mock<IAuthorizationService>().Object);
             mockEnv.Setup(repository => repository.Source).Returns(mockEnvironmentModel.Object);
-            
+
             var environmentRepo = mockEnv.Object;
             EmptyEnvRepo = mockEnv;
             EventAggregator = new Mock<IEventAggregator>();
@@ -83,11 +85,20 @@ namespace Dev2.Core.Tests
             WindowManager = new Mock<IWindowManager>();
             Mock<IAsyncWorker> asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
             Mock<IWorkspaceItemRepository> mockWorkspaceItemRepository = GetworkspaceItemRespository();
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WorkspaceItemRepository(mockWorkspaceItemRepository.Object);
-            // ReSharper restore ObjectCreationAsStatement
-            MainViewModel = new MainViewModel(EventAggregator.Object, asyncWorker.Object, environmentRepo,
-                new Mock<IVersionChecker>().Object, false, null, PopupController.Object);
+            
+            var vieFactory = new Mock<IViewFactory>();
+            var viewMock = new Mock<IView>();
+            vieFactory.Setup(factory => factory.GetViewGivenServerResourceType(It.IsAny<string>()))
+                .Returns(viewMock.Object);
+            ShellViewModel = new ShellViewModel(EventAggregator.Object, asyncWorker.Object, environmentRepo,new Mock<IVersionChecker>().Object, vieFactory.Object, false, null, PopupController.Object);
+        }
+
+        protected void CreateFullExportsAndVm(IExplorerViewModel viewModel)
+        {
+            CreateFullExportsAndVm();
+            ShellViewModel.ExplorerViewModel = viewModel;
         }
 
         protected void CreateFullExportsAndVm()
@@ -103,16 +114,22 @@ namespace Dev2.Core.Tests
             BrowserPopupController = new Mock<IBrowserPopupController>();
             Mock<IAsyncWorker> asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
             Mock<IWorkspaceItemRepository> mockWorkspaceItemRepository = GetworkspaceItemRespository();
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WorkspaceItemRepository(mockWorkspaceItemRepository.Object);
-            // ReSharper restore ObjectCreationAsStatement
-            MainViewModel = new MainViewModel(EventAggregator.Object, asyncWorker.Object, environmentRepo,
-                new Mock<IVersionChecker>().Object, false, BrowserPopupController.Object, PopupController.Object);
-            ActiveEnvironment = new Mock<IEnvironmentModel>();
+            
+            var explorerViewModel = new Mock<IExplorerViewModel>();
+            var vieFactory = new Mock<IViewFactory>();
+            var viewMock = new Mock<IView>();
+            vieFactory.Setup(factory => factory.GetViewGivenServerResourceType(It.IsAny<string>()))
+                .Returns(viewMock.Object);
+            ShellViewModel = new ShellViewModel(EventAggregator.Object, asyncWorker.Object, environmentRepo, new Mock<IVersionChecker>().Object, vieFactory.Object, false, BrowserPopupController.Object, PopupController.Object, explorerViewModel.Object);
+            var activeEnvironment = new Mock<IServer>();
+            activeEnvironment.Setup(server => server.DisplayName).Returns("localhost");
+            ActiveEnvironment = activeEnvironment;
             AuthorizationService = new Mock<IAuthorizationService>();
             ActiveEnvironment.Setup(e => e.AuthorizationService).Returns(AuthorizationService.Object);
 
-            MainViewModel.ActiveEnvironment = ActiveEnvironment.Object;
+            ShellViewModel.ActiveServer = ActiveEnvironment.Object;
         }
 
         protected Mock<IBrowserPopupController> BrowserPopupController;
@@ -133,15 +150,18 @@ namespace Dev2.Core.Tests
             return result;
         }
 
-        protected IEnvironmentRepository GetEnvironmentRepository()
+        protected IServerRepository GetEnvironmentRepository()
         {
-            var models = new List<IEnvironmentModel> { EnvironmentModel.Object };
-            var mock = new Mock<IEnvironmentRepository>();
+            var models = new List<IServer> { EnvironmentModel.Object };
+            var mock = new Mock<IServerRepository>();
+            CustomContainer.DeRegister<IServerRepository>();
+            CustomContainer.Register(mock.Object);
             mock.Setup(s => s.All()).Returns(models);
             mock.Setup(s => s.Source).Returns(EnvironmentModel.Object);
             mock.Setup(repo => repo.Get(It.IsAny<Guid>())).Returns(EnvironmentModel.Object);
-            EnvironmentRepo = mock.Object;
-            return EnvironmentRepo;
+            mock.Setup(repo => repo.ActiveServer).Returns(EnvironmentModel.Object);
+            ServerRepo = mock.Object;
+            return ServerRepo;
         }
 
         protected void CreateResourceRepo()
@@ -151,14 +171,14 @@ namespace Dev2.Core.Tests
             EnvironmentModel = CreateMockEnvironment();
             ResourceRepo = new Mock<IResourceRepository>();
 
-            ResourceRepo.Setup(r => r.FetchResourceDefinition(It.IsAny<IEnvironmentModel>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
+            ResourceRepo.Setup(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
             ResourceRepo.Setup(r => r.GetDependenciesXml(It.IsAny<IContextualResourceModel>(), It.IsAny<bool>())).Returns(msg);
             FirstResource = CreateResource(ResourceType.WorkflowService);
             var coll = new Collection<IResourceModel> { FirstResource.Object };
             ResourceRepo.Setup(c => c.All()).Returns(coll);
-            
+
             EnvironmentModel.Setup(m => m.ResourceRepository).Returns(ResourceRepo.Object);
-            
+
         }
 
         protected Mock<IEnvironmentConnection> CreateMockConnection(Random rand, params string[] sources)
@@ -190,16 +210,16 @@ namespace Dev2.Core.Tests
             return connection;
         }
 
-        protected Mock<IEnvironmentModel> CreateMockEnvironment(params string[] sources)
+        protected Mock<IServer> CreateMockEnvironment(params string[] sources)
         {
             var rand = new Random();
             var connection = CreateMockConnection(rand, sources);
-            var env = new Mock<IEnvironmentModel>();
+            var env = new Mock<IServer>();
             env.Setup(e => e.Connection).Returns(connection.Object);
             env.Setup(e => e.IsConnected).Returns(true);
-            env.Setup(e => e.ID).Returns(ServerId);
+            env.Setup(e => e.EnvironmentID).Returns(ServerId);
             env.Setup(e => e.Name).Returns($"Server_{rand.Next(1, 100)}");
-            
+
             return env;
         }
 
@@ -232,7 +252,7 @@ namespace Dev2.Core.Tests
             SecondResource.Setup(c => c.ID).Returns(SecondResourceId);
             SecondResource.Setup(c => c.UserPermissions).Returns(Permissions.Contribute);
             var msg = new AddWorkSurfaceMessage(SecondResource.Object);
-            MainViewModel.Handle(msg);
+            ShellViewModel.Handle(msg);
         }
 
         protected void SetupForDelete()

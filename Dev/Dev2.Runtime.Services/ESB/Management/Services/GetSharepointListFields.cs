@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
@@ -18,7 +18,7 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class GetSharepointListFields : IEsbManagementEndpoint
     {
         #region Implementation of ISpookyLoadable<string>
@@ -47,9 +47,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             string serializedSource = null;
             string listName = null;
             string editableOnly = null;
-            StringBuilder tmp;
-            values.TryGetValue("SharepointServer", out tmp);
-            if(tmp != null)
+            values.TryGetValue("SharepointServer", out StringBuilder tmp);
+            if (tmp != null)
             {
                 serializedSource = tmp.ToString();
             }
@@ -71,7 +70,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var res = new ExecuteMessage();
                 res.HasError = true;
                 res.SetMessage(ErrorResource.NoSharepointServerSet);
-                Dev2Logger.Debug(ErrorResource.NoSharepointServerSet);
+                Dev2Logger.Debug(ErrorResource.NoSharepointServerSet, GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
             if(string.IsNullOrEmpty(listName))
@@ -79,7 +78,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var res = new ExecuteMessage();
                 res.HasError = true;
                 res.SetMessage(ErrorResource.NoSharepointListNameSet);
-                Dev2Logger.Debug(ErrorResource.NoSharepointListNameSet);
+                Dev2Logger.Debug(ErrorResource.NoSharepointListNameSet, GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
             var editableFieldsOnly = false;
@@ -102,7 +101,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception ex)
             {
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 var res = new DbColumnList(ex);
                 return serializer.SerializeToBuilder(res);
             }
@@ -133,5 +132,15 @@ namespace Dev2.Runtime.ESB.Management.Services
         }
 
         #endregion
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
     }
 }

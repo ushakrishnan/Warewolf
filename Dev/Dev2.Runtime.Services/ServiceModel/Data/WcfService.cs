@@ -27,6 +27,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             var action = xml.Descendants("Action").FirstOrDefault();
             if (action == null)
             {
+                
                 if (xml.HasAttributes && xml.Attribute("Type").Value == "WcfService")
                 {
                     action = xml;

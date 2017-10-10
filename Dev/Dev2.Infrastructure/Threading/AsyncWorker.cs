@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,7 @@ namespace Dev2.Threading
         public Task Start(Action backgroundAction, Action uiAction)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundAction).ContinueWith(_ => uiAction(), scheduler);
+            return Task.Run(backgroundAction).ContinueWith(_ => uiAction(), scheduler);
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace Dev2.Threading
         public Task Start(Action backgroundAction, Action uiAction, Action<Exception> onError)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundAction).ContinueWith(_ =>
+            return Task.Run(backgroundAction).ContinueWith(_ =>
             {
                 if(_.Exception != null)
                 {
@@ -70,7 +70,7 @@ namespace Dev2.Threading
         public Task Start(Action backgroundAction, Action uiAction, CancellationTokenSource cancellationTokenSource, Action<Exception> onError)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundAction, cancellationTokenSource.Token).ContinueWith(_ =>
+            return Task.Run(backgroundAction, cancellationTokenSource.Token).ContinueWith(_ =>
             {
                 if (!cancellationTokenSource.IsCancellationRequested)
                 {
@@ -96,7 +96,7 @@ namespace Dev2.Threading
         /// <date>2013/08/08</date>
         public Task Start(Action backgroundAction)
         {
-            return Task.Factory.StartNew(backgroundAction);
+            return Task.Run(backgroundAction);
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace Dev2.Threading
         public Task Start<TBackgroundResult>(Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> uiAction, Action<Exception> onError)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundFunc).ContinueWith(task =>
+            return Task.Run(backgroundFunc).ContinueWith(task =>
             {
                 if (task.Exception != null)
                 {
@@ -138,7 +138,7 @@ namespace Dev2.Threading
         public Task Start<TBackgroundResult>(Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> uiAction)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundFunc).ContinueWith(task =>
+            return Task.Run(backgroundFunc).ContinueWith(task =>
             {
                 uiAction(task.Result);
             }, scheduler);
@@ -158,7 +158,7 @@ namespace Dev2.Threading
         public Task Start<TBackgroundResult>(Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> uiAction, CancellationTokenSource cancellationTokenSource, Action<Exception> onError)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundFunc, cancellationTokenSource.Token).ContinueWith(task =>
+            return Task.Run(backgroundFunc, cancellationTokenSource.Token).ContinueWith(task =>
             {
                 if(!cancellationTokenSource.IsCancellationRequested)
                 {

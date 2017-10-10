@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,16 +14,16 @@ using System.Diagnostics;
 using Dev2.Activities.Designers2.CommandLine;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace Dev2.Activities.Designers.Tests.ExecuteCommandLine
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class CommandLineDesignerViewModelTests
     {
         [TestMethod]
@@ -55,9 +55,9 @@ namespace Dev2.Activities.Designers.Tests.ExecuteCommandLine
         {
             //------------Setup for test--------------------------
             const string CommandFileName = null;
-            // ReSharper disable RedundantArgumentDefaultValue
+            
             var viewModel = new CommandLineDesignerViewModel(CreateModelItem(CommandFileName));
-            // ReSharper restore RedundantArgumentDefaultValue
+            
 
             //------------Execute Test---------------------------
             viewModel.Validate();
@@ -123,7 +123,7 @@ namespace Dev2.Activities.Designers.Tests.ExecuteCommandLine
         public void CommandLineDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);

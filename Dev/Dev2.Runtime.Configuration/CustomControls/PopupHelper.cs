@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -137,13 +137,8 @@ namespace System.Windows.Controls
  || OutsidePopupCanvas == null
 #endif
  || Application.Current == null
-#if SILVERLIGHT
- || Application.Current.Host == null
-                || Application.Current.Host.Content == null
-#endif
-                // ReSharper disable RedundantLogicalConditionalExpressionOperand
- || false)
-            // ReSharper restore RedundantLogicalConditionalExpressionOperand
+)
+            
             {
                 return;
             }
@@ -154,12 +149,11 @@ namespace System.Windows.Controls
             double rootHeight = hostContent.ActualHeight;
 #else
             UIElement u = Parent;
-            if(Application.Current.Windows.Count > 0)
-            {
-                // TODO: USE THE CURRENT WINDOW INSTEAD! WALK THE TREE!
+            if(Application.Current.CheckAccess() && Application.Current.Windows.Count > 0)
+            {                
                 u = Application.Current.Windows[0];
             }
-            while(u as Window == null && u != null)
+            while((u as Window == null) && u != null)
             {
                 u = VisualTreeHelper.GetParent(u) as UIElement;
             }
@@ -176,9 +170,9 @@ namespace System.Windows.Controls
             double popupContentWidth = PopupChild.ActualWidth;
             double popupContentHeight = PopupChild.ActualHeight;
 
-            // ReSharper disable CompareOfFloatsByEqualityOperator
+            
             if(rootHeight == 0 || rootWidth == 0 || popupContentWidth == 0 || popupContentHeight == 0)
-            // ReSharper restore CompareOfFloatsByEqualityOperator
+            
             {
                 return;
             }
@@ -277,10 +271,7 @@ namespace System.Windows.Controls
         private void OnClosed(EventArgs e)
         {
             EventHandler handler = Closed;
-            if(handler != null)
-            {
-                handler(this, e);
-            }
+            handler?.Invoke(this, e);
         }
 
         /// <summary>
@@ -291,7 +282,7 @@ namespace System.Windows.Controls
         private void OnPopupClosedStateChanged(object sender, VisualStateChangedEventArgs e)
         {
             // Delayed closing of the popup until now
-            if(e != null && e.NewState != null && e.NewState.Name == VisualStates.StatePopupClosed)
+            if(e?.NewState != null && e.NewState.Name == VisualStates.StatePopupClosed)
             {
                 if(Popup != null)
                 {
@@ -410,10 +401,7 @@ namespace System.Windows.Controls
         private void OnFocusChanged(EventArgs e)
         {
             EventHandler handler = FocusChanged;
-            if(handler != null)
-            {
-                handler(this, e);
-            }
+            handler?.Invoke(this, e);
         }
 
         /// <summary>
@@ -423,10 +411,7 @@ namespace System.Windows.Controls
         private void OnUpdateVisualStates(EventArgs e)
         {
             EventHandler handler = UpdateVisualStates;
-            if(handler != null)
-            {
-                handler(this, e);
-            }
+            handler?.Invoke(this, e);
         }
 
         /// <summary>

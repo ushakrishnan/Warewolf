@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Text;
 using System.Xml.Linq;
 using Caliburn.Micro;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure.Events;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Security;
@@ -23,13 +24,14 @@ using Dev2.Providers.Errors;
 using Dev2.Providers.Events;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Models;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Dev2.Studio.Interfaces.Enums;
 
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.Core.Tests
 {
     [TestClass]
@@ -147,7 +149,7 @@ namespace Dev2.Core.Tests
         {
             //------------Setup for test--------------------------
             // Setup();
-            Mock<IEnvironmentModel> testEnvironmentModel = CreateMockEnvironment();
+            Mock<IServer> testEnvironmentModel = CreateMockEnvironment();
             var resourceModel = new ResourceModel(testEnvironmentModel.Object);
             var timesFired = 0;
             var dataListFired = 0;
@@ -172,7 +174,7 @@ namespace Dev2.Core.Tests
         {
             //------------Setup for test--------------------------
             Setup();
-            Mock<IEnvironmentModel> testEnvironmentModel = CreateMockEnvironment(EventPublishers.Studio);
+            Mock<IServer> testEnvironmentModel = CreateMockEnvironment(EventPublishers.Studio);
             var resourceModel = new ResourceModel(testEnvironmentModel.Object);
             var eventFired = false;
             IContextualResourceModel eventResourceModel = null;
@@ -294,7 +296,7 @@ namespace Dev2.Core.Tests
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
 
-            var environmentModel = new Mock<IEnvironmentModel>();
+            var environmentModel = new Mock<IServer>();
             environmentModel.Setup(e => e.Connection).Returns(connection.Object);
 
             var model = new ResourceModel(environmentModel.Object)
@@ -333,7 +335,7 @@ namespace Dev2.Core.Tests
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
 
-            var environmentModel = new Mock<IEnvironmentModel>();
+            var environmentModel = new Mock<IServer>();
             environmentModel.Setup(e => e.Connection).Returns(connection.Object);
 
             var model = new ResourceModel(environmentModel.Object)
@@ -380,6 +382,8 @@ namespace Dev2.Core.Tests
 
                         Assert.AreEqual(2, model.Errors.Count);
                         Assert.AreEqual(0, model.FixedErrors.Count);
+                        break;
+                    default:
                         break;
                 }
             };
@@ -431,6 +435,8 @@ namespace Dev2.Core.Tests
                         Assert.AreEqual(1, model.Errors.Count);
                         Assert.AreEqual(0, model.FixedErrors.Count);
                         break;
+                    default:
+                        break;
                 }
             };
 
@@ -456,7 +462,7 @@ namespace Dev2.Core.Tests
             var environmentModel = CreateMockEnvironment(eventPublisher);
 
             var repo = new Mock<IResourceRepository>();
-            repo.Setup(repository => repository.FetchResourceDefinition(It.IsAny<IEnvironmentModel>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
+            repo.Setup(repository => repository.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
             environmentModel.Setup(e => e.ResourceRepository).Returns(repo.Object);
 
             var instanceID = Guid.NewGuid();
@@ -471,7 +477,7 @@ namespace Dev2.Core.Tests
             var serviceDefinition = model.ToServiceDefinition();
 
             //------------Assert Results-------------------------
-            Assert.IsTrue(serviceDefinition==null||string.IsNullOrEmpty(serviceDefinition.ToString()));
+            Assert.IsTrue(string.IsNullOrEmpty(serviceDefinition?.ToString()));
         }
 
         [TestMethod]
@@ -491,7 +497,7 @@ namespace Dev2.Core.Tests
             var environmentModel = CreateMockEnvironment(eventPublisher);
 
             var repo = new Mock<IResourceRepository>();
-            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IEnvironmentModel>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(MakeMessage("test")).Verifiable();
+            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(MakeMessage("test")).Verifiable();
 
             environmentModel.Setup(e => e.ResourceRepository).Returns(repo.Object);
 
@@ -507,7 +513,7 @@ namespace Dev2.Core.Tests
             model.ToServiceDefinition();
 
             //------------Assert Results-------------------------
-            repo.Verify(r => r.FetchResourceDefinition(It.IsAny<IEnvironmentModel>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>()));
+            repo.Verify(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>()));
         }
 
 
@@ -518,9 +524,9 @@ namespace Dev2.Core.Tests
         {
             const string TestCategory = "Test2";
             const string TestXaml = "current xaml";
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             Verify_ToServiceDefinition_GivenXamlPresent(ResourceType.WorkflowService, TestCategory, TestXaml, true, serviceElement =>
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             {
                 var actionElement = serviceElement.Element("Action");
                 Assert.IsNotNull(actionElement, "actionElement = null");
@@ -536,13 +542,6 @@ namespace Dev2.Core.Tests
                 Assert.AreEqual(TestCategory, category);
                 Assert.AreEqual(TestXaml, source);
             });
-            // ReSharper disable ImplicitlyCapturedClosure
-            Verify_ToServiceDefinition_GivenXamlPresent(ResourceType.Service, TestCategory, "<Root><Category>Test</Category><Source>" + TestXaml + "</Source></Root>", true, serviceElement =>
-            // ReSharper restore ImplicitlyCapturedClosure
-            {
-                var category = serviceElement.ElementSafe("Category");
-                Assert.AreEqual(TestCategory, category);
-            });
         }
 
         void Verify_ToServiceDefinition_GivenXamlPresent(ResourceType resourceType, string category, string workflowXaml, bool hasWorkflowXaml, Action<XElement> verify)
@@ -553,7 +552,7 @@ namespace Dev2.Core.Tests
             var environmentModel = CreateMockEnvironment(eventPublisher);
 
             var repo = new Mock<IResourceRepository>();
-            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IEnvironmentModel>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(MakeMessage(workflowXaml));
+            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(MakeMessage(workflowXaml));
 
             environmentModel.Setup(e => e.ResourceRepository).Returns(repo.Object);
 
@@ -579,6 +578,7 @@ namespace Dev2.Core.Tests
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("ResourceModel_ToServiceDefinition")]
+
         public void ResourceModel_ToServiceDefinition_GivenHasMoreThanOneError_ThenThereShouldBeTwoErrorElements()
         {
             //------------Setup for test--------------------------
@@ -605,7 +605,7 @@ namespace Dev2.Core.Tests
             var environmentModel = CreateMockEnvironment(eventPublisher);
 
             var repo = new Mock<IResourceRepository>();
-            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IEnvironmentModel>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(MakeMessage(resourceDefintion));
+            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(MakeMessage(resourceDefintion));
 
             environmentModel.Setup(e => e.ResourceRepository).Returns(repo.Object);
 
@@ -615,25 +615,6 @@ namespace Dev2.Core.Tests
                 ID = instanceID
             };
             return model;
-        }
-
-        [TestMethod]
-        [Owner("Hagashen Naidu")]
-        [TestCategory("ResourceModel_ToServiceDefinition")]
-        public void ResourceModel_ToServiceDefinition_WhenServiceType_ShouldHaveFullServiceDefinition()
-        {
-            //------------Setup for test--------------------------
-            XElement element = new XElement("Action");
-            var resourceModel = CreateResourceModel(element.ToStringBuilder().ToString());
-            resourceModel.ResourceType = ResourceType.Service;
-            resourceModel.ServerResourceType = "WebService";
-            resourceModel.WorkflowXaml = null;
-
-            //------------Execute Test---------------------------
-            var serviceDefinition = resourceModel.ToServiceDefinition().ToString();
-            //------------Assert Results-------------------------
-            StringAssert.Contains(serviceDefinition, "ResourceType=\"WebService\"");
-            StringAssert.Contains(serviceDefinition, "Service ID=");
         }
 
         [TestMethod]
@@ -669,18 +650,18 @@ namespace Dev2.Core.Tests
             StringAssert.Contains(serviceDefinition, "this has a &amp;");
         }
 
-        public static Mock<IEnvironmentModel> CreateMockEnvironment()
+        public static Mock<IServer> CreateMockEnvironment()
         {
             return CreateMockEnvironment(new EventPublisher());
         }
 
-        public static Mock<IEnvironmentModel> CreateMockEnvironment(IEventPublisher eventPublisher)
+        public static Mock<IServer> CreateMockEnvironment(IEventPublisher eventPublisher)
         {
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(model => model.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(new StringBuilder());
             connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
 
-            var environmentModel = new Mock<IEnvironmentModel>();
+            var environmentModel = new Mock<IServer>();
             environmentModel.Setup(e => e.Connection).Returns(connection.Object);
             return environmentModel;
         }
@@ -691,7 +672,7 @@ namespace Dev2.Core.Tests
         public void ResourceModel_DisplayName_IsNullOrEmptyAndResourceTypeIsWorkflowService_Workflow()
         {
             //------------Setup for test--------------------------
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object)
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object)
             {
                 ResourceType = ResourceType.WorkflowService
             };
@@ -709,7 +690,7 @@ namespace Dev2.Core.Tests
         public void ResourceModel_DisplayName_IsNullOrEmptyAndResourceTypeIsNotWorkflowService_ResourceTypeToString()
         {
             //------------Setup for test--------------------------
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object)
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object)
             {
                 ResourceType = ResourceType.Service
             };
@@ -733,7 +714,7 @@ namespace Dev2.Core.Tests
             err1.Setup(e => e.InstanceID).Returns(instanceID);
             var err2 = new Mock<IErrorInfo>();
             err2.Setup(e => e.InstanceID).Returns(Guid.NewGuid());
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1.Object);
             model.AddError(err2.Object);
 
@@ -757,7 +738,7 @@ namespace Dev2.Core.Tests
             err1.Setup(e => e.InstanceID).Returns(instanceID);
             var err2 = new Mock<IErrorInfo>();
             err2.Setup(e => e.InstanceID).Returns(Guid.NewGuid());
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1.Object);
             model.AddError(err2.Object);
 
@@ -784,7 +765,7 @@ namespace Dev2.Core.Tests
             err1.Setup(e => e.InstanceID).Returns(instanceID);
             var err2 = new Mock<IErrorInfo>();
             err2.Setup(e => e.InstanceID).Returns(Guid.NewGuid());
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1.Object);
             model.AddError(err2.Object);
             //------------Execute Test---------------------------
@@ -806,7 +787,7 @@ namespace Dev2.Core.Tests
             err1.Setup(e => e.InstanceID).Returns(instanceID);
             var err2 = new Mock<IErrorInfo>();
             err2.Setup(e => e.InstanceID).Returns(Guid.NewGuid());
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object) { HelpLink = "somePath" };
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object) { HelpLink = "somePath" };
             //------------Execute Test---------------------------
             var errMsg = model["HelpLink"];
             //-------------Assert Results------------------------
@@ -826,7 +807,7 @@ namespace Dev2.Core.Tests
             err1.Setup(e => e.InstanceID).Returns(instanceID);
             var err2 = new Mock<IErrorInfo>();
             err2.Setup(e => e.InstanceID).Returns(Guid.NewGuid());
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1.Object);
             model.AddError(err2.Object);
             var _propertyChangedFired = false;
@@ -855,7 +836,7 @@ namespace Dev2.Core.Tests
             err1.Setup(e => e.InstanceID).Returns(instanceID);
             var err2 = new Mock<IErrorInfo>();
             err2.Setup(e => e.InstanceID).Returns(Guid.NewGuid());
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1.Object);
             model.AddError(err2.Object);
             var _propertyChangedFired = false;
@@ -901,7 +882,7 @@ namespace Dev2.Core.Tests
                 ErrorType = ErrorType.Warning,
                 FixType = FixType.ReloadMapping
             };
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1);
             model.AddError(err2);
 
@@ -935,7 +916,7 @@ namespace Dev2.Core.Tests
                 ErrorType = ErrorType.Warning,
                 FixType = FixType.ReloadMapping
             };
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1);
             model.AddError(err2);
 
@@ -975,7 +956,7 @@ namespace Dev2.Core.Tests
                 ErrorType = ErrorType.Warning,
                 FixType = FixType.ReloadMapping
             };
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
             model.AddError(err1);
             model.AddError(err2);
 
@@ -1002,8 +983,8 @@ namespace Dev2.Core.Tests
             var eventPublisher = new EventPublisher();
 
             var environmentID = Guid.NewGuid();
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ID).Returns(environmentID);
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.EnvironmentID).Returns(environmentID);
             environment.Setup(e => e.Connection.ServerEvents).Returns(eventPublisher);
 
             var instanceID = Guid.NewGuid();
@@ -1049,7 +1030,7 @@ namespace Dev2.Core.Tests
         {
             //------------Setup for test--------------------------
             var requiredPermissions = authorizationContext.ToPermissions();
-            var model = new ResourceModel(new Mock<IEnvironmentModel>().Object, new Mock<IEventAggregator>().Object);
+            var model = new ResourceModel(new Mock<IServer>().Object, new Mock<IEventAggregator>().Object);
 
             foreach (Permissions permission in Enum.GetValues(typeof(Permissions)))
             {

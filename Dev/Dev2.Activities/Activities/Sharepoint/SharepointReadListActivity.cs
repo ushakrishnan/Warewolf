@@ -9,22 +9,22 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.ServiceModel;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.TO;
 using Microsoft.SharePoint.Client;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+
 
 namespace Dev2.Activities.Sharepoint
 {
-    [ToolDescriptorInfo("SharepointLogo", "Read List Item(s)", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Sharepoint", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_SharePoint_Read List Item_Tags")]
+    [ToolDescriptorInfo("SharepointLogo", "Read List Item(s)", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Sharepoint", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_SharePoint_Read_List_Item")]
     public class SharepointReadListActivity : DsfActivityAbstract<string>
     {
 
@@ -52,6 +52,12 @@ namespace Dev2.Activities.Sharepoint
         {
             IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject,0);
+        }
+
+
+        public override List<string> GetOutputs()
+        {
+            return ReadListItems.Select(to => to.VariableName).ToList();
         }
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
@@ -134,7 +140,7 @@ namespace Dev2.Activities.Sharepoint
                                     }
                                     catch (Exception e)
                                     {
-                                        Dev2Logger.Error(e);
+                                        Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                                         //Ignore sharepoint exception on retrieval not all fields can be retrieved.
                                     }
                                     var correctedVariable = variableName;
@@ -154,7 +160,7 @@ namespace Dev2.Activities.Sharepoint
             }
             catch (Exception e)
             {
-                Dev2Logger.Error("SharepointReadListActivity", e);
+                Dev2Logger.Error("SharepointReadListActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -180,49 +186,43 @@ namespace Dev2.Activities.Sharepoint
             var val = sharepointValue;
             if(type == typeof(FieldUserValue))
             {
-                var fieldValue = sharepointValue as FieldUserValue;
-                if(fieldValue != null)
+                if (sharepointValue is FieldUserValue fieldValue)
                 {
                     return fieldValue.LookupValue;
                 }
             }
             else if(type == typeof(FieldLookupValue))
             {
-                var fieldValue = sharepointValue as FieldLookupValue;
-                if (fieldValue != null)
+                if (sharepointValue is FieldLookupValue fieldValue)
                 {
                     return fieldValue.LookupValue;
                 }
             }
             else if (type == typeof(FieldUrlValue))
             {
-                var fieldValue = sharepointValue as FieldUrlValue;
-                if (fieldValue != null)
+                if (sharepointValue is FieldUrlValue fieldValue)
                 {
                     return fieldValue.Url;
                 }
             }
             else if (type == typeof(FieldGeolocationValue))
             {
-                var fieldValue = sharepointValue as FieldGeolocationValue;
-                if (fieldValue != null)
+                if (sharepointValue is FieldGeolocationValue fieldValue)
                 {
-                    return string.Join(",",fieldValue.Longitude,fieldValue.Latitude,fieldValue.Altitude,fieldValue.Measure);
+                    return string.Join(",", fieldValue.Longitude, fieldValue.Latitude, fieldValue.Altitude, fieldValue.Measure);
                 }
             }
             else if (type == typeof(FieldLookupValue[]))
             {
-                var fieldValue = sharepointValue as FieldLookupValue[];
-                if (fieldValue != null)
+                if (sharepointValue is FieldLookupValue[] fieldValue)
                 {
-                    var returnString = string.Join(",",fieldValue.Select(value => value.LookupValue));
+                    var returnString = string.Join(",", fieldValue.Select(value => value.LookupValue));
                     return returnString;
                 }
             }
             else if (type == typeof(FieldUserValue[]))
             {
-                var fieldValue = sharepointValue as FieldLookupValue[];
-                if (fieldValue != null)
+                if (sharepointValue is FieldLookupValue[] fieldValue)
                 {
                     var returnString = string.Join(",", fieldValue.Select(value => value.LookupValue));
                     return returnString;
@@ -271,14 +271,18 @@ namespace Dev2.Activities.Sharepoint
 
                 foreach (var varDebug in FilterCriteria)
                 {
-                    if (string.IsNullOrEmpty(varDebug.FieldName)) return;
+                    if (string.IsNullOrEmpty(varDebug.FieldName))
+                    {
+                        return;
+                    }
+
                     DebugItem debugItem = new DebugItem();
                     AddDebugItem(new DebugItemStaticDataParams("", _indexCounter.ToString(CultureInfo.InvariantCulture)), debugItem);
                     var fieldName = varDebug.FieldName;
                     if (!string.IsNullOrEmpty(fieldName))
                     {
                         AddDebugItem(new DebugEvalResult(fieldName, "Field Name", env, update), debugItem);
-                        //AddDebugItem(new DebugItemStaticDataParams(varDebug.FieldName, "Field Name"), debugItem);
+
                     }
                     var searchType = varDebug.SearchType;
                     if (!string.IsNullOrEmpty(searchType))

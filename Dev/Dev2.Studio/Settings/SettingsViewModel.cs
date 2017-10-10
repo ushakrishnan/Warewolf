@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,11 +16,10 @@ using System.Windows.Forms;
 using Caliburn.Micro;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Common.Interfaces.Threading;
-
 using Dev2.Instrumentation;
-using Dev2.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
@@ -29,10 +28,10 @@ using Dev2.Settings.Perfcounters;
 using Dev2.Settings.Scheduler;
 using Dev2.Settings.Security;
 using Dev2.Studio.Controller;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Dev2.Threading;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Settings
 {
@@ -54,21 +53,22 @@ namespace Dev2.Settings
 
         SecurityViewModel _securityViewModel;
         LogSettingsViewModel _logSettingsViewModel;
-        private bool _showLog;
-        private IEnvironmentModel _currentEnvironment;
-        private Func<IServer, IEnvironmentModel> _toEnvironmentModel;
+        private IServer _currentEnvironment;
+        private Func<IServer, IServer> _toEnvironmentModel;
         private PerfcounterViewModel _perfmonViewModel;
+        private string _displayName;
 
+        // ReSharper disable once MemberCanBeProtected.Global
         public SettingsViewModel()
             : this(EventPublishers.Aggregator, new PopupController(), new AsyncWorker(), (IWin32Window)System.Windows.Application.Current.MainWindow,CustomContainer.Get<IShellViewModel>().ActiveServer, null)
         {
         }
 
-        public SettingsViewModel(IEventAggregator eventPublisher, IPopupController popupController, IAsyncWorker asyncWorker, IWin32Window parentWindow, IServer server, Func<IServer, IEnvironmentModel> toEnvironmentModel)
+        public SettingsViewModel(IEventAggregator eventPublisher, IPopupController popupController, IAsyncWorker asyncWorker, IWin32Window parentWindow, IServer server, Func<IServer, IServer> toEnvironmentModel)
             : base(eventPublisher)
         {
             Server = server;
-            server.NetworkStateChanged += ServerNetworkStateChanged;
+            Server.NetworkStateChanged += ServerNetworkStateChanged;
             Settings = new Data.Settings.Settings();
             VerifyArgument.IsNotNull("popupController", popupController);
             _popupController = popupController;
@@ -79,24 +79,44 @@ namespace Dev2.Settings
 
             SaveCommand = new RelayCommand(o => SaveSettings(), o => IsDirty);
 
-            IShellViewModel vm = CustomContainer.Get<IShellViewModel>();
-            CreateEnvironmentFromServer(vm.LocalhostServer);
-
             ToEnvironmentModel = toEnvironmentModel??( a=>a.ToEnvironmentModel());
             CurrentEnvironment= ToEnvironmentModel(server);
             LoadSettings();
- 
+            // ReSharper disable once VirtualMemberCallInContructor
+            DisplayName = StringResources.SettingsTitle + " - " + Server.DisplayName;
+        }
+
+        protected override void OnDispose()
+        {
+            Server.NetworkStateChanged -= ServerNetworkStateChanged;
+            base.OnDispose();
         }
 
         public override string DisplayName
         {
             get
             {
-                return "Settings - " + Server.ResourceName;
+                return _displayName;
             }
             set
             {
+                _displayName = value;
+                NotifyOfPropertyChange(() => DisplayName);
+            }
+        }
 
+        private void SetDisplayName()
+        {
+            if (IsDirty)
+            {
+                if (!DisplayName.EndsWith(" *"))
+                {
+                    DisplayName += " *";
+                }
+            }
+            else
+            {
+                DisplayName = _displayName.Replace("*", "").TrimEnd(' ');
             }
         }
 
@@ -114,17 +134,9 @@ namespace Dev2.Settings
 
         public IServer Server { get; set; }
 
-        void CreateEnvironmentFromServer(IServer server)
-        {
-            if (server != null && server.UpdateRepository != null)
-            {
-                //server.UpdateRepository.ItemSaved += Refresh;
-            }
-        }
         public RelayCommand SaveCommand { get; private set; }
 
-
-        public IEnvironmentModel CurrentEnvironment
+        public IServer CurrentEnvironment
         {
             get
             {
@@ -133,9 +145,9 @@ namespace Dev2.Settings
             set
             {
                 _currentEnvironment = value;
-                if(CurrentEnvironment.IsConnected &&_currentEnvironment.AuthorizationService != null  )
+                if(CurrentEnvironment.IsConnected  )
                 {
-                    _currentEnvironment.AuthorizationService.IsAuthorized(AuthorizationContext.Administrator, null);
+                    _currentEnvironment.AuthorizationService?.IsAuthorized(AuthorizationContext.Administrator, null);
                 }
             }
         }
@@ -159,8 +171,6 @@ namespace Dev2.Settings
                 NotifyOfPropertyChange(() => IsErrorsVisible);
             }
         }
-
-    
 
         public string Errors
         {
@@ -208,8 +218,15 @@ namespace Dev2.Settings
                 NotifyOfPropertyChange(() => IsDirty);
                 NotifyOfPropertyChange(() => IsSavedSuccessVisible);
                 NotifyOfPropertyChange(() => IsErrorsVisible);
+                SetDisplayName();
                 SaveCommand.RaiseCanExecuteChanged();
             }
+        }
+
+        public void CloseView()
+        {
+            Server.NetworkStateChanged -= ServerNetworkStateChanged;
+            Server = null;
         }
 
         public bool IsLoading
@@ -255,21 +272,6 @@ namespace Dev2.Settings
                 NotifyOfPropertyChange(() => ShowSecurity);
             }
         }
-        
-        public bool ShowLog
-        {
-            get { return _showLog; }
-            set
-            {
-                if (value.Equals(_showLog))
-                {
-                    return;
-                }
-                _showLog = value;
-                OnSelectionChanged();
-                NotifyOfPropertyChange(() => ShowLog);
-            }
-        }
 
         public Data.Settings.Settings Settings { get; private set; }
 
@@ -301,9 +303,9 @@ namespace Dev2.Settings
                 NotifyOfPropertyChange(() => HasLogSettings);
             }
         }
-        public string SecurityHeader => SecurityViewModel != null && SecurityViewModel.IsDirty ? "SECURITY *" : "SECURITY";
+        public string SecurityHeader => SecurityViewModel != null && SecurityViewModel.IsDirty ? StringResources.SettingsSecurity + " *" : StringResources.SettingsSecurity;
 
-        public string LogHeader => LogSettingsViewModel != null && LogSettingsViewModel.IsDirty ? "LOGGING *" : "LOGGING";
+        public string LogHeader => LogSettingsViewModel != null && LogSettingsViewModel.IsDirty ? StringResources.SettingsLogging + " *" : StringResources.SettingsLogging;
 
         public bool HasLogSettings
         {
@@ -326,34 +328,27 @@ namespace Dev2.Settings
             }
 
             _selectionChanging = true;
-            switch(propertyName)
+            switch (propertyName)
             {
                 case "ShowLogging":
-                    if (Settings == null || Settings.Logging == null)
-                    {
-                        ShowLogging = false;
-                        ShowSecurity = true;
-                    }
-                    else
-                    {
-                        ShowLogging = true;
-                        ShowSecurity = !ShowLogging;
-                    }
+                    ShowLogging = Settings?.Logging != null;
+                    ShowSecurity = !ShowLogging;
                     break;
 
                 case "ShowSecurity":
                     ShowSecurity = true;
                     ShowLogging = !ShowSecurity;
                     break;
+                default:
+                    break;
             }
             _selectionChanging = false;
         }
 
+        public override bool HasVariables => false;
+        public override bool HasDebugOutput => false;
 
-
-
-
-        public Func<IServer, IEnvironmentModel> ToEnvironmentModel
+        public Func<IServer, IServer> ToEnvironmentModel
         {
             get
             {
@@ -408,20 +403,24 @@ namespace Dev2.Settings
 
         protected virtual SecurityViewModel CreateSecurityViewModel()
         {
-            return new SecurityViewModel(Settings.Security, _parentWindow, CurrentEnvironment);
+            var securityViewModel = new SecurityViewModel(Settings.Security, _parentWindow, CurrentEnvironment);
+            securityViewModel.SetItem(securityViewModel);
+            return securityViewModel;
         }
 
         protected virtual PerfcounterViewModel CreatePerfmonViewModel()
         {
-            return new PerfcounterViewModel(Settings.PerfCounters, CurrentEnvironment);
+            var perfcounterViewModel = new PerfcounterViewModel(Settings.PerfCounters, CurrentEnvironment);
+            return perfcounterViewModel;
         }
-
 
         protected virtual LogSettingsViewModel CreateLoggingViewModel()
         {
             if(Settings.Logging != null)
             {
-                return new LogSettingsViewModel(Settings.Logging, CurrentEnvironment);
+                var logSettingsViewModel = new LogSettingsViewModel(Settings.Logging, CurrentEnvironment);
+                logSettingsViewModel.SetItem(logSettingsViewModel);
+                return logSettingsViewModel;
             }
             return null;
         }
@@ -520,7 +519,10 @@ namespace Dev2.Settings
                 }
             }
             else
+            {
                 return SaveSettings();
+            }
+
             return true;
         }
 
@@ -534,7 +536,6 @@ namespace Dev2.Settings
         }
 
         #endregion
-
 
         #endregion
 
@@ -552,21 +553,15 @@ namespace Dev2.Settings
                     // Need to reset sub view models so that selecting something in them fires our OnIsDirtyPropertyChanged()
 
                     ClearErrors();
-                    if(SecurityViewModel.HasDuplicateResourcePermissions())
+                    if (!ValidateDuplicateResourcePermissions())
                     {
-                        IsSaved = false;
-                        IsDirty = true;
-                        ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateResourcePermissions);
+                        return false;
+                    }
+                    if (!ValidateDuplicateServerPermissions())
+                    {
                         return false;
                     }
 
-                    if(SecurityViewModel.HasDuplicateServerPermissions())
-                    {
-                        IsSaved = false;
-                        IsDirty = true;
-                        ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateServerPermissions);
-                        return false;
-                    }
                     SecurityViewModel.Save(Settings.Security);
                     if (LogSettingsViewModel.IsDirty)
                     {
@@ -599,17 +594,41 @@ namespace Dev2.Settings
             return false;
         }
 
+        private bool ValidateDuplicateServerPermissions()
+        {
+            if (SecurityViewModel.HasDuplicateServerPermissions())
+            {
+                IsSaved = false;
+                IsDirty = true;
+                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateServerPermissions);
+                return false;
+            }
+            return true;
+        }
+
+        private bool ValidateDuplicateResourcePermissions()
+        {
+            if (SecurityViewModel.HasDuplicateResourcePermissions())
+            {
+                IsSaved = false;
+                IsDirty = true;
+                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateResourcePermissions);
+                return false;
+            }
+            return true;
+        }
+
         bool WriteSettings()
         {
             var payload = CurrentEnvironment.ResourceRepository.WriteSettings(CurrentEnvironment, Settings);
             if(payload == null)
             {
-                ShowError("Network Error", string.Format(GlobalConstants.NetworkCommunicationErrorTextFormat, "WriteSettings"));
+                ShowError(StringResources.NetworkSettingErrorPrefix, string.Format(GlobalConstants.NetworkCommunicationErrorTextFormat, "WriteSettings"));
                 return false;
             }
             if(payload.HasError)
             {
-                ShowError("Save Error", payload.Message.ToString());
+                ShowError(StringResources.SaveSettingErrorHeader, payload.Message.ToString());
                 return false;
             }
             return true;
@@ -620,12 +639,10 @@ namespace Dev2.Settings
             var payload = CurrentEnvironment.ResourceRepository.ReadSettings(CurrentEnvironment);
             if(payload == null)
             {
-                ShowError("Network Error", string.Format(GlobalConstants.NetworkCommunicationErrorTextFormat, "ReadSettings"));
+                ShowError(StringResources.NetworkSettingErrorPrefix, string.Format(GlobalConstants.NetworkCommunicationErrorTextFormat, "ReadSettings"));
             }
-
             return payload;
         }
-
 
         protected void ClearErrors()
         {
@@ -639,8 +656,8 @@ namespace Dev2.Settings
             Errors = description;
         }
 
-        public string ResourceType => "Settings";
-        public string PerfmonHeader => PerfmonViewModel != null && PerfmonViewModel.IsDirty ? "PERFORMANCE COUNTERS *" : "PERFORMANCE COUNTERS";
+        public string ResourceType => StringResources.SettingsTitle;
+        public string PerfmonHeader => PerfmonViewModel != null && PerfmonViewModel.IsDirty ? StringResources.SettingsPerformanceCounters +  " *" : StringResources.SettingsPerformanceCounters;
     }
 }
 

@@ -9,16 +9,26 @@ using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 
-// ReSharper disable InconsistentNaming
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class SaveRabbitMQServiceSource : IEsbManagementEndpoint
     {
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             ExecuteMessage msg = new ExecuteMessage();
@@ -26,11 +36,10 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             try
             {
-                Dev2Logger.Info("Save RabbitMQ Service Source");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Save RabbitMQ Service Source", GlobalConstants.WarewolfInfo);
                 msg.HasError = false;
 
-                values.TryGetValue("RabbitMQServiceSource", out resourceDefinition);
+                values.TryGetValue("RabbitMQServiceSource", out StringBuilder resourceDefinition);
 
                 RabbitMQServiceSourceDefinition rabbitMQServiceSourceDefinition = serializer.Deserialize<RabbitMQServiceSourceDefinition>(resourceDefinition);
                 if (rabbitMQServiceSourceDefinition.ResourcePath.EndsWith("\\"))
@@ -55,7 +64,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error("Save RabbitMQ Service Source Failed: " + err.Message);
+                Dev2Logger.Error("Save RabbitMQ Service Source Failed: " + err.Message, GlobalConstants.WarewolfError);
             }
 
             return serializer.SerializeToBuilder(msg);

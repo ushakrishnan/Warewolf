@@ -7,6 +7,7 @@ using Dev2.Common.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.Practices.Prism.Mvvm;
 using Warewolf.Studio.ViewModels;
+using Dev2.Common;
 
 namespace Warewolf.Studio.Views
 {
@@ -32,7 +33,8 @@ namespace Warewolf.Studio.Views
             }
         }
 
-        public void EnterServerName(string serverName, bool add = false)
+        public void EnterServerName(string serverName) => EnterServerName(serverName, false);
+        public void EnterServerName(string serverName, bool add)
         {
             try
             {
@@ -71,7 +73,7 @@ namespace Warewolf.Studio.Views
 
         public void SetAuthenticationType(AuthenticationType authenticationType)
         {
-            switch(authenticationType)
+            switch (authenticationType)
             {
                 case AuthenticationType.Windows:
                     WindowsRadioButton.IsChecked = true;
@@ -81,6 +83,8 @@ namespace Warewolf.Studio.Views
                     break;
                 case AuthenticationType.Public:
                     PublicRadioButton.IsChecked = true;
+                    break;
+                case AuthenticationType.Anonymous:
                     break;
                 default:
                     WindowsRadioButton.IsChecked = true;
@@ -95,18 +99,14 @@ namespace Warewolf.Studio.Views
                 if (ProtocolItems.Items.Count == 0)
                 {
                     BindingExpression be = ProtocolItems.GetBindingExpression(ItemsControl.ItemsSourceProperty);
-                    if (be != null)
-                    {
-                        be.UpdateTarget();
-                    }
+                    be?.UpdateTarget();
                     ProtocolItems.DataContext = DataContext;                    
                 }
                 ProtocolItems.SelectedItem = protocol;
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
+            }            
+            catch (Exception e)
             {
-
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
         }
 
@@ -116,39 +116,30 @@ namespace Warewolf.Studio.Views
             {
                 PortTextBox.Text = port;
             }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
+            
+            catch (Exception e)
             {
-
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
         }
 
         public void PerformSave()
         {
             var viewModel = DataContext as ManageNewServerViewModel;
-            if (viewModel != null)
-            {
-                viewModel.OkCommand.Execute(null);
-            }
+            viewModel?.OkCommand.Execute(null);
         }
 
         public Visibility GetUsernameVisibility()
         {
             BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
         public Visibility GetPasswordVisibility()
         {
             BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
         public void TestAction()
@@ -158,11 +149,8 @@ namespace Warewolf.Studio.Views
 
         public string GetErrorMessage()
         {
-            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBlock.TextProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
+            be?.UpdateTarget();
             return ErrorTextBlock.Text;
         }
 
@@ -177,6 +165,8 @@ namespace Warewolf.Studio.Views
                     return viewModel != null && viewModel.OkCommand.CanExecute(null);
                 case "Test":
                     return TestConnectionButton.Command.CanExecute(null);
+                default:
+                    break;
             }
             return false;
         }

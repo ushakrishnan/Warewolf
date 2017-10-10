@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +24,7 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
@@ -32,12 +33,14 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
+
+
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Scripting-CMDScript", "CMD Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_CMD Script_Tags")]
-    public class DsfExecuteCommandLineActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Scripting-CMDScript", "CMD Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_CMD_Script")]
+    public class DsfExecuteCommandLineActivity : DsfActivityAbstract<string>, IDisposable
     {
         #region Fields
 
@@ -55,9 +58,9 @@ namespace Dev2.Activities
         /// </summary>  
         [Inputs("CommandFileName")]
         [FindMissing]
-        // ReSharper disable ConvertToAutoProperty
+        
         public string CommandFileName
-        // ReSharper restore ConvertToAutoProperty
+        
         {
             get
             {
@@ -74,9 +77,9 @@ namespace Dev2.Activities
 
         [Outputs("CommandResult")]
         [FindMissing]
-        // ReSharper disable ConvertToAutoProperty
+        
         public string CommandResult
-        // ReSharper restore ConvertToAutoProperty
+        
         {
             get
             {
@@ -88,6 +91,11 @@ namespace Dev2.Activities
             }
         }
 
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { CommandResult };
+        }
         #region Overrides of DsfNativeActivity<string>
 
         public DsfExecuteCommandLineActivity()
@@ -138,10 +146,7 @@ namespace Dev2.Activities
                             {
                                 throw new Exception(ErrorResource.EmptyScript);
                             }
-
-                            StreamReader errorReader;
-                            StringBuilder outputReader;
-                            if(!ExecuteProcess(val, exeToken, out errorReader, out outputReader))
+                            if (!ExecuteProcess(val, exeToken, out StreamReader errorReader, out StringBuilder outputReader))
                             {
                                 return;
                             }
@@ -149,14 +154,10 @@ namespace Dev2.Activities
                             allErrors.AddError(errorReader.ReadToEnd());
                             var bytes = Encoding.Default.GetBytes(outputReader.ToString().Trim());
                             string readValue = Encoding.ASCII.GetString(bytes).Replace("?", " ");
-
-                            //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
+                            
                             foreach(var region in DataListCleaningUtils.SplitIntoRegions(CommandResult))
                             {
-                                if(dataObject.Environment != null)
-                                {
-                                    dataObject.Environment.Assign(region, readValue, update == 0 ? counter : update);
-                                }
+                                dataObject.Environment?.Assign(region, readValue, update == 0 ? counter : update);
                             }
                             counter++;
                             errorReader.Close();
@@ -174,7 +175,7 @@ namespace Dev2.Activities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("DSFCommandLine", e);
+                Dev2Logger.Error("DSFCommandLine", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -185,7 +186,9 @@ namespace Dev2.Activities
                     File.Delete(_fullPath);
                     string tmpFile = _fullPath.Replace(".bat", "");
                     if (File.Exists(tmpFile))
+                    {
                         File.Delete(tmpFile);
+                    }
                 }
                 // Handle Errors    
                 var hasErrors = allErrors.HasErrors();
@@ -222,9 +225,9 @@ namespace Dev2.Activities
 
                 if (processStartInfo == null)
                 {
-                    // ReSharper disable NotResolvedInText
+                    
                     throw new ArgumentNullException("processStartInfo");
-                    // ReSharper restore NotResolvedInText
+                    
                 }
 
                 _process.StartInfo = processStartInfo;
@@ -250,7 +253,6 @@ namespace Dev2.Activities
                     reader.Append(_process.StandardOutput.ReadToEnd());
                     if(!_process.HasExited && _process.Threads.Cast<ProcessThread>().Any(a=>a.ThreadState == System.Diagnostics.ThreadState.Wait && a.WaitReason == ThreadWaitReason.UserRequest))
                     {
-                        //reader.Append(_process.StandardOutput.ReadToEnd());
                         _process.Kill();
                     }
 
@@ -262,7 +264,6 @@ namespace Dev2.Activities
                         {
                             continue;
                         }
-                        //_process.OutputDataReceived -= a;
                         _process.Kill();
                         throw new ApplicationException(ErrorResource.UserInputRequired);
                     }
@@ -277,7 +278,6 @@ namespace Dev2.Activities
                     KillProcessAndChildren(_process.Id);
                 }
                 reader.Append(_process.StandardOutput.ReadToEnd());
-                //_process.OutputDataReceived -= a;
                 _process.Close();
             }
             return true;
@@ -318,9 +318,17 @@ namespace Dev2.Activities
 
         ProcessStartInfo CreateProcessStartInfo(string val)
         {
-            if(val.StartsWith("cmd")) throw new ArgumentException(ErrorResource.CannotExecuteCMDFromTool);
-            if(val.StartsWith("explorer")) throw new ArgumentException(ErrorResource.CannotExecuteExplorerFromTool);
-            if(val.Contains("explorer"))
+            if(val.StartsWith("cmd"))
+            {
+                throw new ArgumentException(ErrorResource.CannotExecuteCMDFromTool);
+            }
+
+            if (val.StartsWith("explorer"))
+            {
+                throw new ArgumentException(ErrorResource.CannotExecuteExplorerFromTool);
+            }
+
+            if (val.Contains("explorer"))
             {
                 var directoryName = Path.GetFullPath(val);
                 {
@@ -448,13 +456,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == CommandResult);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == CommandResult);
-                if(itemUpdate != null)
-                {
-                    CommandResult = itemUpdate.Item2;
-                }
+                CommandResult = itemUpdate.Item2;
             }
         }
 
@@ -486,6 +491,11 @@ namespace Dev2.Activities
         public override IList<DsfForEachItem> GetForEachOutputs()
         {
             return GetForEachItems(CommandResult);
+        }
+
+        public void Dispose()
+        {
+            ((IDisposable)_process).Dispose();
         }
 
         #endregion

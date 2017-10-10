@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
@@ -23,13 +24,41 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
   namespace Dev2.Tests.Runtime.Services
   {
         [TestClass]
         public class GetVersionsTest
         {
-            [TestMethod]
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getVersions = new GetVersions();
+
+            //------------Execute Test---------------------------
+            var resId = getVersions.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getVersions = new GetVersions();
+
+            //------------Execute Test---------------------------
+            var resId = getVersions.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+
+        [TestMethod]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             public void GetVersions_HandlesType_ExpectName()
@@ -67,7 +96,7 @@ using Moq;
                 //------------Setup for test--------------------------
                 var getVersions = new GetVersions();
                 var resourceId = Guid.NewGuid();
-                ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "", "", "");
+                ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
                 var repo = new Mock<IServerVersionRepository>();
                 var ws = new Mock<IWorkspace>();
                 repo.Setup(a => a.GetVersions(resourceId)).Returns(new List<IExplorerItem> {item});

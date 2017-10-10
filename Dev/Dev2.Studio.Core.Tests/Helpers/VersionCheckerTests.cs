@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,7 @@ using Dev2.Studio.Core;
 
 namespace Dev2.Core.Tests.Helpers
 {
-    // ReSharper disable InconsistentNaming
+    
     [TestClass]
     public class VersionCheckerTests
     {
@@ -51,9 +51,9 @@ namespace Dev2.Core.Tests.Helpers
         public void VersionChecker_Currentr_NullVersionChecker_ExpectException()
         {
             //------------Setup for test--------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new VersionChecker(new WarewolfWebClient(new WebClient()), null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Execute Test---------------------------
 
@@ -62,4 +62,4 @@ namespace Dev2.Core.Tests.Helpers
         
     }
 }
-// ReSharper restore InconsistentNaming
+

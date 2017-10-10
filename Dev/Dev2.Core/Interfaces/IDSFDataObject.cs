@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,10 +14,9 @@ using System.Security.Principal;
 using System.Text;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.Data.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Web;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Interfaces
 {
@@ -28,6 +27,9 @@ namespace Dev2.Interfaces
         string CurrentBookmarkName { get; set; }
         Guid WorkflowInstanceId { get; set; }
         string ServiceName { get; set; }
+        string TestName { get; set; }
+        bool IsServiceTestExecution { get; set; }
+        bool IsDebugFromWeb { get; set; }
         string ParentWorkflowInstanceId { get; set; }
         string ParentServiceName { get; set; }
         StringBuilder DataList { get; set; }
@@ -35,11 +37,11 @@ namespace Dev2.Interfaces
         bool IsDebug { get; set; }
         Guid WorkspaceID { get; set; }
         Guid ResourceID { get; set; }
+        Guid SourceResourceID { get; set; }
         Guid OriginalInstanceID { get; set; }
         Guid ClientID { get; set; }
         bool IsOnDemandSimulation { get; set; }
         Guid ServerID { get; set; }
-      //  ErrorResultTO Errors { get; set; }
         int NumberOfSteps { get; set; }
         IPrincipal ExecutingUser { get; set; }
         Guid DatalistOutMergeID { get; set; }
@@ -101,5 +103,11 @@ namespace Dev2.Interfaces
         Guid DebugEnvironmentId { get; set; }
         bool RemoteNonDebugInvoke { get; set; }
         bool StopExecution { get; set; }
+        IServiceTestModelTO ServiceTest { get; set; }
+        List<Guid> TestsResourceIds { get; set; }
+        Guid? ExecutionID { get; set; }
+        string WebUrl { get; set; }
+        bool IsSubExecution { get; set; }
+        string QueryString { get; set; }
     }
 }

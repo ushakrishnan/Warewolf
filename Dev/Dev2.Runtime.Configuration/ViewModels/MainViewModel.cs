@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -49,7 +49,10 @@ namespace Dev2.Runtime.Configuration.ViewModels
             Errors = new ObservableCollection<string>();
             ClearErrors();
 
-            if(!SetConfiguration(configurationXml)) return;
+            if(!SetConfiguration(configurationXml))
+            {
+                return;
+            }
 
             SaveCallback = saveCallback;
             CancelCallback = cancelCallback;
@@ -170,9 +173,9 @@ namespace Dev2.Runtime.Configuration.ViewModels
             {
                 return _settingsView;
             }
-            // ReSharper disable UnusedMember.Local
+            
             private set
-            // ReSharper restore UnusedMember.Local
+            
             {
                 if(value == null)
                 {
@@ -220,9 +223,9 @@ namespace Dev2.Runtime.Configuration.ViewModels
 
         private Func<XElement, XElement> SaveCallback { get; set; }
         private System.Action CancelCallback { get; set; }
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        
         private System.Action SettingChangedCallback { get; set; }
-        // ReSharper restore UnusedAutoPropertyAccessor.Local
+        
 
         #endregion
 
@@ -230,14 +233,14 @@ namespace Dev2.Runtime.Configuration.ViewModels
 
         private void ConfigurationPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            switch(e.PropertyName)
+            switch (e.PropertyName)
             {
                 case "HasChanges":
                     CommandManager.InvalidateRequerySuggested();
                     SaveCommand.RaiseCanExecuteChanged();
                     CancelCommand.RaiseCanExecuteChanged();
                     ClearErrorsCommand.RaiseCanExecuteChanged();
-                    if(Configuration.HasChanges)
+                    if (Configuration.HasChanges)
                     {
                         SaveSuccess = false;
                     }
@@ -247,6 +250,8 @@ namespace Dev2.Runtime.Configuration.ViewModels
                     SaveCommand.RaiseCanExecuteChanged();
                     CancelCommand.RaiseCanExecuteChanged();
                     ClearErrorsCommand.RaiseCanExecuteChanged();
+                    break;
+                default:
                     break;
             }
         }

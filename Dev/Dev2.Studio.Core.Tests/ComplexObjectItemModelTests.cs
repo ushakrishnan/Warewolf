@@ -1,9 +1,9 @@
 ﻿using System.Collections.ObjectModel;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Models.DataList;
+using Dev2.Studio.Interfaces.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable InconsistentNaming
-// ReSharper disable UseObjectOrCollectionInitializer
+
+
 
 namespace Dev2.Core.Tests
 {
@@ -164,7 +164,7 @@ namespace Dev2.Core.Tests
             
             //------------Assert Results-------------------------
             Assert.IsTrue(complexObject.HasError);
-            Assert.AreEqual("Complex Object name [[Parent.]] contains invalid character(s)", complexObject.ErrorMessage);
+            Assert.AreEqual("Complex Object name [[Parent.]] contains invalid character(s). Only use alphanumeric _ and - ", complexObject.ErrorMessage);
         }
 
         [TestMethod]
@@ -183,7 +183,7 @@ namespace Dev2.Core.Tests
             Assert.IsNull(complexObject.ErrorMessage);
             //Child
             Assert.IsTrue(complexObject.Children[0].HasError);
-            Assert.AreEqual("Complex Object name [[Name.]] contains invalid character(s)", complexObject.Children[0].ErrorMessage);
+            Assert.AreEqual("Complex Object name [[Name.]] contains invalid character(s). Only use alphanumeric _ and - ", complexObject.Children[0].ErrorMessage);
         }
 
         [TestMethod]

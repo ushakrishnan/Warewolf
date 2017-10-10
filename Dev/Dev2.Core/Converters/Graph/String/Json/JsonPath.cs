@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +15,7 @@ using Dev2.Common;
 using Dev2.Common.Interfaces.Core.Graph;
 using Newtonsoft.Json.Linq;
 
-// ReSharper disable once CheckNamespace
+
 namespace Unlimited.Framework.Converters.Graph.String.Json
 {
     [Serializable]
@@ -72,14 +72,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
         public override IPathSegment CreatePathSegment(string pathSegmentString)
         {
             JsonPathSegment pathSegment;
-            if (pathSegmentString.EndsWith(EnumerableSymbol))
-            {
-                pathSegment = new JsonPathSegment(pathSegmentString.TrimEnd(EnumerableSymbol.ToArray()), true);
-            }
-            else
-            {
-                pathSegment = new JsonPathSegment(pathSegmentString, false);
-            }
+            pathSegment = pathSegmentString.EndsWith(EnumerableSymbol) ? new JsonPathSegment(pathSegmentString.TrimEnd(EnumerableSymbol.ToArray()), true) : new JsonPathSegment(pathSegmentString, false);
             return pathSegment;
         }
 

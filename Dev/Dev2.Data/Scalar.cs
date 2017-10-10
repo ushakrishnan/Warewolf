@@ -1,7 +1,7 @@
 
 using System;
 using System.Collections.Generic;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Data
 {
@@ -76,7 +76,7 @@ namespace Dev2.Data
         /// </returns>
         public override int GetHashCode()
         {
-            return Name != null ? Name.GetHashCode() : 0;
+            return Name?.GetHashCode() ?? 0;
         }
 
         public static bool operator ==(Scalar left, Scalar right)
@@ -118,7 +118,7 @@ namespace Dev2.Data
 
             public int GetHashCode(IScalar obj)
             {
-                return obj.Name != null ? obj.Name.GetHashCode() : 0;
+                return obj.Name?.GetHashCode() ?? 0;
             }
         }
 

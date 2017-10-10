@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Dev2.Activities.Annotations;
+using Dev2.Common.Annotations;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.ToolBase;
-// ReSharper disable UnusedMember.Local
+
 
 namespace Dev2.Activities.Designers2.Core.Web.Delete
 {
@@ -16,7 +16,7 @@ namespace Dev2.Activities.Designers2.Core.Web.Delete
         public string ToolRegionName { get; set; }
         public bool IsEnabled { get; set; }
         public IList<IToolRegion> Dependants { get; set; }
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        
         public IList<string> Errors { get; private set; }
         public ObservableCollection<INameValue> Headers { get; set; }
         public string QueryString { get; set; }
@@ -40,7 +40,7 @@ namespace Dev2.Activities.Designers2.Core.Web.Delete
         private void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

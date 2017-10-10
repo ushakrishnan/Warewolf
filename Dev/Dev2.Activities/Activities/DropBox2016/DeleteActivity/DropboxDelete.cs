@@ -3,9 +3,10 @@ using System.Net;
 using Dev2.Activities.DropBox2016.Result;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Wrappers;
 using Dropbox.Api;
 using Dropbox.Api.Files;
-// ReSharper disable MemberCanBePrivate.Global
+
 
 namespace Dev2.Activities.DropBox2016.DeleteActivity
 {
@@ -24,22 +25,25 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
         {
             _validator.Validate();
             if (!dropboxPath.StartsWith(@"/"))
+            {
                 dropboxPath = string.Concat(@"/", dropboxPath);
+            }
+
             _dropboxPath = dropboxPath;
             InitializeCertPinning();
         }
 
         #region Implementation of IDropboxSingleExecutor<IDropboxResult>
-        public IDropboxResult ExecuteTask(DropboxClient client)
+        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
         {
             try
             {
-                FileMetadata deleteAsync = client.Files.DeleteAsync(_dropboxPath).Result as FileMetadata;
+                FileMetadata deleteAsync = client.DeleteAsync(_dropboxPath).Result as FileMetadata;
                 return new DropboxDeleteSuccessResult(deleteAsync);
             }
             catch (Exception exception)
             {
-                Dev2Logger.Error(exception.Message);
+                Dev2Logger.Error(exception.Message, GlobalConstants.WarewolfError);
                 return exception.InnerException != null ? new DropboxFailureResult(exception.InnerException) : new DropboxFailureResult(exception);
             }
         }

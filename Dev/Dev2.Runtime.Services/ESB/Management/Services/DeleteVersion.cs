@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Common.Wrappers;
 using Dev2.Communication;
@@ -21,12 +22,31 @@ using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class DeleteVersion : IEsbManagementEndpoint
     {
         IServerVersionRepository _serverExplorerRepository;
 
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            requestArgs.TryGetValue("resourceId", out StringBuilder tmp);
+            if (tmp != null)
+            {
+                if (Guid.TryParse(tmp.ToString(), out Guid resourceId))
+                {
+                    return resourceId;
+                }
+            }
+
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
         #region Implementation of ISpookyLoadable<string>
 
         public string HandlesType()
@@ -50,13 +70,13 @@ namespace Dev2.Runtime.ESB.Management.Services
             var execMessage = new ExecuteMessage { HasError = false };
             if(!values.ContainsKey("resourceId"))
             {
-                Dev2Logger.Info("Delete Version. Invalid Resource Id");
+                Dev2Logger.Info("Delete Version. Invalid Resource Id", GlobalConstants.WarewolfInfo);
                 execMessage.HasError = true;
                 execMessage.Message = new StringBuilder( "No resourceId sent to server");
             }
             else if(!values.ContainsKey("versionNumber") )
             {
-                Dev2Logger.Info("Delete Version. Invalid Version number");
+                Dev2Logger.Info("Delete Version. Invalid Version number", GlobalConstants.WarewolfInfo);
                 execMessage.HasError = true;
                 execMessage.Message = new StringBuilder("No versionNumber sent to server");
             }
@@ -66,10 +86,9 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     var guid = Guid.Parse(values["resourceId"].ToString());
                     var version = values["versionNumber"].ToString();
-                    Dev2Logger.Info(String.Format("Delete Version. ResourceId:{0} VersionNumber{1}",guid,version));
-                    StringBuilder tmp;
+                    Dev2Logger.Info($"Delete Version. ResourceId:{guid} VersionNumber{version}", GlobalConstants.WarewolfInfo);
                     string resourcePath = "";
-                    values.TryGetValue("resourcePath", out tmp);
+                    values.TryGetValue("resourcePath", out StringBuilder tmp);
                     if (tmp != null)
                     {
                         resourcePath = tmp.ToString();
@@ -79,7 +98,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Error(String.Format("Delete Version Error."),e);
+                    Dev2Logger.Error("Delete Version Error.",e, GlobalConstants.WarewolfError);
                     execMessage.HasError = true;
                     execMessage.Message = new StringBuilder( e.Message);
                 }

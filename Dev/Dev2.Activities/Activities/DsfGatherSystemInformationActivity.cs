@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,19 +20,21 @@ using Dev2.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
+
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Utility-SystemInformation", "Sys Info", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Sys Info_Tags")]
+    [ToolDescriptorInfo("Utility-SystemInformation", "Sys Info", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Sys_Info")]
     public class DsfGatherSystemInformationActivity : DsfActivityAbstract<string>, ICollectionActivity
     {
         #region Fields
@@ -59,6 +61,12 @@ namespace Dev2.Activities
             }
         }
 
+
+        public override List<string> GetOutputs()
+        {
+            return SystemInformationCollection.Select(to => to.Result).ToList();
+        }
+
         #region Overrides of DsfNativeActivity<string>
 
         public DsfGatherSystemInformationActivity()
@@ -67,12 +75,12 @@ namespace Dev2.Activities
             SystemInformationCollection = new List<GatherSystemInformationTO>();
         }
 
-        // ReSharper disable RedundantOverridenMember
+        
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
         }
-        // ReSharper restore RedundantOverridenMember
+        
 
         private void CleanArgs()
         {
@@ -93,9 +101,9 @@ namespace Dev2.Activities
         /// When overridden runs the activity's execution logic
         /// </summary>
         /// <param name="context">The context to be used.</param>
-        // ReSharper disable MethodTooLong
+        
         protected override void OnExecute(NativeActivityContext context)
-            // ReSharper restore MethodTooLong
+            
         {
             IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
@@ -174,7 +182,7 @@ namespace Dev2.Activities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("DSFGatherSystemInformationTool", e);
+                Dev2Logger.Error("DSFGatherSystemInformationTool", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -214,8 +222,12 @@ namespace Dev2.Activities
         {
             switch(enTypeOfSystemInformation)
             {
+                case enTypeOfSystemInformationToGather.ComputerName:
+                    return GetSystemInformation.GetComputerName();
                 case enTypeOfSystemInformationToGather.OperatingSystem:
                     return GetSystemInformation.GetOperatingSystemInformation();
+                case enTypeOfSystemInformationToGather.OperatingSystemVersion:
+                    return GetSystemInformation.GetOperatingSystemVersionInformation();
                 case enTypeOfSystemInformationToGather.ServicePack:
                     return GetSystemInformation.GetServicePackInformation();
                 case enTypeOfSystemInformationToGather.OSBitValue:
@@ -228,6 +240,10 @@ namespace Dev2.Activities
                     return GetSystemInformation.GetDiskSpaceAvailableInformation();
                 case enTypeOfSystemInformationToGather.DiskTotal:
                     return GetSystemInformation.GetDiskSpaceTotalInformation();
+                case enTypeOfSystemInformationToGather.VirtualMemoryAvailable:
+                    return GetSystemInformation.GetVirtualMemoryAvailableInformation();
+                case enTypeOfSystemInformationToGather.VirtualMemoryTotal:
+                    return GetSystemInformation.GetVirtualMemoryTotalInformation();
                 case enTypeOfSystemInformationToGather.PhysicalMemoryAvailable:
                     return GetSystemInformation.GetPhysicalMemoryAvailableInformation();
                 case enTypeOfSystemInformationToGather.PhysicalMemoryTotal:
@@ -246,8 +262,24 @@ namespace Dev2.Activities
                     return GetSystemInformation.GetUserNameInformation();
                 case enTypeOfSystemInformationToGather.Domain:
                     return GetSystemInformation.GetDomainInformation();
-                case enTypeOfSystemInformationToGather.NumberOfWarewolfAgents:
-                    return GetSystemInformation.GetNumberOfWareWolfAgentsInformation();
+                case enTypeOfSystemInformationToGather.NumberOfServerNICS:
+                    return GetSystemInformation.GetNumberOfNICS();
+                case enTypeOfSystemInformationToGather.MacAddress:
+                    return GetSystemInformation.GetMACAdresses();
+                case enTypeOfSystemInformationToGather.GateWayAddress:
+                    return GetSystemInformation.GetDefaultGateway();
+                case enTypeOfSystemInformationToGather.DNSAddress:
+                    return GetSystemInformation.GetDNSServer();
+                case enTypeOfSystemInformationToGather.IPv4Address:
+                    return GetSystemInformation.GetIPv4Adresses();
+                case enTypeOfSystemInformationToGather.IPv6Address:
+                    return GetSystemInformation.GetIPv6Adresses();
+                case enTypeOfSystemInformationToGather.WarewolfMemory:
+                    return GetSystemInformation.GetWarewolfServerMemory();
+                case enTypeOfSystemInformationToGather.WarewolfCPU:
+                    return GetSystemInformation.GetWarewolfCPU();
+                case enTypeOfSystemInformationToGather.WarewolfServerVersion:
+                    return GetSystemInformation.GetWareWolfVersion();
                 default:
                     throw new ArgumentOutOfRangeException("enTypeOfSystemInformation");
             }
@@ -398,8 +430,8 @@ namespace Dev2.Activities
             var modelProperty = modelItem.Properties["DisplayName"];
             if(modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }

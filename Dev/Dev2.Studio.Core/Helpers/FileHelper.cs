@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -18,7 +17,7 @@ using Dev2.Common;
 using Ionic.Zip;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Helpers
 {
     public static class FileHelper
@@ -44,21 +43,21 @@ namespace Dev2.Studio.Core.Helpers
 
         public static void CreateTextFile(StringBuilder outputTxt, string outputPath)
         {
-            Dev2Logger.Info("");
+            Dev2Logger.Info("", "Warewolf Info");
             EnsurePathIsvalid(outputPath, ".txt");
             var fs = File.Open(outputPath,
                                       FileMode.OpenOrCreate,
                                       FileAccess.Write);
             using (var writer = new StreamWriter(fs, Encoding.UTF8))
             {
-                Dev2Logger.Info("Writing a text file");
+                Dev2Logger.Info("Writing a text file", "Warewolf Info");
                 writer.Write(outputTxt);
             }
         }
 
         public static string GetDebugItemTempFilePath(string uri)
         {
-            Dev2Logger.Info("");
+            Dev2Logger.Info("", "Warewolf Info");
 
             using (var client = new WebClient { Credentials = CredentialCache.DefaultCredentials })
             {
@@ -70,7 +69,7 @@ namespace Dev2.Studio.Core.Helpers
             }
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static string CreateATemporaryFile(StringBuilder fileContent, string uniqueOutputPath)
         {
             CreateTextFile(fileContent, uniqueOutputPath);
@@ -131,7 +130,11 @@ namespace Dev2.Studio.Core.Helpers
         {
             var location = Assembly.GetExecutingAssembly().Location;
             var directory = Path.GetDirectoryName(location);
-            if(directory == null) return null;
+            if(directory == null)
+            {
+                return null;
+            }
+
             var path = Path.Combine(directory, uri);
             return path;
         }

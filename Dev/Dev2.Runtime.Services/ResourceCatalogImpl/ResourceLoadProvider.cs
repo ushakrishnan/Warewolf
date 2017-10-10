@@ -21,7 +21,7 @@ using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using ServiceStack.Common.Extensions;
 using Warewolf.Resource.Errors;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Runtime.ResourceCatalogImpl
 {
@@ -33,7 +33,6 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         public ConcurrentDictionary<Guid, object> WorkspaceLocks { get; } = new ConcurrentDictionary<Guid, object>();
         public List<DuplicateResource> DuplicateResources { get; set; }
         readonly object _loadLock = new object();
-        readonly object _workspaceLock = new object();
         private readonly FileWrapper _dev2FileWrapper;
         readonly IPerformanceCounter _perfCounter;
 
@@ -41,19 +40,16 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         public ResourceLoadProvider(ConcurrentDictionary<Guid, List<IResource>> workspaceResources, IEnumerable<DynamicService> managementServices = null)
             : this(new FileWrapper())
         {
-            // MUST load management services BEFORE server workspace!!
             try
             {
-                _perfCounter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Count of requests for workflows which don’t exist");
-
+                _perfCounter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Count of requests for workflows which don't exist");
             }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch (Exception)
+
+            catch (Exception e)
             {
-
-
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
-            if (managementServices != null)
+                if (managementServices != null)
             {
                 foreach (var service in managementServices)
                 {
@@ -108,7 +104,11 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             if (resourceName != null)
             {
                 var resourceContents = ResourceContents<T>(workspaceID, resourceName);
-                if (resourceContents == null || resourceContents.Length == 0) return null;
+                if (resourceContents == null || resourceContents.Length == 0)
+                {
+                    return null;
+                }
+
                 return GetResource<T>(resourceContents);
             }
             return null;
@@ -138,7 +138,7 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(ErrorResource.ErrorGettingResources, e);
+                Dev2Logger.Error(ErrorResource.ErrorGettingResources, e, GlobalConstants.WarewolfError);
                 throw;
             }
         }
@@ -153,9 +153,16 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         {
             var workspaceResources = GetResources(workspaceID);
             var resources = workspaceResources.FindAll(r => r.ResourceType == sourceType.ToString());
-            if (sourceType == enSourceType.MySqlDatabase || sourceType == enSourceType.Oracle || sourceType == enSourceType.PostgreSQL || sourceType == enSourceType.SqlDatabase)
+            if (sourceType == enSourceType.MySqlDatabase || sourceType == enSourceType.Oracle || sourceType == enSourceType.PostgreSQL || sourceType == enSourceType.SqlDatabase || sourceType==enSourceType.ODBC)
             {
-                resources = workspaceResources.FindAll(r => r.ResourceType.ToUpper() == "DbSource".ToUpper());
+                var oldResources = workspaceResources.FindAll(r => r.ResourceType.ToUpper() == "DbSource".ToUpper());
+                foreach (var oldResource in oldResources)
+                {
+                    if (!resources.Exists(resource => resource.ResourceID == oldResource.ResourceID))
+                    {
+                        resources.Add(oldResource);
+                    }
+                }
             }
             Dictionary<enSourceType, Func<IEnumerable>> commands = new Dictionary<enSourceType, Func<IEnumerable>>
             {
@@ -165,6 +172,7 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                 { enSourceType.MySqlDatabase, ()=>BuildSourceList<DbSource>(resources) },
                 { enSourceType.PostgreSQL, ()=>BuildSourceList<DbSource>(resources) },
                 { enSourceType.Oracle, ()=>BuildSourceList<DbSource>(resources) },
+                { enSourceType.ODBC, ()=>BuildSourceList<DbSource>(resources) },
                 { enSourceType.PluginSource, ()=>BuildSourceList<PluginSource>(resources) },
                 { enSourceType.WebSource, ()=>BuildSourceList<WebSource>(resources) },
                 { enSourceType.OauthSource, ()=>BuildSourceList<DropBoxSource>(resources) },
@@ -196,13 +204,14 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         }
 
 
-        public List<TServiceType> GetDynamicObjects<TServiceType>(Guid workspaceID, string resourceName, bool useContains = false) where TServiceType : DynamicServiceObjectBase
+        public List<TServiceType> GetDynamicObjects<TServiceType>(Guid workspaceID, string resourceName) where TServiceType : DynamicServiceObjectBase=> GetDynamicObjects<TServiceType>(workspaceID, resourceName, false);
+
+        public List<TServiceType> GetDynamicObjects<TServiceType>(Guid workspaceID, string resourceName, bool useContains) where TServiceType : DynamicServiceObjectBase
         {
             if (string.IsNullOrEmpty(resourceName))
             {
                 throw new ArgumentNullException(nameof(resourceName));
             }
-
             List<DynamicServiceObjectBase> results;
 
             if (useContains)
@@ -247,13 +256,26 @@ namespace Dev2.Runtime.ResourceCatalogImpl
 
         public List<Guid> GetDependants(Guid workspaceID, Guid? resourceId)
         {
-            if (resourceId == null) throw new ArgumentNullException(nameof(resourceId), ErrorResource.NoResourceName);
+            if (resourceId == null)
+            {
+                throw new ArgumentNullException(nameof(resourceId), ErrorResource.NoResourceName);
+            }
 
             var resources = GetResources(workspaceID);
             var dependants = new List<Guid>();
             resources.ForEach(resource =>
             {
-                if (resource.Dependencies == null) return;
+                if (resource.Dependencies == null)
+                {
+                    if(resource.IsSource || resource.IsServer)
+                    {
+                        resource = new Resource(resource.ToXml());
+                    }
+                }
+                if (resource.Dependencies == null)
+                {
+                    return;
+                }
                 resource.Dependencies.ForEach(tree =>
                 {
                     if (tree.ResourceID == resourceId)
@@ -292,12 +314,9 @@ namespace Dev2.Runtime.ResourceCatalogImpl
 
         public IList<Resource> GetResourceList(Guid workspaceId, Dictionary<string, string> filterParams)
         {
-            string resourceName;
-            filterParams.TryGetValue("resourceName", out resourceName);
-            string type;
-            filterParams.TryGetValue("type", out type);
-            string guidCsv;
-            filterParams.TryGetValue("guidCsv", out guidCsv);
+            filterParams.TryGetValue("resourceName", out string resourceName);
+            filterParams.TryGetValue("type", out string type);
+            filterParams.TryGetValue("guidCsv", out string guidCsv);
             var workspaceResources = GetResources(workspaceId);
 
             if (!string.IsNullOrEmpty(guidCsv) || filterParams.ContainsKey(nameof(guidCsv)))
@@ -330,32 +349,36 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         {
             return GetResources(workspaceID).Count;
         }
-        
-        public IResource GetResource(Guid workspaceID, string resourceName, string resourceType = "Unknown", string version = null)
+
+        public IResource GetResource(Guid workspaceID, string resourceName) => GetResource(workspaceID, resourceName, "Unknown", null);
+
+
+        public IResource GetResource(Guid workspaceID, string resourceName, string resourceType, string version)
         {
+            if (string.IsNullOrEmpty(resourceName))
+            {
+                throw new ArgumentNullException(nameof(resourceName));
+            }
+            var resourceNameToSearchFor = resourceName.Replace("/", "\\");
+            var resourcePath = resourceNameToSearchFor;
+            var endOfResourcePath = resourceNameToSearchFor.LastIndexOf('\\');
+            if (endOfResourcePath >= 0)
+            {
+                resourceNameToSearchFor = resourceNameToSearchFor.Substring(endOfResourcePath + 1);
+            }
             while (true)
             {
-                if (string.IsNullOrEmpty(resourceName))
-                {
-                    throw new ArgumentNullException(nameof(resourceName));
-                }
-                var resourceNameToSearchFor = resourceName.Replace("/", "\\");
-                var resourcePath = resourceNameToSearchFor;
-                var endOfResourcePath = resourceNameToSearchFor.LastIndexOf('\\');
-                if (endOfResourcePath >= 0)
-                {
-                    resourceNameToSearchFor = resourceNameToSearchFor.Substring(endOfResourcePath + 1);
-                }
                 var resources = GetResources(workspaceID);
                 if (resources != null)
                 {
-                    var foundResource = resources.FirstOrDefault(r =>
+                    var id = workspaceID;
+                    var foundResource = resources.AsParallel().FirstOrDefault(r =>
                     {
                         if (r == null)
                         {
                             return false;
                         }
-                        return string.Equals(r.GetResourcePath(workspaceID) ?? "", resourcePath, StringComparison.InvariantCultureIgnoreCase) && string.Equals(r.ResourceName, resourceNameToSearchFor, StringComparison.InvariantCultureIgnoreCase) && (resourceType == "Unknown" || r.ResourceType == resourceType.ToString());
+                        return string.Equals(r.GetResourcePath(id) ?? "", resourcePath, StringComparison.InvariantCultureIgnoreCase) && string.Equals(r.ResourceName, resourceNameToSearchFor, StringComparison.InvariantCultureIgnoreCase) && (resourceType == "Unknown" || r.ResourceType == resourceType.ToString());
                     });
                     if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
                     {
@@ -374,26 +397,22 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             IResource foundResource = null;
             try
             {
-                lock (_workspaceLock)
+                if (_workspaceResources.TryGetValue(workspaceID, out List<IResource> resources))
                 {
-                    List<IResource> resources;
-                    if (_workspaceResources.TryGetValue(workspaceID, out resources))
-                    {
-                        foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                    }
+                    foundResource = resources.AsParallel().FirstOrDefault(resource => resource.ResourceID == resourceID);
+                }
 
-                    if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+                if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+                {
+                    if(_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
                     {
-                        if (_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
-                        {
-                            foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                        }
+                        foundResource = resources.AsParallel().FirstOrDefault(resource => resource.ResourceID == resourceID);
                     }
                 }
             }
             catch (Exception e)
             {
-                Dev2Logger.Error(ErrorResource.ErrorGettingResources, e);
+                Dev2Logger.Error(ErrorResource.ErrorGettingResources, e, GlobalConstants.WarewolfError);
             }
             if (foundResource == null)
             {
@@ -405,21 +424,16 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         public StringBuilder GetResourceContents(Guid workspaceID, Guid resourceID)
         {
             IResource foundResource = null;
-
-            lock (_workspaceLock)
+            if (_workspaceResources.TryGetValue(workspaceID, out List<IResource> resources))
             {
-                List<IResource> resources;
-                if (_workspaceResources.TryGetValue(workspaceID, out resources))
-                {
-                    foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                }
+                foundResource = resources.AsParallel().FirstOrDefault(resource => resource.ResourceID == resourceID);
+            }
 
-                if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+            if (foundResource == null && workspaceID != GlobalConstants.ServerWorkspaceID)
+            {
+                if(_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
                 {
-                    if (_workspaceResources.TryGetValue(GlobalConstants.ServerWorkspaceID, out resources))
-                    {
-                        foundResource = resources.FirstOrDefault(resource => resource.ResourceID == resourceID);
-                    }
+                    foundResource = resources.AsParallel().FirstOrDefault(resource => resource.ResourceID == resourceID);
                 }
             }
             return GetResourceContents(foundResource);
@@ -504,6 +518,11 @@ namespace Dev2.Runtime.ResourceCatalogImpl
 
         private static T GetResource<T>(StringBuilder resourceContents) where T : Resource, new()
         {
+            if (resourceContents == null)
+            {
+                return default(T);
+            }
+
             var elm = resourceContents.ToXElement();
             object[] args = { elm };
             return (T)Activator.CreateInstance(typeof(T), args);
@@ -513,23 +532,20 @@ namespace Dev2.Runtime.ResourceCatalogImpl
         {
             if (resource.ResourceType == "ReservedService")
             {
-                var managementResource = resource as ManagementServiceResource;
-                if (managementResource != null)
+                if (resource is ManagementServiceResource managementResource)
                 {
                     result.Add(managementResource.Service);
                 }
             }
             else
             {
-                List<DynamicServiceObjectBase> objects;
-                if (!FrequentlyUsedServices.TryGetValue(resource.ResourceName, out objects))
+                if (!FrequentlyUsedServices.TryGetValue(resource.ResourceName, out List<DynamicServiceObjectBase> objects))
                 {
                     objects = GenerateObjectGraph(resource);
-                    //_frequentlyUsedServices.TryAdd(resource.ResourceName, objects);
                 }
                 else
                 {
-                    Dev2Logger.Debug($"{resource.ResourceName} -> Resource Catalog Cache HIT");
+                    Dev2Logger.Debug($"{resource.ResourceName} -> Resource Catalog Cache HIT", GlobalConstants.WarewolfDebug);
                 }
                 if (objects != null)
                 {
@@ -543,8 +559,7 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             var guidStrs = guidCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var guidStr in guidStrs)
             {
-                Guid guid;
-                if (Guid.TryParse(guidStr, out guid))
+                if (Guid.TryParse(guidStr, out Guid guid))
                 {
                     guids.Add(guid);
                 }

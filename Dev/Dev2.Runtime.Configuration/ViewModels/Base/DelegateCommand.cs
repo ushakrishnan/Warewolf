@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
 
 namespace Dev2.Runtime.Configuration.ViewModels.Base
@@ -23,7 +22,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         {
             if(action == null)
             {
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             }
 
             _action = action;
@@ -65,16 +64,22 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
 
         public event EventHandler CanExecuteChanged;
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         protected virtual void OnCanExecuteChanged()
         {
             var handler = CanExecuteChanged;
-            if(handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
+            handler?.Invoke(this, EventArgs.Empty);
         }
 
         #endregion
+
+        public void RaiseCanExecuteChanged()
+        {
+            if (CanExecuteChanged != null)
+            {
+                CanExecuteChanged(this, EventArgs.Empty);
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
     }
 }

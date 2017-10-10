@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,22 +27,23 @@ using Dev2.Services.Events;
 using Dev2.Studio.Core.Messages;
 using Warewolf.Resource.Errors;
 
+
 namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 {
     public class QuickVariableInputViewModel : DependencyObject, IClosable, IValidator, IErrorsSource
     {
-        public const string SplitTypeIndex = "Index";
-        public const string SplitTypeChars = "Chars";
-        public const string SplitTypeNewLine = "New Line";
-        public const string SplitTypeSpace = "Space";
-        public const string SplitTypeTab = "Tab";
+        private const string splitTypeIndex = "Index";
+        private const string splitTypeChars = "Chars";
+        private const string splitTypeNewLine = "New Line";
+        private const string splitTypeSpace = "Space";
+        private const string splitTypeTab = "Tab";
 
         readonly Action<IEnumerable<string>, bool> _addToCollection;
 
         readonly PreviewViewModel _previewViewModel;
-        // ReSharper disable CollectionNeverQueried.Local
+        
         readonly List<IErrorInfo> _tokenizerValidationErrors = new List<IErrorInfo>();
-        // ReSharper restore CollectionNeverQueried.Local
+        
 
         #region CTOR
 
@@ -239,10 +240,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             set
             {
                 SetValue(CanAddProperty, value);
-                if(AddCommand != null)
-                {
-                    AddCommand.RaiseCanExecuteChanged();
-                }
+                AddCommand?.RaiseCanExecuteChanged();
             }
         }
 
@@ -365,10 +363,10 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 
             var dtb = new Dev2TokenizerBuilder { ToTokenize = stringToSplit };
 
-            switch(splitType)
+            switch (splitType)
             {
                 case "Index":
-                    if(!string.IsNullOrEmpty(at))
+                    if (!string.IsNullOrEmpty(at))
                     {
                         // No need for try..parse as ValidationErrors() function checks this!
                         var indexNum = int.Parse(at);
@@ -385,15 +383,15 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                     break;
 
                 case "New Line":
-                    if(stringToSplit.Contains("\r\n"))
+                    if (stringToSplit.Contains("\r\n"))
                     {
                         dtb.AddTokenOp("\r\n", false);
                     }
-                    else if(stringToSplit.Contains("\n"))
+                    else if (stringToSplit.Contains("\n"))
                     {
                         dtb.AddTokenOp("\n", false);
                     }
-                    else if(stringToSplit.Contains("\r"))
+                    else if (stringToSplit.Contains("\r"))
                     {
                         dtb.AddTokenOp("\r", false);
                     }
@@ -405,10 +403,12 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                     break;
 
                 case "Chars":
-                    if(!string.IsNullOrEmpty(at))
+                    if (!string.IsNullOrEmpty(at))
                     {
                         dtb.AddTokenOp(at, false);
                     }
+                    break;
+                default:
                     break;
             }
 
@@ -435,6 +435,16 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             private set { SetValue(IsValidProperty, value); }
         }
 
+        public static string SplitTypeIndex => splitTypeIndex;
+
+        public static string SplitTypeChars => splitTypeChars;
+
+        public static string SplitTypeNewLine => splitTypeNewLine;
+
+        public static string SplitTypeSpace => splitTypeSpace;
+
+        public static string SplitTypeTab => splitTypeTab;
+
         public static readonly DependencyProperty IsValidProperty =
             DependencyProperty.Register("IsValid", typeof(bool), typeof(QuickVariableInputViewModel), new PropertyMetadata(true));
 
@@ -451,24 +461,26 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                 yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = ErrorResource.VariableListStringRequired };
             }
 
-            switch(SplitType)
+            switch (SplitType)
             {
                 case "Index":
-                    foreach(var error in ValidationErrorsForIndexSplit())
+                    foreach (var error in ValidationErrorsForIndexSplit())
                     {
                         yield return error;
                     }
                     break;
 
                 case "Chars":
-                    foreach(var error in ValidationErrorsForCharsSplit())
+                    foreach (var error in ValidationErrorsForCharsSplit())
                     {
                         yield return error;
                     }
                     break;
+                default:
+                    break;
             }
 
-            if(!string.IsNullOrEmpty(Prefix) && !IsValidRecordsetPrefix(Prefix))
+            if (!string.IsNullOrEmpty(Prefix) && !IsValidRecordsetPrefix(Prefix))
             {
                 var doFocused = new Action(() => { IsPrefixFocused = true; });
                 yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Prefix contains invalid characters" };
@@ -492,11 +504,9 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             }
             else
             {
-                int indexToSplitOn;
-                if(!int.TryParse(SplitToken, out indexToSplitOn))
+                if (!int.TryParse(SplitToken, out int indexToSplitOn))
                 {
-                    double doubleToSplitOn;
-                    if(double.TryParse(SplitToken, out doubleToSplitOn))
+                    if (double.TryParse(SplitToken, out double doubleToSplitOn))
                     {
                         yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Please supply a number less then 2,147,483,647 for an Index split" };
                     }
@@ -506,7 +516,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                     }
                 }
 
-                if(indexToSplitOn < 1)
+                if (indexToSplitOn < 1)
                 {
                     yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Please supply a whole positive number for an Index split" };
                 }

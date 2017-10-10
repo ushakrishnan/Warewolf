@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,9 +15,9 @@ using Infragistics.Calculations.CalcManager;
 using Infragistics.Calculations.Engine;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.MathOperations
-// ReSharper restore CheckNamespace
+
 {
     public class FunctionEvaluator : IFunctionEvaluator
     {
@@ -83,7 +83,7 @@ namespace Dev2.MathOperations
                 }
                 catch(Exception ex)
                 {
-                    Dev2Logger.Error(ErrorResource.FunctionEvaluationError, ex);
+                    Dev2Logger.Error(ErrorResource.FunctionEvaluationError, ex, GlobalConstants.WarewolfError);
                     error = ex.Message;
                     evaluationState = false;
                 }

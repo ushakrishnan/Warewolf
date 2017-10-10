@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,9 +12,9 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using Dev2.Studio.Core.Models.DataList;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces.DataList;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Converters
 {
     public class DataListItemModelToAutomationIdConverter : IValueConverter
@@ -24,17 +24,16 @@ namespace Dev2.Studio.Core.AppResources.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            DataListItemModel itemModel = value as DataListItemModel;
 
-            if(itemModel != null)
+            if (value is DataListItemModel itemModel)
             {
-                if(itemModel is IRecordSetItemModel)
+                if (itemModel is IRecordSetItemModel)
                 {
                     return string.IsNullOrEmpty(itemModel.DisplayName)
                         ? string.Concat(AutoIdPrefix, "NewRecordSet", AutoIdSufix)
                         : string.Concat(AutoIdPrefix, "RecordSet_", itemModel.DisplayName, AutoIdSufix);
                 }
-                if(itemModel is IScalarItemModel)
+                if (itemModel is IScalarItemModel)
                 {
                     return string.IsNullOrEmpty(itemModel.DisplayName)
                         ? string.Concat(AutoIdPrefix, "NewField", AutoIdSufix)

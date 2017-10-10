@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,19 +28,18 @@ using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Common.Interfaces.ToolBase.Database;
 using Dev2.Communication;
-using Dev2.Interfaces;
 using Dev2.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
-using Warewolf.Resource.Errors;
 
-// ReSharper disable ExplicitCallerInfoArgument
 
-// ReSharper disable UnusedMember.Global
-// ReSharper disable MemberCanBePrivate.Global
+
+
+
 namespace Dev2.Activities.Designers2.ODBC
 {
-    // ReSharper disable once InconsistentNaming
+    
     public class ODBCDatabaseDesignerViewModel : CustomToolWithRegionBase, IDatabaseServiceViewModel
     {
         private IOutputsToolRegion _outputsRegion;
@@ -55,15 +54,7 @@ namespace Dev2.Activities.Designers2.ODBC
         const string OutputDisplayName = " - Outputs";
         private string _commandText;
 
-        // ReSharper disable UnusedMember.Local
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
-
-        readonly string _sourceNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotSelected;
-        readonly string _methodNotSelectedMessage = Warewolf.Studio.Resources.Languages.Core.PluginServiceMethodNotSelected;
-        readonly string _serviceExecuteOnline = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteOnline;
-        readonly string _serviceExecuteLoginPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteLoginPermission;
-        readonly string _serviceExecuteViewPermission = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceExecuteViewPermission;
-        // ReSharper restore UnusedMember.Local
 
         public ODBCDatabaseDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
@@ -76,6 +67,7 @@ namespace Dev2.Activities.Designers2.ODBC
 
             SetupCommonProperties();
             this.RunViewSetup();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_ODBC;
         }
 
         Guid UniqueID => GetProperty<Guid>();
@@ -112,14 +104,11 @@ namespace Dev2.Activities.Designers2.ODBC
             DesignValidationErrors = new ObservableCollection<IErrorInfo>();
             FixErrorsCommand = new Runtime.Configuration.ViewModels.Base.DelegateCommand(o =>
             {
-                FixErrors();
                 IsWorstErrorReadOnly = true;
             });
 
             SetDisplayName("");
-            InitializeImageSource();
             OutputsRegion.OutputMappingEnabled = true;
-
             TestInputCommand = new DelegateCommand(TestProcedure);
 
             InitializeProperties();
@@ -196,10 +185,6 @@ namespace Dev2.Activities.Designers2.ODBC
             Errors.Clear();
 
             Errors = Regions.SelectMany(a => a.Errors).Select(a => new ActionableErrorInfo(new ErrorInfo() { Message = a, ErrorType = ErrorType.Critical }, () => { }) as IActionableErrorInfo).ToList();
-            if (!OutputsRegion.IsEnabled)
-            {
-                Errors = new List<IActionableErrorInfo>() { new ActionableErrorInfo() { Message = string.Format(ErrorResource.ValidateBeforeMinimising, "Database get") } };
-            }
             if (SourceRegion.Errors.Count > 0)
             {
                 foreach (var designValidationError in SourceRegion.Errors)
@@ -238,15 +223,13 @@ namespace Dev2.Activities.Designers2.ODBC
 
         IErrorInfo WorstDesignError
         {
-            // ReSharper disable once UnusedMember.Local
-            get { return _worstDesignError; }
             set
             {
                 if (_worstDesignError != value)
                 {
                     _worstDesignError = value;
                     IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value == null ? ErrorType.None : value.ErrorType;
+                    WorstError = value?.ErrorType ?? ErrorType.None;
                 }
             }
         }
@@ -331,16 +314,8 @@ namespace Dev2.Activities.Designers2.ODBC
         public ICommand TestInputCommand { get; set; }
 
         private string Type => GetProperty<string>();
-        // ReSharper disable InconsistentNaming
-
-        private void FixErrors()
-        {
-        }
-
-        void InitializeImageSource()
-        {
-        }
-
+        
+        
         void AddTitleBarMappingToggle()
         {
             HasLargeView = true;
@@ -354,11 +329,8 @@ namespace Dev2.Activities.Designers2.ODBC
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         #endregion
@@ -372,13 +344,7 @@ namespace Dev2.Activities.Designers2.ODBC
             {
                 SourceRegion = new DatabaseSourceRegion(Model, ModelItem, enSourceType.ODBC) { SourceChangedAction = () => { OutputsRegion.IsEnabled = false; } };
                 regions.Add(SourceRegion);
-                ActionRegion = new DbActionRegionOdbc(Model, ModelItem, SourceRegion)
-                {
-                    SourceChangedAction = () =>
-                    {
-                        OutputsRegion.IsEnabled = false;
-                    }
-                };
+                ActionRegion = new DbActionRegionOdbc(Model, ModelItem, SourceRegion);
                 ActionRegion.SomethingChanged += (sender, args) =>
                 {
                     CommandText = ((IODBCActionToolRegion<IDbAction>)ActionRegion).CommandText;
@@ -493,8 +459,7 @@ namespace Dev2.Activities.Designers2.ODBC
         {
             if (!string.IsNullOrEmpty(CommandText))
             {
-                DbAction command = new DbAction();
-                command.Name = CommandText;
+                DbAction command = new DbAction { Name = CommandText };
                 ActionRegion.SelectedAction = command;
             }
             var databaseService = new DatabaseService
@@ -511,7 +476,9 @@ namespace Dev2.Activities.Designers2.ODBC
         {
             Errors = new List<IActionableErrorInfo>();
             if (hasError)
+            {
                 Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo(new ErrorInfo() { ErrorType = ErrorType.Critical, FixData = "", FixType = FixType.None, Message = exception.Message, StackTrace = exception.StackTrace }, () => { }) };
+            }
         }
 
         public void ValidateTestComplete()
@@ -541,6 +508,7 @@ namespace Dev2.Activities.Designers2.ODBC
         }
 
         private IDbServiceModel Model { get; set; }
+        IDbActionToolRegion<IDbAction> IDatabaseServiceViewModel.ActionRegion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         void SetRegionVisibility(bool value)
         {

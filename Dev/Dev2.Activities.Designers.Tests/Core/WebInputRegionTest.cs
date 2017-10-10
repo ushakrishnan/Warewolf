@@ -11,10 +11,10 @@ using Dev2.Common.Interfaces.WebService;
 using Dev2.Studio.Core.Activities.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable UnusedVariable
-// ReSharper disable UseObjectOrCollectionInitializer
 
-// ReSharper disable InconsistentNaming
+
+
+
 
 namespace Dev2.Activities.Designers.Tests.Core
 {
@@ -65,8 +65,7 @@ namespace Dev2.Activities.Designers.Tests.Core
             var region = new WebGetInputRegion(ModelItemUtils.CreateModelItem(act), srcreg);
             Assert.AreEqual(region.IsEnabled, false);
             Assert.AreEqual(region.Errors.Count, 0);
-            var clone = region.CloneRegion() as WebGetInputRegion;
-            if(clone != null)
+            if (region.CloneRegion() is WebGetInputRegion clone)
             {
                 Assert.AreEqual(clone.IsEnabled, false);
                 Assert.AreEqual(clone.Errors.Count, 0);

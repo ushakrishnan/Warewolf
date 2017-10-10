@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,9 @@
 using System;
 using System.Text;
 using Dev2.Common.Interfaces;
-using Dev2.Studio.Core.AppResources.Enums;
+using Dev2.Studio.Interfaces.Enums;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.AppResources.Comparers
 {
     /// <summary>
@@ -38,11 +38,20 @@ namespace Dev2.Studio.AppResources.Comparers
             var sb = new StringBuilder();
             sb.AppendFormat("Context_{0}_", WorkSurfaceContext);
             if (ServerID.HasValue)
+            {
                 sb.AppendFormat("ServerID_{0}_", ServerID);
+            }
+
             if (ResourceID.HasValue)
+            {
                 sb.AppendFormat("ResourceID_{0}_", ResourceID);
+            }
+
             if (EnvironmentID.HasValue)
+            {
                 sb.AppendFormat("EnvironmentID_{0}_", EnvironmentID);
+            }
+
             var returnString = sb.ToString().Replace('-', '_');
             return returnString;
         }

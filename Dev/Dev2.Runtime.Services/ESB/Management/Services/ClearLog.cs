@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -30,14 +31,13 @@ namespace Dev2.Runtime.ESB.Management.Services
             StringBuilder msg = new StringBuilder();
             string directory = null;
 
-            StringBuilder tmp;
-            values.TryGetValue("Directory", out tmp);
-            if(tmp != null)
+            values.TryGetValue("Directory", out StringBuilder tmp);
+            if (tmp != null)
             {
                 directory = tmp.ToString();
             }
 
-            if(String.IsNullOrWhiteSpace(directory))
+            if(string.IsNullOrWhiteSpace(directory))
             {
                 AppendError(msg, directory, ErrorResource.CannotDeleteFileWithoughtDirectory);
             }
@@ -61,7 +61,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 catch(Exception ex)
                 {
                     AppendError(msg, directory, ex.Message);
-                    Dev2Logger.Info(ex.StackTrace);
+                    Dev2Logger.Info(ex.StackTrace, GlobalConstants.WarewolfInfo);
                 }
             }
 
@@ -77,7 +77,7 @@ namespace Dev2.Runtime.ESB.Management.Services
         {
             result.AppendFormat("Error clearing '{0}'...", directory);
             result.AppendLine();
-            result.Append(String.Format("Error: {0}", msg));
+            result.Append($"Error: {msg}");
         }
 
         public DynamicService CreateServiceEntry()
@@ -96,5 +96,14 @@ namespace Dev2.Runtime.ESB.Management.Services
             return "ClearLogService";
         }
 
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
     }
 }

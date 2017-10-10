@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,9 +15,9 @@ using Infragistics.Calculations;
 using Infragistics.Calculations.CalcManager;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.MathOperations
-// ReSharper restore CheckNamespace
+
 {
 
     // PBI 1214: This class is used to create a dev2 function used by the Calculate Tool
@@ -68,8 +68,7 @@ namespace Dev2.MathOperations
 
         public void CreateCustomFunction(string functionName, List<string> args, List<string> argumentDescriptions, string description, Func<double[], double> function, IDev2CalculationManager calcManager)
         {
-            CustomCalculationFunction calcFunction;
-            if (CreateCustomFunction(functionName, function, out calcFunction))
+            if (CreateCustomFunction(functionName, function, out CustomCalculationFunction calcFunction))
             {
                 if (calcManager != null)
                 {
@@ -108,7 +107,7 @@ namespace Dev2.MathOperations
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error("Function", ex);
+                Dev2Logger.Error("Function", ex, GlobalConstants.WarewolfError);
                 custCalculation = null;
                 isSucessfullyCreated = false;
             }
@@ -124,7 +123,7 @@ namespace Dev2.MathOperations
             }
             else
             {
-                // ReSharper disable once NotResolvedInText
+                
                 throw new ArgumentNullException("Cannot set Function Name to an empty string");
             }
         }

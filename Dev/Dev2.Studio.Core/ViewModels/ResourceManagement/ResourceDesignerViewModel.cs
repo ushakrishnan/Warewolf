@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,36 +10,36 @@
 
 using System;
 using System.Text;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.ViewModels
 {
     public class ResourceDesignerViewModel : SimpleBaseViewModel, IDisposable, IDesignerViewModel
     {
         #region Class Members
 
-        private readonly IEnvironmentModel _environmentModel;
+        private readonly IServer _server;
         private IContextualResourceModel _contexttualResourceModel;
 
         #endregion Class Members
 
         #region Ctor
 
-        public ResourceDesignerViewModel(IContextualResourceModel model, IEnvironmentModel environmentModel)
+        public ResourceDesignerViewModel(IContextualResourceModel model, IServer server)
         {
             _contexttualResourceModel = model;
-            _environmentModel = environmentModel;
+            _server = server;
         }
 
         #endregion
 
         #region Properties
 
-        public IEnvironmentModel EnvironmentModel => _environmentModel;
+        public IServer Server => _server;
 
         public StringBuilder ServiceDefinition
         {
@@ -56,7 +56,10 @@ namespace Dev2.Studio.Core.ViewModels
             {
                 _contexttualResourceModel.WorkflowXaml = value;
                 NotifyOfPropertyChange(() => ServiceDefinition);
-                if(ResourceModel != null) ResourceModel.WorkflowXaml = ServiceDefinition;
+                if(ResourceModel != null)
+                {
+                    ResourceModel.WorkflowXaml = ServiceDefinition;
+                }
             }
 
         }
@@ -77,7 +80,7 @@ namespace Dev2.Studio.Core.ViewModels
 
             var sb = new StringBuilder();
 
-            switch(_contexttualResourceModel.ResourceType)
+            switch (_contexttualResourceModel.ResourceType)
             {
                 case ResourceType.Service:
                     sb.Append(string.Format("<Service Name=\"{0}\">",
@@ -104,7 +107,12 @@ namespace Dev2.Studio.Core.ViewModels
                 case ResourceType.Source:
                     sb.Append(string.Format("<Source Name=\"{0}\" Type=\"\" ConnectionString=\"\" AssemblyName=\"\" AssemblyLocation=\"\" Uri=\"\" /> ", _contexttualResourceModel.ResourceName));
                     break;
-
+                case ResourceType.WorkflowService:
+                    break;
+                case ResourceType.Unknown:
+                    break;
+                case ResourceType.Server:
+                    break;
                 default:
                     throw new ArgumentException(ErrorResource.UnexpectedResourceType);
 

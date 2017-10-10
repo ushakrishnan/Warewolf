@@ -100,10 +100,10 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
             {
                 Errors.Clear();
 
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 UpdateBasedOnSource();
-                SelectedNamespace = null;
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
+                
                 OnPropertyChanged(@"IsEnabled");
             }
             catch (Exception e)
@@ -113,17 +113,15 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
 
 
             }
-            finally
-            {
-                OnSomethingChanged(this);
-            }
         }
 
         private void UpdateBasedOnSource()
         {
             if (_source?.SelectedSource != null)
             {
-                Namespaces = _model.GetNameSpaces(_source.SelectedSource);
+                SelectedNamespace = null;
+                var ns = _model.GetNameSpaces(_source.SelectedSource);
+                Namespaces = ns;
 
 
                 IsNamespaceEnabled = true;
@@ -236,8 +234,7 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as ComNamespaceRegion;
-            if (region != null)
+            if (toRestore is ComNamespaceRegion region)
             {
                 SelectedNamespace = region.SelectedNamespace;
                 IsEnabled = region.IsEnabled;
@@ -256,12 +253,9 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
 
         private void SetSelectedNamespace(INamespaceItem value)
         {
-            if (value != null)
-            {
-                _selectedNamespace = value;
-                SavedNamespace = value;
-                Namespace = value;
-            }
+            _selectedNamespace = value;
+            SavedNamespace = value;
+            Namespace = value;
             OnPropertyChanged("SelectedNamespace");
         }
 
@@ -294,13 +288,13 @@ namespace Dev2.Activities.Designers2.Core.NamespaceRegion
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
             handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        protected virtual void OnSomethingChanged(IToolRegion args)
+        protected void OnSomethingChanged(IToolRegion args)
         {
             SomethingChanged?.Invoke(this, args);
         }

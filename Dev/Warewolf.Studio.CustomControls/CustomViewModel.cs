@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.Configuration.ViewModels.Base;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.CustomControls
 {
@@ -16,14 +15,14 @@ namespace Warewolf.Studio.CustomControls
         
     }
 
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class CustomViewModel : INotifyPropertyChanged
     {
-        readonly IEnvironmentModel _environmentModel;
+        readonly IServer _server;
 
-        public CustomViewModel(IEnvironmentModel environmentModel)
+        public CustomViewModel(IServer server)
         {
-            _environmentModel = environmentModel;
+            _server = server;
 
             Sources = new List<string>(new[] { "Item One", "Item Two", "Item Three" });
             SelectedSource = Sources.FirstOrDefault();
@@ -58,7 +57,7 @@ namespace Warewolf.Studio.CustomControls
             set
             {
                 _sources = value;
-                // ReSharper disable once UseNullPropagation
+                
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("Sources"));
@@ -73,7 +72,7 @@ namespace Warewolf.Studio.CustomControls
             set
             {
                 _selectedSource = value;
-                // ReSharper disable once UseNullPropagation
+                
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("SelectedSource"));
@@ -97,7 +96,7 @@ namespace Warewolf.Studio.CustomControls
             set
             {
                 _namespaces = value;
-                // ReSharper disable once UseNullPropagation
+                
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("Namespaces"));
@@ -112,7 +111,7 @@ namespace Warewolf.Studio.CustomControls
             set
             {
                 _selectedNamespace = value;
-                // ReSharper disable once UseNullPropagation
+                
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("SelectedNamespace"));
@@ -133,7 +132,7 @@ namespace Warewolf.Studio.CustomControls
             set
             {
                 _actions = value;
-                // ReSharper disable once UseNullPropagation
+                
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("Actions"));
@@ -148,7 +147,7 @@ namespace Warewolf.Studio.CustomControls
             set
             {
                 _selectedAction = value;
-                // ReSharper disable once UseNullPropagation
+                
                 if (PropertyChanged != null)
                 {
                     PropertyChanged(this, new PropertyChangedEventArgs("SelectedAction"));

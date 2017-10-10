@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -23,6 +23,7 @@
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <SonarQubeTestProject>False</SonarQubeTestProject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -35,7 +36,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Dev2.Core.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -47,15 +49,16 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Dev2.Core.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Caliburn.Micro, Version=1.4.0.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Caliburn.Micro.1.4\lib\net40\Caliburn.Micro.dll</HintPath>
+    <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Dropbox.Api, Version=0.1.5906.37642, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dropbox.Api.3.0.2\lib\net45\Dropbox.Api.dll</HintPath>
+    <Reference Include="Dropbox.Api, Version=4.0.0.0, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dropbox.Api.4.2.4\lib\net45\Dropbox.Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -87,10 +90,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.JScript" />
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="policy.2.3.FSharp.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\policy.2.3.FSharp.Core.dll</HintPath>
@@ -114,6 +115,10 @@
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Workflow.ComponentModel" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
@@ -130,6 +135,11 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\Run Tests.ps1">
+      <Link>Run Tests.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </None>
     <Compile Include="Calculate\SyntaxTreeBuilderHelper.cs" />
     <Compile Include="Common\Dev2EmailSender.cs" />
     <Compile Include="DeletedFileMetadata.cs" />
@@ -195,16 +205,13 @@
     </Compile>
     <Compile Include="ExtMethods\TaskExtensions.cs" />
     <Compile Include="Factories\DropboxFactory.cs" />
-    <Compile Include="Common\FileIO.cs" />
     <Compile Include="IActivityParser.cs" />
     <Compile Include="IDev2Activity.cs" />
     <Compile Include="InterfaceImplementors\DsfDataObject.cs" />
     <Compile Include="Interfaces\IDev2EmailSender.cs" />
-    <Compile Include="Interfaces\DataListMergeFrequency.cs" />
     <Compile Include="Interfaces\IDSFDataObject.cs" />
     <Compile Include="Interfaces\IEsbChannel.cs" />
     <Compile Include="Interfaces\IEsbWorkspaceChannel.cs" />
-    <Compile Include="Isolated.cs" />
     <Compile Include="PathOperations\FileRepository.cs" />
     <Compile Include="Reflection\NullableHelper.cs" />
     <Compile Include="Session\Debug\DebugTO.cs" />
@@ -242,7 +249,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="Dev2.Core.ruleset" />
     <None Include="Dynamic Services.cd" />
     <None Include="packages.config" />
     <None Include="Simulation\Simulation.cd" />
@@ -254,6 +261,10 @@
     <ProjectReference Include="..\Dev2.Common.Interfaces\Dev2.Common.Interfaces.csproj">
       <Project>{13c0c6e9-7dc3-4dc3-8535-031c263cee0b}</Project>
       <Name>Dev2.Common.Interfaces</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Data.Interfaces\Dev2.Data.Interfaces.csproj">
+      <Project>{D7189600-3C18-4D35-97A4-8095DE1A4504}</Project>
+      <Name>Dev2.Data.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Data\Dev2.Data.csproj">
       <Project>{4bd0c970-ecd6-470b-b9ee-17ecfe53e5fb}</Project>
@@ -279,6 +290,10 @@
       <Project>{dff93ecb-fdd1-405e-ae02-9f4bc7571c1b}</Project>
       <Name>Warewolf.Resource</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Storage.Interfaces\Warewolf.Storage.Interfaces.csproj">
+      <Project>{61A15557-1D18-4C69-88EB-31BF49B7FB50}</Project>
+      <Name>Warewolf.Storage.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Storage\Warewolf.Storage.csproj">
       <Project>{B3D070E0-11C1-4C1C-81A5-E680C1494945}</Project>
       <Name>Warewolf.Storage</Name>
@@ -292,22 +307,12 @@
       <Name>WarewolfParserInterop</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!--<PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
-    <PostBuildEvent>xcopy /Y /Q /R "$(TargetPath)" "C:\Development\DEV2 Studio\Activities\Shared Dependancies\"
-    xcopy /Y /Q /R "$(TargetName).pdb" C:\Development\DEV2 Studio\Activities\Shared Dependancies\"
-
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\DEV2 Studio\Dev2.Studio.Core\Shared Dependancies\"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\DEV2 Studio\Dev2.Studio.Core\Shared Dependancies\"
-
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\DEV2 Application Server\ApplicationServer\Shared Dependancies\"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\DEV2 Application Server\ApplicationServer\Shared Dependancies\"</PostBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
-    <PreBuildEvent>"$(DevEnvDir)tf" get /recursive $(ProjectDir)</PreBuildEvent>
-  </PropertyGroup>
-  -->
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

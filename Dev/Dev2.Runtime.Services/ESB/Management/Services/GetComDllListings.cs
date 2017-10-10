@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
 using Microsoft.Win32;
 //http://procbits.com/2010/11/08/get-all-progid-on-system-for-com-automation
-// ReSharper disable NonLocalizedString
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class GetComDllListings : IEsbManagementEndpoint
     {
         #region Implementation of ISpookyLoadable<out string>
@@ -39,7 +39,7 @@ namespace Dev2.Runtime.ESB.Management.Services
         {
             var msg = new ExecuteMessage();
             var serializer = new Dev2JsonSerializer();
-            Dev2Logger.Info("Get COMDll Listings");
+            Dev2Logger.Info("Get COMDll Listings", GlobalConstants.WarewolfInfo);
             
             try
             {
@@ -55,13 +55,12 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (COMException ex)
             {
-                Dev2Logger.Error(ex);
                 msg.HasError = true;
                 msg.SetMessage(ex.Message);
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 msg.HasError = true;
                 msg.SetMessage(ex.Message);
             }
@@ -94,5 +93,15 @@ namespace Dev2.Runtime.ESB.Management.Services
         }
 
         #endregion
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
     }
 }

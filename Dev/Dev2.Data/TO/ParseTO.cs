@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,11 +8,12 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-
+using Dev2.Data.Interfaces;
 
 namespace Dev2.Data.TO
 {
-    public class ParseTO {
+    public class ParseTO : IParseTO
+    {
 
         private string _payload = string.Empty;
 
@@ -29,9 +30,9 @@ namespace Dev2.Data.TO
 
         public int EndIndex { get; set; }
 
-        public ParseTO Child { get; set; }
+        public IParseTO Child { get; set; }
 
-        public ParseTO Parent { get; set; }
+        public IParseTO Parent { get; set; }
 
         public bool HangingOpen { get; set; }
 

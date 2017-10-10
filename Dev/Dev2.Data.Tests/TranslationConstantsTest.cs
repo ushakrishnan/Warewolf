@@ -1,9 +1,9 @@
 using System.Collections;
-using Dev2.DataList.Contract;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList.Contract.Translators;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Data.Tests
 {
     [TestClass]

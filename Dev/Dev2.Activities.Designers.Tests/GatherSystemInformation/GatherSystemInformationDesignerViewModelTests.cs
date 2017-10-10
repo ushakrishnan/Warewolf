@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,9 +12,9 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using Dev2.Activities.Designers2.GatherSystemInformation;
 using Dev2.Common.Interfaces.Help;
-using Dev2.Data.Enums;
-using Dev2.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -31,7 +31,7 @@ namespace Dev2.Activities.Designers.Tests.GatherSystemInformation
             var items = new List<GatherSystemInformationTO> { new GatherSystemInformationTO() };
             var viewModel = new GatherSystemInformationDesignerViewModel(CreateModelItem(items));
             viewModel.Validate();
-            Assert.AreEqual(17, viewModel.ItemsList.Count);
+            Assert.AreEqual(29, viewModel.ItemsList.Count);
             Assert.IsTrue(viewModel.HasLargeView);
         }
 
@@ -41,7 +41,7 @@ namespace Dev2.Activities.Designers.Tests.GatherSystemInformation
         public void GatherSystemInformationDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------      
-            var mockMainViewModel = new Mock<IMainViewModel>();
+            var mockMainViewModel = new Mock<IShellViewModel>();
             var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
             mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
             mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
@@ -106,10 +106,7 @@ namespace Dev2.Activities.Designers.Tests.GatherSystemInformation
                     var modelItemCollection = modelProperty.Collection;
                     foreach(var dto in items)
                     {
-                        if(modelItemCollection != null)
-                        {
-                            modelItemCollection.Add(dto);
-                        }
+                        modelItemCollection?.Add(dto);
                     }
                 }
             }

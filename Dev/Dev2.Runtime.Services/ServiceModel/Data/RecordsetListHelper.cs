@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,14 +16,17 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
-    // BUG 9626 - 2013.06.11 - TWR : refactored
     public static class RecordsetListHelper
     {
         #region ToRecordsetList
 
-        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList = null, string defaultFieldName = "")
+        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription) => outputDescription.ToRecordsetList(null, "");
+
+        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList) => outputDescription.ToRecordsetList(currentList, "");
+
+        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList, string defaultFieldName)
         {
-            if(outputDescription == null || outputDescription.DataSourceShapes == null || outputDescription.DataSourceShapes.Count == 0)
+            if(outputDescription?.DataSourceShapes == null || outputDescription.DataSourceShapes.Count == 0)
             {
                 throw new Exception(ErrorResource.ErrorRetrievingShapeFromServiceOutput);
             }

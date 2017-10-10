@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
 using Dev2.Controller;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Models
 {
@@ -35,7 +35,8 @@ namespace Dev2.Models
         }
         public IEnvironmentConnection Connection => _connection;
 
-        public IExplorerItem Load(Guid workSpaceId,bool reload=true)
+        public IExplorerItem Load(Guid workSpaceId) => Load(workSpaceId, true);
+        public IExplorerItem Load(Guid workSpaceId, bool reload)
         {
             var controller = CommunicationControllerFactory.CreateController("FetchExplorerItemsService");
             return controller.ExecuteCommand<IExplorerItem>(Connection, workSpaceId);

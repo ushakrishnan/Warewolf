@@ -5,9 +5,10 @@ using Dev2.Common.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Warewolf.Storage.Tests
 {
@@ -200,6 +201,21 @@ namespace Warewolf.Storage.Tests
 
             //------------Execute Test---------------------------
             var length = scopedEnvironment.GetLength("[[a]]");
+            //------------Assert Results-------------------------
+            Assert.AreEqual(length, 1);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("ScopedEnvironment_GetObjectLength")]
+        public void ScopedEnvironment_GetObjectLength_ExpectEquals()
+        {
+            //------------Setup for test--------------------------
+            var scopedEnvironment = new ScopedEnvironment(_mockEnv.Object, "[[@Person(*)]]", "[[a]]");
+            _mockEnv.Setup(a => a.GetObjectLength(It.IsAny<string>())).Returns(1);
+
+            //------------Execute Test---------------------------
+            var length = scopedEnvironment.GetObjectLength("[[a]]");
             //------------Assert Results-------------------------
             Assert.AreEqual(length, 1);
         }
@@ -566,7 +582,7 @@ namespace Warewolf.Storage.Tests
             var personName = "[[@Person(*).Name]]";
             var scopedEnvironment = new ScopedEnvironment(_mockEnv.Object, personName, "[[a]]");
             var clause = new Func<DataStorage.WarewolfAtom, DataStorage.WarewolfAtom>(atom => atom);
-            _mockEnv.Setup(environment => environment.Eval(personName, 0, false, false))
+            _mockEnv.Setup(environment => environment.Eval(personName, 0))
                 .Returns(() => CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.Nothing));            
             scopedEnvironment.ApplyUpdate(personName, clause, 0);
         }
@@ -723,7 +739,7 @@ namespace Warewolf.Storage.Tests
                (s, i,val) =>
                {
 
-                   // ReSharper disable once PossibleNullReferenceException
+                   
                    var replaced =  fun(s,i,val);
                    Assert.IsTrue(orzipped.Any(a=>a.Item1==val&&a.Item2==replaced));
                   
@@ -739,7 +755,7 @@ namespace Warewolf.Storage.Tests
             p.SetFieldOrProperty("_doReplace", new Func<string, int, string, string>(
                 (s, i, val) =>
                 {
-                    // ReSharper disable once PossibleNullReferenceException
+                    
                     var replaced = fun(s, i, val);
 
                     Assert.AreEqual(replaced, val);

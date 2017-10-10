@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -23,7 +23,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Warewolf.Studio.ViewModels.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,16 +33,17 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Warewolf.Studio.ViewModels.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Caliburn.Micro, Version=1.4.0.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Caliburn.Micro.1.4\lib\net40\Caliburn.Micro.dll</HintPath>
+    <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="Dropbox.Api, Version=0.1.5906.37642, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Dropbox.Api.3.0.2\lib\net45\Dropbox.Api.dll</HintPath>
+    <Reference Include="Dropbox.Api, Version=4.0.0.0, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dropbox.Api.4.2.4\lib\net45\Dropbox.Api.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="FontAwesome.WPF, Version=4.5.0.37524, Culture=neutral, PublicKeyToken=0758b07a11a4f466, processorArchitecture=MSIL">
       <HintPath>..\packages\FontAwesome.WPF.4.5.0.8\lib\net40\FontAwesome.WPF.dll</HintPath>
@@ -107,9 +109,8 @@
     <Reference Include="Microsoft.Practices.Unity.RegistrationByConvention">
       <HintPath>..\packages\Unity.3.5.1404.0\lib\net45\Microsoft.Practices.Unity.RegistrationByConvention.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="policy.2.3.FSharp.Core">
       <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\policy.2.3.FSharp.Core.dll</HintPath>
@@ -123,7 +124,7 @@
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Expression.Blend.Sdk.1.0.2\lib\net45\System.Windows.Interactivity.dll</HintPath>
+      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xaml" />
@@ -136,9 +137,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConnectControlViewModel.cs" />
+    <Compile Include="DatabaseSourceViewModelBase.cs" />
     <Compile Include="DeploySourceExplorerViewModel.cs" />
     <Compile Include="DeployDestinationViewModel.cs" />
     <Compile Include="DeployStatsViewerViewModel.cs" />
+    <Compile Include="DLLChooser.cs" />
+    <Compile Include="DummyServiceTest.cs" />
+    <Compile Include="FileChooser.cs" />
+    <Compile Include="FileChooserModel.cs" />
+    <Compile Include="IProcessor.cs" />
+    <Compile Include="ManageMySqlSourceViewModel.cs" />
+    <Compile Include="ManageOdbcSourceViewModel.cs" />
+    <Compile Include="ManageOracleSourceViewModel.cs" />
+    <Compile Include="ManagePostgreSqlSourceViewModel.cs" />
+    <Compile Include="ManageSqlServerSourceViewModel.cs" />
+    <Compile Include="ServiceTestStep.cs" />
     <Compile Include="SingleExplorerDeployViewModel.cs" />
     <Compile Include="ExplorerItemViewModelCommandController.cs" />
     <Compile Include="IDuplicateResourceViewModel.cs" />
@@ -148,8 +161,6 @@
     <Compile Include="ManageDbServiceModel.cs" />
     <Compile Include="ManageOAuthSourceModel.cs" />
     <Compile Include="ManageOAuthSourceViewModel.cs" />
-    <Compile Include="EmailAttachmentModel.cs" />
-    <Compile Include="EmailAttachmentVm.cs" />
     <Compile Include="EnvironmentViewModel.cs" />
     <Compile Include="ExchangeServiceModel.cs" />
     <Compile Include="ExplorerItemNodeViewModel.cs" />
@@ -161,7 +172,6 @@
     <Compile Include="Help\IHelpChangedEvent.cs" />
     <Compile Include="IDockViewModel.cs" />
     <Compile Include="ManageDatabaseSourceModel.cs" />
-    <Compile Include="ManageDatabaseSourceViewModel.cs" />
     <Compile Include="ManageRabbitMQSourceViewModel.cs" />
     <Compile Include="ManageRabbitMQSourceModel.cs" />
     <Compile Include="ManageEmailSourceModel.cs" />
@@ -185,18 +195,33 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\Run Tests.ps1">
+      <Visible>False</Visible>
+      <Link>Run Tests.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="RequestServiceNameViewModel.cs" />
     <Compile Include="SharepointServerSourceModel.cs" />
     <Compile Include="SharepointServerSourceViewModel.cs" />
     <Compile Include="SingleEnvironmentExplorerViewModel.cs" />
     <Compile Include="SourceBaseImpl.cs" />
     <Compile Include="SplashViewModel.cs" />
+    <Compile Include="ServiceTestCommandHandlerModel.cs" />
+    <Compile Include="ServiceTestInput.cs" />
+    <Compile Include="ServiceTestModel.cs" />
+    <Compile Include="ServiceTestOutput.cs" />
+    <Compile Include="ServiceTestViewModel.cs" />
     <Compile Include="ToolBox\ToolBoxCategoryViewModel.cs" />
     <Compile Include="ToolBox\ToolboxViewModel.cs" />
     <Compile Include="ToolBox\ToolDescriptorViewModel.cs" />
     <Compile Include="VersionViewModel.cs" />
+    <None Include="Warewolf.Studio.ViewModels.ruleset" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Dev2.Activities.Designers\Dev2.Activities.Designers.csproj">
+      <Project>{B95B724A-B052-4E18-98A4-88072C8DF2C2}</Project>
+      <Name>Dev2.Activities.Designers</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Activities\Dev2.Activities.csproj">
       <Project>{0A369A8B-0906-47EB-8EEE-CA20E9D4F151}</Project>
       <Name>Dev2.Activities</Name>
@@ -213,9 +238,17 @@
       <Project>{6007C1F1-CE38-474A-A88C-0C05A77BC415}</Project>
       <Name>Dev2.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Data.Interfaces\Dev2.Data.Interfaces.csproj">
+      <Project>{d7189600-3c18-4d35-97a4-8095de1a4504}</Project>
+      <Name>Dev2.Data.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Data\Dev2.Data.csproj">
       <Project>{4bd0c970-ecd6-470b-b9ee-17ecfe53e5fb}</Project>
       <Name>Dev2.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Diagnostics\Dev2.Diagnostics.csproj">
+      <Project>{A7D9DA27-F023-4588-AA64-AC2DE44C0B82}</Project>
+      <Name>Dev2.Diagnostics</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Infrastructure\Dev2.Infrastructure.csproj">
       <Project>{615EAE6D-040C-4364-B708-63DC8755CD4F}</Project>
@@ -232,6 +265,10 @@
     <ProjectReference Include="..\Dev2.Runtime.Services\Dev2.Runtime.Services.csproj">
       <Project>{b48ffdf5-6b1b-4279-a93f-2913b9d3be83}</Project>
       <Name>Dev2.Runtime.Services</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Studio.Interfaces\Dev2.Studio.Interfaces.csproj">
+      <Project>{37149e8e-fef2-47c0-8391-80dcce86d26d}</Project>
+      <Name>Dev2.Studio.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Core\Warewolf.Core.csproj">
       <Project>{8FD23CE0-02BB-48E1-A914-BA467938CE78}</Project>
@@ -263,8 +300,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

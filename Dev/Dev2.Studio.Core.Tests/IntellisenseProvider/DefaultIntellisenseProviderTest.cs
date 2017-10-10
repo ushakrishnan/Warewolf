@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,17 +15,16 @@ using System.Linq;
 using System.Threading;
 using Caliburn.Micro;
 using Dev2.Common.Interfaces;
-using Dev2.Data.Binary_Objects;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Parsers;
-using Dev2.DataList.Contract;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Models;
 using Dev2.Studio.InterfaceImplementors;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -35,7 +34,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
     [TestClass]
     public class DefaultIntellisenseProviderTest
     {
-        // ReSharper disable InconsistentNaming
+        
         private IResourceModel _resourceModel;
 
         #region Test Initialization
@@ -272,9 +271,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResultsWithNumberExpectedErrorInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -290,9 +289,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_OpenRegion_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -314,9 +313,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_OpenRegion_AndInRecSetIndex_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -339,9 +338,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
         //BUG 8755
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResultsWithOpenRegionAndStarIndexExpectedNoResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -357,9 +356,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         //BUG 8755
-        // ReSharper disable InconsistentNaming
+        
         [TestMethod]
-        // ReSharper restore InconsistentNaming
+
         public void GetIntellisenseResultsWithOpenRegionAndOpenRegionStarIndexExpectedNoResults()
         {
             var context = new IntellisenseProviderContext
@@ -376,9 +375,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_OpenRegion_AndInRecSetIndex_AndNoParentRegion_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -400,9 +399,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_OpenRegion_AndInRecSetIndex_AndWithField_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -457,9 +456,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_InRecSetIndex_AndWithField_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -513,9 +512,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_OpenRegion_AndInRecSetIndex_AndWithField_Expected_ScalarVarInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -569,9 +568,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_OpenRegion_AndInRecSetIndex_AndWithField_Expected_RecSetVarInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -592,9 +591,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_CommaSeperatedRegions_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -621,9 +620,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_CommaSeperatedRegions_AndWithinIndex_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -680,9 +679,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_CommaSeperatedRegions_AndAfterLastComma_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -705,9 +704,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_Sum_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -731,9 +730,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void GetIntellisenseResults_With_Sum_AndAfterComma_Expected_AllVarsInResults()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -905,8 +904,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var getResults = new DefaultIntellisenseProvider().GetIntellisenseResults(context);
             Assert.AreEqual(0, getResults.Count);
         }
-
-        //2013.04.16: Ashley Lewis - for Bug 6103
+        
         [TestMethod]
         public void GetIntellisenseResultsWithInRecSetIndexAndWithFieldAndWithClosingSquareBraceExpectedNoResults()
         {
@@ -936,8 +934,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
             Assert.AreEqual(0, getResults.Count);
         }
-
-        //2013.04.22: Ashley Lewis - for Bug 6103 QA Feedback
+        
         [TestMethod]
         public void GetIntellisenseResultsWithOpenRegionAndInRecSetIndexAndWithFieldExpectedAllResults()
         {
@@ -962,8 +959,6 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             Assert.IsTrue(getResults.Any(a => a.ToString() == "[[State]]"));
         }
 
-  
-        //2013.05.29: Ashley Lewis for bug 9472 - RecorsetsOnly filter tests
         [TestMethod]
         public void PerformResultInsertionWithRecordsetFilterAndNoRegionExpectedCompleteResult()
         {
@@ -1233,9 +1228,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestCategory("IntellisenseTests")]
         [Description("Inserting a scalar into a recordset index")]
         [Owner("Massimo Guerrera")]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultsInsertion_UnitTest_InsertIntoRecordsetIndexWithoutBrackets_InsertedTheRightValue()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1251,9 +1246,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestCategory("IntellisenseTests")]
         [Description("Inserting a recordset with a field when just the field is typed")]
         [Owner("Massimo Guerrera")]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultsInsertion_UnitTest_WhenFieldTypeAndRecordsetSelected_FieldReplacedWithSelected()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1266,9 +1261,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_Expected_ResultReplacesText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1281,9 +1276,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialRecSet_AndRegion_Expected_ResultReplacesText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1294,12 +1289,11 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
             Assert.AreEqual("[[recset().field]]", new DefaultIntellisenseProvider().PerformResultInsertion("[[recset().field]]", context));
         }
-
-        //2013.01.24: Ashley Lewis - Bug 8105
+        
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialField_AndRegion_Expected_ResultReplacesText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1312,9 +1306,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndNoRegion_Expected_ResultReplacesText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1328,9 +1322,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
         //Bug 8437
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void NoFieldResultInsertion_AndMatchOnMiddleOfRecsetName_Expected_ResultReplacesText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1343,9 +1337,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void NoFieldResultInsertion_Where_CaretPositionIsZero_Expected_DoesNotThrowException()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1360,9 +1354,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void NoFieldStarResultInsertion_AndMatchOnRecsetName_AndRegion_Expected_ResultReplacesText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1375,9 +1369,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_Expected_ResultAppendsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1391,9 +1385,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
         //Bug 6103
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1406,9 +1400,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialRecset_AndRegion_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1422,9 +1416,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_AtDeepWithinExtaIndex_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1438,9 +1432,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_AndWithinPluses_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1454,9 +1448,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_AndAfterPluses_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1469,9 +1463,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialScalar_AndRegion_AndAfterSum_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1484,9 +1478,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertion_With_PartialField_AndRegion_AndAfterIndexed_Expected_ResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1500,9 +1494,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
         // BUG 8755
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertionWithPartialFieldAndRegionAndAfterBlankIndexExpectedResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1516,9 +1510,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
         // BUG 8755
         [TestMethod]
-        // ReSharper disable InconsistentNaming
+        
         public void PerformResultInsertionWithPartialFieldAndRegionAndAfterStarIndexExpectedResultInsertsText()
-        // ReSharper restore InconsistentNaming
+
         {
             var context = new IntellisenseProviderContext
             {
@@ -1656,8 +1650,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
             Assert.AreEqual(exprected, actual);
         }
-
-        //Bug 8736
+        
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetExpectedResultInsertsText()
         {
@@ -1674,8 +1667,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
             Assert.AreEqual(exprected, actual);
         }
-
-        //2013.06.24: Ashley Lewis for bug 8760 - inserting a recset from results after a scalar
+        
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetFieldAfterScalarExpectedCompleteResult()
         {
@@ -1692,6 +1684,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             string actual = defaultIntellisenseProvider.PerformResultInsertion("[[rec().field]]", intellisenseProviderContext);
             Assert.AreEqual(exprected, actual, "Inserting a recordset after a scalar from intellisense results performs an incorrect insertion");
         }
+
         [TestMethod]
         public void PerformResultInsertionWithRecordsetAfterScalarExpectedCompleteResult()
         {

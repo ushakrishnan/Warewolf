@@ -41,6 +41,8 @@ namespace Warewolf.Studio.Views
                     return TestConnectionButton.Command.CanExecute(null);
                 case "TestQuery":
                     return TestDefault.IsEnabled;
+                default:
+                    break;
             }
             return false;
         }
@@ -60,20 +62,14 @@ namespace Warewolf.Studio.Views
         public Visibility GetUsernameVisibility()
         {
             BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
         public Visibility GetPasswordVisibility()
         {
             BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
@@ -85,10 +81,7 @@ namespace Warewolf.Studio.Views
         public void PerformSave()
         {
             var viewModel = DataContext as ManageWebserviceSourceViewModel;
-            if (viewModel != null)
-            {
-                viewModel.OkCommand.Execute(null);
-            }
+            viewModel?.OkCommand.Execute(null);
         }
 
         public void EnterUserName(string userName)
@@ -103,15 +96,10 @@ namespace Warewolf.Studio.Views
 
         public string GetErrorMessage()
         {
-            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBlock.TextProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
+            be?.UpdateTarget();
             return ErrorTextBlock.Text;
         }
-
-
 
         public string GetAddress()
         {
@@ -136,10 +124,7 @@ namespace Warewolf.Studio.Views
         public string GetTestDefault()
         {
             BindingExpression be = TestDefault.GetBindingExpression(Hyperlink.NavigateUriProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return TestDefault.NavigateUri.ToString();
         }
 
@@ -151,10 +136,7 @@ namespace Warewolf.Studio.Views
         public string GetHeaderText()
         {
             BindingExpression be = HeaderTextBlock.GetBindingExpression(TextBlock.TextProperty);
-            if (be != null)
-            {
-                be.UpdateTarget();
-            }
+            be?.UpdateTarget();
             return HeaderTextBlock.Text;
         }
 

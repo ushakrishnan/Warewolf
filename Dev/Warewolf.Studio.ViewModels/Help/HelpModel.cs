@@ -20,10 +20,7 @@ namespace Warewolf.Studio.Models.Help
 
         private void FireOnHelpReceived(IHelpDescriptor obj)
         {
-            if(OnHelpTextReceived != null)
-            {
-                OnHelpTextReceived(this, obj);
-            }
+            OnHelpTextReceived?.Invoke(this, obj);
         }
 
         public event HelpTextReceived OnHelpTextReceived;
@@ -34,7 +31,9 @@ namespace Warewolf.Studio.Models.Help
         public void Dispose()
         {
             if(_token!=null)
-            _aggregator.GetEvent<HelpChangedEvent>().Unsubscribe(_token);
+            {
+                _aggregator.GetEvent<HelpChangedEvent>().Unsubscribe(_token);
+            }
         }
     }
 }

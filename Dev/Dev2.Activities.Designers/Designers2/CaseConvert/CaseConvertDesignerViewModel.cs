@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using System.Collections.ObjectModel;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.CaseConvert
 {
@@ -37,6 +37,7 @@ namespace Dev2.Activities.Designers2.CaseConvert
             }
 
             ItemsList = CaseConverter.ConvertTypes.ToObservableCollection();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Data_Case_Convert;
         }
 
         public override string CollectionName => "ConvertCollection";
@@ -53,7 +54,7 @@ namespace Dev2.Activities.Designers2.CaseConvert
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
             mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }

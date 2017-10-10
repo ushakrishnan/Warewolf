@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +22,8 @@ namespace Warewolf.Core
         public IList<IServiceInput> Inputs { get; set; }
         public string Name { get; set; }
         public Guid SourceId { get; set; }
+
+        public string ExecuteAction { get; set; }
         #endregion
 
         #region Equality members
@@ -44,21 +46,13 @@ namespace Warewolf.Core
                 return true;
             }
             if (GetHashCode() == other.GetHashCode())
+            {
                 return true;
+            }
 
             bool inputseq;
-            if(Inputs != null&& other.Inputs != null)
-            {
+            inputseq = Inputs != null && other.Inputs != null ? Inputs.Zip(other.Inputs, (a, b) => new Tuple<IServiceInput, IServiceInput>(a, b)).All(a => a.Item1.Equals(a.Item2)) : Equals(Inputs, other.Inputs);
 
-                inputseq = Inputs.Zip(other.Inputs, (a, b) => new Tuple<IServiceInput, IServiceInput>(a, b)).All(a => a.Item1.Equals(a.Item2));
-                    
-              
-            }
-            else
-            {
-                inputseq =Equals(Inputs, other.Inputs) ;
-            }
-            
             return inputseq&& string.Equals(Name, other.Name);
         }
 
@@ -96,7 +90,7 @@ namespace Warewolf.Core
         {
             unchecked
             {
-                return ((Inputs != null ? Inputs.GetHashCode() : 0) * 397) ^ (Name != null ? Name.GetHashCode() : 0);
+                return ((Inputs?.GetHashCode() ?? 0) * 397) ^ (Name?.GetHashCode() ?? 0);
             }
         }
 

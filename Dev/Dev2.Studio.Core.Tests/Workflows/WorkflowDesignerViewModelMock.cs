@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,12 +13,11 @@ using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
 using System.Activities.Presentation.Services;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using Caliburn.Micro;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Threading;
 using Dev2.Utilities;
@@ -53,6 +52,16 @@ namespace Dev2.Core.Tests.Workflows
             _moq.SetupAllProperties();
             _wd = _moq.Object;
         }
+        public WorkflowDesignerViewModelMock(IContextualResourceModel resource, IWorkflowHelper workflowHelper, IEventAggregator eventAggregator, ModelService modelService, bool createDesigner = false)
+            : base(
+                eventAggregator,
+                resource, workflowHelper,
+                new Mock<IPopupController>().Object, new SynchronousAsyncWorker(), new Mock<IExternalProcessExecutor>().Object, createDesigner, false)
+        {
+            _moq.SetupAllProperties();
+            _wd = _moq.Object;
+            ModelService = modelService;
+        }
 
         public WorkflowDesignerViewModelMock(IContextualResourceModel resource, IWorkflowHelper workflowHelper, IPopupController popupController, IExternalProcessExecutor processExecutor, bool createDesigner = false)
             : base(
@@ -68,12 +77,12 @@ namespace Dev2.Core.Tests.Workflows
 
         protected override bool IsDesignerViewVisible => _isDesignerViewVisible;
 
-        public void SetActiveEnvironment(IEnvironmentModel environmentModel)
+        public void SetActiveEnvironment(IServer server)
         {
-            ActiveEnvironment = environmentModel;
+            ActiveEnvironment = server;
         }
 
-        public IEnvironmentModel GetActiveEnvironment()
+        public IServer GetActiveEnvironment()
         {
             return ActiveEnvironment;
         }
@@ -85,9 +94,9 @@ namespace Dev2.Core.Tests.Workflows
 
         public List<ModelItem> SelectedDebugModelItems => SelectedDebugItems;
 
-        public void TestCheckIfRemoteWorkflowAndSetProperties(DsfActivity dsfActivity, IContextualResourceModel resource, IEnvironmentModel environmentModel)
+        public void TestCheckIfRemoteWorkflowAndSetProperties(DsfActivity dsfActivity, IContextualResourceModel resource, IServer server)
         {
-            WorkflowDesignerUtils.CheckIfRemoteWorkflowAndSetProperties(dsfActivity, resource, environmentModel);
+            WorkflowDesignerUtils.CheckIfRemoteWorkflowAndSetProperties(dsfActivity, resource, server);
         }
 
         public void TestModelServiceModelChanged(ModelChangedEventArgs e)
@@ -174,7 +183,12 @@ namespace Dev2.Core.Tests.Workflows
 
         public ModelItem TestPerformAddItems(ModelItem modelItems)
         {
-            return PerformAddItems(new List<ModelItem> { modelItems }).FirstOrDefault();
+            return PerformAddItems(modelItems);
+        }
+
+        public void FireWorkflowChanged()
+        {
+            WorkflowChanged.Invoke();
         }
     }
 }

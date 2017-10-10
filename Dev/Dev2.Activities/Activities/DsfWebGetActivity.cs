@@ -7,7 +7,7 @@ using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
@@ -15,13 +15,14 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable UnusedAutoPropertyAccessor.Global
-// ReSharper disable MemberCanBePrivate.Global
+
+
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("WebMethods", "GET", ToolType.Native, "6AEB1038-6332-46F9-8BDD-641DE4EA038E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Get_Tags")]
+    [ToolDescriptorInfo("WebMethods", "GET", ToolType.Native, "6AEB1038-6332-46F9-8BDD-641DE4EA038E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Get")]
     public class DsfWebGetActivity : DsfActivity
     {
 
@@ -102,7 +103,9 @@ namespace Dev2.Activities
             foreach(var nameValue in head)
             {
                 if(!String.IsNullOrEmpty( nameValue.Name) && !String.IsNullOrEmpty( nameValue.Value))
-                webclient.Headers.Add(nameValue.Name,nameValue.Value);
+                {
+                    webclient.Headers.Add(nameValue.Name,nameValue.Value);
+                }
             }
 
             if (source.AuthenticationType == AuthenticationType.User)
@@ -117,7 +120,7 @@ namespace Dev2.Activities
 
         #endregion
 
-        // ReSharper disable once MemberCanBeProtected.Global
+        
         public DsfWebGetActivity()
         {
             Type = "GET Web Method";

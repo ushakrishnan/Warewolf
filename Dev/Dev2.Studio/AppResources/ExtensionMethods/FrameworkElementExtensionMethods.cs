@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.AppResources.ExtensionMethods
 {
     public static class FrameworkElementExtensionMethods
@@ -22,7 +22,8 @@ namespace Dev2.Studio.AppResources.ExtensionMethods
         /// <param name="frameworkElement">The framework element.</param>
         /// <param name="name">The name of the element.</param>
         /// <param name="partialMatch">Indicates if a partial name match should be performed</param>
-        public static FrameworkElement FindNameAcrossNamescopes(this FrameworkElement frameworkElement, string name, bool partialMatch = false)
+        public static FrameworkElement FindNameAcrossNamescopes(this FrameworkElement frameworkElement, string name) => frameworkElement.FindNameAcrossNamescopes(name, false);
+        public static FrameworkElement FindNameAcrossNamescopes(this FrameworkElement frameworkElement, string name, bool partialMatch)
         {
             return FindNameAcrossNamescopesImpl(frameworkElement, name, partialMatch);
         }
@@ -39,8 +40,7 @@ namespace Dev2.Studio.AppResources.ExtensionMethods
             {
                 DependencyObject child = VisualTreeHelper.GetChild(dp, i);
 
-                FrameworkElement feChild = child as FrameworkElement;
-                if(feChild != null && (feChild.Name == name || partialMatch && feChild.Name.Contains(name)))
+                if (child is FrameworkElement feChild && (feChild.Name == name || partialMatch && feChild.Name.Contains(name)))
                 {
                     return feChild;
                 }

@@ -3,7 +3,6 @@
                     xmlns:activities="clr-namespace:Unlimited.Applications.BusinessDesignStudio.Activities;assembly=Dev2.Activities"
                     xmlns:converters="clr-namespace:Dev2.Studio.Core.AppResources.Converters;assembly=Dev2.Studio.Core"
                     xmlns:converters3="clr-namespace:Dev2.Studio.AppResources.Converters"
-                    xmlns:contract="clr-namespace:Dev2.DataList.Contract;assembly=Dev2.Data"
     xmlns:converters2="clr-namespace:Dev2.CustomControls.Converters;assembly=Dev2.CustomControls"
     xmlns:converters4="clr-namespace:Dev2.Converters;assembly=Dev2.Core"
                     xmlns:converters1="clr-namespace:Dev2.AppResources.Converters;assembly=Dev2.Studio.Core"
@@ -11,7 +10,9 @@
     xmlns:debug="clr-namespace:Dev2.Common.Interfaces.Diagnostics.Debug;assembly=Dev2.Common.Interfaces"
     xmlns:errors1="clr-namespace:Dev2.Common.Interfaces.Infrastructure.Providers.Errors;assembly=Dev2.Common.Interfaces"
     xmlns:core="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
-    xmlns:converters6="clr-namespace:Dev2.CustomControls.Converters;assembly=Dev2.Studio.Core">
+    xmlns:converters6="clr-namespace:Dev2.CustomControls.Converters;assembly=Dev2.Studio.Core"
+    xmlns:enums="clr-namespace:Dev2.Data.Interfaces.Enums;assembly=Dev2.Data.Interfaces"
+    xmlns:converters7="clr-namespace:Dev2.Studio.Core.AppResources.Converters">
 
     <activities:ImagePathConverter x:Key="ImagePathConverter" />
     <converters2:FilterStringToBoolConverter x:Key="FilterStringToBoolConverter" />
@@ -22,7 +23,6 @@
     <converters:StringToResourceConverter x:Key="StringToResourceConverter" />
     <converters4:TypeToIconConverter x:Key="TypeToIconConverter" />
     <converters6:BoolToVisibilityConverter x:Key="BoolToVisConverter" />    
-    <converters:PercentageConverter x:Key="PercentageConverter" />
     <converters2:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibilityConverter"/>
     <converters:NegateVisibilityConverter x:Key="NegateVisibilityConverter" />
     <converters2:DoubleToMarginLeftConverter x:Key="DoubleToMarginLeftConverter" />
@@ -31,8 +31,8 @@
     <converters3:EmailSourceToDisplayTextConverter x:Key="EmailSourceToDisplayTextConverter" />
     <converters3:MessageBoxImageToSystemIconConverter x:Key="MessageBoxImageToSystemIconConverter" />
     <converters:DebugItemResultTypeToColorConverter x:Key="DebugItemResultTypeToColorConverter" />
-    <converters:BooleanInvertConverter x:Key="BooleanInvertConverter" />
     <converters5:SchedulerStatusToCheckedConverter x:Key="SchedulerStatusToCheckedConverter" />
+    <converters7:InverseScheduleStatusConverter x:Key="InverseScheduleStatusConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
     <converters:DeployViewConnectedToVisiblityConverter x:Key="DeployViewConnectedToVisiblityConverter" />
     <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverterNullIsVisible" NotNullVisibilityValue="Collapsed" NullVisibilityValue="Visible" />
@@ -41,7 +41,7 @@
     <converters3:NavigationViewModelPermissionToBooleanConverter x:Key="NavigationViewModelPermissionToBooleanConverter" />
     <converters:EnumToStringConverter x:Key="EnumToStringConverter" />
     <converters:EnumDiscriptionToStringConverter x:Key="EnumDiscriptionToStringConverter" />
-    <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter" Format="hh\:mm\:ss\.fff" />
+    <converters:TimeSpanToStringConverter x:Key="TimeSpanToStringConverter" Format="hh\:mm\:ss\.fffffff" />
     <converters:DateTimeToStringConverter x:Key="DateTimeToStringConverter" />
     <converters1:DateTimeFormatConverter x:Key="DateTimeFormatConverter" />
     <converters:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
@@ -59,6 +59,7 @@
     <converters:ConnectControlDisableConverter x:Key="ConnectControlDisableConverter" />
     <converters:StringToVisibilityConverterMulti x:Key="StringToVisibilityConverterMulti" />
     <converters:BoolToValueConverter x:Key="BoolToPlusMinusConverter" TrueValue="+" FalseValue="-" />
+    <converters:BoolToValueConverter x:Key="BoolToEnabledConverterNegative" TrueValue="False" FalseValue="True" />
     <converters6:BoolToVisibilityConverter x:Key="BoolToVisibilityConverterPositive" TrueValue="Visible" FalseValue="Collapsed" />
     <converters6:BoolToVisibilityConverter x:Key="BoolToVisibilityConverterNegative" TrueValue="Collapsed" FalseValue="Visible" />
     <converters5:ExplorerItemModelToIconConverter x:Key="ExplorerItemModelToIconConverter" />
@@ -80,9 +81,9 @@
     <converters:EnumToBoolConverter x:Key="EnumToBoolConverterenRoundingType">
         <converters:EnumToBoolConverter.TrueEnumValues>
             <converters:EnumCollection>
-                <x:Static Member="contract:enRoundingType.Normal" />    
-                <x:Static Member="contract:enRoundingType.Up" />
-                <x:Static Member="contract:enRoundingType.Down" />
+                <x:Static Member="enums:enRoundingType.Normal" />    
+                <x:Static Member="enums:enRoundingType.Up" />
+                <x:Static Member="enums:enRoundingType.Down" />
             </converters:EnumCollection>
         </converters:EnumToBoolConverter.TrueEnumValues>
     </converters:EnumToBoolConverter>

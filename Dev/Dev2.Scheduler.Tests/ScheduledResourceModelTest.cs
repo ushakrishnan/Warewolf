@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Win32.TaskScheduler;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Scheduler.Test
 {
     [TestClass]
@@ -78,9 +78,9 @@ namespace Dev2.Scheduler.Test
             _folder.Setup(a => a.ValidTasks).Returns(new List<IDev2Task>());
             try
             {
-                // ReSharper disable ObjectCreationAsStatement
+                
                 new ScheduledResourceModel(null, null, null, null, null, null, null);
-                // ReSharper restore ObjectCreationAsStatement
+                
             }
             catch (Exception e)
             {
@@ -272,9 +272,9 @@ securityWrapper
             _convertorFactory.Setup(a => a.CreateTaskEventLog(It.IsAny<string>())).Returns(log);
 
             //test
-            // ReSharper disable UseObjectOrCollectionInitializer
+            
             var model = new ScheduledResourceModel(_mockService.Object, _folderId, _agentPath, _convertorFactory.Object,
-                                                   // ReSharper restore UseObjectOrCollectionInitializer
+                                                   
                                                    @"c:\", _wrapper.Object, a => a.WorkflowName);
             model.DirectoryHelper = dirHelper.Object;
             model.FileHelper = fileHelper.Object;
@@ -319,9 +319,9 @@ securityWrapper
             _convertorFactory.Setup(a => a.CreateTaskEventLog(It.IsAny<string>())).Returns(log);
 
             //test
-            // ReSharper disable UseObjectOrCollectionInitializer
+            
             var model = new ScheduledResourceModel(_mockService.Object, _folderId, _agentPath, _convertorFactory.Object,
-                                                   // ReSharper restore UseObjectOrCollectionInitializer
+                                                   
                                                    @"c:\", _wrapper.Object, a => a.WorkflowName);
             model.DirectoryHelper = dirHelper.Object;
             model.FileHelper = fileHelper.Object;
@@ -357,9 +357,9 @@ securityWrapper
             _convertorFactory.Setup(a => a.CreateTaskEventLog(It.IsAny<string>())).Returns(log);
 
             //test
-            // ReSharper disable UseObjectOrCollectionInitializer
+            
             var model = new ScheduledResourceModel(_mockService.Object, _folderId, _agentPath, _convertorFactory.Object,
-                                                   // ReSharper restore UseObjectOrCollectionInitializer
+                                                   
                                                    @"c:\", _wrapper.Object, a => a.WorkflowName);
             model.DirectoryHelper = dirHelper.Object;
             model.FileHelper = fileHelper.Object;
@@ -396,9 +396,9 @@ securityWrapper
             _convertorFactory.Setup(a => a.CreateTaskEventLog(It.IsAny<string>())).Returns(log);
 
             //test
-            // ReSharper disable UseObjectOrCollectionInitializer
+            
             var model = new ScheduledResourceModel(_mockService.Object, _folderId, _agentPath, _convertorFactory.Object,
-                                                   // ReSharper restore UseObjectOrCollectionInitializer
+                                                   
                                                    @"c:\", _wrapper.Object, a => a.WorkflowName);
             model.DirectoryHelper = dirHelper.Object;
             model.FileHelper = fileHelper.Object;
@@ -444,13 +444,12 @@ securityWrapper
             _mockService.Setup(a => a.GetFolder("WareWolf")).Returns(mockFolder.Object);
             var resource = new Mock<IScheduledResource>();
             resource.Setup(a => a.Name).Returns("Dora");
-            string errorMessage;
             //run test
-            model.Save(resourceToSave.Object, out errorMessage);
+            model.Save(resourceToSave.Object, out string errorMessage);
             mockFolder.Verify(
                 a =>
                 a.RegisterTaskDefinition("henry", task.Object, TaskCreation.CreateOrUpdate, "user", "pwd",
-                                         TaskLogonType.InteractiveTokenOrPassword, null));
+                                         TaskLogonType.InteractiveTokenOrPassword));
         }
 
 
@@ -470,8 +469,7 @@ securityWrapper
                 a => a.IsWindowsAuthorised(It.IsAny<string>(), It.IsAny<string>()))
                     .Returns(false);
             //run test
-            string errorMessage;
-            model.Save(resourceToSave.Object, out errorMessage);
+            model.Save(resourceToSave.Object, out string errorMessage);
             Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.ScheduledResourceLogOnAsBatchErrorTest, errorMessage);
         }
 
@@ -493,8 +491,7 @@ securityWrapper
                     .Returns(false);
             resourceToSave.Setup(a => a.WorkflowName).Returns("bob");
             //run test
-            string errorMessage;
-            model.Save(resourceToSave.Object, out errorMessage);
+            model.Save(resourceToSave.Object, out string errorMessage);
             Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.ScheduledResourceInvalidUserPermissionErrorTest, errorMessage);
         }
 
@@ -515,8 +512,7 @@ securityWrapper
                     .Returns(true);
             resourceToSave.Setup(a => a.Name).Returns("bob?");
             //run test
-            string errorMessage;
-            model.Save(resourceToSave.Object, out errorMessage);
+            model.Save(resourceToSave.Object, out string errorMessage);
             Assert.AreEqual("The task name may not contain the following characters \\/:*?\"<>| .", errorMessage);
 
         }
@@ -558,7 +554,7 @@ securityWrapper
             mockFolder.Verify(
                 a =>
                 a.RegisterTaskDefinition("henry", task.Object, TaskCreation.CreateOrUpdate, "user", "pwd",
-                                         TaskLogonType.InteractiveTokenOrPassword, null));
+                                         TaskLogonType.InteractiveTokenOrPassword));
             task.Verify(a => a.AddTrigger(It.IsAny<ITrigger>()));
         }
 
@@ -629,7 +625,7 @@ securityWrapper
                 };
             return history;
         }
-        // ReSharper restore InconsistentNaming
+
 
     }
 

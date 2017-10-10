@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,9 +8,9 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces.DataList;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core
 {
     /// <summary>
@@ -32,15 +32,9 @@ namespace Dev2.Studio.Core
         {
             get
             {
-                if(_activeDataList != null)
+                if(_activeDataList?.Resource?.DataList != null)
                 {
-                    if(_activeDataList.Resource != null)
-                    {
-                        if(_activeDataList.Resource.DataList != null)
-                        {
-                            return _activeDataList.Resource.DataList;
-                        }
-                    }
+                    return _activeDataList.Resource.DataList;
                 }
 
                 return string.Empty;

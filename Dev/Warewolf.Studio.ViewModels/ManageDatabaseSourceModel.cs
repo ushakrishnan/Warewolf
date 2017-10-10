@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +10,11 @@
 
 using System;
 using System.Collections.Generic;
+using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.ServerProxyLayer;
+using Dev2.Runtime.ServiceModel.Data;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -33,6 +36,14 @@ namespace Warewolf.Studio.ViewModels
         }
 
         #region Implementation of IManageDatabaseSourceModel
+
+        public IDbSource FetchDbSource(Guid resourceID)
+        {
+            var xaml = _queryProxy.FetchResourceXaml(resourceID);
+            var db = new DbSource(xaml.ToXElement());
+            var def = new DbSourceDefinition(db);
+            return def; 
+        }
 
         public IList<string> GetComputerNames()
         {

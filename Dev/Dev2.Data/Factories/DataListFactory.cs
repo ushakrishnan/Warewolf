@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,27 +9,21 @@
 */
 
 using System.Collections.Generic;
+using System.Linq;
 using Dev2.Common.Interfaces.Data;
-using Dev2.Data.Binary_Objects;
 using Dev2.Data.Builders;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Parsers;
 using Dev2.Data.TO;
 using Dev2.DataList.Contract.Binary_Objects;
-using Dev2.DataList.Contract.Interfaces;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.DataList.Contract
 {
     public static class DataListFactory
     {
-        #region Class Members
-
-
-        #endregion Class Members
-
-        #region Methods
 
         /// <summary>
         /// Creates the language parser. 
@@ -49,9 +43,22 @@ namespace Dev2.DataList.Contract
             return new Dev2DataLanguageParser();
         }
 
+        public static string GenerateMapping(IList<IDev2Definition> defs, enDev2ArgumentType typeOf)
+        {
+            DefinitionBuilder b = new DefinitionBuilder { ArgumentType = typeOf, Definitions = defs };
+
+            return b.Generate();
+        }
         public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue)
         {
             return new Dev2Definition(name, mapsTo, value, isEval, defaultValue, isRequired, rawValue);
+        }
+
+        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull, bool isArray)
+        {
+            var dev2Definition = CreateDefinition(name, mapsTo, value, isEval, defaultValue, isRequired, rawValue, emptyToNull);
+            dev2Definition.IsJsonArray = isArray;
+            return dev2Definition;
         }
 
         public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull)
@@ -81,7 +88,7 @@ namespace Dev2.DataList.Contract
             return result;
         }
 
-        public static IList<IDev2Definition> CreateScalarList(IList<IDev2Definition> parsedOutput, bool isOutput)
+        public static IEnumerable<IDev2Definition> CreateScalarList(IEnumerable<IDev2Definition> parsedOutput, bool isOutput)
         {
             IList<IDev2Definition> result = new List<IDev2Definition>();
 
@@ -110,18 +117,9 @@ namespace Dev2.DataList.Contract
         }
 
 
-        public static IList<IDev2Definition> CreateObjectList(IList<IDev2Definition> parsedOutput)
+        public static IEnumerable<IDev2Definition> CreateObjectList(IEnumerable<IDev2Definition> parsedOutput)
         {
-            IList<IDev2Definition> result = new List<IDev2Definition>();
-
-            foreach (IDev2Definition def in parsedOutput)
-            {
-                if (def.IsObject)
-                {
-                    result.Add(def);
-                }
-            }
-            return result;
+            return parsedOutput.Where(def => def.IsObject).ToList();
         }
         public static IDev2LanguageParser CreateOutputParser()
         {
@@ -133,13 +131,6 @@ namespace Dev2.DataList.Contract
             return new InputLanguageParser();
         }
 
-
-        public static string GenerateMapping(IList<IDev2Definition> defs, enDev2ArgumentType typeOf)
-        {
-            DefinitionBuilder b = new DefinitionBuilder { ArgumentType = typeOf, Definitions = defs };
-
-            return b.Generate();
-        }
 
         public static IList<IDev2DataLanguageIntellisensePart> GenerateIntellisensePartsFromDataList(string dataList, IIntellisenseFilterOpsTO fiterTo)
         {
@@ -182,7 +173,6 @@ namespace Dev2.DataList.Contract
         {
             return new Dev2Column(columnName, columnDescription, isEditable, colIODir);
         }
-
-        #endregion Methods
+      
     }
 }

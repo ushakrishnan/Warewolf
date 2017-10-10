@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,7 @@ using Moq;
 namespace Dev2.Core.Tests
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class FileSystemQueryTest
     {
         [TestMethod]
@@ -138,8 +138,7 @@ namespace Dev2.Core.Tests
 
            //------------Execute Test---------------------------
             var query = new FileSystemQuery();
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare(null, out sServerFolderShare);
+            var res = query.GetServerFolderShare(null, out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsFalse(res);
             
@@ -155,8 +154,7 @@ namespace Dev2.Core.Tests
 
             //------------Execute Test---------------------------
             var query = new FileSystemQuery();
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare("bob", out sServerFolderShare);
+            var res = query.GetServerFolderShare("bob", out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsFalse(res);
 
@@ -171,8 +169,7 @@ namespace Dev2.Core.Tests
 
             //------------Execute Test---------------------------
             var query = new FileSystemQuery();
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare("bobthebuilder", out sServerFolderShare);
+            var res = query.GetServerFolderShare("bobthebuilder", out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsFalse(res);
 
@@ -188,8 +185,7 @@ namespace Dev2.Core.Tests
 
             //------------Execute Test---------------------------
             var query = new FileSystemQuery();
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare("\\\\bobthebuilder", out sServerFolderShare);
+            var res = query.GetServerFolderShare("\\\\bobthebuilder", out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsFalse(res);
 
@@ -204,9 +200,9 @@ namespace Dev2.Core.Tests
         {
             //------------Setup for test--------------------------
             //------------Execute Test---------------------------
-// ReSharper disable ObjectCreationAsStatement
+
             new FileSystemQuery(null, new DirectoryEntryFactory(), new ShareCollectionFactory());
-// ReSharper restore ObjectCreationAsStatement
+
             //------------Assert Results-------------------------
         }
 
@@ -219,9 +215,9 @@ namespace Dev2.Core.Tests
         {
             //------------Setup for test--------------------------
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new FileSystemQuery(new DirectoryWrapper(), null, new ShareCollectionFactory());
-            // ReSharper restore ObjectCreationAsStatement
+            
             //------------Assert Results-------------------------
         }
 
@@ -234,9 +230,9 @@ namespace Dev2.Core.Tests
         {
             //------------Setup for test--------------------------
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new FileSystemQuery(new DirectoryWrapper(), new DirectoryEntryFactory(), null);
-            // ReSharper restore ObjectCreationAsStatement
+            
             //------------Assert Results-------------------------
         }
 
@@ -251,8 +247,7 @@ namespace Dev2.Core.Tests
       
             //------------Execute Test---------------------------
             var query = new FileSystemQuery(dir.Object, new DirectoryEntryFactory(),new ShareCollectionFactory());
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare("\\\\bobthebuilder\\dave", out sServerFolderShare);
+            var res = query.GetServerFolderShare("\\\\bobthebuilder\\dave", out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsTrue(res);
 
@@ -269,8 +264,7 @@ namespace Dev2.Core.Tests
 
             //------------Execute Test---------------------------
             var query = new FileSystemQuery(dir.Object, new DirectoryEntryFactory(), new ShareCollectionFactory());
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare("\\\\bobthebuilder\\dave", out sServerFolderShare);
+            var res = query.GetServerFolderShare("\\\\bobthebuilder\\dave", out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsFalse(res);
             dir.Verify(a => a.Exists("\\\\bobthebuilder\\dave"));
@@ -288,8 +282,7 @@ namespace Dev2.Core.Tests
 
             //------------Execute Test---------------------------
             var query = new FileSystemQuery(dir.Object, new DirectoryEntryFactory(), new ShareCollectionFactory());
-            string sServerFolderShare;
-            var res = query.GetServerFolderShare("\\\\bobthebuilder\\dave\\", out sServerFolderShare);
+            var res = query.GetServerFolderShare("\\\\bobthebuilder\\dave\\", out string sServerFolderShare);
             //------------Assert Results-------------------------
             Assert.IsTrue(res);
             Assert.AreEqual(@"\\BOBTHEBUILDER\DAVE\",sServerFolderShare);

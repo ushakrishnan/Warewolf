@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +10,8 @@
 
 using System;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Data.Util;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Util;
 using Dev2.Validation;
@@ -33,22 +33,15 @@ namespace Dev2.TO
             }
         }
 
-        // ReSharper disable MemberCanBePrivate.Global
+        
         public string GetDestinationWithName(string sourceName)
-            // ReSharper restore MemberCanBePrivate.Global
+            
         {
             string destName = null;
             if (DataListUtil.IsFullyEvaluated(sourceName))
             {
 
-                if (DataListUtil.IsValueRecordset(sourceName) || DataListUtil.IsValueRecordsetWithFields(sourceName))
-                {
-                    destName = DataListUtil.ExtractRecordsetNameFromValue(sourceName);
-                }
-                else
-                {
-                    destName = DataListUtil.StripBracketsFromValue(sourceName);
-                }
+                destName = DataListUtil.IsValueRecordset(sourceName) || DataListUtil.IsValueRecordsetWithFields(sourceName) ? DataListUtil.ExtractRecordsetNameFromValue(sourceName) : DataListUtil.StripBracketsFromValue(sourceName);
             }
             return destName;
         }
@@ -84,12 +77,12 @@ namespace Dev2.TO
             DestinationName = GetDestinationWithName(SourceName);
         }
 
-        // ReSharper disable UnusedMember.Global
+        
         public bool IsSourceNameFocused { get { return _isSourceNameFocused; } set { OnPropertyChanged(ref _isSourceNameFocused, value); } }
 
 
         public bool IsDestinationNameFocused { get { return _isDestinationNameFocused; } set { OnPropertyChanged(ref _isDestinationNameFocused, value); } }
-        // ReSharper restore UnusedMember.Global
+        
         public bool CanRemove()
         {
             return string.IsNullOrEmpty(DestinationName) && string.IsNullOrEmpty(SourceName);
@@ -108,10 +101,10 @@ namespace Dev2.TO
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
         public bool Inserted { get; set; }
 

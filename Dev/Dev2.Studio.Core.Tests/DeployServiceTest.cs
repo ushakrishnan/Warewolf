@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,25 +11,23 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Dev2.Common.Interfaces;
 using Dev2.Providers.Events;
 using Dev2.Studio.Core.InterfaceImplementors;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Models;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace Dev2.Core.Tests
 {
-    /// <summary>
-    /// Summary description for DeployServiceTest
-    /// </summary>
     [TestClass]
     public class DeployServiceTest
     {
-
         #region Test Variables
 
         int _numModels = 3;
+        
 
         #endregion Test Variables
 
@@ -67,25 +65,101 @@ namespace Dev2.Core.Tests
             connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
             connection.Setup(e => e.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(new StringBuilder());
 
-            var envMock = new Mock<IEnvironmentModel>();
+            var envMock = new Mock<IServer>();
             envMock.Setup(e => e.Connection).Returns(connection.Object);
             envMock.Setup(e => e.ResourceRepository.DeployResource(It.IsAny<IResourceModel>(), It.IsAny<string>())).Verifiable();
+            envMock.Setup(e => e.ResourceRepository.SaveTests(It.IsAny<IResourceModel>(), It.IsAny<List<IServiceTestModelTO>>())).Verifiable();
             envMock.Setup(e => e.IsConnected).Returns(true);
+
+            var sourceMock = new Mock<IServer>();
+            sourceMock.Setup(e => e.Connection).Returns(connection.Object);
+            sourceMock.Setup(e => e.ResourceRepository.LoadResourceTestsForDeploy(It.IsAny<Guid>())).Returns(new List<IServiceTestModelTO>()).Verifiable();
+            sourceMock.Setup(e => e.IsConnected).Returns(true);
 
             var dtoMock = new Mock<IDeployDto>();
             dtoMock.Setup(d => d.ResourceModels).Returns(CreateModels(envMock.Object));
 
             var ds = new DeployService();
-            ds.Deploy(dtoMock.Object, envMock.Object);
+            ds.Deploy(dtoMock.Object, sourceMock.Object, envMock.Object);
 
             envMock.Verify(e => e.ResourceRepository.DeployResource(It.IsAny<IResourceModel>(), It.IsAny<string>()), Times.Exactly(_numModels));
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void Deploy_GivenFalse_ShouldDeployResourcesOnly()
+        {
+            //---------------Set up test pack-------------------
+            var eventPublisher = new EventPublisher();
+            var connection = new Mock<IEnvironmentConnection>();
+            connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
+            connection.Setup(e => e.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(new StringBuilder());
+
+            var envMock = new Mock<IServer>();
+            envMock.Setup(e => e.Connection).Returns(connection.Object);
+            envMock.Setup(e => e.ResourceRepository.DeployResource(It.IsAny<IResourceModel>(), It.IsAny<string>())).Verifiable();
+            envMock.Setup(e => e.ResourceRepository.SaveTests(It.IsAny<IResourceModel>(), It.IsAny<List<IServiceTestModelTO>>())).Verifiable();
+            envMock.Setup(e => e.IsConnected).Returns(true);
+
+            var sourceMock = new Mock<IServer>();
+            sourceMock.Setup(e => e.Connection).Returns(connection.Object);
+            sourceMock.Setup(e => e.ResourceRepository.LoadResourceTestsForDeploy(It.IsAny<Guid>())).Returns(new List<IServiceTestModelTO>()).Verifiable();
+            sourceMock.Setup(e => e.IsConnected).Returns(true);
+            var dtoMock = new Mock<IDeployDto>();
+            dtoMock.Setup(d => d.ResourceModels).Returns(CreateModels(envMock.Object));
+            dtoMock.Setup(d => d.DeployTests).Returns(false);
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            var ds = new DeployService();
+            ds.Deploy(dtoMock.Object, sourceMock.Object, envMock.Object);
+            //---------------Test Result -----------------------
+            sourceMock.Verify(e => e.ResourceRepository.LoadResourceTestsForDeploy(It.IsAny<Guid>()), Times.Never);
+            envMock.Verify(e => e.ResourceRepository.SaveTests(It.IsAny<IResourceModel>(), It.IsAny<List<IServiceTestModelTO>>()), Times.Never);
+            envMock.Verify(e => e.ResourceRepository.DeployResource(It.IsAny<IResourceModel>(), It.IsAny<string>()), Times.AtLeastOnce);
+
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void Deploy_Giventrue_ShouldDeployResourcesAndTests()
+        {
+            //---------------Set up test pack-------------------
+            var eventPublisher = new EventPublisher();
+            var connection = new Mock<IEnvironmentConnection>();
+            connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
+            connection.Setup(e => e.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(new StringBuilder());
+
+            var envMock = new Mock<IServer>();
+            envMock.Setup(e => e.Connection).Returns(connection.Object);
+            envMock.Setup(e => e.ResourceRepository.DeployResource(It.IsAny<IResourceModel>(), It.IsAny<string>())).Verifiable();
+            envMock.Setup(e => e.ResourceRepository.SaveTests(It.IsAny<IResourceModel>(), It.IsAny<List<IServiceTestModelTO>>())).Verifiable();
+            envMock.Setup(e => e.IsConnected).Returns(true);
+
+            var sourceMock = new Mock<IServer>();
+            sourceMock.Setup(e => e.Connection).Returns(connection.Object);
+            sourceMock.Setup(e => e.ResourceRepository.LoadResourceTestsForDeploy(It.IsAny<Guid>())).Returns(new List<IServiceTestModelTO>()).Verifiable();
+            sourceMock.Setup(e => e.IsConnected).Returns(true);
+            var dtoMock = new Mock<IDeployDto>();
+            dtoMock.Setup(d => d.ResourceModels).Returns(CreateModels(envMock.Object));
+            dtoMock.Setup(d => d.DeployTests).Returns(true);
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            var ds = new DeployService();
+            ds.Deploy(dtoMock.Object, sourceMock.Object, envMock.Object);
+            //---------------Test Result -----------------------
+            sourceMock.Verify(e => e.ResourceRepository.LoadResourceTestsForDeploy(It.IsAny<Guid>()), Times.AtLeastOnce );
+            envMock.Verify(e => e.ResourceRepository.SaveTests(It.IsAny<IResourceModel>(), It.IsAny<List<IServiceTestModelTO>>()), Times.AtLeastOnce);
+            envMock.Verify(e => e.ResourceRepository.DeployResource(It.IsAny<IResourceModel>(), It.IsAny<string>()), Times.AtLeastOnce);
+
         }
 
         #endregion
 
         #region CreateModels
 
-        IList<IResourceModel> CreateModels(IEnvironmentModel environment)
+        IList<IResourceModel> CreateModels(IServer environment)
         {
             if(_numModels == -1)
             {
@@ -105,6 +179,5 @@ namespace Dev2.Core.Tests
         }
 
         #endregion
-
     }
 }

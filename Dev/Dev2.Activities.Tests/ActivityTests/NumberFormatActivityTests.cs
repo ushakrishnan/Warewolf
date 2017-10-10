@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +15,7 @@ using System.Linq;
 using ActivityUnitTests;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -23,7 +23,7 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 namespace Dev2.Tests.Activities.ActivityTests
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class NumberFormatActivityTests : BaseActivityUnitTest
     {
         #region Class Members
@@ -74,10 +74,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = "790";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -91,11 +89,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                            "[[resRecordSet().number]]", "[[recordSet(*).number]]", enRoundingType.Normal, "", "");
             IDSFDataObject result = ExecuteProcess();
 
-            //string expected = "790";
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "resRecordSet", "number", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "resRecordSet", "number", out IList<string> actual, out string error);
 
             // remove test datalist ;)
             var actualVals = actual.Where(s => !string.IsNullOrEmpty(s)).ToList();
@@ -112,10 +106,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = "123.1";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             Assert.AreEqual(expected, actual);
         }
@@ -128,10 +120,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = "123.000";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -146,13 +136,10 @@ namespace Dev2.Tests.Activities.ActivityTests
             IDSFDataObject result = ExecuteProcess();
 
             const string expected = "123.123";
-            string actual;
-            string error;
-            string systemError;
 
-            GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out systemError, out error);
+            GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string systemError, out string error);
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out error);
 
             // remove test datalist ;)
 
@@ -181,6 +168,26 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(roundingType, act.RoundingType);
             Assert.AreEqual(roundingDecimalPlaces, act.RoundingDecimalPlaces);
             Assert.AreEqual(decimalPlacesToShow, act.DecimalPlacesToShow);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfBaseActivity_GetOutputs")]
+        public void DsfBaseActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string expression = "[[Numeric(1).num]]";
+            const string roundingType = "Up";
+            const string result = "[[res]]";
+            const string roundingDecimalPlaces = "2";
+            const string decimalPlacesToShow = "2";
+            var act = new DsfNumberFormatActivity { Expression = expression, RoundingType = roundingType, RoundingDecimalPlaces = roundingDecimalPlaces, DecimalPlacesToShow = decimalPlacesToShow, Result = result };
+
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]

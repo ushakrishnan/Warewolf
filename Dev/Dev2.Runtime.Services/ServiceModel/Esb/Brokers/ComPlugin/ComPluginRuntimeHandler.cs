@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,9 +23,9 @@ using Dev2.Runtime.ServiceModel.Data;
 using Newtonsoft.Json;
 using Unlimited.Framework.Converters.Graph;
 using WarewolfCOMIPC.Client;
-// ReSharper disable ClassNeverInstantiated.Global
-// ReSharper disable UnusedVariable
-// ReSharper disable NonLocalizedString
+
+
+
 
 namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
 {
@@ -35,7 +35,17 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
     /// </summary>
     public class ComPluginRuntimeHandler : MarshalByRefObject, IRuntime
     {
+        private readonly INamedPipeClientStreamWrapper _clientStreamWrapper;
 
+        public ComPluginRuntimeHandler(INamedPipeClientStreamWrapper clientStreamWrapper)
+        {
+            _clientStreamWrapper = clientStreamWrapper;
+        }
+
+        public ComPluginRuntimeHandler()
+        {
+            
+        }
         /// <summary>
         /// Runs the specified setup information.
         /// </summary>
@@ -43,8 +53,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
         /// <returns></returns>
         public object Run(ComPluginInvokeArgs setupInfo)
         {
-            object pluginResult;
-            var methodToRun = ExecuteComPlugin(setupInfo, out pluginResult);
+            var methodToRun = ExecuteComPlugin(setupInfo, out object pluginResult);
             var formater = setupInfo.OutputFormatter;
             if (formater != null)
             {
@@ -59,8 +68,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
             {
                 jsonResult = null;
 
-                object pluginResult;
-                var methodToRun = ExecuteComPlugin(setupInfo, out pluginResult);
+                var methodToRun = ExecuteComPlugin(setupInfo, out object pluginResult);
 
                 // do formating here to avoid object serialization issues ;)
                 var dataBrowser = DataBrowserFactory.CreateDataBrowser();
@@ -68,11 +76,18 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
 
                 if (pluginResult != null)
                 {
-                    jsonResult = pluginResult.ToString();
+                    if (pluginResult is KeyValuePair<bool, string>)
+                    {
+                        KeyValuePair<bool, string> pluginKeyValuePair = (KeyValuePair<bool, string>) pluginResult;
+                        jsonResult = "Exception: " + pluginKeyValuePair.Value;
+                    }
+                    else
+                    {
+                        jsonResult = pluginResult.ToString();
+                    }
                     pluginResult = AdjustPluginResult(pluginResult);
                     var tmpData = dataBrowser.Map(pluginResult);
                     dataSourceShape.Paths.AddRange(tmpData);
-
                 }
 
                 var result = OutputDescriptionFactory.CreateOutputDescription(OutputFormats.ShapedXML);
@@ -81,14 +96,17 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
             }
             catch (COMException e)
             {
-                Dev2Logger.Error("IOutputDescription Test(PluginInvokeArgs setupInfo)", e);
+                Dev2Logger.Error("IOutputDescription Test(PluginInvokeArgs setupInfo)", e, GlobalConstants.WarewolfError);
                 throw;
             }
             catch (Exception e)
             {
                 if (e.InnerException is COMException)
+                {
                     throw e.InnerException;
-                Dev2Logger.Error("IOutputDescription Test(PluginInvokeArgs setupInfo)", e);
+                }
+
+                Dev2Logger.Error("IOutputDescription Test(PluginInvokeArgs setupInfo)", e, GlobalConstants.WarewolfError);
                 jsonResult = null;
                 return null;
             }
@@ -103,7 +121,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                 if (setupInfo.Is32Bit)
                 {
                     ParameterInfoTO[] strings = setupInfo.Parameters.Select(parameter => new ParameterInfoTO {Name = parameter.Name,DefaultValue = parameter.Value,TypeName = parameter.TypeName}).ToArray();
-                    pluginResult = Client.IPCExecutor.Invoke(setupInfo.ClsId.ToGuid(), setupInfo.Method, Execute.ExecuteSpecifiedMethod, strings);
+                    pluginResult = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(setupInfo.ClsId.ToGuid(), setupInfo.Method, Execute.ExecuteSpecifiedMethod, strings);
                     return null;
                 }
                 var typeList = BuildTypeList(setupInfo.Parameters);
@@ -175,7 +193,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                         }
                         catch (Exception k)
                         {
-                            Dev2Logger.Error($"Failed to convert {argType?.FullName}", k);
+                            Dev2Logger.Error($"Failed to convert {argType?.FullName}", k, GlobalConstants.WarewolfError);
                         }
                     }
                 }
@@ -196,7 +214,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                 if (is32Bit)
                 {
 
-                    var execute = Client.IPCExecutor.Invoke(classId.ToGuid(), "", Execute.GetNamespaces, new ParameterInfoTO[] { });
+                    var execute = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(classId.ToGuid(), "", Execute.GetNamespaces, new ParameterInfoTO[] { });
                     var namespaceList = execute as List<string>;
                     return namespaceList;
 
@@ -216,15 +234,14 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
             }
             catch (BadImageFormatException e)
             {
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 throw;
             }
         }
 
         private Type GetType(string classId, bool is32Bit)
         {
-            Guid clasID;
-            Guid.TryParse(classId, out clasID);
+            Guid.TryParse(classId, out Guid clasID);
             var is64BitProcess = Environment.Is64BitProcess;
             Type type;
             if (is64BitProcess && is32Bit)
@@ -232,12 +249,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
 
                 try
                 {
-                    var execute = Client.IPCExecutor.Invoke(clasID, "", Execute.GetType, new ParameterInfoTO[] { });
+                    var execute = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(clasID, "", Execute.GetType, new ParameterInfoTO[] { });
                     type = execute as Type;
                 }
                 catch (Exception ex)
                 {
-                    Dev2Logger.Error("GetType", ex);
+                    Dev2Logger.Error("GetType", ex, GlobalConstants.WarewolfError);
                     type = Type.GetTypeFromCLSID(clasID, true);
 
                 }                
@@ -257,36 +274,36 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
             {
                 
 
-                    var execute = Client.IPCExecutor.Invoke(classId.ToGuid(), "", Execute.GetMethods, new ParameterInfoTO[] { });
-                    var ipcMethods = execute as List<MethodInfoTO>;
-                    if (ipcMethods != null)
+                    var execute = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(classId.ToGuid(), "", Execute.GetMethods, new ParameterInfoTO[] { });
+                if (execute is List<MethodInfoTO> ipcMethods)
+                {
+
+                    foreach (MethodInfoTO ipcMethod in ipcMethods)
                     {
-
-                        foreach (MethodInfoTO ipcMethod in ipcMethods)
+                        var parameterInfos = ipcMethod.Parameters;
+                        var serviceMethod = new ServiceMethod { Name = ipcMethod.Name };
+                        foreach (var parameterInfo in parameterInfos)
                         {
-                            var parameterInfos = ipcMethod.Parameters;
-                            var serviceMethod = new ServiceMethod { Name = ipcMethod.Name };
-                            foreach (var parameterInfo in parameterInfos)
+                            serviceMethod.Parameters.Add(new MethodParameter
                             {
-                                serviceMethod.Parameters.Add(new MethodParameter
-                                {
-                                    DefaultValue = parameterInfo.DefaultValue?.ToString() ?? string.Empty,
-                                    EmptyToNull = false,
-                                    IsRequired = true,
-                                    Name = parameterInfo.Name,
-                                    TypeName = parameterInfo.TypeName
-                                });
+                                DefaultValue = parameterInfo.DefaultValue?.ToString() ?? string.Empty,
+                                EmptyToNull = false,
+                                IsRequired = true,
+                                Name = parameterInfo.Name,
+                                TypeName = parameterInfo.TypeName
+                            });
 
-                            }
-                            serviceMethodList.Add(serviceMethod);
                         }
+                        serviceMethodList.Add(serviceMethod);
+                    }
 
-                    
+
 
                     orderMethodsList.AddRange(serviceMethodList.OrderBy(method => method.Name));
                     return orderMethodsList;
                 }
             }
+            if (string.IsNullOrEmpty(classId)) { return new ServiceMethodList();}
             var type = Type.GetTypeFromCLSID(classId.ToGuid(), true);
             var methodInfos = type.GetMethods();
 
@@ -298,7 +315,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                     serviceMethod.Parameters.Add(
                         new MethodParameter
                         {
-                            DefaultValue = parameterInfo.DefaultValue == null ? string.Empty : parameterInfo.DefaultValue.ToString(),
+                            DefaultValue = parameterInfo.DefaultValue?.ToString() ?? string.Empty,
                             EmptyToNull = false,
                             IsRequired = true,
                             Name = parameterInfo.Name,
@@ -357,7 +374,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
             {
                 var result = new List<NamespaceItem>();
                 var list = ListNamespaces(clsId, is32Bit);
-                list.ForEach(fullName =>
+                list?.ForEach(fullName =>
                     result.Add(new NamespaceItem
                     {
                         AssemblyLocation = clsId,
@@ -367,7 +384,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
 
                 return result;
             }
-            // ReSharper disable once RedundantCatchClause
+            
             catch (BadImageFormatException)
             {
                 throw;
@@ -388,7 +405,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
         private List<Type> BuildTypeList(IEnumerable<MethodParameter> parameters)
         {
             var typeList = new List<Type>();
-            // ReSharper disable once LoopCanBeConvertedToQuery
+            
             foreach (var methodParameter in parameters)
             {
                 var type = DeriveType(methodParameter.TypeName);

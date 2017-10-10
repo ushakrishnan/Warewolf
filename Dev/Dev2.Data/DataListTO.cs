@@ -3,14 +3,19 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Util;
 
 namespace Dev2.Data
 {
     public class DataListTO
     {
-        public DataListTO(string dataList, bool ignoreColumnDirection = false)
+        public DataListTO(string dataList)
+            : this(dataList, false)
+        {
+        }
+
+        public DataListTO(string dataList, bool ignoreColumnDirection)
         {
             var fixedDataList = dataList.Replace(GlobalConstants.SerializableResourceQuote, "\"").Replace(GlobalConstants.SerializableResourceSingleQuote, "\'");
             Inputs = new List<string>();

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,13 +12,12 @@ using System;
 using System.Threading.Tasks;
 using Caliburn.Micro;
 using Dev2.Common;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.ConnectionHelpers;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Enums;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Studio.Views.Workflow;
 using Dev2.Threading;
@@ -33,7 +32,7 @@ namespace Dev2.Dialogs
         readonly enDsfActivityType _activityType;
 
         public IExplorerViewModel SingleEnvironmentExplorerViewModel{get; private set;}
-        IEnvironmentModel _environmentModel;
+        IServer _server;
         IExplorerTreeItem _selectedResource;
 
         /// <summary>
@@ -76,18 +75,19 @@ namespace Dev2.Dialogs
             environmentViewModel.Connect();
 
             await environmentViewModel.LoadDialog("");
-            switch(_activityType)
+            switch (_activityType)
             {
-                case enDsfActivityType.Workflow :
+                case enDsfActivityType.Workflow:
+                case enDsfActivityType.Service:
                     environmentViewModel.Filter(a => a.IsFolder || a.IsService);
                     break;
                 case enDsfActivityType.Source:
                     environmentViewModel.Filter(a => a.IsFolder || a.IsSource);
                     break;
-                case enDsfActivityType.Service:
-                    environmentViewModel.Filter(a => a.IsFolder || a.IsService);
+                case enDsfActivityType.All:
                     break;
-                
+                default:
+                    break;
             }
             environmentViewModel.SelectAction = a => SelectedResource = a;
             return this;
@@ -105,11 +105,11 @@ namespace Dev2.Dialogs
             }
         }
 
-        public bool ShowDialog(IEnvironmentModel environmentModel = null)
+        public bool ShowDialog() => ShowDialog(null);
+        public bool ShowDialog(IServer server)
         {
-            DsfActivityDropViewModel dropViewModel;
-            _environmentModel = environmentModel;
-            return ShowDialog(out dropViewModel);
+            _server = server;
+            return ShowDialog(out DsfActivityDropViewModel dropViewModel);
         }
 
         public void SelectResource(Guid id)
@@ -118,19 +118,13 @@ namespace Dev2.Dialogs
         }
 
         public bool ShowDialog(out DsfActivityDropViewModel dropViewModel)
-        {
-            //if(SingleEnvironmentExplorerViewModel != null)
-            //todo:expand
-            
+        {            
             dropViewModel = new DsfActivityDropViewModel(SingleEnvironmentExplorerViewModel, _activityType);
          
             var selected = SelectedResource;
             if (SelectedResource != null && selected != null)
             {
-              
-               // environmentModel.ResourceRepository.FindSingle(c => c.ID == resourceId, true) as IContextualResourceModel;
-                dropViewModel.SelectedResourceModel = _environmentModel.ResourceRepository.FindSingle(c => c.ID == selected.ResourceId, true) as IContextualResourceModel;
-    
+                dropViewModel.SelectedResourceModel = _server.ResourceRepository.FindSingle(c => c.ID == selected.ResourceId, true) as IContextualResourceModel;    
             }
             var dropWindow = CreateDialog(dropViewModel);
             dropWindow.ShowDialog();

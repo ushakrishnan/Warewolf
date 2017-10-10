@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,14 +9,14 @@
 */
 
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Util;
 using System.Collections.Generic;
+using Dev2.Common.Interfaces.Interfaces;
 
 namespace Dev2.TO
 {
-    // ReSharper disable once InconsistentNaming
+    
     public class AssignObjectDTO : ValidatedObject, IDev2TOFn
     {
         private string _fieldName;
@@ -30,7 +30,12 @@ namespace Dev2.TO
         {
         }
 
-        public AssignObjectDTO(string fieldName, string fieldValue, int indexNumber, bool inserted = false)
+        public AssignObjectDTO(string fieldName, string fieldValue, int indexNumber)
+            : this(fieldName, fieldValue, indexNumber, false)
+        {
+        }
+
+        public AssignObjectDTO(string fieldName, string fieldValue, int indexNumber, bool inserted)
         {
             _fieldName = fieldName;
             _fieldValue = fieldValue;
@@ -148,10 +153,10 @@ namespace Dev2.TO
 
         private void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
     }
 }

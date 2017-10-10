@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,10 @@ namespace Dev2.Util
         public bool HasMember(object value, string member)
         {
             if (value is JObject)
+            {
                 return (value as JObject).Properties().Any(property => property.Name == member);
+            }
+
             if (value is JArray)
             {
                 int index = ParseInt(member, -1);
@@ -47,11 +50,7 @@ namespace Dev2.Util
         public IEnumerable GetMembers(object value)
         {
             var jobject = value as JObject;
-            if (jobject == null)
-            {
-                return null;
-            }
-            return jobject.Properties().Select(property => property.Name);
+            return jobject?.Properties().Select(property => property.Name);
         }
 
         public bool IsObject(object value)
@@ -67,15 +66,16 @@ namespace Dev2.Util
         public bool IsPrimitive(object value)
         {
             if (value == null)
+            {
                 throw new ArgumentNullException("value");
+            }
 
             return !(value is JObject) && !(value is JArray);
         }
 
         private int ParseInt(string s, int defaultValue)
         {
-            int result;
-            return int.TryParse(s, out result) ? result : defaultValue;
+            return int.TryParse(s, out int result) ? result : defaultValue;
         }
     }
 }

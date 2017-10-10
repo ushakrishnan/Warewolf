@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,11 +19,11 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.DataList;
-using Dev2.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -31,7 +31,7 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 {
     public class FindRecordsMultipleCriteriaDesignerViewModel : ActivityCollectionDesignerViewModel<FindRecordsTO>
     {
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         readonly IList<string> _requiresSearchCriteria = new List<string> { "Doesn't Contain", "Contains", "=", "<> (Not Equal)", "Ends With", "Doesn't Start With", "Doesn't End With", "Starts With", "Is Regex", "Not Regex", ">", "<", "<=", ">=" };
 
         public FindRecordsMultipleCriteriaDesignerViewModel(ModelItem modelItem)
@@ -44,6 +44,7 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
             dynamic mi = ModelItem;
             InitializeItems(mi.ResultsCollection);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Recordset_Find_Records;
         }
 
         public override string CollectionName => "ResultsCollection";
@@ -80,14 +81,7 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
             var searchType = mi.GetProperty("SearchType") as string;
 
-            if(searchType == "Is Between" || searchType == "Not Between")
-            {
-                mi.SetProperty("IsSearchCriteriaVisible", false);
-            }
-            else
-            {
-                mi.SetProperty("IsSearchCriteriaVisible", true);
-            }
+            mi.SetProperty("IsSearchCriteriaVisible", searchType == "Is Between" || searchType == "Not Between" ? false : true);
 
             var requiresCriteria = _requiresSearchCriteria.Contains(searchType);
             mi.SetProperty("IsSearchCriteriaEnabled", requiresCriteria);
@@ -99,15 +93,15 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var error in GetRuleSet("FieldsToSearch").ValidateRules("'In Field(s)'", () => IsFieldsToSearchFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach(var error in GetRuleSet("Result").ValidateRules("'Result'", () => IsResultFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 yield return error;
             }
@@ -139,18 +133,15 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public IRuleSet GetRuleSet(string propertyName)
         {
             var ruleSet = new RuleSet();
 
-            switch(propertyName)
+            switch (propertyName)
             {
                 case "FieldsToSearch":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => FieldsToSearch));
@@ -162,7 +153,9 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
                 case "Result":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => Result));
-                    ruleSet.Add(new IsValidExpressionRule(() => Result, GetDatalistString(),"1"));
+                    ruleSet.Add(new IsValidExpressionRule(() => Result, GetDatalistString(), "1"));
+                    break;
+                default:
                     break;
             }
             return ruleSet;

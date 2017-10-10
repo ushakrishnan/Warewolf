@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,10 +17,11 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data;
 using Dev2.Data.ServiceModel;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Runtime.Hosting;
@@ -88,14 +89,13 @@ namespace Dev2.Runtime.ESB.Execution
 
         public override Guid Execute(out ErrorResultTO errors, int update)
         {
-            Dev2Logger.Info($"Starting Remote Execution. Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}");
+            Dev2Logger.Info($"Starting Remote Execution. Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}", GlobalConstants.WarewolfInfo);
 
             var serviceName = DataObject.ServiceName;
 
             errors = new ErrorResultTO();
 
-            // get data in a format we can send ;)
-            Dev2Logger.Debug("Creating DataList fragment for remote execute");
+            Dev2Logger.Debug("Creating DataList fragment for remote execute", GlobalConstants.WarewolfDebug);
             var dataListFragment = ExecutionEnvironmentUtils.GetXmlInputFromEnvironment(DataObject, DataObject.RemoteInvokeResultShape.ToString(), update);
 
             string result = string.Empty;
@@ -109,7 +109,6 @@ namespace Dev2.Runtime.ESB.Execution
 
             try
             {
-                // Invoke Remote WF Here ;)
                 result = ExecutePostRequest(connection, serviceName, dataListFragment);
                 IList<IDebugState> msg = DataObject.IsDebug ? FetchRemoteDebugItems(connection) : new List<IDebugState>();
                 DataObject.RemoteDebugItems = msg; // set them so they can be acted upon
@@ -118,14 +117,19 @@ namespace Dev2.Runtime.ESB.Execution
             {
                 var errorMessage = e.Message.Contains("Forbidden") ? "Executing a service requires Execute permissions" : e.Message;
                 DataObject.Environment.Errors.Add(errorMessage);
-                Dev2Logger.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
             }
 
             // Create tmpDL
-            ExecutionEnvironmentUtils.UpdateEnvironmentFromOutputPayload(DataObject, result.ToStringBuilder(), DataObject.RemoteInvokeResultShape.ToString(), update);
-            Dev2Logger.Info($"Completed Remote Execution. Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}");
+            ExecutionEnvironmentUtils.UpdateEnvironmentFromOutputPayload(DataObject, result.ToStringBuilder(), DataObject.RemoteInvokeResultShape.ToString());
+            Dev2Logger.Info($"Completed Remote Execution. Service Name:{DataObject.ServiceName} Resource Id:{DataObject.ResourceID} Mode:{(DataObject.IsDebug ? "Debug" : "Execute")}", GlobalConstants.WarewolfInfo);
 
             return Guid.Empty;
+        }
+
+        public override bool CanExecute(Guid resourceId, IDSFDataObject dataObject, AuthorizationContext authorizationContext)
+        {
+            return true;
         }
 
         private string ExecutePostRequest(Connection connection, string serviceName, string payload, bool isDebugMode = true)
@@ -134,16 +138,16 @@ namespace Dev2.Runtime.ESB.Execution
 
             var serviceToExecute = GetServiceToExecute(connection, serviceName);
             var req = BuildPostRequest(serviceToExecute, payload, connection.AuthenticationType, connection.UserName, connection.Password, isDebugMode);
-            Dev2Logger.Debug("Executing the remote request.");
+            Dev2Logger.Debug("Executing the remote request.", GlobalConstants.WarewolfDebug);
             if (req != null)
             {
                 using (var response = req.GetResponse() as HttpWebResponse)
                 {
                     if (response != null)
                     {
-                        // ReSharper disable AssignNullToNotNullAttribute
+                        
                         using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                        // ReSharper restore AssignNullToNotNullAttribute
+                        
                         {
                             result = reader.ReadToEnd();
                         }
@@ -205,16 +209,16 @@ namespace Dev2.Runtime.ESB.Execution
             var serviceToExecute = GetServiceToExecute(connection, serviceName);
             var requestUri = serviceToExecute + "?" + payload;
             var req = BuildGetWebRequest(requestUri, connection.AuthenticationType, connection.UserName, connection.Password, isDebugMode) ?? BuildPostRequest(serviceToExecute, payload, connection.AuthenticationType, connection.UserName, connection.Password, isDebugMode);
-            Dev2Logger.Debug("Executing the remote request.");
+            Dev2Logger.Debug("Executing the remote request.", GlobalConstants.WarewolfDebug);
             if (req != null)
             {
                 using (var response = req.GetResponse() as HttpWebResponse)
                 {
                     if (response != null)
                     {
-                        // ReSharper disable AssignNullToNotNullAttribute
+                        
                         using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                        // ReSharper restore AssignNullToNotNullAttribute
+                        
                         {
                             result = reader.ReadToEnd();
                         }
@@ -339,7 +343,7 @@ namespace Dev2.Runtime.ESB.Execution
             }
             try
             {
-                var returnData = ExecuteGetRequest(connection, "FindResourceService", $"ResourceType={"TypeWorkflowService"}&ResourceName={serviceName}&ResourceId={serviceId}", isDebugMode);
+                var returnData = ExecuteGetRequest(connection, "FindResourceService", $"ResourceType=TypeWorkflowService&ResourceName={serviceName}&ResourceId={serviceId}", isDebugMode);
                 if (!string.IsNullOrEmpty(returnData))
                 {
                     Dev2JsonSerializer serializer = new Dev2JsonSerializer();

@@ -6,7 +6,7 @@ using System.Windows.Input;
 using Dev2;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Microsoft.Practices.Prism.Mvvm;
 using Warewolf.Studio.Core;
@@ -40,7 +40,7 @@ namespace Warewolf.Studio.ViewModels.ToolBox
             BackedUpTools =
                 new ObservableCollection<IToolDescriptorViewModel>(
                     _remoteModel.GetTools().Select(a => new ToolDescriptorViewModel(a, _localModel.GetTools().Contains(a))));
-            Tools = BackedUpTools;
+            Tools = new AsyncObservableCollection<IToolDescriptorViewModel>(_backedUpTools);
         }
 
         public ICommand ClearFilterCommand { get; set; }
@@ -64,7 +64,7 @@ namespace Warewolf.Studio.ViewModels.ToolBox
             }
         }
 
-        // ReSharper disable once MemberCanBePrivate.Global
+        
         public ObservableCollection<IToolDescriptorViewModel> BackedUpTools
         {
             get { return _backedUpTools; }
@@ -110,7 +110,7 @@ namespace Warewolf.Studio.ViewModels.ToolBox
             set
             {
 
-                // ReSharper disable once PossibleUnintendedReferenceComparison
+                
                 if (value != _selectedTool)
                 {
                     _selectedTool = value;
@@ -131,6 +131,10 @@ namespace Warewolf.Studio.ViewModels.ToolBox
                     if (!string.IsNullOrWhiteSpace(value))
                     {
                         FilterItems(value.ToLowerInvariant());
+                    }
+                    else
+                    {
+                        Tools = new AsyncObservableCollection<IToolDescriptorViewModel>();
                     }
                 }
             }
@@ -162,28 +166,26 @@ namespace Warewolf.Studio.ViewModels.ToolBox
 
         #region Implementation of IDisposable
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-        // ReSharper disable UnusedParameter.Local
-        void Dispose(bool disposing)
-        // ReSharper restore UnusedParameter.Local
+                
+        void Dispose(bool disposing)        
         {
-            _localModel.OnserverDisconnected -= _localModel_OnserverDisconnected;
-            _remoteModel.OnserverDisconnected -= _remoteModel_OnserverDisconnected;
+            if (disposing)
+            {
+                _localModel.OnserverDisconnected -= _localModel_OnserverDisconnected;
+                _remoteModel.OnserverDisconnected -= _remoteModel_OnserverDisconnected;
+            }
         }
 
         #endregion
 
         public void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
             mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }

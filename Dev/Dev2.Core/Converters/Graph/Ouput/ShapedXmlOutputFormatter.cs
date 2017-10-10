@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
+using Dev2.Data.Interfaces;
 using Dev2.DataList.Contract;
 using Warewolf.Resource.Errors;
 
@@ -211,15 +212,14 @@ namespace Unlimited.Framework.Converters.Graph.Ouput
                 if (!string.IsNullOrWhiteSpace(path.OutputExpression))
                 {
                     string key = GetOutputDescriptionKey(path.OutputExpression);
-                    IList<IPath> dataSourceShapePaths;
 
-                    if (groupedPaths.TryGetValue(key, out dataSourceShapePaths))
+                    if (groupedPaths.TryGetValue(key, out IList<IPath> dataSourceShapePaths))
                     {
                         dataSourceShapePaths.Add(path);
                     }
                     else
                     {
-                        dataSourceShapePaths = new List<IPath> {path};
+                        dataSourceShapePaths = new List<IPath> { path };
                         groupedPaths.Add(key, dataSourceShapePaths);
                     }
                 }
@@ -244,14 +244,7 @@ namespace Unlimited.Framework.Converters.Graph.Ouput
 
             string key;
 
-            if (parts[0].Option.IsScalar)
-            {
-                key = parts[0].Option.Field;
-            }
-            else
-            {
-                key = parts[0].Option.Recordset + "()";
-            }
+            key = parts[0].Option.IsScalar ? parts[0].Option.Field : parts[0].Option.Recordset + "()";
 
             return key;
         }

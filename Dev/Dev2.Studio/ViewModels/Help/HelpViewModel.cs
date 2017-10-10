@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,24 +9,24 @@
 */
 
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using Caliburn.Micro;
 using Dev2.Common;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Helpers;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Dev2.Studio.Views.Help;
 using Dev2.ViewModels.Help;
 using Dev2.Webs.Callbacks;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces.Enums;
 
-// ReSharper disable CheckNamespace
+
+
+
 namespace Dev2.Studio.ViewModels.Help
-// ReSharper restore CheckNamespace
+
 {
     public class HelpViewModel : BaseWorkSurfaceViewModel
     {
@@ -84,12 +84,12 @@ namespace Dev2.Studio.ViewModels.Help
                 }
                 catch(Exception e)
                 {
-                    Dev2Logger.Error(e.Message,e);
+                    Dev2Logger.Error(e.Message,e, "Warewolf Error");
                 }
             }
         }
 
-        public async Task LoadBrowserUri(string uri)
+        public Task LoadBrowserUri(string uri)
         {
             Uri = uri;
 
@@ -100,49 +100,45 @@ namespace Dev2.Studio.ViewModels.Help
             else
             {
                 IsViewAvailable = true;
-
-                var hasConnection = await _network.HasConnectionAsync(uri);
-                if (hasConnection)
-                {
-
-
-                    HelpViewWrapper.WebBrowser.Navigated += (sender, args) => SuppressJavaScriptsErrors(HelpViewWrapper.WebBrowser);
-                    HelpViewWrapper.WebBrowser.LoadCompleted += (sender, args) => Execute.OnUIThread(() =>
-                                                                                                     {
-                                                                                                         HelpViewWrapper.CircularProgressBarVisibility = Visibility.Collapsed;
-                                                                                                         HelpViewWrapper.WebBrowserVisibility = Visibility.Visible;
-                                                                                                     });
-                    Execute.OnUIThread(() =>
-                    {
-                        HelpViewWrapper.Navigate(Uri);
-                    });
-
-                }
-                else
-                {
-                    ResourcePath = FileHelper.GetFullPath(StringResources.Uri_Studio_PageNotAvailable);
-                    Execute.OnUIThread(() =>
-                                       {
-                                           HelpViewWrapper.Navigate(ResourcePath);
-                                           HelpViewWrapper.CircularProgressBarVisibility = Visibility.Collapsed;
-                                           HelpViewWrapper.WebBrowserVisibility = Visibility.Visible;
-                                       });
-
-                }
+                SetupFailedNavigationEvent();
+                SetupLoadCompletedEvent();
+                SetupNavigationCompletdEvent();
+                Execute.OnUIThread(() => { HelpViewWrapper.Navigate(Uri); });
             }
+            return Task.FromResult(true);
         }
 
-        public void SuppressJavaScriptsErrors(WebBrowser webBrowser)
+        void SetupLoadCompletedEvent()
         {
-            FieldInfo fiComWebBrowser = typeof(WebBrowser).GetField("_axIWebBrowser2", BindingFlags.Instance | BindingFlags.NonPublic);
-            if(fiComWebBrowser == null)
+            HelpViewWrapper.WebBrowser.LoadCompleted += (sender, args) => Execute.OnUIThread(() =>
             {
-                return; 
-            }
+                HelpViewWrapper.CircularProgressBarVisibility = Visibility.Collapsed;
+                HelpViewWrapper.WebBrowserVisibility = Visibility.Visible;
+            });
+        }
 
-            object objComWebBrowser = fiComWebBrowser.GetValue(webBrowser);
-
-            objComWebBrowser?.GetType().InvokeMember("Silent", BindingFlags.SetProperty, null, objComWebBrowser, new object[] { true });
+        void SetupNavigationCompletdEvent()
+        {
+            HelpViewWrapper.WebBrowser.Navigated += (sender, args) =>
+            {
+                var navService = HelpViewWrapper.WebBrowser.NavigationService;
+                dynamic browser = navService.GetType().GetField("_webBrowser", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(navService);
+                dynamic iWebBrowser2 = browser.GetType().GetField("_axIWebBrowser2", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(browser);
+                iWebBrowser2.Silent = true;               
+            };
+        }
+        void SetupFailedNavigationEvent()
+        {
+            HelpViewWrapper.WebBrowser.NavigationService.NavigationFailed += (sender, args) =>
+            {
+                ResourcePath = FileHelper.GetFullPath(StringResources.Uri_Studio_PageNotAvailable);
+                Execute.OnUIThread(() =>
+                {
+                    HelpViewWrapper.Navigate(ResourcePath);
+                    HelpViewWrapper.CircularProgressBarVisibility = Visibility.Collapsed;
+                    HelpViewWrapper.WebBrowserVisibility = Visibility.Visible;
+                });
+            };
         }
 
         #region Overrides of Screen
@@ -154,7 +150,6 @@ namespace Dev2.Studio.ViewModels.Help
             if (close)
             {
                 EventPublisher.Unsubscribe(this);
-                HelpViewWrapper?.WebBrowser?.Dispose();
                 HelpViewDisposed = true;
             }
             base.OnDeactivate(close);

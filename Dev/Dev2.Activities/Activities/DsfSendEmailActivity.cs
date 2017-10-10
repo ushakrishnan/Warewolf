@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,8 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
@@ -33,10 +34,11 @@ using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Security.Encryption;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Utility-SendMail", "SMTP Send", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Email", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Email_SMTP Send_Tags")]
+    [ToolDescriptorInfo("Utility-SendMail", "SMTP Send", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Email", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Email_SMTP_Send")]
     public class DsfSendEmailActivity : DsfActivityAbstract<string>
     {
         #region Fields
@@ -52,7 +54,7 @@ namespace Dev2.Activities
         /// The property that holds all the conversions
         /// </summary>
 
-        // ReSharper disable MemberCanBePrivate.Global
+        
         public EmailSource SelectedEmailSource
         {
             get
@@ -70,7 +72,7 @@ namespace Dev2.Activities
                 }
             }
         }
-        // ReSharper restore MemberCanBePrivate.Global
+        
         [FindMissing]
         public string FromAccount { get; set; }
         [FindMissing]
@@ -98,7 +100,7 @@ namespace Dev2.Activities
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        // ReSharper disable once MemberCanBePrivate.Global
+        
         protected string DecryptedPassword => DataListUtil.NotEncrypted(Password) ? Password : DpapiWrapper.Decrypt(Password);
 
         [FindMissing]
@@ -108,9 +110,9 @@ namespace Dev2.Activities
         [FindMissing]
         public string Bcc { get; set; }
 
-        // ReSharper disable MemberCanBePrivate.Global
+        
         public enMailPriorityEnum Priority { get; set; }
-        // ReSharper restore MemberCanBePrivate.Global
+        
         [FindMissing]
         public string Subject { get; set; }
         [FindMissing]
@@ -118,7 +120,7 @@ namespace Dev2.Activities
         [FindMissing]
         public string Body { get; set; }
 
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        
         public bool IsHtml { get; set; }
 
         /// <summary>
@@ -158,6 +160,10 @@ namespace Dev2.Activities
 
         #endregion
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
 
         #region Overrides of DsfNativeActivity<string>
 
@@ -176,9 +182,9 @@ namespace Dev2.Activities
         /// When overridden runs the activity's execution logic
         /// </summary>
         /// <param name="context">The context to be used.</param>
-        // ReSharper disable MethodTooLong
+        
         protected override void OnExecute(NativeActivityContext context)
-            // ReSharper restore MethodTooLong
+            
         {
             IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
@@ -249,8 +255,7 @@ namespace Dev2.Activities
                 {
                     while(colItr.HasMoreData())
                     {
-                        ErrorResultTO errors;
-                        var result = SendEmail(runtimeSource, colItr, fromAccountItr, passwordItr, toItr, ccItr, bccItr, subjectItr, bodyItr, attachmentsItr, out errors);
+                        var result = SendEmail(runtimeSource, colItr, fromAccountItr, passwordItr, toItr, ccItr, bccItr, subjectItr, bodyItr, attachmentsItr, out ErrorResultTO errors);
                         allErrors.MergeErrors(errors);
                         if(!allErrors.HasErrors())
                         {
@@ -278,7 +283,7 @@ namespace Dev2.Activities
             }
             catch(Exception e)
             {
-                Dev2Logger.Error("DSFEmail", e);
+                Dev2Logger.Error("DSFEmail", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
 
@@ -320,16 +325,8 @@ namespace Dev2.Activities
         private int UpsertResult(int indexToUpsertTo, IExecutionEnvironment environment, string result, int update)
         {
             string expression;
-            if(DataListUtil.IsValueRecordset(Result) && DataListUtil.GetRecordsetIndexType(Result) == enRecordsetIndexType.Star)
-            {
-                expression = Result.Replace(GlobalConstants.StarExpression, indexToUpsertTo.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                expression = Result;
-            }
-            //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
-            foreach(var region in DataListCleaningUtils.SplitIntoRegions(expression))
+            expression = DataListUtil.IsValueRecordset(Result) && DataListUtil.GetRecordsetIndexType(Result) == enRecordsetIndexType.Star ? Result.Replace(GlobalConstants.StarExpression, indexToUpsertTo.ToString(CultureInfo.InvariantCulture)) : Result;
+            foreach (var region in DataListCleaningUtils.SplitIntoRegions(expression))
             {
                 environment.Assign(region, result, update);
                 indexToUpsertTo++;
@@ -337,9 +334,9 @@ namespace Dev2.Activities
             return indexToUpsertTo;
         }
 
-        // ReSharper disable TooManyArguments
+        
         string SendEmail(EmailSource runtimeSource, IWarewolfListIterator colItr, IWarewolfIterator fromAccountItr, IWarewolfIterator passwordItr, IWarewolfIterator toItr, IWarewolfIterator ccItr, IWarewolfIterator bccItr, IWarewolfIterator subjectItr, IWarewolfIterator bodyItr, IWarewolfIterator attachmentsItr, out ErrorResultTO errors)
-            // ReSharper restore TooManyArguments
+            
         {
             errors = new ErrorResultTO();
             var fromAccountValue = colItr.FetchNextValue(fromAccountItr);
@@ -351,8 +348,7 @@ namespace Dev2.Activities
             var bodyValue = colItr.FetchNextValue(bodyItr);
             var attachmentsValue = colItr.FetchNextValue(attachmentsItr);
             MailMessage mailMessage = new MailMessage { IsBodyHtml = IsHtml };
-            MailPriority priority;
-            if(Enum.TryParse(Priority.ToString(), true, out priority))
+            if (Enum.TryParse(Priority.ToString(), true, out MailPriority priority))
             {
                 mailMessage.Priority = priority;
             }
@@ -508,13 +504,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

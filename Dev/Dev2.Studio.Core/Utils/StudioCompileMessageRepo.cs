@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,23 +8,22 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common;
 using Dev2.Controller;
 using Dev2.Data.ServiceModel.Messages;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Utils
 {
     public interface IStudioCompileMessageRepo
     {
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         CompileMessageList GetCompileMessagesFromServer(IContextualResourceModel resourceModel);
     }
     public interface IStudioCompileMessageRepoFactory
     {
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         IStudioCompileMessageRepo Create();
     }
 

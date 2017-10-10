@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,12 +11,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Dev2.Common;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
-using Dev2.Runtime.Hosting;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
@@ -29,9 +30,37 @@ namespace Dev2.Tests.Runtime.Services
     public class GetVersionTest
     {
         [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getVersion = new GetVersion();
+
+            //------------Execute Test---------------------------
+            var resId = getVersion.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getVersion = new GetVersion();
+
+            //------------Execute Test---------------------------
+            var resId = getVersion.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+
+        [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_HandlesType")]
-// ReSharper disable InconsistentNaming
+
         public void GetVersions_HandlesType_ExpectName()
 
         {
@@ -235,4 +264,4 @@ namespace Dev2.Tests.Runtime.Services
 </Service>";
     }
 }
-// ReSharper restore InconsistentNaming
+

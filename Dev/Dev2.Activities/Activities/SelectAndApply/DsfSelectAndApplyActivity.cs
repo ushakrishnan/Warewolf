@@ -2,35 +2,50 @@
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using System;
 using System.Activities;
 using System.Collections.Generic;
+using System.Linq;
+using Dev2.Common.Interfaces;
+using Dev2.Data.TO;
+using Dev2.Diagnostics.Debug;
 using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable MemberCanBePrivate.Global
+
+
+
 
 namespace Dev2.Activities.SelectAndApply
 {
-    [ToolDescriptorInfo("SelectApply", "Select and apply", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8FA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Loop Constructs", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_LoopConstruct_Select and Apply_Tags")]
+   
+    [ToolDescriptorInfo("SelectApply", "Select and apply", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8FA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Loop Constructs", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_LoopConstruct_Select_and_Apply")]
     public class DsfSelectAndApplyActivity : DsfActivityAbstract<bool>
     {
+        private class NullDataSource : Exception
+        {
+
+        }
         public DsfSelectAndApplyActivity()
         {
             DisplayName = "Select and apply";
             ApplyActivityFunc = new ActivityFunc<string, bool>
             {
                 DisplayName = "Data Action",
-                Argument = new DelegateInArgument<string>(string.Format("explicitData_{0}", DateTime.Now.ToString("yyyyMMddhhmmss")))
+                Argument = new DelegateInArgument<string>($"explicitData_{DateTime.Now.ToString("yyyyMMddhhmmss")}")
             };
         }
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
+        }
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             metadata.AddDelegate(ApplyActivityFunc);
@@ -45,8 +60,9 @@ namespace Dev2.Activities.SelectAndApply
         public string Alias { get; set; }
         public ActivityFunc<string, bool> ApplyActivityFunc { get; set; }
 
-        private readonly object _selectApplyExecutionObject = new object();
         private string _previousParentId;
+        private Guid _originalUniqueID;
+        private string _childUniqueID;
 
         /// <summary>
         /// When overridden runs the activity's execution logic
@@ -59,7 +75,12 @@ namespace Dev2.Activities.SelectAndApply
         public override void UpdateDebugParentID(IDSFDataObject dataObject)
         {
             WorkSurfaceMappingId = Guid.Parse(UniqueID);
-            UniqueID = dataObject.ForEachNestingLevel > 0 ? Guid.NewGuid().ToString() : UniqueID;
+            var isNestedForEach = dataObject.ForEachNestingLevel > 0;
+            if (!isNestedForEach || _originalUniqueID == Guid.Empty)
+            {
+                _originalUniqueID = WorkSurfaceMappingId;
+            }
+            UniqueID = isNestedForEach ? Guid.NewGuid().ToString() : UniqueID;
         }
 
         protected override void OnBeforeExecute(NativeActivityContext context)
@@ -71,6 +92,7 @@ namespace Dev2.Activities.SelectAndApply
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
             throw new NotImplementedException();
+
         }
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
@@ -108,7 +130,6 @@ namespace Dev2.Activities.SelectAndApply
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
             ErrorResultTO allErrors = new ErrorResultTO();
             InitializeDebug(dataObject);
 
@@ -127,104 +148,172 @@ namespace Dev2.Activities.SelectAndApply
                 {
                     dataObject.Environment.AddError(fetchError);
                 }
-                return;
-            }
-            lock (_selectApplyExecutionObject)
-            {
-                var startTime = DateTime.Now;
-                _previousParentId = dataObject.ParentInstanceID;
-                _debugInputs = new List<DebugItem>();
-                _debugOutputs = new List<DebugItem>();
 
-                dataObject.ForEachNestingLevel++;
-                var ds = dataObject.Environment.ToStar(DataSource);
-                var expressions = dataObject.Environment.GetIndexes(ds);
-                if (expressions.Count == 0)
-                {
-                    expressions.Add(ds);
-                }
+            }
+            var startTime = DateTime.Now;
+            _previousParentId = dataObject.ParentInstanceID;
+            _debugInputs = new List<DebugItem>();
+            _debugOutputs = new List<DebugItem>();
+
+            dataObject.ForEachNestingLevel++;
+
+            List<string> expressions = new List<string>();
+            try
+            {
+                string ds;
                 try
                 {
-                    if(dataObject.IsDebugMode())
+                    ds = dataObject.Environment.ToStar(DataSource);
+                    expressions = dataObject.Environment.GetIndexes(ds);
+                    if (expressions.Count == 0)
                     {
-                        AddDebugInputItem(new DebugItemStaticDataParams(Alias, "As", DataSource));
-                    }
-                   
-                    var executionEnvironment = new ScopedEnvironment(dataObject.Environment, ds, Alias);
-
-                    //Push the new environment
-                    dataObject.PushEnvironment(executionEnvironment);
-                    dataObject.ForEachNestingLevel++;
-                    if(dataObject.IsDebugMode())
-                    {
-                        DispatchDebugState(dataObject, StateType.Before, update);
-                    }
-                    dataObject.ParentInstanceID = UniqueID;
-                    dataObject.IsDebugNested = true;
-                    if (dataObject.IsDebugMode())
-                    {
-                        DispatchDebugState(dataObject, StateType.After, update);
-                    }
-                    foreach(var exp in expressions)
-                    {
-
-                        //Assign the warewolfAtom to Alias using new environment
-                        executionEnvironment.SetDataSource(exp);
-
-                        var exeAct = ApplyActivityFunc.Handler as IDev2Activity;
-                        if(exeAct != null)
-                        {
-                            exeAct.Execute(dataObject, 0);
-                        }
+                        expressions.Add(ds);
                     }
                 }
-                catch (Exception e)
+                catch (NullReferenceException)
                 {
-                    Dev2Logger.Error("DSFSelectAndApply", e);
-                    allErrors.AddError(e.Message);
+                    //Do nothing exception aleady added to errors
+                    throw new NullDataSource();
                 }
-                finally
-                {
-                    dataObject.PopEnvironment();
 
-                    dataObject.ForEachNestingLevel--;
-                    if (allErrors.HasErrors())
+
+                if (dataObject.IsDebugMode())
+                {
+                    AddDebugInputItem(new DebugItemStaticDataParams(Alias, "As", DataSource));
+                }
+
+                var scopedEnvironment = new ScopedEnvironment(dataObject.Environment, ds, Alias);
+
+                //Push the new environment
+                dataObject.PushEnvironment(scopedEnvironment);
+                dataObject.ForEachNestingLevel++;
+                if (dataObject.IsDebugMode())
+                {
+                    DispatchDebugState(dataObject, StateType.Before, update);
+                }
+                dataObject.ParentInstanceID = UniqueID;
+                dataObject.IsDebugNested = true;
+                if (dataObject.IsDebugMode())
+                {
+                    DispatchDebugState(dataObject, StateType.After, update);
+                }
+
+                foreach (var exp in expressions)
+                {
+                    //Assign the warewolfAtom to Alias using new environment
+                    scopedEnvironment.SetDataSource(exp);
+
+                    if (ApplyActivityFunc.Handler is IDev2Activity exeAct)
                     {
-                        if (allErrors.HasErrors())
-                        {
-                            DisplayAndWriteError("DsfSelectAndApplyActivity", allErrors);
-                            foreach (var fetchError in allErrors.FetchErrors())
-                            {
-                                dataObject.Environment.AddError(fetchError);
-                            }
-                        }
+                        _childUniqueID = exeAct.UniqueID;
+                        exeAct.Execute(dataObject, 0);
                     }
-                    if (dataObject.IsDebugMode())
-                    {
-                        foreach(var expression in expressions)
-                        {
-                            var data = dataObject.Environment.Eval(expression, update, false);
-                            if (data.IsWarewolfAtomListresult)
-                            {
-                                var lst = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
-                                AddDebugOutputItem(new DebugItemWarewolfAtomListResult(lst, "", "", expression, "", "", "="));
-                            }
-                            else
-                            {
-                                if (data.IsWarewolfAtomResult)
-                                {
-                                    var atom = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
-                                    if (atom != null)
-                                        AddDebugOutputItem(new DebugItemWarewolfAtomResult(atom.Item.ToString(), expression, ""));
-                                }
-                            }
-                        }                        
-                        DispatchDebugState(dataObject, StateType.End, update, startTime,DateTime.Now);
-                    }
-                    dataObject.ParentInstanceID = _previousParentId;
-                    dataObject.IsDebugNested = false;
                 }
             }
+            catch (NullDataSource e)
+            {
+                Dev2Logger.Error("DSFSelectAndApply", e, GlobalConstants.WarewolfError);
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error("DSFSelectAndApply", e, GlobalConstants.WarewolfError);
+                allErrors.AddError(e.Message);
+            }
+            finally
+            {
+
+                if (dataObject.IsDebugMode())
+                {
+                    if (dataObject.IsServiceTestExecution)
+                    {
+                        var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
+                        var serviceTestSteps = serviceTestStep?.Children;
+                        UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList());
+                        if (serviceTestStep != null)
+                        {
+                            var testRunResult = new TestRunResult();
+                            GetFinalTestRunResult(serviceTestStep, testRunResult, dataObject);
+                            serviceTestStep.Result = testRunResult;
+
+                            var debugItems = TestDebugMessageRepo.Instance.GetDebugItems(dataObject.ResourceID, dataObject.TestName);
+                            debugItems = debugItems.Where(state => state.WorkSurfaceMappingId == serviceTestStep.UniqueId).ToList();
+                            var debugStates = debugItems.LastOrDefault();
+
+                            var debugItemStaticDataParams = new DebugItemServiceTestStaticDataParams(serviceTestStep.Result.Message, serviceTestStep.Result.RunTestResult == RunResult.TestFailed);
+                            DebugItem itemToAdd = new DebugItem();
+                            itemToAdd.AddRange(debugItemStaticDataParams.GetDebugItemResult());
+                            debugStates?.AssertResultList?.Add(itemToAdd);
+
+                        }
+                    }
+                }
+                dataObject.PopEnvironment();
+                dataObject.ForEachNestingLevel--;
+                if (allErrors.HasErrors())
+                {
+                    if (allErrors.HasErrors())
+                    {
+                        DisplayAndWriteError("DsfSelectAndApplyActivity", allErrors);
+                        foreach (var fetchError in allErrors.FetchErrors())
+                        {
+                            dataObject.Environment.AddError(fetchError);
+                        }
+                    }
+                }
+                if (dataObject.IsDebugMode())
+                {
+                    foreach (var expression in expressions)
+                    {
+                        var data = dataObject.Environment.Eval(expression, update);
+                        if (data.IsWarewolfAtomListresult)
+                        {
+                            var lst = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+                            AddDebugOutputItem(new DebugItemWarewolfAtomListResult(lst, "", "", expression, "", "", "="));
+                        }
+                        else
+                        {
+                            if (data.IsWarewolfAtomResult)
+                            {
+                                if (data is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atom)
+                                {
+                                    AddDebugOutputItem(new DebugItemWarewolfAtomResult(atom.Item.ToString(), expression, ""));
+                                }
+                            }
+                        }
+                    }
+
+                    DispatchDebugState(dataObject, StateType.End, update, startTime, DateTime.Now);
+                }
+                OnCompleted(dataObject);
+            }
+        }
+
+        private void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult, IDSFDataObject dataObject)
+        {
+            RegularActivityAssertion(dataObject, serviceTestStep);
+            var nonPassingSteps = serviceTestStep.Children?.Where(step => step.Result?.RunTestResult != RunResult.TestPassed).ToList();
+            if (nonPassingSteps != null && nonPassingSteps.Count == 0)
+            {
+                testRunResult.Message = Warewolf.Resource.Messages.Messages.Test_PassedResult;
+                testRunResult.RunTestResult = RunResult.TestPassed;
+            }
+            else
+            {
+                if (nonPassingSteps != null)
+                {
+                    var failMessage = string.Join(Environment.NewLine, nonPassingSteps.Select(step => step.Result.Message));
+                    testRunResult.Message = failMessage;
+                }
+                testRunResult.RunTestResult = RunResult.TestFailed;
+            }
+        }
+
+        void OnCompleted(IDSFDataObject dataObject)
+        {
+            dataObject.IsDebugNested = false;
+            dataObject.ParentInstanceID = _previousParentId;
+            dataObject.ForEachNestingLevel--;
+            UniqueID = _originalUniqueID.ToString();
         }
 
         public override enFindMissingType GetFindMissingType()
@@ -232,5 +321,13 @@ namespace Dev2.Activities.SelectAndApply
             return enFindMissingType.ForEach;
         }
         #endregion Overrides of DsfNativeActivity<bool>
+
+        private void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps)
+        {
+            ServiceTestHelper.UpdateDebugStateWithAssertions(dataObject, serviceTestTestSteps, _childUniqueID);
+
+        }
     }
+
+    
 }

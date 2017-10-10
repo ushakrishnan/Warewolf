@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.WebServices;
 using Dev2.Communication;
 using Dev2.DynamicServices;
@@ -16,14 +16,27 @@ using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 using Unlimited.Framework.Converters.Graph.Ouput;
 
+
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class TestWebService : IEsbManagementEndpoint
-    // ReSharper restore UnusedMember.Global
+    
     {
         IResourceCatalog _rescat;
         IWebServices _webServices;
+
+
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
@@ -32,15 +45,14 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
 
-                Dev2Logger.Info("Test DB Connection Service");
-                StringBuilder resourceDefinition;
+                Dev2Logger.Info("Test Web Connection Service", GlobalConstants.WarewolfInfo);
 
-                values.TryGetValue("WebService", out resourceDefinition);
+                values.TryGetValue("WebService", out StringBuilder resourceDefinition);
 
                 IWebService src = serializer.Deserialize<IWebService>(resourceDefinition);
-                // ReSharper disable MaximumChainedReferences
-                var parameters = src.Inputs == null ? new List<MethodParameter>() : src.Inputs.Select(a => new MethodParameter { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value }).ToList();
-                // ReSharper restore MaximumChainedReferences
+                
+                var parameters = src.Inputs?.Select(a => new MethodParameter { EmptyToNull = a.EmptyIsNull, IsRequired = a.RequiredField, Name = a.Name, Value = a.Value }).ToList() ?? new List<MethodParameter>();
+                
                 var requestHeaders = src.Headers.Select(nameValue => nameValue.Name + ":" + nameValue.Value).ToList();
                 var requestHeader = string.Join(";", requestHeaders).TrimEnd(':',';');
                 var res = new WebService
@@ -72,7 +84,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
 
             }
 

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,18 +19,16 @@ using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Data.ServiceModel;
-using Dev2.Interfaces;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.PubSubEvents;
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable VirtualMemberCallInContructor
-// ReSharper disable UnusedMember.Global
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+
+
+
+
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -38,7 +36,7 @@ namespace Warewolf.Studio.ViewModels
     {
         public IAsyncWorker AsyncWorker { get; set; }
         ISharepointServerSource _sharePointServiceSource;
-        private readonly IEnvironmentModel _environment;
+        private readonly IServer _environment;
         private readonly ISharePointSourceModel _updateManager;
         private string _serverName;
         private bool _isWindows;
@@ -61,7 +59,7 @@ namespace Warewolf.Studio.ViewModels
         private bool _isDisposed;
         readonly Task<IRequestServiceNameViewModel> _requestServiceNameViewModel;
 
-        public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, IEventAggregator aggregator, IAsyncWorker asyncWorker, IEnvironmentModel environment)
+        public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, IEventAggregator aggregator, IAsyncWorker asyncWorker, IServer environment)
             : base("SharepointServerSource")
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
@@ -71,9 +69,9 @@ namespace Warewolf.Studio.ViewModels
             _environment = environment;
             _updateManager = updateManager;
             _authenticationType = AuthenticationType.Windows;
-            _serverName = String.Empty;
-            _userName = String.Empty;
-            _password = String.Empty;
+            _serverName = string.Empty;
+            _userName = string.Empty;
+            _password = string.Empty;
             IsWindows = true;
             HeaderText = Resources.Languages.Core.SharePointServiceNewHeaderLabel;
             Header = Resources.Languages.Core.SharePointServiceNewHeaderLabel;
@@ -82,19 +80,42 @@ namespace Warewolf.Studio.ViewModels
             CancelTestCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(CancelTest, CanCancelTest);
         }
 
-        public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, Task<IRequestServiceNameViewModel> requestServiceNameViewModel, IEventAggregator aggregator, IAsyncWorker asyncWorker, IEnvironmentModel environment)
+        public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, Task<IRequestServiceNameViewModel> requestServiceNameViewModel, IEventAggregator aggregator, IAsyncWorker asyncWorker, IServer environment)
             : this(updateManager, aggregator, asyncWorker, environment)
         {
             VerifyArgument.IsNotNull("requestServiceNameViewModel", requestServiceNameViewModel);
             _requestServiceNameViewModel = requestServiceNameViewModel;
         }
-        public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, IEventAggregator aggregator, ISharepointServerSource sharePointServiceSource, IAsyncWorker asyncWorker, IEnvironmentModel environment)
+        public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, IEventAggregator aggregator, ISharepointServerSource sharePointServiceSource, IAsyncWorker asyncWorker, IServer environment)
             : this(updateManager, aggregator, asyncWorker, environment)
         {
             VerifyArgument.IsNotNull("sharePointServiceSource", sharePointServiceSource);
-            _sharePointServiceSource = sharePointServiceSource;
-            SetupHeaderTextFromExisting();
-            FromModel(sharePointServiceSource);
+
+            asyncWorker.Start(() => updateManager.FetchSource(sharePointServiceSource.Id), source =>
+            {
+                _sharePointServiceSource = source;
+                _sharePointServiceSource.Path = sharePointServiceSource.Path;
+                SetupHeaderTextFromExisting();
+                ToItem();
+                FromModel(source);
+            });
+
+        }
+
+        void ToItem()
+        {
+            Item = new SharePointServiceSourceDefinition()
+            {
+                Path = _sharePointServiceSource.Path,
+                Password = _sharePointServiceSource.Password,
+                UserName = _sharePointServiceSource.UserName,
+                AuthenticationType = _sharePointServiceSource.AuthenticationType,
+                Name = _sharePointServiceSource.Name,
+                IsSharepointOnline = _sharePointServiceSource.IsSharepointOnline,
+                Server = _sharePointServiceSource.Server,
+                Id = _sharePointServiceSource.Id,
+                
+            };
         }
 
         void SetupHeaderTextFromExisting()
@@ -134,25 +155,25 @@ namespace Warewolf.Studio.ViewModels
         public bool CanTest()
         {
             if (Testing)
+            {
                 return false;
-            if (String.IsNullOrEmpty(ServerName))
+            }
+
+            if (string.IsNullOrEmpty(ServerName))
             {
                 return false;
             }
             if (AuthenticationType == AuthenticationType.User)
             {
-                return !String.IsNullOrEmpty(UserName) && !String.IsNullOrEmpty(Password);
+                return !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password);
             }
             return true;
         }
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
-            if (mainViewModel != null)
-            {
-                mainViewModel.HelpViewModel.UpdateHelpText(helpText);
-            }
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         public override void FromModel(ISharepointServerSource sharepointServerSource)
@@ -165,7 +186,6 @@ namespace Warewolf.Studio.ViewModels
             IsSharepointOnline = sharepointServerSource.IsSharepointOnline;
         }
 
-
         public override string Name
         {
             get
@@ -177,7 +197,6 @@ namespace Warewolf.Studio.ViewModels
                 ResourceName = value;
             }
         }
-
 
         public string ResourceName
         {
@@ -206,6 +225,11 @@ namespace Warewolf.Studio.ViewModels
                     var src = ToSource();
                     src.Path = RequestServiceNameViewModel.ResourceName.Path ?? RequestServiceNameViewModel.ResourceName.Name;
                     Save(src);
+                    if (RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                    {
+                        AfterSave(RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
+                    }
+
                     Item = src;
                     _sharePointServiceSource = src;
                     SetupHeaderTextFromExisting();
@@ -245,7 +269,7 @@ namespace Warewolf.Studio.ViewModels
                 TestFailed = true;
                 TestPassed = false;
                 Testing = false;
-                TestMessage = exception != null ? exception.Message : "Failed";
+                TestMessage = GetExceptionMessage(exception);
             });
         }
 
@@ -271,13 +295,14 @@ namespace Warewolf.Studio.ViewModels
                 Password = Password,
                 UserName = UserName,
                 Name = ResourceName,
-                Id = _sharePointServiceSource == null ? Guid.NewGuid() : _sharePointServiceSource.Id
+                Id = _sharePointServiceSource?.Id ?? Guid.NewGuid()
             };
         }
 
         ISharepointServerSource ToSource()
         {
             if (_sharePointServiceSource == null)
+            {
                 return new SharePointServiceSourceDefinition
                 {
                     AuthenticationType = AuthenticationType,
@@ -286,9 +311,9 @@ namespace Warewolf.Studio.ViewModels
                     UserName = UserName,
                     Name = ResourceName,
                     IsSharepointOnline = IsSharepointOnline,
-                    Id = _sharePointServiceSource == null ? Guid.NewGuid() : _sharePointServiceSource.Id
+                    Id = _sharePointServiceSource?.Id ?? Guid.NewGuid()
                 };
-            // ReSharper disable once RedundantIfElseBlock
+            }
             else
             {
                 _sharePointServiceSource.AuthenticationType = AuthenticationType;
@@ -330,12 +355,11 @@ namespace Warewolf.Studio.ViewModels
                 {
                     return _requestServiceNameViewModel.Result;
                 }
-                // ReSharper disable once RedundantIfElseBlock
+                
                 else
                 {
                     throw _requestServiceNameViewModel.Exception;
                 }
-
             }
         }
 
@@ -489,12 +513,11 @@ namespace Warewolf.Studio.ViewModels
                 ViewModelUtils.RaiseCanExecuteChanged(SaveCommand);
             }
         }
+
         public string TestMessage
         {
             get { return _testMessage; }
-            // ReSharper disable UnusedMember.Local
-            private set
-            // ReSharper restore UnusedMember.Local
+            set
             {
                 _testMessage = value;
                 OnPropertyChanged(() => TestMessage);
@@ -514,10 +537,7 @@ namespace Warewolf.Studio.ViewModels
                 _testComplete = value;
                 OnPropertyChanged("TestComplete");
                 var command = SaveCommand as RelayCommand;
-                if (command != null)
-                {
-                    command.RaiseCanExecuteChanged();
-                }
+                command?.RaiseCanExecuteChanged();
             }
         }
         public bool Testing

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,16 +10,16 @@
 
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Providers.Validation.Rules;
 using Dev2.TO;
 using Dev2.Util;
 using Dev2.Utilities;
 using Dev2.Validation;
+using System;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
     public class FindRecordsTO : ValidatedObject, IDev2TOFn
     {
@@ -39,10 +39,20 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             : this("Match On", "Equal", 0)
         {
         }
-
-        // TODO: Remove WhereOptionList property - DO NOT USE FOR BINDING, USE VIEWMODEL PROPERTY INSTEAD!
+        
         public IList<string> WhereOptionList { get; set; }
-        public FindRecordsTO(string searchCriteria, string searchType, int indexNum, bool inserted = false, string from = "", string to = "")
+
+        public FindRecordsTO(string searchCriteria, string searchType, int indexNum)
+            : this(searchCriteria, searchType, indexNum, false, "", "")
+        {
+        }
+
+        public FindRecordsTO(string searchCriteria, string searchType, int indexNum, bool inserted)
+            : this(searchCriteria, searchType, indexNum, inserted, "", "")
+        {
+        }
+
+        public FindRecordsTO(string searchCriteria, string searchType, int indexNum, bool inserted, string from, string to)
         {
             Inserted = inserted;
             SearchCriteria = searchCriteria;
@@ -131,10 +141,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         void RaiseCanAddRemoveChanged()
         {
-            // ReSharper disable ExplicitCallerInfoArgument
+            
             OnPropertyChanged("CanRemove");
             OnPropertyChanged("CanAdd");
-            // ReSharper restore ExplicitCallerInfoArgument
+            
         }
 
         public bool IsSearchCriteriaEnabled
@@ -237,6 +247,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
      
                     ruleSet.Add(new IsValidExpressionRule(() => SearchCriteria, datalist, "1"));
                     break;
+                default:
+                    throw new ArgumentException("Unrecognized Property Name: " + propertyName);
             }
 
             return ruleSet;

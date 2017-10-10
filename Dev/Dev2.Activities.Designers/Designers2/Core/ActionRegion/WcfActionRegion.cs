@@ -3,7 +3,6 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -12,7 +11,8 @@ using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ToolBase;
 using Dev2.Studio.Core.Activities.Utils;
 using Warewolf.Core;
-// ReSharper disable ExplicitCallerInfoArgument
+
+
 
 namespace Dev2.Activities.Designers2.Core.ActionRegion
 {
@@ -25,7 +25,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         readonly Dictionary<string, IList<IToolRegion>> _previousRegions = new Dictionary<string, IList<IToolRegion>>();
         private Action _sourceChangedAction;
         private IWcfAction _selectedAction;
-        private IWcfServiceModel _model;
+        private readonly IWcfServiceModel _model;
         private ICollection<IWcfAction> _actions;
         private bool _isActionEnabled;
         private bool _isRefreshing;
@@ -85,8 +85,8 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             {
                 Errors.Clear();
                 IsRefreshing = true;
-                // ReSharper disable once ExplicitCallerInfoArgument
-                if (_source != null && _source.SelectedSource != null)
+                
+                if (_source?.SelectedSource != null)
                 {
                     Actions = _model.GetActions(_source.SelectedSource);
                     SelectedAction = null;
@@ -94,7 +94,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                     IsEnabled = true;
                 }
                 IsRefreshing = false;
-                // ReSharper disable once ExplicitCallerInfoArgument
+                
                 OnPropertyChanged(@"IsEnabled");
             }
             catch (Exception e)
@@ -111,10 +111,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         private void CallErrorsEventHandler()
         {
-            if (ErrorsHandler != null)
-            {
-                ErrorsHandler(this, new List<string>(Errors));
-            }
+            ErrorsHandler?.Invoke(this, new List<string>(Errors));
         }
 
         IWcfAction Method
@@ -129,7 +126,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         public bool CanRefresh()
         {
             IsActionEnabled = _source.SelectedSource != null;
-            return _source != null && _source.SelectedSource != null;
+            return _source?.SelectedSource != null;
         }
 
         public IWcfAction SelectedAction
@@ -143,11 +140,12 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 if (!Equals(value, _selectedAction) && _selectedAction != null)
                 {
                     if (!String.IsNullOrEmpty(_selectedAction.Method))
+                    {
                         StorePreviousValues(_selectedAction.GetHashCodeBySource());
+                    }
                 }
                 var outputs = Dependants.FirstOrDefault(a => a is IOutputsToolRegion);
-                var region = outputs as OutputsRegion;
-                if (region != null)
+                if (outputs is OutputsRegion region)
                 {
                     region.Outputs = new ObservableCollection<IServiceOutputMapping>();
                     region.RecordsetName = String.Empty;
@@ -174,10 +172,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 OnSomethingChanged(this);
             }
             var delegateCommand = RefreshActionsCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
-            if (delegateCommand != null)
-            {
-                delegateCommand.RaiseCanExecuteChanged();
-            }
+            delegateCommand?.RaiseCanExecuteChanged();
 
             _selectedAction = value;
         }
@@ -269,7 +264,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
                 IsEnabled = IsEnabled,
                 SelectedAction = SelectedAction == null ? null : new WcfAction()
                 {
-                    Inputs = SelectedAction == null ? null : SelectedAction.Inputs.Select(a => new ServiceInput(a.Name, a.Value) as IServiceInput).ToList(),
+                    Inputs = SelectedAction?.Inputs.Select(a => new ServiceInput(a.Name, a.Value) as IServiceInput).ToList(),
                     FullName = SelectedAction.FullName,
                     Method = SelectedAction.Method
                 }
@@ -278,8 +273,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         public void RestoreRegion(IToolRegion toRestore)
         {
-            var region = toRestore as WcfActionMemento;
-            if (region != null)
+            if (toRestore is WcfActionMemento region)
             {
                 SelectedAction = region.SelectedAction;
                 RestoreIfPrevious(region.SelectedAction);
@@ -361,19 +355,13 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            handler?.Invoke(this, args);
         }
     }
 
@@ -433,24 +421,18 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         #endregion
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         protected virtual void OnSomethingChanged(IToolRegion args)
         {
             var handler = SomethingChanged;
-            if (handler != null)
-            {
-                handler(this, args);
-            }
+            handler?.Invoke(this, args);
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

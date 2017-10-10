@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +21,9 @@ namespace Dev2.Activities.Designers2.DataMerge
             DataGrid = SmallDataGrid;
         }
 
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
+        
         public ICommand MergeTypeUpdatedCommand { get; private set; }
-        // ReSharper restore UnusedAutoPropertyAccessor.Local
+        
 
         protected override IInputElement GetInitialFocusElement()
         {

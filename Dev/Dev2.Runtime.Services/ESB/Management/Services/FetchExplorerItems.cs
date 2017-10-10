@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
@@ -20,13 +21,24 @@ using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
+using System.Threading.Tasks;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class FetchExplorerItems : IEsbManagementEndpoint
     {
-        private IExplorerServerResourceRepository _serverExplorerRepository;
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
 
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+
+        private IExplorerServerResourceRepository _serverExplorerRepository;
+      
         public string HandlesType()
         {
             return "FetchExplorerItemsService";
@@ -34,7 +46,7 @@ namespace Dev2.Runtime.ESB.Management.Services
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2Logger.Info("Fetch Explorer Items");
+            Dev2Logger.Info("Fetch Explorer Items", GlobalConstants.WarewolfInfo);
 
             var serializer = new Dev2JsonSerializer();
             try
@@ -43,9 +55,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     throw new ArgumentNullException(nameof(values));
                 }
-                StringBuilder tmp;
-                values.TryGetValue("ReloadResourceCatalogue", out tmp);
-                String reloadResourceCatalogueString = "";
+                values.TryGetValue("ReloadResourceCatalogue", out StringBuilder tmp);
+                string reloadResourceCatalogueString = "";
                 if (tmp != null)
                 {
                     reloadResourceCatalogueString = tmp.ToString();
@@ -61,19 +72,38 @@ namespace Dev2.Runtime.ESB.Management.Services
                 }
                 if (reloadResourceCatalogue)
                 {
-                    ResourceCatalog.Instance.Reload();
+                    var exeManager = CustomContainer.Get<IExecutionManager>();
+                    if (exeManager != null)
+                    {
+                        if (!exeManager.IsRefreshing)
+                        {
+                            exeManager.StartRefresh();
+                            ResourceCatalog.Instance.Reload();
+                            exeManager.StopRefresh();                            
+                        }                        
+                    }
                 }
-                var item = ServerExplorerRepo.Load(GlobalConstants.ServerWorkspaceID, reloadResourceCatalogue);
-                CompressedExecuteMessage message = new CompressedExecuteMessage();
-                message.SetMessage(serializer.Serialize(item));
-                return serializer.SerializeToBuilder(message);
+                return serializer.SerializeToBuilder(GetExplorerItems(serializer, reloadResourceCatalogue));
             }
             catch (Exception e)
             {
-                Dev2Logger.Info("Fetch Explorer Items Error", e);
+                Dev2Logger.Info("Fetch Explorer Items Error", e, GlobalConstants.WarewolfInfo);
                 IExplorerRepositoryResult error = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
                 return serializer.SerializeToBuilder(error);
             }
+            finally
+            {
+                var exeManager = CustomContainer.Get<IExecutionManager>();
+                exeManager?.StopRefresh();
+            }
+        }
+
+        private CompressedExecuteMessage GetExplorerItems(Dev2JsonSerializer serializer, bool reloadResourceCatalogue)
+        {
+            var item = ServerExplorerRepo.Load(GlobalConstants.ServerWorkspaceID, reloadResourceCatalogue);
+            CompressedExecuteMessage message = new CompressedExecuteMessage();
+            message.SetMessage(serializer.Serialize(item));
+            return message;
         }
 
         public DynamicService CreateServiceEntry()

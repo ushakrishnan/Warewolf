@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,10 +8,12 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.DynamicServices;
@@ -29,7 +31,23 @@ namespace Dev2.Runtime.ESB.Management.Services
         private IServerSchedulerFactory _schedulerFactory;
         ISecurityWrapper _securityWrapper;
         private IResourceCatalog _catalog;
+        
+        
+        
+        public DeleteScheduledResource()
+        {
 
+        }
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Administrator;
+        }
         public string HandlesType()
         {
             return "DeleteScheduledResourceService";
@@ -38,15 +56,14 @@ namespace Dev2.Runtime.ESB.Management.Services
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             var result = new ExecuteMessage { HasError = false };
-            Dev2Logger.Info("Delete Scheduled Resource Service");
-            StringBuilder tmp;
-            values.TryGetValue("Resource", out tmp);
+            Dev2Logger.Info("Delete Scheduled Resource Service", GlobalConstants.WarewolfInfo);
+            values.TryGetValue("Resource", out StringBuilder tmp);
             var serializer = new Dev2JsonSerializer();
 
             if (tmp != null)
             {
                 var res = serializer.Deserialize<IScheduledResource>(tmp);
-                Dev2Logger.Info("Delete Scheduled Resource Service." + res);
+                Dev2Logger.Info("Delete Scheduled Resource Service." + res, GlobalConstants.WarewolfInfo);
                 using (var model = SchedulerFactory.CreateModel(GlobalConstants.SchedulerFolderId, SecurityWrapper))
                 {
                     model.DeleteSchedule(res);
@@ -54,7 +71,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             else
             {
-                Dev2Logger.Info("Delete Scheduled Resource Service. No Resource Selected");
+                Dev2Logger.Info("Delete Scheduled Resource Service. No Resource Selected", GlobalConstants.WarewolfInfo);
                 result.Message.Append("No Resource Selected");
                 result.HasError = true;
             }

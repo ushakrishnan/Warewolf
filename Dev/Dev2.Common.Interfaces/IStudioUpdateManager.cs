@@ -1,10 +1,11 @@
+using System;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
 using Dev2.Common.Interfaces.WebServices;
-using System;
 using System.Collections.Generic;
 using System.Data;
+using Dev2.Common.Interfaces.Deploy;
 
 namespace Dev2.Common.Interfaces
 {
@@ -12,20 +13,14 @@ namespace Dev2.Common.Interfaces
     {
         void Save(IServerSource serverSource);
         void Save(IDbSource toDbSource);
-        void Save(IWebService model);
         void Save(IWebServiceSource model);
-        void Save(IDatabaseService toDbSource);
         void Save(IPluginSource source);
         void Save(IComPluginSource source);
         void Save(IEmailServiceSource emailServiceSource);
         void Save(IExchangeSource emailServiceSource);
         void Save(ISharepointServerSource sharePointServiceSource);
         void Save(IRabbitMQServiceSourceDefinition rabbitMqServiceSource);
-        void Save(IWcfServerSource wcfSource);
-        void Save(IPluginService toDbSource);
-        void Save(IComPluginService toDbSource);
-        void Save(IWcfService toSource);
-        
+        void Save(IWcfServerSource wcfSource);        
         void Save(IOAuthSource sharePointServiceSource);
     }
 
@@ -48,14 +43,11 @@ namespace Dev2.Common.Interfaces
     public interface IStudioUpdateManager : IStudioUpdateManagerSave, IStudioUpdateManagerTest
     {
         string TestConnection(IWcfServerSource wcfServerSource);
-        event Action<IWebServiceSource> WebServiceSourceSaved;
-        event ItemSaved ItemSaved;
-        event ServerSaved ServerSaved;
-        void FireItemSaved(bool forcedRefresh);
-        void FireServerSaved();
-        event Action<IDbSource> DatabaseServiceSourceSaved;
-        event Action<IPluginSource> PluginServiceSourceSaved;
-        event Action<IEmailServiceSource> EmailServiceSourceSaved;
+        Action<Guid, bool> ServerSaved { get; set; }
+        void FireServerSaved(Guid savedServerID);
+        void FireServerSaved(Guid savedServerID, bool isDeleted);
+
+        List<IDeployResult> Deploy(List<Guid> resourceIDsToDeploy, bool deployTests, IConnection destinationEnvironment);
     }
 
     public delegate void ItemSaved(bool refresh);

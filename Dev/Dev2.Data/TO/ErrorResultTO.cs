@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ using Dev2.Common;
 using Dev2.Common.Interfaces.Data.TO;
 using Warewolf.Resource.Errors;
 
-namespace Dev2.DataList.Contract
+namespace Dev2.Data.TO
 {
     [Serializable]
     public class ErrorResultTO : IErrorResultTO
@@ -29,7 +29,8 @@ namespace Dev2.DataList.Contract
         /// </summary>
         /// <param name="msg">The MSG.</param>
         /// <param name="checkForDuplicates"></param>
-        public void AddError(string msg, bool checkForDuplicates = false)
+        public void AddError(string msg) => AddError(msg, false);
+        public void AddError(string msg, bool checkForDuplicates)
         {
             if(!string.IsNullOrEmpty(msg))
             {
@@ -74,7 +75,7 @@ namespace Dev2.DataList.Contract
         /// Merges the errors.
         /// </summary>
         /// <param name="toMerge">To merge.</param>
-        public void MergeErrors(ErrorResultTO toMerge)
+        public void MergeErrors(IErrorResultTO toMerge)
         {
             if (toMerge != null && toMerge.HasErrors())
             {
@@ -116,11 +117,12 @@ namespace Dev2.DataList.Contract
         /// Makes the error collection data list insert ready.
         /// </summary>
         /// <returns></returns>
-        public string MakeDataListReady(bool AsXML = true)
+        public string MakeDataListReady() => MakeDataListReady(true);
+        public string MakeDataListReady(bool asXml)
         {
             StringBuilder result = new StringBuilder();
 
-            if(!AsXML)
+            if(!asXml)
             {
                 result.Append("\"errors\": [ ");
             }
@@ -129,7 +131,7 @@ namespace Dev2.DataList.Contract
             foreach(string e in _errorList)
             {
                 var formattedMsg = FormatErrorMessage(e);
-                if(AsXML)
+                if(asXml)
                 {
                     result.Append(GlobalConstants.InnerErrorTag);
                     result.Append(formattedMsg);
@@ -150,7 +152,7 @@ namespace Dev2.DataList.Contract
                 }
             }
 
-            if(!AsXML)
+            if(!asXml)
             {
                 result.Append("]");
             }

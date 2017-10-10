@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,22 +14,21 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Dev2.Common.Interfaces;
 using Dev2.Core.Tests;
-using Dev2.Data.Interfaces;
 using Dev2.Data.Util;
 using Dev2.Intellisense;
 using Dev2.Intellisense.Helper;
 using Dev2.Intellisense.Provider;
-using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.DataList;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Models;
 using Dev2.Studio.Core.Specs.Helper;
 using Dev2.Studio.InterfaceImplementors;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechTalk.SpecFlow;
-
+using Dev2.Studio.Interfaces.Enums;
+using Dev2.Data.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 
 namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
 {
@@ -128,7 +127,7 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
         {
             IIntellisenseProvider provider = new DefaultIntellisenseProvider();
 
-            switch(providerName.Trim())
+            switch (providerName.Trim())
             {
                 case "Calculate":
                     provider = new CalculateIntellisenseProvider();
@@ -140,6 +139,8 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
                     break;
                 case "DateTime":
                     provider = new DateTimeIntellisenseProvider();
+                    break;
+                default:
                     break;
             }
 
@@ -171,6 +172,15 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
             Assert.AreEqual(!actualist.Any(),bool.Parse(p0));
         }
 
+        [Then(@"the result has the error '(.*)'")]
+        public void ThenTheResultHasTheError(string errorMessage)
+        {
+            var inputText = ScenarioContext.Current.Get<string>("inputText");
+            var error = IntellisenseStringProvider.parseLanguageExpressionAndValidate(inputText);
+            Assert.AreEqual(errorMessage.TrimEnd(' '), error.Item2.TrimEnd(' '));
+        }
+
+
         [Given(@"the options as '(.*)'")]
         public void GivenTheOptionsAs(string option)
         {
@@ -178,6 +188,9 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
             //provider.VariableList = new ObservableCollection<string>( ScenarioContext.Current["datalistOptions"] as IEnumerable<string>);
             //provider.GetSuggestions(option);
         }
+
+
+       
 
         [Given(@"the suggestion list as '(.*)'")]
         public void GivenTheSuggestionListAs(string p0)
@@ -189,7 +202,10 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
             var options = provider.GetSuggestions(ScenarioContext.Current["inputText"].ToString(), caretpos, true,filterType);
             var selected = p0.Split(new char[] { ',' });
              if(p0=="" && !options.Any())
-                 return;
+            {
+                return;
+            }
+
             bool all = true;
             foreach(var a in selected)
             {
@@ -245,11 +261,10 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
         {
             var context = ScenarioContext.Current.Get<IntellisenseProviderContext>("context");
             string result;
-            bool isFileProvider;
 
-            if(ScenarioContext.Current.TryGetValue("isFileProvider", out isFileProvider))
+            if (ScenarioContext.Current.TryGetValue("isFileProvider", out bool isFileProvider))
             {
-                if(DataListUtil.IsEvaluated(option) || string.IsNullOrEmpty(option))
+                if (DataListUtil.IsEvaluated(option) || string.IsNullOrEmpty(option))
                 {
                     result = new DefaultIntellisenseProvider().PerformResultInsertion(option, context);
                 }
@@ -304,7 +319,7 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
         public void ThenTheResultTextShouldBeWithCaretPositionWillBe(string p0, int p1)
         {
            var res =  ScenarioContext.Current["stringResult"] as IIntellisenseStringResult;
-            // ReSharper disable once PossibleNullReferenceException
+            
             Assert.AreEqual(res.Result,p0);
             Assert.AreEqual(p1,res.CaretPosition);
         }

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
@@ -16,15 +16,24 @@ namespace Dev2.Runtime.ESB.Management.Services
     /// <summary>
     /// Find Server Username
     /// </summary>
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class FetchServerPermissions : IEsbManagementEndpoint
     {
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Any;
+        }
+        
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
             {
-                Dev2Logger.Info("Find Server User Name");
-
+                Dev2Logger.Info("Find Server User Name", GlobalConstants.WarewolfInfo);
                 var user = Thread.CurrentPrincipal;
                 var permissionsMemo = new PermissionsModifiedMemo
                 {
@@ -36,7 +45,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch (Exception err)
             {
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
                 throw;
             }
         }

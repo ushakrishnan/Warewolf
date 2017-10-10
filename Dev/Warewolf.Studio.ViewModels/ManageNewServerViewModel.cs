@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,11 +20,9 @@ using System.Windows.Threading;
 using Dev2;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.SaveDialog;
 using Dev2.Common.Interfaces.Threading;
-using Dev2.ConnectionHelpers;
-using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
+using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Microsoft.Practices.Prism.PubSubEvents;
 
@@ -91,40 +89,25 @@ namespace Warewolf.Studio.ViewModels
             : this(updateManager, aggregator, asyncWorker, executor)
         {
             VerifyArgument.IsNotNull("serverSource", serverSource);
-            _serverSource = serverSource;
+
             _warewolfserverName = updateManager.ServerName;
-
-            Item = new ServerSource
+            AsyncWorker.Start(() => updateManager.FetchSource(serverSource.ID), source =>
             {
-                AuthenticationType = _serverSource.AuthenticationType,
-                ID = _serverSource.ID,
-                Name = _serverSource.Name,
-                Password = _serverSource.Password,
-                ResourcePath = _serverSource.ResourcePath,
-                ServerName = _serverSource.ServerName,
-                UserName = _serverSource.UserName,
-                Address = _serverSource.Address
-            };
-
-            GetLoadComputerNamesTask(() =>
-                {
-                    FromModel(_serverSource);
-                    SetupHeaderTextFromExisting();
-                }
-            );
-            if (string.IsNullOrEmpty(TestMessage))
-            {
-                FromModel(_serverSource);
-            }
+                _serverSource = source;
+                _serverSource.ResourcePath = serverSource.ResourcePath;
+                GetLoadComputerNamesTask(() =>
+                    {
+                        FromModel(_serverSource);
+                        Item = ToModel();
+                        SetupHeaderTextFromExisting();
+                    }
+                );
+            });
         }
 
         void SetupHeaderTextFromExisting()
         {
-            if (_warewolfserverName != null)
-            {
-            }
             HeaderText = (_serverSource == null ? ResourceName : _serverSource.Name).Trim();
-
             Header = _serverSource == null ? ResourceName : _serverSource.Name;
         }
 
@@ -146,7 +129,10 @@ namespace Warewolf.Studio.ViewModels
             int portIndex = GetSpecifiedIndexOf(source.Address, ':', 2);
             var ports = source.Address.Substring(portIndex + 1).Split('/');
             if (ports.Any())
+            {
                 SelectedPort = ports[0];
+            }
+
             Address = source.Address;
             Password = source.Password;
             Header = ResourceName;
@@ -157,7 +143,11 @@ namespace Warewolf.Studio.ViewModels
             int i = 0, o = 1;
             while ((i = str.IndexOf(ch, i)) != -1)
             {
-                if (o == index) return i;
+                if (o == index)
+                {
+                    return i;
+                }
+
                 o++;
                 i++;
             }
@@ -258,14 +248,20 @@ namespace Warewolf.Studio.ViewModels
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var res = RequestServiceNameViewModel.Result.ShowSaveDialog();
+                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+                    var res = requestServiceNameViewModel.ShowSaveDialog();
 
                     if (res == MessageBoxResult.OK)
                     {
-                        ResourceName = RequestServiceNameViewModel.Result.ResourceName.Name;
+                        ResourceName = requestServiceNameViewModel.ResourceName.Name;
                         var src = ToSource();
-                        src.ResourcePath = RequestServiceNameViewModel.Result.ResourceName.Path ?? RequestServiceNameViewModel.Result.ResourceName.Name;
+                        src.ResourcePath = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(src);
+                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                        {
+                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ID);
+                        }
+
                         Item = src;
                         _serverSource = src;
                         SetupHeaderTextFromExisting();
@@ -293,7 +289,6 @@ namespace Warewolf.Studio.ViewModels
         public override void Save()
         {
             SaveConnection();
-            ConnectControlSingleton.Instance.ReloadServer();
         }
 
         public override IServerSource ToModel()
@@ -317,7 +312,6 @@ namespace Warewolf.Studio.ViewModels
 
         IServerSource ToNewSource()
         {
-
             return new ServerSource
             {
                 AuthenticationType = AuthenticationType,
@@ -332,16 +326,18 @@ namespace Warewolf.Studio.ViewModels
         IServerSource ToSource()
         {
             if (_serverSource == null)
+            {
                 return new ServerSource
                 {
                     Address = GetAddressName(),
                     AuthenticationType = AuthenticationType,
                     Name = ResourceName,
+                    UserName = UserName,
                     Password = Password,
                     ID = _serverSource?.ID ?? SelectedGuid
                 }
             ;
-            // ReSharper disable once RedundantIfElseBlock
+            }
             else
             {
                 _serverSource.AuthenticationType = AuthenticationType;
@@ -355,14 +351,17 @@ namespace Warewolf.Studio.ViewModels
         public bool CanTest()
         {
             if (Testing)
+            {
                 return false;
-            if (String.IsNullOrEmpty(Address))
+            }
+
+            if (string.IsNullOrEmpty(Address))
             {
                 return false;
             }
             if (AuthenticationType == AuthenticationType.User)
             {
-                return !String.IsNullOrEmpty(UserName) && !String.IsNullOrEmpty(Password);
+                return !string.IsNullOrEmpty(UserName) && !string.IsNullOrEmpty(Password);
             }
             return true;
         }
@@ -405,7 +404,7 @@ namespace Warewolf.Studio.ViewModels
             _token, exception =>
             {
                 FailedTesting();
-                TestMessage = exception?.Message ?? "Failed";
+                TestMessage = GetExceptionMessage(exception);
             });
         }
 
@@ -534,9 +533,7 @@ namespace Warewolf.Studio.ViewModels
         public string TestMessage
         {
             get { return _testMessage; }
-            // ReSharper disable UnusedMember.Local
-            private set
-            // ReSharper restore UnusedMember.Local
+            set
             {
                 _testMessage = value;
                 OnPropertyChanged(() => TestMessage);
@@ -639,8 +636,10 @@ namespace Warewolf.Studio.ViewModels
                     {
                         SelectedPort = "3142";
                     }
-                    OnPropertyChanged(Protocol);
+
                 }
+
+                OnPropertyChanged(() => Protocol);
             }
         }
 
@@ -665,7 +664,7 @@ namespace Warewolf.Studio.ViewModels
 
         public override void UpdateHelpDescriptor(string helpText)
         {
-            var mainViewModel = CustomContainer.Get<IMainViewModel>();
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
             mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
@@ -718,5 +717,7 @@ namespace Warewolf.Studio.ViewModels
 
 
         string ServerName { get; set; }
+
+        IServerSource FetchSource(Guid resourceID);
     }
 }

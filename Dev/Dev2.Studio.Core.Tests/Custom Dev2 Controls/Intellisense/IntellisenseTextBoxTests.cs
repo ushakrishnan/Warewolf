@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,22 +13,23 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Core.Tests.Utils;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.ViewModels.DataList;
 using Dev2.UI;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 
-// ReSharper disable InconsistentNaming
-// ReSharper disable CheckNamespace
+
+
 namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
-// ReSharper restore CheckNamespace
+
 {
     [TestClass]
     [ExcludeFromCodeCoverage]
@@ -53,23 +54,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
 
         #region Test Initialization
 
-        //BUG 9639
-        [TestMethod]
-        // This test is here for when the designers load. The check is to prevent them from hammering the providers on load ;)
-        public void IntellisenseBoxDoesntQueryProvidersWhenTextLengthIsZero()
-        {
-
-            Mock<IIntellisenseProvider> intellisenseProvider = new Mock<IIntellisenseProvider>();
-            intellisenseProvider.Setup(a => a.GetIntellisenseResults(It.IsAny<IntellisenseProviderContext>())).Verifiable();
-
-            IntellisenseTextBox textBox = new IntellisenseTextBox();
-            textBox.CreateVisualTree();
-            textBox.IntellisenseProvider = intellisenseProvider.Object;
-            textBox.Text = "";
-
-            // Ensure the get results method is never called, mimics a initalize event from the design surface ;)
-            intellisenseProvider.Verify(s => s.GetIntellisenseResults(It.IsAny<IntellisenseProviderContext>()), Times.Exactly(0));
-        }
+     
 
 
         [TestMethod]
@@ -86,10 +71,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
 
             // When exceptions are thrown, no results are to be displayed
             Assert.AreEqual(0, textBox.View.Count);
-            //The desired result is that an exception isn't thrown
-
-
-            // GetIntellisenseResults -> OnIntellisenseProviderChanged
+            
         }
 
         //BUG 8761
@@ -125,7 +107,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
                                                   sender = s as IntellisenseTextBox;
                                               }));
 
-            Clipboard.SetText("Cake\t");
+            System.Windows.Clipboard.SetText("Cake\t");
 
             IntellisenseTextBox textBox = new IntellisenseTextBox();
             textBox.CreateVisualTree();
@@ -142,7 +124,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
         [TestMethod]
         public void TextContaningNoTabIsPasedIntoAnIntellisenseTextBoxExpectedTabInsertedEventNotRaised()
         {
-            var preserveClipboard = Clipboard.GetText();
+            var preserveClipboard = System.Windows.Clipboard.GetText();
             try
             {
                 bool eventRaised = false;
@@ -152,7 +134,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
                                                       eventRaised = true;
                                                   }));
 
-                Clipboard.SetText("Cake");
+                System.Windows.Clipboard.SetText("Cake");
 
                 IntellisenseTextBox textBox = new IntellisenseTextBox();
                 textBox.CreateVisualTree();
@@ -163,7 +145,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             }
             finally
             {
-                Clipboard.SetText(preserveClipboard);
+                System.Windows.Clipboard.SetText(preserveClipboard);
             }
 
         }
@@ -215,18 +197,6 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             Assert.IsTrue(textBox.HasError);
         }
 
-        //        [TestMethod]
-        //        [Owner("Leon Rajindrapersadh")]
-        //        [TestCategory("IntellisenseTextBoxTests_Handle")]
-        //        public void IntellisenseTextBoxTests_HandlePasteMessageCallsEnsureIntellisenseResults()
-        //        {
-        //            var textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.RecordsetFields };
-        //            Assert.IsFalse(textBox.HasError);
-        //            textBox.Text = "[[var]]";
-        //            textBox.Handle(new UpdateAllIntellisenseMessage());
-        //            Assert.IsTrue(textBox.HasError);
-        //        }
-
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("IntellisenseTextBoxTests_SetText")]
@@ -248,6 +218,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             textBox.HandleWrapInBrackets(Key.F10);
             //------------Assert Results-------------------------
             Assert.AreEqual("var()", textBox.Text);
+            Assert.IsTrue(textBox.WrapInBrackets);
         }
 
         [TestMethod]
@@ -399,7 +370,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             Assert.IsTrue(textBox.HasError, "Expected [ True ] But got [ " + textBox.HasError + " ]");
         }
 
-        [TestMethod]
+         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("IntellisenseTextBoxTests_SetText")]
         public void IntellisenseTextBoxTests_SetText_FilterTypeIsScalarsOnlyAndTextIsScalar_ToolTipHasNoErrorMessage()
@@ -408,6 +379,7 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             textBox.EnsureIntellisenseResults("[[var]]", false, IntellisenseDesiredResultSet.Default);
             Assert.IsFalse(textBox.HasError);
         }
+
 
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
@@ -544,5 +516,209 @@ namespace Dev2.Core.Tests.Custom_Dev2_Controls.Intellisense
             Assert.AreEqual("DW YY mm", textBox.Text);
         }
 
+
+        [TestMethod]
+        [Owner("Leon Rajindrapersadh")]
+        [TestCategory("IntellisenseTextBox_KeyDown")]
+        public void IntellisenseTextBox_Properties_Not_SetTo_Null()
+        {
+            //------------Setup for test--------------------------
+            var textBox = new IntellisenseTextBox();
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(textBox.MinLines);
+            Assert.IsNotNull(textBox.LineCount);
+            Assert.IsNotNull(textBox.IsPaste);
+            Assert.IsNotNull(textBox.IsInCalculateMode);
+            Assert.IsNotNull(textBox.HorizontalScrollBarVisibility);
+            Assert.IsNotNull(textBox.VerticalScrollBarVisibility);
+            Assert.IsNotNull(textBox.TextWrapping);
+            Assert.IsNotNull(textBox.AcceptsTab);
+            Assert.IsNotNull(textBox.AcceptsReturn);
+            Assert.IsNotNull(textBox.AllowMultipleVariables);
+            Assert.IsNotNull(textBox.AllowMultilinePaste);
+            Assert.IsNotNull(textBox.AllowUserCalculateMode);
+            Assert.IsFalse(textBox.SelectAllOnGotFocus);
+            Assert.IsTrue(textBox.IsUndoEnabled);
+            Assert.IsFalse(textBox.HasError);
+        }
+
+        [TestMethod]
+        public void IntellisenseBox_GivenWrappedInBrackets_AStringWithNoBrackets_Should_AddBrackets()
+        {
+            IntellisenseTextBoxTestHelper textBoxTest = new IntellisenseTextBoxTestHelper { WrapInBrackets = true };
+            textBoxTest.Text = "Variable";
+            textBoxTest.HandleWrapInBrackets(Key.F6);
+            Assert.IsFalse(textBoxTest.HasError);
+            Assert.AreEqual("[[Variable]]", textBoxTest.Text);
+        }
+
+        [TestMethod]
+        public void IntellisenseBox_OnPreviewKeyDown_GivenI_Hit_Enter_Key_And_AlloInsertLine_Is_True_Should_AddLine()
+        {
+            var mockPresentationSource = new Mock<PresentationSource>();
+            var textBox = new Mock<TextBox>();
+            textBox.Object.MinLines = 5;
+            textBox.Object.Text = "Var";
+            IntellisenseTextBoxTestHelper testHelper = new IntellisenseTextBoxTestHelper
+            {
+                AllowUserInsertLine = true,
+                TextBox = textBox.Object,
+                MinLines = textBox.Object.MinLines
+            };
+            testHelper.OnPreviewKeyDown(new KeyEventArgs(Keyboard.PrimaryDevice, mockPresentationSource.Object, 0, Key.Enter));
+            Assert.IsFalse(testHelper.HasError);
+        }
+
+        [TestMethod]
+        public void IntellisenseBox_OnPreviewKeyDown_Given_EnterKey_And_AllowInsertLineIsTrueButLineCountIsEqualToMaximumLine_ShouldNotAddLine()
+        {
+            var mockPresentationSource = new Mock<PresentationSource>();
+            var textBox = new Mock<TextBox>();
+            textBox.Object.MinLines = 5;
+            var givenText = textBox.Object.Text = "Var";
+            Assert.IsFalse(givenText.Contains("\r\n"));
+            IntellisenseTextBoxTestHelper testHelper = new IntellisenseTextBoxTestHelper
+            {
+                AllowUserInsertLine = true,
+                TextBox = textBox.Object,
+                MinLines = textBox.Object.MinLines,
+                LineCount = 5
+            };
+            testHelper.OnPreviewKeyDown(new KeyEventArgs(Keyboard.PrimaryDevice, mockPresentationSource.Object, 0, Key.Enter));
+            Assert.IsFalse(testHelper.HasError);
+            Assert.IsFalse(testHelper.TextBox.Text.Contains("\r\n"));
+        }
+        [TestMethod]
+        public void IntellisenseBox_OnPreviewKeyDown_GivenI_Hit_Tab_Key_Should_AppendText()
+        {
+            var mockPresentationSource = new Mock<PresentationSource>();
+            var textBox = new Mock<TextBox>();
+            textBox.Object.MinLines = 5;
+            var givenText = textBox.Object.Text = "Var";
+            Assert.IsFalse(givenText.Contains("\r\n"));
+            IntellisenseTextBoxTestHelper testHelper = new IntellisenseTextBoxTestHelper
+            {
+                AllowUserInsertLine = true,
+                TextBox = textBox.Object,
+                IsDropDownOpen = true,
+            };
+            testHelper.OnPreviewKeyDown(new KeyEventArgs(Keyboard.PrimaryDevice, mockPresentationSource.Object, 0, Key.Tab));
+            Assert.IsFalse(testHelper.HasError);
+            Assert.IsFalse(testHelper.TextBox.Text.Contains("\r\n"));
+        }        
+
+        [TestMethod]
+        public void IntellisenseBox_GivenMultipleValidVariables_HasNoError()
+        {
+            IntellisenseTextBoxTestHelper textBoxTest = new IntellisenseTextBoxTestHelper { AllowMultipleVariables = true };
+            textBoxTest.CreateVisualTree();
+            textBoxTest.Text = "\"[[Var]]\", \"[[Var()]]\"";
+            textBoxTest.EnsureErrorStatus();
+            Assert.IsFalse(textBoxTest.HasError);
+            Assert.AreEqual(textBoxTest.DefaultText, textBoxTest.ToolTip);
+        }
+
+        [TestMethod]
+        public void IntellisenseBox_Function_HasIsCalcMode_SetTo_True()
+        {
+            IntellisenseTextBoxTestHelper textBoxTest = new IntellisenseTextBoxTestHelper { AllowUserCalculateMode = true };
+            textBoxTest.EnsureIntellisenseResults(null, false,IntellisenseDesiredResultSet.Default);
+            Assert.IsTrue(string.IsNullOrEmpty(textBoxTest.Text));
+            var input = textBoxTest.Text = "=Sum(5,5)";
+            textBoxTest.EnsureIntellisenseResults(input,false,IntellisenseDesiredResultSet.Default);
+            Assert.IsTrue(textBoxTest.IsInCalculateMode);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("IntellisenseTextBoxTests_SetText")]
+        public void IntellisenseTextBoxTests_SetText_FilterTypeIsAllAndTextIsRecordset_ToolTipHasNoErrorMessage()
+        {
+            var textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.All };
+            textBox.Text = "[[People(*)]]";
+            Assert.IsFalse(textBox.HasError);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("IntellisenseTextBoxTests_SetText")]
+        public void IntellisenseTextBoxTests_SetText_FilterTypeIsRecodsetFieldsAndTextMultipleRecordSetFields_ToolTipHasNoErrorMessage()
+        {
+            var textBox = new IntellisenseTextBox
+            {
+                FilterType = enIntellisensePartType.RecordsetFields,
+                AllowMultipleVariables = true
+            };
+            textBox.Text = "[[rec(*).warewolf]],[[rec(*).soa]]";
+            Assert.IsFalse(textBox.HasError);
+        }
+        
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("IntellisenseTextBoxTests_ValidateText")]
+        public void IntellisenseTextBoxTests_ValidateText_FilterTypeIsJsonObjectAndTextIsJson_ToolTipHasNoErrorMessage()
+        {
+            IntellisenseTextBox textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.JsonObject };
+            textBox.CreateVisualTree();
+            textBox.Text = "[[@City]]";
+            Assert.IsFalse(textBox.HasError);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("IntellisenseTextBoxTests_ValidateText")]
+        public void IntellisenseTextBoxTests_ValidateText_FilterTypeIsJsonObjectAndTextIsScalar_ToolTipHasNoErrorMessage()
+        {
+            var mockPresentationSource =new Mock<PresentationSource>();
+            IntellisenseTextBoxTestHelper testHelper = new IntellisenseTextBoxTestHelper();
+            testHelper.OnKeyDown(new KeyEventArgs(null, mockPresentationSource.Object, 0, Key.Escape));
+            Assert.IsFalse(testHelper.IsDropDownOpen);
+        }
+
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("IntellisenseTextBoxTests_SetText")]
+        public void IntellisenseTextBoxTests_SetText_InvalidJsonArrayIndex_ShouldError()
+        {
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            mockDataListViewModel.Setup(model => model.Resource).Returns(new Mock<IResourceModel>().Object);
+            DataListSingleton.SetDataList(mockDataListViewModel.Object);
+            Mock<IIntellisenseProvider> intellisenseProvider = new Mock<IIntellisenseProvider>();
+            intellisenseProvider.Setup(a => a.HandlesResultInsertion).Returns(true);
+            intellisenseProvider.Setup(a => a.GetIntellisenseResults(It.IsAny<IntellisenseProviderContext>()))
+                .Returns(default(IList<IntellisenseProviderResult>));
+
+            var textBox = new IntellisenseTextBox { FilterType = enIntellisensePartType.JsonObject, IntellisenseProvider = intellisenseProvider.Object };
+            textBox.Text = "[[@this.new(1).val(x).s]]";
+            Assert.IsTrue(textBox.HasError);
+            Assert.AreEqual("Variable name [[@this.new(1).val(x).s]] contains invalid character(s). Only use alphanumeric _ and - ", textBox.ToolTip.ToString());
+        }
+    }
+
+    public class IntellisenseTextBoxTestHelper : IntellisenseTextBox
+    {        
+        public new void OnKeyDown(KeyEventArgs e)
+        {
+            base.IsDropDownOpen = true;
+            FilterType = enIntellisensePartType.JsonObject;
+            if(e == null)
+            {
+                throw new ArgumentNullException(nameof(e));
+            }
+
+            base.OnKeyDown(e);
+        }
+   
+        public new void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+        }
+        public new void EnsureErrorStatus()
+        {
+            base.EnsureErrorStatus();
+        }
     }
 }

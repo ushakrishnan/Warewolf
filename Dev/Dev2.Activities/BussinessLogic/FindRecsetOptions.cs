@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common;
 using Dev2.DataList.Contract;
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2.DataList
 {
@@ -41,8 +41,7 @@ namespace Dev2.DataList
             {
                 if (!t.IsAbstract && !t.IsInterface)
                 {
-                    IFindRecsetOptions item = Activator.CreateInstance(t, true) as IFindRecsetOptions;
-                    if (item != null)
+                    if (Activator.CreateInstance(t, true) is IFindRecsetOptions item)
                     {
                         _options.Add(item.HandlesType(), item);
                     }
@@ -54,9 +53,9 @@ namespace Dev2.DataList
         private static void SortRecordsetOptions()
         {
             Dictionary<string, IFindRecsetOptions> tmpDictionary = new Dictionary<string, IFindRecsetOptions>();
-            // ReSharper disable LoopCanBeConvertedToQuery
+            
             foreach (string findRecordsOperation in GlobalConstants.FindRecordsOperations)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            
             {
                 KeyValuePair<string, IFindRecsetOptions> firstOrDefault = _options.FirstOrDefault(c => c.Value.HandlesType().Equals(findRecordsOperation,StringComparison.InvariantCultureIgnoreCase));
                 if (!string.IsNullOrEmpty(firstOrDefault.Key))
@@ -74,8 +73,7 @@ namespace Dev2.DataList
         /// <returns></returns>
         public static IFindRecsetOptions FindMatch(string expressionType)
         {
-            IFindRecsetOptions result;
-            if(!_options.TryGetValue(expressionType, out result))
+            if (!_options.TryGetValue(expressionType, out IFindRecsetOptions result))
             {
                 return null;
             }

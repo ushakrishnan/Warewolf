@@ -1,10 +1,8 @@
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core.Help;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Microsoft.Practices.Prism.Mvvm;
 using Warewolf.Studio.ViewModels;
@@ -32,7 +30,7 @@ namespace Dev2.ViewModels
                 {
                     OnPropertyChanged("DisplayName");
                 }
-                var mainViewModel = CustomContainer.Get<IMainViewModel>();
+                var mainViewModel = CustomContainer.Get<IShellViewModel>();
                 if (mainViewModel != null)
                 {
                     ViewModelUtils.RaiseCanExecuteChanged(mainViewModel.SaveCommand);
@@ -52,7 +50,7 @@ namespace Dev2.ViewModels
                 {
                     OnPropertyChanged("DisplayName");
                 }
-                var mainViewModel = CustomContainer.Get<IMainViewModel>();
+                var mainViewModel = CustomContainer.Get<IShellViewModel>();
                 if (mainViewModel != null)
                 {
                     ViewModelUtils.RaiseCanExecuteChanged(mainViewModel.SaveCommand);
@@ -74,15 +72,14 @@ namespace Dev2.ViewModels
 
         protected override void OnViewLoaded(object view)
         {
-            var loadedView = view as IView;
-            if (loadedView != null)
+            if (view is IView loadedView)
             {
                 loadedView.DataContext = ViewModel;
                 base.OnViewLoaded(loadedView);
             }
         }
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public string ResourceType => "DeployViewer";
 
         #region Implementation of IHelpSource
@@ -97,6 +94,10 @@ namespace Dev2.ViewModels
 
         public bool IsDirty => false;
 
+        public void CloseView()
+        {
+        }
+
         public bool DoDeactivate(bool showMessage)
         {
 
@@ -104,5 +105,8 @@ namespace Dev2.ViewModels
         }
 
         #endregion
+
+        public override bool HasVariables => false;
+        public override bool HasDebugOutput => false;
     }
 }

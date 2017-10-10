@@ -10,7 +10,7 @@ using System.Xml.Linq;
 using Warewolf.Security.Encryption;
 using Warewolf.Sharepoint;
 
-// ReSharper disable MemberCanBePrivate.Global
+
 
 namespace Dev2.Data.ServiceModel
 {
@@ -52,13 +52,11 @@ namespace Dev2.Data.ServiceModel
             UserName = properties["UserName"];
             Password = properties["Password"];
             var isSharepointSourceValue = xml.AttributeSafe("IsSharepointOnline");
-            bool isSharepointSource;
-            if (bool.TryParse(isSharepointSourceValue, out isSharepointSource))
+            if (bool.TryParse(isSharepointSourceValue, out bool isSharepointSource))
             {
                 IsSharepointOnline = isSharepointSource;
             }
-            AuthenticationType authType;
-            AuthenticationType = Enum.TryParse(properties["AuthenticationType"], true, out authType) ? authType : AuthenticationType.Windows;
+            AuthenticationType = Enum.TryParse(properties["AuthenticationType"], true, out AuthenticationType authType) ? authType : AuthenticationType.Windows;
         }
 
         /// <summary>
@@ -71,16 +69,16 @@ namespace Dev2.Data.ServiceModel
         {
             var result = base.ToXml();
             var connectionString = string.Join(";",
-                string.Format("Server={0}", Server),
-                string.Format("AuthenticationType={0}", AuthenticationType)
+                $"Server={Server}",
+                $"AuthenticationType={AuthenticationType}"
                 );
 
             if (AuthenticationType == AuthenticationType.User)
             {
                 connectionString = string.Join(";",
                     connectionString,
-                    string.Format("UserName={0}", UserName),
-                    string.Format("Password={0}", Password)
+                    $"UserName={UserName}",
+                    $"Password={Password}"
                     );
             }
 
@@ -112,7 +110,9 @@ namespace Dev2.Data.ServiceModel
             return sharepointHelper.LoadLists();
         }
 
-        public List<ISharepointFieldTo> LoadFieldsForList(string listName, bool editableFieldsOnly = false)
+        public List<ISharepointFieldTo> LoadFieldsForList(string listName) => LoadFieldsForList(listName, false);
+
+        public List<ISharepointFieldTo> LoadFieldsForList(string listName, bool editableFieldsOnly)
         {
             var sharepointHelper = CreateSharepointHelper();
             return sharepointHelper.LoadFieldsForList(listName, editableFieldsOnly);
@@ -135,8 +135,7 @@ namespace Dev2.Data.ServiceModel
         public string TestConnection()
         {
             var helper = CreateSharepointHelper();
-            bool isSharepointOnline;
-            var testConnection = helper.TestConnection(out isSharepointOnline);
+            var testConnection = helper.TestConnection(out bool isSharepointOnline);
             IsSharepointOnline = isSharepointOnline;
             return testConnection;
         }

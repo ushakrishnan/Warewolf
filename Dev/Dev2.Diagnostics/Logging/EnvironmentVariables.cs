@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,9 +13,9 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Common
-// ReSharper restore CheckNamespace
+
 {
     /// <summary>
     /// Environment Variables to be used in the Server
@@ -24,7 +24,7 @@ namespace Dev2.Common
     {
 
         private static string _appPath;
-
+        private static readonly string DataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create), "Warewolf");
         /// <summary>
         /// Gets the application path.
         /// </summary>
@@ -46,7 +46,7 @@ namespace Dev2.Common
                     }
                     catch (Exception e)
                     {
-                        Dev2Logger.Info("ApplicationPath Error -> " + e.Message);
+                        Dev2Logger.Info("ApplicationPath Error -> " + e.Message, GlobalConstants.WarewolfInfo);
                         _appPath = Directory.GetCurrentDirectory(); // fail safe ;)
                     }
 
@@ -64,16 +64,25 @@ namespace Dev2.Common
                 return resourcePath;
             }
         }
+
+        public static string TestPath
+        {
+            get
+            {
+                var resourcePath = Path.Combine(AppDataPath, "Tests");
+                return resourcePath;
+            }
+        }
+
         public static string AppDataPath
         {
             get
             {
-                var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create),"Warewolf");
-                if(!Directory.Exists(appDataPath))
+                if(!Directory.Exists(DataPath))
                 {
-                    Directory.CreateDirectory(appDataPath);
+                    Directory.CreateDirectory(DataPath);
                 }
-                return appDataPath;
+                return DataPath;
             }
         }
 
@@ -193,7 +202,7 @@ namespace Dev2.Common
 
         public static string WebServerUri { get; set; }
         public static string PublicWebServerUri => DnsName + ":" + Port+"/";
-        public static string DnsName { private get; set; }
-        public static int Port { private get; set; }
+        public static string DnsName { get; set; }
+        public static int Port { get; set; }
     }
 }

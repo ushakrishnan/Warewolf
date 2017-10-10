@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,11 +14,11 @@ using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Runtime.ServiceModel.Data
 {
     [Serializable]
-    public class PluginSource : Resource, IResourceSource
+    public class PluginSource : Resource, IResourceSource, IPlugin
     {
         #region CTOR
 
@@ -35,6 +35,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
             AssemblyLocation = xml.AttributeSafe("AssemblyLocation");
             AssemblyName = xml.AttributeSafe("AssemblyName");
+            ConfigFilePath = xml.AttributeSafe("ConfigFilePath");
         }
 
         #endregion
@@ -54,6 +55,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             result.Add(
                 new XAttribute("AssemblyLocation", AssemblyLocation ?? string.Empty),
                 new XAttribute("AssemblyName", AssemblyName ?? string.Empty),
+                new XAttribute("ConfigFilePath", ConfigFilePath ?? string.Empty),
                 new XAttribute("Type", GetType().Name),
                 new XElement("TypeOf", enSourceType.PluginSource)
                 );
@@ -70,6 +72,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         public override bool IsServer => false;
         public override bool IsResourceVersion => false;
+        public string ConfigFilePath { get; set; }
 
         #endregion
     }

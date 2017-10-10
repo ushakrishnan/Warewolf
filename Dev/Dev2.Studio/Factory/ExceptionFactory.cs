@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,18 +9,18 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Helpers;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Diagnostics;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.Model;
 using Dev2.Studio.ViewModels.Diagnostics;
 using Dev2.Threading;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Factory
 {
     /// <summary>
@@ -38,10 +38,11 @@ namespace Dev2.Studio.Factory
         /// <author>jurie.smit</author>
         /// <date>2013/01/15</date>
         /// <param name="isCritical">Will append the critical error text to the message if true</param>
-        public static ExceptionUiModel Create(Exception exception, bool isCritical = false)
+        public static ExceptionUiModel Create(Exception exception) => Create(exception, false);
+        public static ExceptionUiModel Create(Exception exception, bool isCritical)
         {
             ExceptionUiModel uiModel;
-            if(isCritical)
+            if (isCritical)
             {
                 uiModel = new ExceptionUiModel { Message = StringResources.CriticalExceptionMessage };
                 uiModel.Exception.Add(Create(exception));
@@ -51,59 +52,49 @@ namespace Dev2.Studio.Factory
                 uiModel = new ExceptionUiModel { Message = StringResources.ErrorPrefix + exception.Message };
             }
 
-            if(exception.InnerException != null)
+            if (exception.InnerException != null)
             {
                 uiModel.Exception.Add(Create(exception.InnerException));
             }
 
             return uiModel;
         }
-
-        /// <summary>
-        /// Creates the string value (recursively).
-        /// </summary>
-        /// <param name="exception">The exception.</param>
-        /// <param name="builder">The builder to use - null if not recursive.</param>
-        /// <param name="critical"></param>
-        /// <returns></returns>
-        /// <author>jurie.smit</author>
-        /// <date>2013/01/15</date>
-        public static StringBuilder CreateStringValue(Exception exception, StringBuilder builder = null, bool critical = false)
+        
+        public static StringBuilder CreateStringValue(Exception exception) => CreateStringValue(exception, null, false);
+        public static StringBuilder CreateStringValue(Exception exception, StringBuilder builder) => CreateStringValue(exception, builder, false);
+        public static StringBuilder CreateStringValue(Exception exception, StringBuilder builder, bool critical)
         {
             var appendStackTrace = false;
-            if(builder == null)
+            if (builder == null)
             {
                 builder = new StringBuilder();
                 appendStackTrace = true;
             }
 
-            if(critical)
+            if (critical)
             {
                 builder.AppendLine(StringResources.CriticalExceptionMessage);
             }
 
             builder.AppendLine("Exception: " + exception.Message);
 
-            if(exception.InnerException != null)
+            if (exception.InnerException != null)
             {
                 CreateStringValue(exception.InnerException, builder);
             }
 
-            if(appendStackTrace)
+            if (appendStackTrace)
             {
                 builder.AppendLine("StackTrace:");
                 builder.AppendLine(exception.StackTrace);
-
-                // 14th Feb 2013
-                // Added by Michael to assist with debugging
+                
                 string fullStackTrace = Environment.NewLine + Environment.NewLine + "Additional Trace Info" + Environment.NewLine + Environment.NewLine;
                 StackTrace theStackTrace = new StackTrace();
-                for(int j = theStackTrace.FrameCount - 1; j >= 0; j--)
+                for (int j = theStackTrace.FrameCount - 1; j >= 0; j--)
                 {
                     string module = theStackTrace.GetFrame(j).GetMethod().Module.ToString();
-                    if(module != "WindowsBase.dll" && module != "CommonLanguageRuntimeLibrary")
+                    if (module != "WindowsBase.dll" && module != "CommonLanguageRuntimeLibrary")
                     {
-
                         fullStackTrace += "--> " + theStackTrace.GetFrame(j).GetMethod().Name + " (" + theStackTrace.GetFrame(j).GetMethod().Module + ")";
                     }
                 }
@@ -120,28 +111,28 @@ namespace Dev2.Studio.Factory
         /// Creates the exception view model.
         /// </summary>
         /// <param name="e">The exception for this viewmodel.</param>
-        /// <param name="environmentModel">The environment model.</param>
+        /// <param name="server">The environment model.</param>
         /// <param name="isCritical">The severity of the error.</param>
         /// <returns></returns>
         /// <date>2013/01/16</date>
         /// <author>
         /// Jurie.smit
         /// </author>
-        public static IExceptionViewModel CreateViewModel(Exception e, IEnvironmentModel environmentModel, ErrorSeverity isCritical = ErrorSeverity.Default)
+        public static async Task<IExceptionViewModel> CreateViewModel(Exception e, IServer server) => await CreateViewModel(e, server, ErrorSeverity.Default);
+        public static async Task<IExceptionViewModel> CreateViewModel(Exception e, IServer server, ErrorSeverity isCritical)
         {
             // PBI 9598 - 2013.06.10 - TWR : added environmentModel parameter
             var vm = new ExceptionViewModel(new AsyncWorker())
-                {
-                    OutputText = CreateStringValue(e, null, true).ToString(),
-                    StackTrace = e.StackTrace,
-                    OutputPath = GetUniqueOutputPath(".txt"),
-                    DisplayName = isCritical == ErrorSeverity.Critical ? StringResources.CritErrorTitle : StringResources.ErrorTitle,
-                    
-                };
+            {
+                OutputText = CreateStringValue(e, null, true).ToString(),
+                StackTrace = e.StackTrace,
+                OutputPath = GetUniqueOutputPath(".txt"),
+                DisplayName = isCritical == ErrorSeverity.Critical ? StringResources.CritErrorTitle : StringResources.ErrorTitle
+            };
+            vm.GetStudioLogFile();
+            vm.ServerLogFile = await ExceptionViewModel.GetServerLogFile();
 
-            var attachedFiles = new Dictionary<string, string>();
-
-           vm.Exception.Clear();
+            vm.Exception.Clear();
             vm.Exception.Add(Create(e, isCritical == ErrorSeverity.Critical));
             return vm;
         }

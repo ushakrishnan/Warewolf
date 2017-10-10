@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
@@ -22,12 +22,39 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]    
     public class GetDatabaseColumnsForTableTests
     {
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getDatabaseColumnsForTable = new GetDatabaseColumnsForTable();
+
+            //------------Execute Test---------------------------
+            var resId = getDatabaseColumnsForTable.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getDatabaseColumnsForTable = new GetDatabaseColumnsForTable();
+
+            //------------Execute Test---------------------------
+            var resId = getDatabaseColumnsForTable.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
 
         #region Execute
 
@@ -136,7 +163,7 @@ namespace Dev2.Tests.Runtime.Services
             string someJsonData = JsonConvert.SerializeObject(dbSource, new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
             var esb = new GetDatabaseColumnsForTable();
             var mockWorkspace = new Mock<IWorkspace>();
@@ -149,7 +176,7 @@ namespace Dev2.Tests.Runtime.Services
             var result = JsonConvert.DeserializeObject<DbColumnList>(actual.ToString(), new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
             Assert.AreEqual(4, result.Items.Count);
 
@@ -187,7 +214,7 @@ namespace Dev2.Tests.Runtime.Services
             string someJsonData = JsonConvert.SerializeObject(dbSource,new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
             var esb = new GetDatabaseColumnsForTable();
             var mockWorkspace = new Mock<IWorkspace>();
@@ -200,7 +227,7 @@ namespace Dev2.Tests.Runtime.Services
             var result = JsonConvert.DeserializeObject<DbColumnList>(actual.ToString(), new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
             Assert.AreEqual(3, result.Items.Count);
 
@@ -232,7 +259,7 @@ namespace Dev2.Tests.Runtime.Services
             string someJsonData = JsonConvert.SerializeObject(dbSource, new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
             var esb = new GetDatabaseColumnsForTable();
             var mockWorkspace = new Mock<IWorkspace>();
@@ -245,7 +272,7 @@ namespace Dev2.Tests.Runtime.Services
             var result = JsonConvert.DeserializeObject<DbColumnList>(actual.ToString(), new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
-                TypeNameAssemblyFormat = FormatterAssemblyStyle.Simple
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
             Assert.AreEqual(3, result.Items.Count);
 
@@ -273,7 +300,7 @@ namespace Dev2.Tests.Runtime.Services
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "Dev2TestingDB",
                 DatabaseName = "Dev2TestingDB",
-                Server = "RSAKLFSVRGENDEV",
+                Server = "RSAKLFSVRDEV",
                 AuthenticationType = AuthenticationType.User,
                 ServerType = enSourceType.SqlDatabase,
                 ReloadActions = true,

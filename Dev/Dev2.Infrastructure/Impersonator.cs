@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,20 +9,23 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Claims;
 using System.Security.Principal;
+using System.Threading;
+using Dev2.Common.Interfaces;
+using Warewolf.Security.Encryption;
 
 namespace Dev2
 {
-    public class Impersonator : IDisposable
+    public class Impersonator : IDisposable, IImpersonator
     {
-        // ReSharper disable InconsistentNaming
+        
         const int LOGON32_PROVIDER_DEFAULT = 0;
         const int LOGON32_LOGON_INTERACTIVE = 2;
-        // ReSharper restore InconsistentNaming
+
 
         #region DllImports
 
@@ -62,6 +65,8 @@ namespace Dev2
                         _impersonationContext = tempWindowsIdentity.Impersonate();
                         if(_impersonationContext != null)
                         {
+                            ClaimsPrincipal principal = new WindowsPrincipal(tempWindowsIdentity);
+                            Thread.CurrentPrincipal = principal;
                             CloseHandle(token);
                             CloseHandle(tokenDuplicate);
                             return true;
@@ -91,6 +96,11 @@ namespace Dev2
                 _impersonationContext.Undo();
                 _impersonationContext.Dispose();
             }
+        }
+
+        public bool ImpersonateForceDecrypt(string userName, string domain, string decryptIfEncrypted)
+        {
+            return Impersonate(userName, domain, DpapiWrapper.DecryptIfEncrypted(decryptIfEncrypted));
         }
 
         #endregion
@@ -153,7 +163,7 @@ namespace Dev2
 
         #endregion
 
-        [SuppressMessage("ReSharper", "UnusedMember.Global")]
+    
         public static bool RunAs(string userName, string domain, string password, Action action)
         {
             var result = false;

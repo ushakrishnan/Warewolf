@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,13 +9,13 @@
 */
 
 using System;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Runtime.ESB.Execution;
 using Dev2.Services.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.ESB
 {
     // BUG 9710 - 2013.06.20 - TWR - Created

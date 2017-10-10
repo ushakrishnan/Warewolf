@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -154,6 +155,20 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //assert
             Assert.AreEqual(expectedValue, value);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("SplashViewModel_Copyright")]
+        public void SplashViewModel_Copyright_Valid_ShouldContainCurrentYear()
+        {
+            //------------Setup for test--------------------------
+            var currentYear = DateTime.Now.Year.ToString();
+
+            //------------Execute Test---------------------------
+            var copyRightText = _target.WarewolfCopyright;
+            //------------Assert Results-------------------------
+            StringAssert.Contains(copyRightText,currentYear);
         }
 
         [TestMethod]

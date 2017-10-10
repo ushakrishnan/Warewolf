@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +20,7 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Util;
@@ -30,12 +30,14 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
-// ReSharper disable MemberCanBePrivate.Global
-// ReSharper disable FunctionComplexityOverflow
+using Warewolf.Storage.Interfaces;
+
+
+
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Utility-Random", "Random", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Random_Tags")]
+    [ToolDescriptorInfo("Utility-Random", "Random", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Random")]
     public class DsfRandomActivity : DsfActivityAbstract<string>
     {
 
@@ -60,6 +62,11 @@ namespace Dev2.Activities
         public new string Result { get; set; }
 
         #endregion
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
 
         #region Ctor
 
@@ -190,7 +197,7 @@ namespace Dev2.Activities
             }
             catch (Exception e)
             {
-                Dev2Logger.Error("DSFRandomActivity", e);
+                Dev2Logger.Error("DSFRandomActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -242,13 +249,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
@@ -259,13 +263,12 @@ namespace Dev2.Activities
         private double GetFromValue(string fromValue, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
-            double fromNum;
             if (string.IsNullOrEmpty(fromValue))
             {
                 errors.AddError(ErrorResource.IntegerOrDecimaExpectedForStart);
                 return -1;
             }
-            if (!double.TryParse(fromValue, out fromNum))
+            if (!double.TryParse(fromValue, out double fromNum))
             {
                 errors.AddError(string.Format(ErrorResource.IntegerOrDecimaExpectedForStart + " from {0} to {1}.", double.MinValue, double.MaxValue));
                 return -1;
@@ -276,13 +279,12 @@ namespace Dev2.Activities
         private double GetToValue(string toValue, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
-            double toNum;
             if (string.IsNullOrEmpty(toValue))
             {
                 errors.AddError(ErrorResource.IntegerOrDecimaExpectedForEnd);
                 return -1;
             }
-            if (!double.TryParse(toValue, out toNum))
+            if (!double.TryParse(toValue, out double toNum))
             {
                 errors.AddError(string.Format(ErrorResource.IntegerOrDecimaExpectedForEnd + " from {0} to {1}.", double.MinValue, double.MaxValue));
                 return -1;
@@ -293,14 +295,13 @@ namespace Dev2.Activities
         private int GetLengthValue(string lengthValue, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
-            int lengthNum;
             if (string.IsNullOrEmpty(lengthValue))
             {
                 errors.AddError(string.Format(ErrorResource.PositiveIntegerRequired, "Length."));
                 return -1;
             }
 
-            if (!int.TryParse(lengthValue, out lengthNum))
+            if (!int.TryParse(lengthValue, out int lengthNum))
             {
                 errors.AddError(string.Format(ErrorResource.EnsureValueIsInteger, "Length"));
                 return -1;

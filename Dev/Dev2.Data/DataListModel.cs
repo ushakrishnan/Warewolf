@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using Dev2.Common;
-using Dev2.Data.Binary_Objects;
 using Dev2.Data.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -18,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Data
 {
@@ -65,7 +65,7 @@ namespace Dev2.Data
                 xDoc.LoadXml(toLoad);
             }
 
-            if (!String.IsNullOrEmpty(toLoad))
+            if (!string.IsNullOrEmpty(toLoad))
             {
                 if (xDoc.DocumentElement != null)
                 {
@@ -77,15 +77,12 @@ namespace Dev2.Data
                     foreach (XmlNode c in children)
                     {
                         var hasCorrectIoDirection = true;
-                        if (c.Attributes != null)
+                        var columnIoDirectionAttribute = c.Attributes?["ColumnIODirection"];
+                        if (columnIoDirectionAttribute != null)
                         {
-                            var columnIoDirectionAttribute = c.Attributes["ColumnIODirection"];
-                            if (columnIoDirectionAttribute != null)
-                            {
-                                var columnIoDirectionValue = columnIoDirectionAttribute.Value;
-                                var hasCorrectIoDirectionFromAttribute = columnIoDirectionValue == enDev2ColumnArgumentDirection.Output.ToString() || columnIoDirectionValue == enDev2ColumnArgumentDirection.Both.ToString();
-                                hasCorrectIoDirection = hasCorrectIoDirectionFromAttribute;
-                            }
+                            var columnIoDirectionValue = columnIoDirectionAttribute.Value;
+                            var hasCorrectIoDirectionFromAttribute = columnIoDirectionValue == enDev2ColumnArgumentDirection.Output.ToString() || columnIoDirectionValue == enDev2ColumnArgumentDirection.Both.ToString();
+                            hasCorrectIoDirection = hasCorrectIoDirectionFromAttribute;
                         }
 
                         if (DataListUtil.IsSystemTag(c.Name) && !hasCorrectIoDirection)
@@ -101,8 +98,7 @@ namespace Dev2.Data
                             if (!string.IsNullOrEmpty(c.OuterXml))
                             {
                                 var jsonData = JsonConvert.SerializeXNode(XDocument.Parse(c.OuterXml),Newtonsoft.Json.Formatting.None,true);
-                                var obj = JsonConvert.DeserializeObject(jsonData.Replace("@", "")) as JObject;
-                                if(obj != null)
+                                if (JsonConvert.DeserializeObject(jsonData.Replace("@", "")) is JObject obj)
                                 {
                                     var value = obj.ToString();
                                     complexObject.Value = value;
@@ -114,8 +110,7 @@ namespace Dev2.Data
                             if (recSet != null && shapeRecSet != null)
                             {
                                 // fetch recordset index
-                                int fetchIdx;
-                                int idx = indexCache.TryGetValue(c.Name, out fetchIdx) ? fetchIdx : 1; // recset index
+                                int idx = indexCache.TryGetValue(c.Name, out int fetchIdx) ? fetchIdx : 1; // recset index
                                 // process recordset
                                 var scalars = shapeRecSet.Columns[1];
                                 var colToIoDirection = scalars.ToDictionary(scalar1 => scalar1.Name, scalar1 => scalar1.IODirection);
@@ -169,15 +164,7 @@ namespace Dev2.Data
                     {
                         if (c.HasChildNodes)
                         {
-                            var jsonAttribute = false;
-                            if (c.Attributes != null)
-                            {
-                                var xmlAttribute = c.Attributes["IsJson"];
-                                if (xmlAttribute != null)
-                                {
-                                    bool.TryParse(xmlAttribute.Value, out jsonAttribute);
-                                }
-                            }
+                            var jsonAttribute = IsJsonAttribute(c);
                             if (jsonAttribute)
                             {
                                 AddComplexObjectFromXmlNode(c);
@@ -228,28 +215,49 @@ namespace Dev2.Data
                         }
                         else
                         {
-                            if (c.Attributes != null)
+                            var jsonAttribute = IsJsonAttribute(c);
+                            if (jsonAttribute)
                             {
-                                descAttribute = c.Attributes["Description"];
-                                columnIoDirection = c.Attributes["ColumnIODirection"];
+                                AddComplexObjectFromXmlNode(c);
                             }
-                            string descriptionValue = "";
-                            columnDirection = enDev2ColumnArgumentDirection.None;
-                            if (descAttribute != null)
+                            else
                             {
-                                descriptionValue = descAttribute.Value;
+
+
+                                if (c.Attributes != null)
+                                {
+                                    descAttribute = c.Attributes["Description"];
+                                    columnIoDirection = c.Attributes["ColumnIODirection"];
+                                }
+                                string descriptionValue = "";
+                                columnDirection = enDev2ColumnArgumentDirection.None;
+                                if (descAttribute != null)
+                                {
+                                    descriptionValue = descAttribute.Value;
+                                }
+                                if (columnIoDirection != null)
+                                {
+                                    Enum.TryParse(columnIoDirection.Value, true, out columnDirection);
+                                }
+                                var scalar = new Scalar { Name = c.Name, Description = descriptionValue, IODirection = columnDirection, IsEditable = true };
+                                Scalars.Add(scalar);
+                                ShapeScalars.Add(scalar);
                             }
-                            if (columnIoDirection != null)
-                            {
-                                Enum.TryParse(columnIoDirection.Value, true, out columnDirection);
-                            }
-                            var scalar = new Scalar { Name = c.Name, Description = descriptionValue, IODirection = columnDirection, IsEditable = true };
-                            Scalars.Add(scalar);
-                            ShapeScalars.Add(scalar);
                         }
                     }
                 }
             }
+        }
+
+        private static bool IsJsonAttribute(XmlNode c)
+        {
+            var jsonAttribute = false;
+            var xmlAttribute = c.Attributes?["IsJson"];
+            if (xmlAttribute != null)
+            {
+                bool.TryParse(xmlAttribute.Value, out jsonAttribute);
+            }
+            return jsonAttribute;
         }
 
         private void AddComplexObjectFromXmlNode(XmlNode c)
@@ -284,7 +292,7 @@ namespace Dev2.Data
         }
 
         private enDev2ColumnArgumentDirection ParseColumnIODirection(XmlAttribute attr)
-        // ReSharper restore InconsistentNaming
+
         {
             enDev2ColumnArgumentDirection result = enDev2ColumnArgumentDirection.None;
 

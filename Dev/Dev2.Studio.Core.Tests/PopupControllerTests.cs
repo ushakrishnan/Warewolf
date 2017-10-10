@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,14 +13,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using Dev2.Common;
+using FontAwesome.WPF;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Warewolf.Studio.Core.Popup;
+using Warewolf.Studio.ViewModels;
 using PopupController = Dev2.Studio.Controller.PopupController;
 
 namespace Dev2.Core.Tests
 {
-    [TestClass]
-    // ReSharper disable InconsistentNaming
+    [TestClass]    
     public class PopupControllerTests
     {
         [TestMethod]
@@ -36,13 +37,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
                 {
-                    ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                    ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                         {
                             description = desc;
                             header = hdr;
                             buttons = btn;
                             popupWasCalled = true;
-                            return MessageBoxResult.OK;
+                            return new MessageBoxViewModel(desc,hdr,btn,FontAwesomeIcon.Adn, isDependBtnVisible,isErr,isInf,isQuest,duplicates,isDeleteAnywayBtnVisible,applyToAll)
+                            {
+                                Result = MessageBoxResult.OK
+                            };
                         }
                 };
 
@@ -69,13 +73,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -85,7 +92,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.YesNo, buttons);
-            Assert.AreEqual("Delete version", header);
+            Assert.AreEqual("Delete Version", header);
             Assert.AreEqual("Are you sure you want to delete " + NameOfItemBeingDeleted + "?", description);
         }
 
@@ -102,13 +109,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
             
@@ -132,7 +142,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OKCancel, buttons);
-            Assert.AreEqual("Deploy conflicts", header);
+            Assert.AreEqual("Deploy Conflicts", header);
             Assert.AreEqual(Description, description);
         }
 
@@ -149,13 +159,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -179,7 +192,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OKCancel, buttons);
-            Assert.AreEqual("Deploy conflicts", header);
+            Assert.AreEqual("Deploy Conflicts", header);
             Assert.AreEqual(Description, description);
         }
 
@@ -196,13 +209,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -212,8 +228,8 @@ namespace Dev2.Core.Tests
 
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
-            Assert.AreEqual(MessageBoxButton.OKCancel, buttons);
-            Assert.AreEqual("Deploy Name conflicts", header);
+            Assert.AreEqual(MessageBoxButton.OK, buttons);
+            Assert.AreEqual("Deploy Name Conflicts", header);
             Assert.AreEqual(message, description);
             Assert.IsFalse(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -234,13 +250,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -259,7 +278,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OK, buttons);
-            Assert.AreEqual("Deploy ResourceName conflicts", header);
+            Assert.AreEqual("Deploy ResourceName Conflicts", header);
             Assert.AreEqual(message, description);
             Assert.IsTrue(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -280,13 +299,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -309,7 +331,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OKCancel, buttons);
-            Assert.AreEqual("Deploy Version conflicts", header);
+            Assert.AreEqual("Deploy Version Conflicts", header);
             Assert.AreEqual(message, description);
             Assert.IsTrue(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -330,13 +352,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -358,7 +383,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OKCancel, buttons);
-            Assert.AreEqual("Deploy Version conflicts", header);
+            Assert.AreEqual("Deploy Version Conflicts", header);
             Assert.AreEqual(message, description);
             Assert.IsTrue(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -379,13 +404,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -468,14 +496,17 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     duplicateResources = duplicates;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -513,13 +544,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -527,12 +561,12 @@ namespace Dev2.Core.Tests
             string server = "localhost";
             popupController.ShowServerNotConnected(server);
 
-            var message = "The server " + server + " is unreachable and will be removed from your explorer tab. Please reconnect to save any unsaved work.";
+            var message = "The server " + server + " is unreachable. \n \nPlease make sure the Warewolf Server service is running on that machine.";
 
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OK, buttons);
-            Assert.AreEqual("Server is not connected", header);
+            Assert.AreEqual("Server Unreachable", header);
             Assert.AreEqual(message, description);
             Assert.IsFalse(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -553,13 +587,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -576,7 +613,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OK, buttons);
-            Assert.AreEqual("Server Version conflict", header);
+            Assert.AreEqual("Server Version Conflict", header);
             Assert.AreEqual(message, description);
             Assert.IsFalse(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -597,13 +634,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -619,7 +659,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.YesNo, buttons);
-            Assert.AreEqual("Server is unreachable", header);
+            Assert.AreEqual("Server Is Unreachable", header);
             Assert.AreEqual(message, description);
             Assert.IsFalse(popupController.IsInfo);
             Assert.IsFalse(popupController.IsDependenciesButtonVisible);
@@ -640,13 +680,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -694,13 +737,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -709,7 +755,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OK, buttons);
-            Assert.AreEqual("Scheduler load error", header);
+            Assert.AreEqual("Scheduler Load Error", header);
             Assert.AreEqual(expectedDescription, description);
         }
 
@@ -730,13 +776,16 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -745,7 +794,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OK, buttons);
-            Assert.AreEqual("We’ve got your feedback!", header);
+            Assert.AreEqual("We've got your feedback!", header);
             Assert.AreEqual(expectedDescription, description);
         }
 
@@ -773,14 +822,17 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     imageType = img;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -790,7 +842,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.YesNoCancel, buttons);
-            Assert.AreEqual("Rename conflict", header);
+            Assert.AreEqual("Rename Conflicts", header);
             Assert.AreEqual(expectedDescription, description);
             Assert.AreEqual(MessageBoxImage.Information, imageType);
         }
@@ -809,14 +861,17 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     imageType = img;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -826,8 +881,8 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.OK, buttons);
-            Assert.AreEqual("Server is not connected", header);
-            Assert.AreEqual("You can not change the settings for a server that is offline.", description);
+            Assert.AreEqual("Server Unreachable", header);
+            Assert.AreEqual("You can not change the settings for a server that is unreachable.", description);
             Assert.AreEqual(MessageBoxImage.Error, imageType);
         }
 
@@ -846,14 +901,17 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     imageType = img;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -888,14 +946,17 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     imageType = img;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -904,7 +965,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.YesNoCancel, buttons);
-            Assert.AreEqual("Scheduler Task has changes", header);
+            Assert.AreEqual("Scheduler Task Has Changes", header);
             Assert.AreEqual(expectedDesc, description);
             Assert.AreEqual(MessageBoxImage.Information, imageType);
         }
@@ -930,14 +991,17 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
                     buttons = btn;
                     imageType = img;
                     popupWasCalled = true;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -946,7 +1010,7 @@ namespace Dev2.Core.Tests
             //------------Assert Results-------------------------
             Assert.IsTrue(popupWasCalled);
             Assert.AreEqual(MessageBoxButton.YesNoCancel, buttons);
-            Assert.AreEqual("Settings have changed", header);
+            Assert.AreEqual("Settings Have Changed", header);
             Assert.AreEqual(expectedDesc, description);
             Assert.AreEqual(MessageBoxImage.Information, imageType);
         }
@@ -969,7 +1033,7 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
@@ -977,7 +1041,10 @@ namespace Dev2.Core.Tests
                     imageType = img;
                     popupWasCalled = true;
                     dontShowAgainKey = dntShwAgKy;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 
@@ -1008,7 +1075,7 @@ namespace Dev2.Core.Tests
 
             var popupController = new PopupController
             {
-                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates) =>
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
                 {
                     description = desc;
                     header = hdr;
@@ -1016,7 +1083,10 @@ namespace Dev2.Core.Tests
                     imageType = img;
                     popupWasCalled = true;
                     dontShowAgainKey = dntShwAgKy;
-                    return MessageBoxResult.OK;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
                 }
             };
 

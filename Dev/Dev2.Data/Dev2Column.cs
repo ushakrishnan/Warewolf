@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +9,9 @@
 */
 
 using System;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.DataList.Contract.Binary_Objects
 {
     [Serializable]
@@ -173,8 +173,8 @@ namespace Dev2.DataList.Contract.Binary_Objects
         {
             unchecked
             {
-                var hashCode = ColumnName != null ? ColumnName.GetHashCode() : 0;
-                hashCode = (hashCode * 397) ^ (ColumnDescription != null ? ColumnDescription.GetHashCode() : 0);
+                var hashCode = ColumnName?.GetHashCode() ?? 0;
+                hashCode = (hashCode * 397) ^ (ColumnDescription?.GetHashCode() ?? 0);
                 hashCode = (hashCode * 397) ^ IsEditable.GetHashCode();
                 hashCode = (hashCode * 397) ^ (int)ColumnIODirection;
                 return hashCode;

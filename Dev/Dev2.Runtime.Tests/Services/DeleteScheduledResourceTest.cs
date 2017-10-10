@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
@@ -27,6 +28,34 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DeleteScheduledResourceTest
     {
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var service = new DeleteScheduledResource();
+
+            //------------Execute Test---------------------------
+            var resId = service.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var service = new DeleteScheduledResource();
+
+            //------------Execute Test---------------------------
+            var resId = service.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Administrator, resId);
+        }
+
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
@@ -93,7 +122,10 @@ namespace Dev2.Tests.Runtime.Services
 
             var output = esbMethod.Execute(inp, ws.Object);
             if(expectCorrectInput)
+            {
                 model.Verify(a => a.DeleteSchedule(It.IsAny<ScheduledResource>()));
+            }
+
             return serialiser.Deserialize<ExecuteMessage>(output);
 
         }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -65,7 +65,7 @@ namespace Dev2.Runtime.WebServer
         {
             try
             {
-                if(Request != null && Request.InputStream != null)
+                if(Request?.InputStream != null)
                 {
                     Request.InputStream.Close();
                     Request.InputStream.Dispose();
@@ -76,9 +76,9 @@ namespace Dev2.Runtime.WebServer
                     Response.Response.Dispose();
                 }
             }
-            // ReSharper disable EmptyGeneralCatchClause
+            
             catch
-            // ReSharper restore EmptyGeneralCatchClause
+            
             {
                 // best effort to clean up ;)
             }

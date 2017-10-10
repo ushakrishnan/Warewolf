@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +12,6 @@ using Dev2.Activities.Debug;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Enums;
-using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
 using Dev2.DataList.Contract;
 using Dev2.Development.Languages.Scripting;
@@ -23,20 +22,20 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
-using Warewolf.Core;
 using Warewolf.Resource.Errors;
-using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Activities
 {
     /// <summary>
     /// Activity used for executing JavaScript through a tool
     /// </summary>
-    [ToolDescriptorInfo("Scripting-JavaScript", "Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_Script_Tags")]
+    //[ToolDescriptorInfo("Scripting-JavaScript", "Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_Script")]
     public class DsfScriptingActivity : DsfActivityAbstract<string>
     {
         #region Properties
@@ -61,7 +60,7 @@ namespace Dev2.Activities
 
         #endregion Properties
 
-        IStringScriptSources _sources;
+        readonly IStringScriptSources _sources;
         #region Ctor
 
         public DsfScriptingActivity()
@@ -75,7 +74,10 @@ namespace Dev2.Activities
         }
 
         #endregion Ctor
-
+        public override List<string> GetOutputs()
+        {
+            return new List<string> { Result };
+        }
         #region Overrides of DsfNativeActivity<string>
 
         /// <summary>
@@ -137,14 +139,7 @@ namespace Dev2.Activities
             }
             catch (Exception e) when (e is NullReferenceException || e is RuntimeBinderException)
             {
-                if (e.GetType() == typeof(NullReferenceException) || e.GetType() == typeof(RuntimeBinderException))
-                {
-                    allErrors.AddError(ErrorResource.ScriptingErrorReturningValue);
-                }
-                else
-                {
-                    allErrors.AddError(e.Message.Replace(" for main:Object", string.Empty));
-                }
+                allErrors.AddError(e.GetType() == typeof(NullReferenceException) || e.GetType() == typeof(RuntimeBinderException) ? ErrorResource.ScriptingErrorReturningValue : e.Message.Replace(" for main:Object", string.Empty));
             }
             finally
             {
@@ -171,7 +166,9 @@ namespace Dev2.Activities
         private void AddScriptSourcePathsToList()
         {            
             if (!string.IsNullOrEmpty(IncludeFile))
+            {
                 _sources.AddPaths(IncludeFile);
+            }
         }
         
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
@@ -187,13 +184,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 

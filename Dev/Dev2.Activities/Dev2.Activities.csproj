@@ -1,19 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{0A369A8B-0906-47EB-8EEE-CA20E9D4F151}</ProjectGuid>
-    <ProjectTypeGuids>{32f31d43-81cc-4c15-9de6-3fc5453562b6};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2</RootNamespace>
     <AssemblyName>Dev2.Activities</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>
     </SccProjectName>
@@ -23,8 +18,10 @@
     </SccAuxPath>
     <SccProvider>
     </SccProvider>
+    <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <SonarQubeTestProject>False</SonarQubeTestProject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -37,7 +34,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Dev2.Activities.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -48,11 +46,12 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisRuleSet>Dev2.Activities.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Dropbox.Api, Version=0.1.5906.37642, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
-      <HintPath>..\packages\Dropbox.Api.3.0.2\lib\net45\Dropbox.Api.dll</HintPath>
+    <Reference Include="Dropbox.Api, Version=4.0.0.0, Culture=neutral, PublicKeyToken=310f0e82fbb45d01, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dropbox.Api.4.2.4\lib\net45\Dropbox.Api.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -128,12 +127,12 @@
       <HintPath>..\packages\Microsoft.SharePointOnline.CSOM.16.1.3912.1204\lib\net45\Microsoft.SharePoint.Client.WorkflowServices.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="MySql.Data, Version=6.9.6.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <HintPath>..\Binaries\MySql.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="MySql.Data, Version=6.9.9.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.6.9.9\lib\net45\MySql.Data.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="policy.2.3.FSharp.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>True</Private>
@@ -176,9 +175,15 @@
     <Compile Include="..\AssemblyCommonInfo.cs">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <None Include="..\Run Tests.ps1">
+      <Link>Run Tests.ps1</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </None>
     <Compile Include="Activities\ActivityParser.cs" />
     <Compile Include="Activities\DebugCopyException.cs" />
     <Compile Include="Activities\DebugEvalResult.cs" />
+    <Compile Include="Activities\Debug\DebugItemServiceTestStaticDataParams.cs" />
     <Compile Include="Activities\Debug\DebugItemWarewolfAtomListResult.cs" />
     <Compile Include="Activities\Debug\DebugItemWarewolfAtomResult.cs" />
     <Compile Include="Activities\Debug\DebugItemWarewolfRecordset.cs" />
@@ -207,8 +212,10 @@
     <Compile Include="Activities\DsfBaseActivity.cs" />
     <Compile Include="Activities\DsfDecision.cs" />
     <Compile Include="Activities\DsfComDllActivity.cs" />
+    <Compile Include="Activities\DsfDeleteRecordActivity.cs" />
     <Compile Include="Activities\DsfDotNetDllActivity.cs" />
     <Compile Include="Activities\DsfCreateJsonActivity.cs" />
+    <Compile Include="Activities\DsfEnhancedDotNetDllActivity.cs" />
     <Compile Include="Activities\DsfMethodBasedActivity.cs" />
     <Compile Include="Activities\DsfMultiAssignObjectActivity.cs" />
     <Compile Include="Activities\DsfMySqlDatabaseActivity.cs" />
@@ -216,13 +223,14 @@
     <Compile Include="Activities\DsfOracleDatabaseActivity.cs" />
     <Compile Include="Activities\DsfPostgreSqlActivity.cs" />
     <Compile Include="Activities\DsfRecordsetLengthActivity.cs" />
+    <Compile Include="Activities\DsfRecordsetNullhandlerLengthActivity.cs" />
     <Compile Include="Activities\Debug\DebugItemStaticDataParams.cs" />
     <Compile Include="Activities\Debug\DebugOutputBase.cs" />
     <Compile Include="Activities\DsfFindRecordsMultipleCriteriaActivity.cs" />
     <Compile Include="Activities\DsfPluginActivity.cs" />
     <Compile Include="Activities\DsfDatabaseActivity.cs" />
     <Compile Include="Activities\DsfDataMergeActivity.cs" />
-    <Compile Include="Activities\DsfDeleteRecordActivity.cs" />
+    <Compile Include="Activities\DsfDeleteRecordNullHandlerActivity.cs" />
     <Compile Include="Activities\DsfBaseConvertActivity.cs" />
     <Compile Include="Activities\DsfCalculateActivity.cs" />
     <Compile Include="Activities\DsfCaseConvertActivity.cs" />
@@ -243,7 +251,7 @@
     <Compile Include="Activities\DsfSendEmailActivity.cs" />
     <Compile Include="Activities\DsfSequenceActivity.cs" />
     <Compile Include="Activities\DsfSortRecordsActivity.cs" />
-    <Compile Include="Activities\DsfCountRecordsetActivity.cs" />
+    <Compile Include="Activities\DsfCountRecordsetNullHandlerActivity.cs" />
     <Compile Include="Activities\DsfMultiAssignActivity.cs" />
     <Compile Include="Activities\DsfSqlBulkInsertActivity.cs" />
     <Compile Include="Activities\DsfSqlServerDatabaseActivity.cs" />
@@ -269,6 +277,10 @@
     <Compile Include="Activities\IFlowNodeActivity.cs" />
     <Compile Include="Activities\RabbitMQ\Consume\DsfConsumeRabbitMQActivity.cs" />
     <Compile Include="Activities\RabbitMQ\Publish\DsfPublishRabbitMQActivity.cs" />
+    <Compile Include="Activities\RecordsetOld\DsfCountRecordsetActivity.cs" />
+    <Compile Include="Activities\Scripting\DsfJavascriptActivity.cs" />
+    <Compile Include="Activities\Scripting\DsfPythonActivity.cs" />
+    <Compile Include="Activities\Scripting\DsfRubyActivity.cs" />
     <Compile Include="Activities\SelectAndApply\DsfSelectAndApplyActivity.cs" />
     <Compile Include="Activities\Sharepoint\SharepointCopyFileActivity.cs" />
     <Compile Include="Activities\Sharepoint\SharepointCreateListItemActivity.cs" />
@@ -302,6 +314,7 @@
     <Compile Include="Activities\SqlBulkInsert\SqlBulkCopyWrapper.cs" />
     <Compile Include="Activities\SqlBulkInsert\SqlBulkInserter.cs" />
     <Compile Include="Activities\SqlBulkInsert\ISqlBulkCopy.cs" />
+    <Compile Include="Activities\ServiceTestHelper.cs" />
     <Compile Include="Activities\WcfEndPoint\DsfWcfEndPointActivity.cs" />
     <Compile Include="Activities\WebRequestDataDto.cs" />
     <Compile Include="Activities\WebRequestInvoker.cs" />
@@ -362,7 +375,7 @@
     <Compile Include="Interfaces\IDev2ActivityIOMapping.cs" />
     <Compile Include="Interfaces\IFindMissingStrategy.cs" />
     <Compile Include="Interfaces\IOutputTOConvert.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestMockStep.cs" />
     <Compile Include="TO\AssignObjectDTO.cs" />
     <Compile Include="TO\ActivityDTO.cs" />
     <Compile Include="Activities\DsfActivity.cs" />
@@ -385,7 +398,6 @@
     <Compile Include="TO\XPathDTO.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Utilities\ActivityHelper.cs" />
-    <Compile Include="Utilities\ActivityUtils.cs" />
     <Compile Include="Utilities\FindRecordsDisplayUtil.cs" />
     <Compile Include="Utilities\IWorkflowHelper.cs" />
     <Compile Include="Utilities\WorkflowHelper.cs" />
@@ -397,9 +409,7 @@
     <Compile Include="Validation\IsSingleRecordSetRule.cs" />
     <Compile Include="Validation\IsSingleValueRuleSet.cs" />
     <Compile Include="Validation\IsValidCalculateRule.cs" />
-    <Compile Include="Validation\IsValidExpressionRule.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Validation\IsValidExpressionRule.cs" />
     <Compile Include="Validation\IsValidJsonCreateMappingSourceExpression.cs" />
     <Compile Include="Validation\IsValidJsonCreateMappingSourceRule.cs" />
     <Compile Include="Validation\ShouldNotBeVariableRule.cs" />
@@ -408,7 +418,7 @@
     <Compile Include="Value Objects\ForEachInnerActivityTO.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="Dev2.Activities.ruleset" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -429,6 +439,10 @@
     <ProjectReference Include="..\Dev2.Core\Dev2.Core.csproj">
       <Project>{6007C1F1-CE38-474A-A88C-0C05A77BC415}</Project>
       <Name>Dev2.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Data.Interfaces\Dev2.Data.Interfaces.csproj">
+      <Project>{D7189600-3C18-4D35-97A4-8095DE1A4504}</Project>
+      <Name>Dev2.Data.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Data\Dev2.Data.csproj">
       <Project>{4BD0C970-ECD6-470B-B9EE-17ECFE53E5FB}</Project>
@@ -466,7 +480,7 @@
       <Project>{1990550D-EA6F-4DAC-9B5E-8571E86923ED}</Project>
       <Name>Dev2.Util</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Dev2.Warewolf.Security\Warewolf.Security.csproj">
+    <ProjectReference Include="..\Warewolf.Security\Warewolf.Security.csproj">
       <Project>{CA5E9373-46FE-41B9-AB2E-BD637F48B456}</Project>
       <Name>Warewolf.Security</Name>
     </ProjectReference>
@@ -481,6 +495,10 @@
     <ProjectReference Include="..\Warewolf.Sharepoint\Warewolf.Sharepoint.csproj">
       <Project>{d7a04a3f-ddbd-497c-a311-efd2016830df}</Project>
       <Name>Warewolf.Sharepoint</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Storage.Interfaces\Warewolf.Storage.Interfaces.csproj">
+      <Project>{61A15557-1D18-4C69-88EB-31BF49B7FB50}</Project>
+      <Name>Warewolf.Storage.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Storage\Warewolf.Storage.csproj">
       <Project>{b3d070e0-11c1-4c1c-81a5-e680c1494945}</Project>
@@ -499,44 +517,10 @@
       <Name>WarewolfParserInterop</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!--
-  <PropertyGroup Condition=" '$(BuildingInsideVisualStudio)' == 'true' ">
-    <PostBuildEvent>xcopy /Y /Q /R "$(TargetPath)" "C:\Development\DEV2 Studio\Dev2.Studio.Core\Shared Dependancies\"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\DEV2 Studio\Dev2.Studio.Core\Shared Dependancies\"
-
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\DEV2 Application Server\ApplicationServer\Shared Dependancies\"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\DEV2 Application Server\ApplicationServer\Shared Dependancies\"
-	  </PostBuildEvent>
-  </PropertyGroup>
-  -->
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
-  <!--<PropertyGroup Condition=" '$(BuildingInsideVisualStudio)' == 'true' ">
-    <PostBuildEvent>
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\Dev Source\Dev2 Application Server\ApplicationServer\Unlimited.Applications.DynamicServicesHost\Binaries"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\Dev Source\Dev2 Application Server\ApplicationServer\Unlimited.Applications.DynamicServicesHost\Binaries"
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\Dev Source\Dev2 Application Server\ApplicationServer\Unlimited.Applications.DynamicServicesHost\Bin\Debug"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\Dev Source\Dev2 Application Server\ApplicationServer\Unlimited.Applications.DynamicServicesHost\Bin\Debug"
-
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\Dev Source\Branches\Studio\1\Unlimited.Applications.BusinessDesignStudio\AssemblyDependencies\"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\Dev Source\Branches\Studio\1\Unlimited.Applications.BusinessDesignStudio\AssemblyDependencies\"
-
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\Dev Source\Branches\Studio\1\Unlimited.Applications.BusinessDesignStudio\Binaries\"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\Dev Source\Branches\Studio\1\Unlimited.Applications.BusinessDesignStudio\Binaries\"
-
-      xcopy /Y /Q /R "$(TargetPath)" "C:\Development\Dev Source\Branches\Studio\1\Unlimited.Applications.BusinessDesignStudio\Bin\Debug"
-      xcopy /Y /Q /R "$(TargetName).pdb" "C:\Development\Dev Source\Branches\Studio\1\Unlimited.Applications.BusinessDesignStudio\Bin\Debug"
-    </PostBuildEvent>
-  </PropertyGroup>-->
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

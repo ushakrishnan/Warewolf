@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,16 +10,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
+using Dev2.Runtime.Diagnostics;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
@@ -27,10 +28,20 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    [SuppressMessage("ReSharper", "UnusedMember.Global")]
+
     public class SaveDbSourceSource : IEsbManagementEndpoint
     {
         IExplorerServerResourceRepository _serverExplorerRepository;
+
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        {
+            return Guid.Empty;
+        }
+
+        public AuthorizationContext GetAuthorizationContextForService()
+        {
+            return AuthorizationContext.Contribute;
+        }
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
@@ -38,15 +49,16 @@ namespace Dev2.Runtime.ESB.Management.Services
             Dev2JsonSerializer serializer = new Dev2JsonSerializer();
             try
             {
+                Dev2Logger.Info("Save Resource Service", GlobalConstants.WarewolfInfo);
 
-                Dev2Logger.Info("Save Resource Service");
-                StringBuilder resourceDefinition;
-
-                values.TryGetValue("DbSource", out resourceDefinition);
+                values.TryGetValue("DbSource", out StringBuilder resourceDefinition);
 
                 IDbSource src = serializer.Deserialize<DbSourceDefinition>(resourceDefinition);
                 if (src.Path.EndsWith("\\"))
+                {
                     src.Path = src.Path.Substring(0, src.Path.LastIndexOf("\\", StringComparison.Ordinal));
+                }
+
                 var res = new DbSource
                 {
                     AuthenticationType = src.AuthenticationType,
@@ -60,8 +72,20 @@ namespace Dev2.Runtime.ESB.Management.Services
                     ResourceType = src.Type.ToString()
                 };
                 var con = new DbSources();
-                var result = con.DoDatabaseValidation(res);
+                DatabaseValidationResult result = null;
+                Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.OrginalExecutingUser, () =>
+                {
+                    result = con.DoDatabaseValidation(new DbSource
+                    {
+                        AuthenticationType = src.AuthenticationType,
+                        Server = src.ServerName,
+                        Password = src.Password,
+                        ServerType = src.Type,
+                        UserID = src.UserName
 
+                    });
+
+                });
                 if (result.IsValid)
                 {
                     ResourceCatalog.Instance.SaveResource(GlobalConstants.ServerWorkspaceID, res, src.Path);
@@ -82,7 +106,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 msg.HasError = true;
                 msg.Message = new StringBuilder(err.Message);
-                Dev2Logger.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
 
             }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +9,7 @@
 */
 
 using System;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Services.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,7 +17,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Infrastructure.Tests.Services.Security
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class AuthorizationHelpersTests
     {
         [TestMethod]
@@ -45,7 +46,7 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 var reason = context.ToReason();
 
                 //------------Assert Results-------------------------
-                switch(context)
+                switch (context)
                 {
                     case AuthorizationContext.None:
                         Assert.AreEqual("You are not authorized.", reason);
@@ -64,6 +65,12 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                         break;
                     case AuthorizationContext.DeployFrom:
                         Assert.AreEqual("You are not authorized to deploy from this server.", reason);
+                        break;
+                    case AuthorizationContext.Administrator:
+                        break;
+                    case AuthorizationContext.Any:
+                        break;
+                    default:
                         break;
                 }
             }

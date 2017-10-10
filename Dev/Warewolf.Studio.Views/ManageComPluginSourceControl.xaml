@@ -83,12 +83,12 @@
                                                   Text="{Binding SearchTerm, Delay=450, UpdateSourceTrigger=PropertyChanged}"
                                                   Style="{StaticResource SearchTextboxStyle}"
                                                   LabelText="Filter"
-                                                  ToolTip="{x:Static languages:Core.ComManagePluginSourceFilterTooltip}"
+                                                  ToolTip="{x:Static languages:Tooltips.ComManagePluginSourceFilterTooltip}"
                                                   ClearSearchCommand="{Binding ClearSearchTextCommand}"
-                                                  ClearSearchToolTip="{x:Static languages:Core.ComManagePluginSourceClearSearchTooltip}"
+                                                  ClearSearchToolTip="{x:Static languages:Tooltips.ComManagePluginSourceClearSearchTooltip}"
                                                   HorizontalAlignment="Stretch" >
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ComPluginSourceClearSearchHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ComPluginSourceClearSearchHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </customControls:SearchTextBox>
                     <Button x:Name="RefreshButton" Grid.Row="0"
@@ -97,7 +97,7 @@
                             VerticalAlignment="Center"
                             Margin="0,3,0,-1"
                             Command="{Binding RefreshCommand}"
-                            ToolTip="{x:Static languages:Core.ComManagePluginSourceRefreshTooltip}"
+                            ToolTip="{x:Static languages:Tooltips.ComManagePluginSourceRefreshTooltip}"
                             Visibility="{Binding IsLoading,Converter={StaticResource NotConverter}}">
                         <fa:FontAwesome TextOptions.TextFormattingMode="Display" 
                                         FontSize="16" 
@@ -105,11 +105,12 @@
                                         VerticalAlignment="Center" 
                                         HorizontalAlignment="Center"/>
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ComPluginSourceRefreshCommandHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ComPluginSourceRefreshCommandHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </Button>
                     <views:CircularProgressBar Grid.Row="0"
                                                Grid.Column="1"
+                                               Margin="{StaticResource ControlBorderTop}"
                                                Visibility="{Binding IsLoading,Converter={StaticResource BoolToVisibilityConverter}}"
                                                Width="25"
                                                Height="25"
@@ -129,7 +130,8 @@
                 </Grid>
 
                 <Grid Grid.Row="3" Margin="{StaticResource ControlBorderTop}">
-                    <Grid Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Grid}, Path=ActualWidth}">
+                    <Grid Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=Grid}, Path=ActualWidth}"
+                          Visibility="{Binding IsLoading,Converter={StaticResource BoolToVisibilityConverterNegative}}">
                         <ig:XamDataTree x:Name="ExplorerTree" 
                                         ActiveDataItem="{Binding SelectedDll, Mode=TwoWay}"
                                         ItemsSource="{Binding DllListings}"
@@ -178,6 +180,12 @@
                             </ig:XamDataTree.GlobalNodeLayouts>
                         </ig:XamDataTree>
                     </Grid>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <views:CircularProgressBar Visibility="{Binding IsLoading,Converter={StaticResource BoolToVisibilityConverter}}"
+                                                   Width="75"
+                                                   Height="75"
+                                                   Padding="2.5" />
+                    </StackPanel>
                 </Grid>
                 <Grid Grid.Row="4" Margin="{StaticResource ControlBorderTop}" Width="{Binding ElementName=GridContainer, Path=ActualWidth}">
                     <Grid.ColumnDefinitions>
@@ -188,10 +196,10 @@
                     <TextBox x:Name="AssemblyNameTextBox" 
                              
                              Grid.Column="1" 
-                             ToolTip="{x:Static languages:Core.ComManagePluginSourceAssemblyNameTooltip}"
+                             ToolTip="{x:Static languages:Tooltips.ComManagePluginSourceAssemblyNameTooltip}"
                              Text="{Binding AssemblyName, UpdateSourceTrigger=PropertyChanged}">
                         <i:Interaction.Behaviors>
-                            <core:HelpSetter Text="{x:Static languages:Core.ComPluginSourceDllFullNameHelp}" DataContext="{Binding}" />
+                            <core:HelpSetter Text="{x:Static languages:HelpText.ComPluginSourceDllFullNameHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
                     </TextBox>
                 </Grid>

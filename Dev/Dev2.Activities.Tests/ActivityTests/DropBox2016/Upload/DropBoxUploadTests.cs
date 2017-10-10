@@ -1,24 +1,23 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Activities.DropBox2016.Result;
 using Dev2.Activities.DropBox2016.UploadActivity;
-using Dropbox.Api;
+using Dev2.Common.Interfaces.Wrappers;
 using Dropbox.Api.Files;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-// ReSharper disable ObjectCreationAsStatement
+
 
 namespace Dev2.Tests.Activities.ActivityTests.DropBox2016.Upload
 {
     [TestClass]
-    [SuppressMessage("ReSharper", "InconsistentNaming")]
+
     public class DropBoxUploadTests
     {
         private Mock<IDropBoxUpload> CreateDropboxUploadMock()
         {
             var mock = new Mock<IDropBoxUpload>();
             var fileMetadata = new DropboxUploadSuccessResult(new FileMetadata());
-            mock.Setup(upload => upload.ExecuteTask(It.IsAny<DropboxClient>()))
+            mock.Setup(upload => upload.ExecuteTask(It.IsAny<IDropboxClientWrapper>()))
                  .Returns(fileMetadata);
             return mock;
         }
@@ -46,8 +45,8 @@ namespace Dev2.Tests.Activities.ActivityTests.DropBox2016.Upload
             Assert.IsNotNull(dropBoxUpload);
             //---------------Execute Test ----------------------
             //---------------Test Result -----------------------
-            dropBoxUpload.Object.ExecuteTask(It.IsAny<DropboxClient>());
-            dropBoxUpload.Verify(upload => upload.ExecuteTask(It.IsAny<DropboxClient>()));
+            dropBoxUpload.Object.ExecuteTask(It.IsAny<IDropboxClientWrapper>());
+            dropBoxUpload.Verify(upload => upload.ExecuteTask(It.IsAny<IDropboxClientWrapper>()));
         }
         
       
@@ -72,7 +71,7 @@ namespace Dev2.Tests.Activities.ActivityTests.DropBox2016.Upload
             //---------------Assert Precondition----------------
             Assert.IsNotNull(dropBoxUpload);
             //---------------Execute Test ----------------------
-            var metadata = dropBoxUpload.ExecuteTask(It.IsAny<DropboxClient>());
+            var metadata = dropBoxUpload.ExecuteTask(It.IsAny<IDropboxClientWrapper>());
             //---------------Test Result -----------------------
             Assert.IsNotNull(metadata);
             Assert.IsInstanceOfType(metadata,typeof(DropboxFailureResult));

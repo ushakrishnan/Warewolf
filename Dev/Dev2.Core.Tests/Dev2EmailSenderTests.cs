@@ -1,15 +1,14 @@
 ﻿using System;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Interfaces;
 using Microsoft.Exchange.WebServices.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Storage;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests
 {
@@ -44,7 +43,7 @@ namespace Dev2.Tests
         {
             //---------------Set up test pack-------------------
             var exMailSender = new Mock<IExchangeEmailSender>();
-            var excSource = new Mock<IExchangeSource>();
+            var excSource = new Mock<IExchange>();
             var i1 = new Mock<IWarewolfIterator>();
 
             i1.Setup(iterator => iterator.GetNextValue()).Returns("Micky@Dev2.co.za");
@@ -74,17 +73,17 @@ namespace Dev2.Tests
             iList.AddVariableToIterateOn(i6.Object);
             var sender = new Mock<IDev2EmailSender>();
             var excEmailSender = new Mock<IExchangeEmailSender>();
-            // ReSharper disable once RedundantAssignment
+            
             var eR = new ErrorResultTO();
             excEmailSender.Setup(p => p.Send(It.IsAny<ExchangeService>(), It.IsAny<EmailMessage>()));
             sender.SetupGet(emailSender => emailSender.ExchangeService).Returns(new ExchangeService());
             sender.SetupGet(emailSender => emailSender.EmailSender).Returns(excEmailSender.Object);
-            sender.Setup(q => q.SendEmail(It.IsAny<IExchangeSource>(), It.IsAny<IWarewolfListIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), out eR))
+            sender.Setup(q => q.SendEmail(It.IsAny<IExchange>(), It.IsAny<IWarewolfListIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), out eR))
                 .Returns("Succes");
             //---------------Assert Precondition----------------
             Assert.IsNotNull(sender);
             //---------------Execute Test ----------------------
-            // ReSharper disable once RedundantAssignment
+            
             var er = new ErrorResultTO();
             try
             {

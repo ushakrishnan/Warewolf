@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2016 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Warewolf.Resource.Errors;
 
-// ReSharper disable UnusedMember.Local
 
 namespace Dev2.Activities
 {
@@ -23,15 +22,20 @@ namespace Dev2.Activities
         public static Boolean IsWaitingForUserInput(Process process)
         {
             if(process == null)
+            {
                 throw new Exception(ErrorResource.NoProcessFound);
-            // for thread safety
-            if(process.HasExited) return false;
+            }
+            if (process.HasExited)
+            {
+                return false;
+            }
+
             ModalChecker checker = new ModalChecker(process);
             return checker.WaitingForUserInput;
         }
 
         #region Native Windows Stuff
-        // ReSharper disable InconsistentNaming
+        
         private const int WS_EX_DLGMODALFRAME = 0x00000001;
         private const int GWL_EXSTYLE = -20;
         public delegate bool EnumThreadDelegate(IntPtr hWnd, IntPtr lParam);
@@ -66,18 +70,12 @@ namespace Dev2.Activities
             _process = process;
             _waiting = false;
         }
-
-        /// <summary>
-        /// Gets a value indicating whether [waiting for user input].
-        /// </summary>
-        /// <value>
-        /// <c>true</c> if [waiting for user input]; otherwise, <c>false</c>.
-        /// </value>
+        
         private Boolean WaitingForUserInput
         {
             get
             {
-                WindowEnum(_process.MainWindowHandle, 0);
+                WindowEnum(_process.MainWindowHandle);
                 if(!_waiting)
                 {
                     _waiting = ThreadWindows(_process.MainWindowHandle);
@@ -96,24 +94,21 @@ namespace Dev2.Activities
                 return true;
             }
             return false;
-
-        }
-
-        // ReSharper disable UnusedMethodReturnValue.Local
-        // ReSharper disable UnusedParameter.Local
-        private int WindowEnum(IntPtr hWnd, int lParam)
-        // ReSharper restore UnusedMethodReturnValue.Local
+        }        
+        
+        private int WindowEnum(IntPtr hWnd)
         {
-            IntPtr processId;
-
-            GetWindowThreadProcessId(hWnd, out processId);
-            if(processId.ToInt32() != _process.Id)
+            GetWindowThreadProcessId(hWnd, out IntPtr processId);
+            if (processId.ToInt32() != _process.Id)
+            {
                 return 1;
+            }
+
             uint style = GetWindowLong(hWnd, GWL_EXSTYLE);
             if((style & WS_EX_DLGMODALFRAME) != 0)
             {
                 _waiting = true;
-                return 0; // stop searching further
+                return 0;
             }
             return 1;
         }
