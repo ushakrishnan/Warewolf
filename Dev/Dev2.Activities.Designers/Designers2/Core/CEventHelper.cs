@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,29 +16,25 @@ using System.Reflection;
 
 namespace Dev2.Activities.Designers2.Core
 {
-   
-    static public class CEventHelper
+    public static class CEventHelper
     {
         static readonly Dictionary<Type, List<FieldInfo>> DicEventFieldInfos = new Dictionary<Type, List<FieldInfo>>();
 
-        static BindingFlags AllBindings
-        {
-            get { return BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static; }
-        }
-
-        //--------------------------------------------------------------------------------
+        static BindingFlags AllBindings => BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+        
         static IEnumerable<FieldInfo> GetTypeEventFields(Type t)
         {
             if (DicEventFieldInfos.ContainsKey(t))
+            {
                 return DicEventFieldInfos[t];
+            }
 
-            List<FieldInfo> lst = new List<FieldInfo>();
+            var lst = new List<FieldInfo>();
             BuildEventFields(t, lst);
             DicEventFieldInfos.Add(t, lst);
             return lst;
         }
-
-        //--------------------------------------------------------------------------------
+        
         static void BuildEventFields(Type t, List<FieldInfo> lst)
         {
             // Type.GetEvent(s) gets all Events for the type AND it's ancestors
@@ -55,59 +51,62 @@ namespace Dev2.Activities.Designers2.Core
                          into fi where fi != null select fi);
         }
 
+        public static void RemoveAllEventHandlers(object obj) => TryRemoveEventHandler(obj, "");
 
-
-        //--------------------------------------------------------------------------------
-        public static void RemoveAllEventHandlers(object obj) { RemoveEventHandler(obj, ""); }
-
-        //--------------------------------------------------------------------------------
-        public static void RemoveEventHandler(object obj, string eventName)
+        public static void TryRemoveEventHandler(object obj, string eventName)
         {
             try
             {
-
-
-
                 if (obj == null)
-                    return;
-
-                Type t = obj.GetType();
-                IEnumerable<FieldInfo> eventFields = GetTypeEventFields(t);
-
-                foreach(var fi in eventFields.Where(fi => eventName == "" || String.Compare(eventName, fi.Name, StringComparison.OrdinalIgnoreCase) == 0))
                 {
-                    // After hours and hours of research and trial and error, it turns out that
-                    // STATIC Events have to be treated differently from INSTANCE Events...
-                    if (fi.IsStatic)
-                    {
-
-                    }
-                    else
-                    {
-                        // INSTANCE EVENT
-                        var ei = t.GetEvent(fi.Name, AllBindings);
-                        if (ei != null)
-                        {
-                            object val = fi.GetValue(obj);
-                            Delegate mdel = val as Delegate;
-                            if (mdel != null)
-                            {
-                                foreach (Delegate del in mdel.GetInvocationList())
-                                    ei.RemoveEventHandler(obj, del);
-                            }
-                        }
-                    }
+                    return;
                 }
+                RemoveEventHandler(obj, eventName);
             }
-                // ReSharper disable EmptyGeneralCatchClause
-            catch
-                // ReSharper restore EmptyGeneralCatchClause
+            catch (Exception e)
             {
-
-
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
         }
 
-        //--------------------------------------------------------------------------------
+        static void RemoveEventHandler(object obj, string eventName)
+        {
+            var t = obj.GetType();
+            var eventFields = GetTypeEventFields(t);
+
+            foreach (var fi in eventFields.Where(fi => eventName == "" || String.Compare(eventName, fi.Name, StringComparison.OrdinalIgnoreCase) == 0))
+            {
+                RemoveEventField(obj, t, fi);
+            }
+        }
+
+        static void RemoveEventField(object obj, Type t, FieldInfo fi)
+        {
+            if (!fi.IsStatic)
+            {
+                RemoveNonStaticEventField(obj, t, fi);
+            }
+        }
+
+        static void RemoveNonStaticEventField(object obj, Type t, FieldInfo fi)
+        {
+            var ei = t.GetEvent(fi.Name, AllBindings);
+            if (ei != null)
+            {
+                var val = fi.GetValue(obj);
+                if (val is Delegate mdel)
+                {
+                    RemoveAllDelegates(obj, ei, mdel);
+                }
+            }
+        }
+
+        static void RemoveAllDelegates(object obj, EventInfo ei, Delegate mdel)
+        {
+            foreach (Delegate del in mdel.GetInvocationList())
+            {
+                ei.RemoveEventHandler(obj, del);
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,8 +24,8 @@ namespace Dev2.TaskScheduler.Wrappers
 
         public TimeSpan Delay
         {
-            get { return (Instance).Delay; }
-            set { (Instance).Delay = value; }
+            get { return Instance.Delay; }
+            set { Instance.Delay = value; }
         }
 
         public string UserId
@@ -34,9 +34,6 @@ namespace Dev2.TaskScheduler.Wrappers
             set { Instance.UserId = value; }
         }
 
-        public new LogonTrigger Instance
-        {
-            get { return (LogonTrigger) base.Instance; }
-        }
+        public new LogonTrigger Instance => (LogonTrigger) base.Instance;
     }
 }

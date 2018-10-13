@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,13 +8,14 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-
+using Dev2.Data.Interfaces;
 
 namespace Dev2.Data.TO
 {
-    public class ParseTO {
+    public class ParseTO : IParseTO
+    {
 
-        private string _payload = string.Empty;
+        string _payload = string.Empty;
 
         public string Payload {
             get {
@@ -30,33 +30,23 @@ namespace Dev2.Data.TO
 
         public int EndIndex { get; set; }
 
-        public ParseTO Child { get; set; }
+        public IParseTO Child { get; set; }
 
-        public ParseTO Parent { get; set; }
+        public IParseTO Parent { get; set; }
 
         public bool HangingOpen { get; set; }
 
         public bool IsRecordSet {
 
             get {
-                bool result = Payload != null && Payload.Contains("(");
+                var result = Payload != null && Payload.Contains("(");
 
                 return result;
             }
         }
 
-        public bool IsRoot {
+        public bool IsRoot => Parent == null;
 
-            get {
-                return Parent == null;
-            }
-        }
-
-        public bool IsLeaf {
-
-            get {
-                return Child == null;
-            }
-        }
+        public bool IsLeaf => Child == null;
     }
 }

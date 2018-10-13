@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,9 +21,9 @@ namespace Dev2.Runtime.Hosting
     {
         #region Implementation of IVersionStrategy
 
-        public IVersionInfo GetNextVersion(IResource newResource, IResource oldResource, string userName , string reason )
+        public IVersionInfo GetNextVersion(IResource newResource, IResource oldresource, string userName , string reason )
         {
-            if (oldResource == null)
+            if (oldresource == null)
             {
                 if(newResource.VersionInfo == null)
                 {
@@ -33,42 +32,42 @@ namespace Dev2.Runtime.Hosting
             }
             else if (reason == "Rename")
             {
-                if (oldResource.VersionInfo != null)
-                    return new VersionInfo(DateTime.Now, reason, userName, oldResource.VersionInfo.VersionNumber, oldResource.ResourceID, oldResource.VersionInfo.VersionId);
-
+                if (oldresource.VersionInfo != null)
+                {
+                    return new VersionInfo(DateTime.Now, reason, userName, oldresource.VersionInfo.VersionNumber, oldresource.ResourceID, oldresource.VersionInfo.VersionId);
+                }
             }
 
             else
             {
-                if(oldResource.VersionInfo != null)
-                return new VersionInfo(DateTime.Now, reason, userName, (1 + int.Parse(oldResource.VersionInfo.VersionNumber)).ToString(CultureInfo.InvariantCulture), oldResource.ResourceID, oldResource.VersionInfo.VersionId);
-         
+                if(oldresource.VersionInfo != null)
+                {
+                    return new VersionInfo(DateTime.Now, reason, userName, (1 + int.Parse(oldresource.VersionInfo.VersionNumber)).ToString(CultureInfo.InvariantCulture), oldresource.ResourceID, oldresource.VersionInfo.VersionId);
+                }
             }
             return new VersionInfo(DateTime.Now, reason, userName, "1", newResource.ResourceID, Guid.NewGuid());
         }
 
         #endregion
 
-
-        public IVersionInfo GetCurrentVersion(IResource newResource, IResource oldResource, string userName, string reason)
-        {
-            if (oldResource !=null && oldResource.VersionInfo == null)
-                return new VersionInfo(DateTime.Now, reason, userName, 1.ToString(CultureInfo.InvariantCulture), oldResource.ResourceID, Guid.NewGuid());
-
-
-// ReSharper disable PossibleNullReferenceException
-            return  oldResource.VersionInfo;
-// ReSharper restore PossibleNullReferenceException
-        }
-
         public IVersionInfo GetCurrentVersion(IResource newResource, IVersionInfo oldresource, string userName, string reason)
         {
             if (oldresource == null)
+            {
                 return new VersionInfo(DateTime.Now, reason, userName, 1.ToString(CultureInfo.InvariantCulture), newResource.ResourceID, Guid.NewGuid());
+            }
 
-
-            // ReSharper disable PossibleNullReferenceException
             return new VersionInfo(DateTime.Now, reason, userName, (1 + int.Parse(oldresource.VersionNumber)).ToString(CultureInfo.InvariantCulture), oldresource.ResourceId, oldresource.VersionId);
+        }
+
+        public IVersionInfo GetCurrentVersion(IResource newResource, IResource oldresource, string userName, string reason)
+        {
+            if (oldresource != null && oldresource.VersionInfo == null)
+            {
+                return new VersionInfo(DateTime.Now, reason, userName, 1.ToString(CultureInfo.InvariantCulture), oldresource.ResourceID, Guid.NewGuid());
+            }
+
+            return oldresource?.VersionInfo;            
         }
     }
 }

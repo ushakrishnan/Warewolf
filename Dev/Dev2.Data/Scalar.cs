@@ -1,7 +1,7 @@
 
 using System;
 using System.Collections.Generic;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Data
 {
@@ -61,7 +61,7 @@ namespace Dev2.Data
             {
                 return true;
             }
-            if(obj.GetType() != this.GetType())
+            if(obj.GetType() != GetType())
             {
                 return false;
             }
@@ -74,62 +74,44 @@ namespace Dev2.Data
         /// <returns>
         /// A hash code for the current object.
         /// </returns>
-        public override int GetHashCode()
-        {
-            return (Name != null ? Name.GetHashCode() : 0);
-        }
+        public override int GetHashCode() => Name?.GetHashCode() ?? 0;
 
-        public static bool operator ==(Scalar left, Scalar right)
-        {
-            return Equals(left, right);
-        }
+        public static bool operator ==(Scalar left, Scalar right) => Equals(left, right);
 
-        public static bool operator !=(Scalar left, Scalar right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator !=(Scalar left, Scalar right) => !Equals(left, right);
 
         #endregion
 
         #region ComparerEqualityComparer
 
-        private sealed class ComparerEqualityComparer : IEqualityComparer<IScalar>
+        sealed class ComparerEqualityComparer : IEqualityComparer<IScalar>
         {
             public bool Equals(IScalar x, IScalar y)
             {
-                if(ReferenceEquals(x, y))
+                if (ReferenceEquals(x, y))
                 {
                     return true;
                 }
-                if(ReferenceEquals(x, null))
+                if (ReferenceEquals(x, null))
                 {
                     return false;
                 }
-                if(ReferenceEquals(y, null))
+                if (ReferenceEquals(y, null))
                 {
                     return false;
                 }
-                if(x.GetType() != y.GetType())
+                if (x.GetType() != y.GetType())
                 {
                     return false;
                 }
                 return string.Equals(x.Name, y.Name);
             }
 
-            public int GetHashCode(IScalar obj)
-            {
-                return obj.Name != null ? obj.Name.GetHashCode() : 0;
-            }
+            public int GetHashCode(IScalar obj) => obj.Name?.GetHashCode() ?? 0;
         }
 
-        private static readonly IEqualityComparer<IScalar> ComparerInstance = new ComparerEqualityComparer();
-        public static IEqualityComparer<IScalar> Comparer
-        {
-            get
-            {
-                return ComparerInstance;
-            }
-        }
+        static readonly IEqualityComparer<IScalar> ComparerInstance = new ComparerEqualityComparer();
+        public static IEqualityComparer<IScalar> Comparer => ComparerInstance;
 
         #endregion
     }

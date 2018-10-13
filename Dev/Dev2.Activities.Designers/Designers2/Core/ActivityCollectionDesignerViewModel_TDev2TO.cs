@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -11,18 +10,18 @@
 
 using System;
 using System.Activities.Presentation.Model;
+using System.Activities.Presentation.View;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows.Data;
+using Dev2.Activities.Designers2.DataMerge;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.Studio.Core.Activities.Utils;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-
-//using Dev2.Interfaces;
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -37,15 +36,22 @@ namespace Dev2.Activities.Designers2.Core
         where TDev2TOFn : class, IDev2TOFn, IPerformsValidation, new()
     {
         TDev2TOFn _initialDto = new TDev2TOFn();
-        // ReSharper disable once FieldCanBeMadeReadOnly.Local
-        object _syncLock = new object();
+        readonly object _syncLock = new object();
 
         protected ActivityCollectionDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
         }
 
-        public int ItemCount { get { return ModelItemCollection.Count; } }
+        public int ItemCount => ModelItemCollection.Count;
+        public int ModelItemCount
+        {
+            get
+            {
+                dynamic mi = ModelItem;
+                return mi.MergeCollection.Count;
+            }
+        }
 
         protected void InitializeItems(ModelItemCollection modelItemCollection)
         {
@@ -54,48 +60,40 @@ namespace Dev2.Activities.Designers2.Core
             // Do this before, because AddDTO() also attaches events
             AttachEvents(0);
 
-            switch(modelItemCollection.Count)
+            if (modelItemCollection.Count == 1)
             {
-                case 0:
-                    AddDto(1);
-                    AddDto(2);
-                    break;
-                case 1:
-                    AddDto(2);
-                    break;
+                AddDto(2);
+            }
+            if (modelItemCollection.Count == 0)
+            {
+                AddDto(1);
+                AddDto(2);
             }
 
             AddBlankRow();
             UpdateDisplayName();
 
-            if(ModelItemCollection != null)
+            if (ModelItemCollection != null)
             {
-                ModelItemCollection.CollectionChanged+=ModelItemCollectionOnCollectionChanged;
+                ModelItemCollection.CollectionChanged += ModelItemCollectionOnCollectionChanged;
             }
-            
+
         }
 
         void ModelItemCollectionOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs notifyCollectionChangedEventArgs)
         {
-            //
         }
 
         public override void OnSelectionChanged(ModelItem oldItem, ModelItem newItem)
         {
-            if(oldItem != null)
+            // old row is blank so remove
+            if (oldItem?.GetCurrentValue() is TDev2TOFn dto && dto.CanRemove() && ModelItemCollection != null)
             {
-                var dto = oldItem.GetCurrentValue() as TDev2TOFn;
-                if(dto != null && dto.CanRemove())
-                {
-                    // old row is blank so remove
-                    if(ModelItemCollection != null)
-                    {
-                        var index = ModelItemCollection.IndexOf(oldItem) + 1;
-                        RemoveDto(dto, index);
-                    }
-                }
+                var index = ModelItemCollection.IndexOf(oldItem) + 1;
+                RemoveDto(dto, index);
             }
-            if(newItem != null)
+
+            if (newItem != null)
             {
                 CurrentModelItem = newItem;
             }
@@ -106,13 +104,27 @@ namespace Dev2.Activities.Designers2.Core
         public override void UpdateDisplayName()
         {
             var currentName = DisplayName;
-            if(currentName.Contains("(") && currentName.Contains(")"))
+            if (currentName.Contains("(") && currentName.Contains(")"))
             {
                 currentName = currentName.Remove(currentName.Contains(" (")
                     ? currentName.IndexOf(" (", StringComparison.Ordinal)
                     : currentName.IndexOf("(", StringComparison.Ordinal));
             }
-            currentName = currentName + " (" + (ItemCount - 1) + ")";
+            var count = ItemCount - 2;
+            if (ItemCount > 0)
+            {
+                var indexNumber = ItemCount - 1;
+                var dto = GetDto(indexNumber);
+                if (dto.CanAdd())
+                {
+                    count = indexNumber;
+                }
+            }
+            if (count < 0)
+            {
+                count = 0;
+            }
+            currentName = currentName + " (" + count + ")";
             DisplayName = currentName;
         }
 
@@ -120,10 +132,7 @@ namespace Dev2.Activities.Designers2.Core
         {
             var result = new List<IActionableErrorInfo>();
             result.AddRange(ValidateThis());
-
             ProcessModelItemCollection(0, mi => result.AddRange(ValidateCollectionItem(mi)));
-
-            //Errors = result.Count == 0 ? 0 : result;
             Errors = result.Count == 0 ? null : result;
         }
 
@@ -131,26 +140,20 @@ namespace Dev2.Activities.Designers2.Core
 
         protected abstract IEnumerable<IActionableErrorInfo> ValidateCollectionItem(ModelItem mi);
 
-        public override bool CanRemoveAt(int indexNumber)
-        {
-            return ModelItemCollection.Count > 2 && indexNumber < ModelItemCollection.Count;
-        }
+        public override bool CanRemoveAt(int indexNumber) => ModelItemCollection != null && (ModelItemCollection.Count > 2 && indexNumber < ModelItemCollection.Count);
 
-        public override bool CanInsertAt(int indexNumber)
-        {
-            return ModelItemCollection.Count > 2 && indexNumber < ModelItemCollection.Count;
-        }
+        public override bool CanInsertAt(int indexNumber) => ModelItemCollection != null && (ModelItemCollection.Count > 2 && indexNumber < ModelItemCollection.Count);
 
         public override void RemoveAt(int indexNumber)
         {
-            if(!CanRemoveAt(indexNumber))
+            if (!CanRemoveAt(indexNumber))
             {
                 return;
             }
 
-            if(ModelItemCollection.Count == 2)
+            if (ModelItemCollection.Count == 2)
             {
-                if(indexNumber == 1)
+                if (indexNumber == 1)
                 {
                     var dto = GetDto(indexNumber);
                     dto.ClearRow();
@@ -165,7 +168,7 @@ namespace Dev2.Activities.Designers2.Core
 
         public override void InsertAt(int indexNumber)
         {
-            if(!CanInsertAt(indexNumber))
+            if (!CanInsertAt(indexNumber))
             {
                 return;
             }
@@ -173,77 +176,82 @@ namespace Dev2.Activities.Designers2.Core
             UpdateDisplayName();
         }
 
-        protected override void AddToCollection(IEnumerable<string> source, bool overwrite)
+        protected override void AddToCollection(IEnumerable<string> sources, bool overwrite)
         {
-            if(ModelItemCollection != null)
+            if (GetType() == typeof(DataMergeDesignerViewModel))
             {
-                var firstModelItem = ModelItemCollection.FirstOrDefault();
-                if(firstModelItem != null)
+                var lastPopulated = ModelItemCollection?.LastOrDefault(p => !string.IsNullOrWhiteSpace(p.GetProperty("At").ToString()));
+                if (lastPopulated != null)
                 {
-                    _initialDto = (TDev2TOFn)firstModelItem.GetCurrentValue();
+                    _initialDto = (TDev2TOFn)lastPopulated.GetCurrentValue();
                 }
             }
-
             var indexNumber = GetIndexForAdd(overwrite);
 
             // Always insert items before blank row
-            foreach(var s in source.Where(s => !string.IsNullOrWhiteSpace(s)))
+            foreach (var s in sources.Where(s => !string.IsNullOrWhiteSpace(s)))
             {
                 AddDto(indexNumber, s);
                 indexNumber++;
             }
-
+            AddBlankRow(overwrite);
             var lastModelItem = GetModelItem(ItemCount);
             SetIndexNumber(lastModelItem, indexNumber);
 
             UpdateDisplayName();
 
-            // Restore 
+            // Restore
             _initialDto = new TDev2TOFn();
         }
-
-        /// <summary>
-        /// Gets the insert index for <see cref="AddToCollection"/>. 
-        /// Returns the index of the last blank row.
-        /// </summary>
+        
         int GetIndexForAdd(bool overwrite)
         {
-            var indexNumber = 1;
-            if(overwrite)
+            int indexNumber = 1;
+            if (overwrite)
             {
-                if(ModelItemCollection != null)
-                {
-                    ModelItemCollection.Clear();
-                }
-
-                // Add blank row
-                AddDto(indexNumber);
+                ModelItemCollection?.Clear();
             }
             else
             {
-                var lastDto = GetLastDto();
-                if(ModelItemCollection != null)
-                {
-                    indexNumber = ModelItemCollection.IndexOf(GetModelItem(ItemCount)) + 1;
+                indexNumber = GetIndexWithoutOverwrite();
+            }
+            return indexNumber;
+        }
 
-                    if(ModelItemCollection.Count == 2)
+        int GetIndexWithoutOverwrite()
+        {
+            int indexNumber = 1;
+            var lastDto = GetLastDto();
+            if (ModelItemCollection != null)
+            {
+                indexNumber = ModelItemCollection.IndexOf(GetModelItem(ItemCount)) + 1;
+                if (ModelItemCollection.Count == 2)
+                {
+                    // Check whether we have 2 blank rows
+                    var firstDto = GetDto(1);
+                    if (firstDto.CanRemove() && lastDto.CanRemove())
                     {
-                        // Check whether we have 2 blank rows
-                        var firstDto = GetDto(1);
-                        if(firstDto.CanRemove() && lastDto.CanRemove())
-                        {
-                            RemoveAt(indexNumber, lastDto);
-                            indexNumber = indexNumber - 1;
-                        }
+                        RemoveAt(indexNumber, lastDto);
+                        indexNumber = indexNumber - 1;
                     }
                 }
             }
+
             return indexNumber;
         }
 
         ModelItem GetModelItem(int indexNumber)
         {
-            return ModelItemCollection[indexNumber - 1];
+            var index = indexNumber - 1;
+            if (ItemCount < index)
+            {
+                index = ItemCount == 0 ? 0 : ItemCount - 1;
+            }
+            if (index < 0)
+            {
+                index = 0;
+            }
+            return ModelItemCollection[index];
         }
 
         protected TDev2TOFn GetDto(int indexNumber)
@@ -252,23 +260,33 @@ namespace Dev2.Activities.Designers2.Core
             return item.GetCurrentValue() as TDev2TOFn;
         }
 
-        TDev2TOFn GetLastDto()
-        {
-            return GetDto(ItemCount);
-        }
+        TDev2TOFn GetLastDto() => GetDto(ItemCount);
 
-        void AddBlankRow()
+        void AddBlankRow(bool overwrite = false)
         {
             var lastDto = GetLastDto();
             var index = ItemCount + 1;
             var isLastRowBlank = lastDto.CanRemove();
-            if(!isLastRowBlank)
+            if (!isLastRowBlank)
             {
-                AddDto(index + 1);
-                UpdateDisplayName();
+                var lastIndex = index + 1;
+                if (overwrite)
+                {
+                    _initialDto = new TDev2TOFn();
+                }
+
+                AddDto(lastIndex);
+                if (GetType() == typeof(DataMergeDesignerViewModel))
+                {
+                    RunValidation(ModelItemCount - 1);
+                }
             }
+            UpdateDisplayName();
         }
 
+        protected virtual void RunValidation(int index)
+        {
+        }
         void AddDto(int indexNumber, string initializeWith = "")
         {
             //
@@ -278,29 +296,25 @@ namespace Dev2.Activities.Designers2.Core
             AttachEvents(dto);
 
             var idx = indexNumber - 1;
-            if(ModelItemCollection != null && idx >= ModelItemCollection.Count)
+            if (ModelItemCollection != null && idx >= ModelItemCollection.Count)
             {
-                ModelItem modelItem = ModelItemUtils.CreateModelItem(dto);
+                var modelItem = ModelItemUtils.CreateModelItem(dto);
                 ModelItemCollection.Add(modelItem);
+
             }
             else
             {
-                if(ModelItemCollection != null)
-                {
-                    ModelItemCollection.Insert(idx, dto);
-                }
+                ModelItemCollection?.Insert(idx, dto);
             }
+            RunValidation(idx);
         }
 
-        protected virtual IDev2TOFn CreateDto(int indexNumber, string initializeWith)
-        {
-            return DTOFactory.CreateNewDTO(_initialDto, indexNumber, false, initializeWith);
-        }
+        protected virtual IDev2TOFn CreateDto(int indexNumber, string initializeWith) => DTOFactory.CreateNewDTO(_initialDto, indexNumber, false, initializeWith);
 
         protected virtual void RemoveDto(IDev2TOFn dto, int indexNumber)
         {
 
-            if(ModelItemCollection.Count > 2 && indexNumber < ModelItemCollection.Count)
+            if (ModelItemCollection.Count > 2 && indexNumber < ModelItemCollection.Count)
             {
                 RemoveAt(indexNumber, dto);
                 UpdateDisplayName();
@@ -316,19 +330,42 @@ namespace Dev2.Activities.Designers2.Core
 
         void OnDtoPropertyChanged(object sender, PropertyChangedEventArgs args)
         {
-            DoCustomAction(args.PropertyName);
-            if(args.PropertyName != "CanRemove")
+            if (!IsMerge)
             {
-                return;
-            }
+                DoCustomAction(args.PropertyName);
+                if (args.PropertyName != "CanRemove")
+                {
+                    return;
+                }
 
+                var canAdd = true;
+                var parent = ModelItemCollection.Parent;
+                if (parent != null)
+                {
+                    var parentContentPane = FindDependencyParent.FindParent<DesignerView>(parent.View);
+                    var dataContext = parentContentPane?.DataContext;
+                    if (dataContext != null && (dataContext.GetType().Name == "ServiceTestViewModel"))
+                    {
+                        canAdd = false;
+                    }
+                }
+
+                if (canAdd)
+                {
+                    AddBlank(sender);
+                }
+            }
+        }
+
+        private void AddBlank(object sender)
+        {
             var dto = (TDev2TOFn)sender;
-            if(dto.CanAdd())
+            if (dto.CanAdd())
             {
-                if(ModelItemCollection.Count == 2)
+                if (ModelItemCollection.Count == 2)
                 {
                     var firstDto = GetDto(1);
-                    if(!firstDto.CanRemove())
+                    if (!firstDto.CanRemove())
                     {
                         // first row is not blank
                         AddBlankRow();
@@ -342,18 +379,14 @@ namespace Dev2.Activities.Designers2.Core
         }
 
         protected virtual void DoCustomAction(string propertyName)
-        {            
+        {
         }
-
-        /// <summary>
-        /// Attaches events to the ModelItemCollection starting at the specified zero-based index.
-        /// </summary>
+        
         void AttachEvents(int startIndex)
         {
             ProcessModelItemCollection(startIndex, mi =>
             {
-                var dto = mi.GetCurrentValue() as TDev2TOFn;
-                if(dto != null)
+                if (mi.GetCurrentValue() is TDev2TOFn dto)
                 {
                     AttachEvents(dto);
                 }
@@ -364,19 +397,15 @@ namespace Dev2.Activities.Designers2.Core
         {
             dto.PropertyChanged += OnDtoPropertyChanged;
         }
-
-
-        /// <summary>
-        /// Process the ModelItemCollection starting at the specified zero-based index.
-        /// </summary>
+        
         void ProcessModelItemCollection(int startIndex, Action<ModelItem> processModelItem)
         {
-            if(ModelItemCollection != null)
+            if (ModelItemCollection != null && !IsMerge)
             {
                 startIndex = Math.Max(startIndex, 0);
-                for(var i = startIndex; i < ModelItemCollection.Count; i++)
+                for (var i = startIndex; i < ModelItemCollection.Count; i++)
                 {
-                    processModelItem(ModelItemCollection[i]);
+                    processModelItem?.Invoke(ModelItemCollection[i]);
                 }
             }
         }
@@ -388,20 +417,19 @@ namespace Dev2.Activities.Designers2.Core
 
         protected override void OnDispose()
         {
-          
-          ProcessModelItemCollection(0, mi =>
-            {
-               var dto = mi.GetCurrentValue() as TDev2TOFn;
-                if(dto != null)
-                {
-                    CEventHelper.RemoveAllEventHandlers(dto);
-                }
-                CEventHelper.RemoveAllEventHandlers(mi);
 
-            });
-            if(ModelItemCollection != null)
+            ProcessModelItemCollection(0, mi =>
+              {
+                  if (mi.GetCurrentValue() is TDev2TOFn dto)
+                  {
+                      CEventHelper.RemoveAllEventHandlers(dto);
+                  }
+                  CEventHelper.RemoveAllEventHandlers(mi);
+
+              });
+            if (ModelItemCollection != null)
             {
-                BindingOperations.DisableCollectionSynchronization(ModelItemCollection); 
+                BindingOperations.DisableCollectionSynchronization(ModelItemCollection);
             }
             ModelItemCollection = null;
             base.OnDispose();

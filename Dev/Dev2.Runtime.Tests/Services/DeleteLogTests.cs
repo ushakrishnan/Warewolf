@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,11 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Threading;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Workspaces;
@@ -25,7 +24,6 @@ using Moq;
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DeleteLogTests
     {
         readonly static object MonitorLock = new object();
@@ -68,48 +66,76 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var deleteLog = new DeleteLog();
+
+            //------------Execute Test---------------------------
+            var resId = deleteLog.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var deleteLog = new DeleteLog();
+
+            //------------Execute Test---------------------------
+            var resId = deleteLog.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Administrator, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogExecuteWithNullFilePathExpectedReturnsError()
         {
             var workspace = new Mock<IWorkspace>();
 
-            var values = new Dictionary<string, StringBuilder> { { "FilePath", new StringBuilder() }, { "Directory", new StringBuilder("xyz") } };
+            var values = new Dictionary<string, StringBuilder> { { "ResourcePath", new StringBuilder() }, { "Directory", new StringBuilder("xyz") } };
             var esb = new DeleteLog();
             var result = esb.Execute(values, workspace.Object);
             var msg = ConvertToMsg(result);
             Assert.IsTrue(msg.Message.ToString().StartsWith("DeleteLog: Error"));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogExecuteWithNullDirectoryExpectedReturnsError()
         {
             var workspace = new Mock<IWorkspace>();
 
-            var values = new Dictionary<string, StringBuilder> { { "FilePath", new StringBuilder("abc") }, { "Directory", new StringBuilder() } };
+            var values = new Dictionary<string, StringBuilder> { { "ResourcePath", new StringBuilder("abc") }, { "Directory", new StringBuilder() } };
             var esb = new DeleteLog();
             var result = esb.Execute(values, workspace.Object);
             var msg = ConvertToMsg(result);
             Assert.IsTrue(msg.Message.ToString().StartsWith("DeleteLog: Error"));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogExecuteWithNonExistingDirectoryExpectedReturnsError()
         {
             var workspace = new Mock<IWorkspace>();
 
-            var values = new Dictionary<string, StringBuilder> { { "FilePath", new StringBuilder("abc") }, { "Directory", new StringBuilder("xyz") } };
+            var values = new Dictionary<string, StringBuilder> { { "ResourcePath", new StringBuilder("abc") }, { "Directory", new StringBuilder("xyz") } };
             var esb = new DeleteLog();
             var result = esb.Execute(values, workspace.Object);
             var msg = ConvertToMsg(result);
             Assert.IsTrue(msg.Message.ToString().StartsWith("DeleteLog: Error"));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogExecuteWithNonExistingPathExpectedReturnsError()
         {
             var workspace = new Mock<IWorkspace>();
 
-            var values = new Dictionary<string, StringBuilder> { { "FilePath", new StringBuilder(Guid.NewGuid().ToString()) }, { "Directory", new StringBuilder("C:") } };
+            var values = new Dictionary<string, StringBuilder> { { "ResourcePath", new StringBuilder(Guid.NewGuid().ToString()) }, { "Directory", new StringBuilder("C:") } };
             var esb = new DeleteLog();
             var result = esb.Execute(values, workspace.Object);
             var msg = ConvertToMsg(result);
@@ -117,30 +143,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
-        public void DeleteLogExecuteWithValidPathExpectedReturnsSuccess()
-        {
-            //Lock because of access to file system
-            lock(SyncRoot)
-            {
-                var fileName = Guid.NewGuid().ToString() + "_Test.log";
-                var path = Path.Combine(_testDir, fileName);
-                File.WriteAllText(path, "hello test");
-
-                Assert.IsTrue(File.Exists(path));
-
-                var workspace = new Mock<IWorkspace>();
-
-                var values = new Dictionary<string, StringBuilder> { { "FilePath", new StringBuilder(fileName) }, { "Directory", new StringBuilder(_testDir) } };
-                var esb = new DeleteLog();
-                var result = esb.Execute(values, workspace.Object);
-                var msg = ConvertToMsg(result);
-                Assert.IsTrue(msg.Message.ToString().StartsWith("Success"));
-                Assert.IsFalse(File.Exists(path));
-            }
-        }
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogExecuteWithValidPathAndLockedExpectedReturnsError()
         {
             //Lock because of access to file system
@@ -158,7 +161,7 @@ namespace Dev2.Tests.Runtime.Services
                 {
                     var workspace = new Mock<IWorkspace>();
 
-                    var values = new Dictionary<string, StringBuilder> { { "FilePath", new StringBuilder(fileName) }, { "Directory", new StringBuilder(_testDir) } };
+                    var values = new Dictionary<string, StringBuilder> { { "ResourcePath", new StringBuilder(fileName) }, { "Directory", new StringBuilder(_testDir) } };
                     var esb = new DeleteLog();
                     var result = esb.Execute(values, workspace.Object);
                     var msg = ConvertToMsg(result);
@@ -175,7 +178,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogHandlesTypeExpectedReturnsDeleteLogService()
         {
             var esb = new DeleteLog();
@@ -187,13 +190,13 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogCreateServiceEntryExpectedReturnsDynamicService()
         {
             var esb = new DeleteLog();
             var result = esb.CreateServiceEntry();
             Assert.AreEqual(esb.HandlesType(), result.Name);
-            Assert.AreEqual("<DataList><Directory ColumnIODirection=\"Input\"/><FilePath ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>", result.DataListSpecification.ToString());
+            Assert.AreEqual("<DataList><Directory ColumnIODirection=\"Input\"/><ResourcePath ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>", result.DataListSpecification.ToString());
             Assert.AreEqual(1, result.Actions.Count);
 
             var serviceAction = result.Actions[0];

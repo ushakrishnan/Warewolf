@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,20 +11,20 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using ActivityUnitTests;
+using Dev2.Common.State;
+using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     /// <summary>
     /// Summary description for RecordsetLengthTest
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class RecordsetLengthTest : BaseActivityUnitTest
     {
         /// <summary>
@@ -42,11 +41,9 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[TestCountvar]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"5";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -62,13 +59,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void RecordsetLengthOutputToRecset()
         {
             SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[recset1().field1]]");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "5";
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "recset1", "field1", out actual, out error);
-            string actualSet = actual.First(c => !string.IsNullOrEmpty(c));
+            GetRecordSetFieldValueFromDataList(result.Environment, "recset1", "field1", out IList<string> actual, out string error);
+            var actualSet = actual.First(c => !string.IsNullOrEmpty(c));
 
             // remove test datalist ;)
 
@@ -96,6 +91,21 @@ namespace Dev2.Tests.Activities.ActivityTests
             act.UpdateForEachInputs(null);
             //------------Assert Results-------------------------
             Assert.AreEqual(recordsetName, act.RecordsetName);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfRecordsetLengthActivity_GetOutputs")]
+        public void DsfRecordsetLengthActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string recordsetName = "[[Customers()]]";
+            var act = new DsfRecordsetLengthActivity { RecordsetName = recordsetName, RecordsLength = "[[res]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]
@@ -206,9 +216,54 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[res]]", dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfRecordsetLengthActivity_GetState")]
+        public void DsfRecordsetLengthActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfRecordsetLengthActivity { RecordsetName = "[[recset()]]", RecordsLength = "[[len]]" };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(2, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "RecordsetName",
+                    Type = StateVariable.StateType.Input,
+                    Value = "[[recset()]]"
+                },
+                new StateVariable
+                {
+                    Name="RecordsLength",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[len]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
+
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string recordSetName, string RecordsLength)
+        void SetupArguments(string currentDL, string testData, string recordSetName, string RecordsLength)
         {
             TestStartNode = new FlowStep
             {

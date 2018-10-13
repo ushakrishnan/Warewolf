@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,42 +19,38 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
-using Dev2.Runtime.Hosting;
+using Dev2.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
 using Warewolf.Security.Encryption;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
+using Dev2.Comparer;
+using Dev2.Common.State;
 
 namespace Dev2.Activities
 {
-    public class DsfSendEmailActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Utility-SendMail", "SMTP Send", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Email", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Email_SMTP_Send")]
+    public class DsfSendEmailActivity : DsfActivityAbstract<string>,IEquatable<DsfSendEmailActivity>
     {
-        #region Fields
-
         IEmailSender _emailSender;
         IDSFDataObject _dataObject;
         string _password;
         EmailSource _selectedEmailSource;
-    
-        #endregion
-
-        /// <summary>
-        /// The property that holds all the conversions
-        /// </summary>
-
-        // ReSharper disable MemberCanBePrivate.Global
+                
         public EmailSource SelectedEmailSource
         {
-            get
-            {
-                return _selectedEmailSource;
-            }
+            get => _selectedEmailSource;
             set
             {
                 _selectedEmailSource = value;
@@ -67,13 +62,13 @@ namespace Dev2.Activities
                 }
             }
         }
-        // ReSharper restore MemberCanBePrivate.Global
+        
         [FindMissing]
         public string FromAccount { get; set; }
         [FindMissing]
         public string Password
         {
-            get { return _password; }
+            get => _password;
             set
             {
                 if (DataListUtil.ShouldEncrypt(value))
@@ -95,14 +90,8 @@ namespace Dev2.Activities
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        // ReSharper disable once MemberCanBePrivate.Global
-        protected string DecryptedPassword
-        {
-            get
-            {
-                return DataListUtil.NotEncrypted(Password) ? Password : DpapiWrapper.Decrypt(Password);
-            }
-        }
+        
+        protected string DecryptedPassword => DataListUtil.NotEncrypted(Password) ? Password : DpapiWrapper.Decrypt(Password);
 
         [FindMissing]
         public string To { get; set; }
@@ -110,39 +99,101 @@ namespace Dev2.Activities
         public string Cc { get; set; }
         [FindMissing]
         public string Bcc { get; set; }
-
-        // ReSharper disable MemberCanBePrivate.Global
+        
         public enMailPriorityEnum Priority { get; set; }
-        // ReSharper restore MemberCanBePrivate.Global
+        
         [FindMissing]
         public string Subject { get; set; }
         [FindMissing]
         public string Attachments { get; set; }
         [FindMissing]
         public string Body { get; set; }
-
-        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        
         public bool IsHtml { get; set; }
-
-        /// <summary>
-        /// The property that holds the result string the user enters into the "Result" box
-        /// </summary>
+        
         [FindMissing]
         public new string Result { get; set; }
 
         public IEmailSender EmailSender
         {
-            get
-            {
-                return _emailSender ?? (_emailSender = new EmailSender());
-            }
+            get => _emailSender ?? (_emailSender = new EmailSender());
             set
             {
                 _emailSender = value;
             }
         }
 
-        #region Ctor
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "SelectedEmailSource.ResourceID",
+                    Type = StateVariable.StateType.Input,
+                    Value = SelectedEmailSource.ResourceID.ToString()
+                },
+                new StateVariable
+                {
+                    Name = "FromAccount",
+                    Type = StateVariable.StateType.Input,
+                    Value = FromAccount
+                },
+                new StateVariable
+                {
+                    Name = "To",
+                    Type = StateVariable.StateType.Input,
+                    Value = To
+                },
+                new StateVariable
+                {
+                    Name = "Cc",
+                    Type = StateVariable.StateType.Input,
+                    Value = Cc
+                },
+                new StateVariable
+                {
+                    Name = "Bcc",
+                    Type = StateVariable.StateType.Input,
+                    Value = Bcc
+                },
+                new StateVariable
+                {
+                    Name = "Priority",
+                    Type = StateVariable.StateType.Input,
+                    Value = Priority.ToString()
+                },
+                new StateVariable
+                {
+                    Name = "Subject",
+                    Type = StateVariable.StateType.Input,
+                    Value = Subject
+                },
+                new StateVariable
+                {
+                    Name = "Attachments",
+                    Type = StateVariable.StateType.Input,
+                    Value = Attachments
+                },
+                new StateVariable
+                {
+                    Name = "IsHtml",
+                    Type = StateVariable.StateType.Input,
+                    Value = IsHtml.ToString()
+                },
+                new StateVariable
+                {
+                    Name = "Body",
+                    Type = StateVariable.StateType.Input,
+                    Value = Body
+                },
+                new StateVariable
+                {
+                    Name = "Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = Result
+                }
+            };
+        }
 
         public DsfSendEmailActivity()
             : base("Email")
@@ -159,136 +210,54 @@ namespace Dev2.Activities
             IsHtml = false;
         }
 
-        #endregion
+        public override List<string> GetOutputs() => new List<string> { Result };
 
-
-        #region Overrides of DsfNativeActivity<string>
-
-        private bool IsDebug
+        bool IsDebug
         {
             get
             {
-                if(_dataObject == null)
+                if (_dataObject == null)
                 {
                     return false;
                 }
                 return _dataObject.IsDebugMode();
             }
         }
-        /// <summary>
-        /// When overridden runs the activity's execution logic
-        /// </summary>
-        /// <param name="context">The context to be used.</param>
-        // ReSharper disable MethodTooLong
+
         protected override void OnExecute(NativeActivityContext context)
-            // ReSharper restore MethodTooLong
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
-
             _dataObject = dataObject;
 
-            ErrorResultTO allErrors = new ErrorResultTO();
-            int indexToUpsertTo = 0;
+            var allErrors = new ErrorResultTO();
+            var indexToUpsertTo = 0;
 
             InitializeDebug(dataObject);
             try
             {
-                var runtimeSource = ResourceCatalog.Instance.GetResource<EmailSource>(dataObject.WorkspaceID, SelectedEmailSource.ResourceID);
-               
-                if(runtimeSource==null)
+                var runtimeSource = ResourceCatalog.GetResource<EmailSource>(dataObject.WorkspaceID, SelectedEmailSource.ResourceID);
+
+                if (runtimeSource == null)
                 {
-                    dataObject.Environment.Errors.Add("Invalid Email Source");
+                    dataObject.Environment.Errors.Add(ErrorResource.InvalidEmailSource);
                     return;
                 }
-                if(IsDebug)
-                {
-                    var fromAccount = FromAccount;
-                    if(String.IsNullOrEmpty(fromAccount))
-                    {
-                        fromAccount = runtimeSource.UserName;
-                        AddDebugInputItem(fromAccount, "From Account");
-                    }
-                    else
-                    {
-                        AddDebugInputItem(new DebugEvalResult(FromAccount, "From Account", dataObject.Environment, update));
-                    }
-                    AddDebugInputItem(new DebugEvalResult(To, "To", dataObject.Environment, update));
-                    AddDebugInputItem(new DebugEvalResult(Subject, "Subject", dataObject.Environment, update));
-                    AddDebugInputItem(new DebugEvalResult(Body, "Body", dataObject.Environment, update));
-                }
-                var colItr = new WarewolfListIterator();
-
-                var fromAccountItr = new WarewolfIterator(dataObject.Environment.Eval(FromAccount ?? string.Empty, update));
-                colItr.AddVariableToIterateOn(fromAccountItr);
-
-                var passwordItr = new WarewolfIterator(dataObject.Environment.Eval(DecryptedPassword,update));
-                colItr.AddVariableToIterateOn(passwordItr);
-
-                var toItr = new WarewolfIterator(dataObject.Environment.Eval(To, update));
-                colItr.AddVariableToIterateOn(toItr);
-
-                var ccItr = new WarewolfIterator(dataObject.Environment.Eval(Cc, update));
-                colItr.AddVariableToIterateOn(ccItr);
-
-                var bccItr = new WarewolfIterator(dataObject.Environment.Eval(Bcc, update));
-                colItr.AddVariableToIterateOn(bccItr);
-
-                var subjectItr = new WarewolfIterator(dataObject.Environment.Eval(Subject, update));
-                colItr.AddVariableToIterateOn(subjectItr);
-
-                var bodyItr = new WarewolfIterator(dataObject.Environment.Eval(Body ?? string.Empty, update));
-                colItr.AddVariableToIterateOn(bodyItr);
-
-                var attachmentsItr = new WarewolfIterator(dataObject.Environment.Eval(Attachments ?? string.Empty, update));
-                colItr.AddVariableToIterateOn(attachmentsItr);
-
-                if(!allErrors.HasErrors())
-                {
-                    while(colItr.HasMoreData())
-                    {
-                        ErrorResultTO errors;
-                        var result = SendEmail(runtimeSource, colItr, fromAccountItr, passwordItr, toItr, ccItr, bccItr, subjectItr, bodyItr, attachmentsItr, out errors);
-                        allErrors.MergeErrors(errors);
-                        if(!allErrors.HasErrors())
-                        {
-                            indexToUpsertTo = UpsertResult(indexToUpsertTo, dataObject.Environment, result, update);
-                        }
-                    }
-                    if(IsDebug && !allErrors.HasErrors())
-                    {
-                        if (!string.IsNullOrEmpty(Result))
-                        {
-                            AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
-                        }
-                    }
-                }
-                else
-                {
-                    if(IsDebug)
-                    {
-                        AddDebugInputItem(FromAccount, "From Account");
-                        AddDebugInputItem(To, "To");
-                        AddDebugInputItem(Subject, "Subject");
-                        AddDebugInputItem(Body, "Body");
-                    }
-                }
+                indexToUpsertTo = TryExecute(dataObject, update, allErrors, indexToUpsertTo, runtimeSource);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Dev2Logger.Log.Error("DSFEmail", e);
+                Dev2Logger.Error("DSFEmail", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
 
             finally
             {
                 // Handle Errors
-
                 if(allErrors.HasErrors())
                 {
                     foreach(var err in allErrors.FetchErrors())
@@ -310,6 +279,80 @@ namespace Dev2.Activities
             }
         }
 
+        private int TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, int indexToUpsertTo, EmailSource runtimeSource)
+        {
+            if (IsDebug)
+            {
+                var fromAccount = FromAccount;
+                if (String.IsNullOrEmpty(fromAccount))
+                {
+                    fromAccount = runtimeSource.UserName;
+                    AddDebugInputItem(fromAccount, "From Account");
+                }
+                else
+                {
+                    AddDebugInputItem(new DebugEvalResult(FromAccount, "From Account", dataObject.Environment, update));
+                }
+                AddDebugInputItem(new DebugEvalResult(To, "To", dataObject.Environment, update));
+                AddDebugInputItem(new DebugEvalResult(Subject, "Subject", dataObject.Environment, update));
+                AddDebugInputItem(new DebugEvalResult(Body, "Body", dataObject.Environment, update));
+            }
+            var colItr = new WarewolfListIterator();
+
+            var fromAccountItr = new WarewolfIterator(dataObject.Environment.Eval(FromAccount ?? string.Empty, update));
+            colItr.AddVariableToIterateOn(fromAccountItr);
+
+            var passwordItr = new WarewolfIterator(dataObject.Environment.Eval(DecryptedPassword, update));
+            colItr.AddVariableToIterateOn(passwordItr);
+
+            var toItr = new WarewolfIterator(dataObject.Environment.Eval(To, update));
+            colItr.AddVariableToIterateOn(toItr);
+
+            var ccItr = new WarewolfIterator(dataObject.Environment.Eval(Cc, update));
+            colItr.AddVariableToIterateOn(ccItr);
+
+            var bccItr = new WarewolfIterator(dataObject.Environment.Eval(Bcc, update));
+            colItr.AddVariableToIterateOn(bccItr);
+
+            var subjectItr = new WarewolfIterator(dataObject.Environment.Eval(Subject, update));
+            colItr.AddVariableToIterateOn(subjectItr);
+
+            var bodyItr = new WarewolfIterator(dataObject.Environment.Eval(Body ?? string.Empty, update));
+            colItr.AddVariableToIterateOn(bodyItr);
+
+            var attachmentsItr = new WarewolfIterator(dataObject.Environment.Eval(Attachments ?? string.Empty, update));
+            colItr.AddVariableToIterateOn(attachmentsItr);
+
+            if (!allErrors.HasErrors())
+            {
+                while (colItr.HasMoreData())
+                {
+                    var result = SendEmail(runtimeSource, colItr, fromAccountItr, passwordItr, toItr, ccItr, bccItr, subjectItr, bodyItr, attachmentsItr, out ErrorResultTO errors);
+                    allErrors.MergeErrors(errors);
+                    if (!allErrors.HasErrors())
+                    {
+                        indexToUpsertTo = UpsertResult(indexToUpsertTo, dataObject.Environment, result, update);
+                    }
+                }
+                if (IsDebug && !allErrors.HasErrors() && !string.IsNullOrEmpty(Result))
+                {
+                    AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+                }
+            }
+            else
+            {
+                if (IsDebug)
+                {
+                    AddDebugInputItem(FromAccount, "From Account");
+                    AddDebugInputItem(To, "To");
+                    AddDebugInputItem(Subject, "Subject");
+                    AddDebugInputItem(Body, "Body");
+                }
+            }
+
+            return indexToUpsertTo;
+        }
+
         void AddDebugInputItem(string value, string label)
         {
             if(string.IsNullOrEmpty(value) || string.IsNullOrEmpty(label))
@@ -320,19 +363,11 @@ namespace Dev2.Activities
             AddDebugInputItem(DataListUtil.IsEvaluated(value) ? new DebugItemStaticDataParams("", value, label) : new DebugItemStaticDataParams(value, label));
         }
 
-        private int UpsertResult(int indexToUpsertTo, IExecutionEnvironment environment, string result, int update)
+        int UpsertResult(int indexToUpsertTo, IExecutionEnvironment environment, string result, int update)
         {
             string expression;
-            if(DataListUtil.IsValueRecordset(Result) && DataListUtil.GetRecordsetIndexType(Result) == enRecordsetIndexType.Star)
-            {
-                expression = Result.Replace(GlobalConstants.StarExpression, indexToUpsertTo.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                expression = Result;
-            }
-            //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
-            foreach(var region in DataListCleaningUtils.SplitIntoRegions(expression))
+            expression = DataListUtil.IsValueRecordset(Result) && DataListUtil.GetRecordsetIndexType(Result) == enRecordsetIndexType.Star ? Result.Replace(GlobalConstants.StarExpression, indexToUpsertTo.ToString(CultureInfo.InvariantCulture)) : Result;
+            foreach (var region in DataListCleaningUtils.SplitIntoRegions(expression))
             {
                 environment.Assign(region, result, update);
                 indexToUpsertTo++;
@@ -340,9 +375,7 @@ namespace Dev2.Activities
             return indexToUpsertTo;
         }
 
-        // ReSharper disable TooManyArguments
         string SendEmail(EmailSource runtimeSource, IWarewolfListIterator colItr, IWarewolfIterator fromAccountItr, IWarewolfIterator passwordItr, IWarewolfIterator toItr, IWarewolfIterator ccItr, IWarewolfIterator bccItr, IWarewolfIterator subjectItr, IWarewolfIterator bodyItr, IWarewolfIterator attachmentsItr, out ErrorResultTO errors)
-            // ReSharper restore TooManyArguments
         {
             errors = new ErrorResultTO();
             var fromAccountValue = colItr.FetchNextValue(fromAccountItr);
@@ -353,9 +386,8 @@ namespace Dev2.Activities
             var subjectValue = colItr.FetchNextValue(subjectItr);
             var bodyValue = colItr.FetchNextValue(bodyItr);
             var attachmentsValue = colItr.FetchNextValue(attachmentsItr);
-            MailMessage mailMessage = new MailMessage { IsBodyHtml = IsHtml };
-            MailPriority priority;
-            if(Enum.TryParse(Priority.ToString(), true, out priority))
+            var mailMessage = new MailMessage { IsBodyHtml = IsHtml };
+            if (Enum.TryParse(Priority.ToString(), true, out MailPriority priority))
             {
                 mailMessage.Priority = priority;
             }
@@ -373,7 +405,7 @@ namespace Dev2.Activities
             }
             catch(Exception)
             {
-                errors.AddError(string.Format("From address is not in the valid format: {0}", fromAccountValue));
+                errors.AddError(string.Format(ErrorResource.FROMAddressInvalidFormat, fromAccountValue));
                 return "Failure";
             }
             mailMessage.Body = bodyValue;
@@ -404,10 +436,8 @@ namespace Dev2.Activities
             return result;
         }
 
-        private List<string> GetSplitValues(string stringToSplit, char[] splitOn)
-        {
-            return stringToSplit.Split(splitOn, StringSplitOptions.RemoveEmptyEntries).ToList();
-        }
+        List<string> GetSplitValues(string stringToSplit, char[] splitOn) => stringToSplit.Split(splitOn, StringSplitOptions.RemoveEmptyEntries).ToList();
+
         void AddAttachmentsValue(string attachmentsValue, MailMessage mailMessage)
         {
             try
@@ -417,7 +447,7 @@ namespace Dev2.Activities
             }
             catch(Exception exception)
             {
-                throw new Exception(string.Format("Attachments is not in the valid format: {0}", attachmentsValue), exception);
+                throw new Exception(string.Format(ErrorResource.AttachmentInvalidFormat, attachmentsValue), exception);
             }
         }
 
@@ -430,7 +460,7 @@ namespace Dev2.Activities
             }
             catch(FormatException exception)
             {
-                throw new Exception(string.Format("To address is not in the valid format: {0}", toValue), exception);
+                throw new Exception(string.Format(ErrorResource.ToAddressInvalidFormat, toValue), exception);
             }
         }
 
@@ -443,7 +473,7 @@ namespace Dev2.Activities
             }
             catch(FormatException exception)
             {
-                throw new Exception(string.Format("CC address is not in the valid format: {0}", toValue), exception);
+                throw new Exception(string.Format(ErrorResource.CCAddressInvalidFormat, toValue), exception);
             }
         }
 
@@ -456,14 +486,11 @@ namespace Dev2.Activities
             }
             catch(FormatException exception)
             {
-                throw new Exception(string.Format("BCC address is not in the valid format: {0}", toValue), exception);
+                throw new Exception(string.Format(ErrorResource.BCCAddressInvalidFormat, toValue), exception);
             }
         }
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.StaticActivity;
-        }
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.StaticActivity;
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -504,26 +531,20 @@ namespace Dev2.Activities
                     {
                         Body = t.Item2;
                     }
-
                 }
             }
         }
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
-        #region Overrides of DsfNativeActivity<string>
-
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugInput in _debugInputs)
             {
@@ -532,7 +553,7 @@ namespace Dev2.Activities
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -541,23 +562,81 @@ namespace Dev2.Activities
             return _debugOutputs;
         }
 
-        #endregion
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(FromAccount, Password, To, Cc, Bcc, Subject, Attachments, Body);
 
-        #endregion
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
-        #region GetForEachInputs/Outputs
-
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public bool Equals(DsfSendEmailActivity other)
         {
-            return GetForEachItems(FromAccount, Password, To, Cc, Bcc, Subject, Attachments, Body);
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var emailSourcesComparer = new EmailSourceComparer();
+            var emailSourcesAreEqual = emailSourcesComparer.Equals(SelectedEmailSource, other.SelectedEmailSource);
+            var paswordsAreEqual = CommonEqualityOps.PassWordsCompare(Password, other.Password);
+            return base.Equals(other) 
+                && paswordsAreEqual
+                && emailSourcesAreEqual
+                && string.Equals(FromAccount, other.FromAccount) 
+                && string.Equals(To, other.To) 
+                && string.Equals(Cc, other.Cc) 
+                && string.Equals(Bcc, other.Bcc) 
+                && Priority == other.Priority 
+                && string.Equals(Subject, other.Subject) 
+                && string.Equals(Attachments, other.Attachments) 
+                && string.Equals(Body, other.Body) 
+                && IsHtml == other.IsHtml 
+                && string.Equals(Result, other.Result);
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public override bool Equals(object obj)
         {
-            return GetForEachItems(Result);
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfSendEmailActivity) obj);
         }
 
-        #endregion
-
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_emailSender != null ? _emailSender.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_dataObject != null ? _dataObject.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_password != null ? _password.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_selectedEmailSource != null ? _selectedEmailSource.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (FromAccount != null ? FromAccount.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (To != null ? To.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Cc != null ? Cc.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Bcc != null ? Bcc.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) Priority;
+                hashCode = (hashCode * 397) ^ (Subject != null ? Subject.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Attachments != null ? Attachments.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Body != null ? Body.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ IsHtml.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

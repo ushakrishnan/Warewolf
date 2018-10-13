@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using ActivityUnitTests;
 using Dev2.Activities;
+using Dev2.Common.State;
 using Dev2.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
@@ -13,7 +13,6 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DataSplitActivityTest
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class BaseActivityTests : BaseActivityUnitTest
     {
         /// <summary>
@@ -28,12 +27,10 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //---------------Set up test pack-------------------
             var act = new MySimpleActivity { Input1 = "[[OutVar1]]", Input2 = "[[OutVar2]]", Result = "[[ResultVar]]" };
-            List<DebugItem> inRes;
-            List<DebugItem> outRes;
 
-            // ReSharper disable InconsistentNaming
+
             const string dataList = "<ADL><OutVar1/><OutVar2/><ResultVar/></ADL>";
-            
+
             const string dataListWithData = "<ADL>" +
                                             "<OutVar1>TestVal</OutVar1><OutVar2>TestVal2</OutVar2></ADL>";
 
@@ -43,7 +40,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             //---------------Execute Test ----------------------
             var result = CheckActivityDebugInputOutput(act, dataList,
-                dataListWithData, out inRes, out outRes);
+                dataListWithData, out List<DebugItem> inRes, out List<DebugItem> outRes);
 
             // remove test datalist ;)
             //---------------Test Result -----------------------
@@ -132,16 +129,28 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[Bob]]", dsfForEachItems[0].Name);
             Assert.AreEqual("[[Bob]]", dsfForEachItems[0].Value);
         }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfBaseActivity_GetOutputs")]
+        public void DsfBaseActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new MySimpleActivity { Input1 = "SomeText", Result = "[[Bob]]" };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1,outputs.Count);
+            Assert.AreEqual("[[Bob]]",outputs[0]);
+        }
     }
 
-    internal sealed class MySimpleActivity : DsfBaseActivity
+    sealed class MySimpleActivity : DsfBaseActivity
     {
         public MySimpleActivity()
         {
             DisplayName = "MySimpleActivty";
         }
-
-        public override string DisplayName { get; set; }
 
         [Inputs("My Input 1")]
         public string Input1 { get; set; }
@@ -149,11 +158,15 @@ namespace Dev2.Tests.Activities.ActivityTests
         [Inputs("My Input 2")]
         public string Input2 { get; set; }
 
-        protected override string PerformExecution(Dictionary<string, string> evaluatedValues)
+        protected override List<string> PerformExecution(Dictionary<string, string> evaluatedValues)
         {
             var result = evaluatedValues["Input1"] + " - " + evaluatedValues["Input2"];
-            return result;
+            return new List<string> { result };
+        }
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
         }
     }
-    // ReSharper restore InconsistentNaming
+    
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,74 +13,56 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.Diagnostics.Debug;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Internal service to fetch compile time messages
-    /// </summary>
-    public class FetchRemoteDebugMessages : IEsbManagementEndpoint
+    public class FetchRemoteDebugMessages : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
-            {
+            {         
+                Dev2Logger.Info("Fetch Remote Debug Messages", GlobalConstants.WarewolfInfo);
+                string invokerId = null;
+                var serializer = new Dev2JsonSerializer();
 
-         
-            Dev2Logger.Log.Info("Fetch Remote Debug Messages");
-            string invokerId = null;
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+                values.TryGetValue("InvokerID", out StringBuilder tmp);
+                    if (tmp != null)
+                {
+                    invokerId = tmp.ToString();
+                }
 
-            StringBuilder tmp;
-            values.TryGetValue("InvokerID", out tmp);
-            if(tmp != null)
-            {
-                invokerId = tmp.ToString();
-            }
+                if(string.IsNullOrEmpty(invokerId))
+                {
+                    throw new InvalidDataContractException(ErrorResource.NullServiceIDOrWorkspaceID);
+                }
 
-            if(string.IsNullOrEmpty(invokerId))
-            {
-                throw new InvalidDataContractException("Null or empty ServiceID or WorkspaceID");
-            }
+                    // RemoteDebugMessageRepo
+                    Guid.TryParse(invokerId, out Guid iGuid);
 
-            Guid iGuid;
-            // RemoteDebugMessageRepo
-            Guid.TryParse(invokerId, out iGuid);
+                    if (iGuid != Guid.Empty)
+                {
+                    var items = RemoteDebugMessageRepo.Instance.FetchDebugItems(iGuid);
 
-            if(iGuid != Guid.Empty)
-            {
-                var items = RemoteDebugMessageRepo.Instance.FetchDebugItems(iGuid);
+                    return serializer.SerializeToBuilder(items);
+                }
 
-                return serializer.SerializeToBuilder(items);
-            }
-
-            return new StringBuilder();
+                return new StringBuilder();
             }
             catch (Exception err)
             {
-                Dev2Logger.Log.Error("Fetch Remote Debug Messages Error", err);
+                Dev2Logger.Error("Fetch Remote Debug Messages Error", err, GlobalConstants.WarewolfError);
                 throw;
             }
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService newDs = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder( "<DataList><InvokerID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-            newDs.Actions.Add(sa);
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><InvokerID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            return newDs;
-        }
-
-        public string HandlesType()
-        {
-            return "FetchRemoteDebugMessagesService";
-        }
+        public override string HandlesType() => "FetchRemoteDebugMessagesService";
     }
 }

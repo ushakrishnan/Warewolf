@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,18 +18,28 @@ using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Enums;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Dev2.Validation;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
+
+
+
 
 namespace Dev2.Activities
 {
-    public class DsfRandomActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Utility-Random", "Random", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Random")]
+    public class DsfRandomActivity : DsfActivityAbstract<string>,IEquatable<DsfRandomActivity>
     {
 
         #region Properties
@@ -55,6 +64,8 @@ namespace Dev2.Activities
 
         #endregion
 
+        public override List<string> GetOutputs() => new List<string> { Result };
+
         #region Ctor
 
         public DsfRandomActivity()
@@ -67,6 +78,42 @@ namespace Dev2.Activities
             To = string.Empty;
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "RandomType",
+                    Value = RandomType.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "From",
+                    Value = From,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "To",
+                    Value = To,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Length",
+                    Value = Length,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
+
         #endregion
 
         #region Overrides of DsfNativeActivity<string>
@@ -77,112 +124,24 @@ namespace Dev2.Activities
         /// <param name="context">The context to be used.</param>
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
-
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
-            allErrors.MergeErrors(errors);
+            var allErrors = new ErrorResultTO();
 
             var env = dataObject.Environment;
             InitializeDebug(dataObject);
 
             try
             {
-                if (!errors.HasErrors())
-                {
-                    if (dataObject.IsDebugMode())
-                    {
-                        AddDebugInputItem(Length, From, To, dataObject.Environment, RandomType, update);
-                    }
-
-                    IWarewolfIterator lengthItr = !String.IsNullOrEmpty(Length) ? new WarewolfIterator(env.EvalStrict(Length, update)) as IWarewolfIterator : new WarewolfAtomIterator(new[] { DataASTMutable.WarewolfAtom.Nothing, });
-                    var fromItr = !String.IsNullOrEmpty(From) ? new WarewolfIterator(env.EvalStrict(From, update)) as IWarewolfIterator : new WarewolfAtomIterator(new[] { DataASTMutable.WarewolfAtom.Nothing, });
-                    var toItr = !String.IsNullOrEmpty(To) ? new WarewolfIterator(env.EvalStrict(To, update)) as IWarewolfIterator : new WarewolfAtomIterator(new[] { DataASTMutable.WarewolfAtom.Nothing, });
-                    WarewolfListIterator colItr = new WarewolfListIterator();
-                    colItr.AddVariableToIterateOn(lengthItr);
-                    colItr.AddVariableToIterateOn(fromItr);
-                    colItr.AddVariableToIterateOn(toItr);
-
-                    Dev2Random dev2Random = new Dev2Random();
-                    while (colItr.HasMoreData())
-                    {
-                        int lengthNum = -1;
-                        double fromNum = -1.0;
-                        double toNum = -1.0;
-
-                        string fromValue = colItr.FetchNextValue(fromItr);
-                        string toValue = colItr.FetchNextValue(toItr);
-                        string lengthValue = colItr.FetchNextValue(lengthItr);
-
-                        if (RandomType != enRandomType.Guid)
-                        {
-                            if (RandomType == enRandomType.Numbers)
-                            {
-                                #region Getting the From
-
-                                fromNum = GetFromValue(fromValue, out errors);
-                                if (errors.HasErrors())
-                                {
-                                    allErrors.MergeErrors(errors);
-                                    continue;
-                                }
-
-                                #endregion
-
-                                #region Getting the To
-
-                                toNum = GetToValue(toValue, out errors);
-                                if (errors.HasErrors())
-                                {
-                                    allErrors.MergeErrors(errors);
-                                    continue;
-                                }
-
-                                #endregion
-                            }
-                            else
-                            {
-                                #region Getting the Length
-
-                                lengthNum = GetLengthValue(lengthValue, out errors);
-                                if (errors.HasErrors())
-                                {
-                                    allErrors.MergeErrors(errors);
-                                    continue;
-                                }
-
-                                #endregion
-                            }
-                        }
-                        string value = dev2Random.GetRandom(RandomType, lengthNum, fromNum, toNum);
-
-                        var rule = new IsSingleValueRule(() => Result);
-                        var single = rule.Check();
-                        if (single != null)
-                        {
-                            allErrors.AddError(single.Message);
-                        }
-                        else
-                        {
-                            env.Assign(Result, value, update);
-                        }
-                    }
-                }
-                allErrors.MergeErrors(errors);
-                if (!allErrors.HasErrors())
-                {
-                    AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
-                }
+                TryExecute(dataObject, update, allErrors, env);
             }
             catch (Exception e)
             {
-                Dev2Logger.Log.Error("DSFRandomActivity", e);
+                Dev2Logger.Error("DSFRandomActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -205,6 +164,102 @@ namespace Dev2.Activities
                     DispatchDebugState(dataObject, StateType.After, update);
                 }
             }
+        }
+
+        private void TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, IExecutionEnvironment env)
+        {
+            var errors = new ErrorResultTO();
+            if (!errors.HasErrors())
+            {
+                errors = UpdateEnvironment(dataObject, update, allErrors, env, errors);
+            }
+            allErrors.MergeErrors(errors);
+            if (!allErrors.HasErrors())
+            {
+                AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+            }
+        }
+
+        private ErrorResultTO UpdateEnvironment(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, IExecutionEnvironment env, ErrorResultTO errors)
+        {
+            if (dataObject.IsDebugMode())
+            {
+                AddDebugInputItem(Length, From, To, dataObject.Environment, RandomType, update);
+            }
+
+            var lengthItr = !String.IsNullOrEmpty(Length) ? new WarewolfIterator(env.EvalStrict(Length, update)) as IWarewolfIterator : new WarewolfAtomIterator(new[] { DataStorage.WarewolfAtom.Nothing, });
+            var fromItr = !String.IsNullOrEmpty(From) ? new WarewolfIterator(env.EvalStrict(From, update)) as IWarewolfIterator : new WarewolfAtomIterator(new[] { DataStorage.WarewolfAtom.Nothing, });
+            var toItr = !String.IsNullOrEmpty(To) ? new WarewolfIterator(env.EvalStrict(To, update)) as IWarewolfIterator : new WarewolfAtomIterator(new[] { DataStorage.WarewolfAtom.Nothing, });
+            var colItr = new WarewolfListIterator();
+            colItr.AddVariableToIterateOn(lengthItr);
+            colItr.AddVariableToIterateOn(fromItr);
+            colItr.AddVariableToIterateOn(toItr);
+
+            var dev2Random = new Dev2Random();
+            var counter = 1;
+            while (colItr.HasMoreData())
+            {
+                var lengthNum = -1;
+                var fromNum = -1.0;
+                var toNum = -1.0;
+
+                var fromValue = colItr.FetchNextValue(fromItr);
+                var toValue = colItr.FetchNextValue(toItr);
+                var lengthValue = colItr.FetchNextValue(lengthItr);
+
+                if (RandomType == enRandomType.Numbers)
+                {
+                    #region Getting the From
+
+                    fromNum = GetFromValue(fromValue, out errors);
+                    if (errors.HasErrors())
+                    {
+                        allErrors.MergeErrors(errors);
+                        continue;
+                    }
+
+                    #endregion
+
+                    #region Getting the To
+
+                    toNum = GetToValue(toValue, out errors);
+                    if (errors.HasErrors())
+                    {
+                        allErrors.MergeErrors(errors);
+                        continue;
+                    }
+
+                    #endregion
+                }
+                if (RandomType != enRandomType.Numbers && RandomType != enRandomType.Guid)
+                {
+                    #region Getting the Length
+
+                    lengthNum = GetLengthValue(lengthValue, out errors);
+                    if (errors.HasErrors())
+                    {
+                        allErrors.MergeErrors(errors);
+                        continue;
+                    }
+
+                    #endregion
+                }
+                var value = dev2Random.GetRandom(RandomType, lengthNum, fromNum, toNum);
+
+                var rule = new IsSingleValueRule(() => Result);
+                var single = rule.Check();
+                if (single != null)
+                {
+                    allErrors.AddError(single.Message);
+                }
+                else
+                {
+                    env.Assign(Result, value, update == 0 ? counter : update);
+                }
+                counter++;
+            }
+
+            return errors;
         }
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
@@ -234,13 +289,10 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if (updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if (itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
@@ -248,66 +300,63 @@ namespace Dev2.Activities
 
         #region Private Methods
 
-        private double GetFromValue(string fromValue, out ErrorResultTO errors)
+        double GetFromValue(string fromValue, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
-            double fromNum;
             if (string.IsNullOrEmpty(fromValue))
             {
-                errors.AddError("Please ensure that you have entered an integer or decimal number for Start.");
+                errors.AddError(ErrorResource.IntegerOrDecimaExpectedForStart);
                 return -1;
             }
-            if (!double.TryParse(fromValue, out fromNum))
+            if (!double.TryParse(fromValue, out double fromNum))
             {
-                errors.AddError(string.Format("Please ensure that the Start is an integer or decimal number from {0} to {1}.", double.MinValue, double.MaxValue));
+                errors.AddError(string.Format(ErrorResource.IntegerOrDecimaExpectedForStart + " from {0} to {1}.", double.MinValue, double.MaxValue));
                 return -1;
             }
             return fromNum;
         }
 
-        private double GetToValue(string toValue, out ErrorResultTO errors)
+        double GetToValue(string toValue, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
-            double toNum;
             if (string.IsNullOrEmpty(toValue))
             {
-                errors.AddError("Please ensure that you have entered an integer or decimal number for End.");
+                errors.AddError(ErrorResource.IntegerOrDecimaExpectedForEnd);
                 return -1;
             }
-            if (!double.TryParse(toValue, out toNum))
+            if (!double.TryParse(toValue, out double toNum))
             {
-                errors.AddError(string.Format("Please ensure that the End is an integer or decimal number from {0} to {1}.", double.MinValue, double.MaxValue));
+                errors.AddError(string.Format(ErrorResource.IntegerOrDecimaExpectedForEnd + " from {0} to {1}.", double.MinValue, double.MaxValue));
                 return -1;
             }
             return toNum;
         }
 
-        private int GetLengthValue(string lengthValue, out ErrorResultTO errors)
+        int GetLengthValue(string lengthValue, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
-            int lengthNum;
             if (string.IsNullOrEmpty(lengthValue))
             {
-                errors.AddError("Please ensure that you have entered an integer for Length.");
+                errors.AddError(string.Format(ErrorResource.PositiveIntegerRequired, "Length."));
                 return -1;
             }
 
-            if (!int.TryParse(lengthValue, out lengthNum))
+            if (!int.TryParse(lengthValue, out int lengthNum))
             {
-                errors.AddError("Please ensure that the Length is an integer value.");
+                errors.AddError(string.Format(ErrorResource.EnsureValueIsInteger, "Length"));
                 return -1;
             }
 
             if (lengthNum < 1)
             {
-                errors.AddError("Please enter a positive integer for the Length.");
+                errors.AddError(string.Format(ErrorResource.PositiveIntegerRequired, "Length."));
                 return -1;
             }
 
             return lengthNum;
         }
 
-        private void AddDebugInputItem(string lengthExpression, string fromExpression, string toExpression, IExecutionEnvironment executionEnvironment, enRandomType randomType, int update)
+        void AddDebugInputItem(string lengthExpression, string fromExpression, string toExpression, IExecutionEnvironment executionEnvironment, enRandomType randomType, int update)
         {
             AddDebugInputItem(new DebugItemStaticDataParams(randomType.GetDescription(), "Random"));
 
@@ -331,7 +380,7 @@ namespace Dev2.Activities
 
         #region Get Debug Inputs/Outputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugInput in _debugInputs)
             {
@@ -340,7 +389,7 @@ namespace Dev2.Activities
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugOutput in _debugOutputs)
             {
@@ -353,16 +402,64 @@ namespace Dev2.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(To, From, Length);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(To, From, Length);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(Result);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
         #endregion
+
+        public bool Equals(DsfRandomActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(Length, other.Length) 
+                && RandomType == other.RandomType 
+                && string.Equals(From, other.From) 
+                && string.Equals(To, other.To) 
+                && string.Equals(Result, other.Result);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfRandomActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Length != null ? Length.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) RandomType;
+                hashCode = (hashCode * 397) ^ (From != null ? From.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (To != null ? To.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

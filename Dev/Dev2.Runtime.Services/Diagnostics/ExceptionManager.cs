@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,7 +32,7 @@ namespace Dev2.Runtime.Diagnostics
         protected void RaiseError(Exception ex)
         {
             RaiseError(ex.Message);
-            Dev2Logger.Log.Info(ex.Message + " Stacktrace : " + ex.Message);
+            Dev2Logger.Info(ex.Message + " Stacktrace : " + ex.Message, GlobalConstants.WarewolfInfo);
         }
 
         protected void RaiseError(string error)
@@ -41,7 +40,7 @@ namespace Dev2.Runtime.Diagnostics
             HasErrors = true;
             Error = error;
 
-            Dev2Logger.Log.Info(error);
+            Dev2Logger.Info(error, GlobalConstants.WarewolfInfo);
         }
     }
 }

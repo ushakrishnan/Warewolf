@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +16,11 @@ namespace Dev2.Runtime.WebServer.Responses
     {
         readonly HttpStatusCode _statusCode;
 
-        public StatusResponseWriter(HttpStatusCode statusCode = HttpStatusCode.NoContent)
+        public StatusResponseWriter() : this (HttpStatusCode.NoContent)
+        {
+        }
+
+        public StatusResponseWriter(HttpStatusCode statusCode)
         {
             _statusCode = statusCode;
         }

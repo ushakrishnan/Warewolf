@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,30 +11,30 @@
 using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Windows;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.Email;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Help;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Communication;
 using Dev2.Runtime.Diagnostics;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Messages;
-using Dev2.Threading;
+using Dev2.Studio.Interfaces;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.Email
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class EmailDesignerViewModelTests
     {
         const string AppLocalhost = "http://localhost:3142";
@@ -43,7 +42,7 @@ namespace Dev2.Activities.Designers.Tests.Email
         [TestInitialize]
         public void Initialize()
         {
-            AppSettings.LocalHost = AppLocalhost;
+            AppUsageStats.LocalHost = AppLocalhost;
         }
 
         [TestMethod]
@@ -55,9 +54,9 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new EmailDesignerViewModel(CreateModelItem(), null, null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
         }
@@ -71,9 +70,9 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new EmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
         }
@@ -87,9 +86,9 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
-            new EmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IEnvironmentModel>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
+            new EmailDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IServer>().Object, null);
+            
 
             //------------Assert Results-------------------------
         }
@@ -116,6 +115,7 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.ModelItem);
             Assert.IsNotNull(viewModel.EditEmailSourceCommand);
+            Assert.IsNotNull(viewModel.NewEmailSourceCommand);
             Assert.IsNotNull(viewModel.TestEmailAccountCommand);
             Assert.IsNotNull(viewModel.ChooseAttachmentsCommand);
             Assert.IsNotNull(viewModel.EmailSources);
@@ -124,13 +124,38 @@ namespace Dev2.Activities.Designers.Tests.Email
             Assert.IsFalse(viewModel.IsRefreshing);
             Assert.IsTrue(viewModel.CanTestEmailAccount);
 
-            Assert.AreEqual(EmailSourceCount + 2, viewModel.EmailSources.Count);
-            Assert.AreEqual(viewModel.EmailSources[0], viewModel.SelectedEmailSource);
-            Assert.AreEqual("Select an Email Source...", viewModel.EmailSources[0].ResourceName);
+            Assert.AreEqual(EmailSourceCount, viewModel.EmailSources.Count);
+            Assert.IsNull(viewModel.SelectedEmailSource);
 
             Assert.IsNull(viewModel.SelectedEmailSourceModelItemValue);
 
             Assert.IsFalse(propertyChanged);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("EmailDesignerViewModel_Handle")]
+        public void EmailDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            const int EmailSourceCount = 2;
+            var sources = CreateEmailSources(EmailSourceCount);
+            var selectedEmailSource = sources.First();
+
+            var modelItem = CreateModelItem();
+            modelItem.SetProperty("SelectedEmailSource", selectedEmailSource);
+
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+
+            var viewModel = CreateViewModel(sources, modelItem);
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         [TestMethod]
@@ -167,11 +192,8 @@ namespace Dev2.Activities.Designers.Tests.Email
             Assert.IsFalse(viewModel.IsRefreshing);
             Assert.IsTrue(viewModel.CanTestEmailAccount);
 
-            Assert.AreEqual(EmailSourceCount + 1, viewModel.EmailSources.Count);
+            Assert.AreEqual(EmailSourceCount, viewModel.EmailSources.Count);
             Assert.AreEqual(selectedEmailSource, viewModel.SelectedEmailSource);
-
-            Assert.AreEqual("New Email Source...", viewModel.EmailSources[0].ResourceName);
-            Assert.AreNotEqual(Guid.Empty, viewModel.EmailSources[0].ResourceID);
 
             Assert.IsNotNull(viewModel.SelectedEmailSourceModelItemValue);
 
@@ -225,10 +247,10 @@ namespace Dev2.Activities.Designers.Tests.Email
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedEmailSource", selectedEmailSource);
 
-            ShowEditResourceWizardMessage message = null;
             var eventPublisher = new Mock<IEventAggregator>();
-            eventPublisher.Setup(p => p.Publish(It.IsAny<ShowEditResourceWizardMessage>())).Callback((object m) => message = m as ShowEditResourceWizardMessage).Verifiable();
-
+            var mockShellViewModel = new Mock<IShellViewModel>();
+            mockShellViewModel.Setup(model => model.EditResource(It.IsAny<IEmailServiceSource>())).Verifiable();
+            CustomContainer.Register(mockShellViewModel.Object);
             var resourceModel = new Mock<IResourceModel>();
 
             var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, resourceModel.Object);
@@ -238,8 +260,8 @@ namespace Dev2.Activities.Designers.Tests.Email
 
 
             //------------Assert Results-------------------------
-            eventPublisher.Verify(p => p.Publish(It.IsAny<ShowEditResourceWizardMessage>()));
-            Assert.AreSame(resourceModel.Object, message.ResourceModel);
+            mockShellViewModel.Verify(model => model.EditResource(It.IsAny<IEmailServiceSource>()));
+            CustomContainer.DeRegister<IShellViewModel>();
         }
 
         [TestMethod]
@@ -255,23 +277,23 @@ namespace Dev2.Activities.Designers.Tests.Email
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedEmailSource", selectedEmailSource);
 
-            ShowNewResourceWizard message = null;
             var eventPublisher = new Mock<IEventAggregator>();
-            eventPublisher.Setup(p => p.Publish(It.IsAny<ShowNewResourceWizard>())).Callback((object m) => message = m as ShowNewResourceWizard).Verifiable();
 
             var resourceModel = new Mock<IResourceModel>();
-
+            var mockShellViewModel = new Mock<IShellViewModel>();
+            mockShellViewModel.Setup(model => model.NewEmailSource(It.IsAny<string>()));
+            var shellViewModel = mockShellViewModel.Object;
+            CustomContainer.Register(shellViewModel);
             var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, resourceModel.Object);
 
             var createEmailSource = viewModel.EmailSources[0];
-            Assert.AreEqual("New Email Source...", createEmailSource.ResourceName);
+            Assert.AreEqual("Email0", createEmailSource.ResourceName);
 
             //------------Execute Test---------------------------
-            viewModel.SelectedEmailSource = createEmailSource;
+            viewModel.NewEmailSourceCommand.Execute(null);
 
             //------------Assert Results-------------------------
-            eventPublisher.Verify(p => p.Publish(It.IsAny<ShowNewResourceWizard>()));
-            Assert.AreSame("EmailSource", message.ResourceType);
+            mockShellViewModel.Verify(model => model.NewEmailSource(It.IsAny<string>()));
         }
 
         [TestMethod]
@@ -298,13 +320,13 @@ namespace Dev2.Activities.Designers.Tests.Email
                 hitCount++;
             };
             var createEmailSource = viewModel.EmailSources[0];
-            Assert.AreEqual("New Email Source...", createEmailSource.ResourceName);
+            Assert.AreEqual("Email0", createEmailSource.ResourceName);
 
             //------------Execute Test---------------------------
             viewModel.SelectedEmailSource = createEmailSource;
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(3, hitCount);
+            Assert.AreEqual(1, hitCount);
         }
 
         [TestMethod]
@@ -333,19 +355,44 @@ namespace Dev2.Activities.Designers.Tests.Email
         [TestCategory("EmailDesignerViewModel_ChooseAttachments")]
         public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNotNull_AddsFilesToAttachments()
         {
-            Verify_ChooseAttachments(new List<string> { @"c:\tmp2.txt", @"c:\logs\errors2.log" });
+            var selectedFiles = new List<string> { @"c:\tmp2.txt", @"c:\logs\errors2.log" };
+            //------------Setup for test--------------------------
+            var existingFiles = new List<string> { @"c:\tmp1.txt", @"c:\logs\errors1.log" };
+
+            var expectedFiles = new List<string>();
+            expectedFiles.AddRange(existingFiles);
+            if (selectedFiles != null)
+            {
+                expectedFiles.AddRange(selectedFiles);
+            }
+
+            var emailSources = CreateEmailSources(2);
+            var modelItem = CreateModelItem();
+            modelItem.SetProperty("Attachments", string.Join(";", expectedFiles));
+
+            var eventPublisher = new Mock<IEventAggregator>();
+            eventPublisher.Setup(p => p.Publish(It.IsAny<FileChooserMessage>())).Callback((object m) =>
+            {
+                ((FileChooserMessage)m).SelectedFiles = expectedFiles;
+            });
+
+            var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, new Mock<IResourceModel>().Object);
+
+            //------------Execute Test---------------------------
+            viewModel.ChooseAttachmentsCommand.Execute(null);
+
+            //------------Assert Results-------------------------
+            eventPublisher.Verify(p => p.Publish(It.IsAny<FileChooserMessage>()));
+            var attachments = modelItem.GetProperty<string>("Attachments");
+            Assert.AreEqual(string.Join(";", expectedFiles), attachments);
         }
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("EmailDesignerViewModel_ChooseAttachments")]
-        public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNull_DoesAddNotFilesToAttachments()
+        public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNotNull_SelectedNewFilesToAttachments()
         {
-            Verify_ChooseAttachments(null);
-        }
-
-        void Verify_ChooseAttachments(List<string> selectedFiles)
-        {
+            var selectedFiles = new List<string> { @"c:\tmp2.txt", @"c:\logs\errors2.log" };
             //------------Setup for test--------------------------
             var existingFiles = new List<string> { @"c:\tmp1.txt", @"c:\logs\errors1.log" };
 
@@ -374,105 +421,37 @@ namespace Dev2.Activities.Designers.Tests.Email
             //------------Assert Results-------------------------
             eventPublisher.Verify(p => p.Publish(It.IsAny<FileChooserMessage>()));
             var attachments = modelItem.GetProperty<string>("Attachments");
-            Assert.AreEqual(string.Join(";", expectedFiles), attachments);
+            Assert.AreEqual(string.Join(";", selectedFiles), attachments);
         }
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
-        [TestCategory("EmailDesignerViewModel_TestEmailAccount")]
-        public void EmailDesignerViewModel_TestEmailAccount_TestIsValid_InvokesEmailSourcesTestAndNoErrors()
-        {
-            Verify_TestEmailAccount(true, true);
-            Verify_TestEmailAccount(true, false);
-        }
-
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("EmailDesignerViewModel_TestEmailAccount")]
-        public void EmailDesignerViewModel_TestEmailAccount_TestIsNotValid_InvokesEmailSourcesTestAndSetsErrors()
-        {
-            Verify_TestEmailAccount(false, true);
-            Verify_TestEmailAccount(false, false);
-        }
-
-        void Verify_TestEmailAccount(bool isTestResultValid, bool hasFromAccount)
+        [TestCategory("EmailDesignerViewModel_ChooseAttachments")]
+        public void EmailDesignerViewModel_ChooseAttachments_SelectedFilesIsNull_DoesAddNotFilesToAttachments()
         {
             //------------Setup for test--------------------------
-            const string ExpectedUri = AppLocalhost + "/wwwroot/sources/Service/EmailSources/Test";
-            const string TestToAddress = "test@mydomain.com";
-            const string TestFromAccount = "from@mydomain.com";
-            const string TestFromPassword = "FromPassword";
+            var existingFiles = new List<string> { @"c:\tmp1.txt", @"c:\logs\errors1.log" };
 
-            var result = new ValidationResult { IsValid = isTestResultValid };
-            if (!isTestResultValid)
-            {
-                result.ErrorMessage = "Unable to connect to SMTP server";
-            }
-
-            var emailSource = new EmailSource
-            {
-                ResourceID = Guid.NewGuid(),
-                ResourceName = "EmailTest",
-                UserName = "user@mydomain.com",
-                Password = "SourcePassword",
-            };
-
+            var expectedFiles = new List<string>();
+            var emailSources = CreateEmailSources(2);
             var modelItem = CreateModelItem();
-            modelItem.SetProperty("SelectedEmailSource", emailSource);
-            modelItem.SetProperty("To", TestToAddress);
+            modelItem.SetProperty("Attachments", string.Join(";", existingFiles));
 
-
-            var expectedSource = new EmailSource(emailSource.ToXml()) { TestToAddress = TestToAddress };
-            if (hasFromAccount)
+            var eventPublisher = new Mock<IEventAggregator>();
+            eventPublisher.Setup(p => p.Publish(It.IsAny<FileChooserMessage>())).Callback((object m) =>
             {
-                modelItem.SetProperty("FromAccount", TestFromAccount);
-                modelItem.SetProperty("Password", TestFromPassword);
-                expectedSource.UserName = TestFromAccount;
-                expectedSource.Password = TestFromPassword;
-                expectedSource.TestFromAddress = TestFromAccount;
-            }
-            else
-            {
-                expectedSource.TestFromAddress = emailSource.UserName;
-            }
+                ((FileChooserMessage)m).SelectedFiles = null;
+            });
 
-            var expectedPostData = expectedSource.ToString();
-
-            string postData = null;
-            var webRequestInvoker = new Mock<IWebRequestInvoker>();
-            webRequestInvoker.Setup(w => w.ExecuteRequest("POST", ExpectedUri, It.IsAny<string>(), null, It.IsAny<Action<string>>()))
-                .Callback((string method, string url, string data, List<Tuple<string, string>> headers, Action<string> asyncCallback) =>
-                {
-                    postData = data;
-                    asyncCallback(new Dev2JsonSerializer().Serialize(result));
-                }).Returns(string.Empty)
-                .Verifiable();
-
-            var viewModel = CreateViewModel(new List<EmailSource> { emailSource }, modelItem);
-            viewModel.WebRequestInvoker = webRequestInvoker.Object;
-
-            Assert.IsTrue(viewModel.CanTestEmailAccount);
+            var viewModel = CreateViewModel(emailSources, modelItem, eventPublisher.Object, new Mock<IResourceModel>().Object);
 
             //------------Execute Test---------------------------
-            viewModel.TestEmailAccountCommand.Execute(null);
+            viewModel.ChooseAttachmentsCommand.Execute(null);
 
             //------------Assert Results-------------------------
-            webRequestInvoker.Verify(w => w.ExecuteRequest("POST", ExpectedUri, It.IsAny<string>(), null, It.IsAny<Action<string>>()));
-            Assert.IsNotNull(postData);
-            Assert.AreEqual(expectedPostData, postData);
-            Assert.IsTrue(viewModel.CanTestEmailAccount);
-            if (isTestResultValid)
-            {
-                Assert.IsNull(viewModel.Errors);
-            }
-            else
-            {
-                Assert.IsNotNull(viewModel.Errors);
-                Assert.AreEqual(result.ErrorMessage, viewModel.Errors[0].Message);
-                Assert.IsFalse(viewModel.IsFromAccountFocused);
-                viewModel.Errors[0].Do();
-                Assert.IsTrue(viewModel.IsFromAccountFocused);
-            }
+            eventPublisher.Verify(p => p.Publish(It.IsAny<FileChooserMessage>()));
+            var attachments = modelItem.GetProperty<string>("Attachments");
+            Assert.AreEqual(string.Join(";", expectedFiles), attachments);
         }
 
         [TestMethod]
@@ -647,7 +626,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'Email Source' cannot be null", EmailDesignerViewModel.IsEmailSourceFocusedProperty, false);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailSourceNotNullErrorTest, EmailDesignerViewModel.IsEmailSourceFocusedProperty, false);
         }
 
         [TestMethod]
@@ -799,7 +778,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'From Account' - Invalid expression: opening and closing brackets don't match", EmailDesignerViewModel.IsFromAccountFocusedProperty);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailFromAccountInvalidExpressionErrorTest, EmailDesignerViewModel.IsFromAccountFocusedProperty);
         }
 
         [TestMethod]
@@ -856,7 +835,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'Password' cannot be empty", EmailDesignerViewModel.IsPasswordFocusedProperty);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailPasswordNotNullErrorTest, EmailDesignerViewModel.IsPasswordFocusedProperty);
         }
 
         [TestMethod]
@@ -875,7 +854,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'To' - Invalid expression: opening and closing brackets don't match", EmailDesignerViewModel.IsToFocusedProperty);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailToInvalidExpressionErrorTest, EmailDesignerViewModel.IsToFocusedProperty);
         }
 
         [TestMethod]
@@ -932,7 +911,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'Cc' - Invalid expression: opening and closing brackets don't match", EmailDesignerViewModel.IsCcFocusedProperty);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailCcInvalidExpressionErrorTest, EmailDesignerViewModel.IsCcFocusedProperty);
         }
 
         [TestMethod]
@@ -989,7 +968,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'Bcc' - Invalid expression: opening and closing brackets don't match", EmailDesignerViewModel.IsBccFocusedProperty);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailBccInvalidExpressionErrorTest, EmailDesignerViewModel.IsBccFocusedProperty);
         }
 
         [TestMethod]
@@ -1046,7 +1025,7 @@ namespace Dev2.Activities.Designers.Tests.Email
                 Attachments = "h]]",
                 Body = "The body",
             };
-            Verify_ValidateThis(activity, "'Attachments' - Invalid expression: opening and closing brackets don't match", EmailDesignerViewModel.IsAttachmentsFocusedProperty);
+            Verify_ValidateThis(activity, Warewolf.Resource.Errors.ErrorResource.EmailAttachmentsInvalidExpressionErrorTest, EmailDesignerViewModel.IsAttachmentsFocusedProperty);
         }
 
         [TestMethod]
@@ -1239,8 +1218,12 @@ namespace Dev2.Activities.Designers.Tests.Email
 
         static TestEmailDesignerViewModel CreateViewModel(List<EmailSource> sources, ModelItem modelItem, IEventAggregator eventPublisher, IResourceModel resourceModel)
         {
-            var environment = new Mock<IEnvironmentModel>();
-            environment.Setup(e => e.ResourceRepository.FindSourcesByType<EmailSource>(It.IsAny<IEnvironmentModel>(), enSourceType.EmailSource))
+            if (CustomContainer.Get<IShellViewModel>() == null)
+            {
+                CustomContainer.Register(new Mock<IShellViewModel>().Object);
+            }
+            var environment = new Mock<IServer>();
+            environment.Setup(e => e.ResourceRepository.FindSourcesByType<EmailSource>(It.IsAny<IServer>(), enSourceType.EmailSource))
                 .Returns(sources);
             environment.Setup(e => e.ResourceRepository.FindSingle(It.IsAny<Expression<Func<IResourceModel, bool>>>(), false, false))
                 .Returns(resourceModel);

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,11 +9,7 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
-using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -23,82 +18,48 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 {
     // PBI 953 - 2013.05.16 - TWR - Created
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class EmailSourceTests
     {
-        #region Save
-
-        [TestMethod]
-        public void SaveEmailSourceWithExistingSourceExpectedServerWorkspaceUpdated()
-        {
-            //Initialize test resource, save then change path
-            string uniquePathText = Guid.NewGuid().ToString() + "\\test email source";
-            var testResource = new Resource { ResourceName = "test email source", ResourcePath = "initialpath\\test email source", ResourceType = ResourceType.EmailSource, ResourceID = Guid.NewGuid() };
-            new EmailSources().Save(testResource.ToString(), GlobalConstants.ServerWorkspaceID, Guid.Empty);
-            testResource.ResourcePath = uniquePathText;
-
-            //Execute save again on test resource
-            new EmailSources().Save(testResource.ToString(), GlobalConstants.ServerWorkspaceID, Guid.Empty);
-
-            //Assert resource saved
-            var getSavedResource = Resources.ReadXml(GlobalConstants.ServerWorkspaceID, ResourceType.EmailSource, testResource.ResourceID.ToString());
-            const string PathStartText = "<Category>";
-            int start = getSavedResource.IndexOf(PathStartText, StringComparison.Ordinal);
-            if(start > 0)
-            {
-                start += PathStartText.Length;
-                int end = (getSavedResource.IndexOf("</Category>", start, StringComparison.Ordinal));
-                var savedPath = getSavedResource.Substring(start, end - start);
-                Assert.AreEqual(uniquePathText, savedPath);
-            }
-            else
-            {
-                Assert.Fail("Resource xml malformed after save");
-            }
-        }
-
-        #endregion
-
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void EmailSourceContructorWithDefaultExpectedInitializesProperties()
         {
             var source = new EmailSource();
             Assert.AreEqual(Guid.Empty, source.ResourceID);
-            Assert.AreEqual(ResourceType.EmailSource, source.ResourceType);
+            Assert.AreEqual("EmailSource", source.ResourceType);
             Assert.AreEqual(EmailSource.DefaultTimeout, source.Timeout);
             Assert.AreEqual(EmailSource.DefaultPort, source.Port);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void EmailSourceContructorWithNullXmlExpectedThrowsArgumentNullException()
         {
             var source = new EmailSource(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void EmailSourceContructorWithInvalidXmlExpectedDoesNotThrowExceptionAndInitializesProperties()
         {
             var xml = new XElement("root");
             var source = new EmailSource(xml);
             Assert.AreNotEqual(Guid.Empty, source.ResourceID);
             Assert.IsTrue(source.IsUpgraded);
-            Assert.AreEqual(ResourceType.EmailSource, source.ResourceType);
+            Assert.AreEqual("EmailSource", source.ResourceType);
             Assert.AreEqual(EmailSource.DefaultTimeout, source.Timeout);
             Assert.AreEqual(EmailSource.DefaultPort, source.Port);
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void EmailSourceContructorWithValidXmlExpectedInitializesProperties()
         {
             var xml = XmlResource.Fetch("EmailSource");
 
             var source = new EmailSource(xml);
             Assert.AreEqual(Guid.Parse("bf810e43-3633-4638-9d0a-56473ef54151"), source.ResourceID);
-            Assert.AreEqual(ResourceType.EmailSource, source.ResourceType);
+            Assert.AreEqual("EmailSource", source.ResourceType);
             Assert.AreEqual("smtp.gmail.com", source.Host);
             Assert.AreEqual(465, source.Port);
             Assert.AreEqual(true, source.EnableSsl);
@@ -107,14 +68,14 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("1234", source.Password);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void EmailSourceContructorWithCorruptXmlExpectedInitializesProperties()
         {
             var xml = XmlResource.Fetch("EmailSourceCorrupt");
 
             var source = new EmailSource(xml);
             Assert.AreEqual(Guid.Parse("bf810e43-3633-4638-9d0a-56473ef54151"), source.ResourceID);
-            Assert.AreEqual(ResourceType.EmailSource, source.ResourceType);
+            Assert.AreEqual("EmailSource", source.ResourceType);
             Assert.AreEqual("smtp.gmail.com", source.Host);
             Assert.AreEqual(EmailSource.DefaultPort, source.Port);
             Assert.AreEqual(false, source.EnableSsl);
@@ -127,7 +88,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToXml
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void EmailSourceToXmlExpectedSerializesProperties()
         {
             var expected = new EmailSource
@@ -158,6 +119,5 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
         }
 
         #endregion
-
     }
 }

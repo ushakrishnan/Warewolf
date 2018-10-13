@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +15,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Activities.Designers.Tests.Designers2.Core
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class VariableUtilsTests
     {
         [TestMethod]
@@ -25,10 +24,9 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
         public void VariableUtils_TryParseVariables_InputValueIsNullOrEmpty_NoErrors()
         {
             //------------Setup for test--------------------------
-            string outputValue;
-
+            var util = new VariableUtils();
             //------------Execute Test---------------------------
-            var error = VariableUtils.TryParseVariables(null, out outputValue, () => { });
+            var error = util.TryParseVariables(null, out string outputValue, () => { });
 
             //------------Assert Results-------------------------
             Assert.IsNull(error);
@@ -40,14 +38,13 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
         public void VariableUtils_TryParseVariables_InputValueIsInvalidExpression_HasErrors()
         {
             //------------Setup for test--------------------------
-            string outputValue;
-
+            var util = new VariableUtils();
             //------------Execute Test---------------------------
-            var error = "a]]".TryParseVariables(out outputValue, () => { });
+            var error = util.TryParseVariables("a]]",out string outputValue, () => { });
 
             //------------Assert Results-------------------------
             Assert.IsNotNull(error);
-            Assert.AreEqual("Invalid expression: opening and closing brackets don't match.", error.Message);
+            Assert.AreEqual("Result - Invalid expression: opening and closing brackets don't match", error.Message);
         }
 
         [TestMethod]
@@ -56,11 +53,10 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
         public void VariableUtils_TryParseVariables_InputValueIsValidExpressionAndNoInputs_UsesVariableValueAndHasNoErrors()
         {
             //------------Setup for test--------------------------
-            string outputValue;
-            string variableValue = "xxx";
-
+            var variableValue = "xxx";
+            var util = new VariableUtils();
             //------------Execute Test---------------------------
-            var error = "[[a]]".TryParseVariables(out outputValue, () => { }, variableValue: variableValue);
+            var error = util.TryParseVariables("[[a]]",out string outputValue, () => { }, variableValue: variableValue);
 
             //------------Assert Results-------------------------
             Assert.IsNull(error);
@@ -73,14 +69,13 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
         public void VariableUtils_TryParseVariables_InputValueIsValidExpressionAndHasInputs_UsesInputsValueAndHasNoErrors()
         {
             //------------Setup for test--------------------------
-            string outputValue;
-            string variableValue = "xxx";
+            var variableValue = "xxx";
 
             var inputs = new ObservableCollection<ObservablePair<string, string>>();
             inputs.Add(new ObservablePair<string, string>("[[a]]", variableValue));
-
+            var util = new VariableUtils();
             //------------Execute Test---------------------------
-            var error = "[[a]]".TryParseVariables(out outputValue, () => { }, variableValue: "a", inputs: inputs);
+            var error = util.TryParseVariables("[[a]]",out string outputValue, () => { }, "a", null, inputs);
 
             //------------Assert Results-------------------------
             Assert.IsNull(error);

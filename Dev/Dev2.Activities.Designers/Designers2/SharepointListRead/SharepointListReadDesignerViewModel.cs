@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +10,10 @@
 
 using System.Activities.Presentation.Model;
 using System.Collections.ObjectModel;
-using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
-using Dev2.Providers.Validation.Rules;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.TO;
 
@@ -23,23 +22,33 @@ namespace Dev2.Activities.Designers2.SharepointListRead
     public class SharepointListReadDesignerViewModel : SharepointListDesignerViewModelBase
     {
         public SharepointListReadDesignerViewModel(ModelItem modelItem)
-            : base(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment, EventPublishers.Aggregator,false)
+            : this(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer)
+        {
+        }
+
+        public SharepointListReadDesignerViewModel(ModelItem modelItem,IAsyncWorker asyncWorker,IServer envModel)
+            : base(modelItem, asyncWorker, envModel, EventPublishers.Aggregator, false)
         {
             WhereOptions = new ObservableCollection<string>(SharepointSearchOptions.SearchOptions());
             dynamic mi = ModelItem;
             InitializeItems(mi.FilterCriteria);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_SharePoint_Read_List_Item;
         }
-        
 
-        public override string CollectionName { get { return "FilterCriteria"; } }
+        public override string CollectionName => "FilterCriteria";
 
 
         public ObservableCollection<string> WhereOptions { get; private set; }
+       
 
-        public IRuleSet GetRuleSet(string propertyName)
+        #region Overrides of ActivityCollectionDesignerViewModel<SharepointSearchTo>
+
+        public override void UpdateHelpDescriptor(string helpText)
         {
-            var ruleSet = new RuleSet();
-            return ruleSet;
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
+
+        #endregion
     }
 }

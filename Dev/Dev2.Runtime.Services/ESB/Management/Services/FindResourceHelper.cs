@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common;
@@ -22,17 +22,10 @@ namespace Dev2.Runtime.ESB.Management.Services
 {
     public class FindResourceHelper
     {
-        private IAuthorizationService _authorizationService;
+        IAuthorizationService _authorizationService;
 
-        /// <summary>
-        /// Strips for ship.
-        /// </summary>
-        /// <param name="resource">The resource.</param>
-        /// <returns></returns>
-        public SerializableResource SerializeResourceForStudio(IResource resource)
+        public SerializableResource SerializeResourceForStudio(IResource resource,Guid workspaceID)
         {
-
-            // convert the fliping errors due to json issues in c# ;(
             var errors = new List<ErrorInfo>();
             var parseErrors = resource.Errors;
             if(parseErrors != null)
@@ -52,10 +45,16 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 Inputs = resource.Inputs,
                 Outputs = resource.Outputs,
-                ResourceCategory = resource.ResourcePath,
                 ResourceID = resource.ResourceID,
                 VersionInfo = resource.VersionInfo,
                 ResourceName = resource.ResourceName,
+                IsSource = resource.IsSource,
+                IsServer = resource.IsServer,
+                IsService = resource.IsService,
+                ResourceCategory = resource.GetResourcePath(workspaceID),
+                IsReservedService = resource.IsReservedService,
+                IsResourceVersion = resource.IsResourceVersion,
+                IsFolder = resource.IsFolder,
                 Permissions = AuthorizationService.GetResourcePermissions(resource.ResourceID),
                 ResourceType = resource.ResourceType,
                 IsValid = resource.IsValid,
@@ -65,17 +64,6 @@ namespace Dev2.Runtime.ESB.Management.Services
             };
         }
 
-
-        internal IAuthorizationService AuthorizationService
-        {
-            get
-            {
-                return _authorizationService ?? (_authorizationService = ServerAuthorizationService.Instance);
-            }
-            set
-            {
-                _authorizationService = value;
-            }
-        }
+        IAuthorizationService AuthorizationService => _authorizationService ?? (_authorizationService = ServerAuthorizationService.Instance);
     }
 }

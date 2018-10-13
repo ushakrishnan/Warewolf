@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,7 +8,6 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
 using Microsoft.Win32.TaskScheduler;
 
 namespace Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers
@@ -24,8 +23,6 @@ namespace Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers
 
         IDev2TaskDefinition CreateTaskDefinition(TaskDefinition taskDefinition);
 
-        IDev2TaskService CreateTaskService(TaskService taskService);
-
         IActionCollection CreateActionCollection(ActionCollection actionCollection);
 
         ITriggerCollection CreateTriggerCollection(TriggerCollection triggerCollection);
@@ -38,22 +35,24 @@ namespace Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers
 
         IRepetitionPattern CreateRepetitionPattern(RepetitionPattern repetitionPattern);
 
-        IAction CreateAction(Microsoft.Win32.TaskScheduler.Action action);
+        IAction CreateAction(Action action);
 
         IDev2TaskService CreateTaskService(string targetServer, string userName, string accountDomain, string password,
             bool forceV1);
 
         TaskService CreateTaskService();
 
-        IExecAction CreateExecAction(string path, string arguments = null, string workingDirectory = null);
+        IExecAction CreateExecAction(string path);
+
+        IExecAction CreateExecAction(string path, string arguments);
+
+        IExecAction CreateExecAction(string path, string arguments, string workingDirectory);
 
         IExecAction CreateExecAction(IAction act);
 
         ITaskEvent CreateTaskEvent(TaskEvent currentEvent);
 
         ITaskEventLog CreateTaskEventLog(string taskPath);
-
-        ITaskEventLog CreateTaskEventLog(string taskPath, DateTime date);
 
         ITrigger SanitiseTrigger(ITrigger resource);
     }

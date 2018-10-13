@@ -1,85 +1,130 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common;
+using Dev2.Common.Interfaces.Monitoring;
+using Dev2.Communication;
+using Dev2.Services.Security;
 using System;
 using System.Collections.Concurrent;
 using System.Security.Claims;
 using System.Web;
-using Dev2.Common;
-using Dev2.Communication;
-using Dev2.Services.Security;
+using Dev2.Common.Interfaces.Enums;
 
 namespace Dev2.Runtime.Security
 {
     public class ServerAuthorizationService : AuthorizationServiceBase
     {
-        readonly ConcurrentDictionary<Tuple<string, string>, Tuple<bool, DateTime>> _cachedRequests = new ConcurrentDictionary<Tuple<string, string>, Tuple<bool, DateTime>>();
+        static ConcurrentDictionary<Tuple<string, string, AuthorizationContext>, Tuple<bool, DateTime>> _cachedRequests = new ConcurrentDictionary<Tuple<string, string, AuthorizationContext>, Tuple<bool, DateTime>>();
 
-        // Singleton instance - lazy initialization is used to ensure that the creation is thread-safe
-        static readonly Lazy<ServerAuthorizationService> TheInstance = new Lazy<ServerAuthorizationService>(() => new ServerAuthorizationService(new ServerSecurityService()));
-        public static IAuthorizationService Instance { get { return TheInstance.Value; } }
+        static Lazy<ServerAuthorizationService> _theInstance = new Lazy<ServerAuthorizationService>(() => new ServerAuthorizationService(new ServerSecurityService()));
+
+        public static IAuthorizationService Instance
+        {
+            get
+            {
+                var serverAuthorizationService = _theInstance.Value;
+                serverAuthorizationService.SecurityService.PermissionsChanged += (s, e) => ClearCaches();
+                serverAuthorizationService.SecurityService.PermissionsModified += (s, e) => ClearCaches();
+                return serverAuthorizationService;        
+            }
+        }
 
         readonly TimeSpan _timeOutPeriod;
+        readonly IPerformanceCounter _perfCounter;
 
         protected ServerAuthorizationService(ISecurityService securityService)
             : base(securityService, true)
         {
-            _timeOutPeriod = securityService.TimeOutPeriod;
+            _timeOutPeriod = securityService.TimeOutPeriod;            
+            try
+            {
+                _perfCounter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Count of Not Authorised errors");
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+            }
         }
 
-        public int CachedRequestCount { get { return _cachedRequests.Count; } }
+        public int CachedRequestCount => _cachedRequests.Count;
+
+        protected static void ClearCaches()
+        {
+            _cachedRequests = new ConcurrentDictionary<Tuple<string, string, AuthorizationContext>, Tuple<bool, DateTime>>();
+        }
 
         public override bool IsAuthorized(AuthorizationContext context, string resource)
         {
-            return IsAuthorized(ClaimsPrincipal.Current, context, resource);
-        }
-
-        public override bool IsAuthorized(IAuthorizationRequest request)
-        {
-            VerifyArgument.IsNotNull("request", request);
             bool authorized;
-            Tuple<bool, DateTime> authorizedRequest;
-            if(_cachedRequests.TryGetValue(request.Key, out authorizedRequest) && DateTime.Now.Subtract(authorizedRequest.Item2) < _timeOutPeriod)
-            {
-                authorized = authorizedRequest.Item1;
-            }
-            else
-            {
-                authorized = IsAuthorizedImpl(request);
-            }
 
-            // Only in the case when permissions change and we need to still fetch results ;)
-            if(!authorized && (request.RequestType == WebServerRequestType.HubConnect || request.RequestType == WebServerRequestType.EsbFetchExecutePayloadFragment))
+            VerifyArgument.IsNotNull("resource", resource);
+
+            var user = Common.Utilities.OrginalExecutingUser ?? ClaimsPrincipal.Current;
+
+            var requestKey = new Tuple<string, string,AuthorizationContext>(user.Identity.Name, resource,context);
+            authorized = _cachedRequests.TryGetValue(requestKey, out Tuple<bool, DateTime> authorizedRequest) && DateTime.Now.Subtract(authorizedRequest.Item2) < _timeOutPeriod ? authorizedRequest.Item1 : IsAuthorized(user, context, resource);
+
+            if (!authorized)
             {
-                // TODO : Check that the ResultsCache contains data to fetch for the user ;)
-                var identity = request.User.Identity;
-                if(ResultsCache.Instance.ContainsPendingRequestForUser(identity.Name))
+                if (ResultsCache.Instance.ContainsPendingRequestForUser(user.Identity.Name))
                 {
                     authorized = true;
                 }
             }
             else
             {
-                // normal execution
+                if (resource != Guid.Empty.ToString())
+                {
+                    authorizedRequest = new Tuple<bool, DateTime>(authorized, DateTime.Now);
+                    _cachedRequests.AddOrUpdate(requestKey, authorizedRequest, (tuple, tuple1) => authorizedRequest);
+                }
+            }
+
+            if (!authorized)
+            {
+                _perfCounter?.Increment();
+            }
+            return authorized;
+        }
+
+        public override bool IsAuthorized(IAuthorizationRequest request)
+        {
+            VerifyArgument.IsNotNull("request", request);
+            bool authorized;
+            authorized = _cachedRequests.TryGetValue(request.Key, out Tuple<bool, DateTime> authorizedRequest) && DateTime.Now.Subtract(authorizedRequest.Item2) < _timeOutPeriod ? authorizedRequest.Item1 : IsAuthorizedImpl(request);
+
+            if (!authorized && (request.RequestType == WebServerRequestType.HubConnect || request.RequestType == WebServerRequestType.EsbFetchExecutePayloadFragment))
+            {
+                var identity = request.User.Identity;
+                if (ResultsCache.Instance.ContainsPendingRequestForUser(identity.Name))
+                {
+                    authorized = true;
+                }
+            }
+            else
+            {
                 authorizedRequest = new Tuple<bool, DateTime>(authorized, DateTime.Now);
                 _cachedRequests.AddOrUpdate(request.Key, authorizedRequest, (tuple, tuple1) => authorizedRequest);
             }
-
+            if (!authorized)
+            {
+                _perfCounter?.Increment();
+            }
             return authorized;
         }
 
         bool IsAuthorizedImpl(IAuthorizationRequest request)
         {
             var result = false;
-            switch(request.RequestType)
+            switch (request.RequestType)
             {
                 case WebServerRequestType.WebGetDecisions:
                 case WebServerRequestType.WebGetDialogs:
@@ -112,11 +157,14 @@ namespace Dev2.Runtime.Security
                 case WebServerRequestType.WebExecuteInternalService:
                     result = IsAuthorized(request.User, AuthorizationContext.Any, GetResource(request));
                     break;
+
                 case WebServerRequestType.HubConnect:
                     result = IsAuthorizedToConnect(request.User);
                     break;
+
                 case WebServerRequestType.WebExecuteGetLogFile:
                 case WebServerRequestType.EsbSendMemo:
+                case WebServerRequestType.EsbFetchResourcesAffectedMemo:
                 case WebServerRequestType.EsbAddDebugWriter:
                 case WebServerRequestType.EsbExecuteCommand:
                 case WebServerRequestType.EsbSendDebugState:
@@ -128,24 +176,30 @@ namespace Dev2.Runtime.Security
                 case WebServerRequestType.WebExecuteGetApisJsonForFolder:
                     result = IsAuthorizedToConnect(request.User);
                     break;
+                case WebServerRequestType.Unknown:
+                    break;
+                case WebServerRequestType.EsbOnDisconnected:
+                    break;
+                case WebServerRequestType.EsbOnReconnected:
+                    break;
+                case WebServerRequestType.EsbAddItemMessage:
+                    break;
+                default:
+                    break;
             }
 
-            if(!result)
+            if (!result)
             {
                 var user = "NULL USER";
-                // ReSharper disable ConditionIsAlwaysTrueOrFalse
 
-                if(request.User.Identity != null)
-                // ReSharper restore ConditionIsAlwaysTrueOrFalse
+
+                if (request.User.Identity != null)
+
                 {
                     user = request.User.Identity.Name;
                     DumpPermissionsOnError(request.User);
                 }
-
-                // ReSharper disable InvokeAsExtensionMethod
-                Dev2Logger.Log.Error( "AUTH ERROR FOR USER : " + user);
-                // ReSharper restore InvokeAsExtensionMethod
-
+                Dev2Logger.Error("AUTH ERROR FOR USER : " + user, GlobalConstants.WarewolfError);
             }
 
             return result;
@@ -154,9 +208,9 @@ namespace Dev2.Runtime.Security
         static string GetResource(IAuthorizationRequest request)
         {
             var resource = request.QueryString["rid"];
-            if(string.IsNullOrEmpty(resource))
+            if (string.IsNullOrEmpty(resource))
             {
-                switch(request.RequestType)
+                switch (request.RequestType)
                 {
                     case WebServerRequestType.WebExecuteService:
                         resource = GetWebExecuteName(request.Url.AbsolutePath);
@@ -168,6 +222,68 @@ namespace Dev2.Runtime.Security
 
                     case WebServerRequestType.WebExecuteInternalService:
                         resource = GetWebExecuteName(request.Url.AbsolutePath);
+                        break;
+                    case WebServerRequestType.Unknown:
+                        break;
+                    case WebServerRequestType.WebGetDecisions:
+                        break;
+                    case WebServerRequestType.WebGetDialogs:
+                        break;
+                    case WebServerRequestType.WebGetServices:
+                        break;
+                    case WebServerRequestType.WebGetSources:
+                        break;
+                    case WebServerRequestType.WebGetSwitch:
+                        break;
+                    case WebServerRequestType.WebGet:
+                        break;
+                    case WebServerRequestType.WebGetContent:
+                        break;
+                    case WebServerRequestType.WebGetImage:
+                        break;
+                    case WebServerRequestType.WebGetScript:
+                        break;
+                    case WebServerRequestType.WebGetView:
+                        break;
+                    case WebServerRequestType.WebInvokeService:
+                        break;
+                    case WebServerRequestType.WebExecuteSecureWorkflow:
+                        break;
+                    case WebServerRequestType.WebExecutePublicWorkflow:
+                        break;
+                    case WebServerRequestType.WebExecuteGetLogFile:
+                        break;
+                    case WebServerRequestType.WebExecuteGetRootLevelApisJson:
+                        break;
+                    case WebServerRequestType.WebExecuteGetApisJsonForFolder:
+                        break;
+                    case WebServerRequestType.HubConnect:
+                        break;
+                    case WebServerRequestType.EsbOnConnected:
+                        break;
+                    case WebServerRequestType.EsbOnDisconnected:
+                        break;
+                    case WebServerRequestType.EsbOnReconnected:
+                        break;
+                    case WebServerRequestType.EsbAddDebugWriter:
+                        break;
+                    case WebServerRequestType.EsbFetchExecutePayloadFragment:
+                        break;
+                    case WebServerRequestType.EsbExecuteCommand:
+                        break;
+                    case WebServerRequestType.EsbAddItemMessage:
+                        break;
+                    case WebServerRequestType.EsbSendMemo:
+                        break;
+                    case WebServerRequestType.EsbFetchResourcesAffectedMemo:
+                        break;
+                    case WebServerRequestType.EsbSendDebugState:
+                        break;
+                    case WebServerRequestType.EsbWrite:
+                        break;
+                    case WebServerRequestType.ResourcesSendMemo:
+                        break;
+                    default:
                         break;
                 }
             }
@@ -189,10 +305,10 @@ namespace Dev2.Runtime.Security
         static string GetWebBookmarkName(string absolutePath)
         {
             var startIndex = GetNameStartIndex(absolutePath);
-            if(startIndex.HasValue)
+            if (startIndex.HasValue)
             {
                 var endIndex = absolutePath.IndexOf("/instances/", startIndex.Value, StringComparison.InvariantCultureIgnoreCase);
-                if(endIndex != -1)
+                if (endIndex != -1)
                 {
                     return HttpUtility.UrlDecode(absolutePath.Substring(startIndex.Value, endIndex - startIndex.Value));
                 }
@@ -204,7 +320,7 @@ namespace Dev2.Runtime.Security
         static int? GetNameStartIndex(string absolutePath)
         {
             var startIndex = absolutePath.IndexOf("services/", StringComparison.InvariantCultureIgnoreCase);
-            if(startIndex == -1)
+            if (startIndex == -1)
             {
                 return startIndex;
             }
@@ -213,17 +329,11 @@ namespace Dev2.Runtime.Security
             return startIndex;
         }
 
-        static bool IsWebInvokeServiceSave(string absolutePath)
-        {
-            return absolutePath.EndsWith("/save", StringComparison.InvariantCultureIgnoreCase);
-        }
+        static bool IsWebInvokeServiceSave(string absolutePath) => absolutePath.EndsWith("/save", StringComparison.InvariantCultureIgnoreCase);
 
         protected override void OnDisposed()
         {
-            if(SecurityService != null)
-            {
-                SecurityService.Dispose();
-            }
+            SecurityService?.Dispose();
         }
     }
 }

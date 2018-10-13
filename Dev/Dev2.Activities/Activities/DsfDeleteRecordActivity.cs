@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,21 +12,21 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
-using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
+using Dev2.Common.State;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
 {
-    public class DsfDeleteRecordActivity : DsfActivityAbstract<string>
+    public class DsfDeleteRecordActivity : DsfActivityAbstract<string>,IEquatable<DsfDeleteRecordActivity>
     {
         /// <summary>
         /// Gets or sets the name of the recordset.
@@ -48,26 +47,24 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             Result = string.Empty;
         }
 
-        // ReSharper disable RedundantOverridenMember
+        public override List<string> GetOutputs() => new List<string> { Result };
+
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
 
         }
-        // ReSharper restore RedundantOverridenMember
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
-
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var errors = new ErrorResultTO();
 
             InitializeDebug(dataObject);
             try
@@ -113,49 +110,46 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name="RecordsetName",
+                    Type=StateVariable.StateType.Input,
+                    Value= RecordsetName
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type=StateVariable.StateType.Output,
+                    Value= Result
+                }
+            };
+        }
+
         void GetDebug(IDSFDataObject dataObject, int update)
         {
             try
             {
-
-
                 if (dataObject.IsDebugMode() && ExecutionEnvironment.IsRecordSetName(RecordsetName))
                 {
                     AddDebugInputItem(new DebugEvalResult(RecordsetName, "Records", dataObject.Environment, update));
                 }
-
             }
-             
             catch(Exception)
             {
-
                 AddDebugInputItem(new DebugItemWarewolfAtomResult("", RecordsetName, "Recordset", "", "", "", "="));
             }
         }
 
-        #region Get Debug Inputs/Outputs
-
-        #region GetDebugInputs
-
-
-        #endregion
-
-        #endregion Get Inputs/Outputs
-
-
-
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
-        {
-            return _debugInputs;
-        }
-
-   
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update) => _debugInputs;
 
         public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             return _debugOutputs;
         }
-
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -163,7 +157,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 foreach(var t in updates)
                 {
-
                     if(t.Item1 == RecordsetName)
                     {
                         RecordsetName = t.Item2;
@@ -174,28 +167,61 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
-        #region GetForEachInputs/Outputs
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(RecordsetName);
 
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
+
+        public bool Equals(DsfDeleteRecordActivity other)
         {
-            return GetForEachItems(RecordsetName);
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && string.Equals(RecordsetName, other.RecordsetName) && string.Equals(Result, other.Result);
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public override bool Equals(object obj)
         {
-            return GetForEachItems(Result);
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfDeleteRecordActivity) obj);
         }
 
-        #endregion
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (RecordsetName != null ? RecordsetName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

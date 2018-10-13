@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +19,7 @@ using System.Activities.Presentation.Hosting;
 using System.Windows;
 using System.Windows.Media.Animation;
 
-// ReSharper disable CheckNamespace
+
 namespace System.Activities.Core.Presentation
 {
     public partial class VerticalConnector
@@ -64,33 +63,34 @@ namespace System.Activities.Core.Presentation
         protected override void OnDragEnter(DragEventArgs e)
         {
             CheckAnimate(e, "Expand");
-            dropTarget.Visibility = Visibility.Visible;
+            DropTarget.Visibility = Visibility.Visible;
         }
 
         protected override void OnDragLeave(DragEventArgs e)
         {
             CheckAnimate(e, "Collapse");
-            dropTarget.Visibility = Visibility.Collapsed;
+            DropTarget.Visibility = Visibility.Collapsed;
         }
 
         protected override void OnDrop(DragEventArgs e)
         {
-            dropTarget.Visibility = Visibility.Collapsed;
+            DropTarget.Visibility = Visibility.Collapsed;
             base.OnDrop(e);
         }
 
-        private void CheckAnimate(DragEventArgs e, string storyboardResourceName)
+        void CheckAnimate(DragEventArgs e, string storyboardResourceName)
         {
-            if(e.Handled)
-                return;
-            if(!Context.Items.GetValue<ReadOnlyState>().IsReadOnly)
+            if (e.Handled)
             {
-                if(DragDropHelper.AllowDrop(e.Data, Context, AllowedItemType))
-                {
-                    BeginStoryboard((Storyboard)Resources[storyboardResourceName]);
-                    return;
-                }
+                return;
             }
+
+            if (Context != null && !Context.Items.GetValue<ReadOnlyState>().IsReadOnly && DragDropHelper.AllowDrop(e.Data, Context, AllowedItemType))
+            {
+                BeginStoryboard((Storyboard)Resources[storyboardResourceName]);
+                return;
+            }
+
             e.Effects = DragDropEffects.None;
             e.Handled = true;
         }

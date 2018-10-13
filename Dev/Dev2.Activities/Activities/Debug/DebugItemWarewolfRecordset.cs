@@ -8,43 +8,32 @@ namespace Dev2.Activities.Debug
 {
     public class DebugItemWarewolfRecordset : DebugOutputBase
     {
-        readonly DataASTMutable.WarewolfRecordset _warewolfRecordset;
+        readonly DataStorage.WarewolfRecordset _warewolfRecordset;
         readonly string _labelText;
         string _operand;
         readonly string _variable;
-        readonly DebugItemResultType _type;
+        readonly bool _mockSelected;
 
-        public DebugItemWarewolfRecordset(DataASTMutable.WarewolfRecordset warewolfRecordset, string variable, string labelText, string operand)
+        public DebugItemWarewolfRecordset(DataStorage.WarewolfRecordset warewolfRecordset, string variable, string labelText, string operand)
+            : this(warewolfRecordset, variable, labelText, operand, false)
+        {
+        }
+
+        public DebugItemWarewolfRecordset(DataStorage.WarewolfRecordset warewolfRecordset, string variable, string labelText, string operand, bool mockSelected)
         {
             _warewolfRecordset = warewolfRecordset;
             _labelText = labelText;
             _operand = operand;
             _variable = variable;
-            _type = DebugItemResultType.Variable;
+            Type = DebugItemResultType.Variable;
+            _mockSelected = mockSelected;
         }
         
-        public override string LabelText
-        {
-            get
-            {
-                return _labelText;
-            }
-        }
+        public override string LabelText => _labelText;
 
-        public string Variable
-        {
-            get
-            {
-                return _variable;
-            }
-        }
-        public DebugItemResultType Type
-        {
-            get
-            {
-                return _type;
-            }
-        }
+        public string Variable => _variable;
+
+        public DebugItemResultType Type { get; }
 
         public override List<IDebugItemResult> GetDebugItemResult()
         {
@@ -71,7 +60,7 @@ namespace Dev2.Activities.Debug
                     var index = _warewolfRecordset.Data["WarewolfPositionColumn"][grpIdx];
                     var position = ExecutionEnvironment.WarewolfAtomToString(index);
                     grpIdx++;
-                    string displayExpression = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(DataListUtil.ExtractRecordsetNameFromValue(_variable),item.Key,position));
+                    var displayExpression = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(DataListUtil.ExtractRecordsetNameFromValue(_variable),item.Key,position));
                     var debugType = DebugItemResultType.Value;
                     if (DataListUtil.IsEvaluated(displayExpression))
                     {
@@ -92,7 +81,8 @@ namespace Dev2.Activities.Debug
                             Operator = _operand,
                             GroupName = _variable,
                             Value = ExecutionEnvironment.WarewolfAtomToString(warewolfAtom),
-                            GroupIndex = grpIdx
+                            GroupIndex = grpIdx,
+                            MockSelected = _mockSelected
                         });
                     }
                 }

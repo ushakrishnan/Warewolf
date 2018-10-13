@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,17 +10,18 @@
 
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Activities.Designers2.XPath;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.XPath
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class XPathDesignerViewModelTests
     {
         [TestMethod]
@@ -32,6 +32,26 @@ namespace Dev2.Activities.Designers.Tests.XPath
             var items = new List<XPathDTO> { new XPathDTO() };
             var viewModel = new XPathDesignerViewModel(CreateModelItem(items));
             Assert.AreEqual("ResultsCollection", viewModel.CollectionName);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("XPathDesignerViewModel_Handle")]
+        public void XPathDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+
+            var items = new List<XPathDTO> { new XPathDTO() };
+            var viewModel = new XPathDesignerViewModel(CreateModelItem(items));
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         [TestMethod]
@@ -93,7 +113,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.Errors);
-            Assert.AreEqual("'XPath' is not a valid expression", viewModel.Errors[0].Message);
+            Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.XPathInvalidExpressionErrorTest, viewModel.Errors[0].Message);
         }
 
         [TestMethod]
@@ -110,7 +130,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.Errors);
-            Assert.AreEqual("'Results' - Variable name [[a$]] contains invalid character(s)", viewModel.Errors[0].Message);
+            Assert.AreEqual("'Results' - Variable name [[a$]] contains invalid character(s). Only use alphanumeric _ and - ", viewModel.Errors[0].Message);
         }
 
         [TestMethod]
@@ -127,7 +147,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.IsNotNull(viewModel.Errors);
-            Assert.AreEqual("'Results' cannot be empty", viewModel.Errors[0].Message);
+            Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.XPathResultsNotNullErrorTest, viewModel.Errors[0].Message);
         }
 
 
@@ -145,7 +165,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.Errors.Count);
-            StringAssert.Contains(viewModel.Errors[0].Message, "'XML' cannot be empty or only white space");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.XPathXmlNotNullErrorTest);
         }
 
         [TestMethod]
@@ -162,7 +182,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.Errors.Count);
-            StringAssert.Contains(viewModel.Errors[0].Message, "'XML' is not a valid expression");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.XPathXmlInvalidExpressionErrorTest);
         }
 
         [TestMethod]
@@ -195,7 +215,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.Errors.Count);
-            StringAssert.Contains(viewModel.Errors[0].Message, "'XML' - Recordset index [ -1 ] is not greater than zero");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.XPathXmlRecordsetIndexErrorTest);
         }
 
         [TestMethod]
@@ -229,7 +249,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
             viewModel.Validate();
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.Errors.Count);
-            StringAssert.Contains(viewModel.Errors[0].Message, "'XML' is not a valid expression");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.XPathXmlInvalidExpressionErrorTest);
         }
 
         static ModelItem CreateModelItem(IEnumerable<XPathDTO> items, string displayName = "XPath")
@@ -243,10 +263,7 @@ namespace Dev2.Activities.Designers.Tests.XPath
                 var modelItemCollection = modelProperty.Collection;
                 foreach(var dto in items)
                 {
-                    if(modelItemCollection != null)
-                    {
-                        modelItemCollection.Add(dto);
-                    }
+                    modelItemCollection?.Add(dto);
                 }
             }
             return modelItem;

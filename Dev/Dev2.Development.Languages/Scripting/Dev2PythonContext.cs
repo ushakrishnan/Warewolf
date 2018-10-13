@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,26 +9,38 @@
 */
 
 using System;
+using System.Linq;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scripting;
 using IronPython.Hosting;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 
+
 namespace Dev2.Development.Languages.Scripting
 {
     public class Dev2PythonContext:IScriptingContext
     {
+        readonly IStringScriptSources _sources;
+
+        /// <summary>Initializes a new instance of the <see cref="T:System.Object" /> class.</summary>
+        public Dev2PythonContext(IStringScriptSources sources)
+        {
+            _sources = sources;
+        }
+
         public string Execute(string scriptValue)
         {
             var pyEng = Python.CreateEngine();
-            
-            string pyFunc =  @"def __result__(): " + scriptValue;     
-
-            ScriptSource source = pyEng.CreateScriptSourceFromString(pyFunc, SourceCodeKind.Statements);
+            var scriptStatements = scriptValue.Split(new[] { '\r','\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var fixedScriptStatements = scriptStatements.Select(scriptStatement => "    " + scriptStatement).ToList();
+            var fixedScript = String.Join(Environment.NewLine, fixedScriptStatements);
+            var pyFunc =  @"def __result__(): "+Environment.NewLine + fixedScript;
+            var scope = pyEng.CreateScope();
+            AddScriptToContext(pyEng, scope);
+            var source = pyEng.CreateScriptSourceFromString(pyFunc, SourceCodeKind.Statements);
 
             //create a scope to act as the context for the code
-            ScriptScope scope = pyEng.CreateScope();
 
             //execute the source
             source.Execute(scope);
@@ -47,10 +58,17 @@ namespace Dev2.Development.Languages.Scripting
             return string.Empty;
         }
 
-        public enScriptType HandlesType()
+        void AddScriptToContext(ScriptEngine pyEng, ScriptScope scope)
         {
-            return enScriptType.Python;
+            if (_sources?.GetFileScriptSources() != null)
+            {
+                foreach (var fileScriptSource in _sources.GetFileScriptSources())
+                {
+                    pyEng.Execute(fileScriptSource.GetReader().ReadToEnd(), scope);
+                }
+            }
         }
 
+        public enScriptType HandlesType() => enScriptType.Python;
     }
 }

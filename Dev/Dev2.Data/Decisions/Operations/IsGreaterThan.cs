@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,20 +14,16 @@ namespace Dev2.Data.Decisions.Operations
 {
     public class IsGreaterThan : IDecisionOperation
     {
-        public Enum HandlesType()
-        {
-            return enDecisionType.IsGreaterThan;
-        }
+        public Enum HandlesType() => enDecisionType.IsGreaterThan;
 
         public bool Invoke(string[] cols)
         {
             if(!string.IsNullOrEmpty(cols[0]))
             {
-                decimal[] tryGetNumber;
-                var isString = DecisionUtils.IsNumericComparison(cols, out tryGetNumber);
+                var isString = DecisionUtils.IsNumericComparison(cols, out decimal[] tryGetNumber);
 
                 //either int compare
-                if(!isString)
+                if (!isString)
                 {
                     return tryGetNumber[0].CompareTo(tryGetNumber[1]) > 0;
                 }

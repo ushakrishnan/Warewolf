@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,12 +16,17 @@ namespace Dev2.Common.Interfaces.Services.Sql
     {
         IDbConnection CreateConnection(string connectionString);
 
-        IDbCommand CreateCommand(IDbConnection connection, CommandType text, string format);
+        IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText,int? commandTimeout);
 
         DataTable GetSchema(IDbConnection connection, string collectionName);
 
-        DataTable CreateTable(IDataReader reader, LoadOption overwriteChanges);
+        DataTable CreateTable(IDataAdapter reader, LoadOption overwriteChanges);
 
         DataSet FetchDataSet(IDbCommand command);
-    }
+
+		int ExecuteNonQuery(IDbCommand command);
+
+		int ExecuteScalar(IDbCommand command);
+
+	}
 }

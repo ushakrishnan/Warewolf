@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +10,9 @@
 
 using System;
 using System.Activities.Presentation.Model;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core
 {
     public class WebActivity : IWebActivity
@@ -71,26 +70,13 @@ namespace Dev2.Studio.Core
 
         public object WebActivityObject { get; set; }
 
-        public Type UnderlyingWebActivityObjectType
-        {
-            get
-            {
-                if(WebActivityObject is ModelItem)
-                {
-                    return (WebActivityObject as ModelItem).ItemType;
-                }
-
-                return null;
-            }
-        }
-
+        public Type UnderlyingWebActivityObjectType => (WebActivityObject as ModelItem)?.ItemType;
 
         public IContextualResourceModel ResourceModel { get; set; }
 
-        private string GetPropertyValue(object modelItemObject, string propertyName)
+        string GetPropertyValue(object modelItemObject, string propertyName)
         {
-            var modelItem = modelItemObject as ModelItem;
-            if(modelItem != null && modelItem.Properties[propertyName] != null)
+            if (modelItemObject is ModelItem modelItem && modelItem.Properties[propertyName] != null)
             {
                 return modelItem.Properties[propertyName].ComputedValue == null
                            ? string.Empty
@@ -99,17 +85,13 @@ namespace Dev2.Studio.Core
             return string.Empty;
         }
 
-        private void SetPropertyValue(object modelItemObject, string propertyName, object value)
+        void SetPropertyValue(object modelItemObject, string propertyName, object value)
         {
-            var modelItem = modelItemObject as ModelItem;
-            if(modelItem != null && modelItem.Properties[propertyName] != null)
+            if (modelItemObject is ModelItem modelItem && modelItem.Properties[propertyName] != null)
             {
                 modelItem.Properties[propertyName].SetValue(value);
             }
         }
-        public bool IsNotAvailable()
-        {
-            return !ResourceModel.Environment.IsLocalHost && !ResourceModel.Environment.HasLoadedResources;
-        }
+        public bool IsNotAvailable() => !ResourceModel.Environment.IsLocalHost && !ResourceModel.Environment.IsConnected;
     }
 }

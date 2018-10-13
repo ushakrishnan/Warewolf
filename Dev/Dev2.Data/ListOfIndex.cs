@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +22,7 @@ namespace Dev2.Data.Binary_Objects
 
         public List<int> Indexes { get; private set; }
 
-        private ListOfIndex()
+        ListOfIndex()
         {
 
         }
@@ -35,9 +34,9 @@ namespace Dev2.Data.Binary_Objects
 
         public int GetMaxIndex()
         {
-            int result = -1;
+            var result = -1;
 
-            if(Indexes != null)
+            if (Indexes != null)
             {
                 result = Indexes.Max();
             }
@@ -45,43 +44,14 @@ namespace Dev2.Data.Binary_Objects
             return result;
         }
 
-        public int GetMinIndex()
-        {
-            int result = -1;
-
-            if(Indexes != null)
-            {
-                result = Indexes.Min();
-            }
-
-            return result;
-        }
-
-        public bool Contains(int idx)
-        {
-            bool result = false;
-
-            if(Indexes != null)
-            {
-                result = Indexes.Contains(idx);
-            }
-
-            return result;
-        }
-
         public int Count()
         {
-            int result = -1;
-            if(Indexes != null)
+            var result = -1;
+            if (Indexes != null)
             {
                 result = Indexes.Count;
             }
             return result;
-        }
-
-        public IIndexIterator FetchIterator()
-        {
-            return new ListIndexIterator(Indexes);
         }
     }
 }

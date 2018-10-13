@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,13 +16,13 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
     public class DelegateCommand : ICommand
     {
         readonly Action<object> _action;
-        private readonly Predicate<object> _canExecute;
+        readonly Predicate<object> _canExecute;
 
         public DelegateCommand(Action<object> action, Predicate<object> canExecute)
         {
             if(action == null)
             {
-                throw new ArgumentNullException("action");
+                throw new ArgumentNullException(nameof(action));
             }
 
             _action = action;
@@ -49,10 +48,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         /// true if this command can be executed; otherwise, false.
         /// </returns>
         /// <param name="parameter">Data used by the command.  If the command does not require data to be passed, this object can be set to null.</param>
-        public bool CanExecute(object parameter)
-        {
-            return _canExecute == null || _canExecute(parameter);
-        }
+        public bool CanExecute(object parameter) => _canExecute == null || _canExecute(parameter);
 
         /// <summary>
         /// Defines the method to be called when the command is invoked.
@@ -65,15 +61,22 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
 
         public event EventHandler CanExecuteChanged;
 
+    
         protected virtual void OnCanExecuteChanged()
         {
             var handler = CanExecuteChanged;
-            if(handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
+            handler?.Invoke(this, EventArgs.Empty);
         }
 
         #endregion
+
+        public void RaiseCanExecuteChanged()
+        {
+            if (CanExecuteChanged != null)
+            {
+                CanExecuteChanged(this, EventArgs.Empty);
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
     }
 }

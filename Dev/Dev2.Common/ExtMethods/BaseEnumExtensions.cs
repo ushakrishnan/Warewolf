@@ -1,7 +1,7 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -18,10 +18,10 @@ namespace Dev2.Common.ExtMethods
     {
         public static string GetDescription(this Enum value)
         {
-            FieldInfo field = value.GetType().GetField(value.ToString());
+            var field = value.GetType().GetField(value.ToString());
 
             var attribute
-                = Attribute.GetCustomAttribute(field, typeof (DescriptionAttribute))
+                = Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute))
                     as DescriptionAttribute;
 
             return attribute == null ? value.ToString() : attribute.Description;

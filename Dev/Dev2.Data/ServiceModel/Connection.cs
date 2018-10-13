@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,8 +12,8 @@ using System;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.ServiceModel.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -22,9 +21,9 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Data.ServiceModel
 {
-    public class Connection : Resource
+    public class Connection : Resource, IConnection
     {
-        public const int DefaultWebServerPort = 3142;
+        static readonly int DefaultWebServerPort = 3142;
 
         public string Address { get; set; }
 
@@ -49,21 +48,21 @@ namespace Dev2.Data.ServiceModel
 
         public Connection()
         {
-            ResourceType = ResourceType.Server;
+            ResourceType = enSourceType.Dev2Server.ToString();
             VersionInfo = new VersionInfo();
         }
 
         public Connection(XElement xml)
             : base(xml)
          {
-            ResourceType = ResourceType.Server;
+             ResourceType = enSourceType.Dev2Server.ToString();
 
             var conString = xml.AttributeSafe("ConnectionString");
             var connectionString = conString.CanBeDecrypted() ? DpapiWrapper.Decrypt(conString):conString;
             var props = connectionString.Split(';');
             foreach(var p in props.Select(prop => prop.Split('=')).Where(p => p.Length >= 1))
             {
-                switch(p[0].ToLowerInvariant())
+                switch (p[0].ToLowerInvariant())
                 {
                     case "appserveruri":
                         Address = p[1];
@@ -82,6 +81,8 @@ namespace Dev2.Data.ServiceModel
                     case "password":
                         Password = p[1];
                         break;
+                    default:
+                        break;
                 }
             }
         }
@@ -95,20 +96,10 @@ namespace Dev2.Data.ServiceModel
         {
             var result = Address;
 
-            if(result != null)
+            if(result?.IndexOf("dsf", StringComparison.Ordinal) < 0)
             {
-                if(result.IndexOf("dsf", StringComparison.Ordinal) < 0)
-                {
-                    if(result.EndsWith("/"))
-                    {
-                        result += "dsf";
-                    }
-                    else
-                    {
-                        result += "/dsf";
-                    }
+                result += result.EndsWith("/") ? "dsf" : "/dsf";
 
-                }
             }
 
             return result;
@@ -120,29 +111,72 @@ namespace Dev2.Data.ServiceModel
         {
             var result = base.ToXml();
             var connectionString = string.Join(";",
-                string.Format("AppServerUri={0}", Address),
-                string.Format("WebServerPort={0}", WebServerPort),
-                string.Format("AuthenticationType={0}", AuthenticationType)
+                $"AppServerUri={Address}",
+                $"WebServerPort={WebServerPort}",
+                $"AuthenticationType={AuthenticationType}"
                 );
             if(AuthenticationType == AuthenticationType.User)
             {
                 connectionString = string.Join(";",
                     connectionString,
-                    string.Format("UserName={0}", UserName),
-                    string.Format("Password={0}", Password)
+                    $"UserName={UserName}",
+                    $"Password={Password}"
                     );
             }
 
             result.Add(
                 new XAttribute("ConnectionString", DpapiWrapper.Encrypt(connectionString)),
-                new XAttribute("Type", enSourceType.Dev2Server),
+                new XAttribute("Type", GetType().Name),
                 new XElement("TypeOf", enSourceType.Dev2Server)
                 );
 
             return result;
         }
 
+        public override bool IsSource => false;
+
+        public override bool IsService => false;
+        public override bool IsFolder => false;
+        public override bool IsReservedService => false;
+        public override bool IsServer => true;
+        public override bool IsResourceVersion => false;
+
         #endregion
 
+        protected bool Equals(Connection other) => base.Equals(other) && string.Equals(Address, other.Address) && AuthenticationType == other.AuthenticationType && string.Equals(UserName, other.UserName) && string.Equals(Password, other.Password) && WebServerPort == other.WebServerPort;
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((Connection) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Address != null ? Address.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) AuthenticationType;
+                hashCode = (hashCode * 397) ^ (UserName != null ? UserName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Password != null ? Password.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ WebServerPort;
+                return hashCode;
+            }
+        }
     }
 }

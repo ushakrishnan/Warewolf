@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,8 +11,9 @@
 using System;
 using System.Collections.Generic;
 using Dev2.Common.ExtMethods;
-using Dev2.Data.Enums;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Data.Operations
 {
@@ -23,12 +23,11 @@ namespace Dev2.Data.Operations
 
         public IEnumerable<int> FindIndex(string stringToSearchIn, string firstOccurrence, string charsToSearchFor, string direction, bool matchCase, string startIndex)
         {
-            enIndexFinderOccurrence occurrence = enIndexFinderOccurrence.FirstOccurrence;
-            enIndexFinderDirection dir = enIndexFinderDirection.LeftToRight;
-            int startIdx;
+            var occurrence = enIndexFinderOccurrence.FirstOccurrence;
+            var dir = enIndexFinderDirection.LeftToRight;
             #region Set the enums according to the strings
 
-            switch(firstOccurrence)
+            switch (firstOccurrence)
             {
                 case "First Occurrence":
                     occurrence = enIndexFinderOccurrence.FirstOccurrence;
@@ -41,9 +40,11 @@ namespace Dev2.Data.Operations
                 case "All Occurrences":
                     occurrence = enIndexFinderOccurrence.AllOccurrences;
                     break;
+                default:
+                    break;
             }
 
-            switch(direction)
+            switch (direction)
             {
                 case "Left to Right":
                     dir = enIndexFinderDirection.LeftToRight;
@@ -52,12 +53,14 @@ namespace Dev2.Data.Operations
                 case "Right to Left":
                     dir = enIndexFinderDirection.RightToLeft;
                     break;
+                default:
+                    break;
             }
 
             startIndex = !string.IsNullOrWhiteSpace(startIndex) ? startIndex : "0";
-            if(!int.TryParse(startIndex, out startIdx))
+            if(!int.TryParse(startIndex, out int startIdx))
             {
-                throw new Exception("The start index specified was not a number.");
+                throw new Exception(ErrorResource.StartIndexNotANumber);
             }
 
             #endregion
@@ -75,19 +78,12 @@ namespace Dev2.Data.Operations
                 #region Calculate the index according to what the user enterd
 
                 var comparisonType = matchCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-                int firstIndex = stringToSearchIn.IndexOf(charsToSearchFor, startIndex, comparisonType);
-                int lastIndex = stringToSearchIn.LastIndexOf(charsToSearchFor, stringToSearchIn.Length - 1, comparisonType);
+                var firstIndex = stringToSearchIn.IndexOf(charsToSearchFor, startIndex, comparisonType);
+                var lastIndex = stringToSearchIn.LastIndexOf(charsToSearchFor, stringToSearchIn.Length - 1, comparisonType);
 
-                if(direction == enIndexFinderDirection.RightToLeft)
-                {
-                    result = RightToLeftIndexSearch(occurrence, firstIndex, lastIndex, stringToSearchIn, charsToSearchFor,
+                result = direction == enIndexFinderDirection.RightToLeft ? RightToLeftIndexSearch(occurrence, firstIndex, lastIndex, stringToSearchIn, charsToSearchFor,
+                                                    comparisonType) : LeftToRightIndexSearch(occurrence, firstIndex, lastIndex, stringToSearchIn, charsToSearchFor,
                                                     comparisonType);
-                }
-                else
-                {
-                    result = LeftToRightIndexSearch(occurrence, firstIndex, lastIndex, stringToSearchIn, charsToSearchFor,
-                                                    comparisonType);
-                }
 
                 #endregion
             }
@@ -98,14 +94,14 @@ namespace Dev2.Data.Operations
 
         #region Private Methods
 
-        private IEnumerable<int> RightToLeftIndexSearch(enIndexFinderOccurrence occurrence, int firstIndex, int lastIndex, string stringToSearchIn, string charsToSearchFor, StringComparison comparisonType)
+        IEnumerable<int> RightToLeftIndexSearch(enIndexFinderOccurrence occurrence, int firstIndex, int lastIndex, string stringToSearchIn, string charsToSearchFor, StringComparison comparisonType)
         {
-            int index = -1;
+            var index = -1;
             IEnumerable<int> result;
-            switch(occurrence)
+            switch (occurrence)
             {
                 case enIndexFinderOccurrence.FirstOccurrence:
-                    if(lastIndex != -1)
+                    if (lastIndex != -1)
                     {
                         index = stringToSearchIn.Length - lastIndex - (charsToSearchFor.Length - 1);
                     }
@@ -113,7 +109,7 @@ namespace Dev2.Data.Operations
                     break;
 
                 case enIndexFinderOccurrence.LastOccurrence:
-                    if(firstIndex != -1)
+                    if (firstIndex != -1)
                     {
                         index = stringToSearchIn.Length - firstIndex - (charsToSearchFor.Length - 1);
                     }
@@ -121,13 +117,13 @@ namespace Dev2.Data.Operations
                     break;
 
                 case enIndexFinderOccurrence.AllOccurrences:
-                    List<int> foundIndexes = new List<int>();
+                    var foundIndexes = new List<int>();
                     stringToSearchIn = stringToSearchIn.ReverseString();
-                    int currentIndex = firstIndex;
-                    while(currentIndex != -1 && currentIndex != stringToSearchIn.Length)
+                    var currentIndex = firstIndex;
+                    while (currentIndex != -1 && currentIndex != stringToSearchIn.Length)
                     {
                         currentIndex = stringToSearchIn.IndexOf(charsToSearchFor, currentIndex, comparisonType);
-                        if(currentIndex != -1)
+                        if (currentIndex != -1)
                         {
                             currentIndex++;
                             foundIndexes.Add(currentIndex);
@@ -137,20 +133,20 @@ namespace Dev2.Data.Operations
                     break;
 
                 default:
-                    throw new Exception("Error In Dev2IndexFinder");
+                    throw new Exception(ErrorResource.ErrorInDev2IndexFinder);
 
             }
             return result;
         }
 
-        private IEnumerable<int> LeftToRightIndexSearch(enIndexFinderOccurrence occurrence, int firstIndex, int lastIndex, string stringToSearchIn, string charsToSearchFor, StringComparison comparisonType)
+        IEnumerable<int> LeftToRightIndexSearch(enIndexFinderOccurrence occurrence, int firstIndex, int lastIndex, string stringToSearchIn, string charsToSearchFor, StringComparison comparisonType)
         {
-            int index = -1;
+            var index = -1;
             IEnumerable<int> result;
-            switch(occurrence)
+            switch (occurrence)
             {
                 case enIndexFinderOccurrence.FirstOccurrence:
-                    if(firstIndex != -1)
+                    if (firstIndex != -1)
                     {
                         index = firstIndex + 1;
                     }
@@ -158,7 +154,7 @@ namespace Dev2.Data.Operations
                     break;
 
                 case enIndexFinderOccurrence.LastOccurrence:
-                    if(lastIndex != -1)
+                    if (lastIndex != -1)
                     {
                         index = lastIndex + 1;
                     }
@@ -167,33 +163,31 @@ namespace Dev2.Data.Operations
 
                 case enIndexFinderOccurrence.AllOccurrences:
                     List<int> foundIndexes;
-                    if(firstIndex != -1)
-                    {
-                        foundIndexes = new List<int> { firstIndex + 1 };
-                        int currentIndex = firstIndex;
-                        while(currentIndex != -1)
-                        {
-
-                            currentIndex = stringToSearchIn.IndexOf(charsToSearchFor, currentIndex + 1, comparisonType);
-                            if(currentIndex != -1)
-                            {
-                                foundIndexes.Add(currentIndex + 1);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foundIndexes = new List<int> { firstIndex };
-                    }
-
+                    foundIndexes = firstIndex != -1 ? FindAll(firstIndex, stringToSearchIn, charsToSearchFor, comparisonType) : new List<int> { firstIndex };
                     result = foundIndexes.ToArray();
                     break;
 
                 default:
-                    throw new Exception("Error In Dev2IndexFinder");
+                    throw new Exception(ErrorResource.ErrorInDev2IndexFinder);
 
             }
             return result;
+        }
+
+        private static List<int> FindAll(int firstIndex, string stringToSearchIn, string charsToSearchFor, StringComparison comparisonType)
+        {
+            var foundIndexes = new List<int> { firstIndex + 1 };
+            var currentIndex = firstIndex;
+            while (currentIndex != -1)
+            {
+                currentIndex = stringToSearchIn.IndexOf(charsToSearchFor, currentIndex + 1, comparisonType);
+                if (currentIndex != -1)
+                {
+                    foundIndexes.Add(currentIndex + 1);
+                }
+            }
+
+            return foundIndexes;
         }
 
         #endregion

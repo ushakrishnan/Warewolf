@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,19 +9,15 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.DirectoryServices.ActiveDirectory;
-using System.Reflection;
 using Dev2.Services.Security.MoqInstallerActions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Infrastructure.Tests.MoqInstallerActions
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class WarewolfSecurityOperationsTest
     {
-        // ReSharper disable InconsistentNaming
+        
         [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("WarewolfSecurityOperations_AddWarewolfGroup")]
@@ -125,57 +120,7 @@ namespace Dev2.Infrastructure.Tests.MoqInstallerActions
             //------------Assert Results-------------------------
             Assert.IsTrue(result);
         }
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("WarewolfSecurityOperations_AddWarewolfGroupToAdministrators")]
-        [ExpectedException(typeof(TargetInvocationException))]
-        public void WarewolfSecurityOperations_AddWarewolfGroupToAdministrators_WhenAlreadyMember_ExpectException()
-        {
-
-            //------------Setup for test--------------------------
-            var warewolfGroupOps = MoqInstallerActionFactory.CreateSecurityOperationsObject();
-
-            // Delete warewolf if already a member...
-            warewolfGroupOps.DeleteWarewolfGroup();
-            warewolfGroupOps.AddWarewolfGroup();
-            warewolfGroupOps.AddAdministratorsGroupToWarewolf();
-
-            //------------Execute Test---------------------------
-            warewolfGroupOps.AddAdministratorsGroupToWarewolf();
-        }
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("WarewolfSecurityOperations_DeleteGroup")]
-        public void WarewolfSecurityOperations_AddDomainUserToWarewolfGroup_WhenUserNotPresent_ExpectUserAdded()
-        {
-            //------------Setup for test--------------------------
-	        var inDomain = true;
-	        try
-	        {
-	            Domain.GetComputerDomain();
-	        }
-	        catch (ActiveDirectoryObjectNotFoundException)
-	        {
-	            inDomain = false;
-	        }
-            var warewolfGroupOps = MoqInstallerActionFactory.CreateSecurityOperationsObject();
-            warewolfGroupOps.DeleteWarewolfGroup();
-            warewolfGroupOps.AddWarewolfGroup();
-            var myPc = Environment.MachineName;
-            var user = (inDomain?"Dev2\\":string.Empty)+Environment.UserName;
-
-            var userStr = warewolfGroupOps.FormatUserForInsert(user, myPc);
-
-            //------------Execute Test---------------------------
-            warewolfGroupOps.AddUserToWarewolf(userStr);
-            var result = warewolfGroupOps.IsUserInGroup(user);
-
-            //------------Assert Results-------------------------
-            Assert.IsTrue(result);
-        }
-
+        
         [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("WarewolfSecurityOperations_DeleteGroup")]
@@ -220,8 +165,7 @@ namespace Dev2.Infrastructure.Tests.MoqInstallerActions
         {
             //------------Setup for test--------------------------
             var warewolfGroupOps = MoqInstallerActionFactory.CreateSecurityOperationsObject();
-
-            // Environment.MachineName
+            
             //------------Execute Test---------------------------
             var result = warewolfGroupOps.FormatUserForInsert("Guest", "MyPC");
 
@@ -301,6 +245,6 @@ namespace Dev2.Infrastructure.Tests.MoqInstallerActions
 
         #endregion
 
-        // ReSharper restore InconsistentNaming
+
     }
 }

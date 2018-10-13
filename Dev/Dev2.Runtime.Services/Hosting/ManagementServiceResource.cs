@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,6 @@
 */
 
 using System;
-using Dev2.Common.Interfaces.Data;
 using Dev2.DynamicServices;
 using Dev2.Runtime.ServiceModel.Data;
 
@@ -29,9 +27,22 @@ namespace Dev2.Runtime.Hosting
             Service = service;
             ResourceID = service.ID == Guid.Empty ? Guid.NewGuid() : service.ID;
             ResourceName = service.Name;
-            ResourceType = ResourceType.ReservedService;
-            ResourcePath = service.Name;
+            ResourceType = "ReservedService";
             DataList = service.DataListSpecification;
         }
+
+        #region Overrides of Resource
+
+        public override bool IsSource => false;
+        public override bool IsService => false;
+
+        public override bool IsFolder => false;
+
+        public override bool IsReservedService => true;
+
+        public override bool IsServer => false;
+        public override bool IsResourceVersion => false;
+
+        #endregion
     }
 }

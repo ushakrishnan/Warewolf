@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,19 +21,7 @@ namespace Dev2.Runtime.Configuration
                 return string.Empty;
             }
             var attr = elem.Attribute(name);
-            return attr == null ? string.Empty : attr.Value;
+            return attr?.Value ?? string.Empty;
         }
-
-        public static string ElementSafe(this XElement elem, string name)
-        {
-            if(elem == null || string.IsNullOrEmpty(name))
-            {
-                return string.Empty;
-            }
-
-            var child = elem.Element(name);
-            return child == null ? string.Empty : child.Value;
-        }
-
     }
 }

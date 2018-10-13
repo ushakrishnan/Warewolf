@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,6 @@ namespace Dev2.Calculate
         ParseEventLog EventLog { get; }
         bool HasEventLogs { get; }
         SyntaxTreeBuilder Builder { get; }
-        Node[] Build(string inputText, out Token[] tokens);
         Node[] Build(string inputText, bool expectedPartialTokens, out Token[] tokens);
     }
 
@@ -29,26 +28,14 @@ namespace Dev2.Calculate
             Builder = new SyntaxTreeBuilder();
         }
 
-        public ParseEventLog EventLog
-        {
-            get { return Builder.EventLog; }
-        }
+        public ParseEventLog EventLog => Builder.EventLog;
 
-        public bool HasEventLogs
-        {
-            get { return Builder.EventLog.HasEventLogs; }
-        }
+        public bool HasEventLogs => Builder.EventLog.HasEventLogs;
 
         public SyntaxTreeBuilder Builder { get; private set; }
 
-        public Node[] Build(string inputText, out Token[] tokens)
-        {
-            return Builder.Build(inputText, out tokens);
-        }
 
-        public Node[] Build(string inputText, bool expectedPartialTokens, out Token[] tokens)
-        {
-            return Builder.Build(inputText, expectedPartialTokens, out tokens);
-        }
+
+        public Node[] Build(string inputText, bool expectedPartialTokens, out Token[] tokens) => Builder.Build(inputText, expectedPartialTokens, out tokens);
     }
 }

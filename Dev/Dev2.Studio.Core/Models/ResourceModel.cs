@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -14,7 +13,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -23,6 +21,7 @@ using Dev2.Collections;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.Collections;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Common.Interfaces.Versioning;
@@ -30,38 +29,34 @@ using Dev2.Communication;
 using Dev2.Services;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.AppResources.ExtensionMethods;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
+using Microsoft.Practices.Prism.Mvvm;
+using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.Models
 {
     public class ResourceModel : ValidationController, IDataErrorInfo, IContextualResourceModel
     {
-        #region Class Members
-
-        private readonly List<string> _tagList;
-        private bool _allowCategoryEditing = true;
-        private string _category;
-        private string _comment;
-        private string _dataList;
-        private string _dataTags;
-        private string _displayName = string.Empty;
-        private IEnvironmentModel _environment;
-        private string _helpLink;
-        private string _iconPath;
-        private bool _isDatabaseService;
-        private bool _isDebugMode;
-        private bool _isResourceService;
-        private bool _requiresSignOff;
-        private string _resourceName;
-        private ResourceType _resourceType;
-        private string _tags;
-        private string _unitTestTargetWorkflowService;
-        private StringBuilder _workflowXaml;
-        private Version _version;
+        bool _allowCategoryEditing = true;
+        string _category;
+        string _comment;
+        string _dataList;
+        string _dataTags;
+        string _displayName = string.Empty;
+        IServer _environment;
+        string _helpLink;
+        bool _isDatabaseService;
+        bool _isDebugMode;
+        bool _isResourceService;
+        string _resourceName;
+        ResourceType _resourceType;
+        string _tags;
+        string _unitTestTargetWorkflowService;
+        StringBuilder _workflowXaml;
+        Version _version;
         bool _isPluginService;
         bool _isWorkflowSaved;
         Guid _id;
@@ -73,72 +68,58 @@ namespace Dev2.Studio.Core.Models
         Permissions _userPermissions;
         IVersionInfo _versionInfo;
 
-        #endregion Class Members
-
-        #region Constructors
-
-        public ResourceModel(IEnvironmentModel environment)
+        public ResourceModel() { }
+        public ResourceModel(IServer environment)
             : this(environment, EventPublishers.Aggregator)
         {
         }
 
-        public ResourceModel(IEnvironmentModel environment, IEventAggregator eventPublisher)
+        public ResourceModel(IServer environment, IEventAggregator eventPublisher)
         {
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
 
-            _tagList = new List<string>();
+            TagList = new List<string>();
             Environment = environment;
 
-            if (environment != null && environment.Connection != null)
+            if (environment?.Connection != null)
             {
                 ServerID = environment.Connection.ServerID;
             }
             IsWorkflowSaved = true;
         }
 
-        #endregion Constructors
-
-        #region Properties
-
         public string Inputs { get; set; }
 
         public string Outputs { get; set; }
 
+        public Guid OriginalId { get; set; }
+
         public bool IsValid
         {
-            get
-            {
-                return _isValid;
-            }
+            get => _isValid;
             set
             {
                 _isValid = value;
-                NotifyOfPropertyChange("IsValid");
+                NotifyOfPropertyChange(nameof(IsValid));
             }
         }
 
-        public IObservableReadOnlyList<IErrorInfo> Errors { get { return _errors; } }
-        public IObservableReadOnlyList<IErrorInfo> FixedErrors { get { return _fixedErrors; } }
+        public IObservableReadOnlyList<IErrorInfo> Errors => _errors;
+        public IObservableReadOnlyList<IErrorInfo> FixedErrors => _fixedErrors;
 
         public bool IsWorkflowSaved
         {
-            get
-            {
-                return _isWorkflowSaved;
-            }
+            get => _isWorkflowSaved;
             set
             {
                 _isWorkflowSaved = value;
-                if (OnResourceSaved != null)
-                {
-                    OnResourceSaved(this);
-                }
+                OnResourceSaved?.Invoke(this);
             }
         }
 
-        public IEnvironmentModel Environment
+        public IServer Environment
         {
-            get { return _environment; }
+            get => _environment;
             private set
             {
                 _environment = value;
@@ -146,65 +127,58 @@ namespace Dev2.Studio.Core.Models
                 {
                     _validationService = new DesignValidationService(_environment.Connection.ServerEvents);
 
-                    // BUG 9634 - 2013.07.17 - TWR : added
-                    _validationService.Subscribe(_environment.ID, ReceiveEnvironmentValidation);
+                    _validationService.Subscribe(_environment.EnvironmentID, ReceiveEnvironmentValidation);
                 }
-                NotifyOfPropertyChange("Environment");
-                // ReSharper disable NotResolvedInText
+                NotifyOfPropertyChange(nameof(Environment));
                 NotifyOfPropertyChange("CanExecute");
-                // ReSharper restore NotResolvedInText
             }
         }
-
 
         public Guid ServerID { get; set; }
 
         public bool IsDatabaseService
         {
-            get { return _isDatabaseService; }
+            get => _isDatabaseService;
             set
             {
                 _isDatabaseService = value;
-                NotifyOfPropertyChange("IsDatabaseService");
+                NotifyOfPropertyChange(nameof(IsDatabaseService));
             }
         }
 
         public bool IsPluginService
         {
-            get { return _isPluginService; }
+            get => _isPluginService;
             set
             {
                 _isPluginService = value;
-                NotifyOfPropertyChange("IsPluginService");
+                NotifyOfPropertyChange(nameof(IsPluginService));
             }
         }
 
         public bool IsResourceService
         {
-            get { return _isResourceService; }
+            get => _isResourceService;
             set
             {
                 _isResourceService = value;
-                NotifyOfPropertyChange("IsResourceService");
+                NotifyOfPropertyChange(nameof(IsResourceService));
             }
         }
 
         public Guid ID
         {
-            get { return _id; }
+            get => _id;
             set
             {
                 _id = value;
-                if (_validationService != null)
-                {
-                    _validationService.Subscribe(_id, ReceiveDesignValidation);
-                }
+                _validationService?.Subscribe(_id, ReceiveDesignValidation);
             }
         }
 
         public Permissions UserPermissions
         {
-            get { return _userPermissions; }
+            get => _userPermissions;
             set
             {
                 if (value == _userPermissions)
@@ -216,39 +190,36 @@ namespace Dev2.Studio.Core.Models
             }
         }
 
-        public bool IsAuthorized(AuthorizationContext authorizationContext)
-        {
-            return (UserPermissions & authorizationContext.ToPermissions()) != 0;
-        }
+        public bool IsAuthorized(AuthorizationContext authorizationContext) => (UserPermissions & authorizationContext.ToPermissions()) != 0;
 
         public Version Version
         {
-            get { return _version; }
+            get => _version;
             set
             {
                 _version = value;
-                NotifyOfPropertyChange("Version");
+                NotifyOfPropertyChange(nameof(Version));
             }
         }
 
         public bool AllowCategoryEditing
         {
-            get { return _allowCategoryEditing; }
+            get => _allowCategoryEditing;
             set
             {
                 _allowCategoryEditing = value;
-                NotifyOfPropertyChange("AllowCategoryEditing");
+                NotifyOfPropertyChange(nameof(AllowCategoryEditing));
             }
         }
 
         [Required(ErrorMessage = @"Please enter a name for this resource")]
         public string ResourceName
         {
-            get { return _resourceName; }
+            get => _resourceName;
             set
             {
                 _resourceName = value.Trim();
-                NotifyOfPropertyChange("ResourceName");
+                NotifyOfPropertyChange(nameof(ResourceName));
             }
         }
 
@@ -266,166 +237,132 @@ namespace Dev2.Studio.Core.Models
             set
             {
                 _displayName = value;
-                NotifyOfPropertyChange("DisplayName");
-            }
-        }
-
-        public string IconPath
-        {
-            get { return _iconPath; }
-            set
-            {
-                _iconPath = value;
-                NotifyOfPropertyChange("IconPath");
+                NotifyOfPropertyChange(nameof(DisplayName));
             }
         }
 
         public string UnitTestTargetWorkflowService
         {
-            get { return _unitTestTargetWorkflowService; }
+            get => _unitTestTargetWorkflowService;
             set
             {
                 _unitTestTargetWorkflowService = value;
-                NotifyOfPropertyChange("UnitTestTargetWorkflowService");
+                NotifyOfPropertyChange(nameof(UnitTestTargetWorkflowService));
             }
         }
 
-        public List<string> TagList
-        {
-            get { return _tagList; }
-        }
+        public List<string> TagList { get; }
 
         public string DataList
         {
-            get { return _dataList; }
+            get => _dataList;
             set
             {
                 if (value != _dataList)
                 {
                     _dataList = value;
-                    NotifyOfPropertyChange("DataList");
-                    if (OnDataListChanged != null)
-                    {
-                        OnDataListChanged();
-                    }
+                    NotifyOfPropertyChange(nameof(DataList));
+                    OnDataListChanged?.Invoke();
                 }
-
             }
         }
 
         public ResourceType ResourceType
         {
-            get { return _resourceType; }
+            get => _resourceType;
             set
             {
                 _resourceType = value;
-                NotifyOfPropertyChange("ResourceType");
+                NotifyOfPropertyChange(nameof(ResourceType));
             }
         }
 
         [Required(ErrorMessage = @"Please enter a Category for this resource")]
         public string Category
         {
-            get { return _category; }
+            get => _category;
             set
             {
                 _category = value;
-                NotifyOfPropertyChange("Category");
+                NotifyOfPropertyChange(nameof(Category));
             }
         }
 
         public string Tags
         {
-            get { return _tags; }
+            get => _tags;
             set
             {
                 _tags = value;
-                NotifyOfPropertyChange("Tags");
+                NotifyOfPropertyChange(nameof(Tags));
             }
         }
 
         [Required(ErrorMessage = @"Please enter the Comment for this resource")]
         public string Comment
         {
-            get { return _comment; }
+            get => _comment;
             set
             {
                 _comment = value;
-                NotifyOfPropertyChange("Comment");
+                NotifyOfPropertyChange(nameof(Comment));
             }
         }
 
         public StringBuilder WorkflowXaml
         {
-            get
-            {
-                return _workflowXaml;
-            }
+            get => _workflowXaml;
             set
             {
                 _workflowXaml = value;
-                NotifyOfPropertyChange("WorkflowXaml");
+                NotifyOfPropertyChange(nameof(WorkflowXaml));
             }
         }
 
         public bool IsVersionResource { get; set; }
 
-        public bool RequiresSignOff
-        {
-            get { return _requiresSignOff; }
-            set
-            {
-                _requiresSignOff = value;
-                NotifyOfPropertyChange("RequiresSignOff");
-            }
-        }
-
-        public bool HasErrors
-        {
-            get { return ValidationErrors.Count > 0; }
-        }
+        public bool HasErrors => ValidationErrors.Count > 0;
 
         public string DataTags
         {
-            get { return _dataTags; }
+            get => _dataTags;
             set
             {
                 _dataTags = value;
-                NotifyOfPropertyChange("DataTags");
+                NotifyOfPropertyChange(nameof(DataTags));
             }
         }
 
         [Required(ErrorMessage = @"Please enter a valid help link")]
         public string HelpLink
         {
-            get { return _helpLink; }
+            get => _helpLink;
             set
             {
                 _helpLink = value;
-                NotifyOfPropertyChange("HelpLink");
+                NotifyOfPropertyChange(nameof(HelpLink));
             }
         }
 
         public bool IsDebugMode
         {
-            get { return _isDebugMode; }
+            get => _isDebugMode;
             set
             {
                 _isDebugMode = value;
-                NotifyOfPropertyChange("IsDebugMode");
+                NotifyOfPropertyChange(nameof(IsDebugMode));
             }
         }
 
         public bool IsNewWorkflow { get; set; }
+        public bool IsNotWarewolfPath { get; set; }
+        public bool IsOpeningFromOtherDir { get; set ; }
 
         public string ServerResourceType { get; set; }
 
         public IVersionInfo VersionInfo
         {
-            get
-            {
-                return _versionInfo;
-            }
+            get => _versionInfo;
             set
             {
                 if (Equals(value, _versionInfo))
@@ -433,16 +370,12 @@ namespace Dev2.Studio.Core.Models
                     return;
                 }
                 _versionInfo = value;
-                NotifyOfPropertyChange("VersionInfo");
+                NotifyOfPropertyChange(nameof(VersionInfo));
             }
         }
 
         public event Action<IContextualResourceModel> OnResourceSaved;
         public event System.Action OnDataListChanged;
-
-        #endregion Properties
-
-        #region Methods
 
         public event EventHandler<DesignValidationMemo> OnDesignValidationReceived;
 
@@ -467,11 +400,10 @@ namespace Dev2.Studio.Core.Models
                     }
                 }
             }
-            if (OnDesignValidationReceived != null)
-            {
-                OnDesignValidationReceived(this, memo);
-            }
+            OnDesignValidationReceived?.Invoke(this, memo);
         }
+
+        public IView GetView(Func<IView> view) => view.Invoke();
 
         public void ClearErrors()
         {
@@ -480,25 +412,15 @@ namespace Dev2.Studio.Core.Models
             NotifyOfPropertyChange(() => IsValid);
         }
 
-        public event EventHandler<DesignValidationMemo> OnEnvironmentValidationReceived;
-
-        // BUG 9634 - 2013.07.17 - TWR : added
         void ReceiveEnvironmentValidation(DesignValidationMemo memo)
         {
             foreach (var error in memo.Errors)
             {
                 _errors.Add(error);
             }
-            if (OnEnvironmentValidationReceived != null)
-            {
-                OnEnvironmentValidationReceived(this, memo);
-            }
         }
 
-        public IList<IErrorInfo> GetErrors(Guid instanceId)
-        {
-            return _errors.Where(e => e.InstanceID == instanceId).ToList();
-        }
+        public IList<IErrorInfo> GetErrors(Guid instanceId) => _errors.Where(e => e.InstanceID == instanceId).ToList();
 
         public void AddError(IErrorInfo error)
         {
@@ -535,103 +457,104 @@ namespace Dev2.Studio.Core.Models
         /// <param name="resourceModel">The resource model to update from.</param>
         public void Update(IResourceModel resourceModel)
         {
-            AllowCategoryEditing = resourceModel.AllowCategoryEditing;
-            Category = resourceModel.Category;
-            Comment = resourceModel.Comment;
-            DataTags = resourceModel.DataTags;
-            DisplayName = resourceModel.DisplayName;
-            VersionInfo = resourceModel.VersionInfo;
-            HelpLink = resourceModel.HelpLink;
-            IsDebugMode = resourceModel.IsDebugMode;
-            RequiresSignOff = resourceModel.RequiresSignOff;
-            ResourceName = resourceModel.ResourceName;
-            ResourceType = resourceModel.ResourceType;
-            Tags = resourceModel.Tags;
-            DataList = resourceModel.DataList;
-            UpdateIconPath(resourceModel.IconPath);
-            Version = resourceModel.Version;
-            ConnectionString = resourceModel.ConnectionString;
-            ID = resourceModel.ID;
-            ServerResourceType = resourceModel.ServerResourceType;
-            UserPermissions = resourceModel.UserPermissions;
-            Inputs = resourceModel.Inputs;
-            Outputs = resourceModel.Outputs;
-            WorkflowXaml = resourceModel.WorkflowXaml;
-            _errors.Clear();
-            if (resourceModel.Errors != null)
+            if (resourceModel != null)
             {
-                foreach (var error in resourceModel.Errors)
+                AllowCategoryEditing = resourceModel.AllowCategoryEditing;
+                Category = resourceModel.Category;
+                Comment = resourceModel.Comment;
+                DataTags = resourceModel.DataTags;
+                DisplayName = resourceModel.DisplayName;
+                VersionInfo = resourceModel.VersionInfo;
+                IsVersionResource = resourceModel.IsVersionResource;
+                HelpLink = resourceModel.HelpLink;
+                IsDebugMode = resourceModel.IsDebugMode;
+                ResourceName = resourceModel.ResourceName;
+                ResourceType = resourceModel.ResourceType;
+                Tags = resourceModel.Tags;
+                DataList = resourceModel.DataList;
+                Version = resourceModel.Version;
+                ConnectionString = resourceModel.ConnectionString;
+                ID = resourceModel.ID;
+                ServerResourceType = resourceModel.ServerResourceType;
+                UserPermissions = resourceModel.UserPermissions;
+                Inputs = resourceModel.Inputs;
+                Outputs = resourceModel.Outputs;
+                WorkflowXaml = resourceModel.WorkflowXaml;
+                _errors.Clear();
+                if (resourceModel.Errors != null)
                 {
-                    _errors.Add(error);
+                    foreach (var error in resourceModel.Errors)
+                    {
+                        _errors.Add(error);
+                    }
                 }
             }
         }
 
         public string ConnectionString { get; set; }
 
-        public void UpdateIconPath(string iconPath)
-        {
-            IconPath = string.IsNullOrEmpty(iconPath) ? ResourceType.GetIconLocation() : iconPath;
-        }
+        public StringBuilder ToServiceDefinition() => ToServiceDefinition(false);
 
-        // TODO: cjr: would be best to have this non default to false, so that will be the next step once it all works
-        public StringBuilder ToServiceDefinition(bool prepairForDeployment = false)
+        public StringBuilder ToServiceDefinition(bool prepairForDeployment)
         {
-            //TODO this method replicates functionality that is available in the server. There is a serious need to create a common library for resource contracts and resource serialization.
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
 
-            if(ResourceType == ResourceType.WorkflowService)
+            if (ResourceType == ResourceType.WorkflowService)
             {
-                var msg = Environment.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, false);
-                StringBuilder xaml = WorkflowXaml;
-
-                if ((xaml==null || xaml.Length==0) && msg != null && msg.Message != null)
+                var xaml = WorkflowXaml;
+                if (xaml == null || xaml.Length == 0)
                 {
-                    xaml = msg.Message;
+                    var msg = Environment.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, false);
+                    if (msg?.Message != null)
+                    {
+                        xaml = msg.Message;
+                    }
                 }
                 if (xaml != null && xaml.Length != 0)
                 {
                     var service = CreateWorkflowXElement(xaml);
-                    // save to the string builder ;)
-                    XmlWriterSettings xws = new XmlWriterSettings { OmitXmlDeclaration = true };
+                    var xws = new XmlWriterSettings { OmitXmlDeclaration = true };
                     using (XmlWriter xwriter = XmlWriter.Create(result, xws))
                     {
                         service.Save(xwriter);
                     }
                 }
             }
-            else if(ResourceType == ResourceType.Source || ResourceType == ResourceType.Service)
+            else if (ResourceType == ResourceType.Source || ResourceType == ResourceType.Server)
             {
                 var msg = Environment.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, prepairForDeployment);
                 result = msg.Message;
 
-                if(result == null || result.Length == 0)
+                if (result == null || result.Length == 0)
                 {
                     result = WorkflowXaml;
                 }
 
-                if(ResourceType == ResourceType.Service)
+                if (result != null)
                 {
-                    var completeDefintion = CreateServiceXElement(result);
-                    result = completeDefintion.ToStringBuilder();
-                }
-
-                //2013.07.05: Ashley Lewis for bug 9487 - category may have changed!
-                var startNode = result.IndexOf("<Category>", 0, true) + "<Category>".Length;
-                var endNode = result.IndexOf("</Category>", 0, true);
-                if(endNode > startNode)
-                {
-                    var len = (endNode - startNode);
-                    var oldCategory = result.Substring(startNode, len);
-                    if(oldCategory != Category)
-                    {
-                        result = result.Replace(oldCategory, Category);
-                    }
+                    result = ReplaceCategory(result);
                 }
             }
             else
             {
-                throw new Exception("ToServiceDefinition doesn't support resources of type source. Sources are meant to be managed through the Web API.");
+                throw new Exception(ErrorResource.ToServiceDefinitionDoesNotRupportResourcesOfTypeSource);
+            }
+
+            return result;
+        }
+
+        StringBuilder ReplaceCategory(StringBuilder result)
+        {
+            var startNode = result.IndexOf("<Category>", 0, true) + "<Category>".Length;
+            var endNode = result.IndexOf("</Category>", 0, true);
+            if (endNode > startNode)
+            {
+                var len = endNode - startNode;
+                var oldCategory = result.Substring(startNode, len);
+                if (oldCategory != Category)
+                {
+                    result = result.Replace(oldCategory, Category);
+                }
             }
 
             return result;
@@ -639,10 +562,10 @@ namespace Dev2.Studio.Core.Models
 
         XElement CreateWorkflowXElement(StringBuilder xaml)
         {
-            XElement dataList = string.IsNullOrEmpty(DataList) ? new XElement("DataList") : XElement.Parse(DataList);
-            XElement service = new XElement("Service",
+            var dataList = string.IsNullOrEmpty(DataList) ? new XElement("DataList") : XElement.Parse(DataList);
+            var service = new XElement("Service",
                 new XAttribute("ID", ID),
-                new XAttribute("Version", (Version != null) ? Version.ToString() : "1.0"),
+                new XAttribute("Version", Version?.ToString() ?? "1.0"),
                 new XAttribute("ServerID", ServerID.ToString()),
                 new XAttribute("Name", ResourceName ?? string.Empty),
                 new XAttribute("ResourceType", ResourceType),
@@ -653,7 +576,6 @@ namespace Dev2.Studio.Core.Models
                 new XElement("AuthorRoles", string.Empty),
                 new XElement("Comment", Comment ?? string.Empty),
                 new XElement("Tags", Tags ?? string.Empty),
-                new XElement("IconPath", IconPath ?? string.Empty),
                 new XElement("HelpLink", HelpLink ?? string.Empty),
                 new XElement("UnitTestTargetWorkflowService", UnitTestTargetWorkflowService ?? string.Empty),
                 dataList,
@@ -666,37 +588,13 @@ namespace Dev2.Studio.Core.Models
             return service;
         }
 
-        XElement CreateServiceXElement(StringBuilder xaml)
-        {
-            XElement dataList = string.IsNullOrEmpty(DataList) ? new XElement("DataList") : XElement.Parse(DataList);
-            var content = xaml.Unescape();
-            content = content.Replace("&", "&amp;");
-            var contentElement = content.ToXElement();
-            XElement service = new XElement("Service",
-                new XAttribute("ID", ID),
-                new XAttribute("Version", (Version != null) ? Version.ToString() : "1.0"),
-                new XAttribute("ServerID", ServerID.ToString()),
-                new XAttribute("Name", ResourceName ?? string.Empty),
-                new XAttribute("ResourceType", ServerResourceType ?? ResourceType.ToString()),
-                new XAttribute("IsValid", IsValid),
-                new XElement("DisplayName", ResourceName ?? string.Empty),
-                new XElement("Category", Category ?? string.Empty),
-                new XElement("AuthorRoles", string.Empty),
-                new XElement("Comment", Comment ?? string.Empty),
-                new XElement("Tags", Tags ?? string.Empty),
-                new XElement("IconPath", IconPath ?? string.Empty),
-                new XElement("HelpLink", HelpLink ?? string.Empty),
-                new XElement("UnitTestTargetWorkflowService", UnitTestTargetWorkflowService ?? string.Empty),
-                dataList,
-                new XElement("Actions", contentElement),
-                new XElement("ErrorMessages", WriteErrors())
-                );
-            return service;
-        }
-
         List<XElement> WriteErrors()
         {
-            if (Errors == null || Errors.Count == 0) return null;
+            if (Errors == null || Errors.Count == 0)
+            {
+                return null;
+            }
+
             var errorElements = new List<XElement>();
             foreach (var errorInfo in Errors)
             {
@@ -714,23 +612,18 @@ namespace Dev2.Studio.Core.Models
 
             return errorElements;
         }
-        #endregion Methods
+        
+        public string Error => null;
 
-        #region IDataErrorInfo Members
-
-        public string Error
-        {
-            get { return null; }
-        }
+        
 
         public string this[string columnName]
         {
             get
             {
-                PropertyInfo prop = GetType().GetProperty(columnName);
-                IEnumerable<ValidationAttribute> validationMap = prop.GetCustomAttributes(typeof(ValidationAttribute), true).Cast<ValidationAttribute>();
+                var prop = GetType().GetProperty(columnName);
+                var validationMap = prop.GetCustomAttributes(typeof(ValidationAttribute), true).Cast<ValidationAttribute>();
                 string errMsg;
-
 
                 foreach (ValidationAttribute v in validationMap)
                 {
@@ -742,7 +635,6 @@ namespace Dev2.Studio.Core.Models
                     catch (Exception)
                     {
                         AddError(columnName, v.ErrorMessage);
-
                         return v.ErrorMessage;
                     }
                 }
@@ -758,42 +650,53 @@ namespace Dev2.Studio.Core.Models
                     RemoveError("NoResourceName");
                 }
 
-                if (columnName == "IconPath")
+                if (columnName == "HelpLink" && !Uri.TryCreate(HelpLink, UriKind.Absolute, out Uri testUri))
                 {
-                    Uri testUri;
-                    if (!Uri.TryCreate(IconPath, UriKind.Absolute, out testUri) && !string.IsNullOrEmpty(IconPath))
-                    {
-                        errMsg = "Icon Path Does Not Exist or is not valid";
-                        AddError("IconPathFileDoesNotExist", errMsg);
-                        return errMsg;
-                    }
-                    RemoveError("IconPathFileDoesNotExist");
+                    errMsg = "The help link is not in a valid format";
+                    AddError(columnName, errMsg);
+                    return errMsg;
                 }
 
-                if (columnName == "HelpLink")
-                {
-                    Uri testUri;
-                    if (!Uri.TryCreate(HelpLink, UriKind.Absolute, out testUri))
-                    {
-                        errMsg = "The help link is not in a valid format";
-                        AddError(columnName, errMsg);
-                        return errMsg;
-                    }
-                }
 
                 return null;
             }
         }
 
-        #endregion
+        public string GetSavePath()
+        {
+            if (!string.IsNullOrEmpty(Category))
+            {
+                var savePath = Category;
+                var resourceNameIndex = Category.LastIndexOf(ResourceName, StringComparison.InvariantCultureIgnoreCase);
+                if (resourceNameIndex >= 0)
+                {
+                    savePath = Category.Substring(0, resourceNameIndex);
+                }
+                return savePath;
+            }
+            return "";
+        }
 
         protected override void OnDispose()
         {
-            if (_validationService != null)
-            {
-                _validationService.Dispose();
-            }
+            _validationService?.Dispose();
             base.OnDispose();
+        }
+
+        public StringBuilder GetWorkflowXaml()
+        {
+            if (WorkflowXaml != null)
+            {
+                return WorkflowXaml;
+            }
+
+            var msg = Environment?.ResourceRepository.FetchResourceDefinition(Environment, GlobalConstants.ServerWorkspaceID, ID, true);
+            if (msg != null && msg.Message.Length != 0)
+            {
+                WorkflowXaml = msg.Message;
+            }
+
+            return WorkflowXaml;
         }
     }
 }

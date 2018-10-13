@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,44 +10,30 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Net;
 using Dev2.Common;
-using Dev2.Common.Common;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Runtime.Diagnostics;
-using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using Newtonsoft.Json;
 
 namespace Dev2.Tests.Runtime.ServiceModel
 {
     // PBI 953 - 2013.05.16 - TWR - Created
-    [TestClass]    
-    [ExcludeFromCodeCoverage]
+    [TestClass]
     public class WebSourcesTests
     {
-        // ReSharper disable InconsistentNaming
-        const string TestMethod = "GetCitiesByCountry";
-        const string CountryName = "South%20Africa";
-        const string TestAddress = "http://www.webservicex.net/globalweather.asmx";
-        const string TestDefaultQuery = "/" + TestMethod + "?CountryName=" + CountryName;
-
+        
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebSourcesConstructorWithNullResourceCatalogExpectedThrowsArgumentNullException()
         {
 #pragma warning disable 168
-            // ReSharper disable UnusedVariable
+            
             var handler = new WebSources(null);
-            // ReSharper restore UnusedVariable
+            
 #pragma warning restore 168
         }
 
@@ -56,7 +41,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region Test
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourcesTestWithInValidArgsExpectedInvalidValidationResult()
         {
             var handler = new WebSources();
@@ -64,7 +49,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsFalse(result.IsValid);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourcesTestWithInvalidAddressExpectedInvalidValidationResult()
         {
             var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.Anonymous }.ToString();
@@ -74,24 +59,24 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsFalse(result.IsValid, result.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourcesAssertUserAgentHeaderSet()
         {
             var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.Anonymous };
 
-            WebSources.EnsureWebClient(source, new List<string>());
+            WebSources.CreateWebClient(source, new List<string>());
 
             var client = source.Client;
             var agent = client.Headers["user-agent"];
             Assert.IsNotNull(agent);
-            Assert.AreEqual(agent,GlobalConstants.UserAgentString);
+            Assert.AreEqual(agent, GlobalConstants.UserAgentString);
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourcesAssertUserAgentHeaderSet_SetsOtherHeaders()
         {
             var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.Anonymous };
 
-            WebSources.EnsureWebClient(source, new List<string> { "a:x", "b:e" });
+            WebSources.CreateWebClient(source, new List<string> { "a:x", "b:e" });
 
             var client = source.Client;
             var agent = client.Headers["user-agent"];
@@ -100,28 +85,28 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsTrue(client.Headers.AllKeys.Contains("a"));
             Assert.IsTrue(client.Headers.AllKeys.Contains("b"));
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
 
         public void WebSourcesAssertUserAgentHeaderSet_SetsUserNameAndPassword()
 
         {
-            var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.User,UserName = "User",Password = "pwd"};
+            var source = new WebSource { Address = "www.foo.bar", AuthenticationType = AuthenticationType.User, UserName = "User", Password = "pwd" };
 
-            WebSources.EnsureWebClient(source, new List<string> { "a:x", "b:e" });
+            WebSources.CreateWebClient(source, new List<string> { "a:x", "b:e" });
 
             var client = source.Client;
-            // ReSharper disable PossibleNullReferenceException
+            
             Assert.IsTrue((client.Credentials as NetworkCredential).UserName == "User");
-          
+
             Assert.IsTrue((client.Credentials as NetworkCredential).Password == "pwd");
-            // ReSharper restore PossibleNullReferenceException
+            
         }
 
         #endregion
 
         #region Get
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourcesGetWithNullArgsExpectedReturnsNewSource()
         {
             var handler = new WebSources();
@@ -131,7 +116,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(Guid.Empty, result.ResourceID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourcesGetWithInvalidArgsExpectedReturnsNewSource()
         {
             var handler = new WebSources();
@@ -141,112 +126,39 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(Guid.Empty, result.ResourceID);
         }
 
-        [TestMethod]
-        public void WebSourcesGetWithValidArgsExpectedReturnsSource()
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Sanele Mthembu")]
+        public void GetAddress_Given_Null_Source_And_NoRelativeUri_Should_Return_relativeUri()
         {
-            var expected = CreateWebSource();
-            var saveArgs = expected.ToString();
+            //------------Setup for test-------------------------
+            var webSource = new PrivateType(typeof(WebSources));
+            //------------Execute Test---------------------------
+            object[] args = { null, string.Empty };
+            var invokeStaticResults = webSource.InvokeStatic("GetAddress", args);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(invokeStaticResults);
+            var results = invokeStaticResults as string;
+            Assert.IsNotNull(results);
+            Assert.IsTrue(string.IsNullOrEmpty(results));
+        }
 
-            var workspaceID = Guid.NewGuid();
-            var workspacePath = EnvironmentVariables.GetWorkspacePath(workspaceID);
-            try
-            {
-                var handler = new WebSources();
-                handler.Save(saveArgs, workspaceID, Guid.Empty);
 
-                var actual = handler.Get(expected.ResourceID.ToString(), workspaceID, Guid.Empty);
-
-                VerifySource(actual, expected);
-            }
-            finally
-            {
-                try
-                {
-                    if(Directory.Exists(workspacePath))
-                    {
-                        DirectoryHelper.CleanUp(workspacePath);
-                    }
-                }
-                // ReSharper disable EmptyGeneralCatchClause
-                catch(Exception)
-                // ReSharper restore EmptyGeneralCatchClause
-                {
-                }
-            }
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Sanele Mthembu")]
+        public void GetAddress_Given_Null_Source_And_relativeUri_Should_Return_relativeUri()
+        {
+            //------------Setup for test-------------------------
+            var webSource = new PrivateType(typeof(WebSources));
+            //------------Execute Test---------------------------
+            object[] args = { null, "some url" };
+            var invokeStaticResults = webSource.InvokeStatic("GetAddress", args);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(invokeStaticResults);
+            var results = invokeStaticResults as string;
+            Assert.IsNotNull(results);
+            Assert.AreEqual("some url", results);
         }
 
         #endregion
-
-        #region Save
-
-        [TestMethod]
-        public void WebSourcesSaveWithInValidArgsExpectedInvalidValidationResult()
-        {
-            var handler = new WebSources();
-            var jsonResult = handler.Save("root:'hello'", Guid.Empty, Guid.Empty);
-            var result = JsonConvert.DeserializeObject<ValidationResult>(jsonResult);
-            Assert.IsFalse(result.IsValid);
-        }
-
-        [TestMethod]
-        public void WebSourcesSaveWithValidArgsExpectedInvokesResourceCatalogSave()
-        {
-            var expected = CreateWebSource();
-
-            var catalog = new Mock<IResourceCatalog>();
-            catalog.Setup(c => c.SaveResource(It.IsAny<Guid>(), It.IsAny<IResource>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Verifiable();
-
-            var handler = new WebSources(catalog.Object);
-            var jsonResult = handler.Save(expected.ToString(), Guid.Empty, Guid.Empty);
-            var actual = JsonConvert.DeserializeObject<WebSource>(jsonResult);
-
-            catalog.Verify(c => c.SaveResource(It.IsAny<Guid>(), It.IsAny<IResource>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
-
-            VerifySource(expected, actual);
-        }
-
-        #endregion
-
-        #region VerifySource
-
-        static void VerifySource(WebSource actual, WebSource expected)
-        {
-            Assert.IsNotNull(actual);
-            Assert.AreEqual(expected.ResourceID, actual.ResourceID);
-            Assert.AreEqual(expected.ResourceName, actual.ResourceName);
-            Assert.AreEqual(expected.ResourcePath, actual.ResourcePath);
-            Assert.AreEqual(expected.ResourceType, actual.ResourceType);
-            Assert.AreEqual(expected.ResourceType, actual.ResourceType);
-
-            Assert.AreEqual(expected.Address, actual.Address);
-            Assert.AreEqual(expected.DefaultQuery, actual.DefaultQuery);
-            Assert.AreEqual(expected.AuthenticationType, actual.AuthenticationType);
-            Assert.AreEqual(expected.UserName, actual.UserName);
-            Assert.AreEqual(expected.Password, actual.Password);
-            Assert.IsNull(actual.Response);
-        }
-
-        #endregion
-
-        #region CreateWebSource
-
-        static WebSource CreateWebSource()
-        {
-            return new WebSource
-            {
-                Address = TestAddress,
-                DefaultQuery = TestDefaultQuery,
-                AuthenticationType = AuthenticationType.Anonymous,
-                UserName = "",
-                Password = "",
-
-                ResourceID = Guid.NewGuid(),
-                ResourceName = "TestWeather",
-                ResourcePath = "Testing\\TestWeather",
-            };
-        }
-
-        #endregion
-        // ReSharper restore InconsistentNaming
     }
 }

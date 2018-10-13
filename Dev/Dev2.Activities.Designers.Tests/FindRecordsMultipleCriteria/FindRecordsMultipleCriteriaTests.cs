@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,20 +11,21 @@
 using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Activities.Designers2.FindRecordsMultipleCriteria;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
 {
     // OnSearchTypeChanged moved from FindRecordsTO tests
-    // ReSharper disable InconsistentNaming
+    
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class FindRecordsMultipleCriteriaTests
     {
         [TestMethod]
@@ -172,6 +172,31 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             Assert.AreEqual(isSearchCriteriaBlank, string.IsNullOrEmpty(findRecordsTO.SearchCriteria));
         }
 
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("FindRecordsMultipleCriteriaViewModel_Handle")]
+        public void FindRecordsMultipleCriteriaViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------   
+            var items = new List<FindRecordsTO>
+            {
+                new FindRecordsTO("xxxx", "Equals", 1),
+                new FindRecordsTO("yyyy", "Contains", 2)
+            };
+
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+
+            var viewModel = new FindRecordsMultipleCriteriaDesignerViewModel(CreateModelItem(items));
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
+        }
+
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
@@ -232,7 +257,7 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             Assert.IsNotNull(viewModel.ModelItem);
             Assert.IsNotNull(viewModel.ModelItemCollection);
             Assert.AreEqual("ResultsCollection", viewModel.CollectionName);
-            Assert.AreEqual(1, viewModel.TitleBarToggles.Count);
+            Assert.AreEqual(0, viewModel.TitleBarToggles.Count);
         }
 
         [TestMethod]
@@ -271,9 +296,9 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
 
             //------------Assert Results-------------------------
             Assert.AreEqual(3, viewModel.Errors.Count);
-            StringAssert.Contains(viewModel.Errors[0].Message, "'In Field(s)' cannot be empty or only white space");
-            StringAssert.Contains(viewModel.Errors[1].Message, "'In Field(s)' Cannot have any scalars in this field");
-            StringAssert.Contains(viewModel.Errors[2].Message, "'Result' cannot be empty or only white space");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsInFieldsNotNullErrorTest);
+            StringAssert.Contains(viewModel.Errors[1].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsInFieldsScalarNotAllowedErrorTest);
+            StringAssert.Contains(viewModel.Errors[2].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsInFieldsResultNotNullErrorTest);
         }
 
         [TestMethod]
@@ -334,7 +359,7 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             var dto5 = new FindRecordsTO("", "Is Between", 4);
             var dto6 = new FindRecordsTO("", "Is Not Between", 5);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["ResultsCollection"].Collection;
             var dtoModelItem1 = miCollection.Add(dto1);
             var dtoModelItem2 = miCollection.Add(dto2);
@@ -342,7 +367,7 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             var dtoModelItem4 = miCollection.Add(dto4);
             var dtoModelItem5 = miCollection.Add(dto5);
             var dtoModelItem6 = miCollection.Add(dto6);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new FindRecordsMultipleCriteriaDesignerViewModel(mi);
             SetDataListString(viewModel);
@@ -355,23 +380,71 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
 
             StringAssert.Contains(viewModel.Errors[0].Message, "'In Field(s)' Cannot have any scalars in this field");
 
-            StringAssert.Contains(viewModel.Errors[1].Message, "'From' cannot be empty");
+            StringAssert.Contains(viewModel.Errors[1].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsFromNotNullErrorTest);
             Verify_IsFocused(dtoModelItem5, viewModel.Errors[1].Do, "IsFromFocused");
 
-            StringAssert.Contains(viewModel.Errors[2].Message, "'To' cannot be empty");
+            StringAssert.Contains(viewModel.Errors[2].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsToNotNullErrorTest);
             Verify_IsFocused(dtoModelItem5, viewModel.Errors[2].Do, "IsToFocused");
 
-            StringAssert.Contains(viewModel.Errors[3].Message, "'From' cannot be empty");
+            StringAssert.Contains(viewModel.Errors[3].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsFromNotNullErrorTest);
             Verify_IsFocused(dtoModelItem6, viewModel.Errors[3].Do, "IsFromFocused");
 
-            StringAssert.Contains(viewModel.Errors[4].Message, "'To' cannot be empty");
+            StringAssert.Contains(viewModel.Errors[4].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsToNotNullErrorTest);
             Verify_IsFocused(dtoModelItem6, viewModel.Errors[4].Do, "IsToFocused");
-
-
-
-
         }
-        
+
+
+
+        [TestMethod]
+        [Owner("Robin van den Heever")]
+        [TestCategory("FindRecordsMultipleCriteriaDesignerViewModel_ValidateCollectionItem")]
+        public void FindRecordsMultipleCriteriaDesignerViewModel_ValidateCollectionItem_ValidatesPropertiesOfTO_StarInRecordSetShouldNotError()
+        {
+            //------------Setup for test--------------------------
+            var mi = ModelItemUtils.CreateModelItem(new DsfFindRecordsMultipleCriteriaActivity());
+            mi.SetProperty("DisplayName", "Find");
+            mi.SetProperty("FieldsToSearch", "[[rec(*).set]]");
+            mi.SetProperty("Result", "[[a]]");
+
+            var dto1 = new FindRecordsTO("", "Starts With", 0);
+            var dto2 = new FindRecordsTO("", "Ends With", 1);
+            var dto3 = new FindRecordsTO("", "Doesn't Start With", 2);
+            var dto4 = new FindRecordsTO("", "Doesn't End With", 3);
+            var dto5 = new FindRecordsTO("", "Is Between", 4);
+            var dto6 = new FindRecordsTO("", "Is Not Between", 5);
+
+
+            var miCollection = mi.Properties["ResultsCollection"].Collection;
+            var dtoModelItem1 = miCollection.Add(dto1);
+            var dtoModelItem2 = miCollection.Add(dto2);
+            var dtoModelItem3 = miCollection.Add(dto3);
+            var dtoModelItem4 = miCollection.Add(dto4);
+            var dtoModelItem5 = miCollection.Add(dto5);
+            var dtoModelItem6 = miCollection.Add(dto6);
+
+
+            var viewModel = new FindRecordsMultipleCriteriaDesignerViewModel(mi);
+            SetDataListString(viewModel);
+            //------------Execute Test---------------------------
+            viewModel.Validate();
+
+            //------------Assert Results-------------------------
+            Assert.AreEqual(4, viewModel.Errors.Count);
+
+             
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsFromNotNullErrorTest);
+            Verify_IsFocused(dtoModelItem5, viewModel.Errors[0].Do, "IsFromFocused");
+
+            StringAssert.Contains(viewModel.Errors[1].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsToNotNullErrorTest);
+            Verify_IsFocused(dtoModelItem5, viewModel.Errors[1].Do, "IsToFocused");
+
+            StringAssert.Contains(viewModel.Errors[2].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsFromNotNullErrorTest);
+            Verify_IsFocused(dtoModelItem6, viewModel.Errors[2].Do, "IsFromFocused");
+
+            StringAssert.Contains(viewModel.Errors[3].Message, Warewolf.Resource.Errors.ErrorResource.FindRecordsToNotNullErrorTest);
+            Verify_IsFocused(dtoModelItem6, viewModel.Errors[3].Do, "IsToFocused");
+        }
+
         static void SetDataListString(FindRecordsMultipleCriteriaDesignerViewModel viewModel)
         {
             viewModel.GetDatalistString = () =>
@@ -396,13 +469,13 @@ namespace Dev2.Activities.Designers.Tests.FindRecordsMultipleCriteria
             var modelItem = ModelItemUtils.CreateModelItem(new DsfFindRecordsMultipleCriteriaActivity());
             modelItem.SetProperty("DisplayName", displayName);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var modelItemCollection = modelItem.Properties["ResultsCollection"].Collection;
             foreach(var dto in items)
             {
                 modelItemCollection.Add(dto);
             }
-            // ReSharper restore PossibleNullReferenceException
+            
 
             return modelItem;
         }

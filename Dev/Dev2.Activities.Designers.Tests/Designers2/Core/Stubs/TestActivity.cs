@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +12,8 @@ using System;
 using System.Activities;
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
+using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
@@ -30,6 +31,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
             UniqueID = Guid.NewGuid().ToString();
             IsWorkflow = true;
             IsSimulationEnabled = false;
+        }
+
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
         }
 
         protected override void OnExecute(NativeActivityContext context)
@@ -58,6 +64,24 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
 
         protected override void ExecuteTool(IDSFDataObject dataObject,int update)
         {
+        }
+
+        public bool Equals(TestActivity other)
+        {
+            return ReferenceEquals(this, other);
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is TestActivity instance)
+            {
+                return Equals(instance);
+            }
+            return false;
+        }
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
         }
     }
 }

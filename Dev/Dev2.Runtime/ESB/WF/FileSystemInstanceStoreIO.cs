@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -84,7 +83,7 @@ namespace Dev2.DynamicServices
             }
             catch(Exception exception)
             {
-                Dev2Logger.Log.Error(exception);
+                Dev2Logger.Error(exception);
                 throw new InstancePersistenceException(exception.Message, exception);
             }
             return isExistingInstance;
@@ -120,7 +119,7 @@ namespace Dev2.DynamicServices
             }
             catch(Exception exception)
             {
-                Dev2Logger.Log.Error(exception);
+                Dev2Logger.Error(exception);
                 throw new InstancePersistenceException(exception.Message, exception);
             }
         }
@@ -218,7 +217,7 @@ namespace Dev2.DynamicServices
             }
             catch(Exception exception)
             {
-                Dev2Logger.Log.Error(exception);
+                Dev2Logger.Error(exception);
                 throw new InstancePersistenceException(exception.Message, exception);
             }
 
@@ -307,7 +306,7 @@ namespace Dev2.DynamicServices
             }
             catch(Exception exception)
             {
-                Dev2Logger.Log.Error(exception);
+                Dev2Logger.Error(exception);
                 throw new InstancePersistenceException(exception.Message, exception);
             }
         }
@@ -334,7 +333,7 @@ namespace Dev2.DynamicServices
             }
             catch(Exception exception)
             {
-                Dev2Logger.Log.Error(exception);
+                Dev2Logger.Error(exception);
                 throw new InstancePersistenceException(exception.Message, exception);
             }
             return instanceId;
@@ -355,7 +354,7 @@ namespace Dev2.DynamicServices
             }
             catch(Exception exception)
             {
-                Dev2Logger.Log.Error(exception);
+                Dev2Logger.Error(exception);
                 throw new InstancePersistenceException(exception.Message, exception);
             }
         }

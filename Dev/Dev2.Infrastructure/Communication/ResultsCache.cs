@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,18 +16,12 @@ namespace Dev2.Communication
 {
     public class ResultsCache
     {
-        private readonly ConcurrentDictionary<string, string> _resultCache = new ConcurrentDictionary<string, string>();
+        readonly ConcurrentDictionary<string, string> _resultCache = new ConcurrentDictionary<string, string>();
 
-        private static ResultsCache _instance;
-        public static ResultsCache Instance
-        {
-            get
-            {
-                return _instance ?? (_instance = new ResultsCache());
-            }
-        }
+        static ResultsCache _instance;
+        public static ResultsCache Instance => _instance ?? (_instance = new ResultsCache());
 
-        private ResultsCache() { }
+        ResultsCache() { }
 
         public bool AddResult(FutureReceipt receipt, string payload)
         {
@@ -52,8 +45,7 @@ namespace Dev2.Communication
                 throw new ArgumentNullException("receipt");
             }
 
-            string result;
-            if(!_resultCache.TryRemove(receipt.ToKey(), out result))
+            if (!_resultCache.TryRemove(receipt.ToKey(), out string result))
             {
                 result = string.Empty;
             }

@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.Diagnostics.Debug;
 using Dev2.Runtime.Configuration.Settings;
 
 namespace Dev2.Diagnostics.Logging
@@ -59,20 +56,7 @@ namespace Dev2.Diagnostics.Logging
 
             });
         }
-
-        [ExcludeFromCodeCoverage] // wf debug logging
-        public static bool ShouldLog(IDebugState iDebugState)
-        {
-            var debugState = iDebugState as DebugState;
-            if (debugState == null)
-            {
-                return false;
-            }
-
-            return ShouldLog(debugState.OriginatingResourceID);
-        }
-
-        [ExcludeFromCodeCoverage] // wf debug logging
+ // wf debug logging
         public static bool ShouldLog(Guid resourceID)
         {
             //Unnecessary to continue if logging is turned off
@@ -82,11 +66,10 @@ namespace Dev2.Diagnostics.Logging
             }
 
             //only log if included in the settings
-            bool shouldlog = LoggingSettings.LogAll || _workflowsToLog.ContainsKey(resourceID);
+            var shouldlog = LoggingSettings.LogAll || _workflowsToLog.ContainsKey(resourceID);
             return shouldlog;
         }
-
-        [ExcludeFromCodeCoverage] // wf debug logging
+ // wf debug logging
         public static string GetDirectoryPath(LoggingSettings loggingSettings)
         {
             var dirPath = loggingSettings.LogFileDirectory;
@@ -97,8 +80,7 @@ namespace Dev2.Diagnostics.Logging
             }
             return dirPath;
         }
-
-        [ExcludeFromCodeCoverage] // wf debug logging
+ // wf debug logging
         public static string GetDefaultLogDirectoryPath()
         {
             var rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);

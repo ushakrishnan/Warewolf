@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +10,14 @@
 
 using Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers;
 using Microsoft.Win32.TaskScheduler;
+using System;
 
 namespace Dev2.TaskScheduler.Wrappers
 {
     public class Dev2TaskService : IDev2TaskService
     {
-        private readonly TaskService _nativeService;
-        private readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
+        readonly TaskService _nativeService;
+        readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
 
         public Dev2TaskService(ITaskServiceConvertorFactory taskServiceConvertorFactory, TaskService service)
         {
@@ -41,21 +42,28 @@ namespace Dev2.TaskScheduler.Wrappers
         public void Dispose()
         {
             _nativeService.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public bool Connected
+        protected virtual void Dispose(bool disposing)
         {
-            get { return _nativeService.Connected; }
+            // Cleanup
         }
 
-        public ITaskFolder RootFolder
-        {
-            get { return _taskServiceConvertorFactory.CreateRootFolder(_nativeService.RootFolder); }
-        }
+        public bool Connected => _nativeService.Connected;
+
+        public ITaskFolder RootFolder => _taskServiceConvertorFactory.CreateRootFolder(_nativeService.RootFolder);
 
         public ITaskFolder GetFolder(string folderName)
         {
-            return _taskServiceConvertorFactory.CreateRootFolder(_nativeService.GetFolder(folderName));
+            var taskFolder = _nativeService.GetFolder(folderName);
+            if(taskFolder == null)
+            {
+                var newFolder = _nativeService.RootFolder.CreateFolder(folderName);
+                return _taskServiceConvertorFactory.CreateRootFolder(newFolder);
+            }
+            return _taskServiceConvertorFactory.CreateRootFolder(taskFolder);
         }
 
         public IDev2Task GetTask(string taskPath)
@@ -68,9 +76,6 @@ namespace Dev2.TaskScheduler.Wrappers
             return _taskServiceConvertorFactory.CreateTaskDefinition(_nativeService.NewTask());
         }
 
-        public TaskService Instance
-        {
-            get { return _nativeService; }
-        }
+        public TaskService Instance => _nativeService;
     }
 }

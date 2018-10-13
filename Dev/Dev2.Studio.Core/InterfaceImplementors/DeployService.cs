@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +8,9 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.InterfaceImplementors
 {
     /// <summary>
@@ -25,28 +24,37 @@ namespace Dev2.Studio.Core.InterfaceImplementors
         /// Deploys the <see cref="IResourceModel" />'s represented by the given DTO.
         /// </summary>
         /// <param name="deployDto">The DTO to be deployed.</param>
-        /// <param name="environmentModel">The environment model to be queried.</param>
-        public void Deploy(IDeployDto deployDto, IEnvironmentModel environmentModel)
+        /// <param name="sourceEnviroment"></param>
+        /// <param name="server">The environment model to be queried.</param>
+        public void Deploy(IDeployDto deployDto, IServer sourceEnviroment, IServer server)
         {
 
-            if(deployDto == null || deployDto.ResourceModels == null || environmentModel == null || environmentModel.ResourceRepository == null)
+            if (deployDto?.ResourceModels == null || server?.ResourceRepository == null)
             {
                 return;
             }
 
-            if(!environmentModel.IsConnected)
+            if (!server.IsConnected)
             {
-                environmentModel.Connect();
+                server.Connect();
             }
 
-            if(environmentModel.IsConnected)
+            if (server.IsConnected)
             {
-                foreach(var resourceModel in deployDto.ResourceModels)
+                foreach (var resourceModel in deployDto.ResourceModels)
                 {
-                    environmentModel.ResourceRepository.DeployResource(resourceModel);
+                    var savePath = resourceModel.GetSavePath();
+                    server.ResourceRepository.DeployResource(resourceModel, savePath);
+                    if (deployDto.DeployTests)
+                    {
+                        var models = sourceEnviroment.ResourceRepository.LoadResourceTestsForDeploy(resourceModel.ID);
+                        server.ResourceRepository.SaveTests(resourceModel, models);
+                    }
                 }
             }
         }
+
+
 
         #endregion
     }

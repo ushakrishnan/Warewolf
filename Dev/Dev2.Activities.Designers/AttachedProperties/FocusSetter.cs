@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace Dev2.Activities.AttachedProperties
@@ -43,8 +43,19 @@ namespace Dev2.Activities.AttachedProperties
         static void IsFocusedChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var fe = (FrameworkElement)d;
+            var isFocused = e.NewValue is Boolean && (bool)e.NewValue;
+            if (fe is AutoCompleteBox autoCompleteBox)
+            {
+                if (isFocused && autoCompleteBox.TextBox != null)
+                {
+                    autoCompleteBox.TextBox.Focus();
+                    Keyboard.Focus(autoCompleteBox.TextBox);
+                }
 
-            if(e.OldValue == null)
+                return;
+            }
+
+            if (e.OldValue == null)
             {
                 fe.GotFocus += FrameworkElementGotFocus;
                 fe.LostFocus += FrameworkElementLostFocus;
@@ -57,7 +68,7 @@ namespace Dev2.Activities.AttachedProperties
                 fe.IsVisibleChanged += FeIsVisibleChanged;
             }
 
-            var isFocused = e.NewValue is Boolean && (bool)e.NewValue;
+            
             if(isFocused)
             {
                 fe.Focus();

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -21,13 +19,12 @@ using Unlimited.UnitTest.Framework.ConverterTests.GraphTests;
 namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class PocoMapperTests
     {
         #region Private/Internal Methods
         internal PocoTestData Given()
         {
-            PocoTestData testData = new PocoTestData
+            var testData = new PocoTestData
             {
                 Name = "Brendon",
                 Age = 30,
@@ -38,7 +35,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData1 = new PocoTestData
+            var nestedTestData1 = new PocoTestData
             {
                 Name = "Mo",
                 Age = 30,
@@ -49,7 +46,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData2 = new PocoTestData
+            var nestedTestData2 = new PocoTestData
             {
                 Name = "Trav",
                 Age = 30,
@@ -67,7 +64,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
 
         internal PocoTestData GivenWithParallelAndNestedEnumerables()
         {
-            PocoTestData testData = new PocoTestData
+            var testData = new PocoTestData
             {
                 Name = "Brendon",
                 Age = 30,
@@ -78,7 +75,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData1 = new PocoTestData
+            var nestedTestData1 = new PocoTestData
             {
                 Name = "Mo",
                 Age = 30,
@@ -89,7 +86,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData2 = new PocoTestData
+            var nestedTestData2 = new PocoTestData
             {
                 Name = "Trav",
                 Age = 30,
@@ -100,7 +97,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData3 = new PocoTestData
+            var nestedTestData3 = new PocoTestData
             {
                 Name = "Jayd",
                 Age = 30,
@@ -111,7 +108,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData4 = new PocoTestData
+            var nestedTestData4 = new PocoTestData
             {
                 Name = "Dan",
                 Age = 30,
@@ -122,7 +119,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData5 = new PocoTestData
+            var nestedTestData5 = new PocoTestData
             {
                 Name = "Mark",
                 Age = 30,
@@ -133,7 +130,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData6 = new PocoTestData
+            var nestedTestData6 = new PocoTestData
             {
                 Name = "Warren",
                 Age = 30,
@@ -144,7 +141,7 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData7 = new PocoTestData
+            var nestedTestData7 = new PocoTestData
             {
                 Name = "Wallis",
                 Age = 30,
@@ -167,8 +164,8 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapPrimitive_Expected_PathToRoot()
         {
-            PocoMapper pocoMapper = new PocoMapper();
-            IEnumerable<IPath> paths = pocoMapper.Map(1);
+            var pocoMapper = new PocoMapper();
+            var paths = pocoMapper.Map(1);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == PocoPath.SeperatorSymbol));
         }
@@ -179,20 +176,20 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapEnumerableOnlyContainingPrimitives_Expected_PathToRoot()
         {
-            PocoMapper pocoMapper = new PocoMapper();
-            List<int> primitives = new List<int> { 1, 2, 3 };
-            IEnumerable<IPath> paths = pocoMapper.Map(primitives);
+            var pocoMapper = new PocoMapper();
+            var primitives = new List<int> { 1, 2, 3 };
+            var paths = pocoMapper.Map(primitives);
 
-            Assert.IsTrue(paths.Any(p => p.ActualPath == PocoPath.EnumerableSymbol + PocoPath.SeperatorSymbol));
+            Assert.IsTrue(paths.Any(p => p.ActualPath == "Capacity" || p.ActualPath == "Count"));
         }
 
         [TestMethod]
         public void MapEnumerable_Expected_PathToPublicPrimitiveMember()
         {
-            PocoMapper pocoMapper = new PocoMapper();
-            List<int> primitives = new List<int>();
+            var pocoMapper = new PocoMapper();
+            var primitives = new List<int>();
 
-            IEnumerable<IPath> paths = pocoMapper.Map(primitives);
+            var paths = pocoMapper.Map(primitives);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Count"));
         }
@@ -200,10 +197,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapEnumerableNestedInAnEnumerable_Expected_PathToPublicPrimitiveMemberOfEnumerableNestedInTheOuterEnumerable()
         {
-            PocoMapper pocoMapper = new PocoMapper();
-            PocoTestData testData = GivenWithParallelAndNestedEnumerables();
+            var pocoMapper = new PocoMapper();
+            var testData = GivenWithParallelAndNestedEnumerables();
 
-            IEnumerable<IPath> paths = pocoMapper.Map(testData);
+            var paths = pocoMapper.Map(testData);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "EnumerableData().EnumerableData.Count"));
         }
@@ -211,9 +208,9 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapReferenceType_WhereGetAccessorsOfMembersThrowExceptions_Expected_PathsToExcludeThoseMembers()
         {
-            PocoMapper pocoMapper = new PocoMapper();
-            Uri uri = new Uri("/Cake", UriKind.Relative);
-            IEnumerable<IPath> paths = pocoMapper.Map(uri);
+            var pocoMapper = new PocoMapper();
+            var uri = new Uri("/Cake", UriKind.Relative);
+            var paths = pocoMapper.Map(uri);
 
             Assert.IsFalse(paths.Any(p => p.ActualPath == "Host"));
         }
@@ -221,10 +218,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapReferenceType_Expected_PathToPublicPrimitiveMemberOfPublicReferenceMember()
         {
-            PocoTestData testData = Given();
+            var testData = Given();
 
-            PocoMapper pocoMapper = new PocoMapper();
-            IEnumerable<IPath> paths = pocoMapper.Map(testData);
+            var pocoMapper = new PocoMapper();
+            var paths = pocoMapper.Map(testData);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Name"));
         }
@@ -232,10 +229,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapNestedReferenceType_Expected_PathToPublicPrimitiveMemberOfNestedPublicReferenceMember()
         {
-            PocoTestData testData = Given();
+            var testData = Given();
 
-            PocoMapper pocoMapper = new PocoMapper();
-            IEnumerable<IPath> paths = pocoMapper.Map(testData);
+            var pocoMapper = new PocoMapper();
+            var paths = pocoMapper.Map(testData);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "NestedData.Name"));
         }
@@ -243,10 +240,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapReferenceTypeWithinEnumerable_Expected_PathToPublicPrimitiveMemberOfPublicEnumerableMember()
         {
-            PocoTestData testData = Given();
+            var testData = Given();
 
-            PocoMapper pocoMapper = new PocoMapper();
-            IEnumerable<IPath> paths = pocoMapper.Map(testData);
+            var pocoMapper = new PocoMapper();
+            var paths = pocoMapper.Map(testData);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "EnumerableData().Name"));
         }
@@ -254,21 +251,32 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void MapReferenceTypeNestedInAnWithinEnumerable_Expected_PathToPublicPrimitiveMemberOfPublicReferenceMemberOfPublicEnumerableMember()
         {
-            PocoTestData testData = Given();
+            var testData = Given();
 
-            PocoMapper pocoMapper = new PocoMapper();
-            IEnumerable<IPath> paths = pocoMapper.Map(testData);
+            var pocoMapper = new PocoMapper();
+            var paths = pocoMapper.Map(testData);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "EnumerableData().NestedData.Name"));
         }
 
         [TestMethod]
+        public void MapEnumerable_Expected_PathToEnumerable()
+        {
+            var pocoMapper = new PocoMapper();
+            var testData = GivenWithParallelAndNestedEnumerables();
+
+            var paths = pocoMapper.Map(testData.EnumerableData);
+
+            Assert.IsTrue(paths.Any(p => p.ActualPath == "UnnamedArray().Name"));
+        }
+
+        [TestMethod]
         public void MapReferenceTypeNestedEnumerableAnWithinEnumerable_Expected_PathToPublicPrimitiveMemberOfNestedPublicEnumerableMember()
         {
-            PocoTestData testData = GivenWithParallelAndNestedEnumerables();
+            var testData = GivenWithParallelAndNestedEnumerables();
 
-            PocoMapper pocoMapper = new PocoMapper();
-            IEnumerable<IPath> paths = pocoMapper.Map(testData);
+            var pocoMapper = new PocoMapper();
+            var paths = pocoMapper.Map(testData);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "EnumerableData().EnumerableData().Name"));
         }

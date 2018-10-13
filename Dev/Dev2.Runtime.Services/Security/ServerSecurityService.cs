@@ -1,7 +1,7 @@
  
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,12 +22,11 @@ namespace Dev2.Runtime.Security
 {
     public class ServerSecurityService : SecurityServiceBase
     {
-        public const string FileName = "secure.config";
-        private bool _disposing;
+        bool _disposing;
         FileSystemWatcher _configWatcher = new FileSystemWatcher();
 
         public ServerSecurityService()
-            : this(FileName)
+            : this(EnvironmentVariables.ServerSecuritySettingsFile)
         {
         }
 
@@ -42,7 +41,7 @@ namespace Dev2.Runtime.Security
             var reader = new SecurityRead();
             var result = reader.Execute(null, null);
             var serializer = new Dev2JsonSerializer();
-            SecuritySettingsTO securitySettingsTO = serializer.Deserialize<SecuritySettingsTO>(result);
+            var securitySettingsTO = serializer.Deserialize<SecuritySettingsTO>(result);
             TimeOutPeriod = securitySettingsTO.CacheTimeout;
             return securitySettingsTO.WindowsGroupPermissions;
         }
@@ -107,7 +106,9 @@ namespace Dev2.Runtime.Security
         protected virtual void OnFileChangedEnableRaisingEvents(bool enabled)
         {
             if (!_disposing)
-            _configWatcher.EnableRaisingEvents = enabled;
+            {
+                _configWatcher.EnableRaisingEvents = enabled;
+            }
         }
 
         protected override void OnDisposed()
@@ -130,14 +131,12 @@ namespace Dev2.Runtime.Security
 
         protected override void LogStart([CallerMemberName]string methodName = null)
         {
-            // ReSharper disable once ExplicitCallerInfoArgument
-            Dev2Logger.Log.Info("SecurityService"+ methodName);
+            Dev2Logger.Info("SecurityService"+ methodName, GlobalConstants.WarewolfInfo);
         }
 
         protected override void LogEnd([CallerMemberName]string methodName = null)
         {
-            // ReSharper disable once ExplicitCallerInfoArgument
-            Dev2Logger.Log.Info("SecurityService"+ methodName);
+            Dev2Logger.Info("SecurityService"+ methodName, GlobalConstants.WarewolfInfo);
         }
     }
 }

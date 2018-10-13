@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +17,9 @@ namespace Dev2.Runtime
     {
         #region GenerateString
 
-        public static string GenerateString(this Random random, int length, string prefix = "", bool includeSpaces = false)
+        public static string GenerateString(this Random random, int length) => random.GenerateString(length, "");
+
+        public static string GenerateString(this Random random, int length, string prefix)
         {
             var modulo = length / 3;
             var builder = new StringBuilder(prefix);
@@ -35,6 +36,5 @@ namespace Dev2.Runtime
         }
 
         #endregion
-
     }
 }

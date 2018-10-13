@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
@@ -26,10 +26,39 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class RollBackToTest
     {
-        [TestMethod]
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var rollbackTo = new RollbackTo();
+
+            //------------Execute Test---------------------------
+            var resId = rollbackTo.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var rollbackTo = new RollbackTo();
+
+            //------------Execute Test---------------------------
+            var resId = rollbackTo.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RolbackTo_Name")]
-// ReSharper disable InconsistentNaming
+
         public void RolbackTo_Name_GetName()
 
         {
@@ -42,7 +71,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("RollbackTo",rolbackTo.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RolbackTo_CreateServiceEntry")]
         public void RolbackTo_CreateServiceEntry_ExpectCorrectDL()
@@ -59,7 +88,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RolbackTo_Execute")]
         public void RolbackTo_Execute_InvalidParams()
@@ -77,7 +106,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RolbackTo_Execute")]
         public void RolbackTo_Execute_InvalidParams_NoVersion()
@@ -94,7 +123,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(des.HasError, true);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RolbackTo_Execute")]
         public void RolbackTo_Execute_Valid_ExpectServerCalled()
@@ -114,5 +143,5 @@ namespace Dev2.Tests.Runtime.Services
             server.Verify(a=>a.RollbackTo(res,"1"));
         }
     }
-    // ReSharper restore InconsistentNaming
+    
 }

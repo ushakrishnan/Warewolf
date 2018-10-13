@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +10,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Dev2.Common.Interfaces.Data;
+using Dev2.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
@@ -21,7 +20,6 @@ using Dev2.Common.Interfaces.Security;
 using Dev2.Communication;
 using Dev2.Explorer;
 using Dev2.Runtime.ESB.Management.Services;
-using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -29,11 +27,38 @@ using Moq;
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class RenameItemsTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var renameItemService = new RenameItemService();
+
+            //------------Execute Test---------------------------
+            var resId = renameItemService.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var renameItemService = new RenameItemService();
+
+            //------------Execute Test---------------------------
+            var resId = renameItemService.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Contribute, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RenameItem_HandlesType")]
         public void RenameItem_HandlesType_ExpectName()
@@ -49,7 +74,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("RenameItemService_Execute")]
         public void RenameItem_Execute_NullValues_ErrorResult()
@@ -58,13 +83,13 @@ namespace Dev2.Tests.Runtime.Services
             var renameItemService = new RenameItemService();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = renameItemService.Execute(null, null);
-            IExplorerRepositoryResult result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
+            var jsonResult = renameItemService.Execute(null, null);
+            var result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
             //------------Assert Results-------------------------
             Assert.AreEqual(ExecStatus.Fail, result.Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("RenameItemService_Execute")]
         public void RenameItem_Execute_ItemToRenameNotInValues_ErrorResult()
@@ -74,13 +99,13 @@ namespace Dev2.Tests.Runtime.Services
             var renameItemService = new RenameItemService();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = renameItemService.Execute(values, null);
-            IExplorerRepositoryResult result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
+            var jsonResult = renameItemService.Execute(values, null);
+            var result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
             //------------Assert Results-------------------------
             Assert.AreEqual(ExecStatus.Fail, result.Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("RenameItemService_Execute")]
         public void RenameItem_Execute_NewNameNotInDictionary_ErrorResult()
@@ -90,13 +115,13 @@ namespace Dev2.Tests.Runtime.Services
             var renameItemService = new RenameItemService();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = renameItemService.Execute(values, null);
-            IExplorerRepositoryResult result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
+            var jsonResult = renameItemService.Execute(values, null);
+            var result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
             //------------Assert Results-------------------------
             Assert.AreEqual(ExecStatus.Fail, result.Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("RenameItemervice_Execute")]
         public void RenameItem_Execute_ItemToRenameNotServerExplorerItem_ErrorResult()
@@ -106,13 +131,13 @@ namespace Dev2.Tests.Runtime.Services
             var renameItemService = new RenameItemService();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = renameItemService.Execute(values, null);
-            IExplorerRepositoryResult result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
+            var jsonResult = renameItemService.Execute(values, null);
+            var result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
             //------------Assert Results-------------------------
             Assert.AreEqual(ExecStatus.Fail, result.Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RenameItem_Execute")]
         public void RenameItem_Execute_ExpectRename()
@@ -120,22 +145,22 @@ namespace Dev2.Tests.Runtime.Services
             //------------Setup for test--------------------------
             var renameItemService = new RenameItemService();
 
-            ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), ResourceType.Folder, null, Permissions.DeployFrom, "");
+            var item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
             var repo = new Mock<IExplorerServerResourceRepository>();
             var ws = new Mock<IWorkspace>();
             repo.Setup(a => a.RenameItem(It.IsAny<IExplorerItem>(), It.IsAny<string>(), It.IsAny<Guid>())).Returns(new ExplorerRepositoryResult(ExecStatus.Success, "")).Verifiable();
 
-            var serializer = new Dev2JsonSerializer();
             var inputs = new Dictionary<string, StringBuilder>
                 {
                     {
-                        "itemToRename", serializer.SerializeToBuilder(item)
+                        "itemToRename", new StringBuilder(item.ResourceId.ToString())
                     },
                     {
                         "newName", new StringBuilder("bob")
                     }
                 };
             ws.Setup(a => a.ID).Returns(Guid.Empty);
+            repo.Setup(repository => repository.Find(It.IsAny<Guid>())).Returns(item);
             renameItemService.ServerExplorerRepo = repo.Object;
             //------------Execute Test---------------------------
             renameItemService.Execute(inputs, ws.Object);
@@ -143,7 +168,7 @@ namespace Dev2.Tests.Runtime.Services
             repo.Verify(a => a.RenameItem(It.IsAny<IExplorerItem>(), It.IsAny<string>(), It.IsAny<Guid>()));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("RenameItem_HandlesType")]
         public void RenameItem_CreateServiceEntry_ExpectProperlyFormedDynamicService()

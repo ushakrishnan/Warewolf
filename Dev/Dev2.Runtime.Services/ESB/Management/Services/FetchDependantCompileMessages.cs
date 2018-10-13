@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,35 +14,30 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel.Messages;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 using ServiceStack.Common.Extensions;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Internal service to fetch compile time messages
-    /// </summary>
-    public class FetchDependantCompileMessages : IEsbManagementEndpoint
+    public class FetchDependantCompileMessages : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             string serviceId = null;
             string workspaceId = null;
 
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var result = new ExecuteMessage { HasError = false };
 
-            StringBuilder tmp;
-            values.TryGetValue("ServiceID", out tmp);
-            if(tmp != null)
+            values.TryGetValue("ServiceID", out StringBuilder tmp);
+            if (tmp != null)
             {
                 serviceId = tmp.ToString();
             }
@@ -53,20 +47,14 @@ namespace Dev2.Runtime.ESB.Management.Services
                 workspaceId = tmp.ToString();
             }
             values.TryGetValue("FilterList", out tmp);
-            if(tmp != null)
-            {
-            }
 
             if(string.IsNullOrEmpty(serviceId) || string.IsNullOrEmpty(workspaceId))
             {
-                throw new InvalidDataContractException("Null or empty ServiceID or WorkspaceID");
+                throw new InvalidDataContractException(ErrorResource.NullServiceIDOrWorkspaceID);
             }
 
-            Guid wGuid;
-            Guid sGuid;
-
-            Guid.TryParse(workspaceId, out wGuid);
-            Guid.TryParse(serviceId, out sGuid);
+            Guid.TryParse(workspaceId, out Guid wGuid);
+            Guid.TryParse(serviceId, out Guid sGuid);
 
 
             var thisService = ResourceCatalog.Instance.GetResource(wGuid, sGuid);
@@ -84,12 +72,12 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var enumerable = dependants.Select(a =>
                 {
                     var resource = ResourceCatalog.Instance.GetResource(GlobalConstants.ServerWorkspaceID,a) ?? ResourceCatalog.Instance.GetResource(wGuid,a);
-                    return resource==null?"": resource.ResourcePath;
+                    return resource==null?"": resource.GetResourcePath(wGuid);
                 });
                 var deps = enumerable.Distinct().ToList();
                 if(deps.Count > 0)
                 {
-                    // ReSharper disable ExpressionIsAlwaysNull
+                    
                     msgs = new CompileMessageList();
                     var compileMessageTo = new CompileMessageTO
                     {
@@ -99,30 +87,20 @@ namespace Dev2.Runtime.ESB.Management.Services
                     msgs.Dependants =new List<string>();
                     deps.ForEach(s => msgs.Dependants.Add(s));
                     msgs.MessageList = new List<ICompileMessageTO> { compileMessageTo };
-                    // ReSharper restore ExpressionIsAlwaysNull
+                    
                     return serializer.SerializeToBuilder(msgs);
                 }
             }
             else
             {
-                result.Message.Append("Could not locate service with ID [ " + sGuid + " ]");
+                result.Message.Append(string.Format(ErrorResource.CouldNotLocateService, sGuid));
             }
 
             return serializer.SerializeToBuilder(msgs);
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService newDs = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><ServiceID ColumnIODirection=\"Input\"/><WorkspaceID ColumnIODirection=\"Input\"/><FilterList ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-            newDs.Actions.Add(sa);
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><ServiceID ColumnIODirection=\"Input\"/><WorkspaceID ColumnIODirection=\"Input\"/><FilterList ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            return newDs;
-        }
-
-        public string HandlesType()
-        {
-            return "FetchDependantCompileMessagesService";
-        }
+        public override string HandlesType() => "FetchDependantCompileMessagesService";
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,8 +10,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using ActivityUnitTests;
+using Dev2.Common.State;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -22,7 +22,6 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class FileWriteTests : BaseActivityUnitTest
     {
 
@@ -35,7 +34,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         
 
-        // ReSharper disable InconsistentNaming
+        
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -166,5 +165,94 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(result, dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DsfFileWrite_GetState")]
+        public void DsfFileWrite_GetState_ReturnsStateVariable()
+        {
+            var act = new DsfFileWrite {
+                OutputPath = "Path",
+                Overwrite = true,
+                AppendTop = true,
+                AppendBottom = true,
+                FileContents = "some file contents",
+                Username = "myuser",
+                Password = "secret",
+                PrivateKeyFile = "/path/to/secret",
+                Result = "[[result]]"
+            };
+
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(8, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "OutputPath",
+                    Value = "Path",
+                    Type = StateVariable.StateType.Output
+                },
+                new StateVariable
+                {
+                    Name = "Overwrite",
+                    Value = "True",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "AppendTop",
+                    Value = "True",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "AppendBottom",
+                    Value = "True",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "FileContents",
+                    Value = "some file contents",
+                    Type = StateVariable.StateType.InputOutput
+                },
+                new StateVariable
+                {
+                    Name = "Username",
+                    Value = "myuser",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "PrivateKeyFile",
+                    Value = "/path/to/secret",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Result",
+                    Value = "[[result]]",
+                    Type = StateVariable.StateType.Output
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
     }
 }

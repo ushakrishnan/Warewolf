@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,21 +11,26 @@
 using System;
 using System.Activities;
 using System.Collections.Generic;
-using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
-using Warewolf.Storage;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    public class DsfSortRecordsActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("RecordSet-SortRecords", "Sort", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Recordset", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Recordset_Sort")]
+    public class DsfSortRecordsActivity : DsfActivityAbstract<string>,IEquatable<DsfSortRecordsActivity>
     {
 
         /// <summary>
@@ -40,9 +44,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         /// Gets or sets the selected sort.
         /// </summary>
         [Inputs("SelectedSort")]
-        // ReSharper disable MemberCanBePrivate.Global
+        
         public string SelectedSort { get; set; }
-        // ReSharper restore MemberCanBePrivate.Global
+        
 
         public DsfSortRecordsActivity()
             : base("Sort Records")
@@ -52,31 +56,50 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             DisplayName = "Sort Records";
         }
 
-        // ReSharper disable RedundantOverridenMember
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "SortField",
+                    Value = SortField,
+                    Type = StateVariable.StateType.InputOutput
+                },                 
+                new StateVariable
+                {
+                    Name="SelectedSort",
+                    Value = SelectedSort,
+                    Type = StateVariable.StateType.Input
+                }
+            };
+        }
+
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
         }
-        // ReSharper restore RedundantOverridenMember
+        
 
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
+
+        public override List<string> GetOutputs() => new List<string> { SortField };
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
 
-            ErrorResultTO allErrors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
 
             InitializeDebug(dataObject);
 
             try
             {
-                bool descOrder = String.IsNullOrEmpty(SelectedSort) || SelectedSort.Equals("Backwards");
-                if(dataObject.IsDebugMode())
+                var descOrder = String.IsNullOrEmpty(SelectedSort) || SelectedSort.Equals("Backwards");
+                if (dataObject.IsDebugMode())
                 {
                     AddDebugInputItem(SortField, "Sort Field", dataObject.Environment, update);
                 }
@@ -86,7 +109,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 }
                 else
                 {
-                    allErrors.AddError("No recordset given");
+                    allErrors.AddError(ErrorResource.NoRecordSet);
                 }
             }
                 catch(Exception err)
@@ -117,42 +140,42 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             if(dataObject.IsDebugMode())
             {
-                var data = dataObject.Environment.Eval(dataObject.Environment.ToStar(SortField), update,false);
-                if(data.IsWarewolfAtomListresult)
+                var data = dataObject.Environment.Eval(dataObject.Environment.ToStar(SortField), update);
+                if (data.IsWarewolfAtomListresult)
                 {
-                    var lst = data as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomListresult;
+                    var lst = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
                     AddDebugOutputItem(new DebugItemWarewolfAtomListResult(lst, "", "", SortField, "", "", "="));
                 }
-                else if (data.IsWarewolfAtomResult)
+                else
                 {
-                    var atomData = data as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomResult;
-                    if (atomData != null && atomData.Item.IsNothing)
+                    if (data.IsWarewolfAtomResult && data is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atomData && atomData.Item.IsNothing)
                     {
                         AddDebugOutputItem(new DebugItemStaticDataParams("", SortField, "", "="));
                     }
+
                 }
             }
         }
 
         #region Private Methods
 
-        private void AddDebugInputItem(string expression, string labelText, IExecutionEnvironment env, int update)
+        void AddDebugInputItem(string expression, string labelText, IExecutionEnvironment env, int update)
         {
-            var data =  env.Eval(env.ToStar( expression), update,false);
+            var data = env.Eval(env.ToStar(expression), update);
             if (data.IsWarewolfAtomListresult)
             {
-                var lst = data as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomListresult;
-                AddDebugInputItem(new DebugItemWarewolfAtomListResult(lst,"","",expression, labelText,"","="));
+                var lst = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+                AddDebugInputItem(new DebugItemWarewolfAtomListResult(lst, "", "", expression, labelText, "", "="));
                 AddDebugInputItem(new DebugItemStaticDataParams(SelectedSort, "Sort Order"));
             }
-            else if (data.IsWarewolfAtomResult)
+            else
             {
-                var atomData = data as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomResult;
-                if (atomData != null && atomData.Item.IsNothing)
+                if (data.IsWarewolfAtomResult && data is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atomData && atomData.Item.IsNothing)
                 {
                     AddDebugInputItem(new DebugItemStaticDataParams("", expression, labelText, "="));
                     AddDebugInputItem(new DebugItemStaticDataParams(SelectedSort, "Sort Order"));
                 }
+
             }
         }
 
@@ -190,15 +213,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(SortField);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(SortField);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(SortField);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(SortField);
 
         #endregion
 
@@ -207,20 +224,60 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region GetDebugInputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
-        {
-            return _debugInputs;
-        }
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update) => _debugInputs;
 
-
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
-        {
-            return _debugOutputs;
-        }
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update) => _debugOutputs;
 
         #endregion
 
         #endregion
 
+        public bool Equals(DsfSortRecordsActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(SortField, other.SortField) 
+                && string.Equals(SelectedSort, other.SelectedSort);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfSortRecordsActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SortField != null ? SortField.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (SelectedSort != null ? SelectedSort.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

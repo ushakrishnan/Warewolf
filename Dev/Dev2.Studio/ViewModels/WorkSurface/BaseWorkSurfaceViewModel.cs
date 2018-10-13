@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,17 +9,18 @@
 */
 
 using Caliburn.Micro;
-using Dev2.Studio.Core.AppResources.Enums;
+using Dev2.Activities.Designers2.Core.Help;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
+using Dev2.ViewModels;
 
-// ReSharper disable once CheckNamespace
 namespace Dev2.Studio.ViewModels.WorkSurface
 {
     public class BaseWorkSurfaceViewModel : BaseViewModel,
         IWorkSurfaceViewModel
     {
-        private string _iconPath;
-        private WorkSurfaceContext _workSurfaceContext = WorkSurfaceContext.Unknown;
+        WorkSurfaceContext _workSurfaceContext = WorkSurfaceContext.Unknown;
 
         public BaseWorkSurfaceViewModel(IEventAggregator eventPublisher)
             : base(eventPublisher)
@@ -32,30 +32,15 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             get { return _workSurfaceContext; }
             set
             {
-                if(_workSurfaceContext == value)
-                    return;
-
                 _workSurfaceContext = value;
                 NotifyOfPropertyChange(() => WorkSurfaceContext);
             }
         }
 
-        public virtual string IconPath
-        {
-            get
-            {
-                return _iconPath;
-            }
-            set
-            {
-                if(_iconPath == value) return;
+        public virtual bool HasVariables => false;
 
-                _iconPath = value;
-                NotifyOfPropertyChange(() => IconPath);
-            }
-        }
+        public virtual bool HasDebugOutput => false;
 
-        public virtual bool CanSave { get { return true; } }
-
+        public virtual bool CanSave => true;
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,116 +11,82 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Caliburn.Micro;
-using Dev2.Services.Events;
-using Dev2.Studio.Core.Interfaces.DataList;
-using Dev2.Studio.Core.Messages;
+using Dev2.Common.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Dev2.Studio.ViewModels.WorkSurface;
+using Microsoft.Practices.Prism.Mvvm;
+using Warewolf.Studio.Resources.Languages;
 
-// ReSharper disable once CheckNamespace
 namespace Dev2.Studio.Views.DataList
 {
     /// <summary>
     /// Interaction logic for DataListView.xaml
     /// </summary>
-    public partial class DataListView
+    public partial class DataListView : IView, ICheckControlEnabledView
     {
-        readonly IEventAggregator _eventPublisher;
-
         public DataListView()
-            : this(EventPublishers.Aggregator)
-        {
-        }
-
-        public DataListView(IEventAggregator eventPublisher)
         {
             InitializeComponent();
-
-            VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
-            _eventPublisher = eventPublisher;
-            DataContextChanged += OnDataContextChanged;
+            KeyboardNavigation.SetTabNavigation(ScalarExplorer, KeyboardNavigationMode.Cycle);
         }
-
 
         #region Events
 
-        void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs dependencyPropertyChangedEventArgs)
+        void NametxtTextChanged(object sender, RoutedEventArgs e)
         {
-            IDataListViewModel vm = DataContext as IDataListViewModel;
-            if(vm != null)
+            if (DataContext is IDataListViewModel vm)
             {
-                vm.AddRecordsetNamesIfMissing();
-            }
-        }
-
-        private void NametxtTextChanged(object sender, RoutedEventArgs e)
-        {
-            IDataListViewModel vm = DataContext as IDataListViewModel;
-            if(vm != null)
-            {
-
-                TextBox txtbox = sender as TextBox;
-                if(txtbox != null)
+                var txtbox = sender as TextBox;
+                if (txtbox?.DataContext is IDataListItemModel itemThatChanged)
                 {
-                    IDataListItemModel itemThatChanged = txtbox.DataContext as IDataListItemModel;
-                    if(itemThatChanged != null && itemThatChanged.IsRecordset)
-                    {
-                        itemThatChanged.IsExpanded = true;
-                    }
-                    if(itemThatChanged != null)
-                    {
-                        vm.AddBlankRow(itemThatChanged);
-                        vm.ValidateNames(itemThatChanged);
-                    }
+                    itemThatChanged.IsExpanded = true;
                 }
+                vm.AddBlankRow(null);
             }
         }
 
-        private void NametxtFocusLost(object sender, RoutedEventArgs e)
+        void Inputcbx_OnChecked(object sender, RoutedEventArgs e)
+        {
+            var checkBox = sender as CheckBox;
+            if (checkBox == null || !checkBox.IsEnabled)
+            {
+                return;
+            }
+            WriteToResourceModel();
+        }
+
+        void Outputcbx_OnChecked(object sender, RoutedEventArgs e)
+        {
+            var checkBox = sender as CheckBox;
+            if (checkBox == null || !checkBox.IsEnabled)
+            {
+                return;
+            }
+            WriteToResourceModel();
+        }
+
+        void NametxtFocusLost(object sender, RoutedEventArgs e)
         {
             DoDataListValidation(sender);
         }
 
         void DoDataListValidation(object sender)
         {
-            IDataListViewModel vm = DataContext as IDataListViewModel;
-            if(vm != null)
+            if (DataContext is IDataListViewModel vm && sender is TextBox txtbox)
             {
-                TextBox txtbox = sender as TextBox;
-                if(txtbox != null)
+                var itemThatChanged = txtbox.DataContext as IDataListItemModel;
+                vm.RemoveBlankRows(itemThatChanged);
+                vm.ValidateNames(itemThatChanged);
+
+                if (vm.HasErrors && vm.DataListErrorMessage.Length != 0)
                 {
-                    IDataListItemModel itemThatChanged = txtbox.DataContext as IDataListItemModel;
-                    vm.RemoveBlankRows(itemThatChanged);
-                    vm.AddRecordsetNamesIfMissing();
-                    vm.ValidateNames(itemThatChanged);
+                    vm.LogCustomTrackerEvent(TrackEventVariables.EventCategory, TrackEventVariables.IncorrectSyntax, "Variable Textbox input - " + vm.DataListErrorMessage);
                 }
             }
         }
 
-        private void UserControlLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        void UserControlLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
-            WriteToResourceModel();
-        }
-
-        private void Inputcbx_OnChecked(object sender, RoutedEventArgs e)
-        {
-            CheckBox checkBox = sender as CheckBox;
-            if(checkBox == null || !checkBox.IsEnabled)
-            {
-                return;
-            }
-
-            WriteToResourceModel();
-        }
-
-        private void Outputcbx_OnChecked(object sender, RoutedEventArgs e)
-        {
-            CheckBox checkBox = sender as CheckBox;
-            if(checkBox == null || !checkBox.IsEnabled)
-            {
-                return;
-            }
-
             WriteToResourceModel();
         }
 
@@ -129,47 +94,51 @@ namespace Dev2.Studio.Views.DataList
 
         #region Private Methods
 
-        private void WriteToResourceModel()
+        void WriteToResourceModel()
         {
-            IDataListViewModel vm = DataContext as IDataListViewModel;
-            if(vm != null)
+            if (DataContext is IDataListViewModel vm && !vm.IsSorting)
             {
                 vm.WriteToResourceModel();
-                _eventPublisher.Publish(new UpdateIntellisenseMessage());
             }
         }
 
         #endregion Private Methods
 
-        void ButtonBase_OnClick(object sender, RoutedEventArgs e)
-        {
-            IDataListViewModel vm = DataContext as IDataListViewModel;
-            if(vm != null)
-            {
-
-                Button btn = sender as Button;
-                if(btn != null)
-                {
-                    IDataListItemModel itemThatChanged = btn.DataContext as IDataListItemModel;
-                    vm.RemoveDataListItem(itemThatChanged);
-                    WriteToResourceModel();
-                }
-            }
-        }
-
-        private void UIElement_OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        void UIElement_OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
             var vm = DataContext as IDataListViewModel;
-            if(vm != null)
-            {
-                var model = vm.Parent as WorkSurfaceContextViewModel;
-                if(model != null)
-                {
-                    model.FindMissing();
-                }
-
-            }
+            var model = vm?.Parent as WorkSurfaceContextViewModel;
+            model?.FindMissing();
         }
 
+        #region Implementation of ICheckControlEnabledView
+
+        public bool GetControlEnabled(string controlName)
+        {
+            switch (controlName)
+            {
+                case "Delete Variables":
+                    return DeleteButton.Command.CanExecute(null);
+                case "Sort Variables":
+                    return SortButton.Command.CanExecute(null);
+                case "Variables":
+                    return ScalarExplorer.IsEnabled;
+                default:
+                    break;
+            }
+
+            return false;
+        }
+
+        #endregion
+
+        private void SearchTextBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is TextBox textBoxSearch)
+            {
+                var vm = DataContext as IDataListViewModel;
+                vm.LogCustomTrackerEvent(TrackEventVariables.EventCategory, TrackEventVariables.VariablesSearch, textBoxSearch.Text);
+            }
+        }
     }
 }

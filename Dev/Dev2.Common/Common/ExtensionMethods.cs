@@ -1,22 +1,23 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using ChinhDo.Transactions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 using System.Xml.Linq;
-using ChinhDo.Transactions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Dev2.Common.Common
 {
@@ -26,11 +27,10 @@ namespace Dev2.Common.Common
 
         public static string GetAllMessages(this Exception exception)
         {
-            IEnumerable<string> messages = exception.FromHierarchy(ex => ex.InnerException).Select(ex => ex.Message);
+            var messages = exception.FromHierarchy(ex => ex.InnerException).Select(ex => ex.Message);
             return String.Join(Environment.NewLine, messages);
         }
 
-        // a.k.a., linked list style enumerator
         public static IEnumerable<TSource> FromHierarchy<TSource>(this TSource source, Func<TSource, TSource> nextItem,
             Func<TSource, bool> canContinue)
         {
@@ -41,28 +41,20 @@ namespace Dev2.Common.Common
         }
 
         public static IEnumerable<TSource> FromHierarchy<TSource>(this TSource source, Func<TSource, TSource> nextItem)
-            where TSource : class
-        {
-            return FromHierarchy(source, nextItem, s => s != null);
-        }
+            where TSource : class => FromHierarchy(source, nextItem, s => s != null);
 
-        #endregion
+        #endregion Exception Unrolling
 
         #region StringBuilder Methods
 
-        /// <summary>
-        ///     Cleans the encoding header for XML save.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <returns></returns>
         public static StringBuilder CleanEncodingHeaderForXmlSave(this StringBuilder sb)
         {
-            int removeStartIdx = sb.IndexOf("<?", 0, false);
+            var removeStartIdx = sb.IndexOf("<?", 0, false);
             if (removeStartIdx >= 0)
             {
-                int removeEndIdx = sb.IndexOf("?>", 0, false);
-                int len = removeEndIdx - removeStartIdx + 2;
-                StringBuilder result = sb.Remove(removeStartIdx, len);
+                var removeEndIdx = sb.IndexOf("?>", 0, false);
+                var len = removeEndIdx - removeStartIdx + 2;
+                var result = sb.Remove(removeStartIdx, len);
 
                 return result;
             }
@@ -70,28 +62,16 @@ namespace Dev2.Common.Common
             return sb;
         }
 
-        /// <summary>
-        ///     Writes the automatic file.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <param name="fileName">Name of the file.</param>
-        /// <param name="encoding">The encoding.</param>
-        /// <param name="fileManager"></param>
-        public static void WriteToFile(this StringBuilder sb, string fileName, Encoding encoding,IFileManager fileManager)
+        public static void WriteToFile(this StringBuilder sb, string fileName, Encoding encoding, IFileManager fileManager)
         {
-            int length = sb.Length;
-            int startIdx = 0;
-            var rounds = (int) Math.Ceiling(length/GlobalConstants.MAX_SIZE_FOR_STRING);
-
-            // remove the darn header ;)
-            sb = sb.CleanEncodingHeaderForXmlSave();
+            var length = sb.Length;
+            var startIdx = 0;
+            var rounds = (int)Math.Ceiling(length / GlobalConstants.MAX_SIZE_FOR_STRING);
+            var cleanStringBuilder = sb.CleanEncodingHeaderForXmlSave();
 
             if (!File.Exists(fileName))
             {
-                using (File.Create(fileName))
-                {
-                    // Ensure it gets closed ;)
-                }
+                File.Create(fileName).Close();
             }
             fileManager.Snapshot(fileName);
             using (
@@ -99,37 +79,29 @@ namespace Dev2.Common.Common
             {
                 for (int i = 0; i < rounds; i++)
                 {
-                    var len = (int) GlobalConstants.MAX_SIZE_FOR_STRING;
-                    if (len > (sb.Length - startIdx))
+                    var len = (int)GlobalConstants.MAX_SIZE_FOR_STRING;
+                    if (len > cleanStringBuilder.Length - startIdx)
                     {
-                        len = sb.Length - startIdx;
+                        len = cleanStringBuilder.Length - startIdx;
                     }
 
-                    byte[] bytes = encoding.GetBytes(sb.Substring(startIdx, len));
+                    var bytes = encoding.GetBytes(cleanStringBuilder.Substring(startIdx, len));
                     fs.Write(bytes, 0, bytes.Length);
                     startIdx += len;
                 }
             }
         }
 
-        /// <summary>
-        ///     Automatics the stream for XML load.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <returns></returns>
         public static XElement ToXElement(this StringBuilder sb)
         {
             try
             {
-                // first try utf8, if that fails then unicode. 
-                // some test where kicking up issues with utf8 ;)
-
                 using (Stream result = sb.EncodeStream(Encoding.UTF8))
                 {
                     return XElement.Load(result);
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 using (Stream result = sb.EncodeStream(Encoding.Unicode))
                 {
@@ -138,56 +110,43 @@ namespace Dev2.Common.Common
             }
         }
 
-        public static bool IsNullOrEmpty(this StringBuilder sb)
-        {
-            return sb == null || string.IsNullOrEmpty(sb.ToString());
-        }
+        public static bool IsNullOrEmpty(this StringBuilder sb) => string.IsNullOrEmpty(sb?.ToString());
 
-        public static StringBuilder ToStringBuilder(this string str)
-        {
-            return new StringBuilder(str);
-        }
+        public static StringBuilder ToStringBuilder(this string str) => new StringBuilder(str);
 
-        /// <summary>
-        ///     Encodes for XML document.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <returns></returns>
         public static Stream EncodeForXmlDocument(this StringBuilder sb)
         {
             try
             {
-                // first try utf8, if that fails then unicode. 
-                // some test where kicking up issues with utf8 ;)
-                Stream result = sb.EncodeStream(Encoding.UTF8);
+                var result = sb.EncodeStream(Encoding.UTF8);
                 XElement.Load(result);
                 result.Position = 0;
                 return result;
             }
-            catch
+            catch (Exception ex)
             {
-                Stream result = sb.EncodeStream(Encoding.Unicode);
+                var result = sb.EncodeStream(Encoding.Unicode);
                 XElement.Load(result);
                 result.Position = 0;
                 return result;
             }
         }
 
-        private static Stream EncodeStream(this StringBuilder sb, Encoding encoding)
+        static Stream EncodeStream(this StringBuilder sb, Encoding encoding)
         {
-            int length = sb.Length;
-            int startIdx = 0;
-            var rounds = (int) Math.Ceiling(length/GlobalConstants.MAX_SIZE_FOR_STRING);
+            var length = sb.Length;
+            var startIdx = 0;
+            var rounds = (int)Math.Ceiling(length / GlobalConstants.MAX_SIZE_FOR_STRING);
             var ms = new MemoryStream(length);
             for (int i = 0; i < rounds; i++)
             {
-                var len = (int) GlobalConstants.MAX_SIZE_FOR_STRING;
-                if (len > (sb.Length - startIdx))
+                var len = (int)GlobalConstants.MAX_SIZE_FOR_STRING;
+                if (len > sb.Length - startIdx)
                 {
                     len = sb.Length - startIdx;
                 }
 
-                byte[] bytes = encoding.GetBytes(sb.Substring(startIdx, len));
+                var bytes = encoding.GetBytes(sb.Substring(startIdx, len));
                 ms.Write(bytes, 0, bytes.Length);
 
                 startIdx += len;
@@ -199,118 +158,101 @@ namespace Dev2.Common.Common
             return ms;
         }
 
-        /// <summary>
-        ///     Escapes the specified string builder
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <returns></returns>
-        public static StringBuilder Escape(this StringBuilder sb)
+        public static string EscapeString(this string sb)
         {
+            string escapedString = null;
             if (sb != null)
             {
-                sb = sb.Replace("&", "&amp;");
-                sb = sb.Replace("\"", "&quot;");
-                sb = sb.Replace("'", "&apos;");
-                sb = sb.Replace("<", "&lt;");
-                sb = sb.Replace(">", "&gt;");
+                escapedString = sb.Replace("&", "&amp;");
+                escapedString = escapedString.Replace("\"", "&quot;");
+                escapedString = escapedString.Replace("'", "&apos;");
+                escapedString = escapedString.Replace("<", "&lt;");
+                escapedString = escapedString.Replace(">", "&gt;");
             }
 
-
-            return sb;
+            return escapedString;
         }
 
-        /// <summary>
-        ///     Unescapes the specified string builder
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <returns></returns>
         public static StringBuilder Unescape(this StringBuilder sb)
         {
+            StringBuilder unescapedString = null;
             if (sb != null)
             {
-                sb = sb.Replace("&quot;", "\"");
-                sb = sb.Replace("&apos;", "'");
-                sb = sb.Replace("&lt;", "<");
-                sb = sb.Replace("&gt;", ">");
-                sb = sb.Replace("&amp;", "&");
+                unescapedString = sb.Replace("&quot;", "\"");
+                unescapedString = unescapedString.Replace("&apos;", "'");
+                unescapedString = unescapedString.Replace("&lt;", "<");
+                unescapedString = unescapedString.Replace("&gt;", ">");
+                unescapedString = unescapedString.Replace("&amp;", "&");
             }
-
-            return sb;
+            return unescapedString;
         }
 
-        /// <summary>
-        ///     Determines whether [contains] [the specified string builder].
-        /// </summary>
-        /// <param name="sb">The string builder</param>
-        /// <param name="value">The value.</param>
-        /// <returns></returns>
-        public static bool Contains(this StringBuilder sb, string value)
+        public static string UnescapeString(this string sb)
         {
-            return IndexOf(sb, value, 0, false) >= 0;
+            string unescapedString = null;
+            if (sb != null)
+            {
+                unescapedString = sb.Replace("&quot;", "\"");
+                unescapedString = unescapedString.Replace("&apos;", "'");
+                unescapedString = unescapedString.Replace("&lt;", "<");
+                unescapedString = unescapedString.Replace("&gt;", ">");
+                unescapedString = unescapedString.Replace("&amp;", "&");
+            }
+            return unescapedString;
         }
 
-        /// <summary>
-        ///     Substrings the specified string builder.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <param name="startIdx">The start index.</param>
-        /// <param name="length">The length.</param>
-        /// <returns></returns>
+        public static bool Contains(this StringBuilder sb, string value) => IndexOf(sb, value, 0, false) >= 0;
+
         public static string Substring(this StringBuilder sb, int startIdx, int length)
         {
             return sb.ToString(startIdx, length);
         }
 
-        /// <summary>
-        ///     Lasts the index of.
-        /// </summary>
-        /// <param name="sb">The string builder.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="ignoreCase">if set to <c>true</c> [ignore case].</param>
-        /// <returns></returns>
         public static int LastIndexOf(this StringBuilder sb, string value, bool ignoreCase)
         {
-            int result = -1;
-            int startIndex = -1;
+            var result = -1;
+            var startIndex = -1;
             while ((startIndex = IndexOf(sb, value, startIndex + 1, ignoreCase)) >= 0)
             {
                 result = startIndex;
             }
-
             return result;
         }
 
-        /// <summary>
-        ///     Indexes the of.
-        /// </summary>
-        /// <param name="sb">The string builder.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="startIndex">The start index.</param>
-        /// <param name="ignoreCase">if set to <c>true</c> [ignore case].</param>
-        /// <returns></returns>
-        public static int IndexOf(this StringBuilder sb, string value, int startIndex, bool ignoreCase)
+        public static int LastIndexOf(this StringBuilder sb, string value, int startIdx, bool ignoreCase)
         {
-            if (value == null) return -1;
-            int index;
-            int length = value.Length;
-            int maxSearchLength = sb.Length - length + 1;
+            var result = -1;
+            var startIndex = IndexOf(sb, value, 0, ignoreCase);
+            while (startIdx - startIndex >= 0 && startIndex != -1)
+            {
+                result = startIndex;
+                startIndex = IndexOf(sb, value, startIndex + 1, ignoreCase);
+            }
+            return result;
+        }
+
+        public static int IndexOf(this StringBuilder sb, string value, int startIndex, bool ignoreCase) => IndexOf(sb, value, null, startIndex, ignoreCase);
+
+        public static int IndexOf(this StringBuilder sb, string value, string escapeChar, int startIndex, bool ignoreCase)
+        {
+            if (value == null)
+            {
+                return -1;
+            }
+
+            int index = 1;
+            var length = value.Length;
+            var maxSearchLength = sb.Length - length + 1;
 
             if (ignoreCase)
             {
                 for (int i = startIndex; i < maxSearchLength; ++i)
                 {
-                    if (Char.ToLower(sb[i]) == Char.ToLower(value[0]))
-                    {
-                        index = 1;
-                        while (index < length && Char.ToLower(sb[i + index]) == Char.ToLower(value[index]))
-                        {
-                            ++index;
-                        }
+                    index = sb.IndexOf(value, index, length, i);
 
-                        if (index == length)
-                        {
-                            return i;
-                        }
+                    if (Char.ToLower(sb[i]) == Char.ToLower(value[0]) && index == length)
+                    {
+                        return i;
                     }
                 }
 
@@ -322,7 +264,7 @@ namespace Dev2.Common.Common
                 if (sb[i] == value[0])
                 {
                     index = 1;
-                    while (index < length && sb[i + index] == value[index])
+                    while (index < length && sb[i + index] == value[index] || SkipDueToEscapeChar(sb, startIndex, i + index - 1, escapeChar, value))
                     {
                         ++index;
                     }
@@ -335,6 +277,32 @@ namespace Dev2.Common.Common
             }
 
             return -1;
+        }
+
+        static int IndexOf(this StringBuilder sb, string value, int index, int length, int startingAt)
+        {
+            if (Char.ToLower(sb[startingAt]) == Char.ToLower(value[0]))
+            {
+                index = 1;
+                while (index < length && Char.ToLower(sb[startingAt + index]) == Char.ToLower(value[index]))
+                {
+                    ++index;
+                }
+            }
+
+            return index;
+        }
+
+        static bool SkipDueToEscapeChar(StringBuilder word, int startIdx, int candidatePos, string escapeChar, string searchValue)
+        {
+            if (!String.IsNullOrEmpty(escapeChar))
+            {
+                var charToRemove = escapeChar.Length == 1 ? 2 : 1;
+                var checkValue = escapeChar + searchValue;
+                var check = word.Substring(startIdx, word.Length - candidatePos + checkValue.Length - charToRemove);
+                return check.Contains(checkValue) && check.EndsWith(checkValue);
+            }
+            return false;
         }
 
         /// <summary>
@@ -368,46 +336,47 @@ namespace Dev2.Common.Common
             }
             else
             {
+                if (that != null && sb != null)
+                {
+                    var compareOrdinal = string.CompareOrdinal(sb.ToString(), that.ToString());
+                    if (compareOrdinal == 0)
+                    {
+                        return true;
+                    }
+                }
                 return false;
             }
 
             return true;
         }
 
-        #endregion
+        #endregion StringBuilder Methods
 
-        /// <summary>
-        ///     Extracts the XML attribute from unsafe XML.
-        /// </summary>
-        /// <param name="sb">The sb.</param>
-        /// <param name="searchTagStart">The search tag start.</param>
-        /// <param name="searchTagEnd">The search tag end.</param>
-        /// <returns></returns>
+        public static string ExtractXmlAttributeFromUnsafeXml(this StringBuilder sb, string searchTagStart) => sb.ExtractXmlAttributeFromUnsafeXml(searchTagStart, "\"");
+
         public static string ExtractXmlAttributeFromUnsafeXml(this StringBuilder sb, string searchTagStart,
-            string searchTagEnd = "\"")
+            string searchTagEnd)
         {
-            // 10 chars long
-            int startIndex = sb.IndexOf(searchTagStart, 0, false);
+            var startIndex = sb.IndexOf(searchTagStart, 0, false);
             if (startIndex < 0)
             {
                 return string.Empty;
             }
 
-            int tagLength = searchTagStart.Length;
+            var tagLength = searchTagStart.Length;
             startIndex += tagLength;
-            int endIdx = sb.IndexOf(searchTagEnd, startIndex, false);
-            int length = endIdx - startIndex;
+            var endIdx = sb.IndexOf(searchTagEnd, startIndex, false);
+            var length = endIdx - startIndex;
 
             return sb.Substring(startIndex, length);
         }
 
+        public static string AttributeSafe(this XElement elem, string name) => elem.AttributeSafe(name, false);
 
-        // -- End StringBuilder Methods
-
-        public static string AttributeSafe(this XElement elem, string name, bool returnsNull = false)
+        public static string AttributeSafe(this XElement elem, string name, bool returnsNull)
         {
-            XAttribute attr = elem.Attribute(name);
-            if (attr == null || string.IsNullOrEmpty(attr.Value))
+            var attr = elem.Attribute(name);
+            if (string.IsNullOrEmpty(attr?.Value))
             {
                 return returnsNull ? null : string.Empty;
             }
@@ -416,45 +385,81 @@ namespace Dev2.Common.Common
 
         public static StringBuilder ElementSafeStringBuilder(this XElement elem, string name)
         {
-            XElement child = elem.Element(name);
+            var child = elem.Element(name);
             return child == null ? new StringBuilder() : child.ToStringBuilder();
         }
 
         public static string ElementSafe(this XElement elem, string name)
         {
-            XElement child = elem.Element(name);
-            return child == null ? string.Empty : child.Value;
+            var child = elem.Element(name);
+            return child?.Value ?? string.Empty;
         }
 
         public static string ElementStringSafe(this XElement elem, string name)
         {
-            XElement child = elem.Element(name);
-            return child == null ? string.Empty : child.ToString();
+            var child = elem.Element(name);
+            return child?.ToString() ?? string.Empty;
         }
 
         public static ObservableCollection<T> ToObservableCollection<T>(this IEnumerable<T> enumerable)
         {
-            var col = new ObservableCollection<T>();
-            foreach (T cur in enumerable)
+            if (enumerable == null)
             {
-                col.Add(cur);
+                return new ObservableCollection<T>();
             }
+
+            var col = new ObservableCollection<T>(enumerable);
             return col;
         }
 
-        public static string ToBase64String(this Stream stream)
+        public static bool IsValidXml(this string content)
         {
-            return Convert.ToBase64String(GetByteArray(stream));
+            if (string.IsNullOrEmpty(content) || !content.TrimStart().StartsWith("<"))
+            {
+                return false;
+            }
+
+            try
+            {
+
+                XDocument.Parse(content);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        public static byte[] ToByteArray(this Stream stream)
+        public static bool IsValidJson(this string strInput)
         {
-            return GetByteArray(stream);
+            var trimmedInput = strInput.Trim();
+            if (trimmedInput.StartsWith("{") && trimmedInput.EndsWith("}") || trimmedInput.StartsWith("[") && trimmedInput.EndsWith("]", StringComparison.CurrentCulture))
+            {
+                try
+                {
+                    JToken.Parse(trimmedInput);
+                    return true;
+                }
+                catch (JsonReaderException jex)
+                {
+                    Console.WriteLine(jex.Message);
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    return false;
+                }
+            }
+            return false;
         }
+
+        public static byte[] ToByteArray(this Stream stream) => GetByteArray(stream);
 
         public static byte[] GetByteArray(Stream stream)
         {
-            var buffer = new byte[16*1024];
+            var buffer = new byte[16 * 1024];
             using (var ms = new MemoryStream())
             {
                 int read;
@@ -464,23 +469,6 @@ namespace Dev2.Common.Common
                 }
                 return ms.ToArray();
             }
-        }
-
-
-        /// <summary>
-        ///     Returns the current string as a set of XML tags
-        /// </summary>
-        /// <param name="tag">The string to be returned as tags</param>
-        /// <returns>a set of tags in the form <tag>,</tag> as a string array</returns>
-        public static string[] ReturnAsTagSet(this string tag)
-        {
-            return new[] {"<" + tag + ">", "</" + tag + ">"};
-        }
-
-        public static string GetPropertyName<T, TReturn>(this Expression<Func<T, TReturn>> expression)
-        {
-            var body = (MemberExpression) expression.Body;
-            return body.Member.Name;
         }
     }
 }

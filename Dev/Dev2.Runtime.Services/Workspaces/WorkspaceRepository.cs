@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,9 +17,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Principal;
 using Dev2.Common;
 using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.Workspaces
 {
     /// <summary>
@@ -38,8 +38,8 @@ namespace Dev2.Workspaces
         readonly ConcurrentDictionary<Guid, IWorkspace> _items = new ConcurrentDictionary<Guid, IWorkspace>();
         readonly IResourceCatalog _resourceCatalog;
 
-        private static readonly object WorkspaceLock = new object();
-        private static readonly object UserMapLock = new object();
+        static readonly object WorkspaceLock = new object();
+        static readonly object UserMapLock = new object();
 
         #region Singleton Instance
 
@@ -110,13 +110,7 @@ namespace Dev2.Workspaces
         /// <summary>
         /// Gets the number of items in the repository.
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return _items.Count;
-            }
-        }
+        public int Count => _items.Count;
 
         #endregion
 
@@ -125,13 +119,7 @@ namespace Dev2.Workspaces
         /// <summary>
         /// Gets the server workspace.
         /// </summary>
-        public IWorkspace ServerWorkspace
-        {
-            get
-            {
-                return Get(ServerWorkspaceID);
-            }
-        }
+        public IWorkspace ServerWorkspace => Get(ServerWorkspaceID);
 
         #endregion
 
@@ -139,42 +127,45 @@ namespace Dev2.Workspaces
 
         public Guid GetWorkspaceID(WindowsIdentity identity)
         {
-            var userID = identity.Name;
-            if(identity.User != null)
-            {
-                userID = identity.User.Value;
-            }
             Guid workspaceID;
-            if(!_userMap.TryGetValue(userID, out workspaceID))
+            try
             {
-                workspaceID = Guid.NewGuid();
-                _userMap.TryAdd(userID, workspaceID);
-                WriteUserMap(_userMap);
+                var userID = identity.Name;
+                if (identity.User != null)
+                {
+                    userID = identity.User.Value;
+                }
+                
+                if (!_userMap.TryGetValue(userID, out workspaceID))
+                {
+                    workspaceID = Guid.NewGuid();
+                    _userMap.TryAdd(userID, workspaceID);
+                    WriteUserMap(_userMap);
+                }
+            }
+            catch (Exception ex)
+            {
+                workspaceID = ServerWorkspaceID;
+                Dev2Logger.Error(ex.Message, workspaceID.ToString());
             }
             return workspaceID;
         }
 
         #region Get
 
-        /// <summary>
-        /// Gets the <see cref="IWorkspace" /> with the specified ID from storage if it does not exist in the repository.
-        /// </summary>
-        /// <param name="workspaceID">The workdspace ID to be queried.</param>
-        /// <param name="force"><code>true</code> if the workspace should be re-read even it is found; <code>false</code> otherwise.</param>
-        /// <param name="loadResources"><code>true</code> if resources should be loaded; <code>false</code> otherwise.</param>
-        /// <returns>
-        /// The <see cref="IWorkspace" /> with the specified ID, or <code>null</code> if not found.
-        /// </returns>
-        public IWorkspace Get(Guid workspaceID, bool force = false, bool loadResources = true)
+        public IWorkspace Get(Guid workspaceID) => Get(workspaceID, false, true);
+
+        public IWorkspace Get(Guid workspaceID, bool force) => Get(workspaceID, force, true);
+
+        public IWorkspace Get(Guid workspaceID, bool force, bool loadResources)
         {
             lock(_readLock)
             {
                 // PBI 9363 - 2013.05.29 - TWR: Added loadResources parameter
-                IWorkspace workspace;
-                if(force || !_items.TryGetValue(workspaceID, out workspace))
+                if (force || !_items.TryGetValue(workspaceID, out IWorkspace workspace))
                 {
                     workspace = Read(workspaceID);
-                    if(loadResources)
+                    if (loadResources)
                     {
                         _resourceCatalog.LoadWorkspace(workspaceID);
                     }
@@ -196,30 +187,24 @@ namespace Dev2.Workspaces
             //TODO, 2012-10-24, This is a temporary implementation which brute force 
             //                  refreshes all client workspaces by removing them,
             //                  no changes in the client workspaces are preserved.
-            List<Guid> worksSpacesToRemove = _items.Keys.Where(k => k != ServerWorkspaceID).ToList();
-            foreach(Guid workspaceGuid in worksSpacesToRemove)
+            var worksSpacesToRemove = _items.Keys.Where(k => k != ServerWorkspaceID).ToList();
+            foreach (Guid workspaceGuid in worksSpacesToRemove)
             {
-                IWorkspace workspace;
-                _items.TryRemove(workspaceGuid, out workspace);
+                _items.TryRemove(workspaceGuid, out IWorkspace workspace);
             }
         }
 
         #endregion
 
         #region GetLatest
-
-        /// <summary>
-        /// Overwrites this workspace with the server versions except for those provided.
-        /// </summary>
-        /// <param name="workspace">The workspace to be queried.</param>
-        /// <param name="servicesToIgnore">The services being to be ignored.</param>
+        
         public void GetLatest(IWorkspace workspace, IList<string> servicesToIgnore)
         {
             lock(_readLock)
             {
-                // ReSharper disable RedundantAssignment
-                var filesToIgnore = servicesToIgnore.Select(s => s += ".xml").ToList();
-                // ReSharper restore RedundantAssignment
+                
+                var filesToIgnore = servicesToIgnore.Select(s => s + ".bite").ToList();
+                
                 var targetPath = EnvironmentVariables.GetWorkspacePath(workspace.ID);
                 _resourceCatalog.SyncTo(ServerWorkspacePath, targetPath, true, true, filesToIgnore);
             }
@@ -264,8 +249,7 @@ namespace Dev2.Workspaces
                 return;
             }
 
-            IWorkspace result;
-            _items.TryRemove(workspace.ID, out result);
+            _items.TryRemove(workspace.ID, out IWorkspace result);
             Delete(workspace.ID);
         }
 
@@ -277,27 +261,27 @@ namespace Dev2.Workspaces
 
         #region Read
 
-        private IWorkspace Read(Guid workdspaceID)
+        IWorkspace Read(Guid workdspaceID)
         {
             // force a lock on the file system ;)
-            lock(WorkspaceLock)
+            lock (WorkspaceLock)
             {
                 var filePath = GetFileName(workdspaceID);
                 var fileExists = File.Exists(filePath);
-                using(var stream = File.Open(filePath, FileMode.OpenOrCreate))
+                using (var stream = File.Open(filePath, FileMode.OpenOrCreate))
                 {
                     var formatter = new BinaryFormatter();
-                    if(fileExists)
+                    if (fileExists)
                     {
                         try
                         {
                             return (IWorkspace)formatter.Deserialize(stream);
                         }
-                        // ReSharper disable EmptyGeneralCatchClause 
-                        catch(Exception ex)
-                        // ReSharper restore EmptyGeneralCatchClause
+
+                        catch (Exception ex)
+
                         {
-                            Dev2Logger.Log.Error(ex);
+                            Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                             // Deserialization failed so overwrite with new one.
                         }
                     }
@@ -345,17 +329,11 @@ namespace Dev2.Workspaces
 
         #region GetFileName
 
-        string GetFileName(Guid workspaceID)
-        {
-            return Path.Combine(EnvironmentVariables.WorkspacePath, workspaceID + ".uws");
-        }
+        string GetFileName(Guid workspaceID) => Path.Combine(EnvironmentVariables.WorkspacePath, workspaceID + ".bite");
 
         #endregion
 
-        static string GetUserMapFileName()
-        {
-            return Path.Combine(EnvironmentVariables.WorkspacePath, "workspaces.uws");
-        }
+        static string GetUserMapFileName() => Path.Combine(EnvironmentVariables.WorkspacePath, "workspaces.bite");
 
         static ConcurrentDictionary<string, Guid> ReadUserMap()
         {
@@ -363,21 +341,19 @@ namespace Dev2.Workspaces
             lock(UserMapLock)
             {
                 var filePath = GetUserMapFileName();
-                var fileExists = File.Exists(filePath);
                 using(var stream = File.Open(filePath, FileMode.OpenOrCreate))
                 {
+                    var fileExists = File.Exists(filePath);
                     var formatter = new BinaryFormatter();
                     if(fileExists)
                     {
                         try
                         {
                             return (ConcurrentDictionary<string, Guid>)formatter.Deserialize(stream);
-                        }
-                        // ReSharper disable EmptyGeneralCatchClause 
-                        catch(Exception ex)
-                        // ReSharper restore EmptyGeneralCatchClause
+                        }                         
+                        catch(Exception ex)                        
                         {
-                            Dev2Logger.Log.Error("WorkspaceRepository", ex);
+                            Dev2Logger.Error("WorkspaceRepository", ex, GlobalConstants.WarewolfError);
                             // Deserialization failed so overwrite with new one.
                         }
                     }
@@ -391,19 +367,20 @@ namespace Dev2.Workspaces
 
         static void WriteUserMap(ConcurrentDictionary<string, Guid> userMap)
         {
-            var filePath = GetUserMapFileName();
-            using(var stream = File.Open(filePath, FileMode.OpenOrCreate))
+            // force a lock on the file system ;)
+            lock (UserMapLock)
             {
-                var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, userMap);
+                var filePath = GetUserMapFileName();
+                using (var stream = File.Open(filePath, FileMode.OpenOrCreate))
+                {
+                    var formatter = new BinaryFormatter();
+                    formatter.Serialize(stream, userMap);
+                }
             }
         }
 
         #endregion
 
-        public ICollection<Guid> GetWorkspaceGuids()
-        {
-            return _items.Keys;
-        }
+        public ICollection<Guid> GetWorkspaceGuids() => _items.Keys;
     }
 }

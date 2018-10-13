@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,26 +9,25 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Factory;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Core.Tests.Diagnostics
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ExceptionFactoryTests
     {
-        Mock<IEnvironmentModel> _contextModel;
-        private Mock<IEnvironmentConnection> _con;
+        Mock<IServer> _contextModel;
+        Mock<IEnvironmentConnection> _con;
 
         [TestInitialize]
         public void MyTestInitialize()
         {
-            _contextModel = new Mock<IEnvironmentModel>();
+            _contextModel = new Mock<IServer>();
 
             _con = new Mock<IEnvironmentConnection>();
 
@@ -82,14 +80,14 @@ namespace Dev2.Core.Tests.Diagnostics
         [TestMethod]
         public void GetExceptionExpectedAdditionalTraceInfo()
         {
-            string exceptionResult = ExceptionFactory.CreateStringValue(GetException()).ToString();
+            var exceptionResult = ExceptionFactory.CreateStringValue(GetException()).ToString();
             StringAssert.Contains(exceptionResult, "Additional Trace Info", "Error - Additional Trace Info is missing from the exception!");
         }
 
         [TestMethod]
         public void GetExceptionWithCricalExceptionExpectedCriticalInfoIncluded()
         {
-            string exceptionResult = ExceptionFactory.CreateStringValue(GetException(), null, true).ToString();
+            var exceptionResult = ExceptionFactory.CreateStringValue(GetException(), null, true).ToString();
             StringAssert.Contains(exceptionResult, StringResources.CriticalExceptionMessage, "Error - Additional Trace Info is missing from the exception!");
         }
 
@@ -97,7 +95,7 @@ namespace Dev2.Core.Tests.Diagnostics
 
         #region Private Test Methods
 
-        private static Exception GetException()
+        static Exception GetException()
         {
             return new Exception("Test Exception", new Exception("Test inner Exception"));
         }

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +17,7 @@ namespace Dev2.Studio.AppResources.Behaviors
 {
     public class ThumbResizeBehavior : Behavior<Thumb>
     {
-        private const int ChangeThreshold = 1;
+        const int ChangeThreshold = 1;
 
         public double MinWidthOffset { get; set; }
 
@@ -71,14 +71,14 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         #region Event Handlers
 
-        private void AssociatedObjectOnUnloaded(object sender, RoutedEventArgs routedEventArgs)
+        void AssociatedObjectOnUnloaded(object sender, RoutedEventArgs routedEventArgs)
         {
             AssociatedObject.Unloaded -= AssociatedObjectOnUnloaded;
             AssociatedObject.DragDelta -= AssociatedObjectOnDragDelta;
             routedEventArgs.Handled = true;
         }
 
-        private void AssociatedObjectOnDragDelta(object sender, DragDeltaEventArgs e)
+        void AssociatedObjectOnDragDelta(object sender, DragDeltaEventArgs e)
         {
             if (TargetElement == null)
             {
@@ -99,37 +99,33 @@ namespace Dev2.Studio.AppResources.Behaviors
             }
 
             // Check for legacy usage - adorner framework MUST always use ContentElement - DO NOT REMOVE!!!
-            double minWidth = ContentElement == null ? TargetElement.MinWidth : ContentElement.MinWidth;
-            double maxWidth = ContentElement == null ? TargetElement.MaxWidth : ContentElement.MaxWidth;
-            double minHeight = ContentElement == null ? TargetElement.MinHeight : ContentElement.MinHeight;
-            double maxHeight = ContentElement == null ? TargetElement.MaxHeight : ContentElement.MaxHeight;
+            var minWidth = ContentElement?.MinWidth ?? TargetElement.MinWidth;
+            var maxWidth = ContentElement?.MaxWidth ?? TargetElement.MaxWidth;
+            var minHeight = ContentElement?.MinHeight ?? TargetElement.MinHeight;
+            var maxHeight = ContentElement?.MaxHeight ?? TargetElement.MaxHeight;
 
-            if (TargetElement.Height + e.VerticalChange > 0)
+            if (TargetElement.Height + e.VerticalChange > 0 && Math.Abs(e.VerticalChange) > ChangeThreshold)
             {
-                if (Math.Abs(e.VerticalChange) > ChangeThreshold)
-                {
-                    double newHeight = TargetElement.Height + e.VerticalChange;
+                var newHeight = TargetElement.Height + e.VerticalChange;
 
-                    if ((minHeight.Equals(0D) || newHeight > minHeight + MinHeightOffset) &&
-                        (maxHeight.Equals(double.PositiveInfinity) || newHeight < maxHeight))
-                    {
-                        TargetElement.Height += e.VerticalChange;
-                    }
+                if ((minHeight.Equals(0D) || newHeight > minHeight + MinHeightOffset) &&
+                    (maxHeight.Equals(double.PositiveInfinity) || newHeight < maxHeight))
+                {
+                    TargetElement.Height += e.VerticalChange;
                 }
             }
 
-            if (TargetElement.Width + e.HorizontalChange > 0)
+
+            if (TargetElement.Width + e.HorizontalChange > 0 && Math.Abs(e.HorizontalChange) > ChangeThreshold)
             {
-                if (Math.Abs(e.HorizontalChange) > ChangeThreshold)
+                var newWidth = TargetElement.Width + e.HorizontalChange;
+                if ((minWidth.Equals(0D) || newWidth > minWidth + MinWidthOffset) &&
+                    (maxWidth.Equals(double.PositiveInfinity) || newWidth < maxWidth))
                 {
-                    double newWidth = TargetElement.Width + e.HorizontalChange;
-                    if ((minWidth.Equals(0D) || newWidth > minWidth + MinWidthOffset) &&
-                        (maxWidth.Equals(double.PositiveInfinity) || newWidth < maxWidth))
-                    {
-                        TargetElement.Width += e.HorizontalChange;
-                    }
+                    TargetElement.Width += e.HorizontalChange;
                 }
             }
+
         }
 
         #endregion Event Handlers

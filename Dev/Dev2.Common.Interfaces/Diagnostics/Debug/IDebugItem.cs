@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,17 +9,17 @@
 */
 
 using System.Collections.Generic;
-using System.Xml.Serialization;
 
 namespace Dev2.Common.Interfaces.Diagnostics.Debug
 {
     // If you add/remove columns here then 
     // change DebugState.Serialize/Deserialize
-    public interface IDebugItem : IXmlSerializable
+    public interface IDebugItem 
     {
         List<IDebugItemResult> ResultsList { get; set; }
         bool Contains(string filterText);
-        void Add(IDebugItemResult itemToAdd, bool isDeserialize = false);
+        void Add(IDebugItemResult itemToAdd, bool isDeserialize);
+        void Add(IDebugItemResult itemToAdd);
         void AddRange(List<IDebugItemResult> itemsToAdd);
         IList<IDebugItemResult> FetchResultsList();
         void FlushStringBuilder();

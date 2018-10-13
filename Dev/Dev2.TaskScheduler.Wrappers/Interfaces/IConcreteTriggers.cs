@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using Microsoft.Win32.TaskScheduler;
 
 namespace Dev2.TaskScheduler.Wrappers.Interfaces
 {
+
     public interface ITimeTrigger : ITriggerDelay, ITrigger, IWrappedObject<TimeTrigger>
     {
         /// <summary>
@@ -40,10 +41,7 @@ namespace Dev2.TaskScheduler.Wrappers.Interfaces
             set { Instance.Delay = value; }
         }
 
-        public new BootTrigger Instance
-        {
-            get { return (BootTrigger) base.Instance; }
-        }
+        public new BootTrigger Instance => (BootTrigger) base.Instance;
     }
 
 
@@ -98,37 +96,6 @@ namespace Dev2.TaskScheduler.Wrappers.Interfaces
         ///     action.
         /// </summary>
         NamedValueCollection ValueQueries { get; }
-
-        /// <summary>
-        ///     Gets basic event information.
-        /// </summary>
-        /// <param name="log">The event's log.</param>
-        /// <param name="source">
-        ///     The event's source. Can be <c>null</c>.
-        /// </param>
-        /// <param name="eventId">
-        ///     The event's id. Can be <c>null</c>.
-        /// </param>
-        /// <returns>
-        ///     <c>true</c> if subscription represents a basic event, <c>false</c> if not.
-        /// </returns>
-        bool GetBasic(out string log, out string source, out int? eventId);
-
-        /// <summary>
-        ///     Sets the subscription for a basic event. This will replace the contents of the <see cref="Subscription" /> property
-        ///     and clear all entries in the
-        ///     <see
-        ///         cref="ValueQueries" />
-        ///     property.
-        /// </summary>
-        /// <param name="log">The event's log.</param>
-        /// <param name="source">
-        ///     The event's source. Can be <c>null</c>.
-        /// </param>
-        /// <param name="eventId">
-        ///     The event's id. Can be <c>null</c>.
-        /// </param>
-        void SetBasic(string log, string source, int? eventId);
     }
 
 
@@ -194,9 +161,5 @@ namespace Dev2.TaskScheduler.Wrappers.Interfaces
         /// </summary>
         /// <exception cref="NotV1SupportedException">Not supported under Task Scheduler 1.0.</exception>
         bool RunOnLastDayOfMonth { get; }
-    }
-
-    public interface IRegistrationTrigger : ITrigger, ITriggerDelay, IWrappedObject<RegistrationTrigger>
-    {
     }
 }

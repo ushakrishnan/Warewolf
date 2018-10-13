@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +10,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using ActivityUnitTests;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Data.Interfaces;
 using Dev2.Diagnostics;
 using Dev2.Tests.Activities.Mocks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -26,8 +24,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class UnZipTests : BaseActivityUnitTest
     {
 
@@ -62,10 +59,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             var guid = Guid.NewGuid();
             fileNames.Add(Path.Combine(TestContext.TestRunDirectory, guid + "Dev2.txt"));
 
-            List<DebugItem> inRes;
-            List<DebugItem> outRes;
-
-            foreach(string fileName in fileNames)
+            foreach (string fileName in fileNames)
             {
                 File.Delete(fileName);
             }
@@ -85,7 +79,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             };
 
             CheckPathOperationActivityDebugInputOutput(act, ActivityStrings.DebugDataListShape,
-                                                       ActivityStrings.DebugDataListWithData, out inRes, out outRes);
+                                                       ActivityStrings.DebugDataListWithData, out List<DebugItem> inRes, out List<DebugItem> outRes);
 
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Password, "destPWord");
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Username, "destUName");

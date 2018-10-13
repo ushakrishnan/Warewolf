@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,17 +22,25 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
-using Warewolf.Storage;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
+using Warewolf.Storage.Interfaces;
+
 
 namespace Dev2.Activities
 {
-    public class DsfExecuteCommandLineActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Scripting-CMDScript", "CMD Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_CMD_Script")]
+    public class DsfExecuteCommandLineActivity : DsfActivityAbstract<string>,IEquatable<DsfExecuteCommandLineActivity>, IDisposable
     {
         #region Fields
 
@@ -45,15 +52,10 @@ namespace Dev2.Activities
         ProcessPriorityClass _commandPriority = ProcessPriorityClass.Normal;
 
         #endregion
-
-        /// <summary>
-        /// Gets or sets the name of the recordset.
-        /// </summary>  
+        
         [Inputs("CommandFileName")]
-        [FindMissing]
-        // ReSharper disable ConvertToAutoProperty
-        public string CommandFileName
-        // ReSharper restore ConvertToAutoProperty
+        [FindMissing]        
+        public string CommandFileName        
         {
             get
             {
@@ -66,13 +68,17 @@ namespace Dev2.Activities
         }
 
         [Inputs("CommandPriority")]
-        public ProcessPriorityClass CommandPriority { get { return _commandPriority; } set { _commandPriority = value; } }
+        public ProcessPriorityClass CommandPriority
+        {
+            get => _commandPriority;
+            set => _commandPriority = value;
+        }
 
         [Outputs("CommandResult")]
         [FindMissing]
-        // ReSharper disable ConvertToAutoProperty
+        
         public string CommandResult
-        // ReSharper restore ConvertToAutoProperty
+        
         {
             get
             {
@@ -84,6 +90,8 @@ namespace Dev2.Activities
             }
         }
 
+
+        public override List<string> GetOutputs() => new List<string> { CommandResult };
         #region Overrides of DsfNativeActivity<string>
 
         public DsfExecuteCommandLineActivity()
@@ -108,9 +116,33 @@ namespace Dev2.Activities
             ExecuteTool(dataObject, 0);
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "Command",
+                    Value = CommandFileName,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "CommandPriority",
+                    Value = CommandPriority.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="CommandResult",
+                    Value = CommandResult,
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
+
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-            IExecutionToken exeToken = dataObject.ExecutionToken;
+            var exeToken = dataObject.ExecutionToken;
 
 
             var allErrors = new ErrorResultTO();
@@ -123,56 +155,59 @@ namespace Dev2.Activities
                     AddDebugInputItem(new DebugEvalResult(CommandFileName, "Command", dataObject.Environment, update));
                 }
                 var itr = new WarewolfIterator(dataObject.Environment.Eval(CommandFileName, update));
-                if(!allErrors.HasErrors())
+                if (allErrors.HasErrors())
                 {
-                    while(itr.HasMoreData())
+                    return;
+                }
+                var counter = 1;
+                while (itr.HasMoreData())
+                {
+                    var val = itr.GetNextValue();
                     {
-                        var val = itr.GetNextValue();
+                        if(string.IsNullOrEmpty(val))
                         {
-                            if(string.IsNullOrEmpty(val))
-                            {
-                                throw new Exception("Empty script to execute");
-                            }
-
-                            StreamReader errorReader;
-                            StringBuilder outputReader;
-                            if(!ExecuteProcess(val, exeToken, out errorReader, out outputReader))
-                            {
-                                return;
-                            }
-
-                            allErrors.AddError(errorReader.ReadToEnd());
-                            var bytes = Encoding.Default.GetBytes(outputReader.ToString().Trim());
-                            string readValue = Encoding.ASCII.GetString(bytes).Replace("?", " ");
-
-                            //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
-                            foreach(var region in DataListCleaningUtils.SplitIntoRegions(CommandResult))
-                            {
-                                if(dataObject.Environment != null)
-                                {
-                                    dataObject.Environment.Assign(region, readValue, update);
-                                }
-                            }
-                            errorReader.Close();
+                            throw new Exception(ErrorResource.EmptyScript);
                         }
-                    }
-
-                    if(dataObject.IsDebugMode() && !allErrors.HasErrors())
-                    {
-                        if(!string.IsNullOrEmpty(CommandResult))
+                        if (!ExecuteProcess(val, exeToken, out StreamReader errorReader, out StringBuilder outputReader))
                         {
-                            AddDebugOutputItem(new DebugEvalResult(CommandResult, "", dataObject.Environment, update));
+                            return;
                         }
+
+                        allErrors.AddError(errorReader.ReadToEnd());
+                        var bytes = Encoding.Default.GetBytes(outputReader.ToString().Trim());
+                        var readValue = Encoding.ASCII.GetString(bytes).Replace("?", " ");
+
+                        foreach (var region in DataListCleaningUtils.SplitIntoRegions(CommandResult))
+                        {
+                            dataObject.Environment?.Assign(region, readValue, update == 0 ? counter : update);
+                        }
+                        counter++;
+                        errorReader.Close();
                     }
+                }
+
+                if (dataObject.IsDebugMode() && !allErrors.HasErrors() && !string.IsNullOrEmpty(CommandResult))
+                {
+                    AddDebugOutputItem(new DebugEvalResult(CommandResult, "", dataObject.Environment, update));
                 }
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error("DSFCommandLine", e);
+                Dev2Logger.Error("DSFCommandLine", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
             {
+
+                if (!string.IsNullOrEmpty(_fullPath))
+                {
+                    File.Delete(_fullPath);
+                    var tmpFile = _fullPath.Replace(".bat", "");
+                    if (File.Exists(tmpFile))
+                    {
+                        File.Delete(tmpFile);
+                    }
+                }
                 // Handle Errors    
                 var hasErrors = allErrors.HasErrors();
                 if(hasErrors)
@@ -194,11 +229,6 @@ namespace Dev2.Activities
                     DispatchDebugState(dataObject, StateType.Before, update);
                     DispatchDebugState(dataObject, StateType.After, update);
                 }
-
-                if(!string.IsNullOrEmpty(_fullPath))
-                {
-                    File.Delete(_fullPath);
-                }
             }
         }
 
@@ -209,19 +239,10 @@ namespace Dev2.Activities
             using (_process)
             {
                 var processStartInfo = CreateProcessStartInfo(val);
-
-                if (processStartInfo == null)
-                {
-                    // ReSharper disable NotResolvedInText
-                    throw new ArgumentNullException("processStartInfo");
-                    // ReSharper restore NotResolvedInText
-                }
-
-                _process.StartInfo = processStartInfo;
+                _process.StartInfo = processStartInfo ?? throw new ArgumentNullException("processStartInfo");
                 var processStarted = _process.Start();
 
-
-                StringBuilder reader = outputReader;
+                var reader = outputReader;
                 errorReader = _process.StandardError;
 
                 if (!ProcessHasStarted(processStarted, _process))
@@ -233,65 +254,50 @@ namespace Dev2.Activities
                     _process.PriorityClass = CommandPriority;
                 }
                 _process.StandardInput.Close();
-
-                // bubble user termination down the chain ;)
+                
                 while (!_process.HasExited && !executionToken.IsUserCanceled)
                 {
                     reader.Append(_process.StandardOutput.ReadToEnd());
-                    if(!_process.HasExited && _process.Threads.Cast<ProcessThread>().Any(a=>a.ThreadState == System.Diagnostics.ThreadState.Wait && a.WaitReason == ThreadWaitReason.UserRequest))
+                    if (!_process.HasExited && _process.Threads.Cast<ProcessThread>().Any(a => a.ThreadState == System.Diagnostics.ThreadState.Wait && a.WaitReason == ThreadWaitReason.UserRequest) && !_process.HasExited)
                     {
-                        //reader.Append(_process.StandardOutput.ReadToEnd());
                         _process.Kill();
                     }
 
-                    else if (!_process.HasExited)
+                    if (ModalChecker.IsWaitingForUserInput(_process))
                     {
-                        var isWaitingForUserInput = ModalChecker.IsWaitingForUserInput(_process);
-
-                        if (!isWaitingForUserInput)
-                        {
-                            continue;
-                        }
-                        //_process.OutputDataReceived -= a;
                         _process.Kill();
-                        throw new ApplicationException("The process required user input.");
+                        throw new ApplicationException(ErrorResource.UserInputRequired);
                     }
                     Thread.Sleep(10);
+                    continue;
                 }
-
-                // user termination exit ;)
+                
                 if (executionToken.IsUserCanceled)
                 {
-                    // darn .Kill() does not kill the process tree ;(
-                    // Nor does .CloseMainWindow() as people have claimed, hence the hand rolled process tree killer - WTF M$ ;(
                     KillProcessAndChildren(_process.Id);
                 }
                 reader.Append(_process.StandardOutput.ReadToEnd());
-                //_process.OutputDataReceived -= a;
                 _process.Close();
             }
             return true;
         }
-        #region Overrides of NativeActivity<string>
 
-        #endregion
-
-        private void KillProcessAndChildren(int pid)
+        void KillProcessAndChildren(int pid)
         {
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher("Select * From Win32_Process Where ParentProcessID=" + pid);
-            ManagementObjectCollection moc = searcher.Get();
-            foreach(var mo in moc)
+            var searcher = new ManagementObjectSearcher("Select * From Win32_Process Where ParentProcessID=" + pid);
+            var moc = searcher.Get();
+            foreach (var mo in moc)
             {
                 KillProcessAndChildren(Convert.ToInt32(mo["ProcessID"]));
             }
             try
             {
-                Process proc = Process.GetProcessById(pid);
+                var proc = Process.GetProcessById(pid);
                 proc.Kill();
             }
-            catch(ArgumentException)
+            catch (ArgumentException e)
             {
-                // Process already exited.
+                Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
         }
 
@@ -308,16 +314,24 @@ namespace Dev2.Activities
 
         ProcessStartInfo CreateProcessStartInfo(string val)
         {
-            if(val.StartsWith("cmd")) throw new ArgumentException("Cannot execute CMD from tool.");
-            if(val.StartsWith("explorer")) throw new ArgumentException("Cannot execute explorer from tool.");
-            if(val.Contains("explorer"))
+            if(val.StartsWith("cmd"))
+            {
+                throw new ArgumentException(ErrorResource.CannotExecuteCMDFromTool);
+            }
+
+            if (val.StartsWith("explorer"))
+            {
+                throw new ArgumentException(ErrorResource.CannotExecuteExplorerFromTool);
+            }
+
+            if (val.Contains("explorer"))
             {
                 var directoryName = Path.GetFullPath(val);
                 {
                     var lowerDirectoryName = directoryName.ToLower(CultureInfo.InvariantCulture);
                     if(lowerDirectoryName.EndsWith("explorer.exe"))
                     {
-                        throw new ArgumentException("Cannot execute explorer from tool.");
+                        throw new ArgumentException(ErrorResource.CannotExecuteExplorerFromTool);
                     }
                 }
             }
@@ -325,44 +339,7 @@ namespace Dev2.Activities
             ProcessStartInfo psi;
             if(val.StartsWith("\""))
             {
-                // we have a quoted string for the cmd portion
-                var idx = val.IndexOf("\" \"", StringComparison.Ordinal);
-                if(idx < 0)
-                {
-                    // account for "xxx" arg
-                    idx = val.IndexOf("\" ", StringComparison.Ordinal);
-                    if(idx < 0)
-                    {
-                        val += Environment.NewLine + "exit";
-                        psi = new ProcessStartInfo("cmd.exe", "/Q /C " + val);
-                    }
-                    else
-                    {
-                        var cmd = val.Substring(0, idx + 1);// keep trailing "
-                        if(File.Exists(cmd))
-                        {
-                            var args = val.Substring(idx + 2);
-                            psi = new ProcessStartInfo("cmd.exe", "/Q /C " + cmd + " " + args);
-                        }
-                        else
-                        {
-                            psi = ExecuteSystemCommand(val);
-                        }
-                    }
-                }
-                else
-                {
-                    var cmd = val.Substring(0, idx + 1);// keep trailing "
-                    if(File.Exists(cmd))
-                    {
-                        var args = val.Substring(idx + 2);
-                        psi = new ProcessStartInfo("cmd.exe", "/Q /C " + cmd + " " + args);
-                    }
-                    else
-                    {
-                        psi = ExecuteSystemCommand(val);
-                    }
-                }
+                psi = ExecuteQuotedExpression(ref val);
             }
             else
             {
@@ -401,6 +378,51 @@ namespace Dev2.Activities
             return psi;
         }
 
+        private static ProcessStartInfo ExecuteQuotedExpression(ref string val)
+        {
+            ProcessStartInfo psi;
+            // we have a quoted string for the cmd portion
+            var idx = val.IndexOf("\" \"", StringComparison.Ordinal);
+            if (idx < 0)
+            {
+                // account for "xxx" arg
+                idx = val.IndexOf("\" ", StringComparison.Ordinal);
+                if (idx < 0)
+                {
+                    val += Environment.NewLine + "exit";
+                    psi = new ProcessStartInfo("cmd.exe", "/Q /C " + val);
+                }
+                else
+                {
+                    var cmd = val.Substring(0, idx + 1);// keep trailing "
+                    if (File.Exists(cmd))
+                    {
+                        var args = val.Substring(idx + 2);
+                        psi = new ProcessStartInfo("cmd.exe", "/Q /C " + cmd + " " + args);
+                    }
+                    else
+                    {
+                        psi = ExecuteSystemCommand(val);
+                    }
+                }
+            }
+            else
+            {
+                var cmd = val.Substring(0, idx + 1);// keep trailing "
+                if (File.Exists(cmd))
+                {
+                    var args = val.Substring(idx + 2);
+                    psi = new ProcessStartInfo("cmd.exe", "/Q /C " + cmd + " " + args);
+                }
+                else
+                {
+                    psi = ExecuteSystemCommand(val);
+                }
+            }
+
+            return psi;
+        }
+
         static ProcessStartInfo ExecuteSystemCommand(string val)
         {
             _fullPath = Path.Combine(GlobalConstants.TempLocation, Path.GetTempFileName() + ".bat");
@@ -425,32 +447,32 @@ namespace Dev2.Activities
             foreach(var t in updates)
             {
 
-                if(t.Item1 == CommandFileName)
+                if (t.Item1 == CommandFileName)
                 {
                     CommandFileName = t.Item2;
                 }
-                else if(t.Item1 == CommandPriority.ToString())
+                else
                 {
-                    CommandPriority = (ProcessPriorityClass)Enum.Parse(typeof(ProcessPriorityClass), t.Item2, true);
+                    if (t.Item1 == CommandPriority.ToString())
+                    {
+                        CommandPriority = (ProcessPriorityClass)Enum.Parse(typeof(ProcessPriorityClass), t.Item2, true);
+                    }
                 }
             }
         }
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == CommandResult);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == CommandResult);
-                if(itemUpdate != null)
-                {
-                    CommandResult = itemUpdate.Item2;
-                }
+                CommandResult = itemUpdate.Item2;
             }
         }
 
         #region Overrides of DsfNativeActivity<string>
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugInput in _debugInputs)
             {
@@ -459,7 +481,7 @@ namespace Dev2.Activities
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -468,18 +490,69 @@ namespace Dev2.Activities
             return _debugOutputs;
         }
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(CommandFileName, CommandPriority.ToString());
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(CommandFileName, CommandPriority.ToString());
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(CommandResult);
+
+        public void Dispose()
         {
-            return GetForEachItems(CommandResult);
+            ((IDisposable)_process).Dispose();
         }
 
         #endregion
 
         #endregion
+
+        public bool Equals(DsfExecuteCommandLineActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(CommandFileName, other.CommandFileName) 
+                && string.Equals(CommandResult, other.CommandResult)
+                && CommandPriority == other.CommandPriority;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfExecuteCommandLineActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (CommandFileName != null ? CommandFileName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (CommandResult != null ? CommandResult.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_process != null ? _process.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_nativeActivityContext != null ? _nativeActivityContext.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int) _commandPriority;
+                return hashCode;
+            }
+        }
     }
 }

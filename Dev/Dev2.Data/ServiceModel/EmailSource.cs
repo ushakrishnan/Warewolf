@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,19 +14,18 @@ using System.Net;
 using System.Net.Mail;
 using System.Xml.Linq;
 using Dev2.Common.Common;
-using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces;
 using Warewolf.Security.Encryption;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Runtime.ServiceModel.Data
 {
-    // PBI 953 - 2013.05.16 - TWR - Created
-    public class EmailSource : Resource
+    public class EmailSource : Resource, IResourceSource,IEmailSource
     {
-        public static int DefaultTimeout = 100000; // (100 seconds)
-        public static int DefaultPort = 25;
-        public static int SslPort = 465;
-        public static int TlsPort = 587;
+        public static readonly int DefaultTimeout = 100000; // (100 seconds)
+        public static readonly int DefaultPort = 25;
+        public static readonly int SslPort = 465;
+        public static readonly int TlsPort = 587;
 
         #region Properties
 
@@ -53,7 +51,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             get
             {
                 var stringBuilder = base.DataList;
-                return stringBuilder != null ? stringBuilder.ToString() : null;
+                return stringBuilder?.ToString();
             }
             set
             {
@@ -68,7 +66,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         public EmailSource()
         {
             ResourceID = Guid.Empty;
-            ResourceType = ResourceType.EmailSource;
+            ResourceType = "EmailSource";
             Timeout = DefaultTimeout;
             Port = DefaultPort;
         }
@@ -76,7 +74,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         public EmailSource(XElement xml)
             : base(xml)
         {
-            ResourceType = ResourceType.EmailSource;
+            ResourceType = "EmailSource";
             Timeout = DefaultTimeout;
             Port = DefaultPort;
 
@@ -98,14 +96,11 @@ namespace Dev2.Runtime.ServiceModel.Data
             UserName = properties["UserName"];
             Password = properties["Password"];
 
-            int port;
-            Port = Int32.TryParse(properties["Port"], out port) ? port : DefaultPort;
+            Port = Int32.TryParse(properties["Port"], out int port) ? port : DefaultPort;
 
-            bool enableSsl;
-            EnableSsl = bool.TryParse(properties["EnableSsl"], out enableSsl) && enableSsl;
+            EnableSsl = bool.TryParse(properties["EnableSsl"], out bool enableSsl) && enableSsl;
 
-            int timeout;
-            Timeout = Int32.TryParse(properties["Timeout"], out timeout) ? timeout : DefaultTimeout;
+            Timeout = Int32.TryParse(properties["Timeout"], out int timeout) ? timeout : DefaultTimeout;
         }
 
         public void Send(MailMessage mailMessage)
@@ -130,22 +125,30 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             var result = base.ToXml();
             var connectionString = string.Join(";",
-                string.Format("Host={0}", Host),
-                string.Format("UserName={0}", UserName),
-                string.Format("Password={0}", Password),
-                string.Format("Port={0}", Port),
-                string.Format("EnableSsl={0}", EnableSsl),
-                string.Format("Timeout={0}", Timeout)
+                $"Host={Host}",
+                $"UserName={UserName}",
+                $"Password={Password}",
+                $"Port={Port}",
+                $"EnableSsl={EnableSsl}",
+                $"Timeout={Timeout}"
                 );
 
             result.Add(
                 new XAttribute("ConnectionString", DpapiWrapper.Encrypt(connectionString)),
-                new XAttribute("Type", ResourceType),
+                new XAttribute("Type", GetType().Name),
                 new XElement("TypeOf", ResourceType)
                 );
 
             return result;
         }
+
+        public override bool IsSource => true;
+
+        public override bool IsService => false;
+        public override bool IsFolder => false;
+        public override bool IsReservedService => false;
+        public override bool IsServer => false;
+        public override bool IsResourceVersion => false;
 
         #endregion
 

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,7 +25,7 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ComposeAbleRule_Ctor")]
         [ExpectedException(typeof(ArgumentNullException))]
-// ReSharper disable InconsistentNaming
+
         public void ComposeAbleRule_Null()
 
         {
@@ -43,17 +42,7 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
             //------------Setup for test--------------------------
             new ComposableRule<string>(new Rule1(()=>"")).Or(null);
         }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ComposeAbleRule_And")]
-        [ExpectedException(typeof(ArgumentNullException))]
-        public void ComposeAbleRule_And_Null()
-        {
-            //------------Setup for test--------------------------
-            new ComposableRule<string>(new Rule1(() => "")).And(null);
-        }
-
+        
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ComposeAbleRule_Check")]
@@ -64,52 +53,7 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
             Assert.IsNotNull(cr.Check());
 
         }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ComposeAbleRule_And")]
-        public void ComposeAbleRule_AndConditionNotSatisfied()
-        {
-            //------------Setup for test--------------------------
-            var cr = new ComposableRule<string>(new Rule1(() => "")).And(new Rule1(()=>"1"));
-            Assert.IsNotNull(cr.Check());
-
-        }
-
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ComposeAbleRule_And")]
-        public void ComposeAbleRule_AndConditionSatisfied()
-        {
-            //------------Setup for test--------------------------
-            var cr = new ComposableRule<string>(new Rule1(() => "1")).And(new Rule1(() => "1"));
-            Assert.IsNull(cr.Check());
-
-        }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ComposeAbleRule_And")]
-        public void ComposeAbleRule_AndConditionSatisfied_Three()
-        {
-            //------------Setup for test--------------------------
-            var cr = new ComposableRule<string>(new Rule1(() => "1")).And(new Rule1(() => "1")).And(new Rule2(() => "2"));
-            Assert.IsNull(cr.Check());
-
-        }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ComposeAbleRule_And")]
-        public void ComposeAbleRule_AndConditionFailed_Three()
-        {
-            //------------Setup for test--------------------------
-            var cr = new ComposableRule<string>(new Rule1(() => "1")).And(new Rule1(() => "1")).And(new Rule2(() => "v"));
-            Assert.IsNotNull(cr.Check());
-
-        }
-
+        
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ComposeAbleRule_Or")]
@@ -167,7 +111,7 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
             Assert.IsNull(cr.Check());
 
         }
-        // ReSharper restore InconsistentNaming
+
     }
 
     public class Rule1 :Rule<string>
@@ -182,7 +126,10 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
         public override IActionableErrorInfo Check()
         {
             if(GetValue()!= "1")
+            {
                 return new ActionableErrorInfo();
+            }
+
             return null;
         }
 
@@ -201,7 +148,10 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
         public override IActionableErrorInfo Check()
         {
             if (GetValue() != "2")
+            {
                 return new ActionableErrorInfo();
+            }
+
             return null;
         }
 

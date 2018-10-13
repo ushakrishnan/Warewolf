@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -39,7 +38,15 @@ namespace Dev2.Collections
         public ObservableReadOnlyList(IEnumerable<T> collection)
         {
             // Save dispatcher so that we always fire CollectionChanged on it's thread
-            _dispatcher = Dispatcher.CurrentDispatcher;
+
+            try
+            {
+                _dispatcher = Dispatcher.CurrentDispatcher;
+            }
+            catch(Exception)
+            {
+                //No valid dispatcher
+            }
 
             _list = collection == null ? new ObservableCollection<T>() : new ObservableCollection<T>(collection);
             InitCollectionChanged();
@@ -49,15 +56,9 @@ namespace Dev2.Collections
 
         #region Implementation of IEnumerable
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return _list.GetEnumerator();
-        }
+        public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         #endregion
 
@@ -73,33 +74,24 @@ namespace Dev2.Collections
             _list.Clear();
         }
 
-        public bool Contains(T item)
-        {
-            return _list.Contains(item);
-        }
+        public bool Contains(T item) => _list.Contains(item);
 
         public void CopyTo(T[] array, int arrayIndex)
         {
             _list.CopyTo(array, arrayIndex);
         }
 
-        public bool Remove(T item)
-        {
-            return _list.Remove(item);
-        }
+        public bool Remove(T item) => _list.Remove(item);
 
-        public int Count { get { return _list.Count; } }
+        public int Count => _list.Count;
 
-        public bool IsReadOnly { get { return true; } }
+        public bool IsReadOnly => true;
 
         #endregion
 
         #region Implementation of IReadOnlyList<out T>
 
-        public int IndexOf(T item)
-        {
-            return _list.IndexOf(item);
-        }
+        public int IndexOf(T item) => _list.IndexOf(item);
 
         public void Insert(int index, T item)
         {
@@ -111,7 +103,10 @@ namespace Dev2.Collections
             _list.RemoveAt(index);
         }
 
-        public T this[int index] { get { return _list[index]; } set { _list[index] = value; } }
+        public T this[int index] {
+            get => _list[index];
+            set => _list[index] = value;
+        }
 
         #endregion
 
@@ -128,7 +123,7 @@ namespace Dev2.Collections
             // Post the CollectionChanged event on the creator thread
             _list.CollectionChanged += (sender, args) =>
             {
-                if(!_dispatcher.CheckAccess())
+                if(_dispatcher!=null && !_dispatcher.CheckAccess())
                 {
                     _dispatcher.BeginInvoke(new Action(() => RaiseCollectionChanged(args)), DispatcherPriority.Normal);
                 }
@@ -155,6 +150,5 @@ namespace Dev2.Collections
         }
 
         #endregion
-
     }
 }

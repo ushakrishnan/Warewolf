@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +10,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.DynamicServices;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
@@ -21,16 +19,15 @@ using Dev2.Services.Execution;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class AbstractServiceExecutionTests
     {
         #region Create Service
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ServiceExecutionAbstract_ExecuteWithCrazyXML_ShouldMap()
         {
             
@@ -93,14 +90,13 @@ namespace Dev2.Tests.Runtime.Services
                                                "<CommsEngineCommunicationToView i:nil=\"true\" />" +
                                                "</CommsEngineResponseViewModels>";
             //exe
-            ErrorResultTO errors;
-            webServiceMock.MockExecuteImpl(out errors);
+            webServiceMock.MockExecuteImpl(out ErrorResultTO errors);
             Assert.IsFalse(errors.HasErrors(),"Error while parsing crazy xml");
 
             //assert
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ServiceExecutionAbstract_Execute")]
         public void ServiceExecutionAbstract_Execute_ObjectJson_ShouldMapCorrectly()
@@ -183,11 +179,10 @@ namespace Dev2.Tests.Runtime.Services
                                                       "</Outputs>";
             webServiceMock.ReturnFromExecute = "{\"CommsEngineCommunicationToUpdate\":null,\"CommsEngineCommunicationToSend\":[{\"CommunicationRequestID\":\"60d47fa8-f208-e511-a221-0018fefdef3a\",\"PolicyNo\":\"AA1001366\",\"EventType\":\"DebitFailed\",\"EventSource\":\"Collections\",\"MessageContent\":\"Hi there!  Your  debit order didn't go through this month. Please give us a shout on 087 357 6529 so we can make sure we've got your details right. Love, The Unlimited\",\"DeliveryAddress\":\"0825688436\",\"OriginalAddress\":\"sample string 10\",\"ScheduledFor\":\"2015-05-27T15:30:02\",\"CommunicationsProfile\":\"sample string 12\",\"CommunicationType\":\"SMS\",\"Subject\":\"Default Subject\",\"Attachments\":\"\",\"HTML\":null,\"AttemptCount\":null,\"Priority\":1,\"MetaData\":\"sample string 15\"}],\"CommsEngineCommunicationAdded\":null,\"CommsEngineCommunicationToView\":null,\"StatusCode\":1,\"Message\":null,\"Exception\":null,\"Result\":\"OK\",\"ResponseDate\":\"2015/06/02 09:58:20 AM\"}";
             //------------Execute Test---------------------------
-            ErrorResultTO errors;
-            webServiceMock.MockExecuteImpl(out errors);
+            webServiceMock.MockExecuteImpl(out ErrorResultTO errors);
             //------------Assert Results-------------------------
             Assert.IsFalse(errors.HasErrors(), "Error while parsing object json");
-            var warewolfEvalResult = webServiceMock.DataObj.Environment.Eval("[[CommsEngineCommunicationToSend().MessageContent]]",0) as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomListresult;
+            var warewolfEvalResult = webServiceMock.DataObj.Environment.Eval("[[CommsEngineCommunicationToSend().MessageContent]]",0) as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
             Assert.IsNotNull(warewolfEvalResult);
             var actual = warewolfEvalResult.Item[0].ToString();
             Assert.AreEqual("Hi there!  Your  debit order didn't go through this month. Please give us a shout on 087 357 6529 so we can make sure we've got your details right. Love, The Unlimited",actual);

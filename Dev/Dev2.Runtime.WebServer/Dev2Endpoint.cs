@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -35,37 +34,6 @@ namespace Dev2.Runtime.WebServer
         public IPEndPoint TheIPEndPoint { get; private set; }
         public string CertificatePath { get; private set; }
         public string Url { get; private set; }
-
-        public bool IsSecured
-        {
-            get { return !string.IsNullOrEmpty(CertificatePath); }
-        }
-
-        public IPAddress Address
-        {
-            get
-            {
-                if (TheIPEndPoint != null)
-                {
-                    return TheIPEndPoint.Address;
-                }
-
-                return null;
-            }
-        }
-
-        public int Port
-        {
-            get
-            {
-                if (TheIPEndPoint != null)
-                {
-                    return TheIPEndPoint.Port;
-                }
-
-                return -1;
-            }
-        }
 
         public Dev2Endpoint(IPEndPoint endPoint, string url) : this(endPoint, url, null)
         {

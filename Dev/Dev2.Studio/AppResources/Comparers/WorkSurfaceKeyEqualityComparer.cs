@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,43 +8,31 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.AppResources.Comparers
 {
-    /// <summary>
-    /// Used to compare two worksurface keys
-    /// </summary>
-    /// <author>Jurie.smit</author>
-    /// <date>2/27/2013</date>
     public class WorkSurfaceKeyEqualityComparer : IEqualityComparer<WorkSurfaceKey>
     {
-        // ReSharper disable once InconsistentNaming
-        private static readonly Lazy<WorkSurfaceKeyEqualityComparer> _current
+        static readonly Lazy<WorkSurfaceKeyEqualityComparer> _current
             = new Lazy<WorkSurfaceKeyEqualityComparer>(() => new WorkSurfaceKeyEqualityComparer());
 
-        private WorkSurfaceKeyEqualityComparer()
+        WorkSurfaceKeyEqualityComparer()
         {
 
         }
 
-        public static WorkSurfaceKeyEqualityComparer Current
-        {
-            get
-            {
-                return _current.Value;
-            }
-        }
+        public static WorkSurfaceKeyEqualityComparer Current => _current.Value;
 
         public bool Equals(WorkSurfaceKey x, WorkSurfaceKey y)
         {
-            bool res = false;
+            var res = false;
             if (x.EnvironmentID != null && y.EnvironmentID != null)
             {
-                if (x.WorkSurfaceContext == y.WorkSurfaceContext
-                 && x.ResourceID == y.ResourceID
+                if (x.ResourceID == y.ResourceID
                  && x.ServerID == y.ServerID
                     && x.EnvironmentID == y.EnvironmentID)
                 {
@@ -54,20 +41,38 @@ namespace Dev2.Studio.AppResources.Comparers
             }
             else
             {
-                if (x.WorkSurfaceContext == y.WorkSurfaceContext
-                 && x.ResourceID == y.ResourceID
+                if (x.ResourceID == y.ResourceID
                  && x.ServerID == y.ServerID)
                 {
                     res = true;
                 }
             }
             return res;
-
         }
 
-        public int GetHashCode(WorkSurfaceKey obj)
+        public bool Equals(IWorkSurfaceKey x, IWorkSurfaceKey y)
         {
-            return obj.GetHashCode();
+            var res = false;
+            if (x.EnvironmentID != null && y.EnvironmentID != null)
+            {
+                if (x.ResourceID == y.ResourceID
+                 && x.ServerID == y.ServerID
+                    && x.EnvironmentID == y.EnvironmentID)
+                {
+                    res = true;
+                }
+            }
+            else
+            {
+                if (x.ResourceID == y.ResourceID
+                 && x.ServerID == y.ServerID)
+                {
+                    res = true;
+                }
+            }
+            return res;
         }
+
+        public int GetHashCode(WorkSurfaceKey obj) => obj.GetHashCode();
     }
 }

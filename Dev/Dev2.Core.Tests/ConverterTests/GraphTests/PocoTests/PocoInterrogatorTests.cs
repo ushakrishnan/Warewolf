@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.Poco;
@@ -19,13 +17,12 @@ using Unlimited.Framework.Converters.Graph.Poco;
 namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.PocoTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class PocoInterrogatorTests
     {
         #region Private/Internal Methods
         internal PocoTestData Given()
         {
-            PocoTestData testData = new PocoTestData
+            var testData = new PocoTestData
             {
                 Name = "Brendon",
                 Age = 30,
@@ -36,7 +33,7 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData1 = new PocoTestData
+            var nestedTestData1 = new PocoTestData
             {
                 Name = "Mo",
                 Age = 30,
@@ -47,7 +44,7 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.PocoTests
                 },
             };
 
-            PocoTestData nestedTestData2 = new PocoTestData
+            var nestedTestData2 = new PocoTestData
             {
                 Name = "Trav",
                 Age = 30,
@@ -71,13 +68,13 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void CreateMapper_Expected_PocoMapper()
         {
-            PocoTestData pocoTestData = Given();
-            PocoInterrogator pocoInterrogator = new PocoInterrogator();
+            var pocoTestData = Given();
+            var pocoInterrogator = new PocoInterrogator();
 
-            IMapper mapper = pocoInterrogator.CreateMapper(pocoTestData);
+            var mapper = pocoInterrogator.CreateMapper(pocoTestData);
 
-            Type expected = typeof(PocoMapper);
-            Type actual = mapper.GetType();
+            var expected = typeof(PocoMapper);
+            var actual = mapper.GetType();
 
             Assert.AreEqual(expected, actual);
         }
@@ -91,13 +88,13 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void CreateNavigator_Expected_PocoNavigator()
         {
-            PocoTestData pocoTestData = Given();
-            PocoInterrogator pocoInterrogator = new PocoInterrogator();
+            var pocoTestData = Given();
+            var pocoInterrogator = new PocoInterrogator();
 
-            INavigator navigator = pocoInterrogator.CreateNavigator(pocoTestData, typeof(PocoPath));
+            var navigator = pocoInterrogator.CreateNavigator(pocoTestData, typeof(PocoPath));
 
-            Type expected = typeof(PocoNavigator);
-            Type actual = navigator.GetType();
+            var expected = typeof(PocoNavigator);
+            var actual = navigator.GetType();
 
             Assert.AreEqual(expected, actual);
         }

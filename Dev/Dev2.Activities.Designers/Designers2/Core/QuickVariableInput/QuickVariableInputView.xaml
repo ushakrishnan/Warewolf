@@ -7,7 +7,10 @@
                                xmlns:attached="clr-namespace:Dev2.Activities.AttachedProperties"
                                xmlns:core="clr-namespace:Dev2.Activities.Designers2.Core"
                                xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
-                               xmlns:help="clr-namespace:Dev2.Activities.Designers2.Core.Help"
+                               
+                               xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
+                               xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
+                               xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
                                MinWidth="370"
                                MinHeight="360"
                                MaxWidth="600"
@@ -15,6 +18,13 @@
                                mc:Ignorable="d"
                                d:DataContext="{d:DesignInstance core:ActivityCollectionDesignerViewModel}">
 
+    <core:ActivityDesignerTemplate.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <luna:SharedResourceDictionary Source="/Warewolf.Studio.Themes.Luna;component/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </core:ActivityDesignerTemplate.Resources>
     <core:ActivityDesignerTemplate.RightButtons>
         <core:ActivityDesignerButton Content="Add" 
                                      DataContext="{Binding QuickVariableInputViewModel, Mode=TwoWay}"
@@ -23,26 +33,23 @@
                                      IsEnabled="{Binding CanAdd, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      CustomCommand="{Binding AddCommand}"
                                      IsValidatedBefore="True"
-                                     AutomationProperties.AutomationId="AddButton"
+                                     AutomationProperties.AutomationId="AddModeButton"
                                      IsClosedAfter="True" />
     </core:ActivityDesignerTemplate.RightButtons>
 
     <core:ActivityDesignerTemplate.InputBindings>
-        <KeyBinding Command="{Binding QuickVariableInputViewModel.ClearCommand}"
-                    Key="Escape" />      
+        <KeyBinding Command="{Binding QuickVariableInputViewModel.ClearCommand}" Key="Escape" />
     </core:ActivityDesignerTemplate.InputBindings>
 
-    <Grid x:Name="ParentContext">
-        <Grid Margin="7,0,10,15"
-              DataContext="{Binding QuickVariableInputViewModel, Mode=TwoWay}">
+    <Grid x:Name="ParentContext" Margin="{StaticResource ElementBorder}">
+        <Grid DataContext="{Binding QuickVariableInputViewModel, Mode=TwoWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*"
-                               MinHeight="61" />
+                <RowDefinition Height="*" MinHeight="61" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -50,136 +57,126 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0"
-                  Grid.Column="0"
-                  Grid.ColumnSpan="2">
+            <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="6" />
                 </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0"
-                       Text="Quick Variable Input"
-                       Style="{StaticResource Dev2HeadingTextBlockStyle}" Margin="0,3,0,0" />
-                <Rectangle Grid.Row="1"
-                           Fill="LightGray"
-                           Margin="1"
-                           Height="1" />
+                <TextBlock Grid.Row="0" Text="Quick Variable Input" Style="{StaticResource Dev2HeadingTextBlockStyle}" />
+                <Rectangle Grid.Row="1" Fill="LightGray" Margin="1" Height="1" />
             </Grid>
 
-            <Label Grid.Row="1"
-                   Grid.Column="0"
-                   Content="Variable List :" />
+            <TextBlock Grid.Row="1" Grid.Column="0" Text="Variable List " Margin="{StaticResource ControlBorderTop}"/>
             <TextBox Grid.Row="1"
                      Grid.Column="1"
                      x:Name="InitialFocusElement"
                      Text="{Binding VariableListString}"
-                     Style="{StaticResource ActivityTextBoxStyle}"
                      Height="Auto"
                      AcceptsReturn="True"
+                     Margin="{StaticResource ControlBorderTop}"
                      HorizontalAlignment="Stretch"
                      VerticalAlignment="Stretch"
                      VerticalContentAlignment="Top"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      VerticalScrollBarVisibility="Auto"
                      TextWrapping="Wrap"           
+                     ToolTip="{x:Static languages:Tooltips.QuickVariableVariableListToolTip}"
                      AutomationProperties.AutomationId="QviVariableListBox"
                      attached:FocusSetter.IsFocused="{Binding IsVariableListFocused, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <i:Interaction.Behaviors>
-                    <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariableVariableListHelpText}"
+                    <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariableVariableListHelpText}"
                                      DataContext="{Binding DataContext, ElementName=ParentContext}" />
                 </i:Interaction.Behaviors>
             </TextBox>
 
-            <Label Grid.Row="2"
-                   Grid.Column="0"
-                   Content="Split List On :" />
-            <Grid Grid.Row="2"
-                  Grid.Column="1">
+            <TextBlock Grid.Row="2" Grid.Column="0" Text="Split List On " Margin="{StaticResource ControlBorderTop}"/>
+            <Grid Grid.Row="2" Grid.Column="1" Margin="{StaticResource ControlBorderTop}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0"
                           IsTabStop="False"
-                          Margin="2"
-                          Style="{StaticResource ActivityComboBoxStyle}"
-                          ItemContainerStyle="{StaticResource ActivityComboBoxItemStyle}" 
+                          Margin="{StaticResource ControlBorderRight}"
+                          ItemContainerStyle="{StaticResource ComboBoxItemStyle}" 
                           ItemsSource="{Binding SplitTypeList}"
                           SelectedValue="{Binding SplitType}"
+                          ToolTip="{x:Static languages:Tooltips.QuickVariableSplitAndAtToolTip}"
                           AutomationProperties.AutomationId="QviSplitOnCombobox"
                           HorizontalAlignment="Stretch">
                     <i:Interaction.Behaviors>
-                        <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariableSplitAndAtHelpText}"
+                        <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariableSplitAndAtHelpText}"
                                          DataContext="{Binding DataContext, ElementName=ParentContext}" />
                     </i:Interaction.Behaviors>
                 </ComboBox>
                 <TextBox Grid.Column="1"
-                         Style="{StaticResource ActivityTextBoxStyle}"
                          Text="{Binding SplitToken, UpdateSourceTrigger=PropertyChanged}"
                          IsEnabled="{Binding IsSplitTokenEnabled}"
                          AutomationProperties.AutomationId="QviSplitOnCharacter"
+                         ToolTip="{x:Static languages:Tooltips.QuickVariableSplitAndAtToolTip}"
                          attached:FocusSetter.IsFocused="{Binding IsSplitOnFocused, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <i:Interaction.Behaviors>
-                        <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariableSplitAndAtHelpText}"
+                        <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariableSplitAndAtHelpText}"
                                          DataContext="{Binding DataContext, ElementName=ParentContext}" />
                     </i:Interaction.Behaviors>
                 </TextBox>
             </Grid>
 
-            <Label Grid.Row="3"
-                   Grid.Column="0"
-                   Content="Prefix  With:" />
+            <TextBlock Grid.Row="3" Grid.Column="0" Text="Prefix  With " Margin="{StaticResource ControlBorderTop}"/>
             <TextBox Grid.Row="3"
                      Grid.Column="1"
-                     Style="{StaticResource ActivityTextBoxStyle}"
+                     Margin="{StaticResource ControlBorderTop}"
                      Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}"
                      HorizontalAlignment="Stretch"
+                     ToolTip="{x:Static languages:Tooltips.QuickVariablePrefixWithToolTip}"
                      attached:FocusSetter.IsFocused="{Binding IsPrefixFocused, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <i:Interaction.Behaviors>
-                    <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariablePrefixWithHelpText}"
+                    <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariablePrefixWithHelpText}"
                                      DataContext="{Binding DataContext, ElementName=ParentContext}" />
                 </i:Interaction.Behaviors>
             </TextBox>
 
-            <Label Grid.Row="4"
-                   Grid.Column="0"
-                   Content="Suffix With :" />
+            <TextBlock Grid.Row="4" Grid.Column="0" Text="Suffix With " Margin="{StaticResource ControlBorderTop}"/>
             <TextBox Grid.Row="4"
                      Grid.Column="1"
-                     Style="{StaticResource ActivityTextBoxStyle}"
+                     Margin="{StaticResource ControlBorderTop}"
                      Text="{Binding Suffix, UpdateSourceTrigger=PropertyChanged}"
                      HorizontalAlignment="Stretch"
+                     ToolTip="{x:Static languages:Tooltips.QuickVariableSuffixWithToolTip}"
                      attached:FocusSetter.IsFocused="{Binding IsSuffixFocused, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <i:Interaction.Behaviors>
-                    <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariableSuffixWithHelpText}"
+                    <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariableSuffixWithHelpText}"
                                      DataContext="{Binding DataContext, ElementName=ParentContext}" />
                 </i:Interaction.Behaviors>
             </TextBox>
 
             <StackPanel Grid.Row="5"
                         Grid.Column="1"
-                        Margin="3,-1,0,-5"
+                        Margin="{StaticResource ControlBorderTop}"
                         Orientation="Horizontal"
                         HorizontalAlignment="Left"
                         IsEnabled="{Binding IsOverwriteEnabled}">
                 <RadioButton Content="Append"
                              IsChecked="True"
+                             Margin="{StaticResource ControlBorderRight}"
                              VerticalAlignment="Center"
+                             ToolTip="{x:Static languages:Tooltips.QuickVariableAppendToolTip}"
                              AutomationProperties.AutomationId="AppendOption"
                              GroupName="AppendGroup">
                     <i:Interaction.Behaviors>
-                        <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariableAppendHelpText}"
+                        <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariableAppendHelpText}"
                                          DataContext="{Binding DataContext, ElementName=ParentContext}" />
                     </i:Interaction.Behaviors>
                 </RadioButton>
-                <RadioButton Margin="15,0,0,0"
+                <RadioButton Margin="{StaticResource ControlBorderLeft}"
                              Content="Replace"
                              IsChecked="{Binding Overwrite}"
                              AutomationProperties.AutomationId="ReplaceOption"
+                             ToolTip="{x:Static languages:Tooltips.QuickVariableReplaceToolTip}"
                              VerticalAlignment="Center"
                              GroupName="AppendGroup">
                     <i:Interaction.Behaviors>
-                        <help:HelpSetter Text="{x:Static help:HelpTextResources.QuickVariableReplaceHelpText}"
+                        <core1:HelpSetter Text="{x:Static languages:HelpText.QuickVariableReplaceHelpText}"
                                          DataContext="{Binding DataContext, ElementName=ParentContext}" />
                     </i:Interaction.Behaviors>
                 </RadioButton>
@@ -187,7 +184,8 @@
 
             <!-- +5 left margin to align with Inputs -->
             <preview:PreviewView Grid.Row="6"
-                                 Grid.ColumnSpan="2"
+                                 Grid.ColumnSpan="2" 
+                                 Grid.Column="0"
                                  Margin="5,0,0,0"
                                  DataContext="{Binding PreviewViewModel}" />
         </Grid>

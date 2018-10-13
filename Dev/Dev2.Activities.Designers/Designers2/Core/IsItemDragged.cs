@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -16,14 +16,17 @@ namespace Dev2.Activities.Designers2.Core
     {
 
         #region Fields
-        private static IsItemDragged _instance;
+
+        static readonly Lazy<IsItemDragged> _instance = new Lazy<IsItemDragged>(() => new IsItemDragged());
+
+
         bool _isDragged;
 
         #endregion
 
         #region Ctor
 
-        public IsItemDragged()
+        IsItemDragged()
         {
             IsDragged = false;
         }
@@ -32,18 +35,9 @@ namespace Dev2.Activities.Designers2.Core
 
         #region Properties
 
-        public static IsItemDragged Instance
-        {
-            get
-            {
-                if(_instance == null)
-                {
-                    _instance = new IsItemDragged();
-                }
-                return _instance;
-            }
-        }
+        public static IsItemDragged Instance => _instance.Value;
 
+        
         public bool IsDragged
         {
             get

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,23 +12,17 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Dev2.Workspaces {
-    /// <summary>
-    /// Defines the requirements for a workspace.
-    /// </summary>
-    public partial interface IWorkspace : ISerializable, IEquatable<IWorkspace> {
-        /// <summary>
-        /// Gets or sets the unique ID.
-        /// </summary>
-        Guid ID {
+namespace Dev2.Workspaces
+{
+    public interface IWorkspace : ISerializable
+    {
+        Guid ID
+        {
             get;
         }
 
-
-        /// <summary>
-        /// Gets the items for this workspace.
-        /// </summary>
-        IList<IWorkspaceItem> Items {
+        IList<IWorkspaceItem> Items
+        {
             get;
         }
     }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,9 +15,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
-using Dev2.DataList.Contract;
-using Dev2.Runtime.Hosting;
+using Dev2.Data.TO;
+using Dev2.Data.Util;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.Security;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Security;
@@ -27,7 +26,12 @@ using Newtonsoft.Json;
 namespace Dev2.Runtime.ServiceModel
 {
     // PBI 1220 - 2013.05.20 - TWR - Created
-    public class WebServices : Services
+    public interface IWebServices
+    {
+        void TestWebService(WebService service);
+    }
+
+    public class WebServices : Services, IWebServices
     {
         static readonly WebExecuteString DefaultWebExecute = WebSources.Execute;
         readonly WebExecuteString _webExecute = DefaultWebExecute;
@@ -54,12 +58,10 @@ namespace Dev2.Runtime.ServiceModel
 
         #region DeserializeService
 
-        protected override Service DeserializeService(string args)
-        {
-            return JsonConvert.DeserializeObject<WebService>(args);
-        }
 
-        protected override Service DeserializeService(XElement xml, ResourceType resourceType)
+        protected virtual Service DeserializeService(string args) => JsonConvert.DeserializeObject<WebService>(args);
+
+        protected virtual Service DeserializeService(XElement xml, string resourceType)
         {
             return xml == null ? new WebService() : new WebService(xml);
         }
@@ -68,6 +70,7 @@ namespace Dev2.Runtime.ServiceModel
 
         #region Test
 
+    
         public WebService Test(string args, Guid workspaceId, Guid dataListId)
         {
             var service = new WebService();
@@ -75,10 +78,9 @@ namespace Dev2.Runtime.ServiceModel
             {
                 service = JsonConvert.DeserializeObject<WebService>(args);
 
-                if(string.IsNullOrEmpty(service.RequestResponse))
+                if (string.IsNullOrEmpty(service.RequestResponse))
                 {
-                    ErrorResultTO errors;
-                    ExecuteRequest(service, true, out errors, _webExecute);
+                    ExecuteRequest(service, true, out ErrorResultTO errors, _webExecute);
                     ((WebSource)service.Source).DisposeClient();
                 }
 
@@ -86,7 +88,7 @@ namespace Dev2.Runtime.ServiceModel
                 service.RequestMessage = string.Empty;
                 service.JsonPathResult = string.Empty;
 
-                if(service.RequestResponse.IsJSON() && String.IsNullOrEmpty(service.JsonPath))
+                if (service.RequestResponse.IsJSON() && String.IsNullOrEmpty(service.JsonPath))
                 {
                     service.ApplyPath();
                     // we need to timeout this request after 10 seconds due to nasty pathing issues ;)
@@ -100,12 +102,9 @@ namespace Dev2.Runtime.ServiceModel
                     jsonMapTask.Start();
                     jsonMapTask.Wait(10000);
 
-                    if(!jsonMapTask.IsCompleted)
+                    if (!jsonMapTask.IsCompleted)
                     {
-                        if(jsonMapTaskThread != null)
-                        {
-                            jsonMapTaskThread.Abort();
-                        }
+                        jsonMapTaskThread?.Abort();
 
                         service.Recordsets = preTestRsData;
                         service.RequestMessage = GlobalConstants.WebServiceTimeoutMessage;
@@ -119,10 +118,10 @@ namespace Dev2.Runtime.ServiceModel
                 }
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 RaiseError(ex);
-                if(service.Recordsets.Count > 0)
+                if (service.Recordsets.Count > 0)
                 {
                     service.Recordsets[0].HasErrors = true;
                     service.Recordsets[0].ErrorMessage = ex.Message;
@@ -133,6 +132,7 @@ namespace Dev2.Runtime.ServiceModel
             return service;
         }
 
+    
         public WebService ApplyPath(string args, Guid workspaceId, Guid dataListId)
         {
             var service = new WebService();
@@ -145,10 +145,10 @@ namespace Dev2.Runtime.ServiceModel
                 service.Recordsets = FetchRecordset(service, true);
                 service.RequestResponse = oldResult;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 RaiseError(ex);
-                if(service.Recordsets.Count > 0)
+                if (service.Recordsets.Count > 0)
                 {
                     service.Recordsets[0].HasErrors = true;
                     service.Recordsets[0].ErrorMessage = ex.Message;
@@ -171,29 +171,70 @@ namespace Dev2.Runtime.ServiceModel
 
         public static void ExecuteRequest(WebService service, bool throwError, out ErrorResultTO errors, WebExecuteString webExecute)
         {
-            var requestHeaders = SetParameters(service.Method.Parameters, service.RequestHeaders);
-            var headers = string.IsNullOrEmpty(requestHeaders)
-                              ? new string[0]
-                              : requestHeaders.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
+            var headers = new List<string>();
+            if (service.Headers !=null)
+            {
+                headers.AddRange(service.Headers.Select(nameValue => nameValue.Name + ":" + SetParameters(service.Method.Parameters, nameValue.Value)).ToList());
+            }
             var requestUrl = SetParameters(service.Method.Parameters, service.RequestUrl);
             var requestBody = SetParameters(service.Method.Parameters, service.RequestBody);
-            service.RequestResponse = webExecute(service.Source as WebSource, service.RequestMethod, requestUrl, requestBody, throwError, out errors, headers);
-            if(!String.IsNullOrEmpty(service.JsonPath))
+            service.RequestResponse = webExecute?.Invoke(service.Source as WebSource, service.RequestMethod, requestUrl, requestBody, throwError, out errors, headers.ToArray());
+            if (!String.IsNullOrEmpty(service.JsonPath))
             {
                 service.ApplyPath();
             }
+            errors = new ErrorResultTO();
         }
 
         #endregion
 
         #region SetParameters
 
-        static string SetParameters(IEnumerable<MethodParameter> parameters, string s)
-        {
-            return parameters.Aggregate(s ?? "", (current, parameter) => current.Replace("[[" + parameter.Name + "]]", parameter.Value));
-        }
+        static string SetParameters(IEnumerable<MethodParameter> parameters, string s) => parameters.Aggregate(s ?? "", (current, parameter) => current.Replace(DataListUtil.AddBracketsToValueIfNotExist(parameter.Name), parameter.Value));
 
         #endregion
+
+        public void TestWebService(WebService service)
+        {
+            if (string.IsNullOrEmpty(service.RequestResponse))
+            {
+                ExecuteRequest(service, true, out ErrorResultTO errors, _webExecute);
+                ((WebSource)service.Source).DisposeClient();
+            }
+
+            var preTestRsData = service.Recordsets;
+            service.RequestMessage = string.Empty;
+            service.JsonPathResult = string.Empty;
+
+            if (service.RequestResponse.IsJSON() && String.IsNullOrEmpty(service.JsonPath))
+            {
+                service.ApplyPath();
+                // we need to timeout this request after 10 seconds due to nasty pathing issues ;)
+                Thread jsonMapTaskThread = null;
+                var jsonMapTask = new Task(() =>
+                {
+                    jsonMapTaskThread = Thread.CurrentThread;
+                    service.Recordsets = FetchRecordset(service, true);
+                });
+
+                jsonMapTask.Start();
+                jsonMapTask.Wait(10000);
+
+                if (!jsonMapTask.IsCompleted)
+                {
+                    jsonMapTaskThread?.Abort();
+
+                    service.Recordsets = preTestRsData;
+                    service.RequestMessage = GlobalConstants.WebServiceTimeoutMessage;
+                }
+
+                jsonMapTask.Dispose();
+            }
+            else
+            {
+                service.Recordsets = FetchRecordset(service, true);
+            }
+        }
 
     }
 

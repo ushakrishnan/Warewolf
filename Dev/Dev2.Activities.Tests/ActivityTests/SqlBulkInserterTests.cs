@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +18,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     [TestClass]
     public class SqlBulkInserterTests
     {
-        // ReSharper disable InconsistentNaming
+        
 
         [TestMethod]
         [Owner("Travis Frisinger")]
@@ -42,9 +41,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var bulkInserter = new SqlBulkInserter();
-            Mock<ISqlBulkCopy> bulkCopy = new Mock<ISqlBulkCopy>();
+            var bulkCopy = new Mock<ISqlBulkCopy>();
             bulkCopy.Setup(b => b.WriteToServer(It.IsAny<DataTable>())).Returns(true);
-            DataTable dt = new DataTable("myTable");
+            var dt = new DataTable("myTable");
 
             //------------Execute Test---------------------------
             var result = bulkInserter.Insert(bulkCopy.Object, dt);
@@ -60,9 +59,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var bulkInserter = new SqlBulkInserter();
-            Mock<ISqlBulkCopy> bulkCopy = new Mock<ISqlBulkCopy>();
+            var bulkCopy = new Mock<ISqlBulkCopy>();
             bulkCopy.Setup(b => b.WriteToServer(It.IsAny<DataTable>())).Returns(false);
-            DataTable dt = new DataTable("myTable");
+            var dt = new DataTable("myTable");
 
             //------------Execute Test---------------------------
             var result = bulkInserter.Insert(bulkCopy.Object, dt);
@@ -78,11 +77,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var bulkInserter = new SqlBulkInserter();
-            Mock<ISqlBulkCopy> bulkCopy = new Mock<ISqlBulkCopy>();
+            var bulkCopy = new Mock<ISqlBulkCopy>();
             bulkCopy.Setup(b => b.WriteToServer(It.IsAny<DataTable>())).Returns(false);
 
             //------------Execute Test---------------------------
-            var result = bulkInserter.Insert(bulkCopy.Object, (DataTable)null);
+            var result = bulkInserter.Insert(bulkCopy.Object, null);
 
             //------------Assert Results-------------------------
             Assert.IsFalse(result);
@@ -92,6 +91,6 @@ namespace Dev2.Tests.Activities.ActivityTests
 
 
 
-        // ReSharper restore InconsistentNaming
+
     }
 }

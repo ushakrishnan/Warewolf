@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -18,219 +17,203 @@ using System.Linq;
 using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
+using Dev2.Common;
 using Dev2.Common.Interfaces.Core.Convertors.Case;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Comparer;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Dev2.Validation;
-using Warewolf.Storage;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
+using Warewolf.Storage.Interfaces;
+using Dev2.Activities.Factories.Case;
+using Dev2.Common.State;
+using Dev2.Utilities;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
 {
-    public class DsfCaseConvertActivity : DsfActivityAbstract<string>, ICollectionActivity
+    [ToolDescriptorInfo("Data-CaseConversion", "Case Convert", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Case_Convert")]
+    public class DsfCaseConvertActivity : DsfActivityAbstract<string>, ICollectionActivity, IEquatable<DsfCaseConvertActivity>
     {
-        #region Properties
-
         public IList<ICaseConvertTO> ConvertCollection { get; set; }
 
-        #endregion Properties
-
-        #region Ctor
-
-        /// <summary>
-        /// The consructor for the activity 
-        /// </summary>
         public DsfCaseConvertActivity()
             : base("Case Conversion")
         {
             ConvertCollection = new List<ICaseConvertTO>();
         }
 
-        #endregion Ctor
+        protected override void CacheMetadata(NativeActivityMetadata metadata) => base.CacheMetadata(metadata);
 
-        #region Overridden NativeActivity Methods
-
-        // ReSharper disable RedundantOverridenMember
-        protected override void CacheMetadata(NativeActivityMetadata metadata)
-        {
-            base.CacheMetadata(metadata);
-        }
-        // ReSharper restore RedundantOverridenMember
-
-        /// <summary>
-        /// The execute method that is called when the activity is executed at run time and will hold all the logic of the activity
-        /// </summary>       
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
-
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var errors = new ErrorResultTO();
             var env = dataObject.Environment;
             InitializeDebug(dataObject);
             try
             {
-                CleanArgs();
-
-                allErrors.MergeErrors(errors);
-
-                int inputIndex = 1;
-                int outputIndex = 1;
-
-                foreach(ICaseConvertTO item in ConvertCollection.Where(a => !String.IsNullOrEmpty(a.StringToConvert)))
-                {
-                    IsSingleValueRule.ApplyIsSingleValueRule(item.ExpressionToConvert, allErrors);
-                    if(dataObject.IsDebugMode())
-                    {
-                        var debugItem = new DebugItem();
-                        AddDebugItem(new DebugItemStaticDataParams("", inputIndex.ToString(CultureInfo.InvariantCulture)), debugItem);
-                        AddDebugItem(new DebugEvalResult(item.StringToConvert, "Convert", env, update), debugItem);
-                        AddDebugItem(new DebugItemStaticDataParams(item.ConvertType, "To"), debugItem);
-                        _debugInputs.Add(debugItem);
-                        inputIndex++;
-                    }
-                    if(!allErrors.HasErrors())
-                    {
-                        try
-                        {
-                            env.ApplyUpdate(item.StringToConvert, TryConvertFunc(item, env, update), update);
-                        }
-                        catch(Exception e)
-                        {
-                            allErrors.AddError(e.Message);
-                        }
-
-                        if(!allErrors.HasErrors() && dataObject.IsDebugMode())
-                        {
-                            var debugItem = new DebugItem();
-                            AddDebugItem(new DebugItemStaticDataParams("", outputIndex.ToString(CultureInfo.InvariantCulture)), debugItem);
-                            AddDebugItem(new DebugEvalResult(item.StringToConvert, "", env, update), debugItem);
-                            _debugOutputs.Add(debugItem);
-                            outputIndex++;
-                        }
-                    }
-                }
+                TryExecute(dataObject, update, allErrors, errors, env);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 allErrors.AddError(e.Message);
             }
             finally
             {
-                // Handle Errors
-                var hasErrors = allErrors.HasErrors();
-                if(hasErrors)
+                HandleErrors(dataObject, update, allErrors);
+            }
+        }
+
+        private void TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, ErrorResultTO errors, IExecutionEnvironment env)
+        {
+            CleanArgs();
+
+            allErrors.MergeErrors(errors);
+
+            var inputIndex = 1;
+            var outputIndex = 1;
+
+            foreach (ICaseConvertTO item in ConvertCollection.Where(a => !String.IsNullOrEmpty(a.StringToConvert)))
+            {
+                IsSingleValueRule.ApplyIsSingleValueRule(item.ExpressionToConvert, allErrors);
+                if (dataObject.IsDebugMode())
                 {
-                    DisplayAndWriteError("DsfCaseConvertActivity", allErrors);
-                    var errorString = allErrors.MakeDisplayReady();
-                    dataObject.Environment.AddError(errorString);
+                    var debugItem = new DebugItem();
+                    AddDebugItem(new DebugItemStaticDataParams("", inputIndex.ToString(CultureInfo.InvariantCulture)), debugItem);
+                    AddDebugItem(new DebugEvalResult(item.StringToConvert, "Convert", env, update), debugItem);
+                    AddDebugItem(new DebugItemStaticDataParams(item.ConvertType, "To"), debugItem);
+                    _debugInputs.Add(debugItem);
+                    inputIndex++;
                 }
-                if(dataObject.IsDebugMode())
+                if (!allErrors.HasErrors())
                 {
-                    DispatchDebugState(dataObject, StateType.Before, update);
-                    DispatchDebugState(dataObject, StateType.After, update);
+                    try
+                    {
+                        env.ApplyUpdate(item.StringToConvert, TryConvertFunc(item, env, update), update);
+                    }
+                    catch (Exception e)
+                    {
+                        allErrors.AddError(e.Message);
+                    }
+
+                    if (!allErrors.HasErrors() && dataObject.IsDebugMode())
+                    {
+                        var debugItem = new DebugItem();
+                        AddDebugItem(new DebugItemStaticDataParams("", outputIndex.ToString(CultureInfo.InvariantCulture)), debugItem);
+                        AddDebugItem(new DebugEvalResult(item.StringToConvert, "", env, update), debugItem);
+                        _debugOutputs.Add(debugItem);
+                        outputIndex++;
+                    }
                 }
             }
         }
 
-        private Func<DataASTMutable.WarewolfAtom,DataASTMutable.WarewolfAtom> TryConvertFunc(ICaseConvertTO conversionType,IExecutionEnvironment env,int update)
+        void HandleErrors(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            var hasErrors = allErrors.HasErrors();
+            if (hasErrors)
+            {
+                DisplayAndWriteError(nameof(DsfCaseConvertActivity), allErrors);
+                var errorString = allErrors.MakeDisplayReady();
+                dataObject.Environment.AddError(errorString);
+            }
+            if (dataObject.IsDebugMode())
+            {
+                DispatchDebugState(dataObject, StateType.Before, update);
+                DispatchDebugState(dataObject, StateType.After, update);
+            }
+        }
+
+        static Func<DataStorage.WarewolfAtom, DataStorage.WarewolfAtom> TryConvertFunc(ICaseConvertTO conversionType, IExecutionEnvironment env, int update)
         {
             var convertFunct = CaseConverter.GetFuncs();
-            Func<string, string> returnedFunc;
 
-            if (convertFunct.TryGetValue(conversionType.ConvertType, out returnedFunc))
+            if (convertFunct.TryGetValue(conversionType.ConvertType, out Func<string, string> returnedFunc) && returnedFunc != null)
             {
-                if (returnedFunc != null)
+                return a =>
                 {
-                    return a=>
+                    var upper = returnedFunc.Invoke(a.ToString());
+                    var evalled = env.Eval(upper, update);
+
+                    if (evalled.IsWarewolfAtomResult)
                     {
-                        var upper = returnedFunc.Invoke(a.ToString());
-                        var evalled = env.Eval(upper, update);
-                    
-                        if(evalled.IsWarewolfAtomResult)
+                        if (evalled is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult warewolfAtomResult)
                         {
-                            var warewolfAtomResult = evalled as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomResult;
-                            if(warewolfAtomResult != null)
-                            {
-
-                                return warewolfAtomResult.Item;
-                            }
-                            return DataASTMutable.WarewolfAtom.Nothing;
+                            return warewolfAtomResult.Item;
                         }
+                        return DataStorage.WarewolfAtom.Nothing;
+                    }
 
-                        return DataASTMutable.WarewolfAtom.NewDataString(  WarewolfDataEvaluationCommon.EvalResultToString(evalled));
-                    };
-                }
+                    return DataStorage.WarewolfAtom.NewDataString(CommonFunctions.evalResultToString(evalled));
+                };
             }
-            throw  new Exception("Convert option does not exist");
+            throw new Exception(ErrorResource.ConvertOptionDoesNotExist);
         }
 
-        
 
-        public override enFindMissingType GetFindMissingType()
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
+
+        void BuildStringToConvert(int i, List<string> targetList, List<string> resultList)
         {
-            return enFindMissingType.DataGridActivity;
+            ConvertCollection[i].StringToConvert = targetList[0];
+            ConvertCollection[i].Result = resultList[0];
+            var canidateResult = resultList[0];
+            for (var q = 1; q < targetList.Count; q++)
+            {
+                var pos = ConvertCollection.Count + 1;
+
+                // now process all new results ;)
+                // we always keep the last value in-case we run out of indexes
+                // as they do not have to balance ;)
+                if (q < resultList.Count)
+                {
+                    canidateResult = resultList[q];
+                }
+
+                ConvertCollection.Add(new CaseConvertTO(targetList[q], ConvertCollection[i].ConvertType, canidateResult, pos));
+            }
         }
 
-        #endregion
-
-        #region Private Methods
-
-        private List<string> BreakIntoTokens(string value)
+        List<string> BreakIntoTokens(string value)
         {
             var parts = value.Split(',');
             var result = parts.Select(r => r.Trim()).ToList();
             return result;
         }
 
-        private void CleanArgs()
+        void CleanArgs()
         {
-            ICaseConvertTO[] workItems = new ICaseConvertTO[ConvertCollection.Count];
+            var workItems = new ICaseConvertTO[ConvertCollection.Count];
             ConvertCollection.CopyTo(workItems, 0);
 
-            // ReSharper disable ForCanBeConvertedToForeach
-            for(var i = 0; i < workItems.Length; i++)
-            // ReSharper restore ForCanBeConvertedToForeach
+
+            for (var i = 0; i < workItems.Length; i++)
+
             {
                 var convertResult = workItems[i].Result;
                 var convertTarget = workItems[i].StringToConvert;
 
-                if(!string.IsNullOrEmpty(convertTarget) && !string.IsNullOrEmpty(convertResult))
+                if (!string.IsNullOrEmpty(convertTarget) && !string.IsNullOrEmpty(convertResult))
                 {
                     var targetList = BreakIntoTokens(convertTarget);
                     var resultList = BreakIntoTokens(convertResult);
 
                     // now add them back together
-                    if(targetList.Count > 0 && resultList.Count > 0)
+                    if (targetList.Count > 0 && resultList.Count > 0)
                     {
                         // build up the StringToConvert section ;)
                         // existing record
-                        ConvertCollection[i].StringToConvert = targetList[0];
-                        ConvertCollection[i].Result = resultList[0];
-                        var canidateResult = resultList[0];
-                        for(var q = 1; q < targetList.Count; q++)
-                        {
-                            var pos = ConvertCollection.Count + 1;
-
-                            // now process all new results ;)
-                            // we always keep the last value in-case we run out of indexes 
-                            // as they do not have to balance ;)
-                            if(q < resultList.Count)
-                            {
-                                canidateResult = resultList[q];
-                            }
-
-                            ConvertCollection.Add(new CaseConvertTO(targetList[q], ConvertCollection[i].ConvertType, canidateResult, pos));
-                        }
+                        BuildStringToConvert(i, targetList, resultList);
                     }
                 }
                 else
@@ -238,80 +221,89 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     ConvertCollection.RemoveAt(i);
                 }
             }
-
         }
 
-        private void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
+        void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties["ConvertCollection"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                ModelItemCollection mic = modelProperty.Collection;
+                var mic = modelProperty.Collection;
 
-                if(mic != null)
+                if (mic != null)
                 {
-                    List<ICaseConvertTO> listOfValidRows = ConvertCollection.Where(c => !c.CanRemove()).ToList();
-                    if(listOfValidRows.Count > 0)
-                    {
-                        int startIndex = ConvertCollection.IndexOf(listOfValidRows.Last()) + 1;
-                        foreach(string s in listToAdd)
-                        {
-                            mic.Insert(startIndex, new CaseConvertTO(s, ConvertCollection[startIndex - 1].ConvertType, s, startIndex + 1));
-                            startIndex++;
-                        }
-                        CleanUpCollection(mic, modelItem, startIndex);
-                    }
-                    else
-                    {
-                        AddToCollection(listToAdd, modelItem);
-                    }
+                    AddToConvertCollection(listToAdd, modelItem, mic);
                 }
             }
         }
 
-        private void AddToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
+        private void AddToConvertCollection(IEnumerable<string> listToAdd, ModelItem modelItem, ModelItemCollection mic)
+        {
+            var listOfValidRows = ConvertCollection.Where(c => !c.CanRemove()).ToList();
+            if (listOfValidRows.Count > 0)
+            {
+                var startIndex = ConvertCollection.IndexOf(listOfValidRows.Last()) + 1;
+                foreach (string s in listToAdd)
+                {
+                    mic.Insert(startIndex, new CaseConvertTO(s, ConvertCollection[startIndex - 1].ConvertType, s, startIndex + 1));
+                    startIndex++;
+                }
+                CleanUpCollection(mic, modelItem, startIndex);
+            }
+            else
+            {
+                AddToCollection(listToAdd, modelItem);
+            }
+        }
+
+        void AddToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties["ConvertCollection"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                ModelItemCollection mic = modelProperty.Collection;
+                var mic = modelProperty.Collection;
 
-                if(mic != null)
+                if (mic != null)
                 {
-                    int startIndex = 0;
-                    string firstRowConvertType = ConvertCollection[0].ConvertType;
+                    var startIndex = 0;
+                    var firstRowConvertType = ConvertCollection[0].ConvertType;
                     mic.Clear();
-                    foreach(string s in listToAdd)
+                    foreach (string s in listToAdd)
                     {
-                        mic.Add(new CaseConvertTO(s, firstRowConvertType, s, startIndex + 1));
+                        mic.Insert(startIndex, new CaseConvertTO(s, firstRowConvertType, s, startIndex + 1));
                         startIndex++;
                     }
                     CleanUpCollection(mic, modelItem, startIndex);
                 }
+                else
+                {
+                    AddToCollection(listToAdd, modelItem);
+                }
             }
         }
 
-        private void CleanUpCollection(ModelItemCollection mic, ModelItem modelItem, int startIndex)
+
+        void CleanUpCollection(ModelItemCollection mic, ModelItem modelItem, int startIndex)
         {
-            if(startIndex < mic.Count)
+            if (startIndex < mic.Count)
             {
                 mic.RemoveAt(startIndex);
             }
             mic.Add(new CaseConvertTO(string.Empty, "UPPER", string.Empty, startIndex + 1));
             var modelProperty = modelItem.Properties["DisplayName"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
                 modelProperty.SetValue(CreateDisplayName(modelItem, startIndex + 1));
             }
         }
 
-        private string CreateDisplayName(ModelItem modelItem, int count)
+        string CreateDisplayName(ModelItem modelItem, int count)
         {
             var modelProperty = modelItem.Properties["DisplayName"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }
@@ -322,43 +314,34 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return string.Empty;
         }
 
-        #endregion Private Methods
-
-        #region Get Debug Inputs/Outputs
-
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment environment, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
-            foreach(IDebugItem debugInput in _debugInputs)
+            foreach (IDebugItem debugInput in _debugInputs)
             {
                 debugInput.FlushStringBuilder();
             }
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment environment, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
-            foreach(IDebugItem debugOutput in _debugOutputs)
+            foreach (IDebugItem debugOutput in _debugOutputs)
             {
                 debugOutput.FlushStringBuilder();
             }
             return _debugOutputs;
         }
 
-
-        #endregion
-
-        #region Get ForEach Inputs/Outputs
-
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            foreach(Tuple<string, string> t in updates)
+            foreach (Tuple<string, string> t in updates)
             {
                 // locate all updates for this tuple
-                Tuple<string, string> t1 = t;
+                var t1 = t;
                 var items = ConvertCollection.Where(c => !string.IsNullOrEmpty(c.StringToConvert) && c.StringToConvert.Contains(t1.Item1));
 
                 // issues updates
-                foreach(var a in items)
+                foreach (var a in items)
                 {
                     a.StringToConvert = a.StringToConvert.Replace(t.Item1, t.Item2);
                 }
@@ -367,35 +350,27 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-
-            foreach(Tuple<string, string> t in updates)
+            foreach (Tuple<string, string> t in updates)
             {
-
                 // locate all updates for this tuple
-                Tuple<string, string> t1 = t;
+                var t1 = t;
                 var items = ConvertCollection.Where(c => !string.IsNullOrEmpty(c.Result) && c.Result.Contains(t1.Item1));
 
                 // issues updates
-                foreach(var a in items)
+                foreach (var a in items)
                 {
                     a.Result = a.Result.Replace(t.Item1, t.Item2);
                 }
             }
         }
 
-        #endregion
-
-        #region GetForEachInputs/Outputs
-
         public override IList<DsfForEachItem> GetForEachInputs()
         {
             var result = new List<DsfForEachItem>();
 
-            // ReSharper disable LoopCanBeConvertedToQuery
-            foreach(var item in ConvertCollection)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            foreach (var item in ConvertCollection)
             {
-                if(!string.IsNullOrEmpty(item.StringToConvert) && item.StringToConvert.Contains("[["))
+                if (!string.IsNullOrEmpty(item.StringToConvert) && item.StringToConvert.Contains("[["))
                 {
                     result.Add(new DsfForEachItem { Name = item.StringToConvert, Value = item.Result });
                 }
@@ -407,32 +382,21 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         public override IList<DsfForEachItem> GetForEachOutputs()
         {
             var result = new List<DsfForEachItem>();
-
-            // ReSharper disable LoopCanBeConvertedToQuery
-            foreach(var item in ConvertCollection)
-            // ReSharper restore LoopCanBeConvertedToQuery
+            foreach (var item in ConvertCollection)
             {
-                if(!string.IsNullOrEmpty(item.StringToConvert) && item.StringToConvert.Contains("[["))
+                if (!string.IsNullOrEmpty(item.StringToConvert) && item.StringToConvert.Contains("[["))
                 {
                     result.Add(new DsfForEachItem { Name = item.Result, Value = item.StringToConvert });
                 }
             }
-
             return result;
         }
 
-        #endregion
-
-        #region Implementation of ICollectionActivity
-
-        public int GetCollectionCount()
-        {
-            return ConvertCollection.Count(caseConvertTo => !caseConvertTo.CanRemove());
-        }
+        public int GetCollectionCount() => ConvertCollection.Count(caseConvertTo => !caseConvertTo.CanRemove());
 
         public void AddListToCollection(IList<string> listToAdd, bool overwrite, ModelItem modelItem)
         {
-            if(!overwrite)
+            if (!overwrite)
             {
                 InsertToCollection(listToAdd, modelItem);
             }
@@ -442,6 +406,64 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        #endregion
+        public override List<string> GetOutputs() => ConvertCollection.Select(to => to.Result).ToList();
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name="Convert Collection",
+                    Type= StateVariable.StateType.InputOutput,
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(ConvertCollection)
+                }
+            };
+        }
+
+        public bool Equals(DsfCaseConvertActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var collectionEquals = CommonEqualityOps.CollectionEquals(ConvertCollection, other.ConvertCollection, new CaseConvertToComparer());
+            
+            return base.Equals(other) && collectionEquals;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfCaseConvertActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (ConvertCollection != null ? ConvertCollection.GetHashCode() : 0);
+            }
+        }
     }
 }

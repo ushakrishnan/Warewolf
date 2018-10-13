@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,9 @@ using System.Activities;
 using System.Collections.Generic;
 using Dev2.Activities;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
+using Dev2.Interfaces;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Tests.Activities.ActivityTests
@@ -22,7 +24,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     {
 
         public TestActivity()
-            : this(null)
+            : this(new Mock<IDebugDispatcher>().Object)
         {
         }
 
@@ -35,10 +37,24 @@ namespace Dev2.Tests.Activities.ActivityTests
             IsSimulationEnabled = false;
         }
 
+        public override List<string> GetOutputs()
+        {
+            return new List<string>();
+        }
         public Guid UniqueGuid { get; private set; }
+        public bool ErrorExecute { get; set; }
 
         protected override void OnExecute(NativeActivityContext context)
         {
+            if (ErrorExecute)
+            {
+                throw new Exception("Error in execution");
+            }
+        }
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
         }
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
@@ -68,7 +84,28 @@ namespace Dev2.Tests.Activities.ActivityTests
         public IDebugState TestInitializeDebugState(StateType stateType, IDSFDataObject dataObject, Guid remoteID, bool hasError, string errorMessage)
         {
             InitializeDebugState(stateType, dataObject, remoteID, hasError, errorMessage);
+            return GetDebugState();
+        }
+
+        public IDebugState TestDispatchDebugState(IDSFDataObject dataObject, StateType stateType)
+        {
+            DispatchDebugState(dataObject, stateType,0);
             return DebugState;
         }
+
+        public bool Equals(TestActivity other)
+        {
+            return ReferenceEquals(this, other);
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is TestActivity instance)
+            {
+                return Equals(instance);
+            }
+            return false;
+        }
     }
+
+    
 }

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,8 +16,8 @@ namespace Dev2.TaskScheduler.Wrappers
 {
     public class Dev2Trigger : ITrigger
     {
-        private readonly Trigger _instance;
-        private readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
+        readonly Trigger _instance;
+        readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
 
         public Dev2Trigger(ITaskServiceConvertorFactory taskServiceConvertorFactory, Trigger instance)
         {
@@ -28,13 +28,16 @@ namespace Dev2.TaskScheduler.Wrappers
         public void Dispose()
         {
             Instance.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-
-        public Trigger Instance
+        protected virtual void Dispose(bool disposing)
         {
-            get { return _instance; }
+            // Cleanup
         }
+
+        public Trigger Instance => _instance;
 
         public bool Enabled
         {
@@ -60,10 +63,7 @@ namespace Dev2.TaskScheduler.Wrappers
             set { Instance.Id = value; }
         }
 
-        public IRepetitionPattern Repetition
-        {
-            get { return _taskServiceConvertorFactory.CreateRepetitionPattern(Instance.Repetition); }
-        }
+        public IRepetitionPattern Repetition => _taskServiceConvertorFactory.CreateRepetitionPattern(Instance.Repetition);
 
         public DateTime StartBoundary
         {
@@ -71,10 +71,7 @@ namespace Dev2.TaskScheduler.Wrappers
             set { Instance.StartBoundary = value; }
         }
 
-        public TaskTriggerType TriggerType
-        {
-            get { return Instance.TriggerType; }
-        }
+        public TaskTriggerType TriggerType => Instance.TriggerType;
 
         public override string ToString()
         {

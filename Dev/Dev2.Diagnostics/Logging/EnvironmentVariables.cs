@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,24 +13,15 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Common
-// ReSharper restore CheckNamespace
 {
-    /// <summary>
-    /// Environment Variables to be used in the Server
-    /// </summary>
     public static class EnvironmentVariables
     {
 
-        private static string _appPath;
+        static string _appPath;
+        static readonly string DataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create), "Warewolf");
 
-        /// <summary>
-        /// Gets the application path.
-        /// </summary>
-        /// <value>
-        /// The application path.
-        /// </value>
         public static string ApplicationPath
         {
             get
@@ -47,7 +37,7 @@ namespace Dev2.Common
                     }
                     catch (Exception e)
                     {
-                        Dev2Logger.Log.Info("ApplicationPath Error -> " + e.Message);
+                        Dev2Logger.Info("ApplicationPath Error -> " + e.Message, GlobalConstants.WarewolfInfo);
                         _appPath = Directory.GetCurrentDirectory(); // fail safe ;)
                     }
 
@@ -61,89 +51,173 @@ namespace Dev2.Common
         {
             get
             {
-
-                return Path.Combine(ApplicationPath, "Resources");
-              
+                var resourcePath = Path.Combine(AppDataPath, "Resources");
+                return resourcePath;
             }
         }
 
-        /// <summary>
-        /// Gets the workspace path.
-        /// </summary>
-        /// <value>
-        /// The workspace path.
-        /// </value>
+        public static string VersionsPath
+        {
+            get
+            {
+                var versionsPath = Path.Combine(AppDataPath, "VersionControl");
+                if (!Directory.Exists(versionsPath))
+                {
+                    Directory.CreateDirectory(versionsPath);
+                }
+                return versionsPath;
+            }
+        }
+        public static string TestPath
+        {
+            get
+            {
+                var resourcePath = Path.Combine(AppDataPath, "Tests");
+                return resourcePath;
+            }
+        }
+        public static string DetailLogPath
+        {
+            get
+            {
+                var resourcePath = Path.Combine(AppDataPath, "DetailedLogs");
+                if (!Directory.Exists(resourcePath))
+                {
+                    Directory.CreateDirectory(resourcePath);
+                }
+                return resourcePath;
+            }
+        }
+
+        public static string DetailedLogsArchives
+        {
+            get
+            {
+                var resourcePath = Path.Combine(AppDataPath, DetailLogPath, "Archives");
+                if (!Directory.Exists(resourcePath))
+                {
+                    Directory.CreateDirectory(resourcePath);
+                }
+                return resourcePath;
+            }
+        }
+        public static string WorkflowDetailLogPath(Guid Id, string name)
+        {
+            var wfDetailedLogPath = Path.Combine($"{DetailLogPath}", string.Format("{0}_{1}", Id, name));
+            if (!Directory.Exists(wfDetailedLogPath))
+            {
+                Directory.CreateDirectory(wfDetailedLogPath);
+            }
+            return wfDetailedLogPath;
+        }
+        public static string WorkflowDetailLogArchivePath(Guid Id, string name)
+        {
+            return Path.Combine($"{DetailedLogsArchives}", string.Format("{0}_{1}.zip", Id, string.IsNullOrEmpty(name) ? "" : name));
+        }
+        public static string AppDataPath
+        {
+            get
+            {
+                if (!Directory.Exists(DataPath))
+                {
+                    Directory.CreateDirectory(DataPath);
+                }
+                return DataPath;
+            }
+        }
+
+        public static string ServerSettingsFolder
+        {
+            get
+            {
+                var serverSettingsFolder = Path.Combine(AppDataPath, "Server Settings");
+                if (!Directory.Exists(serverSettingsFolder))
+                {
+                    Directory.CreateDirectory(serverSettingsFolder);
+                }
+                return serverSettingsFolder;
+            }
+        }
+
+        public static string ServerLogSettingsFile
+        {
+            get
+            {
+                var serverLogSettings = Path.Combine(ServerSettingsFolder, "Settings.config");
+                return serverLogSettings;
+            }
+        }
+
+        public static string ServerPerfmonSettingsFile
+        {
+            get
+            {
+                var serverLogSettings = Path.Combine(ServerSettingsFolder, "Perfmon.config");
+                return serverLogSettings;
+            }
+        }
+        public static string ServerResourcePerfmonSettingsFile
+        {
+            get
+            {
+                var serverLogSettings = Path.Combine(ServerSettingsFolder, "ResourcesPerfmon.config");
+                return serverLogSettings;
+            }
+        }
+
+        public static string ServerSecuritySettingsFile
+        {
+            get
+            {
+                var severSecurityFile = Path.Combine(ServerSettingsFolder, "secure.config");
+                return severSecurityFile;
+            }
+        }
+
+        public static string ServerLogFile => Path.Combine(AppDataPath, "Server Log", "warewolf-Server.log");
+
         public static string WorkspacePath
         {
             get
             {
-                return Path.Combine(ApplicationPath, "Workspaces");
+                var workspacePath = Path.Combine(AppDataPath, "Workspaces");
+                if (!Directory.Exists(workspacePath))
+                {
+                    Directory.CreateDirectory(workspacePath);
+                }
+                return workspacePath;
             }
         }
 
-        /// <summary>
-        /// Gets the workspace path.
-        /// </summary>
-        /// <param name="workspaceID">The workspace ID.</param>
-        /// <returns></returns>
-        public static string GetWorkspacePath(Guid workspaceID)
-        {
-            return workspaceID == Guid.Empty
-                       ? Path.Combine(ApplicationPath, "Resources")
-                       : Path.Combine( Path.Combine(WorkspacePath, workspaceID.ToString()),"Resources");
-        }
+        public static string GetWorkspacePath(Guid workspaceID) => workspaceID == Guid.Empty
+                       ? Path.Combine(AppDataPath, "Resources")
+                       : Path.Combine(Path.Combine(WorkspacePath, workspaceID.ToString()), "Resources");
 
         public static bool IsServerOnline { get; set; }
 
-        private static string _rootPath;
-        /// <summary>
-        /// Gets the root persistence path.
-        /// </summary>
-        /// <value>
-        /// The root persistence path.
-        /// </value>
-        public static string RootPersistencePath
-        {
-            get
-            {
-                return _rootPath ?? (_rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Warewolf"));
-            }
-        }
+        static string _rootPath;
 
+        public static string RootPersistencePath => _rootPath ?? (_rootPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Warewolf"));
 
-        /// <summary>
-        /// Gets the encoding for character maps.
-        /// </summary>
-        /// <param></param>
-        /// <returns name="Encoding"></returns>
         public struct CharacterMap
         {
-            public static Encoding DefaultEncoding = Encoding.ASCII;
-            public static int LettersStartNumber = 97;
-            public static int LettersLength = 26;
+            public static readonly Encoding DefaultEncoding = Encoding.ASCII;
+            public static readonly int LettersStartNumber = 97;
+            public static readonly int LettersLength = 26;
         }
 
-        private static readonly Guid RemoteID = Guid.NewGuid();
+        static readonly Guid RemoteID = Guid.NewGuid();
         /// <summary>
         /// Gets the remote invoke ID.
         /// </summary>
         /// <value>
         /// The remote invoke ID.
         /// </value>
-        public static Guid RemoteInvokeID
-        {
-            get { return RemoteID; }
-        }
+        public static Guid RemoteInvokeID => RemoteID;
 
         public static string WebServerUri { get; set; }
-        public static string PublicWebServerUri
-        {
-            get
-            {
-                return DnsName + ":" + Port+"/";
-            }
-        }
-        public static string DnsName { private get; set; }
-        public static int Port { private get; set; }
+        public static string PublicWebServerUri => DnsName + ":" + Port + "/";
+        public static string DnsName { get; set; }
+        public static int Port { get; set; }
     }
 }

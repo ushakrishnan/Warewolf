@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,22 +18,17 @@ namespace Dev2.CustomControls.Converters
 {
     public class RowToIndexConverter : MarkupExtension, IValueConverter
     {
-        private static RowToIndexConverter _converter;
+        static RowToIndexConverter _converter;
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var row = value as ModelItem;
-            if (row != null)
+            var collection = row?.Parent as ModelItemCollection;
+            if (row != null && collection != null)
             {
-                var collection = row.Parent as ModelItemCollection;
-                if (row != null)
-                {
-                    if (collection != null)
-                    {
-                        return collection.IndexOf(row) + 1;
-                    }
-                }
+                return collection.IndexOf(row) + 1;
             }
+
             return -1;
         }
 
@@ -44,7 +39,11 @@ namespace Dev2.CustomControls.Converters
 
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
-            if (_converter == null) _converter = new RowToIndexConverter();
+            if (_converter == null)
+            {
+                _converter = new RowToIndexConverter();
+            }
+
             return _converter;
         }
     }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,29 +9,18 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Common.Interfaces.Security;
-using Dev2.Communication;
-using Dev2.Core.Tests.Utils;
-using Dev2.Explorer;
 using Dev2.Network;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.SignalR.Wrappers;
 using Dev2.SignalR.Wrappers.New;
 using Dev2.Threading;
-using Microsoft.AspNet.SignalR.Client;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests.Network
 {
-    [ExcludeFromCodeCoverage]
     [TestClass]
     public partial class ServerProxyTests
     {
@@ -99,14 +87,14 @@ namespace Dev2.Core.Tests.Network
         public void ServerProxy_StateChange_FromConnectedToReconnecting_IsAuthorizedFalse()
         {
             //------------Setup for test--------------------------
-            bool _permissionsChangedFired = false;
+            var _permissionsChangedFired = false;
 
             var serverProxy = new TestServerProxy();
             serverProxy.PermissionsChanged += (sender, args) =>
                 {
                     _permissionsChangedFired = true;
                 };
-            bool authorisedBeforeStateChange = serverProxy.IsAuthorized;
+            var authorisedBeforeStateChange = serverProxy.IsAuthorized;
             //------------Execute Test---------------------------
             serverProxy.CallHubConnectionChanged(new StateChangeWrapped(ConnectionStateWrapped.Connected, ConnectionStateWrapped.Reconnecting));
             //------------Assert Results-------------------------
@@ -128,40 +116,7 @@ namespace Dev2.Core.Tests.Network
             Assert.IsNotNull(subscription);
         }
 
-        [TestMethod, Timeout(5000)]
-        [Owner("Hagashen Naidu")]
-        [TestCategory("ServerProxy_Constructor")]
-        public void ServerProxy_HandleItemAdded()
-        {
-            //------------Setup for test--------------------------
-            var serverProxy = new ServerProxyWithChunking(new Uri("http://bob"));
-            var serverGuid = Guid.NewGuid();
-            var ItemGuid = Guid.Empty;
-            try
-            {
-                serverProxy.Connect(serverGuid);
-            }
-            // ReSharper disable EmptyGeneralCatchClause
-            catch
-            // ReSharper restore EmptyGeneralCatchClause
-            {
-
-
-            }
-            //------------Execute Test---------------------------
-            ServerExplorerItem item = new ServerExplorerItem("bob",Guid.Empty,ResourceType.DbService,null,Permissions.Administrator, "bob");
-            serverProxy.ItemAddedMessageAction += explorerItem => { ItemGuid = explorerItem.ServerId; };
-            Dev2JsonSerializer dev = new Dev2JsonSerializer();
-            var output = dev.SerializeToBuilder(item);
-            PrivateObject p = new PrivateObject(serverProxy);
-            p.Invoke("OnItemAddedMessageReceived", output.ToString());
-            Assert.AreEqual(ItemGuid,serverGuid);
-            //------------Assert Results-------------------------
-            var subscription = serverProxy.EsbProxy.Subscribe("SendDebugState");
-            Assert.IsNotNull(subscription);
-        }
-
-        [TestMethod, Timeout(5000)]
+        [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ServerProxy_Connect")]
         public void ServerProxy_ConnectSetsId()
@@ -174,9 +129,9 @@ namespace Dev2.Core.Tests.Network
             {
                 serverProxy.Connect(x);
             }
-// ReSharper disable EmptyGeneralCatchClause
+
             catch
-// ReSharper restore EmptyGeneralCatchClause
+
             {
                 
              
@@ -185,121 +140,124 @@ namespace Dev2.Core.Tests.Network
             //------------Assert Results-------------------------
             Assert.AreEqual(x,serverProxy.ID);
         }
-
+        
         [TestMethod, Timeout(3000)]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("ServerProxy_Wait")]
-        public void ServerProxy_Wait_TaskThrowsHttpRequestException_ExceptionHandledAndTaskIsFaultedAndIsConnectedIsFalse()
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ServerProxy_IsLocalhost")]
+        public void ServerProxy_IsLocalHost_DisplayNamelocalhost_ReturnTrue()
         {
             //------------Setup for test--------------------------
-            const string ExMessage = "Server unavailable.";
-            var result = new StringBuilder();
-            var task = new Task<string>(() =>
-            {
-                throw new HttpRequestException(ExMessage);
-            });
-
-
             var serverProxy = new TestServerProxy
             {
-                IsConnected = true
+                IsConnected = true,
+                DisplayName = "localhost"
             };
-
             //------------Execute Test---------------------------
-            serverProxy.TestWait(task, result);
+            var isLocalHost = serverProxy.IsLocalHost;
 
             //------------Assert Results-------------------------
-            StringAssert.Contains(result.ToString(), ExMessage);
-            Assert.IsTrue(task.IsFaulted);
-            Assert.IsFalse(serverProxy.IsConnected);
+            Assert.IsTrue(serverProxy.IsConnected);
+            Assert.IsTrue(isLocalHost);
         }
 
         [TestMethod, Timeout(3000)]
-        [Owner("Travis Frisinger")]
-        [TestCategory("ServerProxy_Wait")]
-        public void ServerProxy_Wait_TaskThrowsHttpClientException_ExceptionHandledAndTaskIsFaultedAndIsConnectedIsTrue()
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ServerProxy_IsLocalhost")]
+        public void ServerProxy_IsLocalHost_DisplayNameLoCaLhOst_ReturnTrue()
         {
             //------------Setup for test--------------------------
-            const string ExMessage = "StatusCode: 403";
-            var result = new StringBuilder();
-            var task = new Task<string>(() =>
-            {
-                throw new HttpClientException(ExMessage);
-            });
-
-
             var serverProxy = new TestServerProxy
             {
-                IsConnected = true
+                IsConnected = true,
+                DisplayName = "LoCaLhOst"
             };
-
             //------------Execute Test---------------------------
-            serverProxy.TestWait(task, result);
+            var isLocalHost = serverProxy.IsLocalHost;
 
             //------------Assert Results-------------------------
-            StringAssert.Contains(result.ToString(), ExMessage);
-            Assert.IsTrue(task.IsFaulted);
             Assert.IsTrue(serverProxy.IsConnected);
+            Assert.IsTrue(isLocalHost);
         }
 
         [TestMethod, Timeout(3000)]
-        [Owner("Travis Frisinger")]
-        [TestCategory("ServerProxy_Wait")]
-        public void ServerProxy_Wait_TaskThrowsException_ExceptionHandledAndTaskIsFaultedAndIsConnectedIsTrue()
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ServerProxy_IsLocalhost")]
+        public void ServerProxy_IsLocalHost_DisplayNamelocalhostConnected_ReturnTrue()
         {
             //------------Setup for test--------------------------
-            const string ExMessage = "Unknown Error Occurred";
-            var result = new StringBuilder();
-            var task = new Task<string>(() =>
-            {
-                throw new Exception(ExMessage);
-            });
-
-
             var serverProxy = new TestServerProxy
             {
-                IsConnected = true
+                IsConnected = true,
+                DisplayName = "localhost (Connected)"
             };
-
             //------------Execute Test---------------------------
-            serverProxy.TestWait(task, result);
+            var isLocalHost = serverProxy.IsLocalHost;
 
             //------------Assert Results-------------------------
-            StringAssert.Contains(result.ToString(), ExMessage);
-            Assert.IsTrue(task.IsFaulted);
             Assert.IsTrue(serverProxy.IsConnected);
+            Assert.IsTrue(isLocalHost);
         }
 
         [TestMethod, Timeout(3000)]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("ServerProxy_Wait")]
-        public void ServerProxy_Wait_TaskThrowsReconnectingBeforeInvocationInvalidOperationException_ExceptionHandledAndTaskIsFaultedAndIsConnectedIsTrue()
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ServerProxy_IsLocalhost")]
+        public void ServerProxy_IsLocalHost_DisplayNamelocalhost2_ReturnFalse()
         {
             //------------Setup for test--------------------------
-            const string ExMessage = "Connection started reconnecting before invocation result was received";
-            var result = new StringBuilder();
-            var task = new Task<string>(() =>
-            {
-                throw new InvalidOperationException(ExMessage);
-            });
-
             var serverProxy = new TestServerProxy
             {
-                IsConnected = true
+                IsConnected = true,
+                DisplayName = "localhost 2"
             };
-
             //------------Execute Test---------------------------
-            serverProxy.TestWait(task, result);
+            var isLocalHost = serverProxy.IsLocalHost;
 
             //------------Assert Results-------------------------
-            StringAssert.Contains(result.ToString(), ExMessage);
-            Assert.IsTrue(task.IsFaulted);
             Assert.IsTrue(serverProxy.IsConnected);
+            Assert.IsFalse(isLocalHost);
+        }
+
+        [TestMethod, Timeout(3000)]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ServerProxy_IsLocalhost")]
+        public void ServerProxy_IsLocalHost_DisplayNameEmpty_ReturnFalse()
+        {
+            //------------Setup for test--------------------------
+            var serverProxy = new TestServerProxy
+            {
+                IsConnected = true,
+                DisplayName = ""
+            };
+            //------------Execute Test---------------------------
+            var isLocalHost = serverProxy.IsLocalHost;
+
+            //------------Assert Results-------------------------
+            Assert.IsTrue(serverProxy.IsConnected);
+            Assert.IsFalse(isLocalHost);
+        }
+        
+        [TestMethod, Timeout(3000)]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ServerProxy_IsLocalhost")]
+        public void ServerProxy_IsLocalHost_DisplayNameNull_ReturnFalse()
+        {
+            //------------Setup for test--------------------------
+            var serverProxy = new TestServerProxy
+            {
+                IsConnected = true,
+                DisplayName = null
+            };
+            //------------Execute Test---------------------------
+            var isLocalHost = serverProxy.IsLocalHost;
+
+            //------------Assert Results-------------------------
+            Assert.IsTrue(serverProxy.IsConnected);
+            Assert.IsFalse(isLocalHost);
         }
 
     }
 
-    internal class TestServerProxy : ServerProxyWithoutChunking
+    class TestServerProxy : ServerProxyWithoutChunking
     {
         // TODO: Move this constructor to a test class!!
         public TestServerProxy(string uri, string userName, string password)
@@ -307,7 +265,7 @@ namespace Dev2.Core.Tests.Network
         {
         }
         public TestServerProxy()
-            : base("http://localhost:8080", CredentialCache.DefaultCredentials, new TestAsyncWorker())
+            : base("http://localhost:8080", CredentialCache.DefaultCredentials, new SynchronousAsyncWorker())
         {
 
         }
@@ -322,19 +280,9 @@ namespace Dev2.Core.Tests.Network
             EsbProxy = hubProxy;
         }
 
-        public T TestWait<T>(Task<T> task, StringBuilder result)
-        {
-            task.Start();
-            return Wait(task, result, 10);
-        }
 
         #region Overrides of ServerProxy
 
-        protected override T Wait<T>(Task<T> task, StringBuilder result)
-        {
-            task.Start();
-            return task.Result;
-        }
 
         protected override void Wait(Task task)
         {
@@ -343,66 +291,4 @@ namespace Dev2.Core.Tests.Network
 
         #endregion
     }
-
-    internal class TestHubConnection : HubConnection
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:Microsoft.AspNet.SignalR.Client.HubConnection"/> class.
-        /// </summary>
-        /// <param name="url">The url to connect to.</param>
-        public TestHubConnection(string url)
-            : base(url)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:Microsoft.AspNet.SignalR.Client.HubConnection"/> class.
-        /// </summary>
-        /// <param name="url">The url to connect to.</param><param name="useDefaultUrl">Determines if the default "/signalr" path should be appended to the specified url.</param>
-        public TestHubConnection(string url, bool useDefaultUrl)
-            : base(url, useDefaultUrl)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:Microsoft.AspNet.SignalR.Client.HubConnection"/> class.
-        /// </summary>
-        /// <param name="url">The url to connect to.</param><param name="queryString">The query string data to pass to the server.</param>
-        public TestHubConnection(string url, string queryString)
-            : base(url, queryString)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:Microsoft.AspNet.SignalR.Client.HubConnection"/> class.
-        /// </summary>
-        /// <param name="url">The url to connect to.</param><param name="queryString">The query string data to pass to the server.</param><param name="useDefaultUrl">Determines if the default "/signalr" path should be appended to the specified url.</param>
-        public TestHubConnection(string url, string queryString, bool useDefaultUrl)
-            : base(url, queryString, useDefaultUrl)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:Microsoft.AspNet.SignalR.Client.HubConnection"/> class.
-        /// </summary>
-        /// <param name="url">The url to connect to.</param><param name="queryString">The query string data to pass to the server.</param>
-        public TestHubConnection(string url, IDictionary<string, string> queryString)
-            : base(url, queryString)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:Microsoft.AspNet.SignalR.Client.HubConnection"/> class.
-        /// </summary>
-        /// <param name="url">The url to connect to.</param><param name="queryString">The query string data to pass to the server.</param><param name="useDefaultUrl">Determines if the default "/signalr" path should be appended to the specified url.</param>
-        public TestHubConnection(string url, IDictionary<string, string> queryString, bool useDefaultUrl)
-            : base(url, queryString, useDefaultUrl)
-        {
-        }
-
-        #region Overrides of HubConnection
-
-        #endregion
-    }
-
 }

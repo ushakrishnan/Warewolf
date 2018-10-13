@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,13 +23,7 @@ namespace Dev2.Data.ServiceModel.Messages
 
         public Guid ServiceID { get; set; }
 
-        public int Count
-        {
-            get
-            {
-                return MessageList == null ? 0 : MessageList.Count;
-            }
-        }
+        public int Count => MessageList?.Count ?? 0;
 
         public IList<string> Dependants { get; set; }
     }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -52,15 +51,9 @@ namespace Dev2.Runtime.WebServer.Controllers
             return context.ResponseMessage;
         }
 
-        protected virtual bool IsAuthenticated()
-        {
-            return User.IsAuthenticated();
-        }
+        protected virtual bool IsAuthenticated() => User.IsAuthenticated();
 
         protected virtual TRequestHandler CreateHandler<TRequestHandler>()
-            where TRequestHandler : class, IRequestHandler, new()
-        {
-            return Activator.CreateInstance<TRequestHandler>();
-        }
+            where TRequestHandler : class, IRequestHandler, new() => Activator.CreateInstance<TRequestHandler>();
     }
 }

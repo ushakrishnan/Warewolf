@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,57 +9,26 @@
 */
 
 using System;
-using Dev2.Data.Enums;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 
-namespace Dev2.DataList.Contract
+namespace Dev2.Data.Exceptions
 {
     public class Dev2DataLanguageParseError : Exception, IDev2DataLangaugeParseError
     {
-
-        private readonly int _startIdx;
-        private readonly int _endIdx;
-        private readonly enIntellisenseErrorCode _errCode;
-
         public Dev2DataLanguageParseError(string msg, int startIdx, int endIdx, enIntellisenseErrorCode code)
             : base(msg)
         {
-            _startIdx = startIdx;
-            _endIdx = endIdx;
-            _errCode = code;
+            StartIndex = startIdx;
+            EndIndex = endIdx;
+            ErrorCode = code;
         }
 
-        public int StartIndex
-        {
-            get
-            {
-                return _startIdx;
-            }
-        }
+        public int StartIndex { get; }
 
-        public int EndIndex
-        {
-            get
-            {
-                return _endIdx;
-            }
-        }
+        public int EndIndex { get; }
 
-        public string Error
-        {
-            get
-            {
-                return Message;
-            }
-        }
-
-        public enIntellisenseErrorCode ErrorCode
-        {
-            get
-            {
-                return _errCode;
-            }
-        }
+        public enIntellisenseErrorCode ErrorCode { get; }
     }
 }
 

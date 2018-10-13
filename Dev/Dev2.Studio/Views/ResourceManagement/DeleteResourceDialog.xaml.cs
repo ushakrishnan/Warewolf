@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,9 +11,10 @@
 using System;
 using System.Windows;
 using Dev2.Common.ExtMethods;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Views.ResourceManagement
 {
     /// <summary>
@@ -22,9 +22,9 @@ namespace Dev2.Studio.Views.ResourceManagement
     /// </summary>
     public partial class DeleteResourceDialog
     {
-        private bool _openDependencyGraph;
+        bool _openDependencyGraph;
 
-        public bool OpenDependencyGraph { get { return _openDependencyGraph; } }
+        public bool OpenDependencyGraph => _openDependencyGraph;
 
         public DeleteResourceDialog(IContextualResourceModel model)
         {
@@ -42,13 +42,13 @@ namespace Dev2.Studio.Views.ResourceManagement
             tbDisplay.Text = message;
         }
 
-        private void Button3Click(object sender, RoutedEventArgs e)
+        void Button3Click(object sender, RoutedEventArgs e)
         {
             _openDependencyGraph = true;
             DialogResult = false;
         }
 
-        private void Button1_OnClick(object sender, RoutedEventArgs e)
+        void Button1_OnClick(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
         }

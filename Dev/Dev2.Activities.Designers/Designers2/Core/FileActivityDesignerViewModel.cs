@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +22,6 @@ namespace Dev2.Activities.Designers2.Core
     public abstract class FileActivityDesignerViewModel : CredentialsActivityDesignerViewModel
     {
         public static readonly List<string> ValidUriSchemes = new List<string> { "file", "ftp", "ftps", "sftp" };
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         protected FileActivityDesignerViewModel(ModelItem modelItem, string inputPathLabel, string outputPathLabel)
             : base(modelItem)
@@ -106,30 +104,18 @@ namespace Dev2.Activities.Designers2.Core
         public static readonly DependencyProperty IsDestinationSftpFocusedProperty =
             DependencyProperty.Register("IsDestinationSftpFocusedProperty", typeof(bool), typeof(FileActivityDesignerViewModel), new PropertyMetadata(false));
 
-        string InputPath { get { return GetProperty<string>(); } }
-        string OutputPath { get { return GetProperty<string>(); } }
-        string PrivateKeyFile { get { return GetProperty<string>(); } }
-        string DestinationPrivateKeyFile { get { return GetProperty<string>(); } }
+        string InputPath => GetProperty<string>();
+        string OutputPath => GetProperty<string>();
+        string PrivateKeyFile => GetProperty<string>();
+        string DestinationPrivateKeyFile => GetProperty<string>();
 
-        protected virtual void ValidateInputPath()
-        {
-            InputPathValue = ValidatePath(InputPathLabel, InputPath, () => IsInputPathFocused = true, true);
-        }
+        protected virtual void ValidateInputPath() => InputPathValue = ValidatePath(InputPathLabel, InputPath, () => IsInputPathFocused = true, true);
 
-        protected virtual void ValidateOutputPath()
-        {
-            OutputPathValue = ValidatePath(OutputPathLabel, OutputPath, () => IsOutputPathFocused = true, true);
-        }
+        protected virtual void ValidateOutputPath() => OutputPathValue = ValidatePath(OutputPathLabel, OutputPath, () => IsOutputPathFocused = true, true);
 
-        private void ValidateSftpKey()
-        {
-            SftpValue = ValidatePath("Private Key Path", PrivateKeyFile, () => IsSftpFocused = true, false);
-        }
+        void ValidateSftpKey() => SftpValue = ValidatePath("Private Key Path", PrivateKeyFile, () => IsSftpFocused = true, false);
 
-        private void ValidateDestinationSftpKey()
-        {
-            DestinationSftpValue = ValidatePath("Destination Private Key Path", DestinationPrivateKeyFile, () => IsSftpFocused = true, false);
-        }
+        void ValidateDestinationSftpKey() => DestinationSftpValue = ValidatePath("Destination Private Key Path", DestinationPrivateKeyFile, () => IsSftpFocused = true, false);
 
         protected virtual void ValidateInputAndOutputPaths()
         {
@@ -148,23 +134,23 @@ namespace Dev2.Activities.Designers2.Core
 
             var errors = new List<IActionableErrorInfo>();
 
-            RuleSet fileActivityRuleSet = new RuleSet();
-            IsValidExpressionRule isValidExpressionRule = new IsValidExpressionRule(() => path, DataListSingleton.ActiveDataList.Resource.DataList);
+            var fileActivityRuleSet = new RuleSet();
+            var variableUtils = new VariableUtils();
+            var isValidExpressionRule = new IsValidExpressionRule(() => path, DataListSingleton.ActiveDataList.Resource.DataList, variableUtils);
             fileActivityRuleSet.Add(isValidExpressionRule);
             errors.AddRange(fileActivityRuleSet.ValidateRules(label, onError));
 
-            string pathValue;
-            path.TryParseVariables(out pathValue, onError, variableValue: ValidUriSchemes[0] + "://temp");
+            variableUtils.TryParseVariables(path,out string pathValue, onError, variableValue: ValidUriSchemes[0] + "://temp");
 
             if (errors.Count == 0)
             {
-                IsStringEmptyOrWhiteSpaceRule isStringEmptyOrWhiteSpaceRuleUserName = new IsStringEmptyOrWhiteSpaceRule(() => path)
+                var isStringEmptyOrWhiteSpaceRuleUserName = new IsStringEmptyOrWhiteSpaceRule(() => path)
                 {
                     LabelText = label,
                     DoError = onError
                 };
 
-                IsValidFileNameRule isValidFileNameRule = new IsValidFileNameRule(() => path)
+                var isValidFileNameRule = new IsValidFileNameRule(() => path)
                 {
                     LabelText = label,
                     DoError = onError
@@ -180,26 +166,25 @@ namespace Dev2.Activities.Designers2.Core
             return pathValue;
         }
 
-        protected virtual void ValidateFileContent(string content, string label)
-        {
-            FileContentValue = ValidateFileContent(content, label, () => FileHasContent = true);
-        }
+        protected virtual void ValidateFileContent(string content, string label) => FileContentValue = ValidateFileContent(content, label, () => FileHasContent = true);
 
         public bool FileHasContent
         {
-            get { return (bool)GetValue(FileHasContentProperty); }
-            set { SetValue(FileHasContentProperty, value); }
+            get => (bool)GetValue(FileHasContentProperty);
+            set => SetValue(FileHasContentProperty, value);
         }
 
         public static readonly DependencyProperty FileHasContentProperty = 
             DependencyProperty.Register("FileHasContent", typeof(bool), typeof(FileActivityDesignerViewModel), new PropertyMetadata(false));
 
-        protected virtual string ValidateFileContent(string content, string label, Action onError, bool contentIsRequired = true)
+        protected virtual string ValidateFileContent(string content, string label, Action onError) => ValidateFileContent(content, label, onError, true);
+
+        protected virtual string ValidateFileContent(string content, string label, Action onError, bool contentIsRequired)
         {
             var errors = new List<IActionableErrorInfo>();
-            RuleSet fileActivityRuleSet = new RuleSet();
+            var fileActivityRuleSet = new RuleSet();
 
-            IsValidExpressionRule isValidExpressionRule = new IsValidExpressionRule(() => content, DataListSingleton.ActiveDataList.Resource.DataList);
+            var isValidExpressionRule = new IsValidExpressionRule(() => content, DataListSingleton.ActiveDataList.Resource.DataList,new VariableUtils());
             fileActivityRuleSet.Add(isValidExpressionRule);
             errors.AddRange(fileActivityRuleSet.ValidateRules(label, onError));
 
@@ -207,26 +192,25 @@ namespace Dev2.Activities.Designers2.Core
             return content;
         }
 
-        protected virtual void ValidateArchivePassword(string password, string label)
-        {
-            ArchivePasswordValue = ValidateArchivePassword(password, label, () => ArchivePasswordExists = true);
-        }
+        protected virtual void ValidateArchivePassword(string password, string label) => ArchivePasswordValue = ValidateArchivePassword(password, label, () => ArchivePasswordExists = true);
 
         public bool ArchivePasswordExists
         {
-            get { return (bool)GetValue(ArchivePasswordExistsProperty); }
-            set { SetValue(ArchivePasswordExistsProperty, value); }
+            get => (bool)GetValue(ArchivePasswordExistsProperty);
+            set => SetValue(ArchivePasswordExistsProperty, value);
         }
 
         public static readonly DependencyProperty ArchivePasswordExistsProperty = 
             DependencyProperty.Register("ArchivePasswordExists", typeof(bool), typeof(FileActivityDesignerViewModel), new PropertyMetadata(false));
 
-        protected virtual string ValidateArchivePassword(string password, string label, Action onError, bool contentIsRequired = true)
+        protected virtual string ValidateArchivePassword(string password, string label, Action onError) => ValidateArchivePassword(password, label, onError, true);
+
+        protected virtual string ValidateArchivePassword(string password, string label, Action onError, bool contentIsRequired)
         {
             var errors = new List<IActionableErrorInfo>();
-            RuleSet fileActivityRuleSet = new RuleSet();
+            var fileActivityRuleSet = new RuleSet();
 
-            IsValidExpressionRule isValidExpressionRule = new IsValidExpressionRule(() => password, DataListSingleton.ActiveDataList.Resource.DataList);
+            var isValidExpressionRule = new IsValidExpressionRule(() => password, DataListSingleton.ActiveDataList.Resource.DataList, new VariableUtils());
             fileActivityRuleSet.Add(isValidExpressionRule);
             errors.AddRange(fileActivityRuleSet.ValidateRules(label, onError));
 

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,12 +9,14 @@
 */
 
 
-// ReSharper disable CheckNamespace
 
+
+using System.Collections.Generic;
 using System.Windows;
+using Dev2.Common.Interfaces.PopupController;
 
 namespace Dev2.Common.Interfaces.Studio.Controller
-// ReSharper restore CheckNamespace
+
 {
     public interface IPopupController
     {
@@ -24,22 +26,55 @@ namespace Dev2.Common.Interfaces.Studio.Controller
         MessageBoxImage ImageType { get; set; }
         MessageBoxButton Buttons { get; set; }
         string DontShowAgainKey { get; set; }
+        bool DeleteAnyway { get; }
+        bool ApplyToAll { get; }
+        MessageBoxResult Show(IPopupMessage popupMessage);
         MessageBoxResult Show();
 
         MessageBoxResult Show(string description, string header, MessageBoxButton buttons, MessageBoxImage image,
-            string dontShowAgainKey);
+            string dontShowAgainKey, bool isDependenciesButtonVisible, bool isError, bool isInfo, bool isQuestion, bool isDeleteAnywayButtonVisible, bool applyToAll);
 
         MessageBoxResult ShowNotConnected();
         MessageBoxResult ShowDeleteConfirmation(string nameOfItemBeingDeleted);
+        MessageBoxResult ShowCorruptTaskResult(string errorMessage);
         MessageBoxResult ShowNameChangedConflict(string oldName, string newName);
+        MessageBoxResult ShowDeployConflict(int conflictCount);
+        MessageBoxResult ShowDeployNoResourcesToDeploy(string header, string description);
+        MessageBoxResult ShowDeployServerVersionConflict(string sourceServerVersion, string destinationServerVersion);
+        MessageBoxResult ShowConnectServerVersionConflict(string selectedServerVersion, string currentServerVersion);
+        MessageBoxResult ShowDeployResourceNameConflict(string conflictResourceName);
         MessageBoxResult ShowSettingsCloseConfirmation();
         MessageBoxResult ShowSchedulerCloseConfirmation();
-        MessageBoxResult ShowNoInputsSelectedWhenClickLink();
+
         MessageBoxResult ShowSaveErrorDialog(string errorMessage);
         MessageBoxResult ShowConnectionTimeoutConfirmation(string serverName);
         MessageBoxResult ShowDeleteVersionMessage(string displayName);
-        MessageBoxResult ShowRollbackVersionMessage(string displayName);
 
         void ShowInvalidCharacterMessage(string invalidText);
+
+        MessageBoxResult ShowDeployNameConflict(string message);
+        MessageBoxResult ShowDeploySuccessful(string message);
+
+        MessageBoxResult ShowDeployServerMinVersionConflict(string sourceServerVersion, string destinationServerVersion);
+
+        MessageBoxResult ShowServerNotConnected(string server);
+
+        IPopupMessage GetDeleteConfirmation(string nameOfItemBeingDeleted);
+        IPopupMessage GetDuplicateMessage(string name);
+
+        MessageBoxResult ShowNoInputsSelectedWhenClickLink();
+
+        MessageBoxResult ShowRollbackVersionMessage(string displayName);
+        MessageBoxResult ShowResourcesConflict(List<string> resourceDuplicates);
+        MessageBoxResult ShowSourceAlreadyExistOpenFromResources();
+        MessageBoxResult ShowOverwiteResourceDialog();
+        MessageBoxResult ShowResourcesNotInCorrectPath();
+        MessageBoxResult ShowCanNotMoveResource();
+        MessageBoxResult ShowInvalidResourcePermission();
+        MessageBoxResult ShowHasDuplicateResourcePermissions();
+        MessageBoxResult ShowHasDuplicateServerPermissions();
+        MessageBoxResult ShowSaveSettingsNotReachableErrorMsg();
+        MessageBoxResult ShowSaveSettingsPermissionsErrorMsg();
+        MessageBoxResult ShowInstallationErrorOccurred();
     }
 }

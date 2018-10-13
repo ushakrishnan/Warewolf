@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,20 +8,17 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.TOTests
 {
     /// <summary>
     /// Summary description for DataSplitDTOTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DataSplitDTOTests
     {
         [TestMethod]
@@ -242,22 +238,6 @@ namespace Dev2.Tests.Activities.TOTests
             Assert.IsTrue(dto.IsEmpty());
         }
 
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("DataSplitDTO_ConvertToOutputTO")]
-        public void DataSplitDTO_ConvertToOutputTO_OutputTOPropertiesInitialized()
-        {
-            //------------Setup for test--------------------------
-            var dto = new DataSplitDTO { OutputVariable = "[[h]]", OutList = new List<string>(new[] { "hello" }) };
-
-            //------------Execute Test---------------------------
-            var outputTO = dto.ConvertToOutputTO();
-
-            //------------Assert Results-------------------------
-            Assert.IsNotNull(outputTO);
-            Assert.AreEqual("[[h]]", outputTO.OutPutDescription);
-            Assert.AreSame(dto.OutList, outputTO.OutputStrings);
-        }
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
@@ -281,7 +261,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "h]]" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "OutputVariable", "Invalid expression: opening and closing brackets don't match");
+            Verify_RuleSet(dto, "OutputVariable", "Result - Invalid expression: opening and closing brackets don't match");
         }
 
         [TestMethod]
@@ -319,7 +299,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "[[h&]]", At = "1" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "OutputVariable", "Variable name [[h&]] contains invalid character(s)");
+            Verify_RuleSet(dto, "OutputVariable", "Variable name [[h&]] contains invalid character(s). Only use alphanumeric _ and - ");
         }
 
 
@@ -334,7 +314,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "[[a]]", At = "h]]", SplitType = DataSplitDTO.SplitTypeIndex };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", "Invalid expression: opening and closing brackets don't match");
+            Verify_RuleSet(dto, "At", "Result - Invalid expression: opening and closing brackets don't match");
         }
 
         [TestMethod]
@@ -370,7 +350,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "[[a]]", At = "h]]", SplitType = DataSplitDTO.SplitTypeChars };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", "Invalid expression: opening and closing brackets don't match");
+            Verify_RuleSet(dto, "At", "Result - Invalid expression: opening and closing brackets don't match");
         }
 
         [TestMethod]
@@ -394,7 +374,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "[[a]]", At = "", SplitType = DataSplitDTO.SplitTypeChars };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", "cannot be empty");
+            Verify_RuleSet(dto, "At", Warewolf.Resource.Errors.ErrorResource.CannotBeNull);
         }
 
         [TestMethod]
@@ -418,7 +398,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataSplitDTO { OutputVariable = "[[a]]", At = "-1", SplitType = DataSplitDTO.SplitTypeIndex };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", " must be a real number");
+            Verify_RuleSet(dto, "At", Warewolf.Resource.Errors.ErrorResource.MustBeRealNumber);
         }
 
         [TestMethod]

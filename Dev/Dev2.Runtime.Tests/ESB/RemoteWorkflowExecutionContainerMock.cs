@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +13,9 @@ using System.Net;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Data.ServiceModel;
 using Dev2.DynamicServices.Objects;
+using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Execution;
-using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Workspaces;
 
 namespace Dev2.Tests.Runtime.ESB

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,84 +9,27 @@
 */
 
 using System;
-using System.Text;
 using Dev2.Communication;
-using Dev2.DataList.Contract;
-using Warewolf.Storage;
+using Dev2.Data.TO;
+using Dev2.Interfaces;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2
-// ReSharper restore CheckNamespace
+
 {
     public interface IEsbChannel
     {
-        /// <summary>
-        ///     Executes the request placing it into a transactional scope
-        /// </summary>
-        /// <param name="dataObject">The data object.</param>
-        /// <param name="request">The request.</param>
-        /// <param name="workspaceId">The workspace ID.</param>
-        /// <param name="errors">The errors.</param>
-        /// <returns></returns>
         Guid ExecuteRequest(IDSFDataObject dataObject, EsbExecuteRequest request, Guid workspaceId,
             out ErrorResultTO errors);
-
-        /// <summary>
-        ///     Fetches the server model.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="dataObject">The data object.</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <param name="errors">The errors.</param>
-        /// <param name="update"></param>
-        /// <returns></returns>
-        T FetchServerModel<T>(IDSFDataObject dataObject, Guid workspaceId, out ErrorResultTO errors, int update);
-
-        /// <summary>
-        ///     Executes the sub request.
-        /// </summary>
-        /// <param name="dataObject">The data object.</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <param name="inputDefs">The input defs.</param>
-        /// <param name="outputDefs">The output defs.</param>
-        /// <param name="errors">The errors.</param>
-        /// <param name="update"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        IExecutionEnvironment ExecuteSubRequest(IDSFDataObject dataObject, Guid workspaceId, string inputDefs, string outputDefs, out ErrorResultTO errors, int update, bool b);
-
-        /// <summary>
-        ///     Finds the service shape.
-        /// </summary>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <param name="resourceId">Name of the service.</param>
-        /// <returns></returns>
-        StringBuilder FindServiceShape(Guid workspaceId, Guid resourceId);
+        
+        IExecutionEnvironment ExecuteSubRequest(IDSFDataObject dataObject, Guid workspaceId, string inputDefs, string outputDefs, out ErrorResultTO errors, int update, bool handleErrors);
 
         void ExecuteLogErrorRequest(IDSFDataObject dataObject, Guid workspaceId, string uri, out ErrorResultTO errors, int update);
-
-
+        
         IExecutionEnvironment UpdatePreviousEnvironmentWithSubExecutionResultUsingOutputMappings(IDSFDataObject dataObject, string outputDefs, int update, bool handleErrors, ErrorResultTO errors);
 
         void CreateNewEnvironmentFromInputMappings(IDSFDataObject dataObject, string inputDefs, int update);
-    }
-
-    public interface IEsbWorkspaceChannel : IEsbChannel
-    {
-    }
-
-    public interface IEsbActivityChannel
-    {
-        bool ExecuteParallel(IEsbActivityInstruction[] instructions);
-    }
-
-    public interface IEsbActivityInstruction
-    {
-        string Instruction { get; }
-        string Result { get; set; }
-        // ReSharper disable InconsistentNaming
-        Guid DataListID { get; set; }
-        // ReSharper restore InconsistentNaming
     }
 }

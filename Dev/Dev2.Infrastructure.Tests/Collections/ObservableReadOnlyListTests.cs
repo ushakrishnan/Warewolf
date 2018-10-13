@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Windows.Data;
 using System.Windows.Threading;
@@ -22,7 +20,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Infrastructure.Tests.Collections
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ObservableReadOnlyListTests
     {
         [TestMethod]
@@ -174,7 +171,9 @@ namespace Dev2.Infrastructure.Tests.Collections
             // MUST bind to CollectionView!!
             //
             var observableReadOnlyList = new ObservableReadOnlyList<string> { "item1", "item2" };
-            observableReadOnlyList.TestDispatcherFrame = new DispatcherFrame();
+            var px = new PrivateObject(observableReadOnlyList);
+            px.SetProperty("TestDispatcherFrame", new DispatcherFrame());
+
             var collectionView = CollectionViewSource.GetDefaultView(observableReadOnlyList);
 
             //
@@ -185,7 +184,7 @@ namespace Dev2.Infrastructure.Tests.Collections
             {
                 try
                 {
-                    action(observableReadOnlyList);
+                    action?.Invoke(observableReadOnlyList);
 
                     exceptionMessage = null;
                 }
@@ -201,9 +200,10 @@ namespace Dev2.Infrastructure.Tests.Collections
 
             //------------Execute Test---------------------------
             otherThread.Start();
-
+       
+            
             // Wait for thread to finish
-            Dispatcher.PushFrame(observableReadOnlyList.TestDispatcherFrame);
+            Dispatcher.PushFrame((DispatcherFrame)px.GetProperty("TestDispatcherFrame"));
 
             otherDone.Wait();
 

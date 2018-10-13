@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +15,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Markup;
 using System.Windows.Media;
+using Dev2.Common;
 
 namespace Dev2.Activities.Designers2.Core.Adorners
 {
@@ -25,8 +25,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         const double OffsetX = 0.0;
         const double OffsetY = 0.0;
 
-        private const double PositionX = Double.NaN;
-        private const double _positionY = Double.NaN;
+        const double PositionX = Double.NaN;
+        const double PositionY = Double.NaN;
 
         AdornerLayer _adornerLayer;
 
@@ -42,19 +42,19 @@ namespace Dev2.Activities.Designers2.Core.Adorners
             adornedElement.SizeChanged += (sender, args) => InvalidateMeasure();
         }
 
-        public AdornerLayer AdornerLayer { get { return _adornerLayer ?? (_adornerLayer = AdornerLayer.GetAdornerLayer(AdornedElement)); } }
+        public AdornerLayer AdornerLayer => _adornerLayer ?? (_adornerLayer = AdornerLayer.GetAdornerLayer(AdornedElement));
 
         /// <summary>
         ///     Override AdornedElement from base class for less type-checking.
         /// </summary>
-        public new FrameworkElement AdornedElement { get { return (FrameworkElement)base.AdornedElement; } }
+        public new FrameworkElement AdornedElement => (FrameworkElement)base.AdornedElement;
 
-        public FrameworkElement Content { get { return (FrameworkElement)GetValue(ContentProperty); } set { SetValue(ContentProperty, value); } }
+        public FrameworkElement Content { get => (FrameworkElement)GetValue(ContentProperty); set => SetValue(ContentProperty, value); }
 
         public static readonly DependencyProperty ContentProperty =
             DependencyProperty.Register("Content", typeof(FrameworkElement), typeof(AdornerControl), new PropertyMetadata(null));
 
-        public bool IsAdornerVisible { get { return (bool)GetValue(IsAdornerVisibleProperty); } set { SetValue(IsAdornerVisibleProperty, value); } }
+        public bool IsAdornerVisible { get => (bool)GetValue(IsAdornerVisibleProperty); set => SetValue(IsAdornerVisibleProperty, value); }
 
         public static readonly DependencyProperty IsAdornerVisibleProperty =
             DependencyProperty.Register("IsAdornerVisible", typeof(bool), typeof(AdornerControl), new PropertyMetadata(false, OnIsAdornerVisibleChanged));
@@ -62,10 +62,10 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         static void OnIsAdornerVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var adorner = (AdornerControl)d;
-            adorner.Toggle();
+            adorner?.Toggle();
         }
 
-        protected override Int32 VisualChildrenCount { get { return 1; } }
+        protected override Int32 VisualChildrenCount => 1;
 
         protected override IEnumerator LogicalChildren
         {
@@ -76,10 +76,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
             }
         }
 
-        protected override Visual GetVisualChild(Int32 index)
-        {
-            return Content;
-        }
+        protected override Visual GetVisualChild(Int32 index) => Content;
 
         protected override Size MeasureOverride(Size constraint)
         {
@@ -94,7 +91,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
             {
                 x = DetermineX();
             }
-            var y = _positionY;
+            var y = PositionY;
             if(Double.IsNaN(y))
             {
                 y = DetermineY();
@@ -109,7 +106,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         {
             var adornedWidth = AdornedElement.ActualWidth;
             var adornerWidth = Content.DesiredSize.Width;
-            switch(Content.HorizontalAlignment)
+            switch (Content.HorizontalAlignment)
             {
                 case HorizontalAlignment.Left:
                     return -adornerWidth + OffsetX;
@@ -123,6 +120,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
 
                 case HorizontalAlignment.Stretch:
                     return 0.0;
+                default:
+                    break;
             }
             return 0.0;
         }
@@ -131,7 +130,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         {
             var adornedHeight = AdornedElement.ActualHeight;
             var adornerHeight = Content.DesiredSize.Height;
-            switch(Content.VerticalAlignment)
+            switch (Content.VerticalAlignment)
             {
                 case VerticalAlignment.Top:
                     return OffsetY;
@@ -145,6 +144,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
 
                 case VerticalAlignment.Stretch:
                     return 0.0;
+                default:
+                    break;
             }
             return 0.0;
         }
@@ -156,7 +157,7 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                 return Content.DesiredSize.Width;
             }
 
-            switch(Content.HorizontalAlignment)
+            switch (Content.HorizontalAlignment)
             {
                 case HorizontalAlignment.Left:
                 case HorizontalAlignment.Right:
@@ -164,6 +165,8 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                     return Content.DesiredSize.Width;
                 case HorizontalAlignment.Stretch:
                     return AdornedElement.ActualWidth;
+                default:
+                    break;
             }
 
             return 0.0;
@@ -172,12 +175,12 @@ namespace Dev2.Activities.Designers2.Core.Adorners
         double DetermineHeight()
         {
             var height = Math.Max(Content.MinHeight, Content.DesiredSize.Height);
-            if(!Double.IsNaN(_positionY))
+            if(!Double.IsNaN(PositionY))
             {
                 return height;
             }
 
-            switch(Content.VerticalAlignment)
+            switch (Content.VerticalAlignment)
             {
                 case VerticalAlignment.Top:
                 case VerticalAlignment.Bottom:
@@ -185,23 +188,32 @@ namespace Dev2.Activities.Designers2.Core.Adorners
                     return height;
                 case VerticalAlignment.Stretch:
                     return AdornedElement.ActualHeight;
+                default:
+                    break;
             }
             return 0.0;
         }
 
         void Toggle()
         {
-            if(IsAdornerVisible)
+            try
             {
-                AddLogicalChild(Content);
-                AddVisualChild(Content);
-                AdornerLayer.Add(this);
+                if(IsAdornerVisible)
+                {
+                    AddLogicalChild(Content);
+                    AddVisualChild(Content);
+                    AdornerLayer?.Add(this);
+                }
+                else
+                {
+                    AdornerLayer?.Remove(this);
+                    RemoveLogicalChild(Content);
+                    RemoveVisualChild(Content);
+                }
             }
-            else
+            catch(Exception e)
             {
-                AdornerLayer.Remove(this);
-                RemoveLogicalChild(Content);
-                RemoveVisualChild(Content);
+                Dev2Logger.Error("Error toggling adorner: ",e, "Warewolf Error");
             }
         }
     }

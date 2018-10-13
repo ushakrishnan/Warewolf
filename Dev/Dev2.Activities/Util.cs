@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,31 +10,19 @@
 
 using System;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
-// ReSharper restore CheckNamespace
-// ReSharper disable InconsistentNaming
     public enum enDev2HTMLType { FORM, PAGETITLE, META, IMAGE, TEXT, MENU }
 
     public class Util
     {
-        public static bool ValueIsNumber(string value)
+        protected Util()
         {
-            double val;
-            return double.TryParse(value, out val);
         }
 
-        public static bool ValueIsDate(string value)
-        {
-            DateTime date;
-            return DateTime.TryParse(value, out date);
-        }
+        public static bool ValueIsNumber(string value) => double.TryParse(value, out double val);
 
-        public static bool IsEmpty(string value)
-        {
-            return string.IsNullOrEmpty(value);
-        }
+        public static bool ValueIsDate(string value) => DateTime.TryParse(value, out DateTime date);
 
         public static bool Eq(string value, object comparisonValue)
         {
@@ -49,28 +36,22 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 return false;
             }
 
-            if(ValueIsDate(value))
+            if (ValueIsDate(value) && ValueIsDate(comparisonValue.ToString()))
             {
-                if(ValueIsDate(comparisonValue.ToString()))
-                {
-                    return DateTime.Parse(value) == DateTime.Parse(comparisonValue.ToString());
-                }
+                return DateTime.Parse(value) == DateTime.Parse(comparisonValue.ToString());
             }
 
-            if(ValueIsNumber(value))
+
+            if (ValueIsNumber(value) && ValueIsNumber(comparisonValue.ToString()))
             {
-                if(ValueIsNumber(comparisonValue.ToString()))
-                {
-                    // ReSharper disable CompareOfFloatsByEqualityOperator
-                    return double.Parse(value) == double.Parse(comparisonValue.ToString());
-                    // ReSharper restore CompareOfFloatsByEqualityOperator
-                }
+                return double.Parse(value).Equals(double.Parse(comparisonValue.ToString()));
             }
 
             
             return string.Equals(value, comparisonValue.ToString(), StringComparison.CurrentCultureIgnoreCase);
         }
 
+    
         public static bool NtEq(string value, object comparisonValue)
         {
             if(string.IsNullOrEmpty(value))
@@ -83,27 +64,21 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 return false;
             }
 
-            if(ValueIsDate(value))
+            if (ValueIsDate(value) && ValueIsDate(comparisonValue.ToString()))
             {
-                if(ValueIsDate(comparisonValue.ToString()))
-                {
-                    return DateTime.Parse(value) != DateTime.Parse(comparisonValue.ToString());
-                }
+                return DateTime.Parse(value) != DateTime.Parse(comparisonValue.ToString());
             }
 
-            if(ValueIsNumber(value))
+
+            if (ValueIsNumber(value) && ValueIsNumber(comparisonValue.ToString()))
             {
-                if(ValueIsNumber(comparisonValue.ToString()))
-                {
-                    // ReSharper disable CompareOfFloatsByEqualityOperator
-                    return double.Parse(value) != double.Parse(comparisonValue.ToString());
-                    // ReSharper restore CompareOfFloatsByEqualityOperator
-                }
+                return !double.Parse(value).Equals(double.Parse(comparisonValue.ToString()));
             }
 
             return value != comparisonValue.ToString();
         }
 
+    
         public static bool LsTh(string value, object comparisonValue)
         {
 
@@ -117,25 +92,22 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 return false;
             }
 
-            if(ValueIsDate(value))
+            if (ValueIsDate(value) && ValueIsDate(comparisonValue.ToString()))
             {
-                if(ValueIsDate(comparisonValue.ToString()))
-                {
-                    return DateTime.Parse(value) < DateTime.Parse(comparisonValue.ToString());
-                }
+                return DateTime.Parse(value) < DateTime.Parse(comparisonValue.ToString());
             }
 
-            if(ValueIsNumber(value))
+
+            if (ValueIsNumber(value) && ValueIsNumber(comparisonValue.ToString()))
             {
-                if(ValueIsNumber(comparisonValue.ToString()))
-                {
-                    return double.Parse(value) < double.Parse(comparisonValue.ToString());
-                }
+                return double.Parse(value) < double.Parse(comparisonValue.ToString());
             }
+
 
             return false;
         }
 
+    
         public static bool LsThEq(string value, object comparisonValue)
         {
             if(string.IsNullOrEmpty(value))
@@ -148,25 +120,22 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 return false;
             }
 
-            if(ValueIsDate(value))
+            if (ValueIsDate(value) && ValueIsDate(comparisonValue.ToString()))
             {
-                if(ValueIsDate(comparisonValue.ToString()))
-                {
-                    return DateTime.Parse(value) <= DateTime.Parse(comparisonValue.ToString());
-                }
+                return DateTime.Parse(value) <= DateTime.Parse(comparisonValue.ToString());
             }
 
-            if(ValueIsNumber(value))
+
+            if (ValueIsNumber(value) && ValueIsNumber(comparisonValue.ToString()))
             {
-                if(ValueIsNumber(comparisonValue.ToString()))
-                {
-                    return double.Parse(value) <= double.Parse(comparisonValue.ToString());
-                }
+                return double.Parse(value) <= double.Parse(comparisonValue.ToString());
             }
+
 
             return false;
         }
 
+    
         public static bool GrTh(string value, object comparisonValue)
         {
 
@@ -180,27 +149,24 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 return false;
             }
 
-            if(ValueIsDate(value))
+            if (ValueIsDate(value) && ValueIsDate(comparisonValue.ToString()))
             {
-                if(ValueIsDate(comparisonValue.ToString()))
-                {
-                    return DateTime.Parse(value) > DateTime.Parse(comparisonValue.ToString());
-                }
+                return DateTime.Parse(value) > DateTime.Parse(comparisonValue.ToString());
             }
 
-            if(ValueIsNumber(value))
+
+            if (ValueIsNumber(value) && ValueIsNumber(comparisonValue.ToString()))
             {
-                if(ValueIsNumber(comparisonValue.ToString()))
-                {
-                    return double.Parse(value) > double.Parse(comparisonValue.ToString());
-                }
+                return double.Parse(value) > double.Parse(comparisonValue.ToString());
             }
+
 
 
             return false;
         }
 
 
+    
         public static bool GrThEq(string value, object comparisonValue)
         {
             if(string.IsNullOrEmpty(value))
@@ -213,25 +179,20 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 return false;
             }
 
-            if(ValueIsDate(value))
+            if(ValueIsDate(value) && ValueIsDate(comparisonValue.ToString()))
             {
-                if(ValueIsDate(comparisonValue.ToString()))
-                {
-                    return DateTime.Parse(value) >= DateTime.Parse(comparisonValue.ToString());
-                }
+                return DateTime.Parse(value) >= DateTime.Parse(comparisonValue.ToString());
             }
 
-            if(ValueIsNumber(value))
+            if(ValueIsNumber(value) && ValueIsNumber(comparisonValue.ToString()))
             {
-                if(ValueIsNumber(comparisonValue.ToString()))
-                {
-                    return double.Parse(value) >= double.Parse(comparisonValue.ToString());
-                }
+                return double.Parse(value) >= double.Parse(comparisonValue.ToString());
             }
 
             return false;
         }
 
+    
         public static bool Btw(string value, object comparisonValueStart, object comparisonValueEnd)
         {
             if(string.IsNullOrEmpty(value))
@@ -247,86 +208,21 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             if(comparisonValueEnd == null)
             {
                 return false;
+            }            
+
+            if(ValueIsDate(value) && ValueIsDate(comparisonValueStart.ToString()) && ValueIsDate(comparisonValueEnd.ToString()))
+            {
+                return DateTime.Parse(value) >= DateTime.Parse(comparisonValueStart.ToString())
+                    && DateTime.Parse(value) <= DateTime.Parse(comparisonValueEnd.ToString());
             }
 
-
-
-            if(ValueIsDate(value))
+            if(ValueIsNumber(value) && ValueIsNumber(comparisonValueStart.ToString()) && ValueIsNumber(comparisonValueEnd.ToString()))
             {
-                if(ValueIsDate(comparisonValueStart.ToString()))
-                {
-                    if(ValueIsDate(comparisonValueEnd.ToString()))
-                    {
-                        return DateTime.Parse(value) >= DateTime.Parse(comparisonValueStart.ToString())
-                            && DateTime.Parse(value) <= DateTime.Parse(comparisonValueEnd.ToString());
-                    }
-                    
-                }
-            }
-
-            if(ValueIsNumber(value))
-            {
-                if(ValueIsNumber(comparisonValueStart.ToString()))
-                {
-                    if(ValueIsNumber(comparisonValueEnd.ToString()))
-                    {
-                        return double.Parse(value) >= double.Parse(comparisonValueStart.ToString())
-                            && double.Parse(value) <= double.Parse(comparisonValueEnd.ToString());
-                    }
-
-                }
+                return double.Parse(value) >= double.Parse(comparisonValueStart.ToString())
+                    && double.Parse(value) <= double.Parse(comparisonValueEnd.ToString());
             }
 
             return false;
-        }
-
-        public static bool Cnt(string value, string comparisonValue)
-        {
-            if(string.IsNullOrEmpty(value))
-            {
-                return false;
-            }
-
-            if(string.IsNullOrEmpty(comparisonValue))
-            {
-                return false;
-            }
-
-            return value.Contains(comparisonValue);
-
-
-        }
-
-        public static bool StWt(string value, string comparisonValue)
-        {
-            if(string.IsNullOrEmpty(value))
-            {
-                return false;
-            }
-
-            if(string.IsNullOrEmpty(comparisonValue))
-            {
-                return false;
-            }
-
-            return value.StartsWith(comparisonValue);
-        }
-
-        public static bool EnWt(string value, string comparisonValue)
-        {
-
-            if(string.IsNullOrEmpty(value))
-            {
-                return false;
-            }
-
-            if(string.IsNullOrEmpty(comparisonValue))
-            {
-                return false;
-            }
-
-            return value.EndsWith(comparisonValue);
-
         }
     }
 }

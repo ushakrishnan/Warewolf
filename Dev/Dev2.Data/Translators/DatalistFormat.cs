@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,30 +11,25 @@
 using System;
 using System.Collections.Generic;
 using Dev2.Web;
+using Warewolf.Resource.Errors;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.DataList.Contract
 {
     public sealed class DataListFormat
     {
         #region Static Members
-        private static readonly object FormatLock = new object();
-        private static readonly Dictionary<string, DataListFormat> ExistingFormats = new Dictionary<string, DataListFormat>(StringComparer.Ordinal);
+        static readonly object FormatLock = new object();
+        static readonly Dictionary<string, DataListFormat> ExistingFormats = new Dictionary<string, DataListFormat>(StringComparer.Ordinal);
 
-        /// <summary>
-        /// Gets the DatalistFormat instance that represents the given <paramref name="formatName" />, or creates a new one if a DatalistFormat instance
-        /// does not exist for the given <paramref name="formatName" />.
-        /// </summary>
-        /// <param name="formatName">The display name of the datalist format.</param>
-        /// <param name="publicFormatName">Name of the public format.</param>
-        /// <param name="headerType">Type of the header.</param>
-        /// <returns>
-        /// An instance of the DatalistFormat type that is unique to the given <paramref name="formatName" />
-        /// </returns>
-        /// <exception cref="System.ArgumentException">formatName cannot be null or empty string.</exception>
-        public static DataListFormat CreateFormat(string formatName, EmitionTypes publicFormatName = EmitionTypes.XML, string headerType = "")
+        public static DataListFormat CreateFormat(string formatName) => CreateFormat(formatName, EmitionTypes.XML, "");
+        public static DataListFormat CreateFormat(string formatName, EmitionTypes publicFormatName, string headerType)
         {
-            if(String.IsNullOrEmpty(formatName)) throw new ArgumentException("formatName cannot be null or empty string.");
+            if(String.IsNullOrEmpty(formatName))
+            {
+                throw new ArgumentException(ErrorResource.FormatNameCannotBeNull);
+            }
+
             DataListFormat format;
 
             lock(FormatLock)
@@ -52,14 +46,14 @@ namespace Dev2.DataList.Contract
         #endregion
 
         #region Instance Fields
-        private readonly string _formatName;
+        readonly string _formatName;
         #endregion
 
         #region Public Properties
         /// <summary>
         /// The display name of the format.
         /// </summary>
-        public string FormatName { get { return _formatName; } }
+        public string FormatName => _formatName;
 
         public EmitionTypes PublicFormatName { get; set; }
 
@@ -77,10 +71,7 @@ namespace Dev2.DataList.Contract
         #endregion
 
         #region Overrides
-        public override string ToString()
-        {
-            return "Datalist Format [" + _formatName + "]";
-        }
+        public override string ToString() => "Datalist Format [" + _formatName + "]";
         #endregion
     }
 }

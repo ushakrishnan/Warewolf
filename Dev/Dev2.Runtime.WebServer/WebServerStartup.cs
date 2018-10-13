@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +16,7 @@ using Microsoft.AspNet.SignalR;
 using Microsoft.Owin.Cors;
 using Microsoft.Owin.Hosting;
 using Owin;
+
 
 namespace Dev2.Runtime.WebServer
 {
@@ -43,7 +43,7 @@ namespace Dev2.Runtime.WebServer
             GlobalHost.Configuration.DefaultMessageBufferSize = 1000;
             GlobalHost.Configuration.MaxIncomingWebSocketMessageSize = null;
             GlobalHost.Configuration.TransportConnectTimeout = TimeSpan.FromSeconds(10);
-            
+
             var startOptions = new StartOptions();
             
             foreach(var endpoint in endpoints)
@@ -53,10 +53,11 @@ namespace Dev2.Runtime.WebServer
             return WebApp.Start<WebServerStartup>(startOptions);
         }
 
+    
         public void Configuration(IAppBuilder app)
         {
             var listener = (HttpListener)app.Properties[typeof(HttpListener).FullName];
-            listener.AuthenticationSchemeSelectorDelegate+=AuthenticationSchemeSelectorDelegate;
+            listener.AuthenticationSchemeSelectorDelegate += AuthenticationSchemeSelectorDelegate;
             listener.IgnoreWriteExceptions = true;  // ignore errors written to disconnected clients.
             // Enable cross-domain calls
             app.UseCors(CorsOptions.AllowAll);
@@ -72,7 +73,7 @@ namespace Dev2.Runtime.WebServer
 
             // Add web server routing...
             var config = new HttpConfiguration();
-            
+
             config.MapHttpAttributeRoutes();
             config.EnsureInitialized();
             app.UseWebApi(config);
@@ -82,7 +83,7 @@ namespace Dev2.Runtime.WebServer
         {
             EnvironmentVariables.DnsName = httpRequest.Url.DnsSafeHost;
             EnvironmentVariables.Port = httpRequest.Url.Port;
-            if (httpRequest.RawUrl.StartsWith("/public/",StringComparison.OrdinalIgnoreCase))
+            if (httpRequest.RawUrl.StartsWith("/public/", StringComparison.OrdinalIgnoreCase))
             {
                 return AuthenticationSchemes.Anonymous;
             }

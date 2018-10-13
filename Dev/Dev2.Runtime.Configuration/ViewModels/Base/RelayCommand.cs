@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +10,11 @@
 
 using System;
 using System.Windows.Input;
+using Dev2.Common.Interfaces;
 
 namespace Dev2.Runtime.Configuration.ViewModels.Base
 {
-    public class RelayCommand : ICommand
+    public class RelayCommand : IRelayCommand
     {
         readonly Action<object> _handlingMethod;
         readonly Predicate<object> _canHandlingMethodExecute;
@@ -23,9 +23,9 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         {
             if(handlingMethod == null)
             {
-                // ReSharper disable NotResolvedInText
+                
                 throw new ArgumentNullException("HandingMethod");
-                // ReSharper restore NotResolvedInText
+                
             }
 
             _handlingMethod = handlingMethod;
@@ -36,10 +36,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
 
         #region ICommand Members
 
-        public bool CanExecute(object parameter)
-        {
-            return _canHandlingMethodExecute == null || _canHandlingMethodExecute(parameter);
-        }
+        public bool CanExecute(object parameter) => _canHandlingMethodExecute == null || _canHandlingMethodExecute(parameter);
 
         public event EventHandler CanExecuteChanged;
 
@@ -53,6 +50,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
             if (CanExecuteChanged != null)
             {
                 CanExecuteChanged(this, EventArgs.Empty);
+                CommandManager.InvalidateRequerySuggested();
             }
         }
         #endregion
@@ -82,7 +80,9 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
         public RelayCommand(Action<T> execute, Predicate<T> canExecute)
         {
             if(execute == null)
+            {
                 throw new ArgumentNullException("execute");
+            }
 
             _execute = execute;
             _canExecute = canExecute;
@@ -92,12 +92,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
 
         #region ICommand Members
 
-        public bool CanExecute(object parameter)
-        {
-            // ReSharper disable SimplifyConditionalTernaryExpression
-            return _canExecute == null ? true : _canExecute((T)parameter);
-            // ReSharper restore SimplifyConditionalTernaryExpression
-        }
+        public bool CanExecute(object parameter) => _canExecute?.Invoke((T)parameter) ?? true;
 
         public event EventHandler CanExecuteChanged;
 
@@ -106,12 +101,10 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
             _execute((T)parameter);
         }
 
+    
         public void RaiseCanExecuteChanged()
         {
-            if (CanExecuteChanged != null)
-            {
-                CanExecuteChanged(this, EventArgs.Empty);
-            }
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
         #endregion // ICommand Members
     }

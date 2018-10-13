@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Core.Graph;
+using Warewolf.Resource.Errors;
 
 namespace Unlimited.Framework.Converters.Graph
 {
@@ -21,12 +22,12 @@ namespace Unlimited.Framework.Converters.Graph
 
         public IEnumerable<IPath> Map(object data)
         {
-            IInterrogator interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
-            IMapper mapper = interrogator.CreateMapper(data);
+            var interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
+            var mapper = interrogator.CreateMapper(data);
 
             if (mapper == null)
             {
-                throw new Exception(string.Concat("Couldn't create a mapper for '", data.ToString(), "'."));
+                throw new Exception(string.Format(ErrorResource.CouldntCreateMapper, data));
             }
 
             return mapper.Map(data);
@@ -34,15 +35,15 @@ namespace Unlimited.Framework.Converters.Graph
 
         public object SelectScalar(IPath path, object data)
         {
-            IInterrogator interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
-            INavigator navigator = interrogator.CreateNavigator(data, path.GetType());
+            var interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
+            var navigator = interrogator.CreateNavigator(data, path.GetType());
 
             if (navigator == null)
             {
-                throw new Exception(string.Concat("Couldn't create a navigator for the path '", path.ToString(), "'."));
+                throw new Exception(string.Format(ErrorResource.CouldntCreateNavigator, path));
             }
 
-            object value = navigator.SelectScalar(path);
+            var value = navigator.SelectScalar(path);
 
             navigator.Dispose();
 
@@ -51,15 +52,15 @@ namespace Unlimited.Framework.Converters.Graph
 
         public IEnumerable<object> SelectEnumerable(IPath path, object data)
         {
-            IInterrogator interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
-            INavigator navigator = interrogator.CreateNavigator(data, path.GetType());
+            var interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
+            var navigator = interrogator.CreateNavigator(data, path.GetType());
 
             if (navigator == null)
             {
-                throw new Exception(string.Concat("Couldn't create a navigator for the path '", path.ToString(), "'."));
+                throw new Exception(string.Format(ErrorResource.CouldntCreateNavigator, path));
             }
 
-            IEnumerable<object> values = navigator.SelectEnumerable(path);
+            var values = navigator.SelectEnumerable(path);
 
             navigator.Dispose();
 
@@ -72,13 +73,12 @@ namespace Unlimited.Framework.Converters.Graph
 
             if (paths.Count > 0)
             {
-                IInterrogator interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
-                INavigator navigator = interrogator.CreateNavigator(data, paths[0].GetType());
+                var interrogator = InterrogatorFactory.CreateInteregator(data.GetType());
+                var navigator = interrogator.CreateNavigator(data, paths[0].GetType());
 
                 if (navigator == null)
                 {
-                    throw new Exception(string.Concat("Couldn't create a navigator for the path '", paths[0].ToString(),
-                        "'."));
+                    throw new Exception(string.Format(ErrorResource.CouldntCreateNavigator, paths[0]));
                 }
 
                 values = navigator.SelectEnumerablesAsRelated(paths);

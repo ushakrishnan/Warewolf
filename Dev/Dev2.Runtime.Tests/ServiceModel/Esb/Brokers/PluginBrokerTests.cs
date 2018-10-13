@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +27,7 @@
 //        #region ApplyMappings
 
 
-//        [TestMethod]
+//        [TestMethod, DeploymentItem("EnableDocker.txt")]
 //        public void PluginBrokerApplyMappingsWithNullResultExpectedNoException()
 //        {
 //            //Initialization
@@ -47,7 +46,7 @@
 //        #region TestPluginResult
 
 //        // BUG 9626 - 2013.06.11 - TWR: added
-//        [TestMethod]
+//        [TestMethod, DeploymentItem("EnableDocker.txt")]
 //        public void PluginServicesTestPluginResultWithValidPocoExpectedAddsRecordsetFields()
 //        {
 //            var broker = new PluginBroker();
@@ -102,7 +101,7 @@
 //        }
 
 
-//        [TestMethod]
+//        [TestMethod, DeploymentItem("EnableDocker.txt")]
 //        [Owner("Travis Frisinger")]
 //        [TestCategory("PluginBroker_TestPlugin")]
 //        public void PluginBroker_TestPlugin_WhenPocoInput_ValidUserPaths()
@@ -139,7 +138,7 @@
 
 //        }
 
-//        [TestMethod]
+//        [TestMethod, DeploymentItem("EnableDocker.txt")]
 //        [Owner("Travis Frisinger")]
 //        [TestCategory("PluginBroker_TestPlugin")]
 //        public void PluginBroker_TestPlugin_WhenXmlInput_ValidXmlPaths()
@@ -225,7 +224,7 @@
 //            CollectionAssert.AreEqual(expectedUserVisiblePaths, resultUserVisiblePaths);
 //        }
 
-//        [TestMethod]
+//        [TestMethod, DeploymentItem("EnableDocker.txt")]
 //        [Owner("Travis Frisinger")]
 //        [TestCategory("PluginBroker_TestPlugin")]
 //        public void PluginBroker_TestPlugin_WhenJsonInput_ValidJsonPaths()

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,13 +17,14 @@ namespace Dev2.TaskScheduler.Wrappers
 {
     public class Dev2TaskSettings : ITaskSettings
     {
-        private readonly TaskSettings _nativeInstance;
+        readonly TaskSettings _nativeInstance;
 
         public Dev2TaskSettings(TaskSettings nativeInstance)
         {
-            _nativeInstance = nativeInstance;
+            nativeInstance.Priority = ProcessPriorityClass.Normal;
+            _nativeInstance = nativeInstance;            
         }
-
+        
         public ProcessPriorityClass Priority
         {
             get { return Instance.Priority; }
@@ -107,12 +108,15 @@ namespace Dev2.TaskScheduler.Wrappers
         public void Dispose()
         {
             Instance.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-
-        public TaskSettings Instance
+        protected virtual void Dispose(bool disposing)
         {
-            get { return _nativeInstance; }
+            // Cleanup
         }
+
+        public TaskSettings Instance => _nativeInstance;
     }
 }

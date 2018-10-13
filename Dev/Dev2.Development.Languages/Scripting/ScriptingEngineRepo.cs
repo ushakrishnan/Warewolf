@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,31 +12,23 @@ using System;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scripting;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Development.Languages.Scripting
 {
     public class ScriptingEngineRepo : SpookyAction<IScriptingContext,enScriptType>
     {
-
-        public IScriptingContext CreateFindMissingStrategy(enScriptType typeOf)
+        public IScriptingContext CreateEngine(enScriptType scriptType, IStringScriptSources sources)
         {
-            return FindMatch(typeOf);
-        }
-
-
-        public IScriptingContext CreateEngine(enScriptType ScriptType)
-        {
-            switch(ScriptType)
+            switch(scriptType)
             {
                 case enScriptType.JavaScript :
-                    return  new JavaScriptContext();
+                    return  new JavaScriptContext(sources);
                 case enScriptType.Python:
-                    return new Dev2PythonContext();
+                    return new Dev2PythonContext(sources);
                 case enScriptType.Ruby:
-                    return new RubyContext();
-                default : throw new Exception("Invalid scripting context");
-
-
+                    return new RubyContext(sources);
+                default : throw new Exception(ErrorResource.InvalidScriptingContext);
             }
         }
     }

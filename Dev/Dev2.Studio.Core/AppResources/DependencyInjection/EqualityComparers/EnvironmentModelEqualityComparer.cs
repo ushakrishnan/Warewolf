@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,19 +10,19 @@
 
 using System;
 using System.Collections.Generic;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers
 {
-    public class EnvironmentModelEqualityComparer : IEqualityComparer<IEnvironmentModel>
+    public class EnvironmentModelEqualityComparer : IEqualityComparer<IServer>
     {
         #region Class Members
 
-        private static readonly Lazy<EnvironmentModelEqualityComparer> Instance
+        static readonly Lazy<EnvironmentModelEqualityComparer> Instance
             = new Lazy<EnvironmentModelEqualityComparer>(() => new EnvironmentModelEqualityComparer());
 
-        private EnvironmentModelEqualityComparer()
+        EnvironmentModelEqualityComparer()
         {
         }
 
@@ -31,7 +30,7 @@ namespace Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers
 
         #region Methods
 
-        public bool Equals(IEnvironmentModel x, IEnvironmentModel y)
+        public bool Equals(IServer x, IServer y)
         {
             if(x == null || y == null)
             {
@@ -40,24 +39,13 @@ namespace Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers
             return x.Equals(y);
         }
 
-        public int GetHashCode(IEnvironmentModel obj)
-        {
-            return obj.GetHashCode();
-        }
-
-        public bool Equals(IEnvironmentModel x, object y)
-        {
-            return Equals(x, y as IEnvironmentModel);
-        }
+        public int GetHashCode(IServer obj) => obj.GetHashCode();
 
         #endregion Methods
 
         #region Properties
 
-        public static EnvironmentModelEqualityComparer Current
-        {
-            get { return Instance.Value; }
-        }
+        public static EnvironmentModelEqualityComparer Current => Instance.Value;
 
         #endregion Properties
     }

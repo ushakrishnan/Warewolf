@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,156 +20,124 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.FindMissingStrategies
 {
-    /// <summary>
-    /// Responsible for the find missing logic that apply to all the activities that have a collection property and some static properties on them
-    /// </summary>
     class MixedActivityFindMissingStrategy : IFindMissingStrategy
     {
         #region Implementation of ISpookyLoadable<Enum>
 
-        public Enum HandlesType()
-        {
-            return enFindMissingType.MixedActivity;
-        }
-
-        /// <summary>
-        /// Gets all the fields for a specific activity
-        /// </summary>
-        /// <param name="activity">The activity that the fields will be retrieved from</param>
-        /// <returns>Returns all the fields in a list of strings</returns>
+        public Enum HandlesType() => enFindMissingType.MixedActivity;
+        
         public List<string> GetActivityFields(object activity)
         {
-            List<string> results = new List<string>();
-            Type activityType = activity.GetType();
+            var results = new List<string>();
+            var activityType = activity.GetType();
 
-            if(activityType == typeof(DsfDataSplitActivity))
+            if (activityType == typeof(DsfDataSplitActivity) && activity is DsfDataSplitActivity dataSplitActivity)
             {
-                DsfDataSplitActivity dsAct = activity as DsfDataSplitActivity;
-                if(dsAct != null)
+                results.AddRange(InternalFindMissing(dataSplitActivity.ResultsCollection));
+                if (!string.IsNullOrEmpty(dataSplitActivity.SourceString))
                 {
-                    results.AddRange(InternalFindMissing(dsAct.ResultsCollection));
-                    if(!string.IsNullOrEmpty(dsAct.SourceString))
-                    {
-                        results.Add(dsAct.SourceString);
-                    }
-                }
-            }            
-            
-            if(activityType == typeof(DsfCreateJsonActivity))
-            {
-                var dsAct = activity as DsfCreateJsonActivity;
-                if(dsAct != null)
-                {
-                    results.AddRange(InternalFindMissing(dsAct.JsonMappings));
-                    if(!string.IsNullOrEmpty(dsAct.JsonString))
-                    {
-                        results.Add(dsAct.JsonString);
-                    }
+                    results.Add(dataSplitActivity.SourceString);
                 }
             }
-            if (activityType == typeof(SharepointReadListActivity))
+
+
+            if (activityType == typeof(DsfCreateJsonActivity) && activity is DsfCreateJsonActivity createJsonActivity)
             {
-                var dsAct = activity as SharepointReadListActivity;
-                if (dsAct != null)
+                results.AddRange(InternalFindMissing(createJsonActivity.JsonMappings));
+                if (!string.IsNullOrEmpty(createJsonActivity.JsonString))
                 {
-                    results.AddRange(InternalFindMissing(dsAct.ReadListItems));
-                    if(dsAct.FilterCriteria != null)
-                    {
-                        results.AddRange(InternalFindMissing(dsAct.FilterCriteria));
-                    }
+                    results.Add(createJsonActivity.JsonString);
                 }
             }
-            if (activityType == typeof(SharepointCreateListItemActivity))
+
+            if (activityType == typeof(SharepointReadListActivity) && activity is SharepointReadListActivity sharepointReadListActivity)
             {
-                var dsAct = activity as SharepointCreateListItemActivity;
-                if (dsAct != null)
+                results.AddRange(InternalFindMissing(sharepointReadListActivity.ReadListItems));
+                if (sharepointReadListActivity.FilterCriteria != null)
                 {
-                    results.AddRange(InternalFindMissing(dsAct.ReadListItems));
-                    results.Add(dsAct.Result);
+                    results.AddRange(InternalFindMissing(sharepointReadListActivity.FilterCriteria));
                 }
             }
-            if (activityType == typeof(SharepointDeleteListItemActivity))
+
+            if (activityType == typeof(SharepointCreateListItemActivity) && activity is SharepointCreateListItemActivity sharepointCreateListItemActivity)
             {
-                var dsAct = activity as SharepointDeleteListItemActivity;
-                if (dsAct != null)
-                {
-                    results.AddRange(InternalFindMissing(dsAct.FilterCriteria));
-                    results.Add(dsAct.DeleteCount);
-                }
-                
+                results.AddRange(InternalFindMissing(sharepointCreateListItemActivity.ReadListItems));
+                results.Add(sharepointCreateListItemActivity.Result);
             }
+
+            if (activityType == typeof(SharepointDeleteListItemActivity) && activity is SharepointDeleteListItemActivity sharepointDeleteListItemActivity)
+            {
+                results.AddRange(InternalFindMissing(sharepointDeleteListItemActivity.FilterCriteria));
+                results.Add(sharepointDeleteListItemActivity.DeleteCount);
+            }
+
             if (activityType == typeof(SharepointUpdateListItemActivity))
             {
-                var dsAct = activity as SharepointUpdateListItemActivity;
-                if (dsAct != null)
+                if (activity is SharepointUpdateListItemActivity dsAct)
                 {
                     results.AddRange(InternalFindMissing(dsAct.ReadListItems));
                     results.AddRange(InternalFindMissing(dsAct.FilterCriteria));
                     results.Add(dsAct.Result);
                 }
             }
-            else if(activityType == typeof(DsfDataMergeActivity))
+            else if (activityType == typeof(DsfDataMergeActivity))
             {
-                DsfDataMergeActivity dmAct = activity as DsfDataMergeActivity;
-                if(dmAct != null)
+                if (activity is DsfDataMergeActivity dmAct)
                 {
                     results.AddRange(InternalFindMissing(dmAct.MergeCollection));
-                    if(!string.IsNullOrEmpty(dmAct.Result))
+                    if (!string.IsNullOrEmpty(dmAct.Result))
                     {
                         results.Add(dmAct.Result);
                     }
                 }
             }
-            else if(activityType == typeof(DsfXPathActivity))
+            else if (activityType == typeof(DsfXPathActivity))
             {
-                DsfXPathActivity xpAct = activity as DsfXPathActivity;
-                if(xpAct != null)
+                if (activity is DsfXPathActivity xpAct)
                 {
                     results.AddRange(InternalFindMissing(xpAct.ResultsCollection));
-                    if(!string.IsNullOrEmpty(xpAct.SourceString))
+                    if (!string.IsNullOrEmpty(xpAct.SourceString))
                     {
                         results.Add(xpAct.SourceString);
                     }
                 }
             }
-            else if(activityType == typeof(DsfSqlBulkInsertActivity))
+            else if (activityType == typeof(DsfSqlBulkInsertActivity))
             {
-                var sbiAct = activity as DsfSqlBulkInsertActivity;
-                if(sbiAct != null)
+                if (activity is DsfSqlBulkInsertActivity sbiAct)
                 {
                     results.AddRange(InternalFindMissing(sbiAct.InputMappings));
-                    if(!string.IsNullOrEmpty(sbiAct.Result))
+                    if (!string.IsNullOrEmpty(sbiAct.Result))
                     {
                         results.Add(sbiAct.Result);
                     }
                 }
             }
-            else if(activityType == typeof(DsfFindRecordsMultipleCriteriaActivity))
+            else
             {
-                DsfFindRecordsMultipleCriteriaActivity frmAct = activity as DsfFindRecordsMultipleCriteriaActivity;
-                if(frmAct != null)
+                if (activityType == typeof(DsfFindRecordsMultipleCriteriaActivity) && activity is DsfFindRecordsMultipleCriteriaActivity frmAct)
                 {
                     results.AddRange(InternalFindMissing(frmAct.ResultsCollection));
-                    if(!string.IsNullOrEmpty(frmAct.FieldsToSearch))
+                    if (!string.IsNullOrEmpty(frmAct.FieldsToSearch))
                     {
                         results.Add(frmAct.FieldsToSearch);
                     }
-                    if(!string.IsNullOrEmpty(frmAct.Result))
+                    if (!string.IsNullOrEmpty(frmAct.Result))
                     {
                         results.Add(frmAct.Result);
                     }
                 }
+
             }
 
-            var act = activity as DsfNativeActivity<string>;
-            if(act != null)
+            if (activity is DsfNativeActivity<string> act)
             {
-                if(!string.IsNullOrEmpty(act.OnErrorVariable))
+                if (!string.IsNullOrEmpty(act.OnErrorVariable))
                 {
                     results.Add(act.OnErrorVariable);
                 }
 
-                if(!string.IsNullOrEmpty(act.OnErrorWorkflow))
+                if (!string.IsNullOrEmpty(act.OnErrorWorkflow))
                 {
                     results.Add(act.OnErrorWorkflow);
                 }
@@ -183,18 +150,18 @@ namespace Dev2.FindMissingStrategies
 
         #region Private Methods
 
-        private static IEnumerable<string> InternalFindMissing<T>(IEnumerable<T> data)
+        static IEnumerable<string> InternalFindMissing<T>(IEnumerable<T> data)
         {
             IList<string> results = new List<string>();
-            // ReSharper disable LoopCanBeConvertedToQuery
-            foreach(T row in data)
-            // ReSharper restore LoopCanBeConvertedToQuery
+
+            foreach (T row in data)
+
             {
-                IEnumerable<PropertyInfo> properties = StringAttributeRefectionUtils.ExtractAdornedProperties<FindMissingAttribute>(row);
-                foreach(PropertyInfo propertyInfo in properties)
+                var properties = StringAttributeRefectionUtils.ExtractAdornedProperties<FindMissingAttribute>(row);
+                foreach (PropertyInfo propertyInfo in properties)
                 {
-                    object property = propertyInfo.GetValue(row, null);
-                    if(property != null)
+                    var property = propertyInfo.GetValue(row, null);
+                    if (property != null)
                     {
                         results.Add(property.ToString());
                     }

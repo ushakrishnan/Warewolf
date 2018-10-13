@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,20 +11,22 @@
 using System.Windows;
 using System.Windows.Input;
 using Caliburn.Micro;
-using Dev2.AppResources.DependencyVisualization;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.ViewModels.DependencyVisualization;
-using Dev2.Utils;
+using Dev2.Studio.Interfaces;
+using Infragistics.Controls.Maps;
+using Microsoft.Practices.Prism.Mvvm;
+using Warewolf.Studio.ViewModels;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Views.DependencyVisualization
 {
-    public partial class DependencyVisualiserView
+    public partial class DependencyVisualiserView : IView
     {
-        private Point _scrollStartOffset;
         readonly IEventAggregator _eventPublisher;
 
+        bool _isMoveInEffect;
+        NetworkNodeNodeControl _currentElement;
+        Point _currentPosition;
 
         public DependencyVisualiserView()
             : this(EventPublishers.Aggregator)
@@ -37,85 +38,78 @@ namespace Dev2.Studio.Views.DependencyVisualization
             InitializeComponent();
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             _eventPublisher = eventPublisher;
+
+            Nodes.NodeControlAttachedEvent += (sender, e) =>
+            {
+                e.NodeControl.MouseLeftButtonUp += ElementMouseLeftButtonUp;
+                e.NodeControl.MouseLeftButtonDown += ElementMouseLeftButtonDown;
+                e.NodeControl.MouseMove += ElementMouseMove;
+            };
+
+            Nodes.NodeControlDetachedEvent += (sender, e) =>
+            {
+                e.NodeControl.MouseLeftButtonUp -= ElementMouseLeftButtonUp;
+                e.NodeControl.MouseLeftButtonDown -= ElementMouseLeftButtonDown;
+                e.NodeControl.MouseMove -= ElementMouseMove;                
+            };
         }
 
-        protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+        void ElementMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            //2012.10.01: massimo.guerrera - Added for the click through on the dependency viewer
-            if(e.ClickCount == 2)
+            var element = (NetworkNodeNodeControl)sender;
+            _currentElement = element;
+            element.CaptureMouse();
+            _isMoveInEffect = true;
+            _currentPosition = e.GetPosition(element.Parent as UIElement);
+        }
+
+        void ElementMouseMove(object sender, MouseEventArgs e)
+        {
+            var element = (NetworkNodeNodeControl)sender;
+            if (_currentElement == null || !Equals(element, _currentElement))
             {
-                ReleaseMouseCapture();
-                FrameworkElement fe = e.OriginalSource as FrameworkElement;
-                FrameworkContentElement fce = e.OriginalSource as FrameworkContentElement;
-                object dataContext = null;
-
-                if(fe != null)
+                _isMoveInEffect = false;
+            }
+            else
+            {
+                if (_isMoveInEffect)
                 {
-                    dataContext = fe.DataContext;
-                }
-                else if(fce != null)
-                {
-                    dataContext = fce.DataContext;
-                }
-
-                string resourceName = dataContext as string;
-
-                if(string.IsNullOrEmpty(resourceName) && dataContext is Node)
-                {
-                    resourceName = (dataContext as Node).ID;
-                }
-
-                if(!string.IsNullOrEmpty(resourceName))
-                {
-                    var vm = DataContext as DependencyVisualiserViewModel;
-                    if(vm != null)
+                    if (e.GetPosition(Nodes).X > Nodes.ActualWidth || e.GetPosition(Nodes).Y > Nodes.ActualHeight || e.GetPosition(Nodes).Y < 0.0)
                     {
-                        IResourceModel resource = vm.ResourceModel.Environment
-                                                                 .ResourceRepository.FindSingle(
-                                                                     c => c.ResourceName == resourceName);
-                        if(resource != null)
-                        {
-                            WorkflowDesignerUtils.EditResource(resource, _eventPublisher);
-                        }
+                        element.ReleaseMouseCapture();
+                        _isMoveInEffect = false;
+                    }
+                    else
+                    {
+                        var currentPosition = e.GetPosition(element.Parent as UIElement);
+
+                        element.Node.Location = new Point(
+                            element.Node.Location.X + (currentPosition.X - _currentPosition.X) / Nodes.ZoomLevel,
+                            element.Node.Location.Y + (currentPosition.Y - _currentPosition.Y) / Nodes.ZoomLevel);
+
+                        _currentPosition = currentPosition;
                     }
                 }
             }
-
-            e.GetPosition(this);
-            _scrollStartOffset.X = myScrollViewer.HorizontalOffset;
-            _scrollStartOffset.Y = myScrollViewer.VerticalOffset;
-
-            // Update the cursor if scrolling is possible 
-            Cursor = myScrollViewer.ExtentWidth > myScrollViewer.ViewportWidth ||
-                myScrollViewer.ExtentHeight > myScrollViewer.ViewportHeight ?
-                Cursors.ScrollAll : Cursors.Arrow;
-
-            CaptureMouse();
-            OnPreviewMouseDown(e);
         }
 
-        protected override void OnPreviewMouseMove(MouseEventArgs e)
+        void ElementMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if(IsMouseCaptured)
-            {
-                // Get the new mouse position. 
-                Point mouseDragCurrentPoint = e.GetPosition(this);
-
-                // Scroll to the new position. 
-                myScrollViewer.ScrollToHorizontalOffset(mouseDragCurrentPoint.X);
-                myScrollViewer.ScrollToVerticalOffset(mouseDragCurrentPoint.Y);
-            }
-            base.OnPreviewMouseMove(e);
+            var element = (NetworkNodeNodeControl)sender;
+            element.ReleaseMouseCapture();
+            _isMoveInEffect = false;
         }
 
-        protected override void OnPreviewMouseUp(MouseButtonEventArgs e)
+        void ButtonBase_OnClick(object sender, RoutedEventArgs e)
         {
-            if(IsMouseCaptured)
-            {
-                Cursor = Cursors.Arrow;
-                ReleaseMouseCapture();
-            }
-            base.OnPreviewMouseUp(e);
+            Nodes.UpdateNodeArrangement();
+        }
+
+        void Nodes_OnNodeMouseDoubleClick(object sender, NetworkNodeClickEventArgs e)
+        {
+            var id = ((ExplorerItemNodeViewModel)e.NodeControl.Node.Data).ResourceId;
+            var activeServer = CustomContainer.Get<IShellViewModel>().ActiveServer;
+            CustomContainer.Get<IShellViewModel>().OpenResource(id,activeServer.EnvironmentID, activeServer);            
         }
     }
 }

@@ -1,24 +1,26 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Collections.Generic;
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
+using System.Collections.Generic;
+using System.Text;
+using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2.Common
 {
     public class Dev2TokenizerBuilder
     {
-        private readonly IList<IDev2SplitOp> _ops = new List<IDev2SplitOp>();
-        public string ToTokenize { get; set; }
+        readonly IList<IDev2SplitOp> _ops = new List<IDev2SplitOp>();
+        public StringBuilder ToTokenize { get; set; }
 
         public bool ReverseOrder { get; set; }
 
@@ -39,14 +41,14 @@ namespace Dev2.Common
 
         public IDev2Tokenizer Generate()
         {
-            if (string.IsNullOrEmpty(ToTokenize))
+            if (ToTokenize.Length == 0)
             {
-                throw new TokenizeError("Null or empty tokenize string!");
+                throw new TokenizeError(ErrorResource.NullTokenzeString);
             }
 
             if (_ops.Count <= 0)
             {
-                throw new TokenizeError("Cant find anything to split on!");
+                throw new TokenizeError(ErrorResource.NothingToSplit);
             }
 
             return new Dev2Tokenizer(ToTokenize, _ops, ReverseOrder);

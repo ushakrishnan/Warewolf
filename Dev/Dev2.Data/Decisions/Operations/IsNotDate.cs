@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,16 +14,8 @@ namespace Dev2.Data.Decisions.Operations
 {
     public class IsNotDate : IDecisionOperation
     {
-        public Enum HandlesType()
-        {
-            return enDecisionType.IsNotDate;
-        }
+        public Enum HandlesType() => enDecisionType.IsNotDate;
 
-        public bool Invoke(string[] cols)
-        {
-            DateTime date;
-
-            return !DateTime.TryParse(cols[0], out date);
-        }
+        public bool Invoke(string[] cols) => !DateTime.TryParse(cols[0], out DateTime date);
     }
 }

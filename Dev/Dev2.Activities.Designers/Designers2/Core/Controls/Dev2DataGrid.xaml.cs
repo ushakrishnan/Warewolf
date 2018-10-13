@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,17 +10,14 @@
 
 using System;
 using System.Activities.Presentation.Model;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
 using Dev2.UI;
-using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers2.Core.Controls
 {
@@ -31,7 +27,8 @@ namespace Dev2.Activities.Designers2.Core.Controls
     public partial class Dev2DataGrid
     {
         readonly Func<Visual, FrameworkElement> _getVisualChild;
-        static int _skipNumber;
+        int _skipNumber;
+        static int _staticSkipNumber;
 
         public Dev2DataGrid()
             : this(GetVisualChild<IntellisenseTextBox>)
@@ -47,152 +44,39 @@ namespace Dev2.Activities.Designers2.Core.Controls
             InitializeComponent();
         }
 
-        public DataGridColumnHeadersPresenter GetColumnHeadersPresenter()
-        {
-            return GetVisualChild<DataGridColumnHeadersPresenter>(this);
-        }
-
-        public void RemoveFirstDuplicateBlankRow()
-        {
-            var blankCount = new List<int>();
-            var itemList = Items.SourceCollection as ModelItemCollection;
-            var modelItem = SelectedValue as ModelItem;
-            if(itemList == null || modelItem == null)
-            {
-                return;
-            }
-
-            if(itemList.Count > 2)
-            {
-                foreach(dynamic item in itemList)
-                {
-                    var currentVal = item.GetCurrentValue();
-                    if(currentVal != modelItem.GetCurrentValue())
-                    {
-                        if(currentVal.CanRemove())
-                        {
-                            blankCount.Add(item.IndexNumber);
-                        }
-                    }
-                }
-                if(blankCount.Count > 1)
-                {
-                    itemList.Remove(Items[blankCount[0] - 1]);
-                    for(var i = blankCount[0] - 1; i < itemList.Count; i++)
-                    {
-                        dynamic tmp = itemList[i];
-                        tmp.IndexNumber = i + 1;
-                    }
-                }
-            }
-        }
-
-        public void RemoveRow(int indexNum)
-        {
-            dynamic itemList = Items.SourceCollection as ModelItemCollection;
-
-            if(itemList == null)
-            {
-                return;
-            }
-
-            if(itemList.Count > 2)
-            {
-                itemList.RemoveAt(indexNum);
-                for(var i = indexNum; i < itemList.Count; i++)
-                {
-                    dynamic tmp = itemList[i];
-                    tmp.IndexNumber--;
-                }
-            }
-            else
-            {
-                itemList.RemoveAt(indexNum);
-
-                var newVal = DTOFactory.CreateNewDTO(itemList[0].GetCurrentValue());
-                newVal.IndexNumber = indexNum + 1;
-                itemList.Insert(indexNum, newVal);
-            }
-        }
-
-        public void AddRow()
-        {
-            var canAdd = true;
-            dynamic itemList = Items.SourceCollection;
-            foreach(var item in itemList)
-            {
-                var currentVal = item.GetCurrentValue();
-                if(!currentVal.CanAdd())
-                {
-                    canAdd = false;
-                }
-            }
-            if(canAdd)
-            {
-                var newVal = DTOFactory.CreateNewDTO(itemList[0].GetCurrentValue());
-                newVal.IndexNumber = itemList.Count + 1;
-                itemList.Add(newVal);
-            }
-        }
-
-        public void InsertRow(int index)
-        {
-            index++;
-            dynamic itemList = Items.SourceCollection;
-            var newVal = DTOFactory.CreateNewDTO(itemList[0].GetCurrentValue(), 0, true);
-            foreach(dynamic item in itemList)
-            {
-                int i = item.IndexNumber;
-                if(i >= index)
-                {
-                    item.IndexNumber++;
-                }
-            }
-            newVal.IndexNumber = index;
-            itemList.Insert(index - 1, newVal);
-            SelectedIndex = index - 1;
-        }
-
-        public int CountRows()
-        {
-            return Items.SourceCollection.Cast<ModelItem>().Count();
-        }
+        public DataGridColumnHeadersPresenter GetColumnHeadersPresenter() => GetVisualChild<DataGridColumnHeadersPresenter>(this);
 
         public bool SetFocusToInserted(DataGridRow row)
         {
             var modelItem = row.DataContext as ModelItem;
-            if(modelItem != null)
+            if (modelItem?.GetCurrentValue() is IDev2TOFn toFn && toFn.Inserted)
             {
-                var toFn = modelItem.GetCurrentValue() as IDev2TOFn;
-                if(toFn != null && toFn.Inserted)
-                {
-                    return SetFocus(row);
-                }
+                return SetFocus(row);
             }
             return false;
         }
 
-        public IInputElement GetFocusElement(int rowIndex, int inputsToSkip=0)
+        public IInputElement GetFocusElement(int rowIndex, int inputsToSkip)
         {
             if(rowIndex >= 0 && rowIndex < Items.Count)
             {
                 var row = GetRow(rowIndex);
-                return GetFocusElement(row,inputsToSkip);
+                return GetFocusElement(row, inputsToSkip);
             }
             return null;
         }
 
-        public IInputElement GetFocusElement(DataGridRow row, int inputsToSkip = 0)
-        {
-            return GetVisualChild(row,inputsToSkip);
-        }
+        public IInputElement GetFocusElement(int rowIndex) => GetFocusElement(rowIndex, 0);
+        public IInputElement GetFocusElement() => GetFocusElement(0, 0);
+
+        public IInputElement GetFocusElement(DataGridRow row, int inputsToSkip) => GetVisualChild(row, inputsToSkip: inputsToSkip);
 
         bool SetFocus(Visual row)
         {
             // Wait for the UI to be fully rendered BEFORE trying to set the focus
             Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(() =>
             {
-                var visualChild = GetVisualChild(row);
+                var visualChild = GetVisualChild(row, 0);
                 if(visualChild != null)
                 {
                     Keyboard.Focus(visualChild);
@@ -201,16 +85,13 @@ namespace Dev2.Activities.Designers2.Core.Controls
             return true;
         }
 
-        FrameworkElement GetVisualChild(Visual row, int inputsToSkip = 0)
+        FrameworkElement GetVisualChild(Visual row, int inputsToSkip)
         {
             _skipNumber = inputsToSkip;
             return row != null ? _getVisualChild(row) : null;
         }
 
-        public DataGridRow GetRow(int rowIndex)
-        {
-            return (DataGridRow)ItemContainerGenerator.ContainerFromItem(Items[rowIndex]);
-        }
+        public DataGridRow GetRow(int rowIndex) => (DataGridRow)ItemContainerGenerator.ContainerFromItem(Items[rowIndex]);
 
         void OnDataGridRowLoaded(object sender, RoutedEventArgs e)
         {
@@ -221,19 +102,18 @@ namespace Dev2.Activities.Designers2.Core.Controls
         {
             var child = default(T);
             var numVisuals = VisualTreeHelper.GetChildrenCount(parent);
-            for (var i = 0; i < numVisuals; i++)
+            var i = 0;
+            while (i < numVisuals && _staticSkipNumber != 0)
             {
                 var v = (Visual)VisualTreeHelper.GetChild(parent, i);
                 child = v as T ?? GetVisualChild<T>(v);
-                if(child != null)
+                if(child != null && _staticSkipNumber != 0)
                 {
-                    if (_skipNumber == 0)
-                    {
-                        break;
-                    }
-                    _skipNumber--;
+
+                    _staticSkipNumber--;
                     child = null;
-                }                
+                }
+                i++;
             }
             return child;
         }

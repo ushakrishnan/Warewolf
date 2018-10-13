@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,14 +11,19 @@
 using System;
 using System.Activities;
 using System.Activities.Statements;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using ActivityUnitTests;
-using Dev2.Data.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Common.Interfaces;
+using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.DynamicServices;
+using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Warewolf.Storage;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -27,10 +31,9 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for AssignActivity
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ForEachActivityTest : BaseActivityUnitTest
     {
-       
+
 
 
         /// <summary>
@@ -49,8 +52,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , ActivityStrings.ForEachDataListShape
                           , enForEachType.NumOfExecution
                           );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(0));
@@ -73,8 +75,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , null
                           , "2"
                           );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(2));
@@ -94,8 +95,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , null
                           , "-2"
                           );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(0));
@@ -114,8 +114,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "9"
                           );
 
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(5));
@@ -134,8 +133,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "5"
                           );
 
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(5));
@@ -153,8 +151,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "-5"
                           , "9"
                            );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
 
@@ -174,8 +171,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "5"
                           , "-9"
                            );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(0));
         }
@@ -193,8 +189,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , null
                           , "6,9,"
                           );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(2));
@@ -213,8 +208,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , null
                           , "6,9,9,6"
                           );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(4));
@@ -234,8 +228,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , null
                           , "9,5,1,"
                           );
-            IDSFDataObject result;
-            Mock<IEsbChannel> coms = ExecuteForEachProcess(out result);
+            var coms = ExecuteForEachProcess(out IDSFDataObject result);
             ErrorResultTO errors;
             // remove test datalist ;)
             coms.Verify(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, It.IsAny<int>(), false), Times.Exactly(3));
@@ -249,34 +242,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DsfForEach_UpdateDebugParentID")]
-// ReSharper disable InconsistentNaming
-        public void DsfForEach_UpdateDebugParentID_UniqueIdSameIfNestingLevelNotChanged()
-// ReSharper restore InconsistentNaming
-        {
-            var dataObject = new DsfDataObject(CurrentDl, Guid.NewGuid())
-            {
-                // NOTE: WorkflowApplicationFactory.InvokeWorkflowImpl() will use HostSecurityProvider.Instance.ServerID 
-                //       if this is NOT provided which will cause the tests to fail!
-                ServerID = Guid.NewGuid(),
-                IsDebug =  true,
-            };
+        
+        public void DsfForEach_UpdateDebugParentID_UniqueIdNotSameIfNestingLevelNotChanged()
 
-            DsfForEachActivity act = new DsfForEachActivity();
-            var originalGuid = Guid.NewGuid();
-            act.UniqueID = originalGuid.ToString();
-            act.UpdateDebugParentID(dataObject);
-            Assert.AreEqual(originalGuid.ToString(), act.UniqueID);
-            Assert.AreEqual(act.GetWorkSurfaceMappingId(), originalGuid);
-          
-
-        }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("DsfForEach_UpdateDebugParentID")]
-// ReSharper disable InconsistentNaming
-        public void DsfForEach_UpdateDebugParentID_UniqueIdNotSameIfNestingLevelIncreased()
-// ReSharper restore InconsistentNaming
         {
             var dataObject = new DsfDataObject(CurrentDl, Guid.NewGuid())
             {
@@ -284,10 +252,9 @@ namespace Dev2.Tests.Activities.ActivityTests
                 //       if this is NOT provided which will cause the tests to fail!
                 ServerID = Guid.NewGuid(),
                 IsDebug = true,
-                ForEachNestingLevel = 1
             };
 
-            DsfForEachActivity act = new DsfForEachActivity();
+            var act = new DsfForEachActivity();
             var originalGuid = Guid.NewGuid();
             act.UniqueID = originalGuid.ToString();
             act.UpdateDebugParentID(dataObject);
@@ -300,9 +267,35 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DsfForEach_UpdateDebugParentID")]
-        // ReSharper disable InconsistentNaming
+        
+        public void DsfForEach_UpdateDebugParentID_UniqueIdNotSameIfNestingLevelIncreased()
+
+        {
+            var dataObject = new DsfDataObject(CurrentDl, Guid.NewGuid())
+            {
+                // NOTE: WorkflowApplicationFactory.InvokeWorkflowImpl() will use HostSecurityProvider.Instance.ServerID 
+                //       if this is NOT provided which will cause the tests to fail!
+                ServerID = Guid.NewGuid(),
+                IsDebug = true,
+                ForEachNestingLevel = 1
+            };
+
+            var act = new DsfForEachActivity();
+            var originalGuid = Guid.NewGuid();
+            act.UniqueID = originalGuid.ToString();
+            act.UpdateDebugParentID(dataObject);
+            Assert.AreNotEqual(originalGuid.ToString(), act.UniqueID);
+            Assert.AreEqual(act.GetWorkSurfaceMappingId(), originalGuid);
+
+
+        }
+
+        [TestMethod]
+        [Owner("Leon Rajindrapersadh")]
+        [TestCategory("DsfForEach_UpdateDebugParentID")]
+        
         public void DsfForEach_Execute_IncrementsAndChangesId_IdNotChangedIfNestingLevelIsZero()
-        // ReSharper restore InconsistentNaming
+
         {
             var id = SetupArguments(
                              ActivityStrings.ForEachCurrentDataList
@@ -315,35 +308,69 @@ namespace Dev2.Tests.Activities.ActivityTests
                            , "9,5,1,"
                            );
             var x = id.UniqueID;
-            IDSFDataObject result;
-            ExecuteForEachProcess(out result, true, -1);
+            ExecuteForEachProcess(out IDSFDataObject result, true, -1);
             Assert.AreEqual(x, id.UniqueID);
             // remove test datalist ;)
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DsfForEachActivity_Execute")]
+        public void DsfForEachActivity_Execute_ServiceTestExecution_WithNoUniqueId()
+        {
+            var uniqueId = Guid.NewGuid();
+
+            var env = new ExecutionEnvironment();
+            var data = new Mock<IDSFDataObject>();
+            data.Setup(o => o.Environment).Returns(() => env);
+            data.Setup(o => o.IsServiceTestExecution).Returns(() => true);
+
+            var serviceTestMock = new Mock<IServiceTestModelTO>();
+            var step = new ServiceTestStepTO();
+            var step_child = new ServiceTestStepTO {
+                UniqueId = uniqueId
+            };
+            step.Children = new ObservableCollection<IServiceTestStep>() { step_child };
+            var testSteps = new List<IServiceTestStep>
+            {
+                step
+            };
+            serviceTestMock.Setup(o => o.TestSteps).Returns(() => testSteps);
+            var serviceTest = serviceTestMock.Object;
+            data.Setup(o => o.ServiceTest).Returns(() => serviceTest);
+            var ob = new DsfForEachActivity
+            {
+                UniqueID = uniqueId.ToString()
+            };
+            ob.Execute(data.Object, 0);
+
+            Assert.AreEqual("Passed", step_child.Result.Message);
+            Assert.AreEqual(RunResult.TestPassed, step_child.Result.RunTestResult);
         }
 
         #endregion Output Mapping Tests
 
         #region Private Test Methods
 
-        private DsfActivity CreateWorkflow()
+        DsfActivity CreateWorkflow()
         {
-            DsfActivity activity = new DsfActivity
-                {
-                    ServiceName = "MyTestService",
-                    InputMapping = ActivityStrings.ForEach_Input_Mapping,
-                    OutputMapping = ActivityStrings.ForEach_Output_Mapping
-                   
-                };
+            var activity = new DsfActivity
+            {
+                ServiceName = "MyTestService",
+                InputMapping = ActivityStrings.ForEach_Input_Mapping,
+                OutputMapping = ActivityStrings.ForEach_Output_Mapping
+
+            };
 
             TestData = "<ADL><innerrecset><innerrec></innerrec><innerrec2></innerrec2><innerdate></innerdate></innerrecset><innertesting><innertest></innertest></innertesting><innerScalar></innerScalar></ADL>";
 
             return activity;
         }
 
-        private DsfActivity CreateWorkflow(string mapping, bool isInputMapping)
+        DsfActivity CreateWorkflow(string mapping, bool isInputMapping)
         {
-            DsfActivity activity = new DsfActivity();
-            if(isInputMapping)
+            var activity = new DsfActivity();
+            if (isInputMapping)
             {
                 activity.InputMapping = mapping;
                 activity.OutputMapping = ActivityStrings.ForEach_Output_Mapping;
@@ -360,17 +387,23 @@ namespace Dev2.Tests.Activities.ActivityTests
             return activity;
         }
 
-        private DsfForEachActivity SetupArguments(string currentDl, string testData, enForEachType type, bool isInputMapping = false, string inputMapping = null, string from = null, string to = null, string csvIndexes = null, string numberExecutions = null)
+        DsfForEachActivity SetupArguments(string currentDl, string testData, enForEachType type, bool isInputMapping = false, string inputMapping = null, string from = null, string to = null, string csvIndexes = null, string numberExecutions = null)
         {
             var activityFunction = new ActivityFunc<string, bool>();
-            DsfActivity activity = inputMapping != null ? CreateWorkflow(inputMapping, isInputMapping) : CreateWorkflow();
+            var activity = inputMapping != null ? CreateWorkflow(inputMapping, isInputMapping) : CreateWorkflow();
 
             activityFunction.Handler = activity;
             var id = Guid.NewGuid().ToString();
-            DsfForEachActivity dsfForEachActivity = new DsfForEachActivity
-                {
-                    DataFunc = activityFunction, ForEachType = type, NumOfExections = numberExecutions, From = @from, To = to, CsvIndexes = csvIndexes, UniqueID = id
-                };
+            var dsfForEachActivity = new DsfForEachActivity
+            {
+                DataFunc = activityFunction,
+                ForEachType = type,
+                NumOfExections = numberExecutions,
+                From = @from,
+                To = to,
+                CsvIndexes = csvIndexes,
+                UniqueID = id
+            };
             TestStartNode = new FlowStep
             {
                 Action = dsfForEachActivity

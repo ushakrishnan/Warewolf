@@ -2,6 +2,7 @@ using System;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Data.Util;
 using Dev2.Providers.Validation.Rules;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Validation
 {
@@ -10,7 +11,7 @@ namespace Dev2.Validation
         public ShouldNotBeVariableRule(Func<string> getValue)
             : base(getValue)
         {
-            ErrorText = "cannot be a variable";
+            ErrorText = ErrorResource.CannotBeVariable;
         }
 
         public override IActionableErrorInfo Check()
@@ -19,9 +20,6 @@ namespace Dev2.Validation
             return IsVariable(value) ? CreatError() : null;
         }
 
-        static bool IsVariable(string value)
-        {
-            return DataListUtil.IsFullyEvaluated(value);
-        }
+        static bool IsVariable(string value) => DataListUtil.IsFullyEvaluated(value);
     }
 }

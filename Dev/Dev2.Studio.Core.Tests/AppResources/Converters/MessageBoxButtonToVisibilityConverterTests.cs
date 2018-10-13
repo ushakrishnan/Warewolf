@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Data;
 using Dev2.Studio.AppResources.Converters;
@@ -19,7 +17,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Core.Tests.AppResources.Converters
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class MessageBoxButtonToVisibilityConverterTests
     {
         #region Tests
@@ -28,16 +25,16 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [ExpectedException(typeof(NotImplementedException))]
         public void ConvertBackExpectedNotImplementedException()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
             messageBoxButtonToVisibilityConverter.ConvertBack(null, null, null, null);
         }
 
         [TestMethod]
         public void ConvertWhereValueIsNullExpectedNothing()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(null, null, MessageBoxResult.OK, null);
-            object expected = Binding.DoNothing;
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(null, null, MessageBoxResult.OK, null);
+            var expected = Binding.DoNothing;
 
             Assert.AreEqual(expected, actual, "When the value is null binding.donothing is expected");
         }
@@ -45,9 +42,9 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereParameterIsNullExpectedNothing()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OK, null, null, null);
-            object expected = Binding.DoNothing;
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OK, null, null, null);
+            var expected = Binding.DoNothing;
 
             Assert.AreEqual(expected, actual, "When the parameter is null binding.donothing is expected");
         }
@@ -55,9 +52,9 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsUnexpectedTypeExpectedNothing()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert("", null, MessageBoxResult.OK, null);
-            object expected = Binding.DoNothing;
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert("", null, MessageBoxResult.OK, null);
+            var expected = Binding.DoNothing;
 
             Assert.AreEqual(expected, actual, "When the value is an unexpected type binding.donothing is expected");
         }
@@ -65,9 +62,9 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereParameterIsUnexpectedTypeExpectedNothing()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OK, null, "", null);
-            object expected = Binding.DoNothing;
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OK, null, "", null);
+            var expected = Binding.DoNothing;
 
             Assert.AreEqual(expected, actual, "When the parameter is null binding.donothing is expected");
         }
@@ -77,8 +74,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsOkCancelAndParameterIsOkTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.OK, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.OK, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -87,8 +84,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsOkAndParameterIsOkTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OK, null, MessageBoxResult.OK, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OK, null, MessageBoxResult.OK, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -97,8 +94,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoAndParameterIsOkExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.OK, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.OK, null);
             object expected = Visibility.Collapsed;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -111,8 +108,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsOkCancelAndParameterIsCancelTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.Cancel, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.Cancel, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -121,8 +118,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoCancelAndParameterIsCancelTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNoCancel, null, MessageBoxResult.Cancel, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNoCancel, null, MessageBoxResult.Cancel, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -131,8 +128,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoAndParameterIsCancelExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.Cancel, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.Cancel, null);
             object expected = Visibility.Collapsed;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -145,8 +142,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoAndParameterIsYesTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.Yes, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.Yes, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -155,8 +152,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoCancelAndParameterIsYesTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNoCancel, null, MessageBoxResult.Yes, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNoCancel, null, MessageBoxResult.Yes, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -165,8 +162,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsOKCancelAndParameterIsYesExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.Yes, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.Yes, null);
             object expected = Visibility.Collapsed;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -179,8 +176,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoAndParameterIsNoTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.No, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNo, null, MessageBoxResult.No, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -189,8 +186,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsYesNoCancelAndParameterIsNoTypeExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNoCancel, null, MessageBoxResult.No, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.YesNoCancel, null, MessageBoxResult.No, null);
             object expected = Visibility.Visible;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");
@@ -199,8 +196,8 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestMethod]
         public void ConvertWhereValueIsOKCancelAndParameterIsNoExpectedVisible()
         {
-            MessageBoxButtonToVisibilityConverter messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
-            object actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.No, null);
+            var messageBoxButtonToVisibilityConverter = new MessageBoxButtonToVisibilityConverter();
+            var actual = messageBoxButtonToVisibilityConverter.Convert(MessageBoxButton.OKCancel, null, MessageBoxResult.No, null);
             object expected = Visibility.Collapsed;
 
             Assert.AreEqual(expected, actual, "This compination of value and parameter should result in Visibility.Visible.");

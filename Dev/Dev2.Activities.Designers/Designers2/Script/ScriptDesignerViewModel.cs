@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,21 +11,43 @@
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Input;
+using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Enums.Enums;
+using Dev2.Runtime.Configuration.ViewModels.Base;
+using Dev2.Services.Events;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Script
 {
     public class ScriptDesignerViewModel : ActivityDesignerViewModel
     {
+        readonly IEventAggregator _eventPublisher;
+        readonly IScriptChooser _scriptChooser;
         public ScriptDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
+            _eventPublisher = EventPublishers.Aggregator;
+            _eventPublisher.Subscribe(this);
+
+            _scriptChooser = new ScriptChooser();
+            EscapeScript = true;
             ScriptTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enScriptType>();
             SelectedScriptType = Dev2EnumConverter.ConvertEnumValueToString(ScriptType);
+            ChooseScriptSourceCommand = new DelegateCommand(o => ChooseScriptSources());
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Scripting_Script;
         }
+
+        public string IncludeFile
+        {
+            get { return GetProperty<string>(); }
+            set { SetProperty(value); }
+        }
+
+        public bool EscapeScript { get; private set; }
 
         public IList<string> ScriptTypes { get; private set; }
 
@@ -44,9 +65,9 @@ namespace Dev2.Activities.Designers2.Script
             var viewModel = (ScriptDesignerViewModel)d;
             var value = e.NewValue as string;
 
-            if(!string.IsNullOrWhiteSpace(value))
+            if (!string.IsNullOrWhiteSpace(value))
             {
-                switch(value)
+                switch (value)
                 {
                     case "Ruby":
                         viewModel.ScriptTypeDefaultText = "Ruby Syntax";
@@ -62,6 +83,7 @@ namespace Dev2.Activities.Designers2.Script
             }
         }
 
+        public ICommand ChooseScriptSourceCommand { get; private set; }
 
         public string ScriptTypeDefaultText
         {
@@ -71,12 +93,29 @@ namespace Dev2.Activities.Designers2.Script
 
         public static readonly DependencyProperty ScriptTypeTextProperty =
             DependencyProperty.Register("ScriptTypeDefaultText", typeof(string), typeof(ScriptDesignerViewModel), new PropertyMetadata(null));
-
-        // DO NOT bind to these properties - these are here for convenience only!!!
-        enScriptType ScriptType { set { SetProperty(value); } get { return GetProperty<enScriptType>(); } }
+        
+        enScriptType ScriptType
+        {
+            set => SetProperty(value);
+            get => GetProperty<enScriptType>();
+        }
 
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel?.UpdateHelpText(helpText);
+        }
+
+        public void ChooseScriptSources()
+        {
+            var fileChooserMessage = _scriptChooser.ChooseScriptSources(IncludeFile);
+            fileChooserMessage.Filter = "js";
+            _eventPublisher.Publish(fileChooserMessage);
+            IncludeFile = string.Join(";", fileChooserMessage.SelectedFiles);
         }
     }
 }

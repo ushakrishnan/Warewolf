@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,25 +20,43 @@ using IronRuby.Builtins;
 using Microsoft.Scripting;
 using Microsoft.Scripting.Hosting;
 
+
+
+
+
+
+
+
+
 namespace Dev2.Development.Languages.Scripting
 {
-    class RubyContext:IScriptingContext
+    public class RubyContext:IScriptingContext
     {
-        #if WIN8
+        readonly IStringScriptSources _sources;
+#if WIN8
             public static readonly bool IsWin8 = true;
-        #else
-            public static readonly bool IsWin8 = false;
-        #endif
+#else
+        public static readonly bool IsWin8 = false;
+#endif
 
+        public RubyContext(IStringScriptSources sources)
+        {
+            _sources = sources;
+        }
 
         public string Execute(string scriptValue)
         {
             var rubyEngine = CreateRubyEngine();
-            string rubyFunc = @"def __result__();" + scriptValue + "end; public :__result__";
-            ScriptSource source = rubyEngine.CreateScriptSourceFromString(rubyFunc, SourceCodeKind.Statements);
-
-            //create a scope to act as the context for the code
-            ScriptScope scope = rubyEngine.CreateScope();
+            var rubyFunc = @"class System::Object"+Environment.NewLine+"def initialize"+Environment.NewLine+"end"+Environment.NewLine+"end"+Environment.NewLine+"def __result__();" + Environment.NewLine +scriptValue+Environment.NewLine + "end;"+Environment.NewLine+" public :__result__";
+            var scope = rubyEngine.CreateScope();
+            if (_sources?.GetFileScriptSources() != null)
+            {
+                foreach(var fileScriptSource in _sources.GetFileScriptSources())
+                {
+                    rubyEngine.Execute(fileScriptSource.GetReader().ReadToEnd(), scope);
+                }
+            }
+            var source = rubyEngine.CreateScriptSourceFromString(rubyFunc, SourceCodeKind.Statements);
 
             //execute the source
             source.Execute(scope);
@@ -50,26 +67,23 @@ namespace Dev2.Development.Languages.Scripting
             return result.Invoke().ToString();
         }
 
-        public ScriptEngine CreateRubyEngine()
+        ScriptEngine CreateRubyEngine()
         {
-            var runtimeSetup = ScriptRuntimeSetup.ReadConfiguration();
-            var languageSetup = runtimeSetup.AddRubySetup();
+            RuntimeSetup = ScriptRuntimeSetup.ReadConfiguration();
+            var languageSetup = RuntimeSetup.AddRubySetup();
 
-            runtimeSetup.PrivateBinding = true;
-            runtimeSetup.HostType = typeof(TmpHost);
-            runtimeSetup.HostArguments = new object[] { new OptionsAttribute() };
-
+            RuntimeSetup.PrivateBinding = true;
+            RuntimeSetup.HostType = typeof(TmpHost);
+            RuntimeSetup.HostArguments = new object[] { new OptionsAttribute() };
             languageSetup.Options["Verbosity"] = 2;
 
-            var runtime = Ruby.CreateRuntime(runtimeSetup);
+            var runtime = Ruby.CreateRuntime(RuntimeSetup);
             return Ruby.GetEngine(runtime);
         }
 
-        public enScriptType HandlesType()
-        {
-            return enScriptType.Ruby;
-        }
+        public ScriptRuntimeSetup RuntimeSetup { get; set; }
 
+        public enScriptType HandlesType() => enScriptType.Ruby;
 
         [AttributeUsage(AttributeTargets.Method)]
         [Serializable]
@@ -83,8 +97,8 @@ namespace Dev2.Development.Languages.Scripting
 
         public class TmpHost : ScriptHost
         {
-            private readonly OptionsAttribute/*!*/ _options;
-            private readonly PlatformAdaptationLayer/*!*/ _pal;
+            readonly OptionsAttribute/*!*/ _options;
+            readonly PlatformAdaptationLayer/*!*/ _pal;
 
             public TmpHost(OptionsAttribute/*!*/ options)
             {
@@ -94,18 +108,15 @@ namespace Dev2.Development.Languages.Scripting
                        PlatformAdaptationLayer.Default;
             }
 
-            public override PlatformAdaptationLayer PlatformAdaptationLayer
-            {
-                get { return _pal; }
-            }
+            public override PlatformAdaptationLayer PlatformAdaptationLayer => _pal;
 
             public class Win8PAL : PlatformAdaptationLayer
             {
-                private string cwd;
+                string cwd;
 
                 public Win8PAL()
                 {
-                    StringBuilder buffer = new StringBuilder(300);
+                    var buffer = new StringBuilder(300);
                     if (GetCurrentDirectory(buffer.Capacity, buffer) == 0)
                     {
                         throw new IOException();
@@ -143,15 +154,9 @@ namespace Dev2.Development.Languages.Scripting
                     set { cwd = value; }
                 }
 
-                public override bool FileExists(string path)
-                {
-                    return false;
-                }
+                public override bool FileExists(string path) => false;
 
-                public override bool DirectoryExists(string path)
-                {
-                    return false;
-                }
+                public override bool DirectoryExists(string path) => false;
             }
         }
     }

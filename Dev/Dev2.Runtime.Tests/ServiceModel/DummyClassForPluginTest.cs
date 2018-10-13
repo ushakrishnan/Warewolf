@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,24 +15,21 @@ namespace DummyNamespaceForTest
     [Serializable]
     public class DummyClassForPluginTest
     {
+        public DummyClassForPluginTest(string name)
+        {
+            Name = name;
+        }
+
+        public DummyClassForPluginTest()
+        {
+            
+        }
         public string Name { get; set; }
 
+    
         public DummyClassForPluginTest DummyMethod()
         {
-            return new DummyClassForPluginTest
-            {
-                Name = "test data"
-            };
-        }
-
-        public string Echo(string text)
-        {
-            return string.Format("<root><echo>{0}</echo><hack>wtf</hack></root>", text);
-        }
-
-        public string NoEcho()
-        {
-            return "<root><echo>None</echo><hack>wtf</hack></root>";
+            return new DummyClassForPluginTest {Name = "test data"};
         }
     }
 }

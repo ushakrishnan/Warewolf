@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +13,8 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Providers.Errors;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -23,7 +22,7 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 namespace Dev2.Activities.Designers.Tests.Designers2.Core.Credentials
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class CredentialsActivityDesignerViewModelTests
     {
         [TestMethod]
@@ -54,7 +53,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Credentials
         [TestCategory("CredentialsActivityDesignerViewModel_ValidateUserNameAndPassword")]
         public void CredentialsActivityDesignerViewModel_ValidateUserNameAndPassword_UserNameIsNotBlankAndPasswordIsBlank_HasErrors()
         {
-            Verify_ValidateUserNameAndPassword("aaaa", "", true, "Password cannot be empty or only white space");
+            Verify_ValidateUserNameAndPassword("aaaa", "", true, Warewolf.Resource.Errors.ErrorResource.CredentialsPasswordNotNullErrorTest);
         }
 
         [TestMethod]
@@ -62,7 +61,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Credentials
         [TestCategory("CredentialsActivityDesignerViewModel_ValidateUserNameAndPassword")]
         public void CredentialsActivityDesignerViewModel_ValidateUserNameAndPassword_UserNameIsBlankAndPasswordIsNotBlank_HasErrors()
         {
-            Verify_ValidateUserNameAndPassword("", "xxx", false, "Username cannot be empty or only white space");
+            Verify_ValidateUserNameAndPassword("", "xxx", false, Warewolf.Resource.Errors.ErrorResource.CredentialsUsernameNotNullErrorTest);
         }
 
         [TestMethod]
@@ -78,17 +77,17 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Credentials
         [TestCategory("CredentialsActivityDesignerViewModel_ValidateUserNameAndPassword")]
         public void CredentialsActivityDesignerViewModel_ValidateUserNameAndPassword_UserNameIsInvalidExpression_HasErrors()
         {
-            Verify_ValidateUserNameAndPassword("a]]", "", false, "Username - Invalid expression: opening and closing brackets don't match.");
+            Verify_ValidateUserNameAndPassword("a]]", "", false, Warewolf.Resource.Errors.ErrorResource.CredentialsUsernameInvalidExpressionErrorTest);
         }
 
 
-        // ReSharper disable UnusedParameter.Local
+        
         static void Verify_ValidateUserNameAndPassword(string userName, string password, bool isPasswordError, string expectedMessageFormat)
-        // ReSharper restore UnusedParameter.Local
+        
         {
             //------------Setup for test-------------------------
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><a></a></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);

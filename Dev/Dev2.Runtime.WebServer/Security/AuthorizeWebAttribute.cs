@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +15,6 @@ using System.Web;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.Security;
 using Dev2.Services.Security;
@@ -63,7 +61,7 @@ namespace Dev2.Runtime.WebServer.Security
 
         AuthorizationRequest GetAuthorizationRequest(HttpActionContext actionContext)
         {
-            AuthorizationRequest authorizationRequest = actionContext.GetAuthorizationRequest();
+            var authorizationRequest = actionContext.GetAuthorizationRequest();
 
             try
             {
@@ -74,7 +72,7 @@ namespace Dev2.Runtime.WebServer.Security
                     var resourceName = HttpUtility.UrlDecode(absolutePath.Substring(startIndex, absolutePath.Length - startIndex));
                     var resource = ResourceCatalog.Instance.GetResource(GlobalConstants.ServerWorkspaceID, resourceName);
 
-                    if(resource != null && resource.ResourceType == ResourceType.ReservedService)
+                    if(resource != null && resource.ResourceType == "ReservedService")
                     {
                         authorizationRequest = new AuthorizationRequest
                         {
@@ -88,7 +86,7 @@ namespace Dev2.Runtime.WebServer.Security
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
             }
 
             return authorizationRequest;

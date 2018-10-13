@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,28 +11,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.ExtMethods;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Common.Utils;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
+using Dev2.Interfaces;
 using Dev2.PathOperations;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
+using Warewolf.Core;
 using Warewolf.Storage;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
 {
-    /// <summary>
-    /// PBI : 1172
-    /// Status : New
-    /// Purpose : To provide an activity that can write a file and its contents via FTP, FTPS and file system
-    /// </summary>
-    public class DsfFileWrite : DsfAbstractFileActivity, IFileWrite, IPathOutput, IPathOverwrite
+    [ToolDescriptorInfo("FileFolder-Write", "Write File", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Write_File")]
+    public class DsfFileWrite : DsfAbstractFileActivity, IFileWrite, IPathOutput, IPathOverwrite, IEquatable<DsfFileWrite>
     {
 
         public DsfFileWrite()
@@ -43,71 +43,68 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             FileContents = string.Empty;
         }
 
-        protected override IList<OutputTO> ExecuteConcreteAction(IDSFDataObject dataObject, out ErrorResultTO allErrors, int update)
+        protected override bool AssignEmptyOutputsToRecordSet => true;
+        protected override IList<OutputTO> TryExecuteConcreteAction(IDSFDataObject context, out ErrorResultTO error, int update)
         {
             IList<OutputTO> outputs = new List<OutputTO>();
 
-            allErrors = new ErrorResultTO();
+            error = new ErrorResultTO();
             var colItr = new WarewolfListIterator();
 
             //get all the possible paths for all the string variables
-            var inputItr = new WarewolfIterator(dataObject.Environment.Eval(OutputPath, update));
+            var inputItr = new WarewolfIterator(context.Environment.Eval(OutputPath, update));
             colItr.AddVariableToIterateOn(inputItr);
 
-            var unameItr = new WarewolfIterator(dataObject.Environment.Eval(Username, update));
-            colItr.AddVariableToIterateOn(unameItr);
-
-            var passItr = new WarewolfIterator(dataObject.Environment.Eval(DecryptedPassword,update));
+            var passItr = new WarewolfIterator(context.Environment.Eval(DecryptedPassword, update));
             colItr.AddVariableToIterateOn(passItr);
 
-            var privateKeyItr = new WarewolfIterator(dataObject.Environment.Eval(PrivateKeyFile, update));
+            var privateKeyItr = new WarewolfIterator(context.Environment.Eval(PrivateKeyFile, update));
             colItr.AddVariableToIterateOn(privateKeyItr);
 
-            var contentItr =new WarewolfIterator(dataObject.Environment.Eval(FileContents, update));
+            var contentItr = new WarewolfIterator(context.Environment.Eval(FileContents, update));
             colItr.AddVariableToIterateOn(contentItr);
 
             outputs.Add(DataListFactory.CreateOutputTO(Result));
 
 
-            if(dataObject.IsDebugMode())
+            if (context.IsDebugMode())
             {
-                AddDebugInputItem(OutputPath, "Output Path", dataObject.Environment, update);
+                AddDebugInputItem(OutputPath, "Output Path", context.Environment, update);
                 AddDebugInputItem(new DebugItemStaticDataParams(GetMethod(), "Method"));
-                AddDebugInputItemUserNamePassword(dataObject.Environment, update);
+                AddDebugInputItemUserNamePassword(context.Environment, update);
                 if (!string.IsNullOrEmpty(PrivateKeyFile))
                 {
-                    AddDebugInputItem(PrivateKeyFile, "Private Key File", dataObject.Environment, update);
+                    AddDebugInputItem(PrivateKeyFile, "Private Key File", context.Environment, update);
                 }
-                AddDebugInputItem(FileContents, "File Contents", dataObject.Environment, update);
+                AddDebugInputItem(FileContents, "File Contents", context.Environment, update);
             }
 
-            while(colItr.HasMoreData())
+            while (colItr.HasMoreData())
             {
-                IActivityOperationsBroker broker = ActivityIOFactory.CreateOperationsBroker();
+                var broker = ActivityIOFactory.CreateOperationsBroker();
                 var writeType = GetCorrectWriteType();
-                Dev2PutRawOperationTO putTo = ActivityIOFactory.CreatePutRawOperationTO(writeType, TextUtils.ReplaceWorkflowNewLinesWithEnvironmentNewLines(colItr.FetchNextValue(contentItr)));
-                IActivityIOPath opath = ActivityIOFactory.CreatePathFromString(colItr.FetchNextValue(inputItr),
-                                                                                colItr.FetchNextValue(unameItr),
+                var putTo = ActivityIOFactory.CreatePutRawOperationTO(writeType, TextUtils.ReplaceWorkflowNewLinesWithEnvironmentNewLines(colItr.FetchNextValue(contentItr)));
+                var opath = ActivityIOFactory.CreatePathFromString(colItr.FetchNextValue(inputItr), Username,
                                                                                 colItr.FetchNextValue(passItr),
                                                                                 true, colItr.FetchNextValue(privateKeyItr));
-                IActivityIOOperationsEndPoint endPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(opath);
+                var endPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(opath);
 
                 try
                 {
-                    if(allErrors.HasErrors())
+                    if (error.HasErrors())
                     {
                         outputs[0].OutputStrings.Add(null);
                     }
                     else
                     {
-                        string result = broker.PutRaw(endPoint, putTo);
+                        var result = broker.PutRaw(endPoint, putTo);
                         outputs[0].OutputStrings.Add(result);
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     outputs[0].OutputStrings.Add(null);
-                    allErrors.AddError(e.Message);
+                    error.AddError(e.Message);
                     break;
                 }
             }
@@ -117,22 +114,20 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         WriteType GetCorrectWriteType()
         {
-            if(AppendBottom)
+            if (AppendBottom)
             {
                 return WriteType.AppendBottom;
             }
-            if(AppendTop)
+            if (AppendTop)
             {
                 return WriteType.AppendTop;
             }
-            if(Overwrite)
+            if (Overwrite)
             {
                 return WriteType.Overwrite;
             }
             return WriteType.AppendBottom;
         }
-
-        #region Properties
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="DsfFileWrite" /> is append.
@@ -196,30 +191,75 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             set;
         }
 
-        #endregion Properties
-
-        #region Private Methods
-
-
-        private string GetMethod()
+        public override IEnumerable<StateVariable> GetState()
         {
-            return GetCorrectWriteType().GetDescription();
+            return new[] {
+                new StateVariable
+                {
+                    Name = nameof(OutputPath),
+                    Value = OutputPath,
+                    Type = StateVariable.StateType.Output
+                },
+                new StateVariable
+                {
+                    Name = nameof(Overwrite),
+                    Value = Overwrite.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(AppendTop),
+                    Value = AppendTop.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(AppendBottom),
+                    Value = AppendBottom.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(FileContents),
+                    Value = FileContents,
+                    Type = StateVariable.StateType.InputOutput
+                },
+                new StateVariable
+                {
+                    Name = nameof(Username),
+                    Value = Username,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(PrivateKeyFile),
+                    Value = PrivateKeyFile,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(Result),
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
         }
 
-        #endregion
+
+        string GetMethod() => GetCorrectWriteType().GetDescription();
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            if (updates != null)
             {
-                foreach(Tuple<string, string> t in updates)
+                foreach (Tuple<string, string> t in updates)
                 {
-                    if(t.Item1 == OutputPath)
+                    if (t.Item1 == OutputPath)
                     {
                         OutputPath = t.Item2;
                     }
 
-                    if(t.Item1 == FileContents)
+                    if (t.Item1 == FileContents)
                     {
                         FileContents = t.Item2;
                     }
@@ -229,29 +269,72 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
 
-        #region GetForEachInputs/Outputs
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(OutputPath, FileContents);
 
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
+
+        public bool Equals(DsfFileWrite other)
         {
-            return GetForEachItems(OutputPath, FileContents);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                && Append == other.Append
+                && string.Equals(FileContents, other.FileContents)
+                && string.Equals(OutputPath, other.OutputPath)
+                && Overwrite == other.Overwrite
+                && AppendTop == other.AppendTop
+                && AppendBottom == other.AppendBottom;
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public override bool Equals(object obj)
         {
-            return GetForEachItems(Result);
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfFileWrite)obj);
         }
 
-        #endregion
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ Append.GetHashCode();
+                hashCode = (hashCode * 397) ^ (FileContents != null ? FileContents.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (OutputPath != null ? OutputPath.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ Overwrite.GetHashCode();
+                hashCode = (hashCode * 397) ^ AppendTop.GetHashCode();
+                hashCode = (hashCode * 397) ^ AppendBottom.GetHashCode();
+                return hashCode;
+            }
+        }
     }
 }

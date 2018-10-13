@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Security.Policy;
-using Dev2.Common.Interfaces.Core.Graph;
+using Dev2.Common.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 
 namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
@@ -20,74 +17,43 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
     /// Used to execute plugins properly ;)
     /// INFO : http://stackoverflow.com/questions/2008691/pass-and-execute-delegate-in-separate-appdomain
     /// </summary>
-    public static class PluginServiceExecutionFactory
+    public static partial class PluginServiceExecutionFactory
     {
         #region Private Methods
 
-        private static IRuntime CreateInvokeAppDomain(out AppDomain childDomain)
-        {
-            // Construct and initialize settings for a second AppDomain.
-            AppDomainSetup domainSetup = new AppDomainSetup
-            {
-                ApplicationBase = AppDomain.CurrentDomain.SetupInformation.ApplicationBase,
-                ConfigurationFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile,
-                ApplicationName = AppDomain.CurrentDomain.SetupInformation.ApplicationName,
-                LoaderOptimization = LoaderOptimization.MultiDomainHost
-            };
-            Evidence adevidence = AppDomain.CurrentDomain.Evidence;
-            // Create the child AppDomain used for the service tool at runtime.
-            childDomain = AppDomain.CreateDomain(Guid.NewGuid().ToString(), adevidence, domainSetup);
-
-            // Create an instance of the runtime in the second AppDomain. 
-            // A proxy to the object is returned.
-            IRuntime runtime = (PluginRuntimeHandler)childDomain.CreateInstanceAndUnwrap(typeof(PluginRuntimeHandler).Assembly.FullName, typeof(PluginRuntimeHandler).FullName);
-
-            return runtime;
-        }
 
         #endregion
 
         #region Public Interface
 
-        public static IOutputDescription TestPlugin(PluginInvokeArgs args)
+        public static IDev2MethodInfo InvokePlugin(Isolated<PluginRuntimeHandler> appDomain, PluginExecutionDto dto,IDev2MethodInfo dev2MethodInfo,out string objString)
         {
-            AppDomain childDomain = null;
+            var invokePlugin = appDomain.Value.Run(dev2MethodInfo, dto, out string objectString);
+            objString = objectString;
+            return invokePlugin;
+        }
 
-            try
-            {
-                var runtime = CreateInvokeAppDomain(out childDomain);
+        public static PluginExecutionDto ExecuteConstructor(Isolated<PluginRuntimeHandler> appDomain, PluginExecutionDto dto) => appDomain.Value.ExecuteConstructor(dto);
 
-                // start the runtime.  call will marshal into the child runtime app domain
-                return runtime.Test(args);
-            }
-            finally
+        public static Isolated<PluginRuntimeHandler> CreateAppDomain() => CreateInvokeAppDomain();
+
+
+        /// <summary>
+        /// Gets the Constructors.
+        /// </summary>
+        /// <param name="assemblyLocation">The assembly location.</param>
+        /// <param name="assemblyName">Name of the assembly.</param>
+        /// <param name="fullName">The full name.</param>
+        /// <returns></returns>
+        public static ServiceConstructorList GetConstructors(string assemblyLocation, string assemblyName, string fullName)
+        {
+            using (var runtime = CreateInvokeAppDomain())
             {
-                if(childDomain != null)
-                {
-                    AppDomain.Unload(childDomain);
-                }
+                return runtime.Value.ListConstructors(assemblyLocation, assemblyName, fullName);
             }
         }
 
-        public static object InvokePlugin(PluginInvokeArgs args)
-        {
-            AppDomain childDomain = null;
-
-            try
-            {
-                var runtime = CreateInvokeAppDomain(out childDomain);
-
-                // start the runtime.  call will marshal into the child runtime app domain
-                return runtime.Run(args);
-            }
-            finally
-            {
-                if(childDomain != null)
-                {
-                    AppDomain.Unload(childDomain);
-                }
-            }
-        }
+        #endregion
 
         /// <summary>
         /// Gets the methods.
@@ -96,69 +62,21 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         /// <param name="assemblyName">Name of the assembly.</param>
         /// <param name="fullName">The full name.</param>
         /// <returns></returns>
-        public static ServiceMethodList GetMethods(string assemblyLocation, string assemblyName, string fullName)
+        public static ServiceMethodList GetMethodsWithReturns(string assemblyLocation, string assemblyName, string fullName)
         {
-            AppDomain childDomain = null;
-            try
+            using (var runtime = CreateInvokeAppDomain())
             {
-                var runtime = CreateInvokeAppDomain(out childDomain);
-
-                // start the runtime.  call will marshal into the child runtime app domain
-                return runtime.ListMethods(assemblyLocation, assemblyName, fullName);
-            }
-            finally
-            {
-                if(childDomain != null)
-                {
-                    AppDomain.Unload(childDomain);
-                }
+                return runtime.Value.ListMethodsWithReturns(assemblyLocation, assemblyName, fullName);
             }
         }
 
-        /// <summary>
-        /// Validates the plugin.
-        /// </summary>
-        /// <param name="toLoad">The automatic load.</param>
-        /// <returns></returns>
-        public static string ValidatePlugin(string toLoad)
+        public static NamespaceList GetNamespacesWithJsonObjects(PluginSource pluginSource)
         {
-            AppDomain childDomain = null;
-            try
+            using (var runtime = CreateInvokeAppDomain())
             {
-                var runtime = CreateInvokeAppDomain(out childDomain);
-
-                // start the runtime.  call will marshal into the child runtime app domain
-                return runtime.ValidatePlugin(toLoad);
-            }
-            finally
-            {
-                if(childDomain != null)
-                {
-                    AppDomain.Unload(childDomain);
-                }
+                return runtime.Value.FetchNamespaceListObjectWithJsonObjects(pluginSource);
             }
         }
-
-        public static NamespaceList GetNamespaces(PluginSource pluginSource)
-        {
-            AppDomain childDomain = null;
-            try
-            {
-                var runtime = CreateInvokeAppDomain(out childDomain);
-
-                // start the runtime.  call will marshal into the child runtime app domain
-                return runtime.FetchNamespaceListObject(pluginSource);
-            }
-            finally
-            {
-                if(childDomain != null)
-                {
-                    AppDomain.Unload(childDomain);
-                }
-            }
-        }
-
-        #endregion
-
+        
     }
 }

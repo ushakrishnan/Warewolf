@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,7 +24,7 @@ namespace Dev2.Core.Tests
         public void Share_Constructor_Construct_ExpectValid()
         {
             //------------Setup for test--------------------------
-            var share = new Share("a","b",ShareType.Disk);
+            var share = new Share("a","b",ShareType.None);
 
             
             //------------Execute Test---------------------------
@@ -40,7 +39,7 @@ namespace Dev2.Core.Tests
         public void Share_IsFileSystem_ExpectValid()
         {
             //------------Setup for test--------------------------
-            var share = new Share("a", "b", ShareType.Disk);
+            var share = new Share("a", "b", ShareType.None);
 
 
             //------------Execute Test---------------------------

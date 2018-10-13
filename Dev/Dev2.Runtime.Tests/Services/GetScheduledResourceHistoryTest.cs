@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +14,7 @@ using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.Diagnostics.Debug;
@@ -31,10 +31,38 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class GetScheduledResourceHistoryTest
     {
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var scheduledResourceHistory = new GetScheduledResourceHistory();
+
+            //------------Execute Test---------------------------
+            var resId = scheduledResourceHistory.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var scheduledResourceHistory = new GetScheduledResourceHistory();
+
+            //------------Execute Test---------------------------
+            var resId = scheduledResourceHistory.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
-        // ReSharper disable InconsistentNaming
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        
         public void SaveScheduledResourceTest_ServiceName()
         {
             SchedulerTestBaseStaticMethods.SaveScheduledResourceTest_ServiceName("GetScheduledResourceHistoryService", new GetScheduledResourceHistory());
@@ -42,7 +70,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void Services_ScheduledResource_ReturnsDynamicService()
         {
             SchedulerTestBaseStaticMethods.GetScheduledResourcesReturnsDynamicService(new GetScheduledResourceHistory());
@@ -50,7 +78,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void Services_ScheduledResourceHistory_GetValid()
         {
             var output = RunOutput(true);
@@ -65,15 +93,14 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void Services_ScheduledResource_GetIncorrectResources()
         {
             var output = RunOutput(false);
             Assert.AreEqual(0, output.Count);
-
         }
 
-        private List<IResourceHistory> RunOutput(bool expectCorrectInput)
+        List<IResourceHistory> RunOutput(bool expectCorrectInput)
         {
             var esbMethod = new GetScheduledResourceHistory();
             var security = new Mock<ISecurityWrapper>();
@@ -91,13 +118,13 @@ namespace Dev2.Tests.Runtime.Services
                                               new Dev2DailyTrigger(new TaskServiceConvertorFactory(), new DailyTrigger(21)),
                                               new Dev2TaskService(new TaskServiceConvertorFactory()),
                                               new TaskServiceConvertorFactory());
-            var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave");
-            Dictionary<string, StringBuilder> inp = new Dictionary<string, StringBuilder>();
+            var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave", Guid.NewGuid().ToString());
+            var inp = new Dictionary<string, StringBuilder>();
             factory.Setup(
                 a =>
                 a.CreateModel(GlobalConstants.SchedulerFolderId, It.IsAny<ISecurityWrapper>())).Returns(model.Object);
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
-            if(expectCorrectInput)
+            var serialiser = new Dev2JsonSerializer();
+            if (expectCorrectInput)
             {
 
                 model.Setup(a => a.CreateHistory(It.IsAny<ScheduledResource>())).Returns(history).Verifiable();
@@ -112,7 +139,7 @@ namespace Dev2.Tests.Runtime.Services
 
         }
 
-        // ReSharper restore InconsistentNaming
+
 
     }
 }

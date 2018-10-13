@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,17 +9,18 @@
 */
 
 using System;
+using System.Threading.Tasks;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.Helpers
-// ReSharper restore CheckNamespace
+
 {
     public interface IVersionChecker
     {
         Version Latest { get; }
         Version Current { get; }
-        string StartPageUri { get; }
-        string LatestVersionCheckSum { get; }
         string CommunityPageUri { get;}
+
+        Task<bool> GetNewerVersionAsync();
     }
 }

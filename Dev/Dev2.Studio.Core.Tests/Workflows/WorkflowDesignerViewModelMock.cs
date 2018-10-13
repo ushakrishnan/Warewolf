@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,19 +9,15 @@
 */
 
 using System;
-using System.Activities;
 using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
 using System.Activities.Presentation.Services;
-using System.Activities.Presentation.View;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
-using System.Windows.Input;
 using Caliburn.Micro;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Core.Tests.Utils;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Threading;
 using Dev2.Utilities;
@@ -41,10 +36,9 @@ namespace Dev2.Core.Tests.Workflows
                 new Mock<IEventAggregator>().Object,
                 resource, workflowHelper,
                 new Mock<IPopupController>().Object,
-                new TestAsyncWorker(),
-                createDesigner,false,false)
+                new SynchronousAsyncWorker(),
+                createDesigner, false)
         {
-            _moq.SetupAllProperties();
             _wd = _moq.Object;
         }
 
@@ -52,35 +46,52 @@ namespace Dev2.Core.Tests.Workflows
             : base(
                 eventAggregator,
                 resource, workflowHelper,
-                new Mock<IPopupController>().Object, new TestAsyncWorker(), createDesigner, false, false)
+                new Mock<IPopupController>().Object, new SynchronousAsyncWorker(), createDesigner, false)
         {
-            _moq.SetupAllProperties();
+            //_moq.SetupAllProperties();
             _wd = _moq.Object;
         }
+        public WorkflowDesignerViewModelMock(IWorkflowDesignerWrapper workflowDesignerWrapper, IContextualResourceModel resource, IWorkflowHelper workflowHelper, IEventAggregator eventAggregator, WorkflowDesigner workflowDesigner, bool createDesigner = false)
+           : base(workflowDesignerWrapper,
+               eventAggregator,
+               resource, workflowHelper,
+               new Mock<IPopupController>().Object, new SynchronousAsyncWorker(), createDesigner, false)
+        {
+            //_moq.SetupAllProperties();
+            _wd = workflowDesigner;
+        }
+        public WorkflowDesignerViewModelMock(IContextualResourceModel resource, IWorkflowHelper workflowHelper, IEventAggregator eventAggregator, ModelService modelService, bool createDesigner = false)
+            : base(
+                eventAggregator,
+                resource, workflowHelper,
+                new Mock<IPopupController>().Object, new SynchronousAsyncWorker(), createDesigner, false)
+        {
+            //_moq.SetupAllProperties();
+            _wd = _moq.Object;
+            _modelService = modelService;
+        }
 
-        public WorkflowDesignerViewModelMock(IContextualResourceModel resource, IWorkflowHelper workflowHelper, IPopupController popupController, bool createDesigner = false)
+        public WorkflowDesignerViewModelMock(IContextualResourceModel resource, IWorkflowHelper workflowHelper, IPopupController popupController, IExternalProcessExecutor processExecutor, bool createDesigner = false)
             : base(
                 new Mock<IEventAggregator>().Object,
                 resource, workflowHelper,
-                popupController, new TestAsyncWorker(), createDesigner, false, false)
+                popupController, new SynchronousAsyncWorker(), createDesigner, false)
         {
-            _moq.SetupAllProperties();
             _wd = _moq.Object;
         }
 
         bool _isDesignerViewVisible = true;
 
-        protected override bool IsDesignerViewVisible
+        protected override bool IsDesignerViewVisible => _isDesignerViewVisible;
+
+        public void SetActiveEnvironment(IServer server)
         {
-            get
-            {
-                return _isDesignerViewVisible;
-            }
+            ActiveEnvironment = server;
         }
 
-        public void SetActiveEnvironment(IEnvironmentModel environmentModel)
+        public IServer GetActiveEnvironment()
         {
-            ActiveEnvironment = environmentModel;
+            return ActiveEnvironment;
         }
 
         public void SetIsDesignerViewVisible(bool isVisible)
@@ -88,17 +99,11 @@ namespace Dev2.Core.Tests.Workflows
             _isDesignerViewVisible = isVisible;
         }
 
-        public List<ModelItem> SelectedDebugModelItems
-        {
-            get
-            {
-                return SelectedDebugItems;
-            }
-        }
+        public List<ModelItem> SelectedDebugModelItems => SelectedDebugItems;
 
-        public void TestCheckIfRemoteWorkflowAndSetProperties(DsfActivity dsfActivity, IContextualResourceModel resource, IEnvironmentModel environmentModel)
+        public void TestCheckIfRemoteWorkflowAndSetProperties(DsfActivity dsfActivity, IContextualResourceModel resource, IServer server)
         {
-            WorkflowDesignerUtils.CheckIfRemoteWorkflowAndSetProperties(dsfActivity, resource, environmentModel);
+            WorkflowDesignerUtils.CheckIfRemoteWorkflowAndSetProperties(dsfActivity, resource, server);
         }
 
         public void TestModelServiceModelChanged(ModelChangedEventArgs e)
@@ -111,20 +116,9 @@ namespace Dev2.Core.Tests.Workflows
             WdOnModelChanged(new object(), new EventArgs());
         }
 
-
         public void TestWorkflowDesignerModelChangedWithNullSender()
         {
             WdOnModelChanged(null, new EventArgs());
-        }
-
-        public string FetchDesignerText()
-        {
-            return _wd.Text;
-        }
-
-        public void VerifyLoadCalled()
-        {
-            _moq.Verify(w => w.Load(It.IsAny<ActivityBuilder>()), Times.Once());
         }
 
         public void LoadXaml()
@@ -138,10 +132,20 @@ namespace Dev2.Core.Tests.Workflows
             DataObject = dataobject;
         }
 
+        public bool SetApplyForDrop(IDataObject dataObject)
+        {
+            return ApplyForDrop(dataObject);
+        }
+
+        public void SetupGetWorkflowFieldsFromFlowNodes(IEnumerable<ModelItem> flowNodes)
+        {
+            GetWorkflowFieldsFromFlowNodes(flowNodes);
+        }
+
         public void SetupRequestExapandAll()
         {
             RequestedExpandAll = false;
-            DesignerManagementService.ExpandAllRequested += (sender, args) =>
+            _designerManagementService.ExpandAllRequested += (sender, args) =>
             {
                 RequestedExpandAll = true;
             };
@@ -150,7 +154,7 @@ namespace Dev2.Core.Tests.Workflows
         public void SetupRequestRestoreAll()
         {
             RequestedExpandAll = false;
-            DesignerManagementService.RestoreAllRequested += (sender, args) =>
+            _designerManagementService.RestoreAllRequested += (sender, args) =>
             {
                 RequestedRestoreAll = true;
             };
@@ -159,7 +163,7 @@ namespace Dev2.Core.Tests.Workflows
         public void SetupRequestCollapseAll()
         {
             RequestedExpandAll = false;
-            DesignerManagementService.CollapseAllRequested += (sender, args) =>
+            _designerManagementService.CollapseAllRequested += (sender, args) =>
             {
                 RequestedCollapseAll = true;
             };
@@ -176,9 +180,7 @@ namespace Dev2.Core.Tests.Workflows
             return base.GetSelectedModelItem(itemId, parentId);
         }
 
-
         public int BringIntoViewHitCount { get; private set; }
-
 
         protected override void BringIntoView(ModelItem selectedModelItem)
         {
@@ -186,14 +188,19 @@ namespace Dev2.Core.Tests.Workflows
             base.BringIntoView(selectedModelItem);
         }
 
-        public void TestHandleMouseClick(DependencyObject dp, DesignerView dv)
-        {
-            HandleMouseClick(MouseButtonState.Pressed, 2, dp, dv);
-        }
-
         public ModelItem TestPerformAddItems(ModelItem modelItems)
         {
-            return PerformAddItems(new List<ModelItem> { modelItems }).FirstOrDefault();
+            return PerformAddItems(modelItems);
+        }
+
+        public void FireWorkflowChanged()
+        {
+            WorkflowChanged.Invoke();
+        }
+
+        public void SetIsPaste(bool pasteValue)
+        {
+            _isPaste = pasteValue;
         }
     }
 }

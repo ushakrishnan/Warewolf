@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,24 +22,22 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
         }
 
         public TestActivityDesignerViewModel(ModelItem modelItem, Action<Type> showExampleWorkflow)
-            : base(modelItem, showExampleWorkflow)
+            : base(modelItem)
         {
         }
 
-        public bool IsSmallViewActive { get { return ShowSmall; } }
+        public bool IsSmallViewActive => ShowSmall;
 
         public override void Validate()
         {
         }
 
-        public void TestAddTitleBarHelpToggle()
+        #region Overrides of ActivityDesignerViewModel
+
+        public override void UpdateHelpDescriptor(string helpText)
         {
-            AddTitleBarHelpToggle();
         }
 
-        public void TestAddTitleBarLargeToggle()
-        {
-            AddTitleBarLargeToggle();
-        }
+        #endregion
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,48 +12,47 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Windows.Input;
+using System.Windows;
 using System.Xml.Linq;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Data;
-using Dev2.Data.Binary_Objects;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList.Contract.Binary_Objects;
 using Dev2.Instrumentation;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Security;
 using Dev2.Session;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Network;
 using Dev2.Studio.Core.ViewModels.Base;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Dev2.Threading;
-using Dev2.ViewModels.Workflow;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Warewolf.Studio.Resources.Languages;
 
-// ReSharper disable CheckNamespace
 namespace Dev2.Studio.ViewModels.Workflow
-// ReSharper restore CheckNamespace
 {
     public class WorkflowInputDataViewModel : SimpleBaseViewModel
     {
         #region Fields
-        //2012.10.11: massimo.guerrera - Added for PBI 5781
-        private OptomizedObservableCollection<IDataListItem> _workflowInputs;
-        private RelayCommand _executeCommmand;
-        private DelegateCommand _cancelComand;
-        private string _xmlData;
-        private static IContextualResourceModel _resourceModel;
-        private bool _rememberInputs;
+        OptomizedObservableCollection<IDataListItem> _workflowInputs;
+        RelayCommand _executeCommmand;
+        string _xmlData;
+        readonly IContextualResourceModel _resourceModel;
+        bool _rememberInputs;
         RelayCommand _viewInBrowserCommmand;
-        static DataListConversionUtils _dataListConversionUtils;
+        static DataListConversionUtils _dataListConversionUtils = new DataListConversionUtils();
         bool _canViewInBrowser;
         bool _canDebug;
-
+        readonly IPopupController _popupController;
+        RelayCommand _cancelCommand;
+        readonly IApplicationTracker _applicationTracker;
         #endregion Fields
 
         public event Action DebugExecutionStart;
@@ -63,27 +61,24 @@ namespace Dev2.Studio.ViewModels.Workflow
         void OnDebugExecutionFinished()
         {
             var handler = DebugExecutionFinished;
-            if(handler != null)
-            {
-                handler();
-            }
+            handler?.Invoke();
         }
 
         void OnDebugExecutionStart()
         {
-            Tracker.TrackEvent(TrackerEventGroup.Workflows, TrackerEventName.DebugClicked);
-            var handler = DebugExecutionStart;
-            if(handler != null)
+            if (_applicationTracker != null)
             {
-                handler();
+                _applicationTracker.TrackEvent(TrackEventDebugOutput.EventCategory,TrackEventDebugOutput.F6Debug);
             }
+            var handler = DebugExecutionStart;
+            handler?.Invoke();
         }
-
-        #region Ctor
 
         public WorkflowInputDataViewModel(IServiceDebugInfoModel input, Guid sessionId)
         {
-            VerifyArgument.IsNotNull("input", input);
+
+            _applicationTracker = CustomContainer.Get<IApplicationTracker>();
+            VerifyArgument.IsNotNull(@"input", input);
             CanDebug = true;
             CanViewInBrowser = true;
 
@@ -91,11 +86,10 @@ namespace Dev2.Studio.ViewModels.Workflow
             {
                 DataList = !string.IsNullOrEmpty(input.ResourceModel.DataList)
                                ? input.ResourceModel.DataList
-                               : "<DataList></DataList>",
+                               : @"<DataList></DataList>",
                 ServiceName = input.ResourceModel.ResourceName,
                 WorkflowID = input.ResourceModel.ResourceName,
                 WorkflowXaml = string.Empty,
-                //WorkflowXaml = input.ResourceModel.WorkflowXaml, - 05.12.2013 ;)
                 XmlData = input.ServiceInputData,
                 ResourceID = input.ResourceModel.ID,
                 ServerID = input.ResourceModel.ServerID,
@@ -103,43 +97,29 @@ namespace Dev2.Studio.ViewModels.Workflow
                 SessionID = sessionId
             };
 
-            if(input.DebugModeSetting == DebugMode.DebugInteractive)
+            if (input.DebugModeSetting == DebugMode.DebugInteractive)
             {
                 DebugTo.IsDebugMode = true;
             }
 
             _resourceModel = input.ResourceModel;
-            // ReSharper disable DoNotCallOverridableMethodsInConstructor
-            DisplayName = "Debug input data";
-            // ReSharper restore DoNotCallOverridableMethodsInConstructor
-            _dataListConversionUtils = new DataListConversionUtils();
+            
+            DisplayName = @"Debug input data";
+            
+            _popupController = CustomContainer.Get<IPopupController>();
         }
-        #endregion Ctor
 
-        #region Properties
-        /// <summary>
-        /// Broker that contain all session data and methods
-        /// </summary>
-        private IDev2StudioSessionBroker Broker { get; set; }
+        IDev2StudioSessionBroker Broker { get; set; }
 
-        /// <summary>
-        /// Binary backing object for the data list
-        /// </summary>
         IDataListModel DataList { get; set; }
-
-        /// <summary>
-        /// The transfer object that holds all the information needed for a debug session
-        /// </summary>
-        public DebugTO DebugTo { get; set; }
-
-        /// <summary>
-        /// Collection of IDataListItems that contain all the inputs
-        /// </summary>
+        
+        public DebugTO DebugTo { get; private set; }
+        
         public OptomizedObservableCollection<IDataListItem> WorkflowInputs
         {
             get
             {
-                if(_workflowInputs == null)
+                if (_workflowInputs == null)
                 {
                     _workflowInputs = new OptomizedObservableCollection<IDataListItem>();
                     _workflowInputs.CollectionChanged += (o, args) => NotifyOfPropertyChange(() => WorkflowInputCount);
@@ -148,20 +128,16 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
         }
 
-        /// <summary>
-        /// Int that contains the count of variables marked as inputs
-        /// </summary>
-        public int WorkflowInputCount
+        public void ViewClosed()
         {
-            get
+            if (!CloseRequested)
             {
-                return _workflowInputs.Count;
+                SendFinishedMessage();
             }
         }
-
-        /// <summary>
-        /// Boolean that contains the option for remembering the inputs for that workflow
-        /// </summary>
+        
+        public int WorkflowInputCount => _workflowInputs.Count;
+        
         public bool RememberInputs
         {
             get
@@ -171,13 +147,10 @@ namespace Dev2.Studio.ViewModels.Workflow
             set
             {
                 _rememberInputs = value;
-                OnPropertyChanged("RememberInputs");
+                OnPropertyChanged(@"RememberInputs");
             }
         }
-
-        /// <summary>
-        /// String that hold the XML representation of the inputs
-        /// </summary>
+        
         public string XmlData
         {
             get
@@ -187,14 +160,11 @@ namespace Dev2.Studio.ViewModels.Workflow
             set
             {
                 _xmlData = value;
-                OnPropertyChanged("XmlData");
+                OnPropertyChanged(@"XmlData");
             }
         }
-        #endregion Properties
 
-        #region Commands
-
-        public bool CanViewInBrowser
+        bool CanViewInBrowser
         {
             get
             {
@@ -202,7 +172,7 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
             set
             {
-                if(value.Equals(_canViewInBrowser))
+                if (value.Equals(_canViewInBrowser))
                 {
                     return;
                 }
@@ -212,7 +182,7 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
         }
 
-        public bool CanDebug
+        bool CanDebug
         {
             get
             {
@@ -220,7 +190,7 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
             set
             {
-                if(value.Equals(_canDebug))
+                if (value.Equals(_canDebug))
                 {
                     return;
                 }
@@ -230,42 +200,27 @@ namespace Dev2.Studio.ViewModels.Workflow
             }
         }
 
-        public RelayCommand OkCommand
-        {
-            get
-            {
-                return _executeCommmand ?? (_executeCommmand = new RelayCommand(param => Save(), param => CanDebug));
-            }
-        }
+        public RelayCommand OkCommand => _executeCommmand ?? (_executeCommmand = new RelayCommand(param => Save(), param => CanDebug));
 
-        public RelayCommand ViewInBrowserCommand
-        {
-            get
-            {
-                return _viewInBrowserCommmand ?? (_viewInBrowserCommmand = new RelayCommand(param => ViewInBrowser(), param => CanViewInBrowser));
-            }
-        }
+        public RelayCommand ViewInBrowserCommand => _viewInBrowserCommmand ?? (_viewInBrowserCommmand = new RelayCommand(param => ViewInBrowser(), param => CanViewInBrowser));
 
-        public ICommand CancelCommand
-        {
-            get
-            {
-                return _cancelComand ?? (_cancelComand = new DelegateCommand(param => Cancel()));
-            }
-        }
-        #endregion Cammands
+        public RelayCommand CancelCommand => _cancelCommand ?? (_cancelCommand = new RelayCommand(param => Cancel()));
 
-        #region Methods
-
-        /// <summary>
-        /// Used for saving the data input by the user to the file system and pushing the data back at the workflow
-        /// </summary>
+        // Set to true in case of any error popup message.
+        public bool IsInError { private get; set; }
+        
         public void Save()
         {
-            //2012.10.11: massimo.guerrera - Added for PBI 5781
-            DoSaveActions();
-            ExecuteWorkflow();
-            RequestClose();
+            if (!IsInError)
+            {
+                DoSaveActions();
+                ExecuteWorkflow();
+                RequestClose();
+            }
+            else
+            {
+                ShowInvalidDataPopupMessage();
+            }
         }
 
         public void DoSaveActions()
@@ -273,7 +228,7 @@ namespace Dev2.Studio.ViewModels.Workflow
             SetXmlData();
             DebugTo.XmlData = XmlData;
             DebugTo.RememberInputs = RememberInputs;
-            if(DebugTo.DataList != null)
+            if (DebugTo.DataList != null)
             {
                 Broker.PersistDebugSession(DebugTo);
             }
@@ -281,28 +236,26 @@ namespace Dev2.Studio.ViewModels.Workflow
 
         public void ExecuteWorkflow()
         {
-            if(_resourceModel == null || _resourceModel.Environment == null)
+            if (_resourceModel?.Environment == null)
             {
                 return;
             }
 
             var context = Parent as WorkSurfaceContextViewModel;
-            if(context != null)
-            {
-                context.BindToModel();
-            }
+            context?.BindToModel();
 
             var clientContext = _resourceModel.Environment.Connection;
-            if(clientContext != null)
+            if (clientContext == null)
             {
-                var dataList = XElement.Parse(DebugTo.XmlData);
-                //
-                dataList.Add(new XElement("BDSDebugMode", DebugTo.IsDebugMode));
-                dataList.Add(new XElement("DebugSessionID", DebugTo.SessionID));
-                dataList.Add(new XElement("EnvironmentID", _resourceModel.Environment.ID));
-                OnDebugExecutionStart();
-                SendExecuteRequest(dataList);
+                return;
             }
+
+            var dataList = XElement.Parse(DebugTo.XmlData);
+            dataList.Add(new XElement(@"BDSDebugMode", DebugTo.IsDebugMode));
+            dataList.Add(new XElement(@"DebugSessionID", DebugTo.SessionID));
+            dataList.Add(new XElement(@"EnvironmentID", _resourceModel.Environment.EnvironmentID));
+            OnDebugExecutionStart();
+            SendExecuteRequest(dataList);
         }
 
         protected virtual void SendExecuteRequest(XElement payload)
@@ -310,24 +263,69 @@ namespace Dev2.Studio.ViewModels.Workflow
             WebServer.Send(_resourceModel, payload.ToString(), new AsyncWorker());
         }
 
+        public void ShowInvalidDataPopupMessage()
+        {
+            _popupController.Show(StringResources.DataInput_Error,
+                                  StringResources.DataInput_Error_Title,
+                                  MessageBoxButton.OK, MessageBoxImage.Error, string.Empty, false, true, false, false, false, false);
+
+            IsInError = true;
+        }
+
         public void ViewInBrowser()
         {
-            Tracker.TrackEvent(TrackerEventGroup.Workflows, TrackerEventName.ViewInBrowserClicked);
-            DoSaveActions();
-            string payload = BuildWebPayLoad();
-            SendViewInBrowserRequest(payload);
-            SendFinishedMessage();
-            RequestClose();
+            // Do not log user action in case of error.
+            if (!IsInError)
+            {
+                if (_applicationTracker != null)
+                {
+                    _applicationTracker.TrackEvent(TrackEventDebugOutput.EventCategory,
+                                                   TrackEventDebugOutput.ViewInBrowser);
+                }
+                DoSaveActions();
+                string payload = BuildWebPayLoad();
+                SendViewInBrowserRequest(payload);
+                SendFinishedMessage();
+                RequestClose();
+            }
+            else
+            {
+                ShowInvalidDataPopupMessage();
+            }
+        }
+
+
+        public void WithoutActionTrackingViewInBrowser()
+        {
+            if (!IsInError)
+            {              
+                DoSaveActions();
+                var payload = BuildWebPayLoad();
+                SendViewInBrowserRequest(payload);
+                SendFinishedMessage();
+                RequestClose();
+            }
+            else
+            {
+                ShowInvalidDataPopupMessage();
+            }
         }
 
         public string BuildWebPayLoad()
         {
-            var allScalars = WorkflowInputs.All(item => !item.IsRecordset);
-            if(allScalars && WorkflowInputs.Count > 0)
+            var allScalars = WorkflowInputs.All(item => !item.CanHaveMutipleRows && !item.IsObject);
+            if (allScalars && WorkflowInputs.Count > 0)
             {
-                return WorkflowInputs.Aggregate("", (current, workflowInput) => current + (workflowInput.Field + "=") + workflowInput.Value + "&").TrimEnd('&');
+                return WorkflowInputs.Aggregate(string.Empty, (current, workflowInput) => current + workflowInput.Field + @"=" + workflowInput.Value + @"&").TrimEnd('&');
             }
-            return XElement.Parse(XmlData).ToString(SaveOptions.DisableFormatting);
+            try
+            {
+                return XElement.Parse(XmlData).ToString(SaveOptions.DisableFormatting);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
         }
 
         protected virtual void SendViewInBrowserRequest(string payload)
@@ -335,311 +333,298 @@ namespace Dev2.Studio.ViewModels.Workflow
             WebServer.OpenInBrowser(_resourceModel, payload);
         }
 
-        private void SendFinishedMessage()
+        internal void SendFinishedMessage()
         {
             OnDebugExecutionFinished();
         }
-
-        /// <summary>
-        /// Used for saving the data input by the user to the file system when the cacel button is clicked
-        /// </summary>
+        
         public void Cancel()
         {
-            //2012.10.11: massimo.guerrera - Added for PBI 5781
             SetXmlData();
             DebugTo.XmlData = XmlData;
             DebugTo.RememberInputs = RememberInputs;
-            if(DebugTo.DataList != null) Broker.PersistDebugSession(DebugTo); //2013.01.22: Ashley Lewis - Bug 7837
+            if (DebugTo.DataList != null)
+            {
+                Broker.PersistDebugSession(DebugTo);
+            }
 
             SendFinishedMessage();
             RequestClose(ViewModelDialogResults.Cancel);
         }
-
-        /// <summary>
-        /// Used for loading all the inputs from the saved data or the data list
-        /// </summary>
+        
         public void LoadWorkflowInputs()
         {
             WorkflowInputs.Clear();
-            if (Broker != null)
-                Broker.Dispose();
+            Broker?.Dispose();
             Broker = Dev2StudioSessionFactory.CreateBroker();
-            if (DebugTo != null)
-                DebugTo.CleanUp();
+            DebugTo?.CleanUp();
             DebugTo = Broker.InitDebugSession(DebugTo);
             XmlData = DebugTo.XmlData;
             RememberInputs = DebugTo.RememberInputs;
             DataList = DebugTo.BinaryDataList;
 
-            // Flipping Jurie....
             var myList = _dataListConversionUtils.CreateListToBindTo(DebugTo.BinaryDataList);
 
             WorkflowInputs.AddRange(myList);
         }
 
-        /// <summary>
-        /// Used for intelligently determining if a extra row should be added for the selected recordset
-        /// </summary>
-        /// <param name="itemToAdd">The item that is currently selected</param>
         public void AddRow(IDataListItem itemToAdd)
         {
-            if(itemToAdd != null && itemToAdd.IsRecordset)
+            if (itemToAdd != null && itemToAdd.CanHaveMutipleRows)
             {
-                IRecordSet recordset = DataList.ShapeRecordSets.FirstOrDefault(set => set.Name == itemToAdd.Recordset);
-                if(recordset != null)
+                var recordset = DataList.ShapeRecordSets.FirstOrDefault(set => set.Name == itemToAdd.Recordset);
+                if (recordset != null)
                 {
-                    var recsetCols = new List<IScalar>();
-                    foreach (var column in recordset.Columns)
-                    {
-                        var cols = column.Value.Where(scalar => scalar.IODirection == enDev2ColumnArgumentDirection.Input || scalar.IODirection == enDev2ColumnArgumentDirection.Both);
-                        recsetCols.AddRange(cols);
-                    }
-
-                    var numberOfRows = WorkflowInputs.Where(c => c.Recordset == itemToAdd.Recordset);
-                    IEnumerable<IDataListItem> dataListItems = numberOfRows as IDataListItem[] ?? numberOfRows.ToArray();
-                    var lastItem = dataListItems.Last();
-                    var indexToInsertAt = WorkflowInputs.IndexOf(lastItem);
-                    var indexString = lastItem.RecordsetIndex;
-                    var indexNum = Convert.ToInt32(indexString) + 1;
-                    var lastRow = dataListItems.Where(c => c.RecordsetIndex == indexString);
-                    var dontAddRow = true;
-                    foreach(var item in lastRow)
-                    {
-                        if(item.Value != string.Empty)
-                        {
-                            dontAddRow = false;
-                        }
-                    }
-                    if(!dontAddRow)
-                    {
-                        AddBlankRowToRecordset(itemToAdd, recsetCols, indexToInsertAt, indexNum);
-                    }
+                    AddRow(itemToAdd, recordset);
                 }
             }
         }
 
-        /// <summary>
-        /// Used for removing a row for the collection
-        /// </summary>
-        /// <param name="itemToRemove">The item that will be removed from the collection</param>
-        /// <param name="indexToSelect"></param>
+        void AddRow(IDataListItem itemToAdd, IRecordSet recordset)
+        {
+            var recsetCols = new List<IScalar>();
+            foreach (var column in recordset.Columns)
+            {
+                var cols = column.Value.Where(scalar => scalar.IODirection == enDev2ColumnArgumentDirection.Input || scalar.IODirection == enDev2ColumnArgumentDirection.Both);
+                recsetCols.AddRange(cols);
+            }
+
+            var numberOfRows = WorkflowInputs.Where(c => c.Recordset == itemToAdd.Recordset);
+            IEnumerable<IDataListItem> dataListItems = numberOfRows as IDataListItem[] ?? numberOfRows.ToArray();
+            var lastItem = dataListItems.Last();
+            var indexToInsertAt = WorkflowInputs.IndexOf(lastItem);
+            var indexString = lastItem.Index;
+            var indexNum = Convert.ToInt32(indexString) + 1;
+            var lastRow = dataListItems.Where(c => c.Index == indexString);
+            var addRow = false;
+            foreach (var item in lastRow)
+            {
+                if (item.Value != string.Empty)
+                {
+                    addRow = true;
+                }
+            }
+            if (addRow)
+            {
+                AddBlankRowToRecordset(itemToAdd, recsetCols, indexToInsertAt, indexNum);
+            }
+        }
+
         public bool RemoveRow(IDataListItem itemToRemove, out int indexToSelect)
         {
             indexToSelect = 1;
             var itemsRemoved = false;
-            if(itemToRemove != null && itemToRemove.IsRecordset)
+            if (itemToRemove != null && itemToRemove.CanHaveMutipleRows)
             {
-                // ReSharper disable InconsistentNaming
-                IEnumerable<IDataListItem> NumberOfRows = WorkflowInputs.Where(c => c.Recordset == itemToRemove.Recordset && c.Field == itemToRemove.Field);
-                // ReSharper restore InconsistentNaming
-                var numberOfRows = NumberOfRows.Count();
-                List<IDataListItem> listToRemove = WorkflowInputs.Where(c => c.RecordsetIndex == numberOfRows.ToString(CultureInfo.InvariantCulture) && c.Recordset == itemToRemove.Recordset).ToList();
+                var numberOfRows = WorkflowInputs.Count(c => c.Recordset == itemToRemove.Recordset && c.Field == itemToRemove.Field);
+                var listToRemove = WorkflowInputs.Where(c => c.Index == numberOfRows.ToString(CultureInfo.InvariantCulture) && c.Recordset == itemToRemove.Recordset).ToList();
 
-                if(numberOfRows == 2)
+                if (numberOfRows == 2)
                 {
-                    IEnumerable<IDataListItem> firstRow = WorkflowInputs.Where(c => c.RecordsetIndex == "1" && c.Recordset == itemToRemove.Recordset);
-                    bool removeRow = firstRow.All(item => string.IsNullOrWhiteSpace(item.Value));
-
-                    if(removeRow)
-                    {
-
-                        IEnumerable<IDataListItem> listToChange = WorkflowInputs.Where(c => c.RecordsetIndex == "2" && c.Recordset == itemToRemove.Recordset);
-
-                        foreach(IDataListItem item in listToChange)
-                        {
-                            item.Value = string.Empty;
-                        }
-                        foreach(IDataListItem item in listToRemove)
-                        {
-                            WorkflowInputs.Remove(item);
-                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if(itemToRemove.RecordsetIndex == item.RecordsetIndex)
-                            {
-                                IDataListItem item1 = item;
-                                indexToSelect = WorkflowInputs.IndexOf(WorkflowInputs.Last(c => c.Recordset == item1.Recordset));
-                            }
-                            else
-                            {
-                                indexToSelect = WorkflowInputs.IndexOf(itemToRemove);
-                            }
-                            itemsRemoved = true;
-                        }
-                    }
+                    RemoveRow(itemToRemove, ref indexToSelect, ref itemsRemoved, listToRemove);
                 }
-                else if(numberOfRows > 2)
+                else
                 {
-                    IEnumerable<IDataListItem> listToChange = WorkflowInputs.Where(c => c.RecordsetIndex == (numberOfRows - 1).ToString(CultureInfo.InvariantCulture) && c.Recordset == itemToRemove.Recordset);
-                    foreach(IDataListItem item in listToChange)
-                    {
-                        item.Value = string.Empty;
-                    }
-                    foreach(IDataListItem item in listToRemove)
-                    {
-                        WorkflowInputs.Remove(item);
-                        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                        if(itemToRemove.RecordsetIndex == item.RecordsetIndex)
-                        {
-                            IDataListItem item1 = item;
-                            indexToSelect = WorkflowInputs.IndexOf(WorkflowInputs.Last(c => c.Recordset == item1.Recordset));
-                        }
-                        else
-                        {
-                            indexToSelect = WorkflowInputs.IndexOf(itemToRemove);
-                        }
-                        itemsRemoved = true;
-                    }
+                    RemoveRows(itemToRemove, ref indexToSelect, ref itemsRemoved, listToRemove, numberOfRows);
                 }
             }
             return itemsRemoved;
         }
-        protected const string RootTag = "DataList";
-        /// <summary>
-        /// Used to transform the WorkflowInputs into XML
-        /// </summary>
-        public void SetXmlData()
-        {
-            // For some damn reason this does not always bind like it should! ;)
-            Thread.Sleep(150);
-            StringBuilder result = new StringBuilder("<" + RootTag + ">");
-            var recordSets = new List<IRecordSet>();
 
-            foreach(var item in WorkflowInputs)
+        void RemoveRows(IDataListItem itemToRemove, ref int indexToSelect, ref bool itemsRemoved, List<IDataListItem> listToRemove, int numberOfRows)
+        {
+            if (numberOfRows > 2)
             {
-                string val = item.Value;
-                if (val != null && val.IsXml())
+                var listToChange = WorkflowInputs.Where(c => c.Index == (numberOfRows - 1).ToString(CultureInfo.InvariantCulture) && c.Recordset == itemToRemove.Recordset);
+                foreach (IDataListItem item in listToChange)
                 {
-                    val = string.Format(GlobalConstants.XMLPrefix + "{0}", Convert.ToBase64String(Encoding.UTF8.GetBytes(val)));
+                    item.Value = string.Empty;
                 }
-                if (item.IsRecordset)
+                foreach (IDataListItem item in listToRemove)
                 {
-                    var recordSet = recordSets.FirstOrDefault(set => set.Name == item.Recordset);
-                    if (recordSet==null)
+                    WorkflowInputs.Remove(item);
+                    indexToSelect = UpdateIndexToSelect(itemToRemove, item);
+                    itemsRemoved = true;
+                }
+            }
+        }
+
+        void RemoveRow(IDataListItem itemToRemove, ref int indexToSelect, ref bool itemsRemoved, List<IDataListItem> listToRemove)
+        {
+            var firstRow = WorkflowInputs.Where(c => c.Index == @"1" && c.Recordset == itemToRemove.Recordset);
+            var removeRow = firstRow.All(item => string.IsNullOrWhiteSpace(item.Value));
+
+            if (removeRow)
+            {
+                var listToChange = WorkflowInputs.Where(c => c.Index == @"2" && c.Recordset == itemToRemove.Recordset);
+
+                foreach (IDataListItem item in listToChange)
+                {
+                    item.Value = string.Empty;
+                }
+                foreach (IDataListItem item in listToRemove)
+                {
+                    WorkflowInputs.Remove(item);
+                    indexToSelect = UpdateIndexToSelect(itemToRemove, item);
+                    itemsRemoved = true;
+                }
+            }
+        }
+
+        int UpdateIndexToSelect(IDataListItem itemToRemove, IDataListItem item)
+        {
+            if (itemToRemove.Index == item.Index)
+            {
+                var item1 = item;
+                return WorkflowInputs.IndexOf(WorkflowInputs.Last(c => c.Recordset == item1.Recordset));
+            }
+            return WorkflowInputs.IndexOf(itemToRemove);
+        }
+
+        public void SetXmlData() => SetXmlData(false);
+        public void SetXmlData(bool includeBlank)
+        {
+            var dataListObject = new JObject();
+            var objects = WorkflowInputs.Where(item => item.IsObject);
+            var recSets = WorkflowInputs.Where(item => item.CanHaveMutipleRows && !item.IsObject);
+            var scalars = WorkflowInputs.Where(item => !item.CanHaveMutipleRows && !item.IsObject);
+            AddScalarsToObject(scalars, dataListObject);
+            AddRecordsetsToObject(recSets, dataListObject,includeBlank);
+            AddObjectsToObject(objects, dataListObject);
+
+            var dataListString = dataListObject.ToString(Formatting.Indented);
+            JsonData = dataListString;
+            var xml = JsonConvert.DeserializeXNode(dataListString, @"DataList", true);
+            try
+            {
+                if (xml.Descendants().Count() == 1)
+                {
+                    xml = XDocument.Parse(@"<DataList></DataList>");
+                }
+                XmlData = XElement.Parse(xml.ToString()).ToString();
+            }
+            catch (Exception e)
+            {
+                XmlData = @"Invalid characters entered";
+                Dev2Logger.Error(e.StackTrace, e, "Warewolf Error");
+            }
+        }
+
+        public string JsonData { get; private set; }
+
+        void AddObjectsToObject(IEnumerable<IDataListItem> objects, JObject dataListObject)
+        {
+            foreach (var o in objects)
+            {
+                AddObjectToObject(dataListObject, o);
+            }
+        }
+
+        private void AddObjectToObject(JObject dataListObject, IDataListItem o)
+        {
+            var json = string.Empty;
+            if (DataListSingleton.ActiveDataList != null)
+            {
+                if (DataListSingleton.ActiveDataList.ComplexObjectCollection != null)
+                {
+                    var complexObjectItemModel = DataListSingleton.ActiveDataList.ComplexObjectCollection.SingleOrDefault(model => model.Name == o.DisplayValue);
+
+                    if (complexObjectItemModel != null)
                     {
-                        recordSet = new RecordSet{Name = item.Recordset};
-                        recordSet.Columns = new Dictionary<int, List<IScalar>>();
-                        recordSets.Add(recordSet);
+                        json = complexObjectItemModel.GetJson();
                     }
-                    recordSet.AddColumn(val, item.Field, Convert.ToInt32(item.RecordsetIndex));
                 }
-                else if(!item.IsRecordset)
-                {
-                    DoScalarAppending(result,item);
-                }
-                }
-            foreach(var recordSet in recordSets)
-            {
-                
-                DoRecordSetAppending(recordSet,result);
-            }
-            result.Append("</" + RootTag + ">");
-            try
-            {
-                XmlData = XElement.Parse(result.ToString()).ToString();
-            }
-            catch(Exception)
-            {
-                XmlData = "Invalid characters entered";
+                AddToDataListObject(dataListObject, o, json);
             }
         }
 
-        private static void DoScalarAppending(StringBuilder result, IDataListItem val)
+        void AddToDataListObject(JObject dataListObject, IDataListItem o, string json)
         {
-
-            var fName = val.Field;
-            result.Append("<");
-            result.Append(fName);
-            result.Append(">");
             try
             {
-                result.Append(val.Value);
+                var objValue = string.IsNullOrEmpty(o.Value) ? json : o.Value;
+                var value = JsonConvert.DeserializeObject(objValue) as JObject;
+                var prop = value?.Properties().FirstOrDefault(property => property.Name == o.Field);
+                if (prop != null)
+                {
+                    value = prop.Value as JObject;
+                }
+                dataListObject.Add(o.Field, value);
             }
-            // ReSharper disable EmptyGeneralCatchClause
             catch (Exception)
-            // ReSharper restore EmptyGeneralCatchClause
             {
+                ShowInvalidDataPopupMessage();
             }
-            result.Append("</");
-            result.Append(fName);
-            result.Append(">");
         }
 
-        private static void DoRecordSetAppending(IRecordSet recordSet, StringBuilder result)
+        static void AddRecordsetsToObject(IEnumerable<IDataListItem> recSets, JObject dataListObject, bool includeBlank = false)
         {
-            var cnt = recordSet.Columns.Max(pair => pair.Key);
-            
-            for (var i = 1; i <= cnt; i++)
+            var groupedRecsets = recSets.GroupBy(item => item.Recordset);
+            foreach (var groupedRecset in groupedRecsets)
             {
-                var rowData = recordSet.Columns[i];
-                
-                if (rowData.All(scalar => string.IsNullOrEmpty(scalar.Value)))
+                var arrayName = groupedRecset.Key;
+                var newArray = new JArray();
+                var dataListItems = groupedRecset.GroupBy(item => item.Index);
+                foreach (var dataListItem in dataListItems)
                 {
-                    continue;
+                    AddRecordsetToObject(newArray, dataListItem, includeBlank);
                 }
-                result.Append("<");
-                result.Append(recordSet.Name);
-                result.Append(">");
-                foreach (var col in rowData)
-                {
-
-                    var fName = col.Name;
-
-                    
-
-                        result.Append("<");
-                        result.Append(fName);
-                        result.Append(">");
-                        try
-                        {
-                            result.Append(col.Value);
-                        }
-                        // ReSharper disable EmptyGeneralCatchClause
-                        catch (Exception)
-                        {
-                        }
-                        result.Append("</");
-                        result.Append(fName);
-                        result.Append(">");
-                    }
-
-                result.Append("</");
-                result.Append(recordSet.Name);
-                result.Append(">");
+                dataListObject.Add(arrayName, newArray);
             }
         }
-        /// <summary>
-        /// Used to transform the XML into WorkflowInputs
-        /// </summary>
+
+        private static void AddRecordsetToObject(JArray newArray, IGrouping<string, IDataListItem> dataListItem, bool includeBlank = false)
+        {
+            var jObjForArray = new JObject();
+            var empty = true;
+            foreach (var listItem in dataListItem)
+            {
+                if (!string.IsNullOrEmpty(listItem.Value))
+                {
+                    empty = false;
+                }
+                jObjForArray.Add(new JProperty(listItem.Field, listItem.Value ?? string.Empty));
+            }
+            if (!empty || includeBlank)
+            {
+                newArray.Add(jObjForArray);
+            }
+        }
+
+        static void AddScalarsToObject(IEnumerable<IDataListItem> scalars, JObject dataListObject)
+        {
+            foreach (var dataListItem in scalars)
+            {
+                dataListObject.Add(dataListItem.DisplayValue, new JValue(dataListItem.Value ?? string.Empty));
+            }
+        }
+
         public void SetWorkflowInputData()
         {
-                WorkflowInputs.Clear();
+            WorkflowInputs.Clear();
             DataList.PopulateWithData(XmlData);
-                _dataListConversionUtils.CreateListToBindTo(DataList).ToList().ForEach(i => WorkflowInputs.Add(i));
-            }
-
-        /// <summary>
-        /// Used for just adding a blank row to a recordset
-        /// </summary>
-        /// <param name="selectedItem">The item that is currently selected</param>
-        /// <param name="indexToSelect"></param>
+            _dataListConversionUtils.CreateListToBindTo(DataList).ToList().ForEach(i => WorkflowInputs.Add(i));
+        }
+        
         public bool AddBlankRow(IDataListItem selectedItem, out int indexToSelect)
         {
             indexToSelect = 1;
-            bool itemsAdded = false;
-            if(selectedItem != null && selectedItem.IsRecordset)
+            var itemsAdded = false;
+            if (selectedItem != null && selectedItem.CanHaveMutipleRows)
             {
                 var recordset = DataList.RecordSets.FirstOrDefault(set => set.Name == selectedItem.Recordset);
-                if(recordset != null)
+                if (recordset != null)
                 {
                     var recsetCols = new List<IScalar>();
-                    foreach(var column in recordset.Columns)
+                    foreach (var column in recordset.Columns)
                     {
                         recsetCols.AddRange(column.Value);
                     }
-                    IEnumerable<IDataListItem> numberOfRows = WorkflowInputs.Where(c => c.Recordset == selectedItem.Recordset);
-                    IDataListItem lastItem = numberOfRows.Last();
-                    int indexToInsertAt = WorkflowInputs.IndexOf(lastItem);
-                    string indexString = lastItem.RecordsetIndex;
-                    int indexNum = Convert.ToInt32(indexString) + 1;
+                    var numberOfRows = WorkflowInputs.Where(c => c.Recordset == selectedItem.Recordset);
+                    var lastItem = numberOfRows.Last();
+                    var indexToInsertAt = WorkflowInputs.IndexOf(lastItem);
+                    var indexString = lastItem.Index;
+                    var indexNum = Convert.ToInt32(indexString) + 1;
                     indexToSelect = indexToInsertAt + 1;
                     itemsAdded = AddBlankRowToRecordset(selectedItem, recsetCols, indexToInsertAt, indexNum);
                 }
@@ -647,41 +632,72 @@ namespace Dev2.Studio.ViewModels.Workflow
             return itemsAdded;
         }
 
+        public IDataListItem GetNextRow(IDataListItem selectedItem)
+        {
+            if (selectedItem != null)
+            {
+                var indexToInsertAt = WorkflowInputs.IndexOf(selectedItem);
+                if (indexToInsertAt != -1)
+                {
+                    var indexOfItemToGet = indexToInsertAt + 1;
+                    if (indexOfItemToGet == WorkflowInputs.Count)
+                    {
+                        return selectedItem;
+                    }
+                    return WorkflowInputs[indexOfItemToGet];
+                }
+            }
+            return null;
+        }
 
+        public IDataListItem GetPreviousRow(IDataListItem selectedItem)
+        {
+            if (selectedItem != null)
+            {
+                var indexToInsertAt = WorkflowInputs.IndexOf(selectedItem);
+                if (indexToInsertAt != -1)
+                {
+                    var indexOfItemToGet = indexToInsertAt - 1;
+                    if (indexOfItemToGet == WorkflowInputs.Count || indexOfItemToGet == -1)
+                    {
+                        return selectedItem;
+                    }
+                    return WorkflowInputs[indexOfItemToGet];
+                }
+            }
+            return null;
+        }
+        
         protected override void OnDispose()
         {
         }
 
-        #endregion Methods
-
-        #region Private Methods
-
-        private bool AddBlankRowToRecordset(IDataListItem dlItem, IList<IScalar> columns, int indexToInsertAt, int indexNum)
+        bool AddBlankRowToRecordset(IDataListItem dlItem, IList<IScalar> columns, int indexToInsertAt, int indexNum)
         {
-            bool itemsAdded = false;
-            if(dlItem.IsRecordset)
+            var itemsAdded = false;
+            if (dlItem.CanHaveMutipleRows)
             {
                 IList<IScalar> recsetCols = columns.Distinct(Scalar.Comparer).ToList();
                 string colName = null;
-                foreach(var col in recsetCols)
+                foreach (var col in recsetCols.Distinct(new ScalarNameComparer()))
                 {
-                    if(string.IsNullOrEmpty(colName) || !colName.Equals(col.Name))
+                    if (string.IsNullOrEmpty(colName) || !colName.Equals(col.Name))
                     {
                         WorkflowInputs.Insert(indexToInsertAt + 1, new DataListItem
                         {
-                            DisplayValue = string.Concat(dlItem.Recordset, "(", indexNum, ").", col.Name),
+                            DisplayValue = string.Concat(dlItem.Recordset, @"(", indexNum, @").", col.Name),
                             Value = string.Empty,
-                            IsRecordset = dlItem.IsRecordset,
+                            CanHaveMutipleRows = dlItem.CanHaveMutipleRows,
                             Recordset = dlItem.Recordset,
                             Field = col.Name,
                             Description = col.Description,
-                            RecordsetIndex = indexNum.ToString(CultureInfo.InvariantCulture)
+                            Index = indexNum.ToString(CultureInfo.InvariantCulture)
                         });
                         indexToInsertAt++;
                     }
                     colName = col.Name;
                     itemsAdded = true;
-                    
+
                 }
             }
             return itemsAdded;
@@ -692,28 +708,18 @@ namespace Dev2.Studio.ViewModels.Workflow
             LoadWorkflowInputs();
             base.OnViewAttached(view, context);
         }
-        #endregion Private Methods
 
-        public void ViewClosed()
-        {
-            if(!CloseRequested)
-                SendFinishedMessage();
-        }
-
-        public static WorkflowInputDataViewModel Create(IContextualResourceModel resourceModel)
-        {
-            return Create(resourceModel, Guid.Empty, DebugMode.Run);
-        }
+        public static WorkflowInputDataViewModel Create(IContextualResourceModel resourceModel) => Create(resourceModel, Guid.Empty, DebugMode.Run);
 
         public static WorkflowInputDataViewModel Create(IContextualResourceModel resourceModel, Guid sessionId, DebugMode debugMode)
         {
-            VerifyArgument.IsNotNull("resourceModel", resourceModel);
+            VerifyArgument.IsNotNull(@"resourceModel", resourceModel);
             var debugInfoModel = ServiceDebugInfoModelFactory.CreateServiceDebugInfoModel(resourceModel, string.Empty, debugMode);
 
             var result = new WorkflowInputDataViewModel(debugInfoModel, sessionId);
-            if(resourceModel != null && resourceModel.Environment != null && resourceModel.Environment.AuthorizationService != null)
+            if (resourceModel?.Environment?.AuthorizationService != null)
             {
-                result.CanDebug = resourceModel.Environment.AuthorizationService.GetResourcePermissions(resourceModel.ID).CanDebug();
+                result.CanDebug = resourceModel.UserPermissions.CanDebug();
             }
 
             return result;

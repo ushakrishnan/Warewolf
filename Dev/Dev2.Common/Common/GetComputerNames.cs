@@ -1,7 +1,7 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -15,13 +15,16 @@ using System.Linq;
 using System.Management;
 using System.Security.Principal;
 
+
 namespace Dev2.Common.Common
 {
-    /// <summary>
-    /// </summary>
     public class GetComputerNames
     {
-        private static List<string> _currentComputerNames;
+        static List<string> _currentComputerNames;
+
+        protected GetComputerNames()
+        {
+        }
 
         public static List<string> ComputerNames
         {
@@ -36,67 +39,43 @@ namespace Dev2.Common.Common
             }
         }
 
-        public static void GetComputerNamesList()
-        {
-            _currentComputerNames = StandardComputerNameQuery();
-        }
+        public static void GetComputerNamesList() => _currentComputerNames = StandardComputerNameQuery();
 
-        /// <summary>
-        ///     Query for Network Computer Names
-        /// </summary>
-        /// <returns></returns>
-        private static List<string> StandardComputerNameQuery()
+        static List<string> StandardComputerNameQuery()
         {
-            WindowsIdentity wi = WindowsIdentity.GetCurrent();
+            var wi = WindowsIdentity.GetCurrent();
 
             if (wi != null)
             {
-                string serverUserName = wi.Name;
+                var serverUserName = wi.Name;
 
-                string[] parts = serverUserName.Split('\\');
+                var parts = serverUserName.Split('\\');
 
-                string queryStr = "WinNT://";
+                var queryStr = "WinNT://";
 
-                // query with domain appended ;)
                 if (parts.Length == 2)
                 {
                     queryStr += parts[0];
                 }
                 else
                 {
-                    // find the first workgroup and report on it ;)
-
-                    try
+                    var query = new SelectQuery("Win32_ComputerSystem");
+                    var searcher = new ManagementObjectSearcher(query);
+                    var itr = searcher.Get().GetEnumerator();
+                    if (itr.MoveNext())
                     {
-                        var query = new SelectQuery("Win32_ComputerSystem");
-                        var searcher = new ManagementObjectSearcher(query);
-
-                        ManagementObjectCollection tmp = searcher.Get();
-
-                        ManagementObjectCollection.ManagementObjectEnumerator itr = tmp.GetEnumerator();
-
-                        if (itr.MoveNext())
-                        {
-                            queryStr += itr.Current["Workgroup"] as string;
-                        }
-                    }
-                        // ReSharper disable EmptyGeneralCatchClause
-                    catch
-                        // ReSharper restore EmptyGeneralCatchClause
-                    {
-                        // best effort ;)
+                        queryStr += itr.Current["Workgroup"] as string;
                     }
                 }
 
                 var root = new DirectoryEntry(queryStr);
 
-                DirectoryEntries kids = root.Children;
+                var kids = root.Children;
 
                 return (from DirectoryEntry node in kids where node.SchemaClassName == "Computer" select node.Name).ToList();
             }
 
-            // big problems, add this computer and return
-            return new List<string> {Environment.MachineName};
+            return new List<string> { Environment.MachineName };
         }
     }
 }

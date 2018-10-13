@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +21,7 @@ namespace Dev2.Tests.Runtime.Hosting
     [TestClass]
    public class ResourceUpgraderTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [ExpectedException(typeof(ArgumentNullException ))]
         [TestCategory("ResourceUpgrader_Ctor")]
@@ -37,7 +36,7 @@ namespace Dev2.Tests.Runtime.Hosting
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrader_Properties")]
         public void ResourceUpgrader_Properties()
@@ -49,7 +48,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
         }
-         [TestMethod]
+         [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrader_Ctor")]
         public void ResourceUpgrader_Upgrade_NoDictionary()
@@ -59,12 +58,12 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
             //------------Execute Test---------------------------
-           var upgraded = a.UpgradeResource(XElement.Parse("<a></a>"), new Version(1, 2),(x=>{}));
+           var upgraded = a.UpgradeResource(XElement.Parse("<a></a>"), new Version(1, 2),x=>{});
             //------------Assert Results-------------------------
            Assert.AreEqual(upgraded.ToString(), "<a></a>");
         }
 
-               [TestMethod]
+               [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrader_Ctor")]
         public void ResourceUpgrader_Upgrade_EmptyDictionary()
@@ -74,12 +73,12 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
             //------------Execute Test---------------------------
-            var upgraded = a.UpgradeResource(XElement.Parse("<a></a>"), new Version(1, 2), (x => { }));
+            var upgraded = a.UpgradeResource(XElement.Parse("<a></a>"), new Version(1, 2), x => { });
             //------------Assert Results-------------------------
             Assert.AreEqual(upgraded.ToString(), "<a></a>");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrader_Ctor")]
         public void ResourceUpgrader_Upgrade_HasDictionaryDictionary()
@@ -93,18 +92,18 @@ namespace Dev2.Tests.Runtime.Hosting
             var mockUpgrade = new Mock<IResourceUpgrade>();
             upgradePaths.Add(upgrade1.Object);
 
-            mockUpgrade.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse((a.ToString().Replace("a", "b"))));
+            mockUpgrade.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse(a.ToString().Replace("a", "b")));
             upgrade1.Setup(a=>a.CanUpgrade(source)).Returns(true);
             upgrade1.Setup(a => a.Upgrade).Returns(mockUpgrade.Object);
             var upgrader = new ResourceUpgrader(upgradePaths);
 
 
             //------------Execute Test---------------------------
-            var upgraded = upgrader.UpgradeResource(source, new Version(1, 2), (x => { }));
+            var upgraded = upgrader.UpgradeResource(source, new Version(1, 2), x => { });
             //------------Assert Results-------------------------
             Assert.AreEqual(upgraded.ToString(), "<b ServerVersion=\"" +upgrader.GetType().Assembly.GetName().Version + "\"></b>");
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrader_Ctor")]
         public void ResourceUpgrader_Upgrade_HasDictionary_TwoUpgrades()
@@ -123,8 +122,8 @@ namespace Dev2.Tests.Runtime.Hosting
             var mockUpgrade2 = new Mock<IResourceUpgrade>();
             upgradePaths.Add(upgrade1.Object);
             upgradePaths.Add(upgrade2.Object);
-            mockUpgrade.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse((a.ToString().Replace("a", "b"))));
-            mockUpgrade2.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse((a.ToString().Replace("b", "c"))));
+            mockUpgrade.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse(a.ToString().Replace("a", "b")));
+            mockUpgrade2.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse(a.ToString().Replace("b", "c")));
             upgrade1.Setup(a => a.CanUpgrade(source)).Returns(true);
             upgrade1.Setup(a => a.Upgrade).Returns(mockUpgrade.Object);
             upgrade2.Setup(a => a.CanUpgrade(source)).Returns(true);
@@ -133,11 +132,11 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
             //------------Execute Test---------------------------
-            var upgraded = upgrader.UpgradeResource(source, new Version(1, 2), (x => { }));
+            var upgraded = upgrader.UpgradeResource(source, new Version(1, 2), x => { });
             //------------Assert Results-------------------------
             Assert.AreEqual(upgraded.ToString(), "<c ServerVersion=\"" + upgrader.GetType().Assembly.GetName().Version + "\"></c>");
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrader_Ctor")]
         public void ResourceUpgrader_Upgrade_HasDictionary_TwoUpgrades_Only1Matches()
@@ -156,8 +155,8 @@ namespace Dev2.Tests.Runtime.Hosting
             var mockUpgrade2 = new Mock<IResourceUpgrade>();
             upgradePaths.Add(upgrade1.Object);
             upgradePaths.Add(upgrade2.Object);
-            mockUpgrade.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse((a.ToString().Replace("a", "b"))));
-            mockUpgrade2.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse((a.ToString().Replace("b", "c"))));
+            mockUpgrade.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse(a.ToString().Replace("a", "b")));
+            mockUpgrade2.Setup(a => a.UpgradeFunc).Returns(a => XElement.Parse(a.ToString().Replace("b", "c")));
             upgrade1.Setup(a => a.CanUpgrade(source)).Returns(true);
             upgrade1.Setup(a => a.Upgrade).Returns(mockUpgrade.Object);
             upgrade2.Setup(a => a.CanUpgrade(source)).Returns(false);
@@ -166,7 +165,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
             //------------Execute Test---------------------------
-            var upgraded = upgrader.UpgradeResource(source, new Version(1, 2), (x => { }));
+            var upgraded = upgrader.UpgradeResource(source, new Version(1, 2), x => { });
             //------------Assert Results-------------------------
             Assert.AreEqual(upgraded.ToString(), "<b ServerVersion=\"" + upgrader.GetType().Assembly.GetName().Version + "\"></b>");
         }

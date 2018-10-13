@@ -11,62 +11,62 @@ namespace Warewolf.ResourceManagement
         readonly IActivityParser _activityParser;
         readonly ConcurrentDictionary<Guid,IDev2Activity> _cache;
 
+        public ConcurrentDictionary<Guid, IDev2Activity> Cache => _cache;
+
         public ResourceActivityCache(IActivityParser activityParser, ConcurrentDictionary<Guid, IDev2Activity> cache)
         {
-            _activityParser = activityParser;
-            _cache = cache;
-        }        
+            _activityParser = activityParser ?? throw new ArgumentNullException(nameof(activityParser));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
+        }
 
-        public IDev2Activity Parse(DynamicActivity activity,Guid resourceIdGuid,bool failOnException=false)
+        public IDev2Activity Parse(DynamicActivity activity, Guid resourceIdGuid) => Parse(activity, resourceIdGuid, false);
+
+        public IDev2Activity Parse(DynamicActivity activity, Guid resourceIdGuid, bool failOnError)
         {
             if(HasActivityInCache(resourceIdGuid))
             {
-                return GetActivity(resourceIdGuid);
+                var dev2Activity = GetActivity(resourceIdGuid);
+                if (dev2Activity != null)
+                {
+                    return dev2Activity;
+                }
             }
             var dynamicActivity = activity;
             if (dynamicActivity != null)
             {
                 try
                 {
-                    IDev2Activity act = _activityParser.Parse(dynamicActivity);
-                    if (_cache.TryAdd(resourceIdGuid, act))
+                    var act = _activityParser.Parse(dynamicActivity);
+                    if (Cache.TryAdd(resourceIdGuid, act))
                     {
                         return act;
                     }
-                }
-                    // ReSharper disable EmptyGeneralCatchClause
-                catch(Exception err) //errors caught inside
-                    // ReSharper restore EmptyGeneralCatchClause
+                    Cache.AddOrUpdate(resourceIdGuid, act, (guid, dev2Activity) =>
+                    {
+                        Cache[resourceIdGuid] = act;
+                        return act;
+                    });
+                    return act;
+                }                    
+                catch(Exception err) //errors caught inside                    
                 {
-                    Dev2Logger.Log.Error(err);
-                    if(failOnException)
-                    throw;
-                }
-   
+                    Dev2Logger.Error(err, "Warewolf Error");
+                    if(failOnError)
+                    {
+                        throw;
+                    }
+                }   
             }
             return null;
         }
 
-        public IDev2Activity GetActivity(Guid resourceIdGuid)
-        {
-            return _cache[resourceIdGuid];
-        }
+        public IDev2Activity GetActivity(Guid resourceIdGuid) => Cache[resourceIdGuid];
 
-        public bool HasActivityInCache(Guid resourceIdGuid)
-        {
-            return _cache.ContainsKey(resourceIdGuid);
-        }
+        public bool HasActivityInCache(Guid resourceIdGuid) => Cache.ContainsKey(resourceIdGuid);
 
         public void RemoveFromCache(Guid resourceID)
         {
-            IDev2Activity act;
-            _cache.TryRemove(resourceID, out act);
+            Cache.TryRemove(resourceID, out IDev2Activity act);
         }
-
-        public void ClearCache()
-        {
-            _cache.Clear();
-        }
-
     }
 }

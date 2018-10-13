@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Core.Graph;
 
-// ReSharper disable once CheckNamespace
+
 namespace Unlimited.Framework.Converters.Graph.String.Json
 {
     public class StringPath : IPath {
@@ -62,10 +62,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             yield break;
         }
 
-        public IPathSegment CreatePathSegment(string pathSegmentString)
-        {
-            return null;
-        }
+        public IPathSegment CreatePathSegment(string pathSegmentString) => null;
 
         #endregion
     }

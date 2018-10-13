@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,15 +11,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.InterfaceImplementors;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace Dev2.Core.Tests.IntellisenseProvider
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class CompositeIntellisenseProviderTests
     {
 

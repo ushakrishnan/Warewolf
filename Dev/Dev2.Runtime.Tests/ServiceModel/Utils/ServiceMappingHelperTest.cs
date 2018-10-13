@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,16 +11,14 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Core.Graph;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Utils;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.Ouput;
 using Unlimited.Framework.Converters.Graph.Output;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Runtime.ServiceModel.Utils
 {
@@ -29,7 +26,6 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
     /// Summary description for ServiceMappingHelperTest
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ServiceMappingHelperTest
     {
         /// <summary>
@@ -38,7 +34,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
         ///</summary>
         public TestContext TestContext { get; set; }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServiceMappingHelper_MapDbOutputs")]
         public void ServiceMappingHelper_MapDbOutputs_WhenOutputsWithPaths_ExpectTwoOutputMappings()
@@ -48,9 +44,9 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             const string outputDefs = @"<z:anyType xmlns:i=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:d1p1=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph.Ouput"" i:type=""d1p1:OutputDescription"" xmlns:z=""http://schemas.microsoft.com/2003/10/Serialization/""><d1p1:DataSourceShapes xmlns:d2p1=""http://schemas.microsoft.com/2003/10/Serialization/Arrays""><d2p1:anyType i:type=""d1p1:DataSourceShape""><d1p1:_x003C_Paths_x003E_k__BackingField><d2p1:anyType xmlns:d5p1=""http://schemas.datacontract.org/2004/07/Dev2.Converters.Graph.DataTable"" i:type=""d5p1:DataTablePath""><_x003C_ActualPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">CountryID</_x003C_ActualPath_x003E_k__BackingField><_x003C_DisplayPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">CountryID</_x003C_DisplayPath_x003E_k__BackingField><_x003C_OutputExpression_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">[[dbo_Pr_CitiesGetCountries().CountryID]]</_x003C_OutputExpression_x003E_k__BackingField><_x003C_SampleData_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">1__COMMA__2__COMMA__3__COMMA__4__COMMA__5__COMMA__6__COMMA__7__COMMA__8__COMMA__9__COMMA__10</_x003C_SampleData_x003E_k__BackingField></d2p1:anyType><d2p1:anyType xmlns:d5p1=""http://schemas.datacontract.org/2004/07/Dev2.Converters.Graph.DataTable"" i:type=""d5p1:DataTablePath""><_x003C_ActualPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">Description</_x003C_ActualPath_x003E_k__BackingField><_x003C_DisplayPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">Description</_x003C_DisplayPath_x003E_k__BackingField><_x003C_OutputExpression_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">[[dbo_Pr_CitiesGetCountries().Description]]</_x003C_OutputExpression_x003E_k__BackingField><_x003C_SampleData_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">Afghanistan__COMMA__Albania__COMMA__Algeria__COMMA__Andorra__COMMA__Angola__COMMA__Argentina__COMMA__Armenia__COMMA__Australia__COMMA__Austria__COMMA__Azerbaijan</_x003C_SampleData_x003E_k__BackingField></d2p1:anyType></d1p1:_x003C_Paths_x003E_k__BackingField></d2p1:anyType></d1p1:DataSourceShapes><d1p1:Format>ShapedXML</d1p1:Format></z:anyType>";
 
             var serviceMappingHelper = new ServiceMappingHelper();
-            IOutputDescription outputs = new OutputDescriptionSerializationService().Deserialize(outputDefs);
+            var outputs = new OutputDescriptionSerializationService().Deserialize(outputDefs);
             outputs.DataSourceShapes.Add(new DataSourceShape());
-            DbService theService = CreateCountriesDbService();
+            var theService = CreateCountriesDbService();
             theService.Recordset.Fields.Clear();
 
             //------------Execute Test---------------------------
@@ -60,7 +56,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             Assert.AreEqual(2, theService.Recordset.Fields.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServiceMappingHelper_MapDbOutputs")]
         public void ServiceMappingHelper_MapDbOutputs_WhenNoOutputsWithPaths_ExpectNoOutputMappings()
@@ -69,9 +65,9 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             const string outputDefs = @"<z:anyType xmlns:i=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:d1p1=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph.Ouput"" i:type=""d1p1:OutputDescription"" xmlns:z=""http://schemas.microsoft.com/2003/10/Serialization/""><d1p1:DataSourceShapes xmlns:d2p1=""http://schemas.microsoft.com/2003/10/Serialization/Arrays""><d2p1:anyType i:type=""d1p1:DataSourceShape""><d1p1:_x003C_Paths_x003E_k__BackingField><d2p1:anyType xmlns:d5p1=""http://schemas.datacontract.org/2004/07/Dev2.Converters.Graph.DataTable"" i:type=""d5p1:DataTablePath""><_x003C_ActualPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">Column1</_x003C_ActualPath_x003E_k__BackingField><_x003C_DisplayPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph""></_x003C_DisplayPath_x003E_k__BackingField><_x003C_OutputExpression_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph""></_x003C_OutputExpression_x003E_k__BackingField><_x003C_SampleData_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">the result</_x003C_SampleData_x003E_k__BackingField></d2p1:anyType></d1p1:_x003C_Paths_x003E_k__BackingField></d2p1:anyType></d1p1:DataSourceShapes><d1p1:Format>ShapedXML</d1p1:Format></z:anyType>";
 
             var serviceMappingHelper = new ServiceMappingHelper();
-            IOutputDescription outputs = new OutputDescriptionSerializationService().Deserialize(outputDefs);
+            var outputs = new OutputDescriptionSerializationService().Deserialize(outputDefs);
             outputs.DataSourceShapes.Add(new DataSourceShape());
-            DbService theService = CreateCountriesDbService();
+            var theService = CreateCountriesDbService();
             theService.Recordset.Fields.Clear();
 
             //------------Execute Test---------------------------
@@ -81,7 +77,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             Assert.AreEqual(0, theService.Recordset.Fields.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServiceMappingHelper_MapDbOutputs")]
         public void ServiceMappingHelper_MapDbOutputs_WhenNoOutputsContainNameWithDot_ExpectDotRemainsInNameReplacedInAlias()
@@ -90,9 +86,9 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             const string outputDefs = @"<z:anyType xmlns:i=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:d1p1=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph.Ouput"" i:type=""d1p1:OutputDescription"" xmlns:z=""http://schemas.microsoft.com/2003/10/Serialization/""><d1p1:DataSourceShapes xmlns:d2p1=""http://schemas.microsoft.com/2003/10/Serialization/Arrays""><d2p1:anyType i:type=""d1p1:DataSourceShape""><d1p1:_x003C_Paths_x003E_k__BackingField><d2p1:anyType xmlns:d5p1=""http://schemas.datacontract.org/2004/07/Dev2.Converters.Graph.DataTable"" i:type=""d5p1:DataTablePath""><_x003C_ActualPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">Column1</_x003C_ActualPath_x003E_k__BackingField><_x003C_DisplayPath_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">foo.bar</_x003C_DisplayPath_x003E_k__BackingField><_x003C_OutputExpression_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">foobar</_x003C_OutputExpression_x003E_k__BackingField><_x003C_SampleData_x003E_k__BackingField xmlns=""http://schemas.datacontract.org/2004/07/Unlimited.Framework.Converters.Graph"">the result</_x003C_SampleData_x003E_k__BackingField></d2p1:anyType></d1p1:_x003C_Paths_x003E_k__BackingField></d2p1:anyType></d1p1:DataSourceShapes><d1p1:Format>ShapedXML</d1p1:Format></z:anyType>";
 
             var serviceMappingHelper = new ServiceMappingHelper();
-            IOutputDescription outputs = new OutputDescriptionSerializationService().Deserialize(outputDefs);
+            var outputs = new OutputDescriptionSerializationService().Deserialize(outputDefs);
             outputs.DataSourceShapes.Add(new DataSourceShape());
-            DbService theService = CreateCountriesDbService();
+            var theService = CreateCountriesDbService();
             theService.Recordset.Fields.Clear();
 
             //------------Execute Test---------------------------
@@ -104,7 +100,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             Assert.AreEqual("foobar", theService.Recordset.Fields[0].Alias);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServiceMappingHelper_MapDbOutputs")]
         public void ServiceMappingHelper_MapDbOutputs_WhenSampleDataContainsCommaReplacement_Expect10SampleItems()
@@ -172,8 +168,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
             {
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "CountriesService",
-                ResourceType = ResourceType.DbService,
-                ResourcePath = "Test",
+                ResourceType = "DbService",
                 Method = new ServiceMethod
                 {
                     Name = "dbo.spGetCountries",
@@ -191,9 +186,8 @@ namespace Dev2.Tests.Runtime.ServiceModel.Utils
 
                     ResourceID = Guid.NewGuid(),
                     ResourceName = "CitiesDB",
-                    ResourceType = ResourceType.DbSource,
-                    ResourcePath = "Test",
-                    Server = "RSAKLFSVRGENDEV",
+                    ResourceType = "DbSource",
+                    Server = "TEST-MSSQL",
                     DatabaseName = "Cities",
                     AuthenticationType = AuthenticationType.Windows,
                 }

@@ -1,70 +1,93 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
+using System;
 using Dev2.Common.Interfaces.Wrappers;
+using System.IO;
+using Microsoft.VisualBasic.FileIO;
+using System.Collections.Generic;
 
 namespace Dev2.Common.Wrappers
-{
-    [ExcludeFromCodeCoverage] // not required for code coverage this is simply a pass through required for unit testing
+{ // not required for code coverage this is simply a pass through required for unit testing
     public class DirectoryWrapper : IDirectory
     {
         public string[] GetFiles(string path)
         {
+            if (!Directory.Exists(path))
+            {
+                return new string[0];
+            }
             return Directory.GetFiles(path);
         }
 
-        public string CreateIfNotExists(string debugOutputPath)
+        public string CreateIfNotExists(string path)
         {
-            if (!Directory.Exists(debugOutputPath))
+            if (!Directory.Exists(path))
             {
-                return Directory.CreateDirectory(debugOutputPath).Name;
+                return Directory.CreateDirectory(path).Name;
             }
 
-            return debugOutputPath;
+            return path;
         }
 
-        public string[] GetLogicalDrives()
-        {
-            return Directory.GetLogicalDrives();
-        }
+        public string[] GetLogicalDrives() => Directory.GetLogicalDrives();
 
-        public bool Exists(string path)
-        {
-            return Directory.Exists(path);
-        }
+        public bool Exists(string path) => Directory.Exists(path);
 
-        public string[] GetFileSystemEntries(string path)
-        {
-            return Directory.GetFileSystemEntries(path);
-        }
+        public string[] GetFileSystemEntries(string path) => Directory.GetFileSystemEntries(path);
 
-        public string[] GetFileSystemEntries(string path, string searchPattern)
-        {
-            return Directory.GetFileSystemEntries(path, searchPattern);
-        }
+        public string[] GetFileSystemEntries(string path, string searchPattern) => Directory.GetFileSystemEntries(path, searchPattern);
 
-        public string[] GetDirectories(string path)
+        public string[] GetDirectories(string workspacePath) => Directory.GetDirectories(workspacePath);
+
+        public string[] GetDirectories(string path, string pattern) => Directory.GetDirectories(path, pattern, System.IO.SearchOption.AllDirectories);
+
+        public static string GetDirectoryName(string path)
         {
-            return Directory.GetDirectories(path);
+            var validPath = path.TrimEnd('\\');
+            var index = validPath.LastIndexOf("\\", StringComparison.InvariantCultureIgnoreCase);
+            if (index != -1)
+            {
+                return path.Substring(index + 1);
+            }
+            return path;
         }
 
         public void Move(string directoryStructureFromPath, string directoryStructureToPath)
         {
-            Directory.Move(directoryStructureFromPath, directoryStructureToPath);
+            FileSystem.MoveDirectory(directoryStructureFromPath, directoryStructureToPath, true);
         }
 
         public void Delete(string directoryStructureFromPath, bool recursive)
         {
             Directory.Delete(directoryStructureFromPath, recursive);
+        }
+
+        public DirectoryInfo CreateDirectory(string dir) => Directory.CreateDirectory(dir);
+
+        public IEnumerable<string> EnumerateFiles(string path)
+            => Directory.EnumerateFiles(path);
+        public IEnumerable<string> EnumerateDirectories(string path)
+            => Directory.EnumerateDirectories(path);
+        public IEnumerable<string> EnumerateFileSystemEntries(string path)
+            => Directory.EnumerateFileSystemEntries(path);
+        public IEnumerable<string> EnumerateFiles(string path, string pattern)
+            => Directory.EnumerateFiles(path, pattern);
+        public IEnumerable<string> EnumerateDirectories(string path, string pattern)
+            => Directory.EnumerateDirectories(path, pattern);
+        public IEnumerable<string> EnumerateFileSystemEntries(string path, string pattern)
+            => Directory.EnumerateFileSystemEntries(path, pattern);
+
+        public DirectoryInfo GetParent(string path)
+        {
+            return Directory.GetParent(path);
         }
     }
 }

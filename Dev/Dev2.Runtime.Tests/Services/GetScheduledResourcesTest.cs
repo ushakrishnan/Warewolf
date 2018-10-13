@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +15,7 @@ using System.Linq;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Scheduler;
@@ -33,13 +33,40 @@ namespace Dev2.Tests.Runtime.Services
     {
 
 
-        private Mock<IServerSchedulerFactory> _factory;
+        Mock<IServerSchedulerFactory> _factory;
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var getScheduledResources = new GetScheduledResources();
+
+            //------------Execute Test---------------------------
+            var resId = getScheduledResources.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var getScheduledResources = new GetScheduledResources();
+
+            //------------Execute Test---------------------------
+            var resId = getScheduledResources.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
 
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Get")]
-        [TestMethod]
-// ReSharper disable InconsistentNaming
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+
         public void GetScheduledResources_Execute_ReturnsScheduledResources()
 
         {
@@ -54,7 +81,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Get")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetScheduledResources_ServiceName()
         {
             var esbMethod = new GetScheduledResources();
@@ -64,7 +91,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Get")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetScheduledResourcesReturnsDynamicService()
         {
             var esb = new GetScheduledResources();
@@ -82,7 +109,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Get")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetScheduledResources_Execute_ReturnsTrigger()
         {
             var output = RunOutput();
@@ -95,14 +122,13 @@ namespace Dev2.Tests.Runtime.Services
 
             var first = result.First().Trigger;
             Assert.IsNotNull(first.Trigger);
-            var dailyTrigger = first.Trigger.Instance as DailyTrigger;
-            if(dailyTrigger != null)
+            if (first.Trigger.Instance is DailyTrigger dailyTrigger)
             {
                 Assert.AreEqual(21, dailyTrigger.DaysInterval);
             }
         }
 
-        private StringBuilder RunOutput()
+        StringBuilder RunOutput()
         {
             var esbMethod = new GetScheduledResources();
             _factory = new Mock<IServerSchedulerFactory>();
@@ -114,7 +140,7 @@ namespace Dev2.Tests.Runtime.Services
                                               new Dev2DailyTrigger(new TaskServiceConvertorFactory(), new DailyTrigger(21)),
                                               new Dev2TaskService(new TaskServiceConvertorFactory()),
                                               new TaskServiceConvertorFactory());
-            var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave");
+            var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave", Guid.NewGuid().ToString());
             _factory.Setup(
                 a =>
                 a.CreateModel(GlobalConstants.SchedulerFolderId, It.IsAny<ISecurityWrapper>())).Returns(model.Object);
@@ -125,5 +151,5 @@ namespace Dev2.Tests.Runtime.Services
             return output;
         }
     }
-    // ReSharper restore InconsistentNaming
+    
 }

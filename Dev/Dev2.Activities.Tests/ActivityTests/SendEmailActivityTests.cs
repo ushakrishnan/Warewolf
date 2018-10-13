@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,24 +11,21 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Mail;
 using ActivityUnitTests;
 using Dev2.Activities;
 using Dev2.Common.ExtMethods;
-using Dev2.DataList.Contract;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class SendEmailActivityTests : BaseActivityUnitTest
     {
         [TestMethod]
@@ -88,7 +84,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             MailMessage mailMessage = null;
             mock.Setup(sender =>
@@ -129,7 +125,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             MailMessage mailMessage = null;
             mock.Setup(sender =>
@@ -170,7 +166,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             MailMessage mailMessage = null;
             mock.Setup(sender =>
@@ -209,7 +205,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             MailMessage mailMessage = null;
             mock.Setup(sender =>
@@ -248,7 +244,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             MailMessage mailMessage = null;
             mock.Setup(sender =>
@@ -287,7 +283,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             MailMessage mailMessage = null;
             mock.Setup(sender =>
@@ -324,7 +320,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void SendEmail_Execute_MixedScalarsRecordsetData_CorrectExcecution()
         {
             var emailSourceForTesting = EmailSourceForTesting();
-            var esbChannelMock = CreateMockEsbChannel(emailSourceForTesting);
+            var esbChannelMock = CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             mock.Setup(sender =>
                 sender.Send(emailSourceForTesting, It.IsAny<MailMessage>())).
@@ -373,7 +369,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                 ResourceName = Guid.NewGuid().ToString(),
                 ResourceID = Guid.NewGuid()
             };
-            ResourceCatalog.Instance.SaveResource(Guid.Empty, testSource);
+            ResourceCatalog.Instance.SaveResource(Guid.Empty, testSource, "");
             EmailSource sendSource = null;
             MailMessage sendMessage = null;
             var emailSender = new Mock<IEmailSender>();
@@ -406,7 +402,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             };
             TestData = "<root></root>";
             CurrentDl = "<ADL></ADL>";
-            var esbChannelMock = CreateMockEsbChannel(testSource);
+            var esbChannelMock = CreateMockEsbChannel();
 
             //------------Execute Test---------------------------
             ExecuteProcess(channel: esbChannelMock.Object, isDebug: true);
@@ -438,7 +434,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             //------------Setup for test--------------------------
             var emailSourceForTesting = EmailSourceForTesting();
-            CreateMockEsbChannel(emailSourceForTesting);
+            CreateMockEsbChannel();
             var mock = new Mock<IEmailSender>();
             mock.Setup(sender =>
                 sender.Send(emailSourceForTesting, It.IsAny<MailMessage>())).
@@ -511,14 +507,30 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("TheResult", activity.Result);
         }
 
-        static Mock<IEsbChannel> CreateMockEsbChannel(EmailSource emailSourceForTesting)
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
         {
-            Mock<IEsbChannel> esbChannelMock = new Mock<IEsbChannel>();
-            ErrorResultTO errorResultTO;
-            esbChannelMock.Setup(channel => channel.FetchServerModel<EmailSource>(
-                It.IsAny<IDSFDataObject>(),
-                It.IsAny<Guid>(),
-                out errorResultTO, 0)).Returns(emailSourceForTesting);
+            //------------Setup for test--------------------------
+            var emailSourceForTesting = EmailSourceForTesting();
+            var mock = new Mock<IEmailSender>();
+            mock.Setup(sender =>
+                sender.Send(emailSourceForTesting, It.IsAny<MailMessage>())).
+                Callback<EmailSource, MailMessage>((client, message) =>
+                { });
+            var act = GetSendEmailActivity(mock);
+            act.Result = "[[Result]]";
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[Result]]", outputs[0]);
+        }
+
+        static Mock<IEsbChannel> CreateMockEsbChannel()
+        {
+            var esbChannelMock = new Mock<IEsbChannel>();
             return esbChannelMock;
         }
 
@@ -546,7 +558,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                 UserName = "from.someone@amail.account",
                 Password = "TestPassword"
             };
-            ResourceCatalog.Instance.SaveResource(Guid.Empty, emailSourceForTesting);
+            ResourceCatalog.Instance.SaveResource(Guid.Empty, emailSourceForTesting, "");
             return emailSourceForTesting;
         }
     }

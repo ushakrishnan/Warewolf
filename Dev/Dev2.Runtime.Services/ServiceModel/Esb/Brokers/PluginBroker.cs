@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,73 +8,69 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 using Dev2.Common.Interfaces.Core.Graph;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin;
 
 namespace Dev2.Runtime.ServiceModel.Esb.Brokers
 {
-    public interface IPluginBroker
-    {
-        NamespaceList GetNamespaces(PluginSource pluginSource);
-        ServiceMethodList GetMethods(string assemblyLocation, string assemblyName, string fullName);
-        IOutputDescription TestPlugin(PluginService pluginService);
-        bool ValidatePlugin(string toLoad, out string error);
-    }
-
     /// <summary>
     /// Handle interaction with plugins ;)
     /// </summary>
-    public class PluginBroker : IPluginBroker
+    public class PluginBroker : IPluginBroker<PluginSource, PluginService>
     {
-        /// <summary>
-        /// Gets the namespaces.
-        /// </summary>
-        /// <param name="pluginSource">The plugin source.</param>
-        /// <returns></returns>
+        #region Implementation of IPluginBroker<in PluginSource>
+
         public NamespaceList GetNamespaces(PluginSource pluginSource)
         {
-            return PluginServiceExecutionFactory.GetNamespaces(pluginSource);
+            try
+            {
+                return PluginServiceExecutionFactory.GetNamespaces(pluginSource);
+            }
+            
+            catch (BadImageFormatException)
+            {
+                throw;
+            }
         }
 
-        /// <summary>
-        /// Gets the methods.
-        /// </summary>
-        /// <param name="assemblyLocation">The assembly location.</param>
-        /// <param name="assemblyName">Name of the assembly.</param>
-        /// <param name="fullName">The full name.</param>
-        /// <returns></returns>
-        public ServiceMethodList GetMethods(string assemblyLocation, string assemblyName, string fullName)
+        public NamespaceList GetNamespacesWithJsonObjects(PluginSource pluginSource)
         {
-            return PluginServiceExecutionFactory.GetMethods(assemblyLocation, assemblyName, fullName);
+            try
+            {
+                return PluginServiceExecutionFactory.GetNamespacesWithJsonObjects(pluginSource);
+            }
+            
+            catch (BadImageFormatException)
+            {
+                throw;
+            }
         }
 
-        public bool ValidatePlugin(string toLoad, out string error)
-        {
-            error = PluginServiceExecutionFactory.ValidatePlugin(toLoad);
+        public ServiceMethodList GetMethods(string assemblyLocation, string assemblyName, string fullName) => PluginServiceExecutionFactory.GetMethods(assemblyLocation, assemblyName, fullName);
 
-            return error == string.Empty;
-        }
+        public ServiceMethodList GetMethodsWithReturns(string assemblyLocation, string assemblyName, string fullName) => PluginServiceExecutionFactory.GetMethodsWithReturns(assemblyLocation, assemblyName, fullName);
 
-        /// <summary>
-        /// Tests the plugin.
-        /// </summary>
-        /// <param name="pluginService">The plugin service.</param>
-        /// <returns></returns>
+        public ServiceConstructorList GetConstructors(string assemblyLocation, string assemblyName, string fullName) => PluginServiceExecutionFactory.GetConstructors(assemblyLocation, assemblyName, fullName);
+
         public IOutputDescription TestPlugin(PluginService pluginService)
         {
-            PluginInvokeArgs args = new PluginInvokeArgs
-                                    {
-                                        AssemblyLocation = ((PluginSource)pluginService.Source).AssemblyLocation,
-                                        AssemblyName = ((PluginSource)pluginService.Source).AssemblyName,
-                                        Method = pluginService.Method.Name,
-                                        Fullname = pluginService.Namespace,
-                                        Parameters = pluginService.Method.Parameters
-                                    };
+            var args = new PluginInvokeArgs
+            {
+                AssemblyLocation = ((PluginSource)pluginService.Source).AssemblyLocation,
+                AssemblyName = ((PluginSource)pluginService.Source).AssemblyName,
+                Method = pluginService.Method.Name,
+                Fullname = pluginService.Namespace,
+                Parameters = pluginService.Method.Parameters
+            };
 
-            var pluginResult = PluginServiceExecutionFactory.TestPlugin(args);
-
+            var pluginResult = PluginServiceExecutionFactory.TestPlugin(args, out string serializedResult);
+            pluginService.SerializedResult = serializedResult;
             return pluginResult;
         }
+
+        #endregion
     }
 }

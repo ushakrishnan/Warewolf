@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,21 +10,17 @@
 
 using Newtonsoft.Json.Linq;
 
-namespace Dev2
+namespace Dev2.Common
 {
     public static class JPropertyExtensionMethods
     {
-        public static bool IsEnumerable(this JProperty property)
-        {
-            return property.Value is JArray;
-        }
+        public static bool IsEnumerable(this JProperty property) => property.Value is JArray;
 
         public static bool IsEnumerableOfPrimitives(this JProperty property)
         {
-            bool returnValue = false;
-            var array = property.Value as JArray;
+            var returnValue = false;
 
-            if (array != null && array.Count > 0)
+            if (property.Value is JArray array && array.Count > 0)
             {
                 returnValue = array[0].IsPrimitive();
             }
@@ -32,9 +28,6 @@ namespace Dev2
             return returnValue;
         }
 
-        public static bool IsPrimitive(this JProperty property)
-        {
-            return property.Value is JValue;
-        }
+        public static bool IsPrimitive(this JProperty property) => property.Value is JValue;
     }
 }

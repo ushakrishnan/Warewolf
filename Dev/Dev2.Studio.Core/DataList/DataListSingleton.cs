@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +8,9 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces.DataList;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core
 {
     /// <summary>
@@ -23,7 +22,7 @@ namespace Dev2.Studio.Core
 
         #region Locals
 
-        private static IDataListViewModel _activeDataList;
+        static IDataListViewModel _activeDataList;
 
         #endregion Locals
 
@@ -33,28 +32,16 @@ namespace Dev2.Studio.Core
         {
             get
             {
-                if(_activeDataList != null)
+                if(_activeDataList?.Resource?.DataList != null)
                 {
-                    if(_activeDataList.Resource != null)
-                    {
-                        if(_activeDataList.Resource.DataList != null)
-                        {
-                            return _activeDataList.Resource.DataList;
-                        }
-                    }
+                    return _activeDataList.Resource.DataList;
                 }
 
                 return string.Empty;
             }
         }
 
-        public static IDataListViewModel ActiveDataList
-        {
-            get
-            {
-                return _activeDataList;
-            }
-        }
+        public static IDataListViewModel ActiveDataList => _activeDataList;
 
         #endregion Properties
 
@@ -62,6 +49,7 @@ namespace Dev2.Studio.Core
 
         public static void SetDataList(IDataListViewModel activeDataList)
         {
+         
             _activeDataList = activeDataList;
         }
 

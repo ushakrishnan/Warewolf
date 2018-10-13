@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Dev2.Common;
 
 namespace Dev2.Services.Security
 {
@@ -90,12 +88,10 @@ namespace Dev2.Services.Security
             LogStart();
             _permissionsLock.EnterWriteLock();
             var previousPermissions = _permissions.ToList();
-            Dev2Logger.Log.Error(previousPermissions);
             List<WindowsGroupPermission> newPermissions;
             try
             {
                 newPermissions = ReadPermissions();
-                Dev2Logger.Log.Error(newPermissions);
                 _permissions.Clear();
                 if(newPermissions != null)
                 {
@@ -126,21 +122,14 @@ namespace Dev2.Services.Security
         {
             LogStart();
             var handler = PermissionsChanged;
-            if(handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
+            handler?.Invoke(this, EventArgs.Empty);
             LogEnd();
         }
 
         protected virtual void RaisePermissionsModified(PermissionsModifiedEventArgs e)
         {
             LogStart();
-            var handler = PermissionsModified;
-            if(handler != null)
-            {
-                handler(this, e);
-            }
+            PermissionsModified?.Invoke(this, e);
             LogEnd();
         }
 

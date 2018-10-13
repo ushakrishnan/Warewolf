@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,17 +8,15 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Dev2.Data.Binary_Objects
 {
     public class ListIndexIterator : IIndexIterator
     {
-        private int _curValue;
-        private int _curPos;
-        private ListOfIndex _indexList;
+        int _curValue;
+        int _curPos;
+        ListOfIndex _indexList;
 
         public ListOfIndex IndexList
         {
@@ -34,12 +31,9 @@ namespace Dev2.Data.Binary_Objects
             }
         }
 
-        public int Count
-        {
-            get { return IndexList.Count(); }
-        }
+        public int Count => IndexList.Count();
 
-        public bool IsEmpty { get { return _curValue - Count == 0; } }
+        public bool IsEmpty => _curValue - Count == 0;
 
         public ListIndexIterator(List<int> indexes)
         {
@@ -51,7 +45,7 @@ namespace Dev2.Data.Binary_Objects
 
         public bool HasMore()
         {
-            bool result = _curPos < IndexList.Count();
+            var result = _curPos < IndexList.Count();
             return result;
         }
 
@@ -64,35 +58,6 @@ namespace Dev2.Data.Binary_Objects
             return _curValue;
         }
 
-        public int MaxIndex()
-        {
-            return IndexList.GetMaxIndex();
-        }
-
-        public int MinIndex()
-        {
-            return IndexList.GetMinIndex();
-        }
-
-        public void AddGap(int idx)
-        {
-            IndexList.Indexes.Add(idx);
-        }
-
-        public void RemoveGap(int idx)
-        {
-            IndexList.Indexes.Remove(idx);
-        }
-
-        public HashSet<int> FetchGaps()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IIndexIterator Clone()
-        {
-            List<int> indexes = IndexList.Indexes.ToList();
-            return new ListIndexIterator(indexes);
-        }
+        public int MaxIndex() => IndexList.GetMaxIndex();
     }
 }

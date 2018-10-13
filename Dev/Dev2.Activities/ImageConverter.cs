@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,27 +10,20 @@
 
 using System;
 using System.Globalization;
-using System.IO;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities 
 {
     public class ImagePathConverter : IValueConverter 
     {
-        private string _imageDirectory = Directory.GetCurrentDirectory();
-        public string ImageDirectory {
-            get { return _imageDirectory; }
-            set { _imageDirectory = value; }
-        }
-
         #region IValueConverter Members
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
             try {
-                BitmapImage image = new BitmapImage();
+                var image = new BitmapImage();
                 if (value != null && value.ToString() != string.Empty) {
-                    Uri imageUri = new Uri(value.ToString(), UriKind.RelativeOrAbsolute);
+                    var imageUri = new Uri(value.ToString(), UriKind.RelativeOrAbsolute);
 
                     image = new BitmapImage();
                     image.BeginInit();
@@ -41,8 +33,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 }
                 return image;
             }
-            catch {
-                return new BitmapImage(); 
+            catch (Exception ex)
+            {
+                return new BitmapImage();
             }
 
 

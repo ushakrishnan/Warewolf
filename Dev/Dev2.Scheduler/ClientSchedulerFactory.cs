@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,15 +32,11 @@ namespace Dev2.Scheduler
 
 
 
-        public IScheduleTrigger CreateTrigger(TaskState state, ITrigger trigger)
-        {
-            return new ScheduleTrigger(state, trigger, _service, _serviceConvertorFactory);
-        }
-
+        public IScheduleTrigger CreateTrigger(TaskState state, ITrigger trigger) => new ScheduleTrigger(state, trigger, _service, _serviceConvertorFactory);
 
         public IScheduleTrigger CreateTrigger(Trigger trigger)
         {
-            switch(trigger.TriggerType)
+            switch (trigger.TriggerType)
             {
                 case TaskTriggerType.Boot:
                     return new ScheduleTrigger(TaskState.Ready, new Dev2BootTrigger(_serviceConvertorFactory, trigger as BootTrigger), _service, _serviceConvertorFactory);
@@ -65,11 +60,12 @@ namespace Dev2.Scheduler
                     return new ScheduleTrigger(TaskState.Ready, new Dev2TimeTrigger(_serviceConvertorFactory, trigger as TimeTrigger), _service, _serviceConvertorFactory);
                 case TaskTriggerType.Weekly:
                     return new ScheduleTrigger(TaskState.Ready, new Dev2WeeklyTrigger(_serviceConvertorFactory, trigger), _service, _serviceConvertorFactory);
+                case TaskTriggerType.Custom:
+                    return null;
                 default:
                     return new ScheduleTrigger(TaskState.Ready, new Dev2Trigger(_serviceConvertorFactory, trigger), _service, _serviceConvertorFactory);
 
             }
         }
-
     }
 }

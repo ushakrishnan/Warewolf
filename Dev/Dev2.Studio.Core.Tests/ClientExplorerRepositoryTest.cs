@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,18 +9,17 @@
 */
 
 using System;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Controller;
 using Dev2.Explorer;
 using Dev2.Models;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Core.Tests
 {
     [TestClass]
@@ -59,7 +57,7 @@ namespace Dev2.Core.Tests
             var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
             var com = new Mock<ICommunicationController>();
             var item = new Mock<IExplorerItem>();
-            // ReSharper disable MaximumChainedReferences
+            
             comFactory.Setup(a => a.CreateController("FetchExplorerItemsService")).Returns(com.Object).Verifiable();
      
             com.Setup(a => a.ExecuteCommand<IExplorerItem>(env.Object, Guid.Empty)).Returns(item.Object).Verifiable();
@@ -85,7 +83,7 @@ namespace Dev2.Core.Tests
             var comFactory = new Mock<ICommunicationControllerFactory>();
             var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
             var com = new Mock<ICommunicationController>();
-            var item = new ServerExplorerItem("", Guid.Empty, ResourceType.DbService, null, Permissions.Contribute, "f");
+            var item = new ServerExplorerItem("", Guid.Empty, "DbService", null, Permissions.Contribute, "f");
             comFactory.Setup(a => a.CreateController("AddFolderService")).Returns(com.Object).Verifiable();
             com.Setup(a => a.ExecuteCommand<IExplorerItem>(env.Object, Guid.Empty)).Returns(item).Verifiable();
 
@@ -110,7 +108,7 @@ namespace Dev2.Core.Tests
             var comFactory = new Mock<ICommunicationControllerFactory>();
             var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
             var com = new Mock<ICommunicationController>();
-            var item = new ServerExplorerItem("", Guid.Empty, ResourceType.DbService, null, Permissions.Contribute, "f");
+            var item = new ServerExplorerItem("", Guid.Empty, "DbService.", null, Permissions.Contribute, "f");
             comFactory.Setup(a => a.CreateController("RenameItemService")).Returns(com.Object).Verifiable();
             com.Setup(a => a.ExecuteCommand<IExplorerItem>(env.Object, Guid.Empty)).Returns(item).Verifiable();
 
@@ -137,7 +135,7 @@ namespace Dev2.Core.Tests
             var comFactory = new Mock<ICommunicationControllerFactory>();
             var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
             var com = new Mock<ICommunicationController>();
-            var item = new ServerExplorerItem("", Guid.Empty, ResourceType.DbService, null, Permissions.Contribute, "f");
+            var item = new ServerExplorerItem("", Guid.Empty, "DbService", null, Permissions.Contribute, "f");
             comFactory.Setup(a => a.CreateController("MoveItemService")).Returns(com.Object).Verifiable();
             com.Setup(a => a.ExecuteCommand<IExplorerItem>(env.Object, Guid.Empty)).Returns(item).Verifiable();
 
@@ -155,52 +153,6 @@ namespace Dev2.Core.Tests
 
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ClientExplorerRepository_MoveItem")]
-        public void ClientExplorerRepository_GetServerVersion_ExpectCorrectServiceCalled()
-        {
-            //------------Setup for test--------------------------
-            var env = new Mock<IEnvironmentConnection>();
-            var comFactory = new Mock<ICommunicationControllerFactory>();
-            var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
-            var com = new Mock<ICommunicationController>();
-           comFactory.Setup(a => a.CreateController("GetServerVersion")).Returns(com.Object).Verifiable();
-            com.Setup(a => a.ExecuteCommand<string>(env.Object, Guid.Empty)).Returns("1,2,3,4").Verifiable();
-
-            //------------Execute Test---------------------------
-            Assert.AreEqual("1,2,3,4",rep.GetServerVersion());
-            //------------Assert Results-------------------------
-
-            comFactory.Verify(a => a.CreateController("GetServerVersion"));
-            com.Verify(a => a.ExecuteCommand<string>(env.Object, Guid.Empty));
-            com.Verify(a => a.ExecuteCommand<string>(env.Object, Guid.Empty));
-
-        }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
-        [TestCategory("ClientExplorerRepository_MoveItem")]
-        public void ClientExplorerRepository_GetServerVersion_ExpectCorrectServiceCalled_defaultIfEmpty()
-        {
-            //------------Setup for test--------------------------
-            var env = new Mock<IEnvironmentConnection>();
-            var comFactory = new Mock<ICommunicationControllerFactory>();
-            var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
-            var com = new Mock<ICommunicationController>();
-            comFactory.Setup(a => a.CreateController("GetServerVersion")).Returns(com.Object).Verifiable();
-            com.Setup(a => a.ExecuteCommand<string>(env.Object, Guid.Empty)).Returns("").Verifiable();
-
-            //------------Execute Test---------------------------
-            Assert.AreEqual("less than 0.4.19.1", rep.GetServerVersion());
-            //------------Assert Results-------------------------
-
-            comFactory.Verify(a => a.CreateController("GetServerVersion"));
-            com.Verify(a => a.ExecuteCommand<string>(env.Object, Guid.Empty));
-            com.Verify(a => a.ExecuteCommand<string>(env.Object, Guid.Empty));
-
-        }
-
-        [TestMethod]
-        [Owner("Leon Rajindrapersadh")]
         [TestCategory("ClientExplorerRepository_DeleteItemItem")]
         public void ClientExplorerRepository_DeleteItemItem_ExpectDeleteServiceCalled()
         {
@@ -209,7 +161,7 @@ namespace Dev2.Core.Tests
             var comFactory = new Mock<ICommunicationControllerFactory>();
             var rep = new ServerExplorerClientProxy(env.Object, comFactory.Object);
             var com = new Mock<ICommunicationController>();
-            var item = new ServerExplorerItem("", Guid.Empty, ResourceType.DbService, null, Permissions.Contribute, "f");
+            var item = new ServerExplorerItem("", Guid.Empty, "DbService", null, Permissions.Contribute, "f");
             comFactory.Setup(a => a.CreateController("DeleteItemService")).Returns(com.Object).Verifiable();
             com.Setup(a => a.ExecuteCommand<IExplorerItem>(env.Object, Guid.Empty)).Returns(item).Verifiable();
 
@@ -224,7 +176,7 @@ namespace Dev2.Core.Tests
 
         }
 
-        // ReSharper restore MaximumChainedReferences
+        
         
     }
 }

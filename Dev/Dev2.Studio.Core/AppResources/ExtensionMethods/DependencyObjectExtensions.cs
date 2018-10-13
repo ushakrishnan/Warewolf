@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,16 +15,16 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.ExtensionMethods
 {
     public static class DependencyObjectExtensions
     {
         public static IEnumerable<DependencyObject> GetDescendents(this DependencyObject dependencyObject)
         {
-            List<DependencyObject> descendents = new List<DependencyObject>();
+            var descendents = new List<DependencyObject>();
 
-            if(dependencyObject == null)
+            if (dependencyObject == null)
             {
                 return descendents;
             }
@@ -46,9 +45,9 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
         {
             for(int i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(source, i);
+                var child = VisualTreeHelper.GetChild(source, i);
 
-                if(child.GetType() == type)
+                if (child.GetType() == type)
                 {
                     return child;
                 }
@@ -56,9 +55,9 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
 
             for(int i = 0; i < VisualTreeHelper.GetChildrenCount(source); i++)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(source, i);
-                DependencyObject nestedchild = GetChildByType(child, type);
-                if(nestedchild != null)
+                var child = VisualTreeHelper.GetChild(source, i);
+                var nestedchild = GetChildByType(child, type);
+                if (nestedchild != null)
                 {
                     return nestedchild;
                 }
@@ -69,9 +68,12 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
 
         public static DependencyObject GetParentByType(this DependencyObject source, Type type)
         {
-            DependencyObject parent = VisualTreeHelper.GetParent(source);
+            var parent = VisualTreeHelper.GetParent(source);
 
-            if(parent == null) return null;
+            if (parent == null)
+            {
+                return null;
+            }
 
             return parent.GetType() == type ? parent : GetParentByType(parent, type);
         }
@@ -86,10 +88,7 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
         /// <returns>The first descendant of the specified type</returns>
         /// <remarks> usage: myWindow.FindChild<StackPanel>() </StackPanel></remarks>
         public static T FindChild<T>(this DependencyObject parent)
-            where T : DependencyObject
-        {
-            return parent.FindChild<T>(child => true);
-        }
+            where T : DependencyObject => parent.FindChild<T>(child => true);
 
         /// <summary>
         /// Find the first child of the specified type (the child must exist)
@@ -104,41 +103,8 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
         public static T FindChild<T>(this DependencyObject parent, Func<T, bool> predicate)
             where T : DependencyObject
         {
-            return parent.FindChildren(predicate).First();
-        }
-
-        /// <summary>
-        /// Use this overload if the child you're looking may not exist.
-        /// </summary>
-        /// <typeparam name="T">The type of child you're looking for</typeparam>
-        /// <param name="parent">The dependency object whose children you wish to scan</param>
-        /// <param name="foundChild">out param - the found child dependencyobject, null if the method returns false</param>
-        /// <returns>True if a child was found, else false</returns>
-        public static bool TryFindChild<T>(this DependencyObject parent, out T foundChild)
-            where T : DependencyObject
-        {
-            return parent.TryFindChild(child => true, out foundChild);
-        }
-
-        /// <summary>
-        /// Use this overload if the child you're looking may not exist.
-        /// </summary>
-        /// <typeparam name="T">The type of child you're looking for</typeparam>
-        /// <param name="parent">The dependency object whose children you wish to scan</param>
-        /// <param name="predicate">The child object is selected if the predicate evaluates to true</param>
-        /// <param name="foundChild">out param - the found child dependencyobject, null if the method returns false</param>
-        /// <returns>True if a child was found, else false</returns>
-        public static bool TryFindChild<T>(this DependencyObject parent, Func<T, bool> predicate, out T foundChild)
-            where T : DependencyObject
-        {
-            foundChild = null;
-            var results = parent.FindChildren(predicate);
-            IEnumerable<T> enumerable = results as IList<T> ?? results.ToList();
-            if(!enumerable.Any())
-                return false;
-
-            foundChild = enumerable.First();
-            return true;
+            var findChildren = parent.FindChildren(predicate);
+            return findChildren.FirstOrDefault();
         }
 
         /// <summary>
@@ -155,24 +121,33 @@ namespace Dev2.Studio.Core.AppResources.ExtensionMethods
         {
             var children = new List<DependencyObject>();
 
-            if((parent is Visual) || (parent is Visual3D))
+            if(parent is Visual || parent is Visual3D)
             {
                 var visualChildrenCount = VisualTreeHelper.GetChildrenCount(parent);
                 for(int childIndex = 0; childIndex < visualChildrenCount; childIndex++)
+                {
                     children.Add(VisualTreeHelper.GetChild(parent, childIndex));
+                }
             }
             foreach(var logicalChild in LogicalTreeHelper.GetChildren(parent).OfType<DependencyObject>())
-                if(!children.Contains(logicalChild))
-                    children.Add(logicalChild);
-
-            foreach(var child in children)
             {
-                var typedChild = child as T;
-                if((typedChild != null) && predicate.Invoke(typedChild))
-                    yield return typedChild;
+                if (!children.Contains(logicalChild))
+                {
+                    children.Add(logicalChild);
+                }
+            }
 
-                foreach(var foundDescendant in FindChildren(child, predicate))
+            foreach (var child in children)
+            {
+                if ((child is T typedChild) && predicate.Invoke(typedChild))
+                {
+                    yield return typedChild;
+                }
+
+                foreach (var foundDescendant in FindChildren(child, predicate))
+                {
                     yield return foundDescendant;
+                }
             }
         }
     }

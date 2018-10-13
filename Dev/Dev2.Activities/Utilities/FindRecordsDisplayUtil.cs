@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,21 +9,19 @@
 */
 
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Dev2.Utilities
 {
     public static class FindRecordsDisplayUtil
     {
-        private static Dictionary<string, string> _changedOptions;
+        static Dictionary<string, string> _changedOptions;
 
         public static string ConvertForDisplay(string key)
         {
             InitDictionary();
 
-            string value;
 
-            if(!_changedOptions.TryGetValue(key, out value))
+            if (!_changedOptions.TryGetValue(key, out string value))
             {
                 value = key;
             }
@@ -32,22 +29,9 @@ namespace Dev2.Utilities
             return value;
         }
 
-        public static string ConvertForWriting(string key)
+        static void InitDictionary()
         {
-            InitDictionary();            
-
-            KeyValuePair<string, string> firstOrDefault = _changedOptions.FirstOrDefault(c => c.Value == key);
-            if(firstOrDefault.Key != null && firstOrDefault.Value!= null)
-            {
-                return firstOrDefault.Key;
-            }
-
-            return key;
-        }
-
-        private static void InitDictionary()
-        {
-            if(_changedOptions == null)
+            if (_changedOptions == null)
             {
                 _changedOptions = new Dictionary<string, string> { { "Equals", "=" }, { "Not Equals", "<> (Not Equal)" }, { "Not Contains", "Doesn't Contain" }, { "Regex", "Is Regex" } };
 

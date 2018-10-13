@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,37 +11,41 @@
 using System;
 using System.Activities;
 using System.Collections.Generic;
-using Dev2;
 using Dev2.Activities;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Diagnostics;
-using Warewolf.Storage;
+using Dev2.Interfaces;
+using Warewolf.Core;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    public class DsfCommentActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Utility-Comment", "Comment", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Comment")]
+    public class DsfCommentActivity : DsfActivityAbstract<string>,IEquatable<DsfCommentActivity>
     {
+        string _text;
 
         public DsfCommentActivity()
         {
             DisplayName = "Comment";
         }
-        public string Text { get; set; }
 
+        public string Text
+        {
+            get { return _text; }
+            set { _text = value; }
+        }
 
         #region Get Debug Inputs/Outputs
 
-        public List<DebugItem> GetDebugInputs()
-        {
-            return DebugItem.EmptyList;
-        }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
-            List<DebugItem> result = new List<DebugItem>();
-            DebugItem itemToAdd = new DebugItem();
+            var result = new List<DebugItem>();
+            var itemToAdd = new DebugItem();
             itemToAdd.Add(new DebugItemResult { Type = DebugItemResultType.Value, Value = Text });
             result.Add(itemToAdd);
             return result;
@@ -77,14 +80,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return DsfForEachItem.EmptyList;
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => DsfForEachItem.EmptyList;
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return new List<DsfForEachItem>
+        public override IList<DsfForEachItem> GetForEachOutputs() => new List<DsfForEachItem>
             {
                 new DsfForEachItem
                 {
@@ -92,12 +90,74 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     Name = Text
                 }
             };
-        }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
+            InitializeDebug(dataObject);
+            DispatchDebugState(dataObject, StateType.Before, 0);
+
+            DispatchDebugState(dataObject, StateType.After, 0);
         }
 
         #endregion
+
+        public override List<string> GetOutputs() => new List<string>();
+
+        public bool Equals(DsfCommentActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(Text, other.Text);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfCommentActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (Text != null ? Text.GetHashCode() : 0);
+            }
+        }
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] 
+            {
+                new StateVariable
+                {
+                    Name = "Text",
+                    Type = StateVariable.StateType.InputOutput,
+                    Value = Text
+                }
+            };
+        }
     }
 }

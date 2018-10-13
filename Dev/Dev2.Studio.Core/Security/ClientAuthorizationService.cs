@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,9 +13,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Services.Security;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+
 
 namespace Dev2.Security
 {
@@ -27,8 +28,7 @@ namespace Dev2.Security
         public ClientAuthorizationService(ISecurityService securityService, bool isLocalConnection)
             : base(securityService, isLocalConnection)
         {
-            var clientSecurityService = securityService as ClientSecurityService;
-            if(clientSecurityService != null)
+            if (securityService is ClientSecurityService clientSecurityService)
             {
                 _environmentConnection = clientSecurityService.EnvironmentConnection;
             }
@@ -47,9 +47,11 @@ namespace Dev2.Security
         {
             var serverPermissions = _securityService.Permissions;
             var serverOnlyPermissions = serverPermissions.Where(permission => permission.IsServer || permission.ResourceID==Guid.Empty);
-            
-            Guid resourceId;
-            if (Guid.TryParse(resource, out resourceId))
+            if (principal == null)
+            {
+                serverOnlyPermissions= serverOnlyPermissions.Where(permission => permission.IsBuiltInGuests);
+            }
+            if (Guid.TryParse(resource, out Guid resourceId))
             {
                 if (resourceId == Guid.Empty)
                 {
@@ -58,6 +60,10 @@ namespace Dev2.Security
                 var resourcePermissions = serverPermissions.Where(p => p.Matches(resource) && !p.IsServer).ToList();
                 if (resourcePermissions.Any())
                 {
+                    if (principal == null)
+                    {
+                        return resourcePermissions.Where(permission => permission.IsBuiltInGuestsForExecution);
+                    }
                     return resourcePermissions;
                 }
             }
@@ -66,13 +72,11 @@ namespace Dev2.Security
 
         public override bool IsAuthorized(AuthorizationContext context, string resource)
         {
-            return IsAuthorized(_environmentConnection.Principal, context, resource);
+            var x =IsAuthorized(_environmentConnection.Principal, context, resource);
+            return x;
         }
 
-        public override bool IsAuthorized(IAuthorizationRequest request)
-        {
-            return false;
-        }
+        public override bool IsAuthorized(IAuthorizationRequest request) => false;
 
         protected override void OnDisposed()
         {

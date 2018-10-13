@@ -7,20 +7,27 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
+using Dev2.Comparer;
 using Dev2.Data.ServiceModel;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
-using Dev2.Runtime.Hosting;
+using Dev2.Interfaces;
 using Dev2.TO;
 using Dev2.Util;
 using Microsoft.SharePoint.Client;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
-using Warewolf.Storage;
+using Warewolf.Core;
+using Warewolf.Storage.Interfaces;
+using Dev2.Utilities;
+
 
 namespace Dev2.Activities.Sharepoint
 {
-    public class SharepointDeleteListItemActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("SharepointLogo", "Delete List Item(s)", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Sharepoint", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_SharePoint_Delete_List_Item")]
+    public class SharepointDeleteListItemActivity : DsfActivityAbstract<string>, IEquatable<SharepointDeleteListItemActivity>
     {
 
         public SharepointDeleteListItemActivity()
@@ -32,10 +39,48 @@ namespace Dev2.Activities.Sharepoint
             _sharepointUtils = new SharepointUtils();
             _indexCounter = 1;
         }
-
-        /// <summary>
-        ///     Gets or sets the number of successful deletes.
-        /// </summary>
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name="SharepointServerResourceId",
+                    Type = StateVariable.StateType.Input,
+                    Value = SharepointServerResourceId.ToString()
+                 },
+                 new StateVariable
+                {
+                    Name="FilterCriteria",
+                    Type = StateVariable.StateType.Input,
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(FilterCriteria)
+                 },
+                new StateVariable
+                {
+                    Name="ReadListItems",
+                    Type = StateVariable.StateType.Input,
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(ReadListItems)
+                },
+                new StateVariable
+                {
+                    Name="SharepointList",
+                    Type = StateVariable.StateType.Input,
+                    Value = SharepointList
+                },
+                 new StateVariable
+                {
+                    Name="RequireAllCriteriaToMatch",
+                    Type = StateVariable.StateType.Input,
+                    Value = RequireAllCriteriaToMatch.ToString()
+                 }
+                 ,new StateVariable
+                {
+                    Name="DeleteCount",
+                    Type = StateVariable.StateType.Output,
+                    Value = DeleteCount
+                 }
+            };
+        }
         [Outputs("DeleteCount")]
         [FindMissing]
         public string DeleteCount { get; set; }
@@ -45,15 +90,13 @@ namespace Dev2.Activities.Sharepoint
         public List<SharepointSearchTo> FilterCriteria { get; set; }
         public bool RequireAllCriteriaToMatch { get; set; }
 
-        /// <summary>
-        /// When overridden runs the activity's execution logic 
-        /// </summary>
-        /// <param name="context">The context to be used.</param>
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
-            ExecuteTool(dataObject,0);
+            var dataObject = context.GetExtension<IDSFDataObject>();
+            ExecuteTool(dataObject, 0);
         }
+
+        public override List<string> GetOutputs() => new List<string> { DeleteCount };
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -63,35 +106,26 @@ namespace Dev2.Activities.Sharepoint
         {
         }
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return null;
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => null;
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return null;
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => null;
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.MixedActivity;
-        }
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.MixedActivity;
 
         readonly SharepointUtils _sharepointUtils;
-        private int _indexCounter;
+        int _indexCounter;
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
             _debugInputs = new List<DebugItem>();
             _debugOutputs = new List<DebugItem>();
-            ErrorResultTO allErrors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
             try
             {
-                var sharepointSource = ResourceCatalog.Instance.GetResource<SharepointSource>(dataObject.WorkspaceID, SharepointServerResourceId);
+                var sharepointSource = ResourceCatalog.GetResource<SharepointSource>(dataObject.WorkspaceID, SharepointServerResourceId);
                 if (sharepointSource == null)
                 {
-                    var contents = ResourceCatalog.Instance.GetResourceContents(dataObject.WorkspaceID, SharepointServerResourceId);
+                    var contents = ResourceCatalog.GetResourceContents(dataObject.WorkspaceID, SharepointServerResourceId);
                     sharepointSource = new SharepointSource(contents.ToXElement());
                 }
                 var env = dataObject.Environment;
@@ -104,31 +138,34 @@ namespace Dev2.Activities.Sharepoint
                 var fields = sharepointHelper.LoadFieldsForList(SharepointList, true);
                 using (var ctx = sharepointHelper.GetContext())
                 {
-                    var camlQuery = _sharepointUtils.BuildCamlQuery(env, FilterCriteria, fields,update , RequireAllCriteriaToMatch);
-                    List list = sharepointHelper.LoadFieldsForList(SharepointList, ctx, false);
+                    var camlQuery = _sharepointUtils.BuildCamlQuery(env, FilterCriteria, fields, update, RequireAllCriteriaToMatch);
+                    var list = sharepointHelper.LoadFieldsForList(SharepointList, ctx, false);
                     listItems = list.GetItems(camlQuery);
                     ctx.Load(listItems);
                     ctx.ExecuteQuery();
                 }
                 using (var ctx = sharepointHelper.GetContext())
                 {
-                    List list = ctx.Web.Lists.GetByTitle(SharepointList);
+                    var list = ctx.Web.Lists.GetByTitle(SharepointList);
                     foreach (var item in listItems)
+                    {
                         list.GetItemById(item.Id).DeleteObject();
+                    }
+
                     list.Update();
                     ctx.ExecuteQuery();
                 }
                 var successfulDeleteCount = listItems.Count();
-                if(!String.IsNullOrWhiteSpace(DeleteCount))
+                if (!string.IsNullOrWhiteSpace(DeleteCount))
                 {
-                    dataObject.Environment.Assign(DeleteCount, successfulDeleteCount.ToString(),update);
+                    dataObject.Environment.Assign(DeleteCount, successfulDeleteCount.ToString(), update);
                     env.CommitAssign();
                     AddOutputDebug(dataObject, update);
                 }
             }
             catch (Exception e)
             {
-                Dev2Logger.Log.Error("SharepointDeleteListItemActivity", e);
+                Dev2Logger.Error("SharepointDeleteListItemActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -142,7 +179,7 @@ namespace Dev2.Activities.Sharepoint
                 }
                 if (dataObject.IsDebugMode())
                 {
-                    DispatchDebugState(dataObject, StateType.Before,update);
+                    DispatchDebugState(dataObject, StateType.Before, update);
                     DispatchDebugState(dataObject, StateType.After, update);
                 }
             }
@@ -160,23 +197,26 @@ namespace Dev2.Activities.Sharepoint
         {
             if (FilterCriteria != null && FilterCriteria.Any())
             {
-                string requireAllCriteriaToMatch = RequireAllCriteriaToMatch ? "Yes" : "No";
+                var requireAllCriteriaToMatch = RequireAllCriteriaToMatch ? "Yes" : "No";
 
                 foreach (var varDebug in FilterCriteria)
                 {
-                    if(string.IsNullOrEmpty(varDebug.FieldName)) return;
-                    DebugItem debugItem = new DebugItem();
+                    if (string.IsNullOrEmpty(varDebug.FieldName))
+                    {
+                        return;
+                    }
+
+                    var debugItem = new DebugItem();
                     AddDebugItem(new DebugItemStaticDataParams("", _indexCounter.ToString(CultureInfo.InvariantCulture)), debugItem);
                     var fieldName = varDebug.FieldName;
                     if (!string.IsNullOrEmpty(fieldName))
                     {
                         AddDebugItem(new DebugEvalResult(fieldName, "Field Name", env, update), debugItem);
-                        //AddDebugItem(new DebugItemStaticDataParams(varDebug.FieldName, "Field Name"), debugItem);
                     }
                     var searchType = varDebug.SearchType;
                     if (!string.IsNullOrEmpty(searchType))
                     {
-                        AddDebugItem(new DebugEvalResult(searchType, "Search Type", env,update), debugItem);
+                        AddDebugItem(new DebugEvalResult(searchType, "Search Type", env, update), debugItem);
                     }
                     var valueToMatch = varDebug.ValueToMatch;
                     if (!string.IsNullOrEmpty(valueToMatch))
@@ -192,7 +232,7 @@ namespace Dev2.Activities.Sharepoint
             }
         }
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugInput in _debugInputs)
             {
@@ -201,7 +241,7 @@ namespace Dev2.Activities.Sharepoint
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugOutput in _debugOutputs)
             {
@@ -211,5 +251,61 @@ namespace Dev2.Activities.Sharepoint
         }
 
 
+        public bool Equals(SharepointDeleteListItemActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                && string.Equals(DeleteCount, other.DeleteCount)
+                && ReadListItems.SequenceEqual(other.ReadListItems, new SharepointReadListToComparer())
+                && SharepointServerResourceId.Equals(other.SharepointServerResourceId)
+                && string.Equals(SharepointList, other.SharepointList)
+                && string.Equals(DisplayName, other.DisplayName)
+                && FilterCriteria.SequenceEqual(other.FilterCriteria, new SharepointSearchToComparer())
+                && RequireAllCriteriaToMatch == other.RequireAllCriteriaToMatch;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((SharepointDeleteListItemActivity)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (DeleteCount != null ? DeleteCount.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ReadListItems != null ? ReadListItems.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ SharepointServerResourceId.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SharepointList != null ? SharepointList.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (FilterCriteria != null ? FilterCriteria.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ RequireAllCriteriaToMatch.GetHashCode();
+                return hashCode;
+            }
+        }
     }
 }

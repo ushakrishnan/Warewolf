@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,17 +9,19 @@
 */
 
 using System;
+using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Newtonsoft.Json;
 
 namespace Dev2.Services.Security
 {
-    public class WindowsGroupPermission : ObservableObject
+    public class WindowsGroupPermission : ObservableObject, IWindowsGroupPermission
     {
         public WindowsGroupPermission()
         {
             EnableCellEditing = true;
+            CanChangeName = true;
         }
 
         public const string BuiltInAdministratorsText = "Warewolf Administrators";
@@ -41,6 +42,7 @@ namespace Dev2.Services.Security
         bool _isDeleted;
         RelayCommand _removeRow;
         bool _enableCellEditing;
+        bool _canChangeName;
 
         public bool IsServer
         {
@@ -55,11 +57,11 @@ namespace Dev2.Services.Security
             }
         }
 
-        // ReSharper disable InconsistentNaming
-        public Guid ResourceID { get { return _resourceId; } set { OnPropertyChanged(ref _resourceId, value); } }
-// ReSharper restore InconsistentNaming
+        
+        public Guid ResourceID { get => _resourceId; set => OnPropertyChanged(ref _resourceId, value); }
 
-        public string ResourceName { get { return _resourceName; } set { OnPropertyChanged(ref _resourceName, value); } }
+
+        public string ResourceName { get => _resourceName; set => OnPropertyChanged(ref _resourceName, value); }
 
         public string WindowsGroup
         {
@@ -70,6 +72,9 @@ namespace Dev2.Services.Security
             set
             {
                 OnPropertyChanged(ref _windowsGroup, value);
+                OnPropertyChanged("EnableCellEditing");
+                OnPropertyChanged("CanRemove");
+                OnPropertyChanged("CanChangeName");
                 RemoveRow.RaiseCanExecuteChanged();
             }
         }
@@ -83,6 +88,23 @@ namespace Dev2.Services.Security
             set
             {
                 OnPropertyChanged(ref _isDeleted, value);
+                OnPropertyChanged("CanChangeName");
+            }
+        }
+
+        public bool CanChangeName
+        {
+            get
+            {
+                if (IsBuiltInAdministrators || IsBuiltInGuests || IsDeleted)
+                {
+                    return false;
+                }
+                return _canChangeName;
+            }
+            set
+            {
+                _canChangeName = value;
             }
         }
 
@@ -90,47 +112,43 @@ namespace Dev2.Services.Security
         {
             get
             {
+                if (IsBuiltInAdministrators)
+                {
+                    return false;
+                }
                 return _enableCellEditing;
             }
             set
             {
+                
                 OnPropertyChanged(ref _enableCellEditing, value);
             }
         }
 
-        public RelayCommand RemoveRow
-        {
-            get
-            {
-                return _removeRow ??
+        public RelayCommand RemoveRow => _removeRow ??
                        (_removeRow =
                        new RelayCommand(o =>
                            {
                                IsDeleted = !IsDeleted;
                                EnableCellEditing = !IsDeleted;
                            }, o => CanRemove));
-            }
-        }
 
-        public bool CanRemove
-        {
-            get { return !string.IsNullOrEmpty(WindowsGroup) && !IsBuiltInGuests; }
-        }
+        public bool CanRemove => !string.IsNullOrEmpty(WindowsGroup) && !IsBuiltInGuests && !IsBuiltInAdministrators;
 
 
-        public bool View { get { return _view; } set { OnPropertyChanged(ref _view, value); } }
+        public bool View { get => _view; set => OnPropertyChanged(ref _view, value); }
 
-        public bool Execute { get { return _execute; } set { OnPropertyChanged(ref _execute, value); } }
+        public bool Execute { get => _execute; set => OnPropertyChanged(ref _execute, value); }
 
-        public bool Contribute { get { return _contribute; } set { OnPropertyChanged(ref _contribute, value); } }
+        public bool Contribute { get => _contribute; set => OnPropertyChanged(ref _contribute, value); }
 
-        public bool DeployTo { get { return _deployTo; } set { OnPropertyChanged(ref _deployTo, value); } }
+        public bool DeployTo { get => _deployTo; set => OnPropertyChanged(ref _deployTo, value); }
 
-        public bool DeployFrom { get { return _deployFrom; } set { OnPropertyChanged(ref _deployFrom, value); } }
+        public bool DeployFrom { get => _deployFrom; set => OnPropertyChanged(ref _deployFrom, value); }
 
-        public bool Administrator { get { return _administrator; } set { OnPropertyChanged(ref _administrator, value); } }
+        public bool Administrator { get => _administrator; set => OnPropertyChanged(ref _administrator, value); }
 
-        public bool IsNew { get { return _isNew; } set { OnPropertyChanged(ref _isNew, value); } }
+        public bool IsNew { get => _isNew; set => OnPropertyChanged(ref _isNew, value); }
 
         [JsonIgnore]
         public Permissions Permissions
@@ -138,12 +156,30 @@ namespace Dev2.Services.Security
             get
             {
                 var result = Permissions.None;
-                if(View) { result |= Permissions.View; }
-                if(Execute) { result |= Permissions.Execute; }
-                if(Contribute) { result |= Permissions.Contribute; }
-                if(DeployTo) { result |= Permissions.DeployTo; }
-                if(DeployFrom) { result |= Permissions.DeployFrom; }
-                if(Administrator) { result |= Permissions.Administrator; }
+                if (View)
+                {
+                    result |= Permissions.View;
+                }
+                if (Execute)
+                {
+                    result |= Permissions.Execute;
+                }
+                if(Contribute)
+                {
+                    result |= Permissions.Contribute;
+                }
+                if(DeployTo)
+                {
+                    result |= Permissions.DeployTo;
+                }
+                if(DeployFrom)
+                {
+                    result |= Permissions.DeployFrom;
+                }
+                if(Administrator)
+                {
+                    result |= Permissions.Administrator;
+                }
 
                 return result;
             }
@@ -159,58 +195,31 @@ namespace Dev2.Services.Security
         }
 
         [JsonIgnore]
-        public bool IsBuiltInAdministrators
-        {
-            get
-            {
-                return IsServer && WindowsGroup.Equals(BuiltInAdministratorsText, StringComparison.InvariantCultureIgnoreCase);
-            }
-        }
+        public bool IsBuiltInAdministrators => WindowsGroup != null && IsServer && WindowsGroup.Equals(BuiltInAdministratorsText, StringComparison.InvariantCultureIgnoreCase);
 
         [JsonIgnore]
-        public bool IsBuiltInGuests
-        {
-            get
-            {
-                return IsServer && IsBuiltInGuestsForExecution;
-            }
-        }
+        public bool IsBuiltInGuests => IsServer && IsBuiltInGuestsForExecution;
 
         [JsonIgnore]
-        public bool IsBuiltInGuestsForExecution
-        {
-            get
-            {
-                return WindowsGroup != null && WindowsGroup.Equals(BuiltInGuestsText, StringComparison.InvariantCultureIgnoreCase);
-            }
-        }
+        public bool IsBuiltInGuestsForExecution => WindowsGroup != null && WindowsGroup.Equals(BuiltInGuestsText, StringComparison.InvariantCultureIgnoreCase);
 
         [JsonIgnore]
-        public bool IsValid
-        {
-            get
-            {
-                return IsServer
-                    ? !string.IsNullOrEmpty(WindowsGroup)
-                    : !string.IsNullOrEmpty(WindowsGroup) && !string.IsNullOrEmpty(ResourceName);
-            }
-        }
+        public bool IsValid => IsServer
+            ? !string.IsNullOrEmpty(WindowsGroup)
+            : !string.IsNullOrEmpty(WindowsGroup) && !string.IsNullOrEmpty(ResourceName);
 
-        public static WindowsGroupPermission CreateAdministrators()
+        public static WindowsGroupPermission CreateAdministrators() => new WindowsGroupPermission
         {
-            return new WindowsGroupPermission
-            {
-                IsServer = true,
-                WindowsGroup = BuiltInAdministratorsText,
-                View = true,
-                Execute = true,
-                Contribute = true,
-                DeployTo = true,
-                DeployFrom = true,
-                Administrator = true
+            IsServer = true,
+            WindowsGroup = BuiltInAdministratorsText,
+            View = true,
+            Execute = true,
+            Contribute = true,
+            DeployTo = true,
+            DeployFrom = true,
+            Administrator = true
 
-            };
-        }
+        };
 
         public static WindowsGroupPermission CreateEveryone()
         {
@@ -228,20 +237,17 @@ namespace Dev2.Services.Security
 ;
         }
 
-        public static WindowsGroupPermission CreateGuests()
+        public static WindowsGroupPermission CreateGuests() => new WindowsGroupPermission
         {
-            return new WindowsGroupPermission
-            {
-                IsServer = true,
-                WindowsGroup = BuiltInGuestsText,
-                View = false,
-                Execute = false,
-                Contribute = false,
-                DeployTo = false,
-                DeployFrom = false,
-                Administrator = false
+            IsServer = true,
+            WindowsGroup = BuiltInGuestsText,
+            View = false,
+            Execute = false,
+            Contribute = false,
+            DeployTo = false,
+            DeployFrom = false,
+            Administrator = false
 
-            };
-        }
+        };
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,26 +9,23 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Data.ServiceModel;
-using Dev2.DataList.Contract;
-using Dev2.Runtime.Hosting;
+using Dev2.Common.Interfaces;
+using Dev2.Data.TO;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Tests.Runtime.JSON;
 using Dev2.Tests.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.ServiceModel
 {
     // PBI 1220 - 2013.05.27 - TWR - Created
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class WebServicesTest
     {
         string _requestResponse;
@@ -37,7 +33,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
         string _requestBodyEvaluated;
         string[] _requestHeadersEvaluated;
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Webservice_Test")]
         public void Webservice_Test_WhenRequestShouldTimeout_ExpectTimeoutMessage()
@@ -72,7 +68,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(GlobalConstants.WebServiceTimeoutMessage, result.RequestMessage);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Webservice_Test")]
         public void Webservice_Test_WhenRequestShouldNotTimeout_ExpectNoMessage()
@@ -107,7 +103,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(string.Empty, result.RequestMessage);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Webservice_ApplyPath")]
         public void Webservice_Test_WhenJsonPathSet_ExpectShapedData()
@@ -132,7 +128,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(expected, result.JsonPathResult);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Webservice_ApplyPath")]
         public void Webservice_Test_WhenJsonPathNotSet_ExpectNoShapedData()
@@ -156,7 +152,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithValidArgsAndEmptyResponseExpectedExecutesRequestAndFetchesRecordset()
         {
             var serviceXml = XmlResource.Fetch("WebService");
@@ -190,29 +186,29 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServicesContructorWithNullResourceCatalogExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WebServices(null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServicesContructorWithNullWebExectueExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WebServices(new Mock<IResourceCatalog>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         #endregion
 
         #region DeserializeService
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServicesDeserializeServiceWithNullJsonExpectedThrowsArgumentNullException()
         {
@@ -220,7 +216,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             services.DeserializeService(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesDeserializeServiceWithInvalidJsonExpectedReturnsNewWebService()
         {
             var services = new WebServicesMock();
@@ -228,7 +224,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(result.ResourceID, Guid.Empty);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesDeserializeServiceWithValidJsonExpectedReturnsWebService()
         {
             var xml = XmlResource.Fetch("WebService");
@@ -240,22 +236,22 @@ namespace Dev2.Tests.Runtime.ServiceModel
             WebServiceTests.VerifyEmbeddedWebService(result as WebService);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesDeserializeServiceWithNullXmlExpectedReturnsNewWebService()
         {
             var services = new WebServicesMock();
-            var result = services.DeserializeService(null, ResourceType.WebService);
+            var result = services.DeserializeService(null, "WebService");
 
             Assert.AreEqual(result.ResourceID, Guid.Empty);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesDeserializeServiceWithValidXmlExpectedReturnsWebService()
         {
             var xml = XmlResource.Fetch("WebService");
 
             var services = new WebServicesMock();
-            var result = services.DeserializeService(xml, ResourceType.WebService);
+            var result = services.DeserializeService(xml, "WebService");
 
             WebServiceTests.VerifyEmbeddedWebService(result as WebService);
         }
@@ -264,7 +260,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region Test
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithValidArgsAndNonEmptyResponseExpectedFetchesRecordsetOnly()
         {
             var serviceXml = XmlResource.Fetch("WebService");
@@ -297,7 +293,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual("", result.Recordsets[0].Name);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithInValidArgsExpectedReturnsResponseWithErrorMessage()
         {
             var serviceXml = XmlResource.Fetch("WebService");
@@ -320,7 +316,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #endregion
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithValidArgsAndRecordsetFieldsExpectedDoesNotAddRecordsetFields()
         {
             //------------Setup for test--------------------------
@@ -332,7 +328,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsFalse(services.FetchRecordsetAddFields);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithValidArgsAndNoRecordsetFieldsExpectedAddsRecordsetFields()
         {
             //------------Setup for test--------------------------
@@ -345,7 +341,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsTrue(services.FetchRecordsetAddFields);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithValidArgsExpectedFetchesRecordset()
         {
             //------------Setup for test--------------------------
@@ -357,7 +353,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(1, services.FetchRecordsetHitCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServicesTestWithValidArgsExpectedClearsRecordsFirst()
         {
             //------------Setup for test--------------------------
@@ -369,7 +365,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(1, services.FetchRecordsetHitCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void OuputDescriptionWhereRequestResponseJSONExpectValidOutputDescription()
         {
             //------------Setup for test--------------------------
@@ -385,7 +381,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void OuputDescriptionWhereRequestResponseHasXMLWithElementValuesAndAttributeValues()
         {
             //------------Setup for test--------------------------
@@ -399,7 +395,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("Services_FetchRecordsetList")]
         public void Services_FetchRecordsetList_WhenWebserviceWithJsonDataAndPrimitiveArrayType_ShouldNotIncludeInFieldsList()
@@ -408,13 +404,13 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var service = CreateDummyWebService();
             service.RequestResponse = "{\"results\" : [{\"address_components\": [{\"long_name\" :\"Address:\",\"short_name\" :\"Address:\",\"types\" : [\"point_of_interest\",\"establishment\" ]}]}],\"status\" : \"OK\"}";
             //------------Execute Test---------------------------
-            WebServices services = new WebServices();
+            var services = new WebServices();
             var result = services.FetchRecordset(service, true);
             //------------Assert Results-------------------------
             Assert.AreEqual(2, result.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("Services_Execute")]
         public void Services_Execute_WhenHasJsonPath_ShouldReturnValid()
@@ -432,20 +428,19 @@ namespace Dev2.Tests.Runtime.ServiceModel
             _requestResponse = "{\"results\" : [{\"address_components\": [{\"long_name\" :\"Address:\",\"short_name\" :\"Address:\",\"types\" : [\"point_of_interest\",\"establishment\" ]}]}],\"status\" : \"OK\"}";
             service.RequestResponse = _requestResponse;
             //------------Execute Test---------------------------
-            ErrorResultTO errors;
-            WebServices.ExecuteRequest(service, false, out errors, DummyWebExecute);
+            WebServices.ExecuteRequest(service, false, out ErrorResultTO errors, DummyWebExecute);
             //------------Assert Results-------------------------
             Assert.AreEqual("[{\"address_components\":[{\"long_name\":\"Address:\",\"short_name\":\"Address:\",\"types\":[\"point_of_interest\",\"establishment\"]}]}]", service.JsonPathResult);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Massimo Guerrera")]
         [TestCategory("Services_Execute")]
         public void Services_Execute_WithVariablesInAllField_ShouldUseEvaluatedValues()
         {
             //------------Setup for test--------------------------
             var service = CreateDummyWebService();
-            service.RequestHeaders = "[[test1]]";
+            service.Headers = new List<NameValue>() {new NameValue {Name="Accept",Value = "[[test1]]" } };
             service.RequestBody = "[[test2]]";
             service.RequestUrl = "[[test3]]";
             service.Method.Parameters.Add(new MethodParameter { Name = "test1", Value = "val1" });
@@ -453,10 +448,9 @@ namespace Dev2.Tests.Runtime.ServiceModel
             service.Method.Parameters.Add(new MethodParameter { Name = "test3", Value = "val3" });
 
             //------------Execute Test---------------------------
-            ErrorResultTO errors;
-            WebServices.ExecuteRequest(service, false, out errors, DummyWebExecute);
+            WebServices.ExecuteRequest(service, false, out ErrorResultTO errors, DummyWebExecute);
             //------------Assert Results-------------------------
-            Assert.AreEqual("val1", _requestHeadersEvaluated[0]);
+            Assert.AreEqual("Accept:val1", _requestHeadersEvaluated[0]);
             Assert.AreEqual("val2", _requestBodyEvaluated);
             Assert.AreEqual("val3", _requestUrlEvaluated);
         }
@@ -471,7 +465,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             return _requestResponse;
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchRecordsetWhereRequestResponseJSONExpectValidOutputDescription()
         {
             //------------Setup for test--------------------------
@@ -480,21 +474,21 @@ namespace Dev2.Tests.Runtime.ServiceModel
                 "\"in_reply_to_status_id\":null,\"in_reply_to_status_id_str\":null,\"in_reply_to_user_id\":null,\"in_reply_to_user_id_str\":null,\"in_reply_to_screen_name\":null,\"user\":{\"id\":634794199,\"id_str\":\"634794199\"},\"geo\":null,\"coordinates\":null," +
                 "\"place\":null,\"contributors\":null,\"retweet_count\":0,\"favorite_count\":0,\"favorited\":false,\"retweeted\":false,\"lang\":\"en\"}";
             //------------Execute Test---------------------------
-            WebServices services = new WebServices();
+            var services = new WebServices();
             var result = services.FetchRecordset(service, true);
             //------------Assert Results-------------------------
             // BUG 9626 - 2013.06.11 - TWR: RecordsetListHelper.ToRecordsetList returns correct number of recordsets now
             Assert.AreEqual(1, result.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchRecordsetWhereRequestResponseXml2ExpectValidOutputDescription()
         {
             //------------Setup for test--------------------------
             var service = CreateDummyWebService();
             service.RequestResponse = "<?xml version=\"1.0\" encoding=\"utf-8\"?><string xmlns=\"http://www.webserviceX.NET\"><NewDataSet><Table><Country>France</Country><City>Le Touquet</City></Table><Table><Country>France</Country><City>Agen</City></Table><Table><Country>France</Country><City>Cazaux</City></Table><Table><Country>France</Country><City>Bordeaux / Merignac</City></Table><Table><Country>France</Country><City>Bergerac</City></Table><Table><Country>France</Country><City>Toulouse / Francazal</City></Table><Table><Country>France</Country><City>Cognac</City></Table><Table><Country>France</Country><City>La Rochelle</City></Table><Table><Country>France</Country><City>Poitiers</City></Table><Table><Country>France</Country><City>Montlucon / Gueret</City></Table><Table><Country>France</Country><City>Limoges</City></Table><Table><Country>France</Country><City>Mont-De-Marsan</City></Table><Table><Country>France</Country><City>Niort</City></Table><Table><Country>France</Country><City>Toulouse / Blagnac</City></Table><Table><Country>France</Country><City>Pau</City></Table><Table><Country>France</Country><City>Biscarosse</City></Table><Table><Country>France</Country><City>Tarbes / Ossun</City></Table><Table><Country>France</Country><City>Brive</City></Table><Table><Country>France</Country><City>Perigueux</City></Table><Table><Country>France</Country><City>Dax</City></Table><Table><Country>France</Country><City>Biarritz</City></Table><Table><Country>France</Country><City>St-Girons</City></Table><Table><Country>France</Country><City>Albi</City></Table><Table><Country>France</Country><City>Rodez</City></Table><Table><Country>France</Country><City>Auch</City></Table><Table><Country>France</Country><City>Suippes Range Met</City></Table><Table><Country>France</Country><City>Le Puy</City></Table><Table><Country>France</Country><City>Cassagnes-Begonhes</City></Table><Table><Country>France</Country><City>Metz-Nancy-Lorraine</City></Table><Table><Country>France</Country><City>Bastia</City></Table><Table><Country>France</Country><City>Calvi</City></Table><Table><Country>France</Country><City>Figari</City></Table><Table><Country>France</Country><City>Ajaccio</City></Table><Table><Country>France</Country><City>Solenzara</City></Table><Table><Country>France</Country><City>Auxerre</City></Table><Table><Country>France</Country><City>Chambery / Aix-Les-Bains</City></Table><Table><Country>France</Country><City>Clermont-Ferrand</City></Table><Table><Country>France</Country><City>Bourges</City></Table><Table><Country>France</Country><City>Lyon / Satolas</City></Table><Table><Country>France</Country><City>Macon</City></Table><Table><Country>France</Country><City>Saint-Yan</City></Table><Table><Country>France</Country><City>Montelimar</City></Table><Table><Country>France</Country><City>Grenoble / St. Geoirs</City></Table><Table><Country>France</Country><City>Vichy</City></Table><Table><Country>France</Country><City>Aurillac</City></Table><Table><Country>France</Country><City>Chateauroux</City></Table><Table><Country>France</Country><City>Lyon / Bron</City></Table><Table><Country>France</Country><City>Aix Les Milles</City></Table><Table><Country>France</Country><City>Le Luc</City></Table><Table><Country>France</Country><City>Cannes</City></Table><Table><Country>France</Country><City>Nimes / Courbessac</City></Table><Table><Country>France</Country><City>St-Etienne Boutheon</City></Table><Table><Country>France</Country><City>Istres</City></Table><Table><Country>France</Country><City>Carcassonne</City></Table><Table><Country>France</Country><City>Marseille / Marignane</City></Table><Table><Country>France</Country><City>Nice</City></Table><Table><Country>France</Country><City>Orange</City></Table><Table><Country>France</Country><City>Perpignan</City></Table><Table><Country>France</Country><City>Montpellier</City></Table><Table><Country>France</Country><City>Beziers / Vias</City></Table><Table><Country>France</Country><City>St-Auban-Sur-Durance</City></Table><Table><Country>France</Country><City>Salon</City></Table><Table><Country>France</Country><City>Mende / Brenoux</City></Table><Table><Country>France</Country><City>Beauvais</City></Table><Table><Country>France</Country><City>Chateaudun</City></Table><Table><Country>France</Country><City>Evreux</City></Table><Table><Country>France</Country><City>Alencon</City></Table><Table><Country>France</Country><City>La Heve</City></Table><Table><Country>France</Country><City>Abbeville</City></Table><Table><Country>France</Country><City>Orleans</City></Table><Table><Country>France</Country><City>Rouen</City></Table><Table><Country>France</Country><City>Chartres</City></Table><Table><Country>France</Country><City>Vittefleur / St. Vale</City></Table><Table><Country>France</Country><City>Tours</City></Table><Table><Country>France</Country><City>Saint-Quentin</City></Table><Table><Country>France</Country><City>Paris / Le Bourget</City></Table><Table><Country>France</Country><City>Creil Fafb</City></Table><Table><Country>France</Country><City>Paris-Aeroport Charles De Gaulle</City></Table><Table><Country>France</Country><City>Melun</City></Table><Table><Country>France</Country><City>Toussus Le Noble</City></Table><Table><Country>France</Country><City>Paris-Orly</City></Table><Table><Country>France</Country><City>Villacoublay</City></Table><Table><Country>France</Country><City>Paris Met Center</City></Table><Table><Country>France</Country><City>Troyes</City></Table><Table><Country>France</Country><City>Nevers</City></Table><Table><Country>France</Country><City>Chatillon-Sur-Seine</City></Table><Table><Country>France</Country><City>Cambrai</City></Table><Table><Country>France</Country><City>Lille</City></Table><Table><Country>France</Country><City>Charleville</City></Table><Table><Country>France</Country><City>Angers</City></Table><Table><Country>France</Country><City>Brest</City></Table><Table><Country>France</Country><City>Cherbourg / Maupertus</City></Table><Table><Country>France</Country><City>Dinard</City></Table><Table><Country>France</Country><City>Lann Bihoue</City></Table><Table><Country>France</Country><City>La Roche-Sur-Yon</City></Table><Table><Country>France</Country><City>Landivisiau</City></Table><Table><Country>France</Country><City>Caen</City></Table><Table><Country>France</Country><City>Lanveoc Poulmic</City></Table><Table><Country>France</Country><City>Le Mans</City></Table><Table><Country>France</Country><City>Rennes</City></Table><Table><Country>France</Country><City>Lannion / Servel</City></Table><Table><Country>France</Country><City>Quimper</City></Table><Table><Country>France</Country><City>Nantes</City></Table><Table><Country>France</Country><City>Saint-Brieuc</City></Table><Table><Country>France</Country><City>Morlaix / Ploujean</City></Table><Table><Country>France</Country><City>St-Nazaire</City></Table><Table><Country>France</Country><City>Besancon</City></Table><Table><Country>France</Country><City>Bale-Mulhouse</City></Table><Table><Country>France</Country><City>Colmar</City></Table><Table><Country>France</Country><City>Dijon</City></Table><Table><Country>France</Country><City>Metz / Frescaty</City></Table><Table><Country>France</Country><City>St-Dizier</City></Table><Table><Country>France</Country><City>Toul / Rosieres</City></Table><Table><Country>France</Country><City>Nancy / Essey</City></Table><Table><Country>France</Country><City>Nancy / Ochey</City></Table><Table><Country>France</Country><City>Belfort</City></Table><Table><Country>France</Country><City>Reims</City></Table><Table><Country>France</Country><City>Strasbourg</City></Table><Table><Country>France</Country><City>Luxeuil</City></Table><Table><Country>France</Country><City>Hyeres</City></Table><Table><Country>France</Country><City>St-Raphael</City></Table><Table><Country>France</Country><City>Nimes / Garons</City></Table><Table><Country>France</Country><City>Amberieu</City></Table><Table><Country>France</Country><City>Apt / Saint Christol</City></Table><Table><Country>France</Country><City>Romorantin</City></Table><Table><Country>France</Country><City>Maopoopo Ile Futuna</City></Table><Table><Country>France</Country><City>Hihifo Ile Wallis</City></Table></NewDataSet></string>";
             //------------Execute Test---------------------------
-            WebServices services = new WebServices();
+            var services = new WebServices();
             var result = services.FetchRecordset(service, true);
             //------------Assert Results-------------------------
             // BUG 9626 - 2013.06.11 - TWR: RecordsetListHelper.ToRecordsetList returns correct number of recordsets now
@@ -502,7 +496,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchRecordsetWhereRequestResponseXMLExpectValidOutputDescription()
         {
             //------------Setup for test--------------------------
@@ -531,7 +525,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
                 "</status>" +
                 "</statuses>";
             //------------Execute Test---------------------------
-            WebServices services = new WebServices();
+            var services = new WebServices();
             var result = services.FetchRecordset(service, true);
             //------------Assert Results-------------------------
             // BUG 9626 - 2013.06.11 - TWR: RecordsetListHelper.ToRecordsetList returns correct number of recordsets now
@@ -539,7 +533,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void OuputDescriptionWhereRequestResponseXMLExpectValidOutputDescription()
         {
             //------------Setup for test--------------------------
@@ -582,11 +576,8 @@ namespace Dev2.Tests.Runtime.ServiceModel
                 ResourceID = Guid.NewGuid(),
 
                 ResourceName = "DummyWebService",
-                ResourceType = ResourceType.WebService,
-                ResourcePath = "Tests"
-
+                ResourceType = "WebService"
             };
         }
-
     }
 }

@@ -7,21 +7,25 @@
                                xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
                                xmlns:core="clr-namespace:Dev2.Activities.Designers2.Core"
                                xmlns:local="clr-namespace:Dev2.Activities.Designers2.Replace"
-                               xmlns:help="clr-namespace:Dev2.Activities.Designers2.Core.Help"
                                xmlns:errors="clr-namespace:Dev2.Activities.Designers2.Core.Errors"
+                               xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
+                               xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
+                               xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
                                Width="200"
                                MaxWidth="200"
-                               Padding="7"
                                mc:Ignorable="d"
                                d:DesignWidth="200"
                                d:DataContext="{d:DesignInstance local:ReplaceDesignerViewModel}">
 
     <core:ActivityDesignerTemplate.Resources>
-        <ResourceDictionary x:Name="TheResources"
-                            Source="pack://application:,,,/Dev2.Activities.Designers;component/Themes/ActivityResources.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <luna:SharedResourceDictionary Source="/Warewolf.Studio.Themes.Luna;component/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </core:ActivityDesignerTemplate.Resources>
 
-    <Grid>
+    <Grid Margin="{StaticResource ElementBorder}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -33,22 +37,19 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Label Grid.Column="0"
-               Grid.Row="0"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="In Field(s)" />
+        <TextBlock Grid.Column="0" Grid.Row="0" Text="In Field(s)" />
         <ui:IntellisenseTextBox x:Name="InitialFocusElement"
                                 Grid.Column="1"
                                 Grid.Row="0"
+                                AllowUserInsertLine="False"
                                 WrapInBrackets="True"
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
-                                ToolTip="{x:Static help:HelpTextResources.ReplaceToolTipInFields}"
+                                ToolTip="{x:Static languages:Tooltips.ReplaceToolTipInFields}"
                                 DefaultText="[[Recordset().Field]]"
                                 Text="{Binding ModelItem.FieldsToSearch,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_InFiledstxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.ReplaceHelpInFields}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.ReplaceHelpInFields}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ModelItem.FieldsToSearch"
                                      SourcePropertyValue="{Binding ModelItem.FieldsToSearch, UpdateSourceTrigger=PropertyChanged}"
@@ -57,25 +58,22 @@
 
         </ui:IntellisenseTextBox>
 
-        <Label Grid.Column="0"
-               Grid.Row="1"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="Find"/>
+        <TextBlock Grid.Column="0" Grid.Row="1" Margin="{StaticResource ControlBorderTop}" Text="Find"/>
         <ui:IntellisenseTextBox Grid.Column="1"
                                 Grid.Row="1"
                                 AllowMultilinePaste="True"
-                                                AcceptsReturn="True"
-                                                AllowUserInsertLine="True"
-                                                MaxHeight="52"
+                                AcceptsReturn="True"
+                                AllowUserInsertLine="True"
+                                MaxHeight="52"
+                                Margin="{StaticResource ControlBorderTop}"
                                 TextWrapping="Wrap"
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
-                                ToolTip="{x:Static help:HelpTextResources.ReplaceToolTipFind}"
+                                ToolTip="{x:Static languages:Tooltips.ReplaceToolTipFind}"
                                 DefaultText="Some Text"
                                 Text="{Binding ModelItem.Find, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Findtxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.ReplaceHelpFind}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.ReplaceHelpFind}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ModelItem.Find"
                                      SourcePropertyValue="{Binding ModelItem.Find, UpdateSourceTrigger=PropertyChanged}"
@@ -84,25 +82,22 @@
 
         </ui:IntellisenseTextBox>
 
-        <Label Grid.Column="0"
-               Grid.Row="2"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="Replace With" />
+        <TextBlock Grid.Column="0" Grid.Row="2" Margin="{StaticResource ControlBorderTop}" Text="Replace With" />
         <ui:IntellisenseTextBox Grid.Column="1"
-                  Grid.Row="2"
-                  DefaultText="New Text"
+                                Grid.Row="2"
+                                DefaultText="New Text"
                                 AllowMultilinePaste="True"
-                                                AcceptsReturn="True"
-                                                AllowUserInsertLine="True"
-                                                MaxHeight="52"
+                                AcceptsReturn="True"
+                                AllowUserInsertLine="True"
+                                MaxHeight="52"
                                 TextWrapping="Wrap"
-                  Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
-                  ToolTip="{x:Static help:HelpTextResources.ReplaceToolTipReplaceWith}"
-                  Text="{Binding ModelItem.ReplaceWith,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                  AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Replacetxt_AutoID}">
+                                Margin="{StaticResource ControlBorderTop}"
+                                Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
+                                ToolTip="{x:Static languages:Tooltips.ReplaceToolTipReplaceWith}"
+                                Text="{Binding ModelItem.ReplaceWith,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Replacetxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.ReplaceHelpReplaceWith}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.ReplaceHelpReplaceWith}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ModelItem.ReplaceWith"
                                      SourcePropertyValue="{Binding ModelItem.ReplaceWith, UpdateSourceTrigger=PropertyChanged}"
@@ -110,21 +105,19 @@
             </i:Interaction.Behaviors>
         </ui:IntellisenseTextBox>
 
-         <Label Grid.Column="0"
-                Grid.Row="3"
-                Style="{StaticResource ActivityLabelStyle}"
-               Content="Result" />
+        <TextBlock Grid.Column="0" Grid.Row="3" Margin="{StaticResource ControlBorderTop}" Text="Result" />
         <ui:IntellisenseTextBox Grid.Column="1"
+                                Margin="{StaticResource ControlBorderTop}"
                                 Grid.Row="3"
+                                AllowUserInsertLine="False"
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
                                 DefaultText="[[ReplacementCount]]"
-                                ToolTip="{x:Static help:HelpTextResources.ReplaceToolTipResult}"
+                                ToolTip="{x:Static languages:Tooltips.ReplaceToolTipResult}"
                                 WrapInBrackets="True"
                                 Text="{Binding ModelItem.Result,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Resulttxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.ReplaceHelpResult}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.ReplaceHelpResult}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="Result"
                                      SourcePropertyValue="{Binding ModelItem.Result, UpdateSourceTrigger=PropertyChanged}"

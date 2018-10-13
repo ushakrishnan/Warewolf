@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,29 +9,27 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class RuleBaseTests
     {
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("Rule_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
-// ReSharper disable InconsistentNaming
+
         public void Rule_Constructor_GetValueIsNull_ThrowsArgumentNullException()
-// ReSharper restore InconsistentNaming
+
         {
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-// ReSharper disable ObjectCreationAsStatement
+
             new TestRuleBase(null);
-// ReSharper restore ObjectCreationAsStatement
+
 
             //------------Assert Results-------------------------
         }
@@ -41,9 +38,9 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("Rule_Constructor")]
-// ReSharper disable InconsistentNaming
+
         public void Rule_Constructor_GetValueIsNotNull_PropertiesInitialized()
-// ReSharper restore InconsistentNaming
+
         {
             //------------Setup for test--------------------------
 
@@ -51,8 +48,8 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
             var rule = new TestRuleBase(() => "");
 
             //------------Assert Results-------------------------
-            Assert.AreEqual("The", rule.LabelText);
-            Assert.AreEqual("value is invalid.", rule.ErrorText);
+            Assert.AreEqual("", rule.LabelText);
+            Assert.AreEqual("Value is invalid.", rule.ErrorText);
             Assert.IsNull(rule.DoError);
         }
 
@@ -60,9 +57,9 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("Rule_CreatError")]
-// ReSharper disable InconsistentNaming
+
         public void Rule_CreatError_ReturnsNonNullError()
-// ReSharper restore InconsistentNaming
+
         {
             //------------Setup for test--------------------------
             var doErrorWasAssigned = false;
@@ -75,7 +72,7 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
 
             //------------Assert Results-------------------------
             Assert.IsNotNull(error);
-            Assert.AreEqual("The value is invalid.", error.Message);
+            Assert.AreEqual("Value is invalid.", error.Message);
             error.Do();
             Assert.IsTrue(doErrorWasAssigned);
         }

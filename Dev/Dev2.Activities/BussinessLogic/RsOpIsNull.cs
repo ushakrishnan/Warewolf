@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+
 namespace Dev2.DataList
 {
     /// <summary>
@@ -9,8 +10,10 @@ namespace Dev2.DataList
     /// </summary>
     public class RsOpIsNull : AbstractRecsetSearchValidation
     {
+    
+        public override int ArgumentCount => 1;
 
-        public override Func<DataASTMutable.WarewolfAtom, bool> CreateFunc(IEnumerable<DataASTMutable.WarewolfAtom> values, IEnumerable<DataASTMutable.WarewolfAtom> warewolfAtoms, IEnumerable<DataASTMutable.WarewolfAtom> to, bool all)
+        public override Func<DataStorage.WarewolfAtom, bool> CreateFunc(IEnumerable<DataStorage.WarewolfAtom> values, IEnumerable<DataStorage.WarewolfAtom> from, IEnumerable<DataStorage.WarewolfAtom> to, bool all)
         {
             if(all)
             {
@@ -18,9 +21,6 @@ namespace Dev2.DataList
             }
             return a => values.Any(x => a.IsNothing);
         }
-        public override string HandlesType()
-        {
-            return "Is NULL";
-        }
+        public override string HandlesType() => "Is NULL";
     }
 }

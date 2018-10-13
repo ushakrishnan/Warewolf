@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,20 +11,20 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using ActivityUnitTests;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Common.State;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class NumberFormatActivityTests : BaseActivityUnitTest
     {
         #region Class Members
@@ -43,8 +42,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         #endregion Properties
 
         #region Private Methods
-
-        private void SetupArguments(string currentDl, string testData, string result, string expression,
+        //SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
+        //                  "[[resRecordSet().number]]", "[[recordSet(*).number]]", enRoundingType.Normal, "", "");
+        void SetupArguments(string currentDl, string testData, string result, string expression,
             enRoundingType roundingType, string roundingDecimalPlaces, string decimalPlacesToShow)
         {
             TestStartNode = new FlowStep
@@ -72,13 +72,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "[[number]]", enRoundingType.Normal, "", "");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "790";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -90,13 +88,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[resRecordSet().number]]", "[[recordSet(*).number]]", enRoundingType.Normal, "", "");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
-            //string expected = "790";
-            IList<string> actual;
-            string error;
-
-            GetRecordSetFieldValueFromDataList(result.Environment, "resRecordSet", "number", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "resRecordSet", "number", out IList<string> actual, out string error);
 
             // remove test datalist ;)
             var actualVals = actual.Where(s => !string.IsNullOrEmpty(s)).ToList();
@@ -110,13 +104,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "123.123", enRoundingType.Normal, "2", "1");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "123.1";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             Assert.AreEqual(expected, actual);
         }
@@ -126,13 +118,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "123.123", enRoundingType.Normal, "", "3");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "123.000";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -144,16 +134,13 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "123.123", enRoundingType.None, "", "");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "123.123";
-            string actual;
-            string error;
-            string systemError;
 
-            GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out systemError, out error);
+            GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string systemError, out string error);
 
-            GetScalarValueFromEnvironment(result.Environment, "res", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out error);
 
             // remove test datalist ;)
 
@@ -182,6 +169,26 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(roundingType, act.RoundingType);
             Assert.AreEqual(roundingDecimalPlaces, act.RoundingDecimalPlaces);
             Assert.AreEqual(decimalPlacesToShow, act.DecimalPlacesToShow);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfBaseActivity_GetOutputs")]
+        public void DsfBaseActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            const string expression = "[[Numeric(1).num]]";
+            const string roundingType = "Up";
+            const string result = "[[res]]";
+            const string roundingDecimalPlaces = "2";
+            const string decimalPlacesToShow = "2";
+            var act = new DsfNumberFormatActivity { Expression = expression, RoundingType = roundingType, RoundingDecimalPlaces = roundingDecimalPlaces, DecimalPlacesToShow = decimalPlacesToShow, Result = result };
+
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[res]]", outputs[0]);
         }
 
         [TestMethod]
@@ -316,6 +323,74 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(1, dsfForEachItems.Count);
             Assert.AreEqual(result, dsfForEachItems[0].Name);
             Assert.AreEqual(result, dsfForEachItems[0].Value);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfNumberFormatActivity_GetState")]
+        public void DsfNumberFormatActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            const string expression = "[[Numeric(1).num]]";
+            const string roundingType = "Up";
+            const string result = "[[res]]";
+            const string roundingDecimalPlaces = "2";
+            const string decimalPlacesToShow = "2";
+            //------------Setup for test--------------------------
+            var act = new DsfNumberFormatActivity { Expression = expression, RoundingType = roundingType, RoundingDecimalPlaces = roundingDecimalPlaces, DecimalPlacesToShow = decimalPlacesToShow, Result = result };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(5, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "Expression",
+                    Type = StateVariable.StateType.Input,
+                    Value = expression
+                },
+                new StateVariable
+                {
+                    Name = "RoundingType",
+                    Type = StateVariable.StateType.Input,
+                    Value = roundingType
+                },
+                new StateVariable
+                {
+                    Name = "RoundingDecimalPlaces",
+                    Type = StateVariable.StateType.Input,
+                    Value = roundingDecimalPlaces
+                },
+                new StateVariable
+                {
+                    Name = "DecimalPlacesToShow",
+                    Type = StateVariable.StateType.Input,
+                    Value = decimalPlacesToShow
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = result
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
 
     }

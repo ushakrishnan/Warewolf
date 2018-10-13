@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,9 @@
 
 using System;
 using System.Text;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Data.Operations
 {
@@ -70,12 +71,12 @@ namespace Dev2.Data.Operations
                         break;
 
                     default:
-                        throw new Exception("Error In Dev2MergeOperations");
+                        throw new Exception(ErrorResource.ErrorInDev2MergeOperations);
                 }
             }
             else
             {
-                throw new ArgumentNullException("value", "The value can not be null.");
+                throw new ArgumentNullException("value", ErrorResource.ValueCannotBeNull);
             }
 
         }
@@ -83,12 +84,12 @@ namespace Dev2.Data.Operations
         public void Merge(string value, string mergeType, string at, string padding, string align)
         {
             enMergeType mergingType;
-            enMergeAlignment mergeAlignment = enMergeAlignment.Left;
+            var mergeAlignment = enMergeAlignment.Left;
 
-            switch(mergeType)
+            switch (mergeType)
             {
                 case "Index":
-                    switch(align)
+                    switch (align)
                     {
                         case "Left":
                             mergeAlignment = enMergeAlignment.Left;
@@ -96,6 +97,8 @@ namespace Dev2.Data.Operations
 
                         case "Right":
                             mergeAlignment = enMergeAlignment.Right;
+                            break;
+                        default:
                             break;
                     }
                     mergingType = enMergeType.Index;
@@ -118,14 +121,9 @@ namespace Dev2.Data.Operations
                     break;
 
                 default:
-                    throw new Exception("Error In Dev2MergeOperations");
+                    throw new Exception(ErrorResource.ErrorInDev2MergeOperations);
             }
             Merge(value, mergingType, at, padding, mergeAlignment);
-        }
-
-        public void Clear()
-        {
-            MergeData.Clear();
         }
 
         #endregion Methods
@@ -141,19 +139,18 @@ namespace Dev2.Data.Operations
         /// <param name="at">The numeric index that will be used during the merge</param>
         /// <param name="padding">The padding character that will be used</param>
         /// <param name="mergeAlignment">The alignment used for the padding</param>
-        private void IndexMergeOp(string value, string at, string padding, enMergeAlignment mergeAlignment)
+        void IndexMergeOp(string value, string at, string padding, enMergeAlignment mergeAlignment)
         {
-            int indexToUse;
-            if(Int32.TryParse(at, out indexToUse))
+            if (Int32.TryParse(at, out int indexToUse))
             {
-                string paddedString = string.Empty;
-                int difference = indexToUse - value.Length;
-                if(difference >= 0)
+                var paddedString = string.Empty;
+                var difference = indexToUse - value.Length;
+                if (difference >= 0)
                 {
                     var padChar = string.IsNullOrEmpty(padding) || padding.Length < 1 ? ' ' : padding[0];
                     paddedString = paddedString.PadRight(difference, padChar);
 
-                    if(mergeAlignment == enMergeAlignment.Left)
+                    if (mergeAlignment == enMergeAlignment.Left)
                     {
                         paddedString = paddedString.Insert(0, value);
                     }
@@ -162,9 +159,12 @@ namespace Dev2.Data.Operations
                         paddedString += value;
                     }
                 }
-                else if(difference < 0)
+                else
                 {
-                    paddedString = value.Substring(0, indexToUse);
+                    if (difference < 0)
+                    {
+                        paddedString = value.Substring(0, indexToUse);
+                    }
                 }
 
                 MergeData.Append(paddedString);
@@ -180,7 +180,7 @@ namespace Dev2.Data.Operations
         /// </summary>
         /// <param name="value">The value that will be merged to the class string</param>
         /// <param name="at">The Charecters that will be used as the merge token</param>
-        private void CharMergeOp(string value, string at)
+        void CharMergeOp(string value, string at)
         {
             MergeData.Append(value).Append(at);
         }
@@ -193,7 +193,7 @@ namespace Dev2.Data.Operations
         /// Merge data to the class string using a NewLine merge, which will merge the data with a new line in between
         /// </summary>
         /// <param name="value">The value that will be merged to the class string</param>
-        private void NewLineMergeOp(string value)
+        void NewLineMergeOp(string value)
         {
             MergeData.Append(value).Append("\r\n");
         }
@@ -206,7 +206,7 @@ namespace Dev2.Data.Operations
         /// Merge data to the class string using a Tab merge, which will merge the data with a Tab inbetween
         /// </summary>
         /// <param name="value">The value that will be merged to the class string</param>
-        private void TabMergeOp(string value)
+        void TabMergeOp(string value)
         {
             MergeData.Append(value).Append("\t");
         }
@@ -219,7 +219,7 @@ namespace Dev2.Data.Operations
         /// Merge data to the class string using a None merge, which will merge the data with nothing inbetween
         /// </summary>
         /// <param name="value">The value that will be merged to the class string</param>
-        private void NoneMergeOp(string value)
+        void NoneMergeOp(string value)
         {
             MergeData.Append(value);
         }

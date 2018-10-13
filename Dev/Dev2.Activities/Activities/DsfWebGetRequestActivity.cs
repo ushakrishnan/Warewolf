@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,18 +15,24 @@ using System.Globalization;
 using System.Linq;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
 using Dev2.Data;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    public class DsfWebGetRequestActivity : DsfActivityAbstract<string>
+   //[ToolDescriptorInfo("WebMethods", "Web Request", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml")]
+    public class DsfWebGetRequestActivity : DsfActivityAbstract<string>,IEquatable<DsfWebGetRequestActivity>
     {
         IWebRequestInvoker _webRequestInvoker;
 
@@ -66,12 +71,36 @@ namespace Dev2.Activities
             Headers = string.Empty;
         }
 
-        #region Overrides of DsfNativeActivity<string>
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "Url",
+                    Value = Url,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Headers",
+                    Value = Headers,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
 
-        /// <summary>
-        ///     When overridden runs the activity's execution logic
-        /// </summary>
-        /// <param name="context">The context to be used.</param>
+
+        public override List<string> GetOutputs() => new List<string> { Result };
+
+
+        #region Overrides of DsfNativeActivity<string>
+        
         protected override void OnExecute(NativeActivityContext context)
         {
             var dataObject = context.GetExtension<IDSFDataObject>();
@@ -91,51 +120,11 @@ namespace Dev2.Activities
             InitializeDebug(dataObject);
             try
             {
-                allErrors.MergeErrors(errorsTo);
-                if(dataObject.IsDebugMode())
-                {
-                    DebugItem debugItem = new DebugItem();
-                    AddDebugItem(new DebugEvalResult(Url, "URL", dataObject.Environment, update), debugItem);
-                    _debugInputs.Add(debugItem);
-                }
-                var colItr = new WarewolfListIterator();
-                var urlitr = new WarewolfIterator(dataObject.Environment.Eval(Url, update));
-                var headerItr = new WarewolfIterator(dataObject.Environment.Eval(Headers, update));
-                colItr.AddVariableToIterateOn(urlitr);
-                colItr.AddVariableToIterateOn(headerItr);
-                const int IndexToUpsertTo = 1;
-                while(colItr.HasMoreData())
-                {
-                    var c = colItr.FetchNextValue(urlitr);
-                    var headerValue = colItr.FetchNextValue(headerItr);
-                    var headers = string.IsNullOrEmpty(headerValue)
-                        ? new string[0]
-                        : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
-
-                    var headersEntries = new List<Tuple<string, string>>();
-
-                    foreach(var header in headers)
-                    {
-                        var headerSegments = header.Split(':');
-                        headersEntries.Add(new Tuple<string, string>(headerSegments[0], headerSegments[1]));
-
-                        if(dataObject.IsDebugMode())
-                        {
-                            DebugItem debugItem = new DebugItem();
-                            AddDebugItem(new DebugEvalResult(Headers, "Header", dataObject.Environment, update), debugItem);
-                            _debugInputs.Add(debugItem);
-                        }
-                    }
-
-                    var result = WebRequestInvoker.ExecuteRequest(Method, c, headersEntries);
-                    allErrors.MergeErrors(errorsTo);
-                    var expression = GetExpression(IndexToUpsertTo);
-                    PushResultsToDataList(expression, result, dataObject, update);
-                }
+                allErrors = TryExecute(dataObject, update, allErrors);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Dev2Logger.Log.Error("DSFWebGetRequest", e);
+                Dev2Logger.Error("DSFWebGetRequest", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -156,17 +145,56 @@ namespace Dev2.Activities
             }
         }
 
+        ErrorResultTO TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            allErrors.MergeErrors(_errorsTo);
+            if (dataObject.IsDebugMode())
+            {
+                var debugItem = new DebugItem();
+                AddDebugItem(new DebugEvalResult(Url, "URL", dataObject.Environment, update), debugItem);
+                _debugInputs.Add(debugItem);
+            }
+            var colItr = new WarewolfListIterator();
+            var urlitr = new WarewolfIterator(dataObject.Environment.Eval(Url, update));
+            var headerItr = new WarewolfIterator(dataObject.Environment.Eval(Headers, update));
+            colItr.AddVariableToIterateOn(urlitr);
+            colItr.AddVariableToIterateOn(headerItr);
+            const int IndexToUpsertTo = 1;
+            while (colItr.HasMoreData())
+            {
+                var c = colItr.FetchNextValue(urlitr);
+                var headerValue = colItr.FetchNextValue(headerItr);
+                var headers = string.IsNullOrEmpty(headerValue)
+                    ? new string[0]
+                    : headerValue.Split(new[] { '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                var headersEntries = new List<Tuple<string, string>>();
+
+                foreach (var header in headers)
+                {
+                    var headerSegments = header.Split(':');
+                    headersEntries.Add(new Tuple<string, string>(headerSegments[0], headerSegments[1]));
+
+                    if (dataObject.IsDebugMode())
+                    {
+                        var debugItem = new DebugItem();
+                        AddDebugItem(new DebugEvalResult(Headers, "Header", dataObject.Environment, update), debugItem);
+                        _debugInputs.Add(debugItem);
+                    }
+                }
+
+                var result = WebRequestInvoker.ExecuteRequest(Method, c, headersEntries);
+                allErrors.MergeErrors(_errorsTo);
+                var expression = GetExpression(IndexToUpsertTo);
+                PushResultsToDataList(expression, result, dataObject, update);
+            }
+            return allErrors;
+        }
+
         string GetExpression(int indexToUpsertTo)
         {
             string expression;
-            if(DataListUtil.IsValueRecordset(Result) && DataListUtil.GetRecordsetIndexType(Result) == enRecordsetIndexType.Star)
-            {
-                expression = Result.Replace(GlobalConstants.StarExpression, indexToUpsertTo.ToString(CultureInfo.InvariantCulture));
-            }
-            else
-            {
-                expression = Result;
-            }
+            expression = DataListUtil.IsValueRecordset(Result) && DataListUtil.GetRecordsetIndexType(Result) == enRecordsetIndexType.Star ? Result.Replace(GlobalConstants.StarExpression, indexToUpsertTo.ToString(CultureInfo.InvariantCulture)) : Result;
             return expression;
         }
 
@@ -192,7 +220,7 @@ namespace Dev2.Activities
 
         #region GetDebugInputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugInput in _debugInputs)
             {
@@ -205,7 +233,7 @@ namespace Dev2.Activities
 
         #region GetDebugOutputs
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -235,29 +263,72 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(Url);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(Url);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(Result);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
         #endregion
         #endregion
+
+        public bool Equals(DsfWebGetRequestActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(Method, other.Method) 
+                && string.Equals(Url, other.Url) 
+                && string.Equals(Headers, other.Headers) 
+                && string.Equals(Result, other.Result);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfWebGetRequestActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Method != null ? Method.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Url != null ? Url.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Headers != null ? Headers.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

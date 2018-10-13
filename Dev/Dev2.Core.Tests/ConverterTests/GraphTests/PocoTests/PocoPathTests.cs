@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,19 +8,17 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.Poco;
 using Unlimited.UnitTest.Framework.ConverterTests.GraphTests;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class PocoPathTests {
 
         #region GetSegements Tests
@@ -32,10 +29,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void GetSegments_Expected_CorrectSegmentCount()
         {
-            PocoPath path = new PocoPath("EnumerableData().NestedData.Name", "EnumerableData.NestedData.Name");
+            var path = new PocoPath("EnumerableData().NestedData.Name", "EnumerableData.NestedData.Name");
 
             const int expected = 3;
-            int actual = path.GetSegements().Count();
+            var actual = path.GetSegements().Count();
 
             Assert.AreEqual(expected, actual);
         }
@@ -46,10 +43,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void GetSegments_Expected_LastSegmentIsCorrect()
         {
-            PocoPath path = new PocoPath("EnumerableData().NestedData.NestedData.Name", "EnumerableData.NestedData.NestedData.Name");
+            var path = new PocoPath("EnumerableData().NestedData.NestedData.Name", "EnumerableData.NestedData.NestedData.Name");
 
             const string expected = "Name";
-            string actual = path.GetSegements().Last().ToString();
+            var actual = path.GetSegements().Last().ToString();
 
             Assert.AreEqual(expected, actual);
         }
@@ -64,12 +61,12 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void CreateEnumerablePathSegmentFromPropertyInfo_Expected_EnumerablePocoPathSegment()
         {
-            PropertyInfo propertyInfo = typeof(PocoTestData).GetProperty("EnumerableData");
-            PocoPath path = new PocoPath();
-            IPathSegment segment = path.CreatePathSegment(propertyInfo);
+            var propertyInfo = typeof(PocoTestData).GetProperty("EnumerableData");
+            var path = new PocoPath();
+            var segment = path.CreatePathSegment(propertyInfo.Name,propertyInfo.PropertyType.IsEnumerable());
 
             const bool expected = true;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }
@@ -80,12 +77,12 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void CreateScalarPathSegmentFromPropertyInfo_Expected_ScalarPocoPathSegment()
         {
-            PropertyInfo propertyInfo = typeof(PocoTestData).GetProperty("Name");
-            PocoPath path = new PocoPath();
-            IPathSegment segment = path.CreatePathSegment(propertyInfo);
+            var propertyInfo = typeof(PocoTestData).GetProperty("Name");
+            var path = new PocoPath();
+            var segment = path.CreatePathSegment(propertyInfo.Name, propertyInfo.PropertyType.IsEnumerable());
 
             const bool expected = false;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }
@@ -96,11 +93,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void CreateEnumerablePathSegmentFromSegmentText_Expected_EnumerablePocoPathSegment()
         {
-            PocoPath path = new PocoPath();
-            IPathSegment segment = path.CreatePathSegment("EnumerableData()");
+            var path = new PocoPath();
+            var segment = path.CreatePathSegment("EnumerableData()");
 
             const bool expected = true;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }
@@ -111,11 +108,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.PocoTests
         [TestMethod]
         public void CreateScalarPathSegmentFromSegmentText_Expected_ScalarPocoPathSegment()
         {
-            PocoPath path = new PocoPath();
-            IPathSegment segment = path.CreatePathSegment("Name");
+            var path = new PocoPath();
+            var segment = path.CreatePathSegment("Name");
 
             const bool expected = false;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }

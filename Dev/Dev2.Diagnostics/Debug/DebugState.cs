@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,39 +9,35 @@
 */
 
 
-#region
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Xml;
-using System.Xml.Schema;
 using System.Xml.Serialization;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.Diagnostics.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
-#endregion
 
 namespace Dev2.Diagnostics.Debug
 {
-    /// <summary>
-    ///     A default debug state
-    /// </summary>
     [Serializable]
-    public class DebugState : IDebugState,INotifyPropertyChanged
+    public class DebugState : IDebugState, INotifyPropertyChanged
     {
-        private DateTime _startTime;
-        private DateTime _endTime;
+        DateTime _startTime;
+        String _durationString;
+        DateTime _endTime;
         string _errorMessage;
         bool _isDurationVisible;
         string _server;
         Guid _environmentID;
         Guid _disconnectedID;
+        Guid? _parentID;
+        Guid _id;
 
         #region Ctor
 
@@ -50,14 +45,21 @@ namespace Dev2.Diagnostics.Debug
         {
             Inputs = new List<IDebugItem>();
             Outputs = new List<IDebugItem>();
-
+            AssertResultList = new List<IDebugItem>();
+            Children = new List<IDebugState>();
+            DisconnectedID = Guid.NewGuid();
 
             IsDurationVisible = true;
             _disconnectedID = Guid.NewGuid();
         }
 
+        public Guid DisconnectedID
+        {
+            get => _disconnectedID;
+            set => _disconnectedID = value;
+        }
 
-         static DebugState()
+        static DebugState()
         {
             var tempPath = Path.Combine(GlobalConstants.TempLocation, "Warewolf", "Debug");
             if (!Directory.Exists(tempPath))
@@ -65,6 +67,7 @@ namespace Dev2.Diagnostics.Debug
                 Directory.CreateDirectory(tempPath);
             }
         }
+
         #endregion
 
         #region IDebugState - Properties
@@ -72,26 +75,28 @@ namespace Dev2.Diagnostics.Debug
         /// <summary>
         ///     Gets or sets the ID.
         /// </summary>
-        public Guid ID { get; set; }
-        /// <summary>
-        ///     Gets or sets the ID.
-        /// </summary>
-        public Guid DisconnectedID
+        public Guid ID
         {
-            get
-            {
-                return _disconnectedID;
-            }
-            set
-            {
-                _disconnectedID = value;
-            }
+            get { return _id; }
+            set { _id = value; }
         }
+
 
         /// <summary>
         ///     Gets or sets the parent ID.
         /// </summary>
-        public Guid ParentID { get; set; }
+        public Guid? ParentID
+        {
+            get { return _parentID; }
+            set
+            {
+                _parentID = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool IsAdded { get; set; }
+        public Guid SourceResourceID { get; set; }
 
         /// <summary>
         ///     Gets or sets the server ID.
@@ -121,6 +126,7 @@ namespace Dev2.Diagnostics.Debug
         /// <summary>
         ///     Gets or sets the type of the state.
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public StateType StateType { get; set; }
 
         /// <summary>
@@ -165,13 +171,7 @@ namespace Dev2.Diagnostics.Debug
         /// </summary>
         public ActivityType ActivityType { get; set; }
 
-        public TimeSpan Duration
-        {
-            get
-            {
-                return EndTime - StartTime;
-            }
-        }
+        public TimeSpan Duration => EndTime - StartTime;
 
         // XmlSerializer does not support TimeSpan, so use this property for serialization 
         // instead.
@@ -181,11 +181,7 @@ namespace Dev2.Diagnostics.Debug
             {
                 return XmlConvert.ToString(Duration);
             }
-            // ReSharper disable ValueParameterNotUsed
-            set
-            // ReSharper restore ValueParameterNotUsed
-            {
-            }
+            set => _durationString = value;
         }
 
         /// <summary>
@@ -227,6 +223,11 @@ namespace Dev2.Diagnostics.Debug
         ///     Gets the outputs.
         /// </summary>
         public List<IDebugItem> Outputs { get; private set; }
+
+        /// <summary>
+        ///     Gets the outputs.
+        /// </summary>
+        public List<IDebugItem> AssertResultList { get; private set; }
 
         /// <summary>
         ///     Gets or sets the server name.
@@ -291,7 +292,7 @@ namespace Dev2.Diagnostics.Debug
             get
             {
 
-                switch(ExecutionOrigin)
+                switch (ExecutionOrigin)
                 {
                     case ExecutionOrigin.Unknown:
                         return string.Empty;
@@ -300,8 +301,9 @@ namespace Dev2.Diagnostics.Debug
                     case ExecutionOrigin.External:
                         return ExecutionOrigin.GetDescription();
                     case ExecutionOrigin.Workflow:
-                        return string.Format("{0} - {1}",
-                                             ExecutionOrigin.GetDescription(), ExecutionOriginDescription);
+                        return $"{ExecutionOrigin.GetDescription()} - {ExecutionOriginDescription}";
+                    default:
+                        break;
                 }
 
                 return string.Empty;
@@ -350,13 +352,14 @@ namespace Dev2.Diagnostics.Debug
 
             Deserialize(reader, Inputs);
             Deserialize(reader, Outputs);
+            Deserialize(reader, AssertResultList);
         }
 
         public void Write(IByteWriterBase writer)
         {
             writer.Write(WorkspaceID);
             writer.Write(ID);
-            writer.Write(ParentID);
+            writer.Write(ParentID.GetValueOrDefault());
             writer.Write((int)StateType);
             writer.Write(DisplayName);
             writer.Write(Name);
@@ -380,21 +383,22 @@ namespace Dev2.Diagnostics.Debug
 
             Serialize(writer, Inputs);
             Serialize(writer, Outputs);
+            Serialize(writer, AssertResultList);
         }
 
         #endregion
 
         #region IDebugItem serialization helper methods
 
-        private void Serialize(IByteWriterBase writer, IList<IDebugItem> items)
+        void Serialize(IByteWriterBase writer, IList<IDebugItem> items)
         {
 
             writer.Write(items.Count);
-            // ReSharper disable ForCanBeConvertedToForeach
-            for(var i = 0; i < items.Count; i++)
+
+            for (var i = 0; i < items.Count; i++)
             {
                 writer.Write(items[i].FetchResultsList().Count);
-                for(var j = 0; j < items[i].FetchResultsList().Count; j++)
+                for (var j = 0; j < items[i].FetchResultsList().Count; j++)
                 {
                     var itemResult = items[i].FetchResultsList()[j];
                     writer.Write((int)itemResult.Type);
@@ -406,28 +410,28 @@ namespace Dev2.Diagnostics.Debug
                     writer.Write(itemResult.MoreLink);
                 }
             }
-            // ReSharper restore ForCanBeConvertedToForeach
+
         }
 
-        private static void Deserialize(IByteReaderBase reader, ICollection<IDebugItem> items)
+        static void Deserialize(IByteReaderBase reader, ICollection<IDebugItem> items)
         {
             var count = reader.ReadInt32();
-            for(var i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var item = new DebugItem();
                 var resultCount = reader.ReadInt32();
-                for(var j = 0; j < resultCount; j++)
+                for (var j = 0; j < resultCount; j++)
                 {
                     item.Add(new DebugItemResult
-                        {
-                            Type = (DebugItemResultType)reader.ReadInt32(),
-                            Label = reader.ReadString(),
-                            Variable = reader.ReadString(),
-                            Value = reader.ReadString(),
-                            GroupName = reader.ReadString(),
-                            GroupIndex = reader.ReadInt32(),
-                            MoreLink = reader.ReadString()
-                        }, true);
+                    {
+                        Type = (DebugItemResultType)reader.ReadInt32(),
+                        Label = reader.ReadString(),
+                        Variable = reader.ReadString(),
+                        Value = reader.ReadString(),
+                        GroupName = reader.ReadString(),
+                        GroupIndex = reader.ReadInt32(),
+                        MoreLink = reader.ReadString()
+                    }, true);
                 }
                 items.Add(item);
             }
@@ -436,276 +440,10 @@ namespace Dev2.Diagnostics.Debug
         #endregion
 
 
-        public XmlSchema GetSchema()
-        {
-            return null;
-        }
+        public bool IsFinalStep() => StateType == StateType.End && OriginalInstanceID == ID && (!ParentID.HasValue || ParentID == Guid.Empty);
 
-        public void ReadXml(XmlReader reader)
-        {
-            reader.MoveToContent();
-
-            DisplayName = reader.GetAttribute("DisplayName");
-            Guid guid;
-            Guid.TryParse(reader.GetAttribute("ID"), out guid);
-            ID = guid;
-            Guid.TryParse(reader.GetAttribute("OriginalInstanceID"), out guid);
-            OriginalInstanceID = guid;
-            Guid.TryParse(reader.GetAttribute("ParentID"), out guid);
-            ParentID = guid;
-            Guid.TryParse(reader.GetAttribute("ServerID"), out guid);
-            ServerID = guid;
-
-            StateType state;
-            Enum.TryParse(reader.GetAttribute("StateType"), out state);
-            StateType = state;
-
-            Guid.TryParse(reader.GetAttribute("SessionID"), out guid);
-            SessionID = guid;
-
-            while(reader.Read())
-            {
-                if(reader.IsStartElement("HasError"))
-                {
-                    var result = reader.ReadElementString("HasError");
-
-                    bool boolean;
-                    var exists = bool.TryParse(result, out boolean);
-                    HasError = exists && boolean;
-                }
-
-                if(reader.IsStartElement("ErrorMessage"))
-                {
-                    ErrorMessage = reader.ReadElementString("ErrorMessage");
-                }
-
-                if(reader.IsStartElement("Version"))
-                {
-                    Version = reader.ReadElementString("Version");
-                }
-
-                if(reader.IsStartElement("Name"))
-                {
-                    Name = reader.ReadElementString("Name");
-                }
-
-                if(reader.IsStartElement("ActivityType"))
-                {
-                    var result = reader.ReadElementString("ActivityType");
-
-                    ActivityType activityType;
-                    Enum.TryParse(result, out activityType);
-                    ActivityType = activityType;
-                }
-
-                if(reader.IsStartElement("Duration"))
-                {
-                    DurationString = reader.ReadElementString("Duration");
-                }
-
-                if(reader.IsStartElement("StartTime"))
-                {
-                    var result = reader.ReadElementString("StartTime");
-
-                    DateTime date;
-                    DateTime.TryParse(result, out date);
-                    StartTime = date;
-                }
-
-                if(reader.IsStartElement("EndTime"))
-                {
-                    var result = reader.ReadElementString("EndTime");
-
-                    DateTime date;
-                    DateTime.TryParse(result, out date);
-                    EndTime = date;
-                }
-
-
-                if(reader.IsStartElement("Inputs"))
-                {
-                    Inputs = new List<IDebugItem>();
-                    reader.ReadStartElement();
-                    while(reader.MoveToContent() == XmlNodeType.Element && reader.LocalName == "DebugItem")
-                    {
-                        var item = new DebugItem();
-                        item.ReadXml(reader);
-                        Inputs.Add(item);
-                    }
-                    reader.ReadEndElement();
-                }
-
-                if(reader.IsStartElement("Outputs"))
-                {
-                    Outputs = new List<IDebugItem>();
-                    reader.ReadStartElement();
-                    while(reader.MoveToContent() == XmlNodeType.Element && reader.LocalName == "DebugItem")
-                    {
-                        var item = new DebugItem();
-                        item.ReadXml(reader);
-                        Outputs.Add(item);
-                    }
-                    reader.ReadEndElement();
-                }
-
-                if(reader.IsStartElement("ExecutionOrigin"))
-                {
-                    var result = reader.ReadElementString("ExecutionOrigin");
-
-                    ExecutionOrigin origin;
-                    var exists = Enum.TryParse(result, out origin);
-                    if(exists)
-                    {
-                        ExecutionOrigin = origin;
-                    }
-                }
-
-                if(reader.IsStartElement("ExecutingUser"))
-                {
-                    ExecutingUser = reader.ReadElementString("ExecutingUser");
-                }
-
-                if(reader.IsStartElement("NumberOfSteps"))
-                {
-                    int numberOfSteps;
-                    var success = int.TryParse(reader.ReadElementString("NumberOfSteps"), out numberOfSteps);
-                    if(success)
-                    {
-                        NumberOfSteps = numberOfSteps;
-                    }
-                }
-
-                if(reader.NodeType == XmlNodeType.EndElement && reader.Name == "DebugState")
-                {
-                    reader.ReadEndElement();
-                    break;
-                }
-            }
-        }
-
-        public void WriteXml(XmlWriter writer)
-        {
-            //------Always log these for reconstruction------------
-            writer.WriteAttributeString("DisplayName", DisplayName);
-
-            writer.WriteAttributeString("ID", ID.ToString());
-
-            writer.WriteAttributeString("OriginalInstanceID", OriginalInstanceID.ToString());
-
-            writer.WriteAttributeString("ParentID", ParentID.ToString());
-
-            writer.WriteAttributeString("ServerID", ServerID.ToString());
-
-            writer.WriteAttributeString("StateType", StateType.ToString());
-
-            writer.WriteElementString("HasError", HasError.ToString());
-
-            writer.WriteAttributeString("SessionID", SessionID.ToString());
-
-            if(HasError)
-            {
-                writer.WriteElementString("ErrorMessage", ErrorMessage);
-            }
-            //-----------------------------
-
-            var settings = WorkflowLoggger.LoggingSettings;
-
-            //Version
-            if(settings.IsVersionLogged && !string.IsNullOrWhiteSpace(Version))
-            {
-                writer.WriteElementString("Version", Version);
-            }
-
-            //Type
-            if(settings.IsTypeLogged)
-            {
-                writer.WriteElementString("Name", Name);
-                writer.WriteElementString("ActivityType", ActivityType.ToString());
-            }
-
-            //Duration
-            if(settings.IsDurationLogged)
-            {
-                if(Duration != default(TimeSpan))
-                {
-                    writer.WriteElementString("Duration", DurationString);
-                }
-            }
-
-            //DateTime
-            if(settings.IsDataAndTimeLogged)
-            {
-                if(StartTime != DateTime.MinValue)
-                {
-                    writer.WriteElementString("StartTime", StartTime.ToString("G"));
-                }
-                if(EndTime != DateTime.MinValue)
-                {
-                    writer.WriteElementString("EndTime", EndTime.ToString("G"));
-                }
-            }
-
-
-            //Input
-            if(settings.IsInputLogged && Inputs.Count > 0)
-            {
-                writer.WriteStartElement("Inputs");
-                writer.WriteAttributeString("Count", Inputs.Count.ToString(CultureInfo.InvariantCulture));
-
-                var inputSer = new XmlSerializer(typeof(DebugItem));
-                foreach(var other in Inputs)
-                {
-                    inputSer.Serialize(writer, other);
-                }
-                writer.WriteEndElement();
-            }
-
-            //Output
-            if(settings.IsOutputLogged && Outputs.Count > 0)
-            {
-                writer.WriteStartElement("Outputs");
-                writer.WriteAttributeString("Count", Outputs.Count.ToString(CultureInfo.InvariantCulture));
-
-                var outputSer = new XmlSerializer(typeof(DebugItem));
-                foreach(var other in Outputs)
-                {
-                    outputSer.Serialize(writer, other);
-                }
-                writer.WriteEndElement();
-            }
-
-            //StartBlock
-            if(IsFirstStep())
-            {
-                if(ExecutionOrigin != ExecutionOrigin.Unknown)
-                {
-                    writer.WriteElementString("ExecutionOrigin", ExecutionOrigin.ToString());
-                }
-                if(!string.IsNullOrWhiteSpace(ExecutingUser))
-                {
-                    writer.WriteElementString("ExecutingUser", ExecutingUser);
-                }
-            }
-
-            //EndBlock
-
-            if(IsFinalStep())
-            {
-                writer.WriteElementString("NumberOfSteps", NumberOfSteps.ToString(CultureInfo.InvariantCulture));
-            }
-        }
-
-        public bool IsFinalStep()
-        {
-            return StateType == StateType.End &&
-                   OriginalInstanceID == ID && ParentID==Guid.Empty;
-        }
-
-        public bool IsFirstStep()
-        {
-            return StateType == StateType.Start &&
+        public bool IsFirstStep() => StateType == StateType.Start &&
                    OriginalInstanceID == ID;
-        }
 
         public bool IsDurationVisible
         {
@@ -718,6 +456,10 @@ namespace Dev2.Diagnostics.Debug
                 _isDurationVisible = value;
             }
         }
+        public string ActualType { get; set; }
+
+        [XmlIgnore]
+        public List<IDebugState> Children { get; set; }
 
         #region Implementation of IEquatable<IDebugState>
 
@@ -733,11 +475,11 @@ namespace Dev2.Diagnostics.Debug
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(IDebugState other)
         {
-            if(ReferenceEquals(null, other))
+            if (ReferenceEquals(null, other))
             {
                 return false;
             }
-            if(ReferenceEquals(this, other))
+            if (ReferenceEquals(this, other))
             {
                 return true;
             }
@@ -753,15 +495,15 @@ namespace Dev2.Diagnostics.Debug
         /// <param name="obj">The object to compare with the current object. </param>
         public override bool Equals(object obj)
         {
-            if(ReferenceEquals(null, obj))
+            if (ReferenceEquals(null, obj))
             {
                 return false;
             }
-            if(ReferenceEquals(this, obj))
+            if (ReferenceEquals(this, obj))
             {
                 return true;
             }
-            if(obj.GetType() != GetType())
+            if (obj.GetType() != GetType())
             {
                 return false;
             }
@@ -782,15 +524,9 @@ namespace Dev2.Diagnostics.Debug
             }
         }
 
-        public static bool operator ==(DebugState left, DebugState right)
-        {
-            return Equals(left, right);
-        }
+        public static bool operator ==(DebugState left, DebugState right) => Equals(left, right);
 
-        public static bool operator !=(DebugState left, DebugState right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator !=(DebugState left, DebugState right) => !Equals(left, right);
 
         #endregion
 
@@ -801,9 +537,10 @@ namespace Dev2.Diagnostics.Debug
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
-            if(handler != null)
+            handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (propertyName?.Equals("ParentID") != null && ParentID == Guid.Empty)
             {
-                handler(this, new PropertyChangedEventArgs(propertyName));
+                ParentID = null;
             }
         }
     }

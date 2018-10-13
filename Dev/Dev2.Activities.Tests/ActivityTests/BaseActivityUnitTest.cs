@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +12,6 @@ using System;
 using System.Activities;
 using System.Activities.Statements;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Security.Principal;
 using System.Text;
@@ -21,11 +19,12 @@ using Dev2;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Data.Decision;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
+using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Execution;
 using Dev2.Runtime.Execution;
 using Dev2.Workspaces;
@@ -34,16 +33,16 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace ActivityUnitTests
-// ReSharper restore CheckNamespace
+
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class BaseActivityUnitTest
     {
-        // ReSharper disable once MemberInitializerValueIgnored
+        
        
 
         public BaseActivityUnitTest()
@@ -57,18 +56,18 @@ namespace ActivityUnitTests
       
         }
 
-        // ReSharper disable UnusedAutoPropertyAccessor.Local
-        Guid ExecutionId { get; set; }
+        
+        protected Guid ExecutionId { get; set; }
 
-        protected string TestData { private get; set; }
+        protected string TestData { get; set; }
 
         protected string CurrentDl { get; set; }
 
         protected FlowStep TestStartNode { get; set; }
 
-        protected IDSFDataObject DataObject { get; private set; }
+        protected IDSFDataObject DataObject { get;  set; }
 
-        DynamicActivity FlowchartProcess
+        protected DynamicActivity FlowchartProcess
         {
             get
             {
@@ -138,22 +137,21 @@ namespace ActivityUnitTests
 
         protected IDSFDataObject ExecuteProcess(IDSFDataObject dataObject = null, bool isDebug = false, IEsbChannel channel = null, bool isRemoteInvoke = false, bool throwException = true, bool isDebugMode = false, Guid currentEnvironmentId = default(Guid), bool overrideRemote = false)
         {
-
-            
-                var svc = new ServiceAction { Name = "TestAction", ServiceName = "UnitTestService" };
+            using (ServiceAction svc = new ServiceAction { Name = "TestAction", ServiceName = "UnitTestService" })
+            {
                 svc.SetActivity(FlowchartProcess);
-                Mock<IEsbChannel> mockChannel = new Mock<IEsbChannel>();
+                var mockChannel = new Mock<IEsbChannel>();
 
-                if(CurrentDl == null)
+                if (CurrentDl == null)
                 {
                     CurrentDl = TestData;
                 }
 
                 var errors = new ErrorResultTO();
-                if(ExecutionId == Guid.Empty)
+                if (ExecutionId == Guid.Empty)
                 {
 
-                    if(dataObject != null)
+                    if (dataObject != null)
                     {
                         dataObject.ExecutingUser = User;
                         dataObject.DataList = new StringBuilder(CurrentDl);
@@ -161,17 +159,17 @@ namespace ActivityUnitTests
 
                 }
 
-                if(errors.HasErrors())
+                if (errors.HasErrors())
                 {
-                    string errorString = errors.FetchErrors().Aggregate(string.Empty, (current, item) => current + item);
+                    var errorString = errors.FetchErrors().Aggregate(string.Empty, (current, item) => current + item);
 
-                    if(throwException)
+                    if (throwException)
                     {
                         throw new Exception(errorString);
                     }
                 }
 
-                if(dataObject == null)
+                if (dataObject == null)
                 {
 
                     dataObject = new DsfDataObject(CurrentDl, ExecutionId)
@@ -187,87 +185,89 @@ namespace ActivityUnitTests
                     };
 
                 }
-                ExecutionEnvironmentUtils.UpdateEnvironmentFromXmlPayload(DataObject, new StringBuilder(TestData), CurrentDl, 0);
+                if (!string.IsNullOrEmpty(TestData))
+                {
+                    ExecutionEnvironmentUtils.UpdateEnvironmentFromXmlPayload(DataObject, new StringBuilder(TestData), CurrentDl, 0);
+                }
                 dataObject.IsDebug = isDebug;
 
                 // we now need to set a thread ID ;)
                 dataObject.ParentThreadID = 1;
 
-                if(isRemoteInvoke)
+                if (isRemoteInvoke)
                 {
                     dataObject.RemoteInvoke = true;
                     dataObject.RemoteInvokerID = Guid.NewGuid().ToString();
                 }
 
                 var esbChannel = mockChannel.Object;
-                if(channel != null)
+                if (channel != null)
                 {
                     esbChannel = channel;
                 }
-            dataObject.ExecutionToken = new ExecutionToken();
-                WfExecutionContainer wfec = new WfExecutionContainer(svc, dataObject, WorkspaceRepository.Instance.ServerWorkspace, esbChannel);
+                dataObject.ExecutionToken = new ExecutionToken();
+                var wfec = new WfExecutionContainer(svc, dataObject, WorkspaceRepository.Instance.ServerWorkspace, esbChannel);
 
                 errors.ClearErrors();
-            CustomContainer.Register<IActivityParser>(new ActivityParser());
-            if(dataObject.ResourceID == Guid.Empty)
-            {
-                dataObject.ResourceID = Guid.NewGuid();
+                CustomContainer.Register<IActivityParser>(new ActivityParser());
+                if (dataObject.ResourceID == Guid.Empty)
+                {
+                    dataObject.ResourceID = Guid.NewGuid();
+                }
+                dataObject.Environment = DataObject.Environment;
+                wfec.Eval(FlowchartProcess, dataObject, 0);
+                DataObject = dataObject;
+                return dataObject;
             }
-            dataObject.Environment = DataObject.Environment;
-            wfec.Eval(FlowchartProcess,dataObject, 0);
-            DataObject = dataObject;
-            return dataObject;
         }
 
         #region ForEach Execution
-
-        /// <summary>
-        /// The ForEach Activity requires the data returned from an activity
-        /// We will mock the DSF channel to return something that we expect is shaped.
-        /// </summary>
-        /// <returns></returns>
+        
         protected Mock<IEsbChannel> ExecuteForEachProcess(out IDSFDataObject dataObject, bool isDebug = false, int nestingLevel = 0)
         {
-            var svc = new ServiceAction { Name = "ForEachTestAction", ServiceName = "UnitTestService" };
-            var mockChannel = new Mock<IEsbChannel>();
-            svc.SetActivity(FlowchartProcess);
-
-            if(CurrentDl == null)
+            using (ServiceAction svc = new ServiceAction { Name = "ForEachTestAction", ServiceName = "UnitTestService" })
             {
-                CurrentDl = TestData;
+                var mockChannel = new Mock<IEsbChannel>();
+                svc.SetActivity(FlowchartProcess);
+
+                if(CurrentDl == null)
+                {
+                    CurrentDl = TestData;
+                }
+
+                var errors = new ErrorResultTO();
+
+
+                if (errors.HasErrors())
+                {
+                    var errorString = errors.FetchErrors().Aggregate(string.Empty, (current, item) => current + item);
+
+                    throw new Exception(errorString);
+                }
+
+                dataObject = new DsfDataObject(CurrentDl, new Guid())
+                {
+                    // NOTE: WorkflowApplicationFactory.InvokeWorkflowImpl() will use HostSecurityProvider.Instance.ServerID 
+                    //       if this is NOT provided which will cause the tests to fail!
+                    ServerID = Guid.NewGuid(),
+                    IsDebug = isDebug,
+                    ForEachNestingLevel = nestingLevel,
+                    ParentThreadID = 1
+                };
+
+
+                // we need to set this now ;)
+
+                mockChannel.Setup(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, 0, false)).Verifiable();
+                CustomContainer.Register<IActivityParser>(new ActivityParser());
+                var wfec = new WfExecutionContainer(svc, dataObject, WorkspaceRepository.Instance.ServerWorkspace, mockChannel.Object);
+
+                errors.ClearErrors();
+                wfec.Eval(FlowchartProcess,dataObject, 0);
+
+                return mockChannel;
             }
-
-            ErrorResultTO errors = new ErrorResultTO();
-
-
-            if(errors.HasErrors())
-            {
-                string errorString = errors.FetchErrors().Aggregate(string.Empty, (current, item) => current + item);
-
-                throw new Exception(errorString);
-            }
-
-            dataObject = new DsfDataObject(CurrentDl, new Guid())
-            {
-                // NOTE: WorkflowApplicationFactory.InvokeWorkflowImpl() will use HostSecurityProvider.Instance.ServerID 
-                //       if this is NOT provided which will cause the tests to fail!
-                ServerID = Guid.NewGuid(),
-                IsDebug = isDebug,
-                ForEachNestingLevel = nestingLevel,
-                ParentThreadID = 1
-            };
-
-
-            // we need to set this now ;)
-
-            mockChannel.Setup(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, 0, false)).Verifiable();
-            CustomContainer.Register<IActivityParser>(new ActivityParser());
-            WfExecutionContainer wfec = new WfExecutionContainer(svc, dataObject, WorkspaceRepository.Instance.ServerWorkspace, mockChannel.Object);
-
-            errors.ClearErrors();
-            wfec.Eval(FlowchartProcess,dataObject, 0);
-
-            return mockChannel;
+            
         }
 
         #endregion ForEach Execution
@@ -330,7 +330,7 @@ namespace ActivityUnitTests
             return result;
         }
 
-        protected IPrincipal User { private get; set; }
+        protected IPrincipal User {  get; set; }
 
         protected void CreateDataListWithRecsetAndCreateShape(IEnumerable<string> recsetData, string recsetName, string fieldName, out string dataListShape, out string dataListWithData)
         {
@@ -363,9 +363,12 @@ namespace ActivityUnitTests
                 result = env.FetchErrors();
                 return;
             }
+            var brackettedField = DataListUtil.AddBracketsToValueIfNotExist(fieldToRetrieve);
+            CommonFunctions.WarewolfEvalResult evalResult;
             try
             {
-                result = ExecutionEnvironment.WarewolfEvalResultToString(env.Eval(DataListUtil.AddBracketsToValueIfNotExist(fieldToRetrieve), 0));
+                evalResult = env.Eval(brackettedField, 0, true);
+                result = ExecutionEnvironment.WarewolfEvalResultToString(evalResult);
             }
             catch( Exception err)
             {
@@ -384,28 +387,23 @@ namespace ActivityUnitTests
                 {
                     variableName = DataListUtil.CreateRecordsetDisplayValue(recordSet, fieldNameToRetrieve, "*");
                 }
-                var warewolfEvalResult = environment.Eval(DataListUtil.AddBracketsToValueIfNotExist(variableName), 0);
+                var warewolfEvalResult = environment.Eval(DataListUtil.AddBracketsToValueIfNotExist(variableName), 0, true);
 
                 if (warewolfEvalResult == null)
                 {
                     return;
                 }
-                var listResult = warewolfEvalResult as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomListresult;
-                if (listResult != null)
+                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult listResult)
                 {
-                    foreach(var res in listResult.Item)
+                    foreach (var res in listResult.Item)
                     {
                         result.Add(ExecutionEnvironment.WarewolfAtomToString(res));
                     }
-                }               
+                }
             }
             catch(Exception e)
             {
                 error = e.Message;
-            }
-            
-            if(!string.IsNullOrEmpty(error))
-            {
             }
         }
 

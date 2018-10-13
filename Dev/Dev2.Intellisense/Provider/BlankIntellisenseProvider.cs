@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,7 @@
 */
 
 using System.Collections.Generic;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Intellisense.Provider
 {
@@ -33,15 +32,9 @@ namespace Dev2.Intellisense.Provider
 
         public IntellisenseProviderType IntellisenseProviderType { get; private set; }
 
-        public string PerformResultInsertion(string input, IntellisenseProviderContext context)
-        {
-            return string.Empty;
-        }
+        public string PerformResultInsertion(string input, IntellisenseProviderContext context) => string.Empty;
 
-        public IList<IntellisenseProviderResult> GetIntellisenseResults(IntellisenseProviderContext context)
-        {
-            return new List<IntellisenseProviderResult>();
-        }
+        public IList<IntellisenseProviderResult> GetIntellisenseResults(IntellisenseProviderContext context) => new List<IntellisenseProviderResult>();
 
         public void Dispose()
         {

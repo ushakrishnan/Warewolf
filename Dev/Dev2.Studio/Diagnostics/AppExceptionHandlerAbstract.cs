@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +12,7 @@ using System;
 using System.Text;
 using Dev2.Common;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Diagnostics
 {
     public abstract class AppExceptionHandlerAbstract : IAppExceptionHandler
@@ -30,16 +29,15 @@ namespace Dev2.Studio.Diagnostics
             {
                 throw new ArgumentNullException("e");
             }
-            if(_busy)
+            if (_busy || e.Message.ToLowerInvariant().Equals("The remote name could not be resolved: 'warewolf.io'".ToLowerInvariant()) || (e.Source!=null && (e.Source.Contains("InfragisticsWPF4.DragDrop") || e.Source.Contains("PresentationFramework"))))
             {
                 return true;
             }
             try
             {
-                Dev2Logger.Log.Error("Unhandled Exception" ,e);
+                Dev2Logger.Error("Unhandled Exception" ,e, "Warewolf Error");
                 _exception = e;
                 _busy = true;                
-                Dev2Logger.Log.Error(_exception);
                 var popupController = CreatePopupController();
                 var exceptionString = ToErrorString(_exception);
                 var lastExceptionSignature = _lastExceptionSignature;
@@ -57,7 +55,7 @@ namespace Dev2.Studio.Diagnostics
                 }
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 ShutdownApp();
                 return false;

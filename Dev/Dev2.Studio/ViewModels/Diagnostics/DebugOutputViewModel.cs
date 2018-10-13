@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,12 +12,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
+using Caliburn.Micro;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Infrastructure.Events;
 using Dev2.Common.Interfaces.Security;
@@ -26,101 +27,132 @@ using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Diagnostics.Debug;
 using Dev2.DynamicServices;
 using Dev2.Messages;
-using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services;
 using Dev2.Services.Events;
-using Dev2.Studio.Controller;
-using Dev2.Studio.Core.Helpers;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Diagnostics;
-using Dev2.ViewModels.Diagnostics;
+using Dev2.Studio.Core;
+using Dev2.Studio.Core.Helpers;
+using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
+using DelegateCommand = Dev2.Runtime.Configuration.ViewModels.Base.DelegateCommand;
+using Dev2.Instrumentation;
 
-// ReSharper disable CheckNamespace
 namespace Dev2.Studio.ViewModels.Diagnostics
-// ReSharper restore CheckNamespace
 {
-    /// <summary>
-    ///     This is the view-model of the UI.  It provides a data source
-    ///     for the TreeView (the RootItems property), a bindable
-    ///     SearchText property, and the SearchCommand to perform a search.
-    /// </summary>
-    public class DebugOutputViewModel : SimpleBaseViewModel
+    public class DebugOutputViewModel : SimpleBaseViewModel, IUpdatesHelp
     {
-        #region Fields
-
-        // BUG 9735 - 2013.06.22 - TWR : added pending items
         readonly List<IDebugState> _pendingItems = new List<IDebugState>();
         readonly List<IDebugState> _contentItems;
         readonly Dictionary<Guid, IDebugTreeViewItemViewModel> _contentItemMap;
         readonly IDebugOutputFilterStrategy _debugOutputFilterStrategy;
+        readonly IContextualResourceModel _contextualResourceModel;
         readonly SubscriptionService<DebugWriterWriteMessage> _debugWriterSubscriptionService;
-        readonly IEnvironmentRepository _environmentRepository;
-        readonly IPopupController _popup;
+        readonly IServerRepository _serverRepository;
         readonly object _syncContext = new object();
+        ObservableCollection<IDebugTreeViewItemViewModel> _rootItems;
+        readonly IPopupController _popup;
+        readonly IDebugOutputViewModelUtil _outputViewModelUtil;
+
+        IDebugState _lastStep;
+        DebugStatus _debugStatus;
+        ICommand _expandAllCommand;
+        ICommand _openItemCommand;
+        ICommand _selectAllCommand;
+        ICommand _showOptionsCommand;
 
         int _depthMin;
         int _depthMax;
-        bool _continueDebugDispatch;
-        bool _dispatchLastDebugState;
-        IDebugState _lastStep;
-        ICommand _expandAllCommand;
+        string _searchText = string.Empty;
         bool _expandAllMode = true;
         bool _highlightError = true;
-        bool _isRebuildingTree;
-        ICommand _openItemCommand;
-        ObservableCollection<IDebugTreeViewItemViewModel> _rootItems;
-        string _searchText = string.Empty;
+        bool _showDebugStatus = true;
         bool _showDuration = true;
         bool _showInputs = true;
-        bool _showOptions;
-        ICommand _showOptionsCommand;
         bool _showOutputs = true;
+        bool _showAssertResult = true;
         bool _showServer = true;
         bool _showTime = true;
         bool _showType = true;
+        bool _showOptions;
         bool _showVersion;
-        bool _skipOptionsCommandExecute;
-        DebugStatus _debugStatus;
-        bool _showDebugStatus = true;
-        ICommand _selectAllCommand;
         bool _allDebugReceived;
+        bool _isRebuildingTree;
+        bool _skipOptionsCommandExecute;
+        bool _continueDebugDispatch;
+        bool _dispatchLastDebugState;
+        string _addNewTestTooltip;
 
-        #endregion
+        public DebugOutputViewModel(IEventPublisher serverEventPublisher, IServerRepository serverRepository, IDebugOutputFilterStrategy debugOutputFilterStrategy)
+            : this(serverEventPublisher, serverRepository, debugOutputFilterStrategy, null)
+        {
+        }
 
-        #region Ctor
-
-        public DebugOutputViewModel(IEventPublisher serverEventPublisher, IEnvironmentRepository environmentRepository, IDebugOutputFilterStrategy debugOutputFilterStrategy)
+        public DebugOutputViewModel(IEventPublisher serverEventPublisher, IServerRepository serverRepository, IDebugOutputFilterStrategy debugOutputFilterStrategy, IContextualResourceModel contextualResourceModel)
         {
             VerifyArgument.IsNotNull("serverEventPublisher", serverEventPublisher);
-            VerifyArgument.IsNotNull("environmentRepository", environmentRepository);
+            VerifyArgument.IsNotNull("environmentRepository", serverRepository);
             VerifyArgument.IsNotNull("debugOutputFilterStrategy", debugOutputFilterStrategy);
-            _environmentRepository = environmentRepository;
+            _serverRepository = serverRepository;
             _debugOutputFilterStrategy = debugOutputFilterStrategy;
-
+            if (contextualResourceModel != null)
+            {
+                _contextualResourceModel = contextualResourceModel;
+                ResourceID = _contextualResourceModel.ID;
+            }
+            IsTestView = false;
             _contentItems = new List<IDebugState>();
             _contentItemMap = new Dictionary<Guid, IDebugTreeViewItemViewModel>();
             _debugWriterSubscriptionService = new SubscriptionService<DebugWriterWriteMessage>(serverEventPublisher);
             _debugWriterSubscriptionService.Subscribe(msg =>
             {
-                IDebugState debugState = msg.DebugState;
-                Append(debugState);
+                Append(msg.DebugState);                
             });
 
             SessionID = Guid.NewGuid();
             _popup = CustomContainer.Get<IPopupController>();
+            ClearSearchTextCommand = new Microsoft.Practices.Prism.Commands.DelegateCommand(() => SearchText = "");
+            AddNewTestCommand = new DelegateCommand(o => AddNewTest(EventPublishers.Aggregator), o=> CanAddNewTest());
+            _outputViewModelUtil = new DebugOutputViewModelUtil(SessionID);
         }
 
-        #endregion
+        public bool IsTestView { get; set; }
 
-        #region Properties
+        void AddNewTest(IEventAggregator eventPublisher)
+        {
+            var applicationTracker = CustomContainer.Get<IApplicationTracker>();
+            if (applicationTracker != null)
+            {
+                applicationTracker.TrackEvent(Warewolf.Studio.Resources.Languages.TrackEventMenu.EventCategory,
+                                                Warewolf.Studio.Resources.Languages.TrackEventMenu.CreateNewTest);
+            }
+                var newTestFromDebugMessage = new NewTestFromDebugMessage
+            {
+                ResourceID = ResourceID,
+                ResourceModel = _contextualResourceModel,
+                RootItems = RootItems.ToList()
+            };
+            eventPublisher.Publish(newTestFromDebugMessage);
+        }
 
-        // BUG 9735 - 2013.06.22 - TWR : added pending/content count properties
-        public int PendingItemCount { get { return _pendingItems.Count; } }
-        public int ContentItemCount { get { return _contentItems.Count; } }
+        public Guid ResourceID { get; set; }
 
-        public ProcessController ProcessController { get; set; }
+        bool CanAddNewTest()
+        {
+            var canAddNewTest = RootItems != null && RootItems.Count > 0;
+
+            if (canAddNewTest && !IsTestView && _contextualResourceModel != null)
+            {
+                canAddNewTest = !_contextualResourceModel.IsNewWorkflow && _contextualResourceModel.IsWorkflowSaved;
+            }
+
+            AddNewTestTooltip = canAddNewTest ? Warewolf.Studio.Resources.Languages.Tooltips.DebugOutputViewAddNewTestToolTip : Warewolf.Studio.Resources.Languages.Tooltips.DebugOutputViewAddNewTestUnsavedToolTip;
+
+            return canAddNewTest;
+        }
+
+        public int PendingItemCount => _pendingItems.Count;
+        public int ContentItemCount => _contentItems.Count;
 
         public DebugStatus DebugStatus
         {
@@ -129,7 +161,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             {
                 _debugStatus = value;
 
-                if(value == DebugStatus.Executing)
+                if (value == DebugStatus.Executing)
                 {
                     _allDebugReceived = false;
                     ClearSelection();
@@ -143,70 +175,26 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ProcessingText);
             }
         }
+        
+        public string ProcessingText => DebugStatus.GetDescription();
 
+        public bool IsProcessing => _debugStatus != DebugStatus.Ready && _debugStatus != DebugStatus.Finished &&
+                                    _debugStatus != DebugStatus.Stopping;
 
-        /// <summary>
-        ///     Gets or sets the processing text.
-        /// </summary>
-        /// <value>
-        ///     The processing text.
-        /// </value>
-        /// <author>Massimo.Guerrera</author>
-        /// <date>3/4/2013</date>
-        public string ProcessingText
-        {
-            get { return DebugStatus.GetDescription(); }
-        }
+        public bool IsStopping => _debugStatus == DebugStatus.Stopping;
 
-        public bool IsProcessing
-        {
-            get
-            {
-                return _debugStatus != DebugStatus.Ready && _debugStatus != DebugStatus.Finished && _debugStatus != DebugStatus.Stopping;
-            }
-        }
+        public string DebugImage => IsProcessing ? StringResources.Pack_Uri_Stop_Image : StringResources.Pack_Uri_Debug_Image;
 
-        public bool IsStopping
-        {
-            get
-            {
-                return _debugStatus == DebugStatus.Stopping;
-            }
-        }
-
-        public string DebugImage
-        {
-            get
-            {
-                return IsProcessing ? StringResources.Pack_Uri_Stop_Image : StringResources.Pack_Uri_Debug_Image;
-            }
-        }
-
-        public string DebugText
-        {
-            get
-            {
-                return IsProcessing ? StringResources.Ribbon_StopExecution : StringResources.Ribbon_Debug;
-            }
-        }
-
-        /// <summary>
-        ///     Gets or sets the environment repository, this property is imported via MEF.
-        /// </summary>
-        /// <value>
-        ///     The environment repository.
-        /// </value>
-        public IEnvironmentRepository EnvironmentRepository
-        {
-            get { return _environmentRepository; }
-        }
+        public string DebugText => IsProcessing ? StringResources.Ribbon_StopExecution : StringResources.Ribbon_Debug;
+        
+        public IServerRepository ServerRepository => _serverRepository;
 
         public int DepthMin
         {
             get { return _depthMin; }
             set
             {
-                if(_depthMin != value)
+                if (_depthMin != value)
                 {
                     _depthMin = value;
                     NotifyOfPropertyChange(() => DepthMin);
@@ -219,7 +207,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             get { return _depthMax; }
             set
             {
-                if(_depthMax != value)
+                if (_depthMax != value)
                 {
                     _depthMax = value;
                     NotifyOfPropertyChange(() => DepthMax);
@@ -227,12 +215,16 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             }
         }
 
-        /// <summary>
-        ///     Gets or sets a value indicating whether [expand all mode].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [expand all mode]; otherwise, <c>false</c>.
-        /// </value>
+        public string AddNewTestTooltip
+        {
+            get { return _addNewTestTooltip; }
+            set
+            {
+                _addNewTestTooltip = value;
+                NotifyOfPropertyChange(() => AddNewTestTooltip);
+            }
+        }
+        
         public bool ExpandAllMode
         {
             get { return _expandAllMode; }
@@ -242,13 +234,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ExpandAllMode);
             }
         }
-
-        /// <summary>
-        ///     Gets or sets a value indicating whether the options command show skip executing it's next execution.
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [skip options command execute]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool SkipOptionsCommandExecute
         {
             get { return _skipOptionsCommandExecute; }
@@ -258,13 +244,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => SkipOptionsCommandExecute);
             }
         }
-
-        /// <summary>
-        ///     Gets or sets a value indicating whether [show options].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show options]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowOptions
         {
             get { return _showOptions; }
@@ -274,13 +254,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowOptions);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show version].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show version]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowVersion
         {
             get { return _showVersion; }
@@ -290,13 +264,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowVersion);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show server].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show server]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowServer
         {
             get { return _showServer; }
@@ -306,13 +274,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowServer);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show type].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show type]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowType
         {
             get { return _showType; }
@@ -322,13 +284,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowType);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show time].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show time]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowTime
         {
             get { return _showTime; }
@@ -338,13 +294,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowTime);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show duratrion].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show duratrion]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowDuration
         {
             get { return _showDuration; }
@@ -354,13 +304,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowDuration);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show inputs].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show inputs]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowInputs
         {
             get { return _showInputs; }
@@ -370,13 +314,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowInputs);
             }
         }
-
-        /// <summary>
-        ///     Gets a value indicating whether [show outputs].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [show outputs]; otherwise, <c>false</c>.
-        /// </value>
+        
         public bool ShowOutputs
         {
             get { return _showOutputs; }
@@ -386,15 +324,17 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowOutputs);
             }
         }
-
-
-
-        /// <summary>
-        ///     Gets a value indicating whether [highligh error].
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if [highligh error]; otherwise, <c>false</c>.
-        /// </value>
+        
+        public bool ShowAssertResult
+        {
+            get { return _showAssertResult; }
+            set
+            {
+                _showAssertResult = value;
+                NotifyOfPropertyChange(() => ShowAssertResult);
+            }
+        }
+        
         public bool HighlightError
         {
             get { return _highlightError; }
@@ -404,25 +344,17 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => HighlightError);
             }
         }
+        
+        public ObservableCollection<IDebugTreeViewItemViewModel> RootItems => _rootItems ?? (_rootItems = new ObservableCollection<IDebugTreeViewItemViewModel>());
 
-        /// <summary>
-        ///     Returns a observable collection containing the root level items
-        ///     in the debug tree, to which the TreeView can bind.
-        /// </summary>
-        public ObservableCollection<IDebugTreeViewItemViewModel> RootItems
-        {
-            get { return _rootItems ?? (_rootItems = new ObservableCollection<IDebugTreeViewItemViewModel>()); }
-        }
-
-        /// <summary>
-        ///     Gets/sets a fragment of the name to search for.
-        /// </summary>
+        public ICommand ClearSearchTextCommand { get; private set; }
+        
         public string SearchText
         {
             get { return _searchText; }
             set
             {
-                if(value == _searchText)
+                if (value == _searchText)
                 {
                     return;
                 }
@@ -442,7 +374,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             }
             set
             {
-                if(_showDebugStatus == value)
+                if (_showDebugStatus == value)
                 {
                     return;
                 }
@@ -451,147 +383,124 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 NotifyOfPropertyChange(() => ShowDebugStatus);
             }
         }
-
-        #endregion
-
-        #region public methods
-
-        /// <summary>
-        ///     Appends the specified content.
-        /// </summary>
-        /// <param name="content">The content.</param>
+        
         public virtual void Append(IDebugState content)
         {
-            if(content == null || content.SessionID != SessionID)
+            if (_outputViewModelUtil.ContenIsNotValid(content))
             {
                 return;
             }
 
-            //Juries - Dont append start and end states, its not for display, just for logging puposes, unless its the first or last step
-            if(content.StateType == StateType.Start && !content.IsFirstStep())
-            {
-                return;
-            }
-
-            if(content.StateType == StateType.End && !content.IsFinalStep())
-            {
-                return;
-            }
-
-            if((DebugStatus == DebugStatus.Stopping || DebugStatus == DebugStatus.Finished) && content.StateType != StateType.Message)
-            {
-                if(content.StateType != StateType.End)
-                {
-                    _lastStep = content;
-                }
-                //return;
-            }
+            IsDebugStateLastStep(content);
 
             _continueDebugDispatch = false;
-
-            if(content.IsFinalStep())
+            if (content.IsFinalStep() && !IsTestView)
             {
                 _allDebugReceived = true;
                 _continueDebugDispatch = true;
+                ViewModelUtils.RaiseCanExecuteChanged(AddNewTestCommand);
             }
 
-            if(QueuePending(content))
+            if(content.StateType == StateType.TestAggregate && IsTestView)
+            {
+                _allDebugReceived = true;
+                _continueDebugDispatch = true;
+                ViewModelUtils.RaiseCanExecuteChanged(AddNewTestCommand);
+            }
+
+            if (_outputViewModelUtil.QueuePending(content, _pendingItems, IsProcessing))
             {
                 return;
             }
 
-            // BUG 9735 - 2013.06.22 - TWR : refactored
             AddItemToTree(content);
+            
         }
 
-        public void AppendX(IDebugState content)
+        void IsDebugStateLastStep(IDebugState content)
         {
-            content.SessionID = SessionID;
-            Append(content);
-        }
+            if ((DebugStatus != DebugStatus.Stopping && DebugStatus != DebugStatus.Finished) || content.StateType == StateType.Message)
+            {
+                return;
+            }
 
+            if (content.StateType != StateType.End && !IsTestView)
+            {
+                _lastStep = content;
+            }
+            if (content.StateType != StateType.TestAggregate && IsTestView)
+            {
+                _lastStep = content;
+            }
+        }
+        
         public void OpenMoreLink(IDebugLineItem item)
         {
-            if(item == null)
+            if (_outputViewModelUtil.IsItemMoreLinkValid(item) && CanOpenMoreLink(item))
             {
-                Dev2Logger.Log.Debug("Debug line item is null, did not proceed");
-                return;
+                CreatProcessController(item);
             }
+        }
 
-            if(string.IsNullOrEmpty(item.MoreLink))
+        public bool CanOpenMoreLink(IDebugLineItem item) => !string.IsNullOrEmpty(item?.MoreLink);
+
+        [ExcludeFromCodeCoverage]
+        void CreatProcessController(IDebugLineItem item)
+        {
+            try
             {
-                Dev2Logger.Log.Debug("Link is empty");
+                var debugItemTempFilePath = FileHelper.GetDebugItemTempFilePath(item.MoreLink);
+                Dev2Logger.Debug($"Debug file path is [{debugItemTempFilePath}]", "Warewolf Debug");
+                Process.Start(new ProcessStartInfo(debugItemTempFilePath));
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error(ex, "Warewolf Error");
+                ProcessControllerHasError(ex);
+            }
+        }
+        [ExcludeFromCodeCoverage]
+        void ProcessControllerHasError(Exception ex)
+        {
+            if (ex.Message.Contains("The remote name could not be resolved"))
+            {
+                _popup.Show(
+                    string.Format(Warewolf.Studio.Resources.Languages.Core.DebugCouldNotGetRemoteDebugItemsError, Environment.NewLine),
+                    Warewolf.Studio.Resources.Languages.Core.DebugCouldNotGetRemoteDebugItemsErrorHeader, MessageBoxButton.OK, MessageBoxImage.Error, "",
+                    false, true, false, false, false, false);
             }
             else
             {
-                try
-                {
-                    string debugItemTempFilePath = FileHelper.GetDebugItemTempFilePath(item.MoreLink);
-                    Dev2Logger.Log.Debug(string.Format("Debug file path is [{0}]", debugItemTempFilePath));
-                    ProcessController = new ProcessController(Process.Start(new ProcessStartInfo(debugItemTempFilePath)));
-                }
-                catch(Exception ex)
-                {
-                    Dev2Logger.Log.Error(ex);
-                    if (ex.Message.Contains("The remote name could not be resolved"))
-                        _popup.Show("Warewolf was unable to download the debug output values from the remote server. Please insure that the remote server is accessible.", "Failed to retrieve remote debug items", MessageBoxButton.OK, MessageBoxImage.Error, "");
-                    else
-                        throw;
-                }
+                _popup.Show(
+                    string.Format(Warewolf.Studio.Resources.Languages.Core.DebugCouldNotGetDebugItemsError, Environment.NewLine),
+                    Warewolf.Studio.Resources.Languages.Core.DebugCouldNotGetDebugItemsErrorHeader, MessageBoxButton.OK, MessageBoxImage.Error, "",
+                    false, true, false, false, false, false);
             }
         }
 
-        public bool CanOpenMoreLink(IDebugLineItem item)
-        {
-            if(item == null)
-                return false;
+        public ICommand OpenItemCommand => _openItemCommand ?? (_openItemCommand = new DelegateCommand(OpenItem));
 
-            return !string.IsNullOrEmpty(item.MoreLink);
-        }
+        public ICommand ExpandAllCommand => _expandAllCommand ?? (_expandAllCommand = new DelegateCommand(ExpandAll));
 
-        #endregion public methods
+        public ICommand ShowOptionsCommand => _showOptionsCommand ?? (_showOptionsCommand = new DelegateCommand(o =>
+                                                            {
+                                                                if (SkipOptionsCommandExecute)
+                                                                {
+                                                                    SkipOptionsCommandExecute = false;
+                                                                }
+                                                                else
+                                                                {
+                                                                    ShowOptions = !ShowOptions;
+                                                                }
+                                                            }));
 
-        #region Commands
+        public bool IsConfiguring => DebugStatus == DebugStatus.Configure;
 
-        public ICommand OpenItemCommand
-        {
-            get { return _openItemCommand ?? (_openItemCommand = new DelegateCommand(OpenItem)); }
-        }
+        public Guid SessionID { get; }
 
-        public ICommand ExpandAllCommand
-        {
-            get { return _expandAllCommand ?? (_expandAllCommand = new DelegateCommand(ExpandAll)); }
-        }
-
-        public ICommand ShowOptionsCommand
-        {
-            get
-            {
-                return _showOptionsCommand ?? (_showOptionsCommand = new DelegateCommand(o =>
-                {
-                    if(SkipOptionsCommandExecute)
-                    {
-                        SkipOptionsCommandExecute = false;
-                    }
-                    else
-                    {
-                        ShowOptions = !ShowOptions;
-                    }
-                }));
-            }
-        }
-
-        public bool IsConfiguring
-        {
-            get { return DebugStatus == DebugStatus.Configure; }
-        }
-
-        public Guid SessionID { get; private set; }
-
-        public ICommand SelectAllCommand
-        {
-            get { return _selectAllCommand ?? (_selectAllCommand = new DelegateCommand(SelectAll)); }
-        }
+        public ICommand SelectAllCommand => _selectAllCommand ?? (_selectAllCommand = new DelegateCommand(SelectAll));
+        public ICommand AddNewTestCommand { get; set; }
+        public bool AddNewTestMode { get; set; }
 
         void SelectAll(object obj)
         {
@@ -602,23 +511,15 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 item.IsSelected = true;
             });
         }
-
-        #endregion
-
-        #region Private Methods
-
-        /// <summary>
-        ///     Clears all content and the tree.
-        /// </summary>
+        
         public void Clear()
         {
             RootItems.Clear();
+            _allDebugReceived = false;
             _contentItems.Clear();
             _contentItemMap.Clear();
             _pendingItems.Clear();
         }
-
-        #region OnDispose
 
         protected override void OnDispose()
         {
@@ -627,83 +528,42 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             _debugWriterSubscriptionService.Dispose();
             base.OnDispose();
         }
-
-        #endregion
-
-        /// <summary>
-        ///     Expands all nodes.
-        /// </summary>
-        /// <param name="payload">The payload.</param>
-        void ExpandAll(object payload)
+        
+        public void ExpandAll(object payload)
         {
             var node = payload as IDebugTreeViewItemViewModel;
 
-            //
-            // If no node is passed in then call for all root nodes
-            //
-            if(node == null)
+            if (node == null)
             {
-                foreach(var rootNode in RootItems)
+                foreach (var rootNode in RootItems)
                 {
                     ExpandAll(rootNode);
                 }
-
-                //
-                // Switch Expand modes
-                //
                 ExpandAllMode = !ExpandAllMode;
-
                 return;
             }
 
-            //
-            // Expand node and call for all children
-            //
             node.IsExpanded = ExpandAllMode;
-            foreach(var childNode in node.Children)
+            foreach (var childNode in node.Children)
             {
                 ExpandAll(childNode);
             }
         }
-
-        /// <summary>
-        ///     Opens an item.
-        /// </summary>
-        /// <param name="payload">The payload.</param>
+        
         void OpenItem(object payload)
         {
             var debugState = payload as IDebugState;
 
-            if(debugState == null)
+            if (debugState?.ActivityType == ActivityType.Workflow)
             {
-                return;
-            }
-
-            if(debugState.ActivityType == ActivityType.Workflow && EnvironmentRepository != null)
-            {
-                var environment = EnvironmentRepository.All().FirstOrDefault(e => e.ID == debugState.EnvironmentID);
-
-                if(environment == null || !environment.IsConnected)
-                {
-                    return;
-                }
-
-                var resource = environment.ResourceRepository.FindSingle(r => r.ResourceName == debugState.DisplayName);
-
-                if(resource == null)
-                {
-                    return;
-                }
-                EventPublishers.Aggregator.Publish(new AddWorkSurfaceMessage(resource));
+                var shellViewModel = CustomContainer.Get<IShellViewModel>();
+                shellViewModel?.OpenResource(debugState.OriginatingResourceID, debugState.EnvironmentID, shellViewModel.ActiveServer);
             }
         }
-
-        /// <summary>
-        ///     Rebuilds the tree.
-        /// </summary>
+        
         void RebuildTree()
         {
-            lock(_syncContext)
+            lock (_syncContext)
             {
                 _isRebuildingTree = true;
             }
@@ -711,32 +571,31 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             RootItems.Clear();
             _contentItemMap.Clear();
 
-            foreach(var content in _contentItems)
+            foreach (var content in _contentItems)
             {
                 AddItemToTreeImpl(content);
             }
 
-            lock(_syncContext)
+            lock (_syncContext)
             {
                 _isRebuildingTree = false;
             }
         }
 
-        #endregion Private Methods
 
-        #region AddItemToTree
-
-        // BUG 9735 - 2013.06.22 - TWR : refactored
-        void AddItemToTree(IDebugState content)
+        public void AddItemToTree(IDebugState content)
         {
+            if (_contentItems.Any(a => a.DisconnectedID == content.DisconnectedID))
+            {
+                return;
+            }
+
             if (content.StateType == StateType.Duration)
             {
                 var item = _contentItems.FirstOrDefault(a => a.WorkSurfaceMappingId == content.WorkSurfaceMappingId);
-           
                 if (item != null)
                 {
                     item.EndTime = content.EndTime;
-                    //RebuildTree();
                 }
             }
             else
@@ -745,34 +604,18 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 var isRemote = environmentId != Guid.Empty;
                 if (isRemote)
                 {
-                    Thread.Sleep(500);
-                }
-                if (isRemote)
-                {
-                    var remoteEnvironmentModel = _environmentRepository.FindSingle(model => model.ID == environmentId);
+                    var remoteEnvironmentModel = _serverRepository.FindSingle(model => model.EnvironmentID == environmentId);
                     if (remoteEnvironmentModel != null)
                     {
-                        if (content.Server == "localhost")
-                            content.Server = remoteEnvironmentModel.Name;
-                        if (!remoteEnvironmentModel.IsConnected)
-                        {
-                            remoteEnvironmentModel.Connect();
-                        }
-                        if (content.ParentID != Guid.Empty)
-                        {
-                            if (remoteEnvironmentModel.AuthorizationService != null)
-                            {
-                                var remoteResourcePermissions = remoteEnvironmentModel.AuthorizationService.GetResourcePermissions(content.OriginatingResourceID);
-                                if (!remoteResourcePermissions.HasFlag(Permissions.View))
-                                {
-                                    return;
-                                }
-                            }
-                        }
+                        ConnectRemoteServer(content, remoteEnvironmentModel);
+                    }
+                    if (remoteEnvironmentModel != null && content.ParentID.GetValueOrDefault() != Guid.Empty && remoteEnvironmentModel.AuthorizationService != null && !remoteEnvironmentModel.AuthorizationService.GetResourcePermissions(content.OriginatingResourceID).HasFlag(Permissions.View))
+                    {
+                        return;
                     }
                 }
                 var debugState = _contentItems.FirstOrDefault(state => state.DisconnectedID == content.DisconnectedID);
-                if(debugState == null)
+                if (debugState == null)
                 {
                     _contentItems.Add(content);
                 }
@@ -805,146 +648,213 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             }
         }
 
+        private static void ConnectRemoteServer(IDebugState content, IServer remoteEnvironmentModel)
+        {
+            if (content.Server == "localhost")
+            {
+                content.Server = remoteEnvironmentModel.Name;
+            }
+            if (!remoteEnvironmentModel.IsConnected)
+            {
+                remoteEnvironmentModel.Connect();
+            }
+        }
+
         void AddItemToTreeImpl(IDebugState content)
         {
-
-            if((DebugStatus == DebugStatus.Stopping || DebugStatus == DebugStatus.Finished || _allDebugReceived) && string.IsNullOrEmpty(content.Message) && !_continueDebugDispatch && !_dispatchLastDebugState)
+            if ((DebugStatus == DebugStatus.Stopping || DebugStatus == DebugStatus.Finished || _allDebugReceived) && string.IsNullOrEmpty(content.Message) && !_continueDebugDispatch && !_dispatchLastDebugState)
             {
                 return;
             }
-            Dev2Logger.Log.Debug(string.Format("Debug content to be added ID: {0}" + Environment.NewLine + "Parent ID: {1}" + Environment.NewLine + "Name: {2}", content.ID, content.ParentID, content.DisplayName));
-            if(_lastStep != null && DebugStatus == DebugStatus.Finished && content.StateType == StateType.Message)
+            Dev2Logger.Debug(string.Format("Debug content to be added ID: {0}" + Environment.NewLine + "Parent ID: {1}" + Environment.NewLine + "Name: {2}", content.ID, content.ParentID.GetValueOrDefault(), content.DisplayName), "Warewolf Debug");
+            if (_lastStep != null && DebugStatus == DebugStatus.Finished && content.StateType == StateType.Message)
             {
                 var lastDebugStateProcessed = _lastStep;
                 _lastStep = null;
                 _dispatchLastDebugState = true;
-                AddItemToTreeImpl(new DebugState { StateType = StateType.Message, Message = Resources.CompilerMessage_ExecutionInterrupted, ParentID = lastDebugStateProcessed.ParentID });
+                AddItemToTreeImpl(new DebugState { StateType = StateType.Message, Message = Resources.CompilerMessage_ExecutionInterrupted, ParentID = lastDebugStateProcessed.ParentID.GetValueOrDefault() });
                 AddItemToTreeImpl(lastDebugStateProcessed);
                 _dispatchLastDebugState = false;
             }
 
-            if(!string.IsNullOrWhiteSpace(SearchText) && !_debugOutputFilterStrategy.Filter(content, SearchText))
+            if (!string.IsNullOrWhiteSpace(SearchText) && !_debugOutputFilterStrategy.Filter(content, SearchText))
             {
                 return;
             }
 
-            if(content.StateType == StateType.Message && content.ParentID == Guid.Empty)
+            if (AddTreeViewItemToRootItems(content))
             {
-                RootItems.Add(new DebugStringTreeViewItemViewModel { Content = content.Message });
+                return;
+            }
+
+            if (content.IsFinalStep())
+            {
+                DebugStatus = DebugStatus.Finished;
+            }
+        }
+
+        bool AddTreeViewItemToRootItems(IDebugState content)
+        {
+            var parentID = content.ParentID.GetValueOrDefault();
+            if (content.StateType == StateType.Message && parentID == Guid.Empty)
+            {
+                RootItems.Add(new DebugStringTreeViewItemViewModel { Content = content.Message, ActivityTypeName = content.ActualType });
             }
             else
             {
-                var isRootItem = content.ParentID == Guid.Empty || content.ID == content.ParentID;
+                var isRootItem = parentID == Guid.Empty || content.ID == parentID;
 
-                IDebugTreeViewItemViewModel child;
+                var child = CreateChildTreeViewItem(content);
 
-                if(content.StateType == StateType.Message)
-                {
-                    child = new DebugStringTreeViewItemViewModel { Content = content.Message };
-                }
-                else
-                {
-                    child = new DebugStateTreeViewItemViewModel(EnvironmentRepository) { Content = content };
-                }
-
-                if(!_contentItemMap.ContainsKey(content.ID))
+                if (!_contentItemMap.ContainsKey(content.ID))
                 {
                     _contentItemMap.Add(content.ID, child);
                 }
-                if(isRootItem)
+                if (isRootItem)
                 {
                     RootItems.Add(child);
                 }
                 else
                 {
-                    IDebugTreeViewItemViewModel parent;
-                    if(!_contentItemMap.TryGetValue(content.ParentID, out parent))
+                    var parent = CreateParentTreeViewItem(content, child);
+                    if (AddErrorToParent(content, child, parent))
                     {
-                        parent = new DebugStateTreeViewItemViewModel(EnvironmentRepository);
-                        _contentItemMap.Add(content.ParentID, parent);
-                    }
-                    child.Parent = parent;
-                    parent.Children.Add(child);
-                    if(child.HasError.GetValueOrDefault(false))
-                    {
-                        var theParent = parent as DebugStateTreeViewItemViewModel;
-                        if(theParent == null)
-                        {
-                            return;
-                        }
-                     
-                        theParent.AppendError(content.ErrorMessage);
-                        theParent.HasError = true;
+                        return true;
                     }
                 }
-            }
-            if(content.IsFinalStep())
-            {
-                DebugStatus = DebugStatus.Finished;
-            }
-
-        }
-
-        #endregion
-
-        #region QueuePending
-
-        // BUG 9735 - 2013.06.22 - TWR : added
-        bool QueuePending(IDebugState item)
-        {
-            if(item.StateType == StateType.Message && IsProcessing)
-            {
-                _pendingItems.Add(item);
-                return true;
             }
             return false;
         }
 
-        #endregion
+        bool AddErrorToParent(IDebugState content, IDebugTreeViewItemViewModel child, IDebugTreeViewItemViewModel parent)
+        {
+            if (!child.HasError.GetValueOrDefault(false))
+            {
+                return false;
+            }
 
-        #region FlushPending
+            var theParent = parent as DebugStateTreeViewItemViewModel;
+            if (theParent == null)
+            {
+                return true;
+            }
 
-        // BUG 9735 - 2013.06.22 - TWR : added
+            theParent.AppendError(content.ErrorMessage);
+            theParent.HasError = true;
+            var childState = child as DebugStateTreeViewItemViewModel;
+            if (childState?.AssertResultList != null && childState.AssertResultList.Count > 0 && IsTestView)
+            {
+                foreach (var listItem in childState.AssertResultList)
+                {
+                    AddErrorToAssertResultListParent(theParent, listItem);
+                }
+            }
+            return false;
+        }
+
+        static void AddErrorToAssertResultListParent(DebugStateTreeViewItemViewModel theParent, object listItem)
+        {
+            var lineItem = listItem as DebugLine;
+            if (lineItem?.LineItems != null)
+            {
+                foreach (var lineItemLineItem in lineItem.LineItems)
+                {
+                    if (lineItemLineItem is DebugLineItem line && line.TestStepHasError)
+                    {
+                        theParent.AppendError(line.Value);
+                    }
+                }
+            }
+        }
+
+        IDebugTreeViewItemViewModel CreateParentTreeViewItem(IDebugState content, IDebugTreeViewItemViewModel child)
+        {
+            if (!_contentItemMap.TryGetValue(content.ParentID.GetValueOrDefault(), out IDebugTreeViewItemViewModel parent))
+            {
+                parent = new DebugStateTreeViewItemViewModel(ServerRepository)
+                {
+                    ActivityTypeName = content.ActualType
+                };
+                _contentItemMap.Add(content.ParentID.GetValueOrDefault(), parent);
+            }
+            child.Parent = parent;
+            parent.Children.Add(child);
+            return parent;
+        }
+
+        IDebugTreeViewItemViewModel CreateChildTreeViewItem(IDebugState content)
+        {
+            IDebugTreeViewItemViewModel child;
+            if (content.StateType == StateType.Message)
+            {
+                child = new DebugStringTreeViewItemViewModel
+                {
+                    Content = content.Message,
+                    ActivityTypeName = content.ActualType
+                };
+            }
+            else
+            {
+                child = new DebugStateTreeViewItemViewModel(ServerRepository)
+                {
+                    Content = content,
+                    ActivityTypeName = content.ActualType
+                };
+            }
+            return child;
+        }
+
         void FlushPending()
         {
-            while(_pendingItems.Count > 0)
+            while (_pendingItems.Count > 0)
             {
                 AddItemToTree(_pendingItems[0]);
                 _pendingItems.RemoveAt(0);
             }
         }
 
-        #endregion
-
-        #region NotifyOfPropertyChange
-
-        public override void NotifyOfPropertyChange(string propertyName)
+        public override void NotifyOfPropertyChange(string propertyName = "")
         {
             base.NotifyOfPropertyChange(propertyName);
 
-            // BUG 9735 - 2013.06.22 - TWR : added
-            if(propertyName == "IsProcessing")
+            if (propertyName == "IsProcessing")
             {
                 FlushPending();
             }
         }
 
-        #endregion
+        public void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
+        }
 
         static void IterateItems<T>(IEnumerable<IDebugTreeViewItemViewModel> items, Action<T> processItem)
             where T : IDebugTreeViewItemViewModel
         {
-            foreach(var debugTreeViewItemViewModel in items.Where(i => i is T))
+            foreach (var debugTreeViewItemViewModel in items.Where(i => i is T))
             {
                 var item = (T)debugTreeViewItemViewModel;
-                processItem(item);
-                IterateItems(item.Children, processItem);
+                if (item is DebugStateTreeViewItemViewModel)
+                {
+                    var actual = item as DebugStateTreeViewItemViewModel;
+                    if (actual.Content.StateType != StateType.End)
+                    {
+                        processItem?.Invoke(item);
+                        IterateItems(item.Children, processItem);
+                    }
+
+                }
+
             }
         }
 
         static void ClearSelection()
         {
-            EventPublishers.Studio.Publish(new DebugSelectionChangedEventArgs { SelectionType = ActivitySelectionType.None });
+            EventPublishers.Studio.Publish(new DebugSelectionChangedEventArgs
+            {
+                SelectionType = ActivitySelectionType.None
+            });
         }
     }
 }

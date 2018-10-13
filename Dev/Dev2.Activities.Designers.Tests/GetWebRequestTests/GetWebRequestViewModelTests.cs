@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,6 @@
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using Dev2.Activities.Designers2.GetWebRequest.GetWebRequestWithTimeout;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -22,7 +20,6 @@ using Moq.Protected;
 namespace Dev2.Activities.Designers.Tests.GetWebRequestTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class GetWebRequestViewModelTests
     {
         [TestMethod]
@@ -200,7 +197,7 @@ namespace Dev2.Activities.Designers.Tests.GetWebRequestTests
             var propertyCollection = new Mock<ModelPropertyCollection>();
 
             var url = new Mock<ModelProperty>();
-            url.SetupProperty(p => p.ComputedValue, "http://www.google.com"); // start "tracking" sets/gets to this property
+            url.SetupProperty(p => p.ComputedValue, "http://www.google.com");
             properties.Add("Url", url);
             propertyCollection.Protected().Setup<ModelProperty>("Find", "Url", true).Returns(url.Object);
 
@@ -227,7 +224,7 @@ namespace Dev2.Activities.Designers.Tests.GetWebRequestTests
             var propertyCollection = new Mock<ModelPropertyCollection>();
 
             var url = new Mock<ModelProperty>();
-            url.SetupProperty(p => p.ComputedValue, "www.google.com"); // start "tracking" sets/gets to this property
+            url.SetupProperty(p => p.ComputedValue, "www.google.com");
             properties.Add("Url", url);
             propertyCollection.Protected().Setup<ModelProperty>("Find", "Url", true).Returns(url.Object);
 

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,16 +8,14 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
-using Dev2.Data.Enums;
-using Dev2.Interfaces;
+using Dev2.Common.Interfaces.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class GatherSystemInformationTOTests
     {
         [TestMethod]
@@ -27,7 +24,7 @@ namespace Dev2.Tests
             //------------Setup for test--------------------------
             
             //------------Execute Test---------------------------
-            GatherSystemInformationTO informationTO = new GatherSystemInformationTO();
+            var informationTO = new GatherSystemInformationTO();
             //------------Assert Results-------------------------
             Assert.IsInstanceOfType(informationTO,typeof(IDev2TOFn));
         }

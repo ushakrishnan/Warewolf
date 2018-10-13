@@ -4,33 +4,28 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Services.Security;
 using Dev2.Workspaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Checks a users permissions on the local file system
-    /// </summary>
-    public class LoggingSettingsWrite : IEsbManagementEndpoint
+    public class LoggingSettingsWrite : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             if(values == null)
             {
-                throw new InvalidDataException("Empty values passed.");
+                throw new InvalidDataException(ErrorResource.EmptyValuesPassed);
             }
 
-            StringBuilder loggingSettingsBuilder;
-            values.TryGetValue("LoggingSettings", out loggingSettingsBuilder);
+            values.TryGetValue("LoggingSettings", out StringBuilder loggingSettingsBuilder);
 
-            if(loggingSettingsBuilder == null || loggingSettingsBuilder.Length == 0)
+            if (loggingSettingsBuilder == null || loggingSettingsBuilder.Length == 0)
             {
-                throw new InvalidDataException("Empty Logging Settings passed.");
+                throw new InvalidDataException(ErrorResource.EmptyLoggingSettingsPassed);
             }
 
             var serializer = new Dev2JsonSerializer();
@@ -40,14 +35,14 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var loggingSettingsTo = serializer.Deserialize<LoggingSettingsTo>(loggingSettingsBuilder);
                 if(loggingSettingsTo == null)
                 {
-                    throw new InvalidDataException("The security settings are not valid.");
+                    throw new InvalidDataException(ErrorResource.InvalidSecuritySettings);
                 }
 
                 Write(loggingSettingsTo);
             }
             catch(Exception e)
             {
-                throw new InvalidDataException(string.Format("The security settings are not valid. Error: {0}", e.Message));
+                throw new InvalidDataException(ErrorResource.InvalidSecuritySettings + $" Error: {e.Message}");
             }
 
             var msg = new ExecuteMessage { HasError = false };
@@ -59,32 +54,11 @@ namespace Dev2.Runtime.ESB.Management.Services
         public static void Write(LoggingSettingsTo loggingSettingsTo)
         {
             VerifyArgument.IsNotNull("loggingSettingsTo", loggingSettingsTo);
-            Dev2Logger.WriteLogSettings(loggingSettingsTo.LogSize.ToString(CultureInfo.InvariantCulture), loggingSettingsTo.LogLevel, "Settings.config");
+            Dev2Logger.WriteLogSettings(loggingSettingsTo.FileLoggerLogSize.ToString(CultureInfo.InvariantCulture), loggingSettingsTo.FileLoggerLogLevel,loggingSettingsTo.EventLogLoggerLogLevel, EnvironmentVariables.ServerLogSettingsFile,"Warewolf Server");
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            var dynamicService = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><LoggingSettings ColumnIODirection=\"Input\"></LoggingSettings><Result/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><LoggingSettings ColumnIODirection=\"Input\"></LoggingSettings><Result/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            var serviceAction = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            dynamicService.Actions.Add(serviceAction);
-
-            return dynamicService;
-        }
-
-        public string HandlesType()
-        {
-            return "LoggingSettingsWriteService";
-        }
+        public override string HandlesType() => "LoggingSettingsWriteService";
     }
 }

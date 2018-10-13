@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +12,6 @@ using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -22,21 +20,21 @@ using Dev2.Activities.Designers2.Core.QuickVariableInput;
 using Dev2.Activities.Designers2.SqlBulkInsert;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Messages;
-using Dev2.Threading;
+using Dev2.Studio.Interfaces;
 using Dev2.TO;
+using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class SqlBulkInsertDesignerViewModelTests
     {
 
@@ -49,9 +47,9 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new SqlBulkInsertDesignerViewModel(CreateModelItem(), null, null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
         }
@@ -64,13 +62,37 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             var x = CreateModelItem();
             var vm = new SqlBulkInsertDesignerViewModel(x);
             Assert.AreEqual(x, vm.ModelItem);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("SqlBulkInsertDesignerViewModel_Handle")]
+        public void SqlBulkInsertDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            AppUsageStats.LocalHost = "http://localhost:1245";
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+
+            var modelItem = CreateModelItem();
+            const int DatabaseCount = 2;
+            var databases = CreateDatabases(DatabaseCount);
+
+            var viewModel = CreateViewModel(modelItem, databases);
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
 
@@ -83,9 +105,9 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new SqlBulkInsertDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, null, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Assert Results-------------------------
         }
@@ -99,9 +121,9 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            // ReSharper disable ObjectCreationAsStatement
-            new SqlBulkInsertDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IEnvironmentModel>().Object, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
+            new SqlBulkInsertDesignerViewModel(CreateModelItem(), new Mock<IAsyncWorker>().Object, new Mock<IServer>().Object, null);
+            
 
             //------------Assert Results-------------------------
         }
@@ -551,21 +573,18 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             modelItem.SetProperty("TableName", selectedTable.TableName);
             modelItem.SetProperty("InputMappings", selectedTable.Columns.Select(c => new DataColumnMapping { OutputColumn = c }).ToList());
 
-            ShowEditResourceWizardMessage message = null;
             var eventPublisher = new Mock<IEventAggregator>();
-            eventPublisher.Setup(p => p.Publish(It.IsAny<ShowEditResourceWizardMessage>())).Callback((object m) => message = m as ShowEditResourceWizardMessage).Verifiable();
-
+            var mockShellViewModel = new Mock<IShellViewModel>();
+            mockShellViewModel.Setup(model => model.OpenResource(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<IServer>()));
+            CustomContainer.Register(mockShellViewModel.Object);
             var resourceModel = new Mock<IResourceModel>();
 
             var viewModel = CreateViewModel(modelItem, databases, eventPublisher.Object, resourceModel.Object, true);
-
+            viewModel.SelectedDatabase = selectedDatabase;
             //------------Execute Test---------------------------
             viewModel.EditDatabaseCommand.Execute(null);
-
-
             //------------Assert Results-------------------------
-            eventPublisher.Verify(p => p.Publish(It.IsAny<ShowEditResourceWizardMessage>()));
-            Assert.AreSame(resourceModel.Object, message.ResourceModel);
+            mockShellViewModel.Verify(model => model.OpenResource(It.IsAny<Guid>(),It.IsAny<Guid>(), It.IsAny<IServer>()));
         }
 
         [TestMethod]
@@ -585,9 +604,12 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             modelItem.SetProperty("TableName", selectedTable.TableName);
             modelItem.SetProperty("InputMappings", selectedTable.Columns.Select(c => new DataColumnMapping { OutputColumn = c }).ToList());
 
-            ShowNewResourceWizard message = null;
             var eventPublisher = new Mock<IEventAggregator>();
-            eventPublisher.Setup(p => p.Publish(It.IsAny<ShowNewResourceWizard>())).Callback((object m) => message = m as ShowNewResourceWizard).Verifiable();
+
+            var mockShellViewModel = new Mock<IShellViewModel>();
+            mockShellViewModel.Setup(model => model.NewSqlServerSource(It.IsAny<string>()));
+            var shellViewModel = mockShellViewModel.Object;
+            CustomContainer.Register(shellViewModel);
 
             var resourceModel = new Mock<IResourceModel>();
 
@@ -601,8 +623,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
 
             //------------Assert Results-------------------------
-            eventPublisher.Verify(p => p.Publish(It.IsAny<ShowNewResourceWizard>()));
-            Assert.AreSame("DbSource", message.ResourceType);
+            mockShellViewModel.Verify(model => model.NewSqlServerSource(It.IsAny<string>()));
         }
 
         [TestMethod]
@@ -812,10 +833,10 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(viewModel.IsDatabaseSelected, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "A database must be selected.") == null);
-            Assert.AreEqual(viewModel.IsTableSelected, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "A table must be selected.") == null);
-            Assert.AreEqual(isBatchSizeValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Batch size must be a number greater than or equal to zero.") == null);
-            Assert.AreEqual(isTimeoutValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Timeout must be a number greater than or equal to zero.") == null);
+            Assert.AreEqual(viewModel.IsDatabaseSelected, viewModel.Errors?.FirstOrDefault(e => e.Message == "A database must be selected.") == null);
+            Assert.AreEqual(viewModel.IsTableSelected, viewModel.Errors?.FirstOrDefault(e => e.Message == "A table must be selected.") == null);
+            Assert.AreEqual(isBatchSizeValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Batch size must be a number greater than or equal to zero.") == null);
+            Assert.AreEqual(isTimeoutValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Timeout must be a number greater than or equal to zero.") == null);
         }
 
         [TestMethod]
@@ -981,10 +1002,10 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
 
             //------------Assert Results-------------------------
-            Assert.AreEqual(isInputMappingsValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Input Mapping To Field '" + toField + "' Invalid region detected: A close ]] without a related open [[") == null);
-            Assert.AreEqual(isBatchSizeValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Batch Size Invalid region detected: A close ]] without a related open [[") == null);
-            Assert.AreEqual(isTimeoutValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Timeout Invalid region detected: A close ]] without a related open [[") == null);
-            Assert.AreEqual(isResultValid, viewModel.Errors == null || viewModel.Errors.FirstOrDefault(e => e.Message == "Result Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isInputMappingsValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Input Mapping To Field '" + toField + "' Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isBatchSizeValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Batch Size Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isTimeoutValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Timeout Invalid region detected: A close ]] without a related open [[") == null);
+            Assert.AreEqual(isResultValid, viewModel.Errors?.FirstOrDefault(e => e.Message == "Result Invalid region detected: A close ]] without a related open [[") == null);
         }
 
         [TestMethod]
@@ -1130,9 +1151,9 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 
         static TestSqlBulkInsertDesignerViewModel CreateViewModel(ModelItem modelItem, Dictionary<DbSource, DbTableList> sources, IEventAggregator eventAggregator, IResourceModel resourceModel, bool configureFindSingle = false, string columnListErrors = "")
         {
-            var sourceDefs = sources == null ? null : sources.Select(s => s.Key.ToXml().ToString());
+            var sourceDefs = sources?.Select(s => s.Key.ToXml().ToString());
 
-            var envModel = new Mock<IEnvironmentModel>();
+            var envModel = new Mock<IServer>();
             envModel.Setup(e => e.Connection.WorkspaceID).Returns(Guid.NewGuid());
 
             var resourceRepo = new Mock<IResourceRepository>();
@@ -1147,27 +1168,27 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
             if (sources != null)
             {
                 var dbs = sources.Keys.ToList();
-                resourceRepo.Setup(r => r.FindSourcesByType<DbSource>(It.IsAny<IEnvironmentModel>(), enSourceType.SqlDatabase)).Returns(dbs);
+                resourceRepo.Setup(r => r.FindSourcesByType<DbSource>(It.IsAny<IServer>(), enSourceType.SqlDatabase)).Returns(dbs);
             }
 
             var tableJson = new DbTableList();
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             resourceRepo.Setup(r => r.GetDatabaseTables(It.IsAny<DbSource>())).Callback((DbSource src) =>
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             {
                 if (sources != null)
                 {
                     var tableList = sources[src];
                     tableJson = tableList;
                 }
-                // ReSharper disable ImplicitlyCapturedClosure
+                
             }).Returns(() => tableJson);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
 
             var columnsJson = new DbColumnList();
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             resourceRepo.Setup(r => r.GetDatabaseTableColumns(It.IsAny<DbSource>(), It.IsAny<DbTable>())).Callback((DbSource src, DbTable tbl) =>
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             {
                 var tableName = tbl.TableName;
                 if (sources != null)
@@ -1184,9 +1205,9 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
                     }
                     columnsJson = columnList;
                 }
-                // ReSharper disable ImplicitlyCapturedClosure
+                
             }).Returns(() => columnsJson);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
 
             if (configureFindSingle)
             {
@@ -1214,7 +1235,7 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
                 for (var j = 0; j < 10; j++)
                 {
                     var columns = new List<IDbColumn>();
-                    var colCount = ((j % 4) + 1) * (i + 1);
+                    var colCount = (j % 4 + 1) * (i + 1);
                     for (var k = 0; k < colCount; k++)
                     {
                         var t = k % 4;
@@ -1231,6 +1252,8 @@ namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
                                 break;
                             case 3:
                                 columns.Add(new DbColumn { ColumnName = dbName + "_Column_" + j + "_" + k, SqlDataType = SqlDbType.Float });
+                                break;
+                            default:
                                 break;
                         }
                     }

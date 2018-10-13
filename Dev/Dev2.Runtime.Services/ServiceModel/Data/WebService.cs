@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,14 +9,14 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Core.Graph;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Data.ServiceModel;
 using Dev2.Data.Util;
 using Dev2.Util;
 using Newtonsoft.Json;
@@ -50,20 +49,10 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         #region CTOR
 
-        public static WebService Create()
-        {
-            var result = new WebService
-            {
-                ResourceID = Guid.Empty,
-                Source = { ResourceID = Guid.Empty },
-            };
-            return result;
-        }
-
         public WebService()
         {
             ResourceID = Guid.Empty;
-            ResourceType = ResourceType.WebService;
+            ResourceType = "WebService";
             Source = new WebSource();
             Recordsets = new RecordsetList();
             Method = new ServiceMethod();
@@ -72,17 +61,24 @@ namespace Dev2.Runtime.ServiceModel.Data
         public WebService(XElement xml)
             : base(xml)
         {
-            ResourceType = ResourceType.WebService;
+            ResourceType = "WebService";
             var action = xml.Descendants("Action").FirstOrDefault();
             if(action == null)
             {
-                return;
+                
+                if (xml.HasAttributes && xml.Attribute("Type").Value == "InvokeWebService")
+                {
+                    action = xml;
+                }
+                else
+                {
+                    return;
+                }
             }
 
             RequestUrl = action.AttributeSafe("RequestUrl");
             JsonPath = action.AttributeSafe("JsonPath");
-            WebRequestMethod requestMethod;
-            RequestMethod = Enum.TryParse(action.AttributeSafe("RequestMethod"), true, out requestMethod) ? requestMethod : WebRequestMethod.Get;
+            RequestMethod = Enum.TryParse(action.AttributeSafe("RequestMethod"), true, out WebRequestMethod requestMethod) ? requestMethod : WebRequestMethod.Get;
             RequestHeaders = action.ElementSafe("RequestHeaders");
             RequestBody = action.ElementSafe("RequestBody");
 
@@ -90,6 +86,8 @@ namespace Dev2.Runtime.ServiceModel.Data
             Method = CreateInputsMethod(action);
             Recordsets = CreateOutputsRecordsetList(action);
         }
+
+        public List<NameValue> Headers { get; set; } 
 
         #endregion
 
@@ -179,15 +177,13 @@ namespace Dev2.Runtime.ServiceModel.Data
             {
                 // If disposing equals true, dispose all managed 
                 // and unmanaged resources. 
-                if(disposing)
+                // Dispose managed resources.
+                if (disposing && Source != null)
                 {
-                    // Dispose managed resources.
-                    if(Source != null)
-                    {
-                        ((WebSource)Source).Dispose();
-                        Source = null;
-                    }
+                    ((WebSource)Source).Dispose();
+                    Source = null;
                 }
+
 
                 // Call the appropriate methods to clean up 
                 // unmanaged resources here. 
@@ -219,7 +215,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             }
             catch(JsonException je)
             {
-                Dev2Logger.Log.Error(je);
+                Dev2Logger.Error(je, GlobalConstants.WarewolfError);
             }
         }
 

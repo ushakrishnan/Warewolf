@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,20 +15,8 @@ namespace Dev2.Data.Decisions.Operations
 {
     public class IsText : IDecisionOperation
     {
-        public bool Invoke(string[] cols)
-        {
-            if(!string.IsNullOrEmpty(cols[0]))
-            {
-                return cols[0].IsAlpha();
-            }
+        public bool Invoke(string[] cols) => cols[0].IsAlpha();
 
-            return false; // blank is not Text
-
-        }
-
-        public Enum HandlesType()
-        {
-            return enDecisionType.IsText;
-        }
+        public Enum HandlesType() => enDecisionType.IsText;
     }
 }

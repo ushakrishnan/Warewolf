@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,13 +11,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.InterfaceImplementors
 {
     /// <summary>
-    /// A provider responsible for providing an aggregated list of <see cref="IEnvironmentModel"/>'s.
+    /// A provider responsible for providing an aggregated list of <see cref="IServer"/>'s.
     /// </summary>
     public class ServerProvider : IEnvironmentModelProvider
     {
@@ -61,22 +60,36 @@ namespace Dev2.Studio.Core.InterfaceImplementors
 
         #region Load
 
-        public List<IEnvironmentModel> Load()
-        {
-            return Load(EnvironmentRepository.Instance);
-        }
+        public List<IServer> Load() => Load(CustomContainer.Get<IServerRepository>());
 
-        public List<IEnvironmentModel> Load(IEnvironmentRepository environmentRepository)
+        public List<IServer> Load(IServerRepository serverRepository)
         {
             // PBI 6597 : TWR
             // BUG 9276 : TWR : 2013.04.19 - refactored so that we share environments
 
-            if(environmentRepository == null)
+            if(serverRepository == null)
             {
-                throw new ArgumentNullException("environmentRepository");
+                throw new ArgumentNullException("serverRepository");
             }
 
-            var environments = environmentRepository.All();
+            var environments = serverRepository.All();
+
+            return environments.ToList();
+        }
+
+        public List<IServer> ReloadServers() => ReloadServers(CustomContainer.Get<IServerRepository>());
+
+        public List<IServer> ReloadServers(IServerRepository serverRepository)
+        {
+            // PBI 6597 : TWR
+            // BUG 9276 : TWR : 2013.04.19 - refactored so that we share environments
+
+            if (serverRepository == null)
+            {
+                throw new ArgumentNullException("serverRepository");
+            }
+
+            var environments = serverRepository.ReloadServers();
 
             return environments.ToList();
         }

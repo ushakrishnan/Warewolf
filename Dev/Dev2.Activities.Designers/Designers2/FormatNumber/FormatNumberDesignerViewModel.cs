@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +14,8 @@ using System.Collections.Generic;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.FormatNumber
 {
@@ -24,23 +24,26 @@ namespace Dev2.Activities.Designers2.FormatNumber
         public FormatNumberDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             RoundingTypes = new List<string>(Dev2EnumConverter.ConvertEnumsTypeToStringList<enRoundingType>());
             SelectedRoundingType = string.IsNullOrEmpty(RoundingType) ? RoundingTypes[0] : RoundingType;
-           
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Format_Number;
         }
 
         public List<string> RoundingTypes { get; set; }
 
-        public string SelectedRoundingType { get { return (string)GetValue(SelectedRoundingTypeProperty); } set { SetValue(SelectedRoundingTypeProperty, value); } }
+        public string SelectedRoundingType { get => (string)GetValue(SelectedRoundingTypeProperty); set => SetValue(SelectedRoundingTypeProperty, value); }
         public static readonly DependencyProperty SelectedRoundingTypeProperty =
         DependencyProperty.Register("SelectedRoundingType", typeof(string), typeof(FormatNumberDesignerViewModel), new PropertyMetadata(null, OnSelectedRoundingTypeChanged));
+        
+        string RoundingType { set => SetProperty(value); get => GetProperty<string>(); }
 
-        // DO NOT bind to these properties - these are here for convenience only!!!
-        string RoundingType { set { SetProperty(value); } get { return GetProperty<string>(); } }
-        string RoundingDecimalPlaces { set { SetProperty(value); } }
+        void SetRoundingDecimalPlaces(string value)
+        {
+            SetProperty(value);
+        }
 
-        public bool IsRoundingEnabled { get { return (bool)GetValue(IsRoundingEnabledProperty); } set { SetValue(IsRoundingEnabledProperty, value); } }
+        public bool IsRoundingEnabled { get => (bool)GetValue(IsRoundingEnabledProperty); set => SetValue(IsRoundingEnabledProperty, value); }
 
         public static readonly DependencyProperty IsRoundingEnabledProperty =
            DependencyProperty.Register("IsRoundingEnabled", typeof(bool), typeof(FormatNumberDesignerViewModel), new PropertyMetadata(false));
@@ -50,12 +53,11 @@ namespace Dev2.Activities.Designers2.FormatNumber
             var viewModel = (FormatNumberDesignerViewModel)d;
             var value = e.NewValue as string;
 
-            enRoundingType roundingType;
-            if(Enum.TryParse(value, out roundingType))
+            if (Enum.TryParse(value, out enRoundingType roundingType))
             {
-                if(roundingType == enRoundingType.None)
+                if (roundingType == enRoundingType.None)
                 {
-                    viewModel.RoundingDecimalPlaces = string.Empty;
+                    viewModel.SetRoundingDecimalPlaces(string.Empty);
                     viewModel.IsRoundingEnabled = false;
                 }
                 else
@@ -68,6 +70,12 @@ namespace Dev2.Activities.Designers2.FormatNumber
 
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,8 +18,8 @@ namespace Dev2.TaskScheduler.Wrappers
 {
     public class Dev2ActionCollection : IActionCollection
     {
-        private readonly ActionCollection _nativeInstance;
-        private readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
+        readonly ActionCollection _nativeInstance;
+        readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
 
         public Dev2ActionCollection(ITaskServiceConvertorFactory taskServiceConvertorFactory,
             ActionCollection nativeInstance)
@@ -33,21 +33,13 @@ namespace Dev2.TaskScheduler.Wrappers
             return _taskServiceConvertorFactory.CreateAction(Instance.Add(action.Instance));
         }
 
-        public bool ContainsType(Type actionType)
-        {
-            return Instance.ContainsType(actionType);
-        }
 
-
-        public int Count
-        {
-            get { return Instance.Count; }
-        }
+        public int Count => Instance.Count;
 
 
         public IEnumerator<IAction> GetEnumerator()
         {
-            IEnumerator<Microsoft.Win32.TaskScheduler.Action> en = Instance.GetEnumerator();
+            var en = Instance.GetEnumerator();
             while (en.MoveNext())
             {
                 yield return _taskServiceConvertorFactory.CreateAction(en.Current);
@@ -58,14 +50,21 @@ namespace Dev2.TaskScheduler.Wrappers
         public void Dispose()
         {
             Instance.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-
-        public ActionCollection Instance
+        protected virtual void Dispose(bool disposing)
         {
-            get { return _nativeInstance; }
+            // Cleanup
         }
 
+        public ActionCollection Instance => _nativeInstance;
+
+        public bool ContainsType(Type actionType)
+        {
+            return Instance.ContainsType(actionType);
+        }
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

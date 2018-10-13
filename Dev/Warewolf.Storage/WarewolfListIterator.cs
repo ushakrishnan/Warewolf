@@ -17,24 +17,16 @@ namespace Warewolf.Storage
             _count = -1;
         }
 
-        public string FetchNextValue(IWarewolfIterator expression)
+        public string FetchNextValue(IWarewolfIterator iterator)
         {
-            var warewolfEvalResult = _variablesToIterateOn[_variablesToIterateOn.IndexOf(expression)];
-            if (warewolfEvalResult!=null)
-            {
-                return warewolfEvalResult.GetNextValue();
-            }            
-            return null;
+            var warewolfEvalResult = _variablesToIterateOn[_variablesToIterateOn.IndexOf(iterator)];
+            return warewolfEvalResult?.GetNextValue();
         }
 
         public string FetchNextValue(int position)
         {
             var warewolfEvalResult = _variablesToIterateOn[position];
-            if (warewolfEvalResult != null)
-            {
-                return warewolfEvalResult.GetNextValue();
-            }
-            return null;
+            return warewolfEvalResult?.GetNextValue();
         }
 
 
@@ -43,15 +35,9 @@ namespace Warewolf.Storage
             _variablesToIterateOn.Add(iterator);            
         }
 
-        public int GetMax()
-        {
-            return _variablesToIterateOn.Max(iterator => iterator.GetLength());
-        }
+        public int GetMax() => _variablesToIterateOn.Max(iterator => iterator.GetLength());
 
-        public bool HasMoreData()
-        {
-            return _variablesToIterateOn.Any(iterator => iterator.HasMoreData());
-        }
+        public bool HasMoreData() => _variablesToIterateOn.Any(iterator => iterator.HasMoreData());
 
         #region Implementation of IDisposable
 
@@ -73,10 +59,7 @@ namespace Warewolf.Storage
         /// The name of the field or the empty string (""), if there is no value to return.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public string GetName(int i)
-        {
-            return "";
-        }
+        public string GetName(int i) => "";
 
         /// <summary>
         /// Gets the data type information for the specified field.
@@ -85,10 +68,7 @@ namespace Warewolf.Storage
         /// The data type information for the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public string GetDataTypeName(int i)
-        {
-            return "String";
-        }
+        public string GetDataTypeName(int i) => "String";
 
         /// <summary>
         /// Gets the <see cref="T:System.Type"/> information corresponding to the type of <see cref="T:System.Object"/> that would be returned from <see cref="M:System.Data.IDataRecord.GetValue(System.Int32)"/>.
@@ -97,10 +77,7 @@ namespace Warewolf.Storage
         /// The <see cref="T:System.Type"/> information corresponding to the type of <see cref="T:System.Object"/> that would be returned from <see cref="M:System.Data.IDataRecord.GetValue(System.Int32)"/>.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public Type GetFieldType(int i)
-        {
-            return typeof(string);
-        }
+        public Type GetFieldType(int i) => typeof(string);
 
         /// <summary>
         /// Return the value of the specified field.
@@ -179,10 +156,7 @@ namespace Warewolf.Storage
         /// The index of the named field.
         /// </returns>
         /// <param name="name">The name of the field to find. </param>
-        public int GetOrdinal(string name)
-        {
-            return Names.IndexOf(name);
-        }
+        public int GetOrdinal(string name) => Names.IndexOf(name);
 
         /// <summary>
         /// Gets the value of the specified column as a Boolean.
@@ -191,10 +165,7 @@ namespace Warewolf.Storage
         /// The value of the column.
         /// </returns>
         /// <param name="i">The zero-based column ordinal. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public bool GetBoolean(int i)
-        {
-            return Convert.ToBoolean(FetchNextValue(i));
-        }
+        public bool GetBoolean(int i) => Convert.ToBoolean(FetchNextValue(i));
 
         /// <summary>
         /// Gets the 8-bit unsigned integer value of the specified column.
@@ -203,10 +174,7 @@ namespace Warewolf.Storage
         /// The 8-bit unsigned integer value of the specified column.
         /// </returns>
         /// <param name="i">The zero-based column ordinal. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public byte GetByte(int i)
-        {
-            return Convert.ToByte(FetchNextValue(i));
-        }
+        public byte GetByte(int i) => Convert.ToByte(FetchNextValue(i));
 
         /// <summary>
         /// Reads a stream of bytes from the specified column offset into the buffer as an array, starting at the given buffer offset.
@@ -215,10 +183,7 @@ namespace Warewolf.Storage
         /// The actual number of bytes read.
         /// </returns>
         /// <param name="i">The zero-based column ordinal. </param><param name="fieldOffset">The index within the field from which to start the read operation. </param><param name="buffer">The buffer into which to read the stream of bytes. </param><param name="bufferoffset">The index for <paramref name="buffer"/> to start the read operation. </param><param name="length">The number of bytes to read. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
-        {
-            return 0;
-        }
+        public long GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length) => 0;
 
         /// <summary>
         /// Gets the character value of the specified column.
@@ -227,10 +192,7 @@ namespace Warewolf.Storage
         /// The character value of the specified column.
         /// </returns>
         /// <param name="i">The zero-based column ordinal. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public char GetChar(int i)
-        {
-            return Convert.ToChar(FetchNextValue(i));
-        }
+        public char GetChar(int i) => Convert.ToChar(FetchNextValue(i));
 
         /// <summary>
         /// Reads a stream of characters from the specified column offset into the buffer as an array, starting at the given buffer offset.
@@ -239,10 +201,7 @@ namespace Warewolf.Storage
         /// The actual number of characters read.
         /// </returns>
         /// <param name="i">The zero-based column ordinal. </param><param name="fieldoffset">The index within the row from which to start the read operation. </param><param name="buffer">The buffer into which to read the stream of bytes. </param><param name="bufferoffset">The index for <paramref name="buffer"/> to start the read operation. </param><param name="length">The number of bytes to read. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
-        {
-            return 0;
-        }
+        public long GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length) => 0;
 
         /// <summary>
         /// Returns the GUID value of the specified field.
@@ -251,10 +210,7 @@ namespace Warewolf.Storage
         /// The GUID value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public Guid GetGuid(int i)
-        {
-            return Guid.Parse( FetchNextValue(i));
-        }
+        public Guid GetGuid(int i) => Guid.Parse(FetchNextValue(i));
 
         /// <summary>
         /// Gets the 16-bit signed integer value of the specified field.
@@ -263,10 +219,7 @@ namespace Warewolf.Storage
         /// The 16-bit signed integer value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public short GetInt16(int i)
-        {
-            return short.Parse( FetchNextValue(i));
-        }
+        public short GetInt16(int i) => short.Parse(FetchNextValue(i));
 
         /// <summary>
         /// Gets the 32-bit signed integer value of the specified field.
@@ -275,10 +228,7 @@ namespace Warewolf.Storage
         /// The 32-bit signed integer value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public int GetInt32(int i)
-        {
-            return Convert.ToInt32(FetchNextValue(i)); 
-        }
+        public int GetInt32(int i) => Convert.ToInt32(FetchNextValue(i));
 
         /// <summary>
         /// Gets the 64-bit signed integer value of the specified field.
@@ -287,10 +237,7 @@ namespace Warewolf.Storage
         /// The 64-bit signed integer value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public long GetInt64(int i)
-        {
-            return Convert.ToInt64(FetchNextValue(i));
-        }
+        public long GetInt64(int i) => Convert.ToInt64(FetchNextValue(i));
 
         /// <summary>
         /// Gets the single-precision floating point number of the specified field.
@@ -299,10 +246,7 @@ namespace Warewolf.Storage
         /// The single-precision floating point number of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public float GetFloat(int i)
-        {
-            return Convert.ToSingle(FetchNextValue(i));
-        }
+        public float GetFloat(int i) => Convert.ToSingle(FetchNextValue(i));
 
         /// <summary>
         /// Gets the double-precision floating point number of the specified field.
@@ -311,10 +255,7 @@ namespace Warewolf.Storage
         /// The double-precision floating point number of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public double GetDouble(int i)
-        {
-            return Convert.ToDouble(FetchNextValue(i));
-        }
+        public double GetDouble(int i) => Convert.ToDouble(FetchNextValue(i));
 
         /// <summary>
         /// Gets the string value of the specified field.
@@ -323,10 +264,7 @@ namespace Warewolf.Storage
         /// The string value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public string GetString(int i)
-        {
-            return FetchNextValue(i);
-        }
+        public string GetString(int i) => FetchNextValue(i);
 
         /// <summary>
         /// Gets the fixed-position numeric value of the specified field.
@@ -335,10 +273,7 @@ namespace Warewolf.Storage
         /// The fixed-position numeric value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public decimal GetDecimal(int i)
-        {
-            return Convert.ToDecimal(FetchNextValue(i));
-        }
+        public decimal GetDecimal(int i) => Convert.ToDecimal(FetchNextValue(i));
 
         /// <summary>
         /// Gets the date and time data value of the specified field.
@@ -347,10 +282,7 @@ namespace Warewolf.Storage
         /// The date and time data value of the specified field.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public DateTime GetDateTime(int i)
-        {
-            return Convert.ToDateTime(FetchNextValue(i));
-        }
+        public DateTime GetDateTime(int i) => Convert.ToDateTime(FetchNextValue(i));
 
         /// <summary>
         /// Returns an <see cref="T:System.Data.IDataReader"/> for the specified column ordinal.
@@ -359,10 +291,7 @@ namespace Warewolf.Storage
         /// The <see cref="T:System.Data.IDataReader"/> for the specified column ordinal.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public IDataReader GetData(int i)
-        {
-            return null;
-        }
+        public IDataReader GetData(int i) => null;
 
         /// <summary>
         /// Return whether the specified field is set to null.
@@ -371,10 +300,7 @@ namespace Warewolf.Storage
         /// true if the specified field is set to null; otherwise, false.
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        public bool IsDBNull(int i)
-        {
-            return false;
-        }
+        public bool IsDBNull(int i) => false;
 
         /// <summary>
         /// Gets the number of columns in the current row.
@@ -382,7 +308,8 @@ namespace Warewolf.Storage
         /// <returns>
         /// When not positioned in a valid recordset, 0; otherwise, the number of columns in the current record. The default is -1.
         /// </returns>
-        public int FieldCount { get { return _variablesToIterateOn.Count; } }
+        public int FieldCount => _variablesToIterateOn.Count;
+
         /// <summary>
         /// Gets the column located at the specified index.
         /// </summary>
@@ -390,13 +317,8 @@ namespace Warewolf.Storage
         /// The column located at the specified index as an <see cref="T:System.Object"/>.
         /// </returns>
         /// <param name="i">The zero-based index of the column to get. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
-        object IDataRecord.this[int i]
-        {
-            get
-            {
-                return null;
-            }
-        }
+        object IDataRecord.this[int i] => null;
+
         /// <summary>
         /// Gets the column with the specified name.
         /// </summary>
@@ -404,13 +326,7 @@ namespace Warewolf.Storage
         /// The column with the specified name as an <see cref="T:System.Object"/>.
         /// </returns>
         /// <param name="name">The name of the column to find. </param><exception cref="T:System.IndexOutOfRangeException">No column with the specified name was found. </exception>
-        object IDataRecord.this[string name]
-        {
-            get
-            {
-                return null;
-            }
-        }
+        object IDataRecord.this[string name] => null;
 
         #endregion
 
@@ -430,10 +346,7 @@ namespace Warewolf.Storage
         /// A <see cref="T:System.Data.DataTable"/> that describes the column metadata.
         /// </returns>
         /// <exception cref="T:System.InvalidOperationException">The <see cref="T:System.Data.IDataReader"/> is closed. </exception>
-        public DataTable GetSchemaTable()
-        {
-            return null;
-        }
+        public DataTable GetSchemaTable() => null;
 
         /// <summary>
         /// Advances the data reader to the next result, when reading the results of batch SQL statements.
@@ -441,11 +354,7 @@ namespace Warewolf.Storage
         /// <returns>
         /// true if there are more rows; otherwise, false.
         /// </returns>
-        public bool NextResult()
-        {
-            return false;
-
-        }
+        public bool NextResult() => false;
 
         /// <summary>
         /// Advances the <see cref="T:System.Data.IDataReader"/> to the next record.
@@ -465,21 +374,23 @@ namespace Warewolf.Storage
         /// <returns>
         /// The level of nesting.
         /// </returns>
-        public int Depth { get { return _count; } }
+        public int Depth => _count;
+
         /// <summary>
         /// Gets a value indicating whether the data reader is closed.
         /// </summary>
         /// <returns>
         /// true if the data reader is closed; otherwise, false.
         /// </returns>
-        public bool IsClosed { get { return false; } }
+        public bool IsClosed => false;
+
         /// <summary>
         /// Gets the number of rows changed, inserted, or deleted by execution of the SQL statement.
         /// </summary>
         /// <returns>
         /// The number of rows changed, inserted, or deleted; 0 if no rows were affected or the statement failed; and -1 for SELECT statements.
         /// </returns>
-        public int RecordsAffected { get { return 0; } }
+        public int RecordsAffected => 0;
 
         #endregion
 

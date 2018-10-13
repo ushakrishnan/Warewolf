@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,20 +10,17 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using Dev2.Data.Enums;
 using Dev2.Data.Interfaces;
-using Dev2.DataList.Contract;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Studio.InterfaceImplementors;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace Dev2.Core.Tests.IntellisenseProvider
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class DateTimeIntellisenseProviderTests
     {
         [TestMethod]
@@ -37,7 +33,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             Assert.IsFalse(provider.HandlesResultInsertion);
             Assert.AreEqual(IntellisenseProviderType.NonDefault, provider.IntellisenseProviderType);
             Assert.IsNotNull(provider.IntellisenseResults);
-            Assert.AreEqual(24, provider.IntellisenseResults.Count);
+            Assert.AreEqual(32, provider.IntellisenseResults.Count);
             Assert.IsFalse(provider.Optional);
         }
 
@@ -55,9 +51,9 @@ namespace Dev2.Core.Tests.IntellisenseProvider
                 };
 
             var dateTimeIntellisenseProvider = new DateTimeIntellisenseProvider();
-            IList<IntellisenseProviderResult> results = dateTimeIntellisenseProvider.GetIntellisenseResults(context);
+            var results = dateTimeIntellisenseProvider.GetIntellisenseResults(context);
 
-            Assert.AreEqual(6, results.Count);
+            Assert.AreEqual(4, results.Count);
         }
 
         [TestMethod]

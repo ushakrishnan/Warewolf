@@ -7,10 +7,12 @@
                                xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
                                xmlns:core="clr-namespace:Dev2.Activities.Designers2.Core"
                                xmlns:local="clr-namespace:Dev2.Activities.Designers2.FindIndex"
-                               xmlns:help="clr-namespace:Dev2.Activities.Designers2.Core.Help"
+                               
                                xmlns:errors="clr-namespace:Dev2.Activities.Designers2.Core.Errors"
                                xmlns:attachedProperties2="clr-namespace:Dev2.Studio.AppResources.AttachedProperties"
-                               Padding="7"
+                               xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
+                               xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
+                               xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
                                mc:Ignorable="d"
                                Width="200"
                                MaxWidth="200"
@@ -18,10 +20,14 @@
                                d:DataContext="{d:DesignInstance local:FindIndexDesignerViewModel}">
 
     <core:ActivityDesignerTemplate.Resources>
-        <ResourceDictionary x:Name="TheResources"
-                            Source="pack://application:,,,/Dev2.Activities.Designers;component/Themes/ActivityResources.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <luna:SharedResourceDictionary Source="/Warewolf.Studio.Themes.Luna;component/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </core:ActivityDesignerTemplate.Resources>
-    <Grid>
+    
+    <Grid Margin="{StaticResource ElementBorder}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -34,73 +40,62 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Label Grid.Column="0"
-               Grid.Row="0"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="In Field" />
+        <TextBlock Grid.Column="0" Grid.Row="0" Text="In Field" />
         <ui:IntellisenseTextBox x:Name="InitialFocusElement"
                                 Grid.Column="1" 
                                 Grid.Row="0" 
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
                                 DefaultText="InField"
-                                FilterType="All" 
-                                WrapInBrackets="False"
-                                ToolTip="{x:Static help:HelpTextResources.FindIndexToolTipInField}"
+                                FilterType="All"
+                                AllowUserInsertLine="False"
+                                WrapInBrackets="True"
+                                ToolTip="{x:Static languages:Tooltips.FindIndexToolTipInField}"
                                 Text="{Binding Path=ModelItem.InField, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_InFieldtxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.FindIndexHelpInField}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.FindIndexHelpInField}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ModelItem.InField"
                                      SourcePropertyValue="{Binding ModelItem.InField, UpdateSourceTrigger=PropertyChanged}"
                                      Target="{Binding}" />
             </i:Interaction.Behaviors>
-
         </ui:IntellisenseTextBox>
 
-        <Label Grid.Column="0"
-               Grid.Row="1"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="Index"  />
+        <TextBlock Grid.Column="0" Grid.Row="1" Text="Index" Margin="{StaticResource ControlBorderTop}" />
         <ComboBox Grid.Column="1"
                   Grid.Row="1"
-                  Style="{StaticResource ActivityComboBoxStyle}"
-                  ItemContainerStyle="{StaticResource ActivityComboBoxItemStyle}"
+                  Margin="{StaticResource ControlBorderTop}"
+                  ItemContainerStyle="{StaticResource ComboBoxItemStyle}"
                   ItemsSource="{Binding Path=IndexList}"
                   SelectedValue="{Binding Path=SelectedIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                   AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Indextcbx_AutoID}"
-                  ToolTip="{x:Static help:HelpTextResources.FindIndexToolTipIndexType}">
+                  ToolTip="{x:Static languages:Tooltips.FindIndexToolTipIndexType}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.FindIndexHelpIndexType}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.FindIndexHelpIndexType}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="SelectedIndex"
                                      SourcePropertyValue="{Binding SelectedIndex, UpdateSourceTrigger=PropertyChanged}"
                                      Target="{Binding}" />
             </i:Interaction.Behaviors>
         </ComboBox>
-        
-        <Label Grid.Column="0"
-               Grid.Row="2"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="Characters" />
+
+        <TextBlock Grid.Column="0" Grid.Row="2" Text="Characters" Margin="{StaticResource ControlBorderTop}"/>
         <ui:IntellisenseTextBox Grid.Column="1" 
                                 Grid.Row="2"
                                 AllowMultilinePaste="True"
-                                                AcceptsReturn="True"
-                                                AllowUserInsertLine="True"
-                                                MaxHeight="52"
+                                AcceptsReturn="True"
+                                AllowUserInsertLine="True"
+                                MaxHeight="52"
+                                Margin="{StaticResource ControlBorderTop}"
                                 TextWrapping="Wrap"
                                 DefaultText="Look for info" 
                                 Text="{Binding Path=ModelItem.Characters,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
-                                ToolTip="{x:Static help:HelpTextResources.FindIndexToolTipCharacters}"
+                                ToolTip="{x:Static languages:Tooltips.FindIndexToolTipCharacters}"
                                 attachedProperties2:WizardEngineAttachedProperties.DontOpenWizard="True"
-                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Characterstxt_AutoID}">
+                                AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Characterstxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.FindIndexHelpCharacters}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.FindIndexHelpCharacters}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="ModelItem.Characters"
                                      SourcePropertyValue="{Binding ModelItem.Characters, UpdateSourceTrigger=PropertyChanged}"
@@ -108,21 +103,17 @@
             </i:Interaction.Behaviors>
         </ui:IntellisenseTextBox>
 
-        <Label Grid.Column="0"
-               Grid.Row="3"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="Direction" />
+        <TextBlock Grid.Column="0" Grid.Row="3" Text="Direction" Margin="{StaticResource ControlBorderTop}"/>
         <ComboBox Grid.Column="1"
                   Grid.Row="3"
-                  Style="{StaticResource ActivityComboBoxStyle}"
-                  ItemContainerStyle="{StaticResource ActivityComboBoxItemStyle}"
+                  Margin="{StaticResource ControlBorderTop}"
+                  ItemContainerStyle="{StaticResource ComboBoxItemStyle}"
                   ItemsSource="{Binding Path=DirectionList}"
                   SelectedValue="{Binding Path=SelectedDirection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                   AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Directioncbx_AutoID}"
-                  ToolTip="{x:Static help:HelpTextResources.FindIndexToolTipDirectionType}">
+                  ToolTip="{x:Static languages:Tooltips.FindIndexToolTipDirectionType}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.FindIndexHelpDirectiontype}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.FindIndexHelpDirectiontype}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="SelectedDirection"
                                      SourcePropertyValue="{Binding SelectedDirection, UpdateSourceTrigger=PropertyChanged}"
@@ -130,22 +121,20 @@
             </i:Interaction.Behaviors>
         </ComboBox>
 
-        <Label Grid.Column="0"
-               Grid.Row="4"
-               Style="{StaticResource ActivityLabelStyle}"
-               Content="Result" />
+        <TextBlock Grid.Column="0" Grid.Row="4" Text="Result" Margin="{StaticResource ControlBorderTop}"/>
         <ui:IntellisenseTextBox Grid.Column="1" 
                                 Grid.Row="4" 
+                                Margin="{StaticResource ControlBorderTop}"
                                 DefaultText="[[Result]]" 
                                 FilterType="All"
+                                AllowUserInsertLine="False"
                                 WrapInBrackets="True" 
                                 Style="{StaticResource ActivityIntellisenseTextBoxStyle}"
-                                ToolTip="{x:Static help:HelpTextResources.FindIndexToolTipResult}"
+                                ToolTip="{x:Static languages:Tooltips.FindIndexToolTipResult}"
                                 Text="{Binding Path=ModelItem.Result, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                 AutomationProperties.AutomationId="{Binding ModelItem.AutomationID, StringFormat=UI_{0}_Resulttxt_AutoID}">
             <i:Interaction.Behaviors>
-                <help:HelpSetter Text="{x:Static help:HelpTextResources.FindIndexHelpResult}"
-                                 DataContext="{Binding}" />
+                <core1:HelpSetter Text="{x:Static languages:HelpText.FindIndexHelpResult}" DataContext="{Binding}" />
                 <errors:ErrorsSetter Source="{Binding}"
                                      SourcePropertyName="Result"
                                      SourcePropertyValue="{Binding ModelItem.Result, UpdateSourceTrigger=PropertyChanged}"

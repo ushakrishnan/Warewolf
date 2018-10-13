@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -57,7 +56,7 @@ namespace Dev2.Activities.Designers2.Core
 
         public abstract void InsertAt(int indexNumber);
 
-        protected abstract void AddToCollection(IEnumerable<string> source, bool overWrite);
+        protected abstract void AddToCollection(IEnumerable<string> sources, bool overwrite);
 
         public QuickVariableInputViewModel QuickVariableInputViewModel
         {
@@ -77,13 +76,7 @@ namespace Dev2.Activities.Designers2.Core
         public static readonly DependencyProperty ShowQuickVariableInputProperty =
             DependencyProperty.Register("ShowQuickVariableInput", typeof(bool), typeof(ActivityCollectionDesignerViewModel), new PropertyMetadata(false, OnTitleBarToggleChanged));
 
-        public override bool ShowSmall
-        {
-            get
-            {
-                return base.ShowSmall && !ShowQuickVariableInput;
-            }
-        }
+        public override bool ShowSmall => base.ShowSmall && !ShowQuickVariableInput;
 
         public override void Collapse()
         {
@@ -108,18 +101,19 @@ namespace Dev2.Activities.Designers2.Core
         {
             if(!_isToggleCheckedChanged)
             {
-                if(propertyName == ShowLargeProperty.Name)
+                if (propertyName == ShowLargeProperty.Name)
                 {
                     _isToggleCheckedChanged = true;
                     ShowQuickVariableInput = false;
                 }
-                else if(propertyName == ShowQuickVariableInputProperty.Name)
+                else
                 {
-                    if(PreviousView == ShowLargeProperty.Name)
+                    if (propertyName == ShowQuickVariableInputProperty.Name && PreviousView == ShowLargeProperty.Name)
                     {
                         _isToggleCheckedChanged = true;
                         ShowLarge = false;
                     }
+
                 }
                 _isToggleCheckedChanged = false;
 
@@ -134,7 +128,7 @@ namespace Dev2.Activities.Designers2.Core
         }
         protected void AddTitleBarQuickVariableInputToggle()
         {
-            var toggle = ActivityDesignerToggle.Create("pack://application:,,,/Dev2.Activities.Designers;component/Images/ServiceQuickVariableInput-32.png", "Close Quick Variable Input", "pack://application:,,,/Dev2.Activities.Designers;component/Images/ServiceQuickVariableInput-32.png", "Open Quick Variable Input", "QuickVariableInputToggle", this, ShowQuickVariableInputProperty
+            var toggle = ActivityDesignerToggle.Create("ServiceQuickVariableInput", "Close Quick Variable Input", "ServiceQuickVariableInput", "Open Quick Variable Input", "QuickVariableInputToggle", this, ShowQuickVariableInputProperty
                 );
             TitleBarToggles.Add(toggle);
         }

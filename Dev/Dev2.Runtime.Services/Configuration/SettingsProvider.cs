@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -78,15 +77,6 @@ namespace Dev2.Runtime.Configuration
 
         public Settings.Configuration Configuration { get; private set; }
 
-        #region ProcessMessage
-
-        public virtual void ProcessMessage()
-        {
-
-        }
-
-        #endregion
-
         #region ProcessRead
 
         #endregion
@@ -131,9 +121,9 @@ namespace Dev2.Runtime.Configuration
         {
             var rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            // ReSharper disable AssignNullToNotNullAttribute
+            
             return Path.Combine(rootDir, "Settings", "Application.xml");
-            // ReSharper restore AssignNullToNotNullAttribute
+            
         }
 
         #endregion
@@ -152,12 +142,12 @@ namespace Dev2.Runtime.Configuration
 
                     return new Settings.Configuration(xml);
                 }
-                // ReSharper disable EmptyGeneralCatchClause
+                
                 catch(Exception ex)
-                // ReSharper restore EmptyGeneralCatchClause
+                
                 {
                     // error occurred so ignore and load empty
-                    Dev2Logger.Log.Error(ex);
+                    Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 }
             }
             return new Settings.Configuration(WebServerUri);

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +9,7 @@
 */
 
 using System.Xml.Linq;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 
@@ -33,7 +31,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             return base.DeserializeService(args);
         }
 
-        public new Service DeserializeService(XElement xml, ResourceType resourceType)
+        public new Service DeserializeService(XElement xml, string resourceType)
         {
             return base.DeserializeService(xml, resourceType);
         }

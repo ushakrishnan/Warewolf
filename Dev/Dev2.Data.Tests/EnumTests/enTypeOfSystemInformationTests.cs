@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +8,8 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.ExtMethods;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Data.Tests.EnumTests
@@ -20,10 +18,9 @@ namespace Dev2.Data.Tests.EnumTests
     /// Summary description for enTypeOfSystemInformationTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class enTypeOfSystemInformationTests
     {
-        private TestContext testContextInstance;
+        TestContext testContextInstance;
 
         /// <summary>
         ///Gets or sets the test context which provides
@@ -66,120 +63,114 @@ namespace Dev2.Data.Tests.EnumTests
         [TestMethod]
         public void OperatingSystemEnumExpectedDiscriptionOfOperatingSystem()
         {
-            string disc = enTypeOfSystemInformationToGather.OperatingSystem.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.OperatingSystem.GetDescription();
             Assert.AreEqual("Operating System", disc);
         }
 
         [TestMethod]
         public void ServicePackEnumExpectedDiscriptionOfServicePack()
         {
-            string disc = enTypeOfSystemInformationToGather.ServicePack.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.ServicePack.GetDescription();
             Assert.AreEqual("Service Pack", disc);
         }
 
         [TestMethod]
         public void OsBitValueEnumExpectedDiscriptionOf32Slash64Bit()
         {
-            string disc = enTypeOfSystemInformationToGather.OSBitValue.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.OSBitValue.GetDescription();
             Assert.AreEqual("32/64 Bit", disc);
         }
 
         [TestMethod]
         public void DateAndTimeEnumExpectedDiscriptionOfDateAndTime()
         {
-            string disc = enTypeOfSystemInformationToGather.FullDateTime.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.FullDateTime.GetDescription();
             Assert.AreEqual("Date & Time", disc);
         }
 
         [TestMethod]
         public void DateTimeFormatEnumExpectedDiscriptionOfDateAndTimeFormat()
         {
-            string disc = enTypeOfSystemInformationToGather.DateTimeFormat.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.DateTimeFormat.GetDescription();
             Assert.AreEqual("Date & Time Format", disc);
         }
 
         [TestMethod]
         public void DiskAvailableEnumExpectedDiscriptionOfDiskAvailable()
         {
-            string disc = enTypeOfSystemInformationToGather.DiskAvailable.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.DiskAvailable.GetDescription();
             Assert.AreEqual("Disk Available (GB)", disc);
         }
 
         [TestMethod]
         public void DiskTotalEnumExpectedDiscriptionOfDiskTotal()
         {
-            string disc = enTypeOfSystemInformationToGather.DiskTotal.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.DiskTotal.GetDescription();
             Assert.AreEqual("Disk Total (GB)", disc);
         }
 
         [TestMethod]
         public void MemoryAvailableEnumExpectedDiscriptionOfMemoryAvailable()
         {
-            string disc = enTypeOfSystemInformationToGather.PhysicalMemoryAvailable.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.PhysicalMemoryAvailable.GetDescription();
             Assert.AreEqual("RAM Available (MB)", disc);
         }
 
         [TestMethod]
         public void MemoryTotalEnumExpectedDiscriptionOfMemoryTotal()
         {
-            string disc = enTypeOfSystemInformationToGather.PhysicalMemoryTotal.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.PhysicalMemoryTotal.GetDescription();
             Assert.AreEqual("RAM Total (MB)", disc);
         } 
 
         [TestMethod]
         public void CPUAvailableEnumExpectedDiscriptionOfCPUAvailable()
         {
-            string disc = enTypeOfSystemInformationToGather.CPUAvailable.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.CPUAvailable.GetDescription();
             Assert.AreEqual("CPU Available", disc);
         }
 
         [TestMethod]
         public void CPUTotalEnumExpectedDiscriptionOfCPUTotal()
         {
-            string disc = enTypeOfSystemInformationToGather.CPUTotal.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.CPUTotal.GetDescription();
             Assert.AreEqual("CPU Total", disc);
         }
 
         [TestMethod]
         public void LanguageEnumExpectedDiscriptionOfLanguage()
         {
-            string disc = enTypeOfSystemInformationToGather.Language.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.Language.GetDescription();
             Assert.AreEqual("Language", disc);
         }
         
         [TestMethod]
         public void RegionEnumExpectedDiscriptionOfRegion()
         {
-            string disc = enTypeOfSystemInformationToGather.Region.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.Region.GetDescription();
             Assert.AreEqual("Region", disc);
         }
 
         [TestMethod]
         public void UserRolesEnumExpectedDiscriptionOfUserRoles()
         {
-            string disc = enTypeOfSystemInformationToGather.UserRoles.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.UserRoles.GetDescription();
             Assert.AreEqual("User Roles", disc);
         }
 
         [TestMethod]
         public void UserNameEnumExpectedDiscriptionOfUserName()
         {
-            string disc = enTypeOfSystemInformationToGather.UserName.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.UserName.GetDescription();
             Assert.AreEqual("User Name", disc);
         }
         
         [TestMethod]
         public void DomainEnumExpectedDiscriptionOfDomain()
         {
-            string disc = enTypeOfSystemInformationToGather.Domain.GetDescription();
+            var disc = enTypeOfSystemInformationToGather.Domain.GetDescription();
             Assert.AreEqual("Domain", disc);
         }
 
-        [TestMethod]
-        public void NumberOfWarewolfAgentsEnumExpectedDiscriptionOfNumberOfWarewolfAgents()
-        {
-            string disc = enTypeOfSystemInformationToGather.NumberOfWarewolfAgents.GetDescription();
-            Assert.AreEqual("Warewolf Agents", disc);
-        }
     }
 }

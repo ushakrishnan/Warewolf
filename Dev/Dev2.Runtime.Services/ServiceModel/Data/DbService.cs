@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,19 +13,19 @@ using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Data;
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
     public class DbService : Service
     {
         public Recordset Recordset { get; set; }
+        public int? CommandTimeout { get; set; }
 
         #region CTOR
 
         public DbService()
         {
-            ResourceType = ResourceType.DbService;
+            ResourceType = "DbService";
             Source = new DbSource();
             Recordset = new Recordset();
         }
@@ -34,14 +33,21 @@ namespace Dev2.Runtime.ServiceModel.Data
         public DbService(XElement xml)
             : base(xml)
         {
-            ResourceType = ResourceType.DbService;
+            ResourceType = "DbService";
             var action = xml.Descendants("Action").FirstOrDefault();
-            if(action == null)
+            if (action == null)
             {
-                return;
+                
+                if (xml.HasAttributes && xml.Attribute("Type").Value == "InvokeStoredProc")
+                {
+                    action = xml;
+                }
+                else
+                {
+                    return;
+                }
             }
-
-            Source = CreateSource<WebSource>(action);
+            Source = CreateSource<DbSource>(action);
             Method = CreateInputsMethod(action);
 
             var recordSets = CreateOutputsRecordsetList(action);
@@ -59,7 +65,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         public override XElement ToXml()
         {
-            var actionName = Recordset == null || Recordset.Name == null ? string.Empty : Recordset.Name;
+            var actionName = Recordset?.Name == null ? string.Empty : Recordset.Name;
             var result = CreateXml(enActionType.InvokeStoredProc, actionName, Source, new RecordsetList { Recordset });
             return result;
         }
@@ -68,6 +74,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         #region Create
 
+    
         public static DbService Create()
         {
             var result = new DbService

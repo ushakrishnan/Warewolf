@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,24 +10,34 @@
 
 using System;
 using System.Threading;
+using Dev2.Common.Interfaces;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.WebServer.TransferObjects;
 
 namespace Dev2.Runtime.WebServer.Handlers
 {
     public class WebPostRequestHandler : AbstractWebRequestHandler
     {
+        public WebPostRequestHandler(IResourceCatalog catalog, ITestCatalog testCatalog)
+            : base(catalog, testCatalog)
+        {
+
+        }
+
+        public WebPostRequestHandler()
+        {
+            
+        }
         public override void ProcessRequest(ICommunicationContext ctx)
         {
             var serviceName = GetServiceName(ctx);
             var instanceId = GetInstanceID(ctx);
             var bookmark = GetBookmark(ctx);
-            var postDataListID = GetDataListID(ctx);
             var workspaceID = GetWorkspaceID(ctx);
-
             var requestTO = new WebRequestTO();
             var xml = GetPostData(ctx);
 
-            if(!String.IsNullOrEmpty(xml))
+            if (!String.IsNullOrEmpty(xml))
             {
                 requestTO.RawRequestPayload = xml;
             }
@@ -47,9 +56,7 @@ namespace Dev2.Runtime.WebServer.Handlers
                     requestTO.Variables.Add(key, variables[key]);
                 }
             }
-            // Execute in its own thread to give proper context ;)
             Thread.CurrentPrincipal = ctx.Request.User;
-           // requestTO.Variables.Add(ctx.Request.BoundVariables);
             var responseWriter = CreateForm(requestTO, serviceName, workspaceID, ctx.FetchHeaders(), ctx.Request.User);
             ctx.Send(responseWriter);
 

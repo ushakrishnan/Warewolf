@@ -1,16 +1,15 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Services.Sql;
 using MySql.Data.MySqlClient;
+using Warewolf.Resource.Errors;
 using Warewolf.Security.Encryption;
 
 namespace Dev2.Services.Sql
 {
-    [ExcludeFromCodeCoverage]
-    internal class MySqlDbFactory : IDbFactory
+    class MySqlDbFactory : IDbFactory
     {
         #region Implementation of IDbFactory
 
@@ -24,54 +23,74 @@ namespace Dev2.Services.Sql
             return new MySqlConnection(connectionString);
         }
 
-        public IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText)
+        public IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText, int? commandTimeout)
         {
-            return new MySqlCommand(commandText, connection as MySqlConnection)
+            var command = new MySqlCommand(commandText, connection as MySqlConnection)
             {
                 CommandType = commandType,
-                CommandTimeout = (int)GlobalConstants.TransactionTimeout.TotalSeconds,
             };
+            if (commandTimeout != null)
+            {
+                command.CommandTimeout = commandTimeout.Value;
+            }
+            return command;
         }
 
-        public DataTable GetSchema(IDbConnection connection, string collectionName)
-        {
-
-            return GetMySqlServerSchema(connection);
-
-        }
+        public DataTable GetSchema(IDbConnection connection, string collectionName) => GetMySqlServerSchema(connection);
 
         DataTable GetMySqlServerSchema(IDbConnection connection)
         {
             if (!(connection is MySqlConnection))
-                throw new Exception("Invalid Mqsql Connection");
-
+            {
+                throw new Exception(string.Format(ErrorResource.InvalidSqlConnection, "MySql"));
+            }
             return ((MySqlConnection)connection).GetSchema();
-
         }
 
-
-
-        public DataTable CreateTable(IDataReader reader, LoadOption overwriteChanges)
+        public DataTable CreateTable(IDataAdapter reader, LoadOption overwriteChanges)
         {
-            var table = new DataTable();
-            table.Load(reader, LoadOption.OverwriteChanges);
-            return table;
+            var ds = new DataSet();
+            reader.Fill(ds);
+            return ds.Tables[0];
         }
 
         public DataSet FetchDataSet(IDbCommand command)
         {
-            if (!(command is SqlCommand))
-                throw new Exception("Invalid DBCommand expected.");
-            using (var dataSet = new DataSet())
+            if (!(command is MySqlCommand))
             {
-                using (var adapter = new SqlDataAdapter(command as SqlCommand))
-                {
-                    adapter.Fill(dataSet);
-                }
-                return dataSet;
+                throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
             }
+
+            var dataSet = new DataSet();
+            using (var adapter = new MySqlDataAdapter(command as MySqlCommand))
+            {
+                adapter.Fill(dataSet);
+            }
+            return dataSet;
+        }
+        public int ExecuteNonQuery(IDbCommand command)
+        {
+            if (!(command is SqlCommand))
+            {
+                throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
+            }
+
+            int retValue = 0;
+            retValue = command.ExecuteNonQuery();
+            return retValue;
         }
 
+        public int ExecuteScalar(IDbCommand command)
+        {
+            if (!(command is SqlCommand))
+            {
+                throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
+            }
+
+            int retValue = 0;
+            retValue = Convert.ToInt32(command.ExecuteScalar());
+            return retValue;
+        }
         #endregion
     }
 }

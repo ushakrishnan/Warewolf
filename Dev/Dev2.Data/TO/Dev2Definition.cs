@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +9,10 @@
 */
 
 using Dev2.Common.Interfaces.Data;
+
+
+
+
 
 namespace Dev2.DataList.Contract
 {
@@ -24,6 +27,7 @@ namespace Dev2.DataList.Contract
         public Dev2Definition(string name, string mapsTo, string value, bool isEvaluated, string defaultValue, bool isRequired, string rawValue) : this(name, mapsTo, value, string.Empty, isEvaluated, defaultValue, isRequired, rawValue) { }
 
         public Dev2Definition(string name, string mapsTo, string value, string recordSet, bool isEvaluated, string defaultValue, bool isRequired, string rawValue)
+            
             : this(name, mapsTo, value, recordSet, isEvaluated, defaultValue, isRequired, rawValue, false)
         {
         }
@@ -50,13 +54,7 @@ namespace Dev2.DataList.Contract
 
         public string Value { get; set; }
 
-        public bool IsRecordSet
-        {
-            get
-            {
-                return !(RecordSetName == null || RecordSetName.Equals(string.Empty));
-            }
-        }
+        public bool IsRecordSet => !(RecordSetName == null || RecordSetName.Equals(string.Empty));
 
         public string RecordSetName { get; set; }
 
@@ -69,6 +67,10 @@ namespace Dev2.DataList.Contract
         public string RawValue { get; set; }
 
         public bool EmptyToNull { get; set; }
+        public bool IsTextResponse { get;  set; }
+        public bool IsObject { get; set; }
+        public bool IsJsonArray { get; set; }
+
         #endregion
     }
 }

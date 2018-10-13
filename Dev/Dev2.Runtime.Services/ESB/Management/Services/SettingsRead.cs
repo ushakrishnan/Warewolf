@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,24 +12,22 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Monitoring;
 using Dev2.Communication;
 using Dev2.Data.Settings;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Services.Security;
 using Dev2.Workspaces;
 using Newtonsoft.Json;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Checks a users permissions on the local file system
-    /// </summary>
-    public class SettingsRead : IEsbManagementEndpoint
+    public class SettingsRead : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
+            var serializer = new Dev2JsonSerializer();
             var settings = new Settings();
             try
             {
@@ -38,54 +35,33 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var loggingSettingsRead = CreateLoggingSettingsReadEndPoint();
                 var jsonPermissions = securityRead.Execute(values, theWorkspace);
                 var jsonLoggingSettings = loggingSettingsRead.Execute(values, theWorkspace);
+                var permissionsRead = CreatePerfCounterReadEndPoint();
+                var perfsettings = permissionsRead.Execute(values, theWorkspace);
+
                 settings.Security = JsonConvert.DeserializeObject<SecuritySettingsTO>(jsonPermissions.ToString());
                 settings.Logging = JsonConvert.DeserializeObject<LoggingSettingsTo>(jsonLoggingSettings.ToString());
+                settings.PerfCounters = serializer.Deserialize<IPerformanceCounterTo>(perfsettings.ToString());
             }
             catch(Exception ex)
             {
-                Dev2Logger.Log.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 settings.HasError = true;
-                settings.Error = "Error reading settings configuration : " + ex.Message;
+                settings.Error = ErrorResource.ErrorReadingSettingsConfiguration + ex.Message;
                 settings.Security = new SecuritySettingsTO(SecurityRead.DefaultPermissions);
             }
 
-            var serializer = new Dev2JsonSerializer();
+          
             return serializer.SerializeToBuilder(settings);
         }
 
-        protected virtual IEsbManagementEndpoint CreateSecurityReadEndPoint()
-        {
-            return new SecurityRead();
-        }
-        
-        protected virtual IEsbManagementEndpoint CreateLoggingSettingsReadEndPoint()
-        {
-            return new LoggingSettingsRead();
-        }
+        protected virtual IEsbManagementEndpoint CreatePerfCounterReadEndPoint() => new FetchPerformanceCounters();
 
-        public DynamicService CreateServiceEntry()
-        {
-            var dynamicService = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Settings ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
+        protected virtual IEsbManagementEndpoint CreateSecurityReadEndPoint() => new SecurityRead();
 
-            var serviceAction = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
+        protected virtual IEsbManagementEndpoint CreateLoggingSettingsReadEndPoint() => new LoggingSettingsRead();
 
-            dynamicService.Actions.Add(serviceAction);
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Settings ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            return dynamicService;
-        }
-
-        public string HandlesType()
-        {
-            return "SettingsReadService";
-        }
+        public override string HandlesType() => "SettingsReadService";
     }
 }

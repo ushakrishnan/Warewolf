@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,8 +20,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Core.Tests.ConverterTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class GridRowNumberConverterTests
     {
         [TestMethod]
@@ -33,7 +30,7 @@ namespace Dev2.Core.Tests.ConverterTests
         {
             //------------Setup for test--------------------------
             var converter = new GridRowNumberConverter();
-            DataGrid dataGrid = new DataGrid { AutoGenerateColumns = true };
+            var dataGrid = new DataGrid { AutoGenerateColumns = true };
             var itemsSource = new List<string> { "Item 1 ", "Item 2" };
             dataGrid.ItemsSource = itemsSource;
             dataGrid.SelectedItem = itemsSource[0];
@@ -51,7 +48,7 @@ namespace Dev2.Core.Tests.ConverterTests
         {
             //------------Setup for test--------------------------
             var converter = new GridRowNumberConverter();
-            DataGrid dataGrid = new DataGrid { AutoGenerateColumns = true };
+            var dataGrid = new DataGrid { AutoGenerateColumns = true };
             var itemsSource = new List<string> { "Item 1 ", "Item 2" };
             dataGrid.ItemsSource = itemsSource;
             dataGrid.SelectedItem = itemsSource[0];
@@ -68,7 +65,7 @@ namespace Dev2.Core.Tests.ConverterTests
         public void GridRowNumberConverter_Convert_WhenValidRow_ReturnsRowIndex()
         {
             var converter = new GridRowNumberConverter();
-            DataGrid dataGrid = new DataGrid { AutoGenerateColumns = true };
+            var dataGrid = new DataGrid { AutoGenerateColumns = true };
             var itemsSource = new List<string> { "Item 1 ", "Item 2" };
             dataGrid.ItemsSource = itemsSource;
             dataGrid.SelectedItem = itemsSource[0];
@@ -78,7 +75,7 @@ namespace Dev2.Core.Tests.ConverterTests
             {
                 foreach(object o in dataGrid.Items)
                 {
-                    DependencyObject dp = generator.GenerateNext();
+                    var dp = generator.GenerateNext();
                     generator.PrepareItemContainer(dp);
                 }
             }
@@ -95,7 +92,7 @@ namespace Dev2.Core.Tests.ConverterTests
         public void GridRowNumberConverter_Convert_WhenNotFirstOne_ReturnsRowIndex()
         {
             var converter = new GridRowNumberConverter();
-            DataGrid dataGrid = new DataGrid { AutoGenerateColumns = true };
+            var dataGrid = new DataGrid { AutoGenerateColumns = true };
             var itemsSource = new List<string> { "Item 1 ", "Item 2", "Item 3" };
             dataGrid.ItemsSource = itemsSource;
             dataGrid.SelectedItem = itemsSource[1];
@@ -105,7 +102,7 @@ namespace Dev2.Core.Tests.ConverterTests
             {
                 foreach(object o in dataGrid.Items)
                 {
-                    DependencyObject dp = generator.GenerateNext();
+                    var dp = generator.GenerateNext();
                     generator.PrepareItemContainer(dp);
                 }
             }

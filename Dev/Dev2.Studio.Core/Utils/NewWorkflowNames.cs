@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,7 @@
 using System;
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Utils
 {
     /// <summary>
@@ -22,8 +21,8 @@ namespace Dev2.Studio.Core.Utils
     {
         #region Fields
 
-        private static NewWorkflowNames _instance;
-        private readonly HashSet<string> _workflowNamesHashSet = new HashSet<string>();
+        static NewWorkflowNames _instance;
+        readonly HashSet<string> _workflowNamesHashSet = new HashSet<string>();
 
         #endregion
 
@@ -44,13 +43,19 @@ namespace Dev2.Studio.Core.Utils
         /// <param name="nameToRemove"></param>
         public bool Remove(string nameToRemove)
         {
-            bool result = false;
-            if(Contains(nameToRemove))
+            var result = false;
+            if (Contains(nameToRemove))
             {
                 _workflowNamesHashSet.Remove(nameToRemove);
                 result = true;
             }
             return result;
+        }
+
+        public bool RemoveAll(string nameToRemove)
+        {
+            _workflowNamesHashSet.Remove(nameToRemove);
+            return true;
         }
 
         /// <summary>
@@ -59,12 +64,12 @@ namespace Dev2.Studio.Core.Utils
         /// <returns>The next available workflow name</returns>
         public string GetNext()
         {
-            string newWorkflowBaseName = StringResources.NewWorkflowBaseName;
+            var newWorkflowBaseName = StringResources.NewWorkflowBaseName;
 
-            int counter = 1;
-            string fullName = StringResources.NewWorkflowBaseName + " " + counter;
+            var counter = 1;
+            var fullName = StringResources.NewWorkflowBaseName + " " + counter;
 
-            while(Contains(fullName))
+            while (Contains(fullName))
             {
                 counter++;
                 fullName = newWorkflowBaseName + " " + counter;
@@ -80,10 +85,7 @@ namespace Dev2.Studio.Core.Utils
         /// </summary>
         /// <param name="nameToCheck"></param>
         /// <returns>Does the HashSet contain the string</returns>
-        public bool Contains(string nameToCheck)
-        {
-            return _workflowNamesHashSet.Contains(nameToCheck);
-        }
+        public bool Contains(string nameToCheck) => _workflowNamesHashSet.Contains(nameToCheck);
 
         /// <summary>
         /// Add a used name to the WorkflowNamesHashSet

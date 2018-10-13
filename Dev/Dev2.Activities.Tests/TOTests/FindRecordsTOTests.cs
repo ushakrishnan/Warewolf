@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,17 +8,15 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.TOTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class FindRecordsTOTests
     {
         [TestMethod]
@@ -69,9 +66,9 @@ namespace Dev2.Tests.Activities.TOTests
             var findRecordsTO = new FindRecordsTO();
             const string searchType = "MyValue";
             //------------Execute Test---------------------------
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             var notifyPropertyChanged = TestUtils.PropertyChangedTester(findRecordsTO, () => findRecordsTO.SearchType, () => findRecordsTO.SearchType = searchType);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             //------------Assert Results-------------------------
             Assert.AreEqual(searchType, findRecordsTO.SearchType);
             Assert.IsTrue(notifyPropertyChanged);
@@ -86,9 +83,9 @@ namespace Dev2.Tests.Activities.TOTests
             var findRecordsTO = new FindRecordsTO();
             const string searchCriteria = "MyValue";
             //------------Execute Test---------------------------
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             var notifyPropertyChanged = TestUtils.PropertyChangedTester(findRecordsTO, () => findRecordsTO.SearchCriteria, () => findRecordsTO.SearchCriteria = searchCriteria);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             //------------Assert Results-------------------------
             Assert.AreEqual(searchCriteria, findRecordsTO.SearchCriteria);
             Assert.IsTrue(notifyPropertyChanged);

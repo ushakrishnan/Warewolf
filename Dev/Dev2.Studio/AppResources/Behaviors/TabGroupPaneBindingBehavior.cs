@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,107 +15,80 @@ using System.Windows.Input;
 using System.Windows.Interactivity;
 using Dev2.Studio.Core.AppResources.ExtensionMethods;
 using Dev2.Studio.ViewModels;
+using Dev2.Studio.ViewModels.WorkSurface;
 using Infragistics.Windows.DockManager;
+
 
 namespace Dev2.Studio.AppResources.Behaviors
 {
     public class TabGroupPaneBindingBehavior : Behavior<TabGroupPane>
     {
         #region Private Methods
-
-        /// <summary>
-        ///     Gets all tab group panes which are descendents of the DocumentHost
-        /// </summary>
+        
         List<TabGroupPane> GetAllTabGroupPanes()
         {
-            var tabGroupPanes = new List<TabGroupPane>();
-
-            if(DocumentHost == null)
-            {
-                if(AssociatedObject != null)
-                {
-                    tabGroupPanes.Add(AssociatedObject);
-                }
-
-                return tabGroupPanes;
-            }
-            tabGroupPanes.AddRange(DocumentHost.GetDescendents().OfType<TabGroupPane>());
-            return tabGroupPanes;
+            _tabGroupPanes = new List<TabGroupPane>();
+            _tabGroupPanes.AddRange(DocumentHost.GetDescendents().OfType<TabGroupPane>());
+            return _tabGroupPanes;
         }
 
         #endregion Private Methods
 
-        #region Dependency Properties
 
         #region DocumentHost
 
         // Using a DependencyProperty as the backing store for ItemTemplate.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty DocumentHostProperty =
             DependencyProperty.Register("DocumentHost", typeof(DocumentContentHost), typeof(TabGroupPaneBindingBehavior), new PropertyMetadata(null, DocumentHostChangedCallback));
-        public DocumentContentHost DocumentHost { get { return (DocumentContentHost)GetValue(DocumentHostProperty); } set { SetValue(DocumentHostProperty, value); } }
+
+        public DocumentContentHost DocumentHost
+        {
+            get => (DocumentContentHost)GetValue(DocumentHostProperty);
+            set => SetValue(DocumentHostProperty, value);
+        }
 
         static void DocumentHostChangedCallback(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
         {
-            var itemsControlBindingBehavior = dependencyObject as TabGroupPaneBindingBehavior;
-            if (itemsControlBindingBehavior == null)
+            if (!(dependencyObject is TabGroupPaneBindingBehavior itemsControlBindingBehavior))
             {
                 return;
             }
 
-            var oldValue = e.OldValue as DocumentContentHost;
-            var newValue = e.NewValue as DocumentContentHost;
-
-            if (oldValue != null)
-            {
-                oldValue.ActiveDocumentChanged -= itemsControlBindingBehavior.DocumentHostOnActiveDocumentChanged;
-            }
-
-            if (newValue != null)
+            if (e.NewValue is DocumentContentHost newValue)
             {
                 newValue.ActiveDocumentChanged -= itemsControlBindingBehavior.DocumentHostOnActiveDocumentChanged;
                 newValue.ActiveDocumentChanged += itemsControlBindingBehavior.DocumentHostOnActiveDocumentChanged;
+                newValue.PreviewMouseLeftButtonDown -= itemsControlBindingBehavior.NewValueOnPreviewMouseLeftButtonDown;
+                newValue.PreviewMouseLeftButtonDown += itemsControlBindingBehavior.NewValueOnPreviewMouseLeftButtonDown;
+            }
+        }
+
+        void NewValueOnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
+        {
+            var host = sender as DocumentContentHost;
+            var workSurfaceContextViewModel = host?.ActiveDocument?.DataContext as WorkSurfaceContextViewModel;
+
+            if (_shellViewModel != null && _shellViewModel.ActiveItem != workSurfaceContextViewModel)
+            {
+                _shellViewModel.ActiveItem = workSurfaceContextViewModel;
             }
         }
 
         #endregion DocumentHost
 
-        #region SelectedItem
+        static List<TabGroupPane> _tabGroupPanes;
+        ShellViewModel _shellViewModel;
 
-        // Using a DependencyProperty as the backing store for SelectedItem.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty SelectedItemProperty =
-            DependencyProperty.Register("SelectedItem", typeof(object), typeof(TabGroupPaneBindingBehavior), new UIPropertyMetadata(null, SelectedItemChangedCallback));
-        public object SelectedItem { get { return GetValue(SelectedItemProperty); } set { SetValue(SelectedItemProperty, value); } }
-
-        static void SelectedItemChangedCallback(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+        void ActiveItemChanged(IWorkSurfaceContextViewModel workSurfaceContextViewModel)
         {
-            var itemsControlBindingBehavior = dependencyObject as TabGroupPaneBindingBehavior;
-            if (itemsControlBindingBehavior == null)
+            if (_tabGroupPanes == null || _tabGroupPanes.Count <= 0)
             {
-                return;
+                _tabGroupPanes = GetAllTabGroupPanes();
             }
 
-            foreach (var tabGroupPane in itemsControlBindingBehavior.GetAllTabGroupPanes())
-            {
-                FocusManager.AddGotFocusHandler(tabGroupPane, GotFocusHandler);
-                var found = false;
-
-                for (var i = 0; i < tabGroupPane.Items.Count; i++)
-                {
-                    var frameworkElement = tabGroupPane.Items[i] as FrameworkElement;
-                    if (frameworkElement != null && frameworkElement.DataContext == e.NewValue)
-                    {
-                        tabGroupPane.SelectedIndex = i;
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (found)
-                {
-                    break;
-                }
-            }
+            SetActivePane(workSurfaceContextViewModel);
         }
+
 
         static void GotFocusHandler(object sender, RoutedEventArgs routedEventArgs)
         {
@@ -127,27 +99,51 @@ namespace Dev2.Studio.AppResources.Behaviors
         static void RefreshActiveEnvironment(object sender)
         {
             var frameworkElement = sender as FrameworkElement;
-            if (frameworkElement != null && frameworkElement.DataContext != null)
-            {
-                var vm = frameworkElement.DataContext as MainViewModel;
-                if (vm != null)
-                {
-                    vm.RefreshActiveEnvironment();
-                }
-            }
+            var vm = frameworkElement?.DataContext as ShellViewModel;
+            vm?.RefreshActiveServer();
         }
-
-        #endregion SelectedItem
-
-        #endregion Dependency Properties
 
         #region Event Handlers
 
         void DocumentHostOnActiveDocumentChanged(object sender, RoutedPropertyChangedEventArgs<ContentPane> routedPropertyChangedEventArgs)
         {
-            if (routedPropertyChangedEventArgs.NewValue != null)
+            if (DocumentHost?.DataContext is ShellViewModel mainViewModel)
             {
-                SelectedItem = routedPropertyChangedEventArgs.NewValue.DataContext;
+                if (_shellViewModel == null)
+                {
+                    _shellViewModel = mainViewModel;
+                    _shellViewModel.ActiveItemChanged = ActiveItemChanged;
+                }
+
+                var workSurfaceContextViewModel = routedPropertyChangedEventArgs.NewValue?.DataContext as WorkSurfaceContextViewModel;
+                _shellViewModel.ActiveItemChanged = null;
+                _shellViewModel.ActiveItem = workSurfaceContextViewModel;
+                if (workSurfaceContextViewModel != null)
+                {
+                    _shellViewModel.PersistTabs();
+                }
+                _shellViewModel.ActiveItemChanged = ActiveItemChanged;
+            }
+        }
+
+        static void SetActivePane(IWorkSurfaceContextViewModel newValue)
+        {
+            if (_tabGroupPanes != null && _tabGroupPanes.Count > 0)
+            {
+                var tabGroupPane = _tabGroupPanes[0];
+
+                foreach (var item in from object item in tabGroupPane.Items
+                                     let frameworkElement = item as FrameworkElement
+                                     where frameworkElement != null && frameworkElement.DataContext == newValue
+                                     select item)
+                {
+                    if (tabGroupPane.SelectedItem != item)
+                    {
+                        tabGroupPane.SelectedItem = item;
+                        break;
+                    }
+                }
+                FocusManager.AddGotFocusHandler(tabGroupPane, GotFocusHandler);
             }
         }
 

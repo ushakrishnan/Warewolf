@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,10 +9,9 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.InterfaceImplementors;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -23,7 +21,6 @@ namespace Dev2.Core.Tests.Environments
     // BUG 9276 : TWR : 2013.04.19 - refactored so that we share environments
 
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ServerProviderTest
     {
 
@@ -38,7 +35,7 @@ namespace Dev2.Core.Tests.Environments
         [TestInitialize]
         public void MyTestInitialize()
         {
-            AppSettings.LocalHost = "http://localhost:3142";
+            AppUsageStats.LocalHost = "http://localhost:3142";
         }
 
         #endregion
@@ -83,14 +80,16 @@ namespace Dev2.Core.Tests.Environments
         static void TestLoad(bool useParameterless)
         {
             var targetEnv = EnviromentRepositoryTest.CreateMockEnvironment(EnviromentRepositoryTest.Server1Source);
-            var repository = new Mock<IEnvironmentRepository>();
+            var repository = new Mock<IServerRepository>();
             repository.Setup(r => r.All()).Returns(new[] { targetEnv.Object });
-
-            if(useParameterless)
+            CustomContainer.DeRegister<IServerRepository>();
+            CustomContainer.Register(repository.Object);
+            if (useParameterless)
             {
-                EnvironmentRepository.Instance.Clear();
-                EnvironmentRepository.Instance.Save(targetEnv.Object);
-                EnvironmentRepository.Instance.IsLoaded = true;  // so that we don't connect to a server!
+                
+                ServerRepository.Instance.IsLoaded = true;  // so that we don't connect to a server!
+                ServerRepository.Instance.Clear();
+                ServerRepository.Instance.Save(targetEnv.Object);
             }
 
             var provider = new TestServerProvider();
@@ -99,7 +98,7 @@ namespace Dev2.Core.Tests.Environments
             Assert.AreEqual(1, servers.Count);
 
             Assert.AreSame(servers[0], targetEnv.Object);
-            Assert.AreEqual(servers[0].ID, targetEnv.Object.ID);
+            Assert.AreEqual(servers[0].EnvironmentID, targetEnv.Object.EnvironmentID);
             Assert.AreEqual(servers[0].Name, targetEnv.Object.Name);
             // remove the last two properties from mock ;)
         }

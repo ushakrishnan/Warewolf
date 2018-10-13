@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,14 +12,18 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.DynamicServices.Objects;
+using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Management;
+using Dev2.Runtime.Interfaces;
+using Dev2.Runtime.Security;
 using Dev2.Workspaces;
-using Warewolf.Storage;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Execution
 {
@@ -29,41 +32,50 @@ namespace Dev2.Runtime.ESB.Execution
     /// </summary>
     public class InternalServiceContainer : EsbExecutionContainer
     {
+        readonly IEsbManagementServiceLocator _managementServiceLocator;
 
         public InternalServiceContainer(ServiceAction sa, IDSFDataObject dataObj, IWorkspace theWorkspace, IEsbChannel esbChannel, EsbExecuteRequest request)
+            : this(sa, dataObj, theWorkspace, esbChannel, request, null)
+        {
+        }
+
+        public InternalServiceContainer(ServiceAction sa, IDSFDataObject dataObj, IWorkspace theWorkspace, IEsbChannel esbChannel, EsbExecuteRequest request, IEsbManagementServiceLocator managementServiceLocator)
             : base(sa, dataObj, theWorkspace, esbChannel, request)
         {
-            var dataListTO = new DataListTO(sa.DataListSpecification.ToString());
+            
             if(request.Args == null)
             {
-                request.Args = new Dictionary<string, StringBuilder>();
-                foreach(var input in dataListTO.Inputs)
+                if (sa.DataListSpecification == null)
                 {
-                    var warewolfEvalResult = dataObj.Environment.Eval(DataListUtil.AddBracketsToValueIfNotExist(input),0,false);
-                    if(warewolfEvalResult.IsWarewolfAtomResult)
+                    sa.DataListSpecification = new StringBuilder("<DataList></DataList>");
+                }
+                var dataListTo = new DataListTO(sa.DataListSpecification.ToString());
+                request.Args = new Dictionary<string, StringBuilder>();
+                foreach(var input in dataListTo.Inputs)
+                {
+                    var warewolfEvalResult = dataObj.Environment.Eval(DataListUtil.AddBracketsToValueIfNotExist(input),0);
+                    if (warewolfEvalResult.IsWarewolfAtomResult && warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult scalarResult && !scalarResult.Item.IsNothing)
                     {
-                        var scalarResult = warewolfEvalResult as WarewolfDataEvaluationCommon.WarewolfEvalResult.WarewolfAtomResult;
-                        if(scalarResult != null && !scalarResult.Item.IsNothing)
-                        {
-                            request.Args.Add(input, new StringBuilder(scalarResult.Item.ToString()));
-                        }
+                        request.Args.Add(input, new StringBuilder(scalarResult.Item.ToString()));
                     }
+
                 }
             }
+
+            _managementServiceLocator = managementServiceLocator ?? new EsbManagementServiceLocator();
         }
 
         public override Guid Execute(out ErrorResultTO errors, int update)
         {
             errors = new ErrorResultTO();
             var invokeErrors = new ErrorResultTO();
-            Guid result = GlobalConstants.NullDataListID;
+            var result = GlobalConstants.NullDataListID;
 
             try
             {
-                EsbManagementServiceLocator emsl = new EsbManagementServiceLocator();
-                IEsbManagementEndpoint eme = emsl.LocateManagementService(ServiceAction.Name);
+                var eme = _managementServiceLocator.LocateManagementService(ServiceAction.Name);
 
-                if(eme != null)
+                if (eme != null)
                 {
                     // Web request for internal service ;)
                     if(Request.Args == null)
@@ -71,19 +83,27 @@ namespace Dev2.Runtime.ESB.Execution
                         GenerateRequestDictionaryFromDataObject(out invokeErrors);
                         errors.MergeErrors(invokeErrors);
                     }
+                    if (CanExecute(eme))
+                    {
+                        Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.ServerUser,()=>
+                        {
+                            result = ExecuteService(eme);
+                        });
+                        errors.MergeErrors(invokeErrors);
 
-                    var res = eme.Execute(Request.Args, TheWorkspace);
-                    Request.ExecuteResult = res;
-                    errors.MergeErrors(invokeErrors);
-                    result = DataObject.DataListID;
+                    }
+                    else
+                    {
+                        SetMessage(errors, eme);
+                    }
                     Request.WasInternalService = true;
                 }
                 else
                 {
-                    errors.AddError("Could not locate management service [ " + ServiceAction.ServiceName + " ]");
+                    errors.AddError(string.Format(ErrorResource.CouldNotLocateManagementService, ServiceAction.ServiceName));
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 errors.AddError(ex.Message);
             }
@@ -91,15 +111,64 @@ namespace Dev2.Runtime.ESB.Execution
             return result;
         }
 
-        public override IExecutionEnvironment Execute(IDSFDataObject inputs, IDev2Activity activity)
+        private Guid ExecuteService(IEsbManagementEndpoint eme)
         {
-            return null;
+            Guid result;
+            var res = eme.Execute(Request.Args, TheWorkspace);
+            if (res == null)
+            {
+                Dev2Logger.Error($"Null result return from internal service:{ServiceAction.Name}", GlobalConstants.WarewolfError);
+            }
+            Request.ExecuteResult = res;
+            result = DataObject.DataListID;
+            return result;
         }
 
-        private void GenerateRequestDictionaryFromDataObject(out ErrorResultTO errors)
+        private void SetMessage(ErrorResultTO errors, IEsbManagementEndpoint eme)
+        {
+            var serializer = new Dev2JsonSerializer();
+            var msg = new ExecuteMessage { HasError = true };
+            switch (eme.GetAuthorizationContextForService())
+            {
+                case AuthorizationContext.View:
+                    msg.SetMessage(ErrorResource.NotAuthorizedToViewException);
+                    break;
+                case AuthorizationContext.Execute:
+                    msg.SetMessage(ErrorResource.NotAuthorizedToExecuteException);
+                    break;
+                case AuthorizationContext.Contribute:
+                    msg.SetMessage(ErrorResource.NotAuthorizedToContributeException);
+                    break;
+                case AuthorizationContext.DeployTo:
+                    msg.SetMessage(ErrorResource.NotAuthorizedToDeployToException);
+                    break;
+                case AuthorizationContext.DeployFrom:
+                    msg.SetMessage(ErrorResource.NotAuthorizedToDeployFromException);
+                    break;
+                case AuthorizationContext.Administrator:
+                    msg.SetMessage(ErrorResource.NotAuthorizedToAdministratorException);
+                    break;
+                default:
+                    Request.ExecuteResult = serializer.SerializeToBuilder(msg);
+                    errors.AddError(ErrorResource.NotAuthorizedToExecuteException);
+                    break;
+            }
+        }
+
+        bool CanExecute(IEsbManagementEndpoint eme) => CanExecute(eme.GetResourceID(Request.Args), DataObject, eme.GetAuthorizationContextForService());
+
+        public override bool CanExecute(Guid resourceId, IDSFDataObject dataObject, AuthorizationContext authorizationContext)
+        {
+            var isAuthorized = ServerAuthorizationService.Instance.IsAuthorized(authorizationContext, resourceId.ToString());
+            return isAuthorized;
+        }
+
+        public override IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity) => null;
+
+        void GenerateRequestDictionaryFromDataObject(out ErrorResultTO errors)
         {
             errors = null;
-            Request.Args = new Dictionary<string, StringBuilder>();            
+            Request.Args = new Dictionary<string, StringBuilder>();
         }
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,16 +10,19 @@
 
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Activities.Designers2.CaseConvert;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using System;
+using Dev2.TO;
 
 namespace Dev2.Activities.Designers.Tests.CaseConvert
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class CaseConvertDesignerViewModelTests
     {
         [TestMethod]
@@ -31,6 +33,7 @@ namespace Dev2.Activities.Designers.Tests.CaseConvert
             var items = new List<CaseConvertTO> { new CaseConvertTO() };
             var viewModel = new CaseConvertDesignerViewModel(CreateModelItem(items));
             Assert.AreEqual(4, viewModel.ItemsList.Count);
+            Assert.IsTrue(viewModel.HasLargeView);
         }
 
         [TestMethod]
@@ -70,7 +73,33 @@ namespace Dev2.Activities.Designers.Tests.CaseConvert
             dynamic mi = viewModel.ModelItem;
             Assert.AreEqual(4, mi.ConvertCollection.Count);
         }
-        
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("CaseConvertDesignerViewModel_Handle")]
+        public void CaseConvertDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+
+            var items = new List<CaseConvertTO>
+            {
+                new CaseConvertTO("", "None", "", 0),
+                new CaseConvertTO("", "None", "", 0),
+                new CaseConvertTO("", "None", "", 0),
+                new CaseConvertTO("", "None", "", 0)
+            };
+            var viewModel = new CaseConvertDesignerViewModel(CreateModelItem(items));
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
+        }
+
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("CaseConvertDesignerViewModel_Constructor")]
@@ -81,6 +110,47 @@ namespace Dev2.Activities.Designers.Tests.CaseConvert
             Assert.AreEqual(2, mi.ConvertCollection.Count);
         }
 
+        [TestMethod]
+        [Owner("Trevor Williams-Ros")]
+        [TestCategory("CaseConvertDesignerViewModel_ValidateCollectionItem")]
+        public void CaseConvertDesignerViewModel_ValidateCollectionItem_ValidatesPropertiesOfDTO()
+        {
+            //------------Setup for test--------------------------
+            var mi = ModelItemUtils.CreateModelItem(new DsfCaseConvertActivity());
+            mi.SetProperty("DisplayName", "Case Convert");
+
+            var dto = new CaseConvertTO("a&]]", "Upper", "", 0, true);
+
+
+            var miCollection = mi.Properties["ConvertCollection"].Collection;
+            var dtoModelItem = miCollection.Add(dto);
+
+
+            var viewModel = new CaseConvertDesignerViewModel(mi);
+            viewModel._getDatalistString = () =>
+            {
+                const string trueString = "True";
+                const string noneString = "None";
+                var datalist = string.Format("<DataList><var Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" /><a Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" /><b Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" /><h Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" /><r Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" /><rec Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" ><set Description=\"\" IsEditable=\"{0}\" ColumnIODirection=\"{1}\" /></rec></DataList>", trueString, noneString);
+                return datalist;
+            };
+
+            //------------Execute Test---------------------------
+            viewModel.Validate();
+
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, viewModel.Errors.Count);
+
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.CaseConvertInputInvalidExpressionErrorTest);
+            Verify_IsFocused(dtoModelItem, viewModel.Errors[0].Do, "IsStringToConvertFocused");
+        }
+
+        void Verify_IsFocused(ModelItem modelItem, Action doError, string isFocusedPropertyName)
+        {
+            Assert.IsFalse(modelItem.GetProperty<bool>(isFocusedPropertyName));
+            doError.Invoke();
+            Assert.IsTrue(modelItem.GetProperty<bool>(isFocusedPropertyName));
+        }
 
         static ModelItem CreateModelItem(IEnumerable<CaseConvertTO> items, string displayName = "Case Convert")
         {
@@ -95,10 +165,7 @@ namespace Dev2.Activities.Designers.Tests.CaseConvert
                 {
                     foreach(var dto in items)
                     {
-                        if(modelItemCollection != null)
-                        {
-                            modelItemCollection.Add(dto);
-                        }
+                        modelItemCollection?.Add(dto);
                     }
                 }
             }

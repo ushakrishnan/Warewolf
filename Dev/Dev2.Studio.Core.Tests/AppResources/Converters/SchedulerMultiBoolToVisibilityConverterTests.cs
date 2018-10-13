@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +22,7 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestCategory("SchedulerMultiBoolToVisibilityConverter_Convert")]
         public void SchedulerMultiBoolToVisibilityConverter_Convert_WithTrueFalse_ReturnsCollapsed()
         {
-            SchedulerMultiBoolToVisibilityConverter schedulerMultiBoolToVisibilityConverter = new SchedulerMultiBoolToVisibilityConverter();
+            var schedulerMultiBoolToVisibilityConverter = new SchedulerMultiBoolToVisibilityConverter();
             object[] values = { true, false };
             var actual = schedulerMultiBoolToVisibilityConverter.Convert(values, null, null, null);
 
@@ -35,7 +34,7 @@ namespace Dev2.Core.Tests.AppResources.Converters
         [TestCategory("SchedulerMultiBoolToVisibilityConverter_Convert")]
         public void SchedulerMultiBoolToVisibilityConverter_Convert_WithFalseFalse_ReturnsVisible()
         {
-            SchedulerMultiBoolToVisibilityConverter schedulerMultiBoolToVisibilityConverter = new SchedulerMultiBoolToVisibilityConverter();
+            var schedulerMultiBoolToVisibilityConverter = new SchedulerMultiBoolToVisibilityConverter();
             object[] values = { false, false };
             var actual = schedulerMultiBoolToVisibilityConverter.Convert(values, null, null, null);
 

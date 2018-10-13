@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,27 +10,25 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 using Dev2.Intellisense.Helper;
 using Dev2.Intellisense.Provider;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
 using Dev2.Studio.Core.Models;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
+using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Core.Tests.IntellisenseProvider
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class FileSystemIntellisenseProviderTest
     {
-        private IResourceModel _resourceModel;
+        IResourceModel _resourceModel;
 
         #region Test Initialization
 
@@ -420,7 +417,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         public void QueryList(string searchPath)
         {
             QueryCollection = new List<string>();
-            switch(searchPath)
+            switch (searchPath)
             {
                 case @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\Runt":
                     AddToList(1);
@@ -454,6 +451,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
                     break;
                 case "":
                     AddToList(8);
+                    break;
+                default:
                     break;
             }
         }

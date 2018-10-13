@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,13 +11,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
+using Dev2.Common;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Data;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Studio.Core.Factories;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core.Models.DataList;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.DataList;
 
 namespace Dev2.DataList
@@ -44,9 +47,8 @@ namespace Dev2.DataList
         /// <returns></returns>
         internal string FetchMatch(string token,string recset)
         {
-            string result;
 
-            RecordsetColumnsToName.TryGetValue(new Tuple<string, string>(token,recset), out result);
+            RecordsetColumnsToName.TryGetValue(new Tuple<string, string>(token, recset), out string result);
 
             return result;
         }
@@ -73,6 +75,7 @@ namespace Dev2.DataList
     /// </summary>
     public class ActivityDataMappingBuilder
     {
+        List<ComplexObjectItemModel> _complexObjects;
 
         /// <summary>
         /// Gets or sets the data list.
@@ -122,8 +125,6 @@ namespace Dev2.DataList
         /// </value>
         public Type ActivityType { get; private set; }
 
-        public bool IsWorkflow { get; private set; }
-
         /// <summary>
         /// Setups the activity data.
         /// </summary>
@@ -135,51 +136,131 @@ namespace Dev2.DataList
                 SavedInputMapping = activity.SavedInputMapping;
                 SavedOutputMapping = activity.SavedOutputMapping;
                 ActivityType = activity.UnderlyingWebActivityObjectType;
-
-                if(activity.ResourceModel != null)
+                _complexObjects = new List<ComplexObjectItemModel>();
+                if (activity.ResourceModel != null)
                 {
-                    IsWorkflow = activity.ResourceModel.ResourceType == Studio.Core.AppResources.Enums.ResourceType.WorkflowService;
-
                     string inputs;
                     string outputs;
 
                     // handle workflows differently ;)
-                    if(IsWorkflow)
-                    {
-                        //if (!activity.ResourceModel.Environment.IsLocalHost && !activity.ResourceModel.Environment.HasLoadedResources)
-                        if(activity.IsNotAvailable())
-                        {
-                            inputs = activity.ResourceModel.Inputs;
-                            outputs = activity.ResourceModel.Outputs;
-                            
-                        }
-                        else
-                        {
-                            var datalist = activity.ResourceModel.DataList;
 
-                            inputs = DataListUtil.GenerateSerializableDefsFromDataList(datalist,
-                                                                                   enDev2ColumnArgumentDirection.Input);
-                            outputs = DataListUtil.GenerateSerializableDefsFromDataList(datalist,
-                                                                                    enDev2ColumnArgumentDirection.Output);
-                        }
-                    }
-                    else
+                    if(activity.IsNotAvailable())
                     {
-                        // handle services ;)
                         inputs = activity.ResourceModel.Inputs;
                         outputs = activity.ResourceModel.Outputs;
                     }
+                    else
+                    {
+                        var datalist = activity.ResourceModel.DataList;
+                        AddComplexObjects(datalist);
+                        inputs = DataListUtil.GenerateSerializableDefsFromDataList(datalist,
+                            enDev2ColumnArgumentDirection.Input);
+                        outputs = DataListUtil.GenerateSerializableDefsFromDataList(datalist,
+                            enDev2ColumnArgumentDirection.Output);
+                    }                
 
                     ActivityInputDefinitions = inputs;
                     ActivityOutputDefinitions = outputs;
                 }
-
             }
         }
 
-        /// <summary>
-        /// Generates this instance.
-        /// </summary>
+        void AddComplexObjects(string datalist)
+        {
+            try
+            {
+                var xDoc = new XmlDocument();
+                xDoc.LoadXml(datalist);
+                if (xDoc.DocumentElement != null)
+                {
+                    var children = xDoc.DocumentElement.ChildNodes;
+                    foreach (XmlNode c in children)
+                    {
+                        AddSystemTag(c);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error(e, "Warewolf Error");
+            }
+        }
+
+        private void AddSystemTag(XmlNode c)
+        {
+            if (!DataListUtil.IsSystemTag(c.Name))
+            {
+                var jsonAttribute = false;
+                var xmlAttribute = c.Attributes?["IsJson"];
+                if (xmlAttribute != null)
+                {
+                    bool.TryParse(xmlAttribute.Value, out jsonAttribute);
+                }
+                if (jsonAttribute)
+                {
+                    AddComplexObjectFromXmlNode(c, null);
+                }
+            }
+        }
+
+        void AddComplexObjectFromXmlNode(XmlNode c, ComplexObjectItemModel parent)
+        {
+            var isArray = false;
+            var ioDirection = enDev2ColumnArgumentDirection.None;
+            if (c.Attributes != null)
+            {
+                isArray = ParseBoolAttribute(c.Attributes["IsArray"]);
+                ioDirection = ParseColumnIODirection(c.Attributes[GlobalConstants.DataListIoColDirection]);
+            }
+            var name = GetNameForArrayComplexObject(c, isArray);
+            var complexObjectItemModel = new ComplexObjectItemModel(name) { IsArray = isArray, Parent = parent, ColumnIODirection = ioDirection };
+            if (parent != null)
+            {
+                parent.Children.Add(complexObjectItemModel);
+            }
+            else
+            {
+                _complexObjects.Add(complexObjectItemModel);
+            }
+            if (c.HasChildNodes)
+            {
+                var children = c.ChildNodes;
+                foreach (XmlNode childNode in children)
+                {
+                    AddComplexObjectFromXmlNode(childNode, complexObjectItemModel);
+                }
+            }
+        }
+        bool ParseBoolAttribute(XmlAttribute attr)
+        {
+            var result = true;
+            if (attr != null)
+            {
+                bool.TryParse(attr.Value, out result);
+            }
+            return result;
+        }
+        enDev2ColumnArgumentDirection ParseColumnIODirection(XmlAttribute attr)
+
+        {
+            var result = enDev2ColumnArgumentDirection.None;
+
+            if (attr == null)
+            {
+                return result;
+            }
+            if (!Enum.TryParse(attr.Value, true, out result))
+            {
+                result = enDev2ColumnArgumentDirection.None;
+            }
+            return result;
+        }
+        static string GetNameForArrayComplexObject(XmlNode xmlNode, bool isArray)
+        {
+            var name = isArray ? xmlNode.Name + "()" : xmlNode.Name;
+            return name;
+        }
+        
         public MappingViewModelTO Generate()
         {
             var outputParser = DataListFactory.CreateOutputParser();
@@ -189,10 +270,10 @@ namespace Dev2.DataList
 
             var outputList = GenerateMapping(SavedOutputMapping, ActivityOutputDefinitions, true, outputParser);
 
-            MappingViewModelTO result = new MappingViewModelTO(inputList, outputList);
+            var result = new MappingViewModelTO(inputList, outputList);
 
             // and set the data to save?!
-            if(string.IsNullOrEmpty(SavedInputMapping))
+            if (string.IsNullOrEmpty(SavedInputMapping))
             {
                 SavedInputMapping = GetInputString(inputList);
             }
@@ -204,19 +285,14 @@ namespace Dev2.DataList
 
             return result;
         }
-
-        /// <summary>
-        /// Gets the input string.
-        /// </summary>
-        /// <param name="inputData">The input data.</param>
-        /// <returns></returns>
-        private string GetInputString(IList<IInputOutputViewModel> inputData)
+        
+        string GetInputString(IList<IInputOutputViewModel> inputData)
         {
-            string inputString = string.Empty;
+            var inputString = string.Empty;
             IList<IDev2Definition> inputs = new List<IDev2Definition>();
-            if(inputData.Count != 0)
+            if (inputData.Count != 0)
             {
-                foreach(IInputOutputViewModel itp in inputData)
+                foreach (IInputOutputViewModel itp in inputData)
                 {
                     inputs.Add(itp.GetGenerationTO());
                 }
@@ -224,19 +300,14 @@ namespace Dev2.DataList
             }
             return inputString;
         }
-
-        /// <summary>
-        /// Gets the output string.
-        /// </summary>
-        /// <param name="outputData">The output data.</param>
-        /// <returns></returns>
-        private string GetOutputString(IList<IInputOutputViewModel> outputData)
+        
+        string GetOutputString(IList<IInputOutputViewModel> outputData)
         {
-            string outputString = string.Empty;
+            var outputString = string.Empty;
             IList<IDev2Definition> outputs = new List<IDev2Definition>();
-            if(outputData.Count != 0)
+            if (outputData.Count != 0)
             {
-                foreach(IInputOutputViewModel otp in outputData)
+                foreach (IInputOutputViewModel otp in outputData)
                 {
                     outputs.Add(otp.GetGenerationTO());
                 }
@@ -244,20 +315,12 @@ namespace Dev2.DataList
             }
             return outputString;
         }
-
-        /// <summary>
-        /// Generates the mapping.
-        /// </summary>
-        /// <param name="savedMappingData">The mapping data.</param>
-        /// <param name="mappingDefinitions">The mapping definitions.</param>
-        /// <param name="isOutputMapping">if set to <c>true</c> [is output mapping].</param>
-        /// <param name="parser">The parser.</param>
-        /// <returns></returns>
-        private IList<IInputOutputViewModel> GenerateMapping(string savedMappingData, string mappingDefinitions, bool isOutputMapping, IDev2LanguageParser parser)
+        
+        IList<IInputOutputViewModel> GenerateMapping(string savedMappingData, string mappingDefinitions, bool isOutputMapping, IDev2LanguageParser parser)
         {
             IList<IInputOutputViewModel> result;
 
-            if(string.IsNullOrEmpty(savedMappingData))
+            if (string.IsNullOrEmpty(savedMappingData))
             {
                 // TODO : Inject fuzzy matching logic here ;)
                 var fuzzyMatchDefinitions = GenerateMatchFragmentsFromDataList();
@@ -279,29 +342,24 @@ namespace Dev2.DataList
 
             return result;
         }
-
-        /// <summary>
-        /// Reconsiles the exiting and master view.
-        /// </summary>
-        /// <param name="masterView">The master view.</param>
-        /// <param name="existingView">The existing view.</param>
-        /// <returns></returns>
-        private IList<IInputOutputViewModel> ReconcileExistingAndMasterView(IList<IInputOutputViewModel> masterView, IEnumerable<IInputOutputViewModel> existingView)
+        
+        IList<IInputOutputViewModel> ReconcileExistingAndMasterView(IList<IInputOutputViewModel> masterView, IEnumerable<IInputOutputViewModel> existingView)
         {
             var equalityCompareImpl = new InputOutputViewModelEqualityComparer();
 
             var intersectionResult = existingView.Intersect(masterView, equalityCompareImpl);
 
             IEnumerable<IInputOutputViewModel> inputOutputViewModels = intersectionResult as IList<IInputOutputViewModel> ?? intersectionResult.ToList();
-            foreach(var intersectionRowItem in inputOutputViewModels)
+            foreach (var intersectionRowItem in inputOutputViewModels)
             {
                 //  Find a match in master list and tranfer properties ;)
                 var match = masterView.FirstOrDefault(c => c.DisplayName == intersectionRowItem.DisplayName);
 
-                if(match != null)
+                if (match != null)
                 {
                     intersectionRowItem.Required = match.Required;
                     intersectionRowItem.DefaultValue = match.DefaultValue;
+                    intersectionRowItem.IsObject = match.IsObject;
                 }
             }
 
@@ -311,136 +369,29 @@ namespace Dev2.DataList
 
             return result;
         }
-
-        /// <summary>
-        /// Creates the mapping list.
-        /// </summary>
-        /// <param name="mappingDefinitions">The mapping definitions.</param>
-        /// <param name="parser">The parser.</param>
-        /// <param name="autoAddBrackets">if set to <c>true</c> [automatic add brackets].</param>
-        /// <param name="isOutputMapping">if set to <c>true</c> [is output mapping].</param>
-        /// <param name="fuzzyMatch">The fuzzy match.</param>
-        /// <returns></returns>
-        private IList<IInputOutputViewModel> CreateMappingList(string mappingDefinitions, IDev2LanguageParser parser, bool autoAddBrackets, bool isOutputMapping, FuzzyMatchVo fuzzyMatch = null)
+        
+        IList<IInputOutputViewModel> CreateMappingList(string mappingDefinitions, IDev2LanguageParser parser, bool autoAddBrackets, bool isOutputMapping, FuzzyMatchVo fuzzyMatch = null)
         {
             IList<IInputOutputViewModel> result = new List<IInputOutputViewModel>();
-            IList<IDev2Definition> concreteDefinitions = parser.ParseAndAllowBlanks(mappingDefinitions);
+            var concreteDefinitions = parser.ParseAndAllowBlanks(mappingDefinitions);
 
-
-            var masterRecordsetName = string.Empty;
-
-            foreach(var def in concreteDefinitions)
+            foreach (var def in concreteDefinitions)
             {
                 var injectValue = def.RawValue;
-
-                if(!string.IsNullOrEmpty(injectValue) || IsWorkflow)
+                if (autoAddBrackets)
                 {
-                    if(autoAddBrackets)
-                    {
-                        // When output mapping we need to replace the recordset name if present with MasterRecordset
-                        // 
-                        if(isOutputMapping && def.IsRecordSet && fuzzyMatch != null)
-                        {
-                            var field = DataListUtil.ExtractFieldNameFromValue(injectValue);
-
-                            if(IsWorkflow)
-                            {
-                                field = def.Name;
-                            }
-
-                            string recordsetName = fuzzyMatch.FetchMatch(def.Name,def.RecordSetName);
-                            if(!string.IsNullOrEmpty(recordsetName))
-                            {
-                                masterRecordsetName = recordsetName;
-                            }
-                            else
-                            {
-                                // we have no match, use the current mapping value ;)
-                                masterRecordsetName = !IsWorkflow ? DataListUtil.ExtractRecordsetNameFromValue(injectValue) : def.RecordSetName;
-                            }
-
-
-                            injectValue = FormatString(masterRecordsetName, field);
-
-                        }
-                        else
-                        {
-                            if(def.IsRecordSet)
-                            {
-                                if(fuzzyMatch != null)
-                                {
-                                    string recordsetName = fuzzyMatch.FetchMatch(def.Name, def.RecordSetName);
-                                    masterRecordsetName = !String.IsNullOrEmpty(recordsetName) ? recordsetName : def.RecordSetName;
-                                }
-                                else
-                                {
-                                    masterRecordsetName = def.RecordSetName;
-                                }
-
-                                injectValue = FormatString(masterRecordsetName, def.Name);
-                            }
-                            else
-                            {
-                                injectValue = DataListUtil.AddBracketsToValueIfNotExist(!IsWorkflow ? injectValue : def.Name);
-                            }
-                        }
-                    }
+                    injectValue = CreateInjectValue(isOutputMapping, fuzzyMatch, def);
                 }
-                else
-                {
-                    if(!def.IsRecordSet)
-                    {
-                        if(!String.IsNullOrEmpty(def.RawValue) && String.IsNullOrEmpty(SavedInputMapping))
-                        {
-                            injectValue = DataListUtil.AddBracketsToValueIfNotExist(def.Name);
-                        }
-                    }
-                    else
-                    {
-                        if(!isOutputMapping)
-                        {
-                            var field = def.Name;
-
-                            if(fuzzyMatch != null && def.IsRecordSet)
-                            {
-                                if(string.IsNullOrEmpty(masterRecordsetName))
-                                {
-                                    string recordsetName = fuzzyMatch.FetchMatch(def.Name, def.RecordSetName);
-                                    masterRecordsetName = !string.IsNullOrEmpty(recordsetName) ? recordsetName : def.RecordSetName;
-                                }
-
-                                injectValue = DataListUtil.ComposeIntoUserVisibleRecordset(masterRecordsetName,
-                                                                                           string.Empty, field);
-                                injectValue = DataListUtil.AddBracketsToValueIfNotExist(injectValue);
-                            }
-                            else
-                            {
-                                if(!String.IsNullOrEmpty(def.RawValue) && String.IsNullOrEmpty(SavedInputMapping))
-                                {
-                                    injectValue = FormatString(def.RecordSetName, def.Name);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if(!String.IsNullOrEmpty(def.RawValue) && String.IsNullOrEmpty(SavedOutputMapping))
-                            {
-                                injectValue = FormatString(def.RecordSetName, def.Name);
-                            }
-                        }
-                    }
-                }
-
                 var injectMapsTo = def.MapsTo;
 
                 // no saved mappings add brackets ;)
-                if(!string.IsNullOrEmpty(injectMapsTo) && string.IsNullOrEmpty(SavedInputMapping))
+                if (!string.IsNullOrEmpty(injectMapsTo) && string.IsNullOrEmpty(SavedInputMapping))
                 {
                     injectMapsTo = DataListUtil.AddBracketsToValueIfNotExist(injectMapsTo);
                 }
                 else
                 {
-                    if(def.IsRecordSet)
+                    if (def.IsRecordSet)
                     {
                         var tmp = injectValue.Replace("()", "(*)");
                         injectMapsTo = tmp; // tag it as the same ;)
@@ -453,61 +404,107 @@ namespace Dev2.DataList
 
                 // def.RecordSetName -> recordsetName
                 var viewModel = new InputOutputViewModel(def.Name, injectValue, injectMapsTo, def.DefaultValue, def.IsRequired, def.RecordSetName, def.EmptyToNull);
-
+                viewModel.IsObject = def.IsObject;
+                if (def.IsObject)
+                {
+                    var complexObjectItemModel = _complexObjects.FirstOrDefault(model => model.Name == def.Name);
+                    if (complexObjectItemModel != null)
+                    {
+                        viewModel.JsonString = complexObjectItemModel.GetJson();
+                    }
+                }
                 result.Add(viewModel);
             }
 
             return result;
         }
 
-        /// <summary>
-        /// Formats the string.
-        /// </summary>
-        /// <param name="recset">The recset.</param>
-        /// <param name="field">The field.</param>
-        /// <returns></returns>
-        private string FormatString(string recset, string field)
+        string CreateInjectValue(bool isOutputMapping, FuzzyMatchVo fuzzyMatch, IDev2Definition def)
         {
-            var tmp = DataListUtil.ComposeIntoUserVisibleRecordset(recset, string.Empty, field);
-            return DataListUtil.AddBracketsToValueIfNotExist(tmp);
-        }
-
-        /// <summary>
-        /// Generates the match fragments from data list.
-        /// </summary>
-        /// <returns></returns>
-        private FuzzyMatchVo GenerateMatchFragmentsFromDataList()
-        {
-            FuzzyMatchVo result = null;
-
-            if (!string.IsNullOrEmpty(DataList))
+            string injectValue;
+            // When output mapping we need to replace the recordset name if present with MasterRecordset
+            // 
+            string masterRecordsetName;
+            if (isOutputMapping && def.IsRecordSet && fuzzyMatch != null)
             {
+                var field = def.Name;
 
-                var dataListModel = new DataListModel();
-                dataListModel.Create(DataList,DataList);
-                IDictionary<Tuple<string, string>, string> tmp = new Dictionary<Tuple<string, string>, string>();
+                var recordsetName = fuzzyMatch.FetchMatch(def.Name, def.RecordSetName);
+                if (!string.IsNullOrEmpty(recordsetName))
+                {
+                    masterRecordsetName = recordsetName;
+                }
+                else
+                {
+                    // we have no match, use the current mapping value ;)
+                    masterRecordsetName = def.RecordSetName;
+                }
 
-                    foreach (var rs in dataListModel.RecordSets)
+                injectValue = FormatString(masterRecordsetName, field);
+            }
+            else
+            {
+                if (def.IsRecordSet)
+                {
+                    if (fuzzyMatch != null)
                     {
-                        // build map for each column in a recordset ;)
-                        foreach (var col in rs.Columns)
-                        {
-                            foreach(var scalar in col.Value)
-                            {
-                                if (!tmp.Keys.Any(a => a.Item2 == scalar.Name && a.Item1 == rs.Name))
-                                {
-                                    tmp[new Tuple<string, string>(rs.Name, scalar.Name)] = rs.Name;
-                                }
-                            }
-                            
-                        }
+                        var recordsetName = fuzzyMatch.FetchMatch(def.Name, def.RecordSetName);
+                        masterRecordsetName = !String.IsNullOrEmpty(recordsetName) ? recordsetName : def.RecordSetName;
+                    }
+                    else
+                    {
+                        masterRecordsetName = def.RecordSetName;
                     }
 
-                result = new FuzzyMatchVo(tmp);
+                    injectValue = FormatString(masterRecordsetName, def.Name);
+                }
+                else
+                {
+                    injectValue = DataListUtil.AddBracketsToValueIfNotExist(def.Name);
+                }
+            }
 
+            return injectValue;
+        }
+        
+        string FormatString(string recset, string field)
+        {
+            var tmp = DataListUtil.CreateRecordsetDisplayValue(recset, field, string.Empty);
+            return DataListUtil.AddBracketsToValueIfNotExist(tmp);
+        }
+        
+        FuzzyMatchVo GenerateMatchFragmentsFromDataList()
+        {
+            FuzzyMatchVo result = null;
+            if (!string.IsNullOrEmpty(DataList))
+            {
+                var dataListModel = new DataListModel();
+                dataListModel.Create(DataList, DataList);
+                IDictionary<Tuple<string, string>, string> tmp = new Dictionary<Tuple<string, string>, string>();
+
+                foreach (var rs in dataListModel.RecordSets)
+                {
+                    MapRecordsetColumn(tmp, rs);
+                }
+                result = new FuzzyMatchVo(tmp);
             }
 
             return result;
+        }
+
+        private static void MapRecordsetColumn(IDictionary<Tuple<string, string>, string> tmp, IRecordSet rs)
+        {
+            // build map for each column in a recordset ;)
+            foreach (var col in rs.Columns)
+            {
+                foreach (var scalar in col.Value)
+                {
+                    if (!tmp.Keys.Any(a => a.Item2 == scalar.Name && a.Item1 == rs.Name))
+                    {
+                        tmp[new Tuple<string, string>(rs.Name, scalar.Name)] = rs.Name;
+                    }
+                }
+            }
         }
     }
 }

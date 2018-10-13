@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,9 +9,8 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Intellisense.Provider
 {
@@ -21,83 +19,32 @@ namespace Dev2.Intellisense.Provider
         public static string FindTextToSearch(this IntellisenseProviderContext context)
         {
             VerifyArgument.IsNotNull("context",context);
-            string searchString = string.Empty;
-            int foundMinimum = -1;
-            int foundLength = 0;
-            string inputText = context.InputText ?? string.Empty;
-            int caretPosition = context.CaretPosition;
+            var searchString = string.Empty;
+            var foundMinimum = -1;
+            var foundLength = 0;
+            var inputText = context.InputText ?? string.Empty;
+            var caretPosition = context.CaretPosition;
 
-            int maxStringLength = Math.Min(caretPosition, inputText.Length);
-            
-            bool closedBraceFound = false;
+            var maxStringLength = Math.Min(caretPosition, inputText.Length);
 
-            for(int i = maxStringLength - 1; i >= 0; i--)
+            var closedBraceFound = false;
+            var i = maxStringLength - 1;
+            while (i >= 0)
             {
-                char currentChar = inputText[i];
-
-                if(currentChar == ')')
+                var currentChar = inputText[i];
+                if (currentChar == ')')
                 {
                     closedBraceFound = true;
                 }
-
                 if(Char.IsWhiteSpace(currentChar))
                 {
                     i = -1;
                 }
                 else
                 {
-                    
-                    if(currentChar == '[' && i>0 && inputText[i - 1] == '[')
-                    {
-                        foundMinimum = i - 1;
-                        foundLength = maxStringLength - foundMinimum;
-                        i = -1;
-                    }
-                    else if(currentChar == ']')
-                    {
-                        i = -1;
-                    }
-                    else if (Char.IsSymbol(currentChar))
-                    {
-                        i = -1;
-                    }
-                    else if(currentChar == '(' && !closedBraceFound)
-                    {
-                        i = -1;
-                    }
-                    else if(currentChar == '(')
-                    {
-                        if(inputText.Length > i && i < inputText.Length &&  inputText[i + 1] == ')')
-                        {
-                            i = -1;
-                        }
-                    }
-                    else
-                    {
-                        if(!Char.IsLetterOrDigit(currentChar))
-                        {
-                            if(currentChar == '(' ||
-                                currentChar == ')' ||
-                                currentChar == '[' ||
-                                currentChar == ']' ||
-                                currentChar == '_' ||
-                                currentChar == '.')
-                            {
-                                foundMinimum = i;
-                                foundLength = maxStringLength - i;
-                            }
-                            else
-                            {
-                                i = -1;
-                            }
-                        }
-                        else
-                        {
-                            foundMinimum = i;
-                            foundLength = maxStringLength - i;
-                        }
-                    }
+                    ParseWarewolfLanguageSquareBraces(ref foundMinimum, ref foundLength, inputText, maxStringLength, closedBraceFound, ref i, currentChar);
                 }
+                i--;
             }
 
             if(foundMinimum != -1)
@@ -134,124 +81,51 @@ namespace Dev2.Intellisense.Provider
             return searchString;
         }
 
-        public static IEnumerable<int> AllIndexesOf(this string inputString, string searchString)
+        private static void ParseWarewolfLanguageSquareBraces(ref int foundMinimum, ref int foundLength, string inputText, int maxStringLength, bool closedBraceFound, ref int i, char currentChar)
         {
-            if(string.IsNullOrEmpty(searchString) || string.IsNullOrEmpty(inputString))
+            if (currentChar == '[' && i > 0 && inputText[i - 1] == '[')
             {
-                yield return 0;
+                foundMinimum = i - 1;
+                foundLength = maxStringLength - foundMinimum;
+                i = -1;
             }
             else
             {
-                for(var index = 0; ; index += searchString.Length)
+                if (currentChar == ']' || Char.IsSymbol(currentChar) || (currentChar == '(' && !closedBraceFound) || (currentChar == '(' && inputText.Length > i && i < inputText.Length && inputText[i + 1] == ')'))
                 {
-                    index = inputString.IndexOf(searchString, index, StringComparison.Ordinal);
-                    if(index == -1)
-                        break;
-                    yield return index;
+                    i = -1;
+                }
+                else
+                {
+                    ParseLastChar(ref foundMinimum, ref foundLength, ref i, maxStringLength, currentChar);
                 }
             }
         }
 
-        public static Region RegionInPostion(this string inputText, int position)
+        static void ParseLastChar(ref int foundMinimum, ref int foundLength, ref int i, int maxStringLength, char currentChar)
         {
-            var region = new Region();
-
-            if(position > inputText.Length)
+            if (!Char.IsLetterOrDigit(currentChar))
             {
-                return new Region { Name = "" };
-            }
-
-            if(string.IsNullOrEmpty(inputText))
-            {
-                return region;
-            }
-
-            var rightSubstring = inputText.Substring(position, inputText.Length - position);
-            char[] charArray = rightSubstring.ToCharArray();
-            var openingBraces = 2;
-            var closingBraces = 0;
-            var index = position;
-            var openBraceFound = false;
-
-            foreach(var c in charArray)
-            {
-                if(c == '(')
+                if (currentChar == '(' ||
+                    currentChar == ')' ||
+                    currentChar == '[' ||
+                    currentChar == ']' ||
+                    currentChar == '_' ||
+                    currentChar == '.')
                 {
-                    openBraceFound = true;
+                    foundMinimum = i;
+                    foundLength = maxStringLength - i;
                 }
-
-                if(c == ')' && !openBraceFound)
+                else
                 {
-                    break;
-                }
-
-                if(Char.IsWhiteSpace(c))
-                {
-                    break;
-                }
-
-                index++;
-                if(c == '[')
-                {
-                    openingBraces++;
-                }
-
-                if(c == ']')
-                {
-                    closingBraces++;
-                }
-
-                if(openingBraces == closingBraces)
-                {
-                    break;
+                    i = -1;
                 }
             }
-
-            var endIndex = openingBraces - closingBraces == 0 ? index : position;
-
-            var leftSubString = inputText.Substring(0, position);
-            charArray = leftSubString.ToCharArray();
-            openingBraces = 0;
-            closingBraces = 2;
-            index = position;
-
-            foreach(var c in charArray.Reverse())
+            else
             {
-                if(Char.IsWhiteSpace(c))
-                {
-                    break;
-                }
-
-                index--;
-                if(c == '[')
-                {
-                    openingBraces++;
-                }
-
-                if(c == ']')
-                {
-                    closingBraces++;
-                }
-
-                if(openingBraces == closingBraces)
-                {
-                    break;
-                }
+                foundMinimum = i;
+                foundLength = maxStringLength - i;
             }
-
-            var indexOfClosingBracket = leftSubString.LastIndexOf("]]", StringComparison.Ordinal) == -1 ? 0 : leftSubString.LastIndexOf("]]", StringComparison.Ordinal);
-            var startIndex = openingBraces - closingBraces == 0 ? index : indexOfClosingBracket;
-
-            region.StartIndex = startIndex;
-            region.Name = inputText.Substring(startIndex, endIndex - startIndex);
-
-            return region;
         }
-    }
-
-    public class Region
-    {
-        public int StartIndex { get; set; }
-        public string Name { get; set; }
     }
 }

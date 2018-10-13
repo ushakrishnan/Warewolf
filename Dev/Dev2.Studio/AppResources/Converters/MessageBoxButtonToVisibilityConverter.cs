@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,14 +26,12 @@ namespace Dev2.Studio.AppResources.Converters
                 return Binding.DoNothing;
             }
 
-            MessageBoxResult buttonType;
-            if (!Enum.TryParse(parameter.ToString(), true, out buttonType))
+            if (!Enum.TryParse(parameter.ToString(), true, out MessageBoxResult buttonType))
             {
                 return Binding.DoNothing;
             }
 
-            MessageBoxButton messageBoxButton;
-            if (!Enum.TryParse(value.ToString(), true, out messageBoxButton))
+            if (!Enum.TryParse(value.ToString(), true, out MessageBoxButton messageBoxButton))
             {
                 return Binding.DoNothing;
             }

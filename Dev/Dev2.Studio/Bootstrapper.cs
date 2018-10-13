@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,46 +12,42 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Net;
 using System.Windows;
 using Caliburn.Micro;
-using Dev2.Common.Interfaces.Studio;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Diagnostics;
-using Dev2.Interfaces;
-using Dev2.Services;
+using Dev2.Network;
 using Dev2.Studio;
 using Dev2.Studio.Controller;
-using Dev2.Studio.Core.AppResources.WindowManagers;
 using Dev2.Studio.Core.Helpers;
 using Dev2.Studio.Core.Services;
-using Dev2.Studio.Core.Services.System;
-using Dev2.Studio.Factory;
-using Dev2.Studio.StartupResources;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels;
+using Dev2.Threading;
+using Warewolf.Studio.ViewModels;
 
 namespace Dev2
 {
-    public class Bootstrapper : Bootstrapper<IMainViewModel>
+    public class Bootstrapper : Bootstrapper<IShellViewModel>, IDisposable
     {
-
         protected override void PrepareApplication()
         {
             base.PrepareApplication();
-            PreloadReferences();
+            CustomContainer.LoadedTypes = new List<Type>();
+            AddRegionTypes();
             CheckPath();
             FileHelper.MigrateTempData(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
         }
 
-        protected override IEnumerable<Assembly> SelectAssemblies()
+        void AddRegionTypes()
         {
-            var assemblies = base.SelectAssemblies().ToList();
-            assemblies.AddRange(new[]
-                {
-                    Assembly.GetAssembly(typeof (Bootstrapper)),
-                    Assembly.GetAssembly(typeof (DebugWriter))
-                });
-            return assemblies.Distinct();
+            CustomContainer.AddToLoadedTypes(typeof(ManagePluginServiceModel));
+            CustomContainer.AddToLoadedTypes(typeof(ManageComPluginServiceModel));
+            CustomContainer.AddToLoadedTypes(typeof(ManageDbServiceModel));
+            CustomContainer.AddToLoadedTypes(typeof(ManageWebServiceModel));
+            CustomContainer.AddToLoadedTypes(typeof(ManageWcfServiceModel));
+            CustomContainer.AddToLoadedTypes(typeof(ExchangeServiceModel));
+            CustomContainer.AddToLoadedTypes(typeof(ManageRabbitMQSourceModel));
         }
 
         #region Fields
@@ -62,16 +57,19 @@ namespace Dev2
         #endregion
 
         #region Overrides
-
+        ShellViewModel _mainViewModel;
         protected override void Configure()
         {
             CustomContainer.Register<IWindowManager>(new WindowManager());
-            CustomContainer.Register<IDockAwareWindowManager>(new XamDockManagerDockAwareWindowManager());
-            CustomContainer.Register<ISystemInfoService>(new SystemInfoService());
             CustomContainer.Register<IPopupController>(new PopupController());
-            CustomContainer.Register<IMainViewModel>(new MainViewModel());
+            _mainViewModel = new ShellViewModel();
+            CustomContainer.Register<IShellViewModel>(_mainViewModel);
+            CustomContainer.Register<IShellViewModel>(_mainViewModel);
             CustomContainer.Register<IWindowsServiceManager>(new WindowsServiceManager());
-            CustomContainer.Register<IDialogViewModelFactory>(new DialogViewModelFactory());
+            var conn = new ServerProxy("http://localHost:3142", CredentialCache.DefaultNetworkCredentials, new AsyncWorker());
+            conn.Connect(Guid.NewGuid());
+            CustomContainer.Register<Microsoft.Practices.Prism.PubSubEvents.IEventAggregator>(new Microsoft.Practices.Prism.PubSubEvents.EventAggregator());
+
             ClassRoutedEventHandlers.RegisterEvents();
         }
 
@@ -80,10 +78,10 @@ namespace Dev2
 
         protected override void OnExit(object sender, EventArgs e)
         {
-            if(_serverServiceStartedFromStudio)
+            if (_serverServiceStartedFromStudio)
             {
                 var app = Application.Current as IApp;
-                if(app != null)
+                if (app != null)
                 {
                     app.ShouldRestart = true;
                 }
@@ -91,48 +89,23 @@ namespace Dev2
         }
 
         #endregion
-
-
-
+        
         protected override void OnStartup(object sender, StartupEventArgs e)
         {
-
-            // ReSharper disable JoinDeclarationAndInitializer
-            // ReSharper disable RedundantAssignment
-            // ReSharper disable ConvertToConstant.Local
-            bool start = true;
-            // ReSharper restore ConvertToConstant.Local
-            // ReSharper restore RedundantAssignment
-            // ReSharper restore JoinDeclarationAndInitializer
-#if !DEBUG
-            start = CheckWindowsService();
-#endif
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if(start)
+            if(CheckWindowsService())
             {
                 base.OnStartup(sender, e);
             }
-            else
-            // ReSharper disable HeuristicUnreachableCode
+            else            
             {
                 Application.Shutdown();
             }
-            // ReSharper restore HeuristicUnreachableCode
-        }
 
-        protected override void StartRuntime()
-        {
-            Dev2SplashScreen.Show();
-            base.StartRuntime();
         }
 
         #region Overrides of BootstrapperBase
 
-        protected override object GetInstance(Type service, string key)
-        {
-            return CustomContainer.Get(service);
-        }
+        protected override object GetInstance(Type service, string key) => CustomContainer.Get(service);
 
         #endregion
 
@@ -140,29 +113,28 @@ namespace Dev2
 
         #region Private Methods
 
-        /*
-         * DELETE THIS METHOD AND LOOSE A VERY IMPORTANT PART OF YOU ;)
-         * 
-         * IT IS REQUIRED FOR UPDATES IN RELEASE MODE ;)
-         * REMOVING IT MEANS IT IS NOT POSSIBLE TO BUILD AN INSTALLER ;)
-         */
-        // ReSharper disable once UnusedMember.Local
-        private bool CheckWindowsService()
+#pragma warning disable CC0091 // Use static method
+#pragma warning disable CC0038 // You should use expression bodied members whenever possible.
+        bool CheckWindowsService()
+#pragma warning restore CC0091 // Use static method
         {
+#if DEBUG
+            return true;
+#else
             IWindowsServiceManager windowsServiceManager = CustomContainer.Get<IWindowsServiceManager>();
             IPopupController popup = CustomContainer.Get<IPopupController>();
             ServerServiceConfiguration ssc = new ServerServiceConfiguration(windowsServiceManager, popup);
 
-            if(ssc.DoesServiceExist())
+            if (ssc.DoesServiceExist())
             {
-                if(ssc.IsServiceRunning())
+                if (ssc.IsServiceRunning())
                 {
                     return true;
                 }
 
-                if(ssc.PromptUserToStartService())
+                if (ssc.PromptUserToStartService())
                 {
-                    if(ssc.StartService())
+                    if (ssc.StartService())
                     {
                         _serverServiceStartedFromStudio = true;
                         return true;
@@ -171,71 +143,46 @@ namespace Dev2
             }
 
             return false;
+#endif
         }
+#pragma warning restore CC0038 // You should use expression bodied members whenever possible.
 
-        private void PreloadReferences()
-        {
-            var currentAsm = typeof(App).Assembly;
-            var inspected = new HashSet<string> { currentAsm.GetName().ToString() };
-            LoadReferences(currentAsm, inspected);
-        }
-
-        private void LoadReferences(Assembly asm, HashSet<string> inspected)
-        {
-            var allReferences = asm.GetReferencedAssemblies();
-
-            foreach(AssemblyName toLoad in allReferences)
-            {
-                if(inspected.Add(toLoad.ToString()))
-                {
-                    try
-                    {
-                        Assembly loaded = AppDomain.CurrentDomain.Load(toLoad);
-                        LoadReferences(loaded, inspected);
-                    }
-                    // ReSharper disable EmptyGeneralCatchClause
-                    catch
-                    // ReSharper restore EmptyGeneralCatchClause
-                    {
-                        // Pissing me off ;) - Some strange dependency :: 'Microsoft.Scripting.Metadata'
-                    }
-                }
-            }
-        }
-
-        private void CheckPath()
+        void CheckPath()
         {
             var sysUri = new Uri(AppDomain.CurrentDomain.BaseDirectory);
 
-            if(IsLocal(sysUri)) return;
+            if (IsLocal(sysUri))
+            {
+                return;
+            }
 
             var popup = new PopupController
-                {
-                    Header = "Load Error",
-                    Description = String.Format(@"The Design Studio could not be launched from a network location.
-                                                    {0}Please install the application on your local machine",
-                                                Environment.NewLine),
-                    Buttons = MessageBoxButton.OK
-                };
+            {
+                Header = "Load Error",
+                Description =
+                        $@"The Design Studio could not be launched from a network location.
+                        {Environment.NewLine}Please install the application on your local machine",
+                Buttons = MessageBoxButton.OK
+            };
 
             popup.Show();
 
             Application.Current.Shutdown();
         }
 
-        private bool IsLocal(Uri sysUri)
+        bool IsLocal(Uri sysUri)
         {
-            if(IsUnc(sysUri))
+            if (IsUnc(sysUri))
             {
                 return false;
             }
 
-            if(!IsUnc(sysUri))
+            if (!IsUnc(sysUri))
             {
                 var currentLocation = new DriveInfo(sysUri.AbsolutePath);
-                DriveInfo[] drives = DriveInfo.GetDrives();
-                IEnumerable<DriveInfo> info = drives.Where(c => c.DriveType == DriveType.Network);
-                if(info.Any(c => c.RootDirectory.Name == currentLocation.RootDirectory.Name))
+                var drives = DriveInfo.GetDrives();
+                var info = drives.Where(c => c.DriveType == DriveType.Network);
+                if (info.Any(c => c.RootDirectory.Name == currentLocation.RootDirectory.Name))
                 {
                     return false;
                 }
@@ -248,9 +195,11 @@ namespace Dev2
             return true;
         }
 
-        private static bool IsUnc(Uri sysUri)
+        static bool IsUnc(Uri sysUri) => sysUri.IsUnc;
+
+        public void Dispose()
         {
-            return sysUri.IsUnc;
+            ((IDisposable)_mainViewModel).Dispose();
         }
 
         #endregion Private Methods

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,89 +14,48 @@ using System.Text;
 using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Data.TO;
+using Warewolf.Resource.Errors;
+using Dev2.Common.Common;
+using System.Linq;
 
-namespace Dev2.DataList.Contract
+namespace Dev2.Data.TO
 {
     [Serializable]
     public class ErrorResultTO : IErrorResultTO
     {
-
-        private readonly IList<string> _errorList = new List<string>();
-
-        /// <summary>
-        /// Adds the error.
-        /// </summary>
-        /// <param name="msg">The MSG.</param>
-        /// <param name="checkForDuplicates"></param>
-        public void AddError(string msg, bool checkForDuplicates = false)
+        readonly IList<StringBuilder> _errorList = new List<StringBuilder>();
+        
+        public void AddError(string msg) => AddError(msg, false);
+        public void AddError(string msg, bool checkForDuplicates)
         {
-            if(!string.IsNullOrEmpty(msg))
+            if (!string.IsNullOrEmpty(msg) && (checkForDuplicates && !_errorList.Contains(msg.ToStringBuilder()) || !checkForDuplicates))
             {
-                if(checkForDuplicates && !_errorList.Contains(msg) || !checkForDuplicates)
-                {
-                    _errorList.Add(msg);
-                }
+                _errorList.Add(msg.ToStringBuilder());
             }
-        }
 
-        /// <summary>
-        /// Remove the error from the list
-        /// </summary>
-        /// <param name="msg"></param>
+        }
+        
         public void RemoveError(string msg)
         {
-            _errorList.Remove(msg);
-        }
-
-        /// <summary>
-        /// Fetches the errors.
-        /// </summary>
-        /// <returns></returns>
-        public IList<string> FetchErrors()
-        {
-            return _errorList;
-        }
-
-        /// <summary>
-        /// Determines whether this instance has errors.
-        /// </summary>
-        /// <returns>
-        ///   <c>true</c> if this instance has errors; otherwise, <c>false</c>.
-        /// </returns>
-        public bool HasErrors()
-        {
-            return _errorList.Count > 0;
-        }
-
-        /// <summary>
-        /// Merges the errors.
-        /// </summary>
-        /// <param name="toMerge">To merge.</param>
-        public void MergeErrors(IErrorResultTO toMerge)
-        {
-            if(toMerge != null && toMerge.HasErrors())
+            var found = _errorList.FirstOrDefault(s => s.ToString() == msg);
+            if (found != null)
             {
-                // Flipping Union does not appear to work
-                foreach(string wtf in toMerge.FetchErrors())
-                {
-                    _errorList.Add(wtf);
-                }
-
-                toMerge.ClearErrors();
+                _errorList.Remove(found);
             }
         }
-        /// <summary>
-        /// Merges the errors.
-        /// </summary>
-        /// <param name="toMerge">To merge.</param>
-        public void MergeErrors(ErrorResultTO toMerge)
+        
+        public IList<string> FetchErrors() => _errorList.Select(e => e.ToString()).ToList();
+        
+        public bool HasErrors() => _errorList.Count > 0;
+        
+        public void MergeErrors(IErrorResultTO toMerge)
         {
             if (toMerge != null && toMerge.HasErrors())
             {
                 // Flipping Union does not appear to work
                 foreach (string wtf in toMerge.FetchErrors())
                 {
-                    _errorList.Add(wtf);
+                    _errorList.Add(wtf.ToStringBuilder());
                 }
 
                 toMerge.ClearErrors();
@@ -107,36 +65,12 @@ namespace Dev2.DataList.Contract
         {
             _errorList.Clear();
         }
-
-        /// <summary>
-        /// Makes the error collection user ready.
-        /// </summary>
-        /// <returns></returns>
-        public string MakeUserReady()
-        {
-            StringBuilder result = new StringBuilder("<Error>");
-
-            foreach(string e in _errorList)
-            {
-                result.Append(GlobalConstants.InnerErrorTag);
-                result.Append(e);
-                result.Append(GlobalConstants.InnerErrorTagEnd);
-            }
-
-            result.Append("</Error>");
-
-            return result.ToString();
-        }
-
-        /// <summary>
-        /// Makes the error collection user ready.
-        /// </summary>
-        /// <returns></returns>
+        
         public string MakeDisplayReady()
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
 
-            foreach(string e in _errorList)
+            foreach(StringBuilder e in _errorList)
             {
                 result.Append(e);
                 if(_errorList.IndexOf(e) + 1 < _errorList.Count)
@@ -152,20 +86,21 @@ namespace Dev2.DataList.Contract
         /// Makes the error collection data list insert ready.
         /// </summary>
         /// <returns></returns>
-        public string MakeDataListReady(bool AsXML = true)
+        public string MakeDataListReady() => MakeDataListReady(true);
+        public string MakeDataListReady(bool asXml)
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
 
-            if(!AsXML)
+            if (!asXml)
             {
                 result.Append("\"errors\": [ ");
             }
 
-            int errCnt = 0;
-            foreach(string e in _errorList)
+            var errCnt = 0;
+            foreach (StringBuilder e in _errorList)
             {
-                var formattedMsg = FormatErrorMessage(e);
-                if(AsXML)
+                var formattedMsg = FormatErrorMessage(e.ToString());
+                if(asXml)
                 {
                     result.Append(GlobalConstants.InnerErrorTag);
                     result.Append(formattedMsg);
@@ -186,7 +121,7 @@ namespace Dev2.DataList.Contract
                 }
             }
 
-            if(!AsXML)
+            if(!asXml)
             {
                 result.Append("]");
             }
@@ -194,11 +129,11 @@ namespace Dev2.DataList.Contract
             return result.ToString();
         }
 
-        private string FormatErrorMessage(string s)
+        string FormatErrorMessage(string s)
         {
-            if(s.Contains("Cannot set unknown member"))
+            if (s.Contains("Cannot set unknown member"))
             {
-                return "Resource has unrecognized formatting, this Warewolf Server may be to outdated to read this resource.";
+                return ErrorResource.ResourceHasUnrecognizedFormatting;
             }
             return s;
         }
@@ -210,14 +145,14 @@ namespace Dev2.DataList.Contract
         /// <returns>ErrorResultsTO</returns>
         public static ErrorResultTO MakeErrorResultFromDataListString(string errorsString)
         {
-            ErrorResultTO result = new ErrorResultTO();
+            var result = new ErrorResultTO();
             try
             {
                 if(!string.IsNullOrEmpty(errorsString))
                 {
                     errorsString = string.Concat("<Error>", errorsString, "</Error>");
-                    XElement errorNode = XElement.Parse(errorsString);
-                    foreach(XElement element in errorNode.Elements("InnerError"))
+                    var errorNode = XElement.Parse(errorsString);
+                    foreach (XElement element in errorNode.Elements("InnerError"))
                     {
                         result.AddError(element.Value);
                     }

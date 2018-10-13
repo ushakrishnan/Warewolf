@@ -1,7 +1,7 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 
+
 namespace Dev2.Common.Interfaces.Diagnostics.Debug
 {
     /// <summary>
@@ -18,24 +19,13 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
     /// </summary>
     public interface IDebugDispatcher
     {
-        /// <summary>
-        ///     Gets the number of writers.
-        /// </summary>
-        int Count { get; }
 
-        bool IsQueueEmpty { get; }
-
-        /// <summary>
-        ///     Adds the specified writer to the dispatcher.
-        /// </summary>
-        /// <param name="workspaceId">The ID of the workspace to which the writer belongs.</param>
-        /// <param name="writer">The writer to be added.</param>
-        void Add(Guid workspaceId, IDebugWriter writer);
 
         /// <summary>
         ///     Removes the specified workspace from the dispatcher.
         /// </summary>
         /// <param name="workspaceId">The ID of workspace to be removed.</param>
+    
         void Remove(Guid workspaceId);
 
         /// <summary>
@@ -44,20 +34,9 @@ namespace Dev2.Common.Interfaces.Diagnostics.Debug
         /// <param name="workspaceId">The workspace ID to be queried.</param>
         /// <returns>The <see cref="IDebugWriter" /> with the specified ID, or <code>null</code> if not found.</returns>
         IDebugWriter Get(Guid workspaceId);
-
-        /// <summary>
-        ///     Writes the given state to any registered <see cref="IDebugWriter" />'s.
-        ///     <remarks>
-        ///         This must implement the one-way (fire and forget) message exchange pattern.
-        ///     </remarks>
-        /// </summary>
-        /// <param name="debugState">The state to be written.</param>
-        /// <param name="isRemoteInvoke"><code>true</code> if this is a remote invoke; <code>false</code> otherwise.</param>
-        /// <param name="remoteInvokerId">The remote invoker ID.</param>
-        /// <param name="parentInstanceId">The parent instance ID.</param>
-        /// <param name="remoteDebugItems">The remote debug items.</param>
-        // BUG 9706 - 2013.06.22 - TWR : added remote invoke parameters
-        void Write(IDebugState debugState, bool isRemoteInvoke = false, string remoteInvokerId = null,
-            string parentInstanceId = null, IList<IDebugState> remoteDebugItems = null);
+        void Write(IDebugState debugState);
+        void Write(IDebugState debugState, bool isTestExecution, bool isDebugFromWeb, string testName);
+        void Write(IDebugState debugState, bool isTestExecution, bool isDebugFromWeb, string testName, bool isRemoteInvoke, string remoteInvokerId,
+            string parentInstanceId, IList<IDebugState> remoteDebugItems);
     }
 }

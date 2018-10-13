@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,19 +12,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
-    // BUG 9626 - 2013.06.11 - TWR : refactored
     public static class RecordsetListHelper
     {
         #region ToRecordsetList
 
-        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList = null, string defaultFieldName = "")
+        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription) => outputDescription.ToRecordsetList(null, "");
+
+        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList) => outputDescription.ToRecordsetList(currentList, "");
+
+        public static RecordsetList ToRecordsetList(this IOutputDescription outputDescription, RecordsetList currentList, string defaultFieldName)
         {
-            if(outputDescription == null || outputDescription.DataSourceShapes == null || outputDescription.DataSourceShapes.Count == 0)
+            if(outputDescription?.DataSourceShapes == null || outputDescription.DataSourceShapes.Count == 0)
             {
-                throw new Exception("Error retrieving shape from service output.");
+                throw new Exception(ErrorResource.ErrorRetrievingShapeFromServiceOutput);
             }
 
             var result = currentList ?? new RecordsetList();
@@ -83,6 +86,7 @@ namespace Dev2.Runtime.ServiceModel.Data
                     }
                 }
             }
+            result.Description = outputDescription;
             return result;
         }
 
@@ -98,8 +102,8 @@ namespace Dev2.Runtime.ServiceModel.Data
             var indexOf = path.ActualPath.LastIndexOf("()", StringComparison.InvariantCultureIgnoreCase);
             if(indexOf != -1)
             {
-                int length = path.ActualPath.Length;
-                if(indexOf + 2 == length) // This means we have a primitive array as property
+                var length = path.ActualPath.Length;
+                if (indexOf + 2 == length) // This means we have a primitive array as property
                 {
                     var upperRecsetName = path.ActualPath.LastIndexOf(".", StringComparison.InvariantCultureIgnoreCase);
                     if(upperRecsetName == -1)

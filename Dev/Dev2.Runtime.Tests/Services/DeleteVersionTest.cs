@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
@@ -26,10 +26,38 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DeleteVersionTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var deleteVersion = new DeleteVersion();
+
+            //------------Execute Test---------------------------
+            var resId = deleteVersion.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var deleteVersion = new DeleteVersion();
+
+            //------------Execute Test---------------------------
+            var resId = deleteVersion.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Contribute, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeleteVersion_Name")]
-// ReSharper disable InconsistentNaming
+
         public void DeleteVersion_Name_GetName()
 
         {
@@ -42,7 +70,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("DeleteVersion", DeleteVersion.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeleteVersion_CreateServiceEntry")]
         public void DeleteVersion_CreateServiceEntry_ExpectCorrectDL()
@@ -59,7 +87,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeleteVersion_Execute")]
         public void DeleteVersion_Execute_InvalidParams()
@@ -77,7 +105,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeleteVersion_Execute")]
         public void DeleteVersion_Execute_InvalidParams_NoVersion()
@@ -93,26 +121,28 @@ namespace Dev2.Tests.Runtime.Services
             var des = serializer.Deserialize<ExecuteMessage>(ax);
             Assert.AreEqual(des.HasError, true);
         }
+        
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeleteVersion_Execute")]
         public void DeleteVersion_Execute_Valid_ExpectServerCalled()
         {
             //------------Setup for test--------------------------
-            var DeleteVersion = new DeleteVersion();
+
+            var deleteVersion = new DeleteVersion();
             var serializer = new Dev2JsonSerializer();
             var ws = new Mock<IWorkspace>();
             var server = new Mock<IServerVersionRepository>();
             var res = Guid.NewGuid();
             //------------Execute Test---------------------------
-            DeleteVersion.ServerVersionRepo = server.Object;
-            var ax = DeleteVersion.Execute(new Dictionary<string, StringBuilder> { { "resourceId", new StringBuilder(res.ToString()) }, { "versionNumber", new StringBuilder("1") } }, ws.Object);
+            deleteVersion.ServerVersionRepo = server.Object;
+            var ax = deleteVersion.Execute(new Dictionary<string, StringBuilder> { { "resourceId", new StringBuilder(res.ToString()) }, { "versionNumber", new StringBuilder("1") } }, ws.Object);
 
             //------------Assert Results-------------------------
             serializer.Deserialize<ExecuteMessage>(ax);
-            server.Verify(a => a.DeleteVersion(res, "1"));
+            server.Verify(a => a.DeleteVersion(It.IsAny<Guid>(), "1", ""));
         }
     }
-    // ReSharper restore InconsistentNaming
+    
 }

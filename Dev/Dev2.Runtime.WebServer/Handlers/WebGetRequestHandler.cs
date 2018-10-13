@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,37 +8,55 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
 using System.Threading;
+using Dev2.Common.Interfaces;
+using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.WebServer.TransferObjects;
 
 namespace Dev2.Runtime.WebServer.Handlers
 {
     public class WebGetRequestHandler : AbstractWebRequestHandler
     {
+        IResourceCatalog _catalog;
+        ITestCatalog _testCatalog;
+
+        public WebGetRequestHandler(IResourceCatalog catalog, ITestCatalog testCatalog)
+        {
+            _catalog = catalog;
+            _testCatalog = testCatalog;
+        }
+
+        public WebGetRequestHandler()
+        {
+
+        }
+
         public override void ProcessRequest(ICommunicationContext ctx)
         {
             var postDataListID = GetDataListID(ctx);
-            if(postDataListID != null)
+            if (postDataListID != null)
             {
-                new WebPostRequestHandler().ProcessRequest(ctx);
+                _catalog = _catalog ?? ResourceCatalog.Instance;
+                _testCatalog = _testCatalog ?? TestCatalog.Instance;
+                new WebPostRequestHandler(_catalog, _testCatalog).ProcessRequest(ctx);
                 return;
             }
 
             var serviceName = GetServiceName(ctx);
             var workspaceID = GetWorkspaceID(ctx);
 
-            var requestTO = new WebRequestTO { ServiceName = serviceName, WebServerUrl = ctx.Request.Uri.ToString(), Dev2WebServer = String.Format("{0}://{1}", ctx.Request.Uri.Scheme, ctx.Request.Uri.Authority) };
+            var requestTO = new WebRequestTO { ServiceName = serviceName, WebServerUrl = ctx.Request.Uri.ToString(), Dev2WebServer = $"{ctx.Request.Uri.Scheme}://{ctx.Request.Uri.Authority}" };
             var data = GetPostData(ctx);
 
-            if(!String.IsNullOrEmpty(data))
+            if (!string.IsNullOrEmpty(data))
             {
                 requestTO.RawRequestPayload = data;
             }
             var variables = ctx.Request.BoundVariables;
-            if(variables != null)
+            if (variables != null)
             {
-                foreach(string key in variables)
+                foreach (string key in variables)
                 {
                     requestTO.Variables.Add(key, variables[key]);
                 }
@@ -47,7 +64,7 @@ namespace Dev2.Runtime.WebServer.Handlers
             // Execute in its own thread to give proper context ;)
             Thread.CurrentPrincipal = ctx.Request.User;
 
-            var responseWriter = CreateForm(requestTO, serviceName, workspaceID, ctx.FetchHeaders(),ctx.Request.User);
+            var responseWriter = CreateForm(requestTO, serviceName, workspaceID, ctx.FetchHeaders(), ctx.Request.User);
             ctx.Send(responseWriter);
         }
     }

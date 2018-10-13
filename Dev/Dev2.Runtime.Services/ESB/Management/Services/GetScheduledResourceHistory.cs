@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,36 +12,34 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
+using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.Security;
 using Dev2.Scheduler;
 using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    public class GetScheduledResourceHistory : IEsbManagementEndpoint
+    public class GetScheduledResourceHistory : DefaultEsbManagementEndpoint
     {
-        private IServerSchedulerFactory _schedulerFactory;
+        IServerSchedulerFactory _schedulerFactory;
         ISecurityWrapper _securityWrapper;
+        IResourceCatalog _catalog;
 
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
             {
-
-
-                StringBuilder tmp;
-                values.TryGetValue("Resource", out tmp);
+                values.TryGetValue("Resource", out StringBuilder tmp);
                 var serializer = new Dev2JsonSerializer();
 
                 if (tmp != null)
                 {
                     var res = serializer.Deserialize<IScheduledResource>(tmp);
-                    Dev2Logger.Log.Info("Get Scheduled History. " +tmp);
+                    Dev2Logger.Info("Get Scheduled History. " +tmp, GlobalConstants.WarewolfInfo);
                     IList<IResourceHistory> resources;
                     using (var model = SchedulerFactory.CreateModel(GlobalConstants.SchedulerFolderId, SecurityWrapper))
                     {
@@ -50,58 +47,36 @@ namespace Dev2.Runtime.ESB.Management.Services
                     }
                     return serializer.SerializeToBuilder(resources);
                 }
-                Dev2Logger.Log.Debug("No resource Provided");
+                Dev2Logger.Debug("No resource Provided", GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(new List<IResourceHistory>());
             }
             catch (Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 throw;
             }
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            var getResourceHistory = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
-
-            var getHistoryAction = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-
-            getResourceHistory.Actions.Add(getHistoryAction);
-
-            return getResourceHistory;
-        }
-
-        public string HandlesType()
-        {
-            return "GetScheduledResourceHistoryService";
-        }
-
         public IServerSchedulerFactory SchedulerFactory
         {
-            get { return _schedulerFactory ?? new ServerSchedulerFactory(); }
-            set { _schedulerFactory = value; }
+            get => _schedulerFactory ?? new ServerSchedulerFactory(a => ResourceCatalogue.GetResourcePath(GlobalConstants.ServerWorkspaceID, a.ResourceId));
+            set => _schedulerFactory = value;
+        }
+
+        public IResourceCatalog ResourceCatalogue
+        {
+            get => _catalog ?? ResourceCatalog.Instance;
+            set => _catalog = value;
         }
 
         public ISecurityWrapper SecurityWrapper
         {
-            get
-            {
-                return _securityWrapper ?? new SecurityWrapper(ServerAuthorizationService.Instance);
-            }
-            set
-            {
-                _securityWrapper = value;
-            }
+            get => _securityWrapper ?? new SecurityWrapper(ServerAuthorizationService.Instance);
+            set => _securityWrapper = value;
         }
+
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public override string HandlesType() => "GetScheduledResourceHistoryService";
     }
 }

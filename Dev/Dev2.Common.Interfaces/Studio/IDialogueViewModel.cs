@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +13,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Common.Interfaces.Studio
 {
     // Sashen Naidoo - 29-08-2012 - PBI 5037
@@ -29,8 +28,8 @@ namespace Dev2.Common.Interfaces.Studio
         string HyperlinkText { get; }
         Visibility HyperlinkVisibility { get; }
         ICommand OkCommand { get; }
-        //event ClosedOperationEventHandler OnOkClick;
-        void SetupDialogue(string title, string description, string imageSourceuri, string descriptionTitleText, string hyperlink = null, string linkText = null);
+        void SetupDialogue(string title, string description, string imageSourceuri, string descriptionTitleText);
+        void SetupDialogue(string title, string description, string imageSourceuri, string descriptionTitleText, string hyperlink, string linkText);
 
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,25 +15,26 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.TO;
 
 namespace Dev2.Activities.Designers2.CreateJSON
 {
     public class CreateJsonDesignerViewModel : ActivityCollectionDesignerViewModel<JsonMappingTo>
     {
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        readonly Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public CreateJsonDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
             AddTitleBarLargeToggle();
             AddTitleBarQuickVariableInputToggle();
-            AddTitleBarHelpToggle();
 
             dynamic mi = ModelItem;
             InitializeItems(mi.JsonMappings);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Create_JSON;
         }
 
-        public override string CollectionName { get { return "JsonMappings"; } }
+        public override string CollectionName => "JsonMappings";
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
@@ -45,23 +45,22 @@ namespace Dev2.Activities.Designers2.CreateJSON
 
         protected override void DoCustomAction(string propertyName)
         {
-            if (propertyName == "SourceName")
-            {                     
-                if (CurrentModelItem != null)
+            if (propertyName == "SourceName" && CurrentModelItem?.GetCurrentValue() is JsonMappingTo dto)
+            {
+                var destinationWithName = dto.GetDestinationWithName(dto.SourceName);
+                if (String.IsNullOrEmpty(dto.DestinationName))
                 {
-                    var dto = CurrentModelItem.GetCurrentValue() as JsonMappingTo;
-                    if (dto != null)
-                    {
-                        var destinationWithName = dto.GetDestinationWithName(dto.SourceName);
-                        if (String.IsNullOrEmpty(dto.DestinationName))
-                        {
-                            CurrentModelItem.SetProperty("DestinationName", destinationWithName);
-                        }
-                    }
+                    CurrentModelItem.SetProperty("DestinationName", destinationWithName);
                 }
             }
+
         }
 
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
+        }
 
         #endregion
 

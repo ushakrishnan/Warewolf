@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,73 +9,49 @@
 */
 
 using System;
-using System.ComponentModel;
 using System.Windows.Input;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Models;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Enums;
-using Dev2.Studio.ViewModels.Navigation;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable CheckNamespace
 namespace Dev2.Studio.ViewModels.Workflow
 {
     public class DsfActivityDropViewModel : SimpleBaseViewModel
     {
-        #region Fields
+        public IExplorerViewModel SingleEnvironmentExplorerViewModel { get; private set; }
 
-        private RelayCommand _executeCommmand;
-        private DelegateCommand _cancelComand;
+        RelayCommand _executeCommmand;
+        DelegateCommand _cancelComand;
 
-        private IContextualResourceModel _selectedResource;
+        IContextualResourceModel _selectedResource;
 
-        #endregion Fields
-
-        #region Ctor
-
-        public DsfActivityDropViewModel(INavigationViewModel navigationViewModel, enDsfActivityType dsfActivityType)
+        public DsfActivityDropViewModel(IExplorerViewModel explorerViewModel, enDsfActivityType dsfActivityType)
         {
-            NavigationViewModel = navigationViewModel;
+            SingleEnvironmentExplorerViewModel = explorerViewModel;
+            SingleEnvironmentExplorerViewModel.SelectedItemChanged += SingleEnvironmentExplorerViewModel_SelectedItemChanged;
             ActivityType = dsfActivityType;
-            NavigationViewModel.PropertyChanged+=CheckIfSelectedItemChanged;
+
             Init();
             EventPublishers.Aggregator.Subscribe(this);
         }
 
-        void CheckIfSelectedItemChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
+        void SingleEnvironmentExplorerViewModel_SelectedItemChanged(object sender, IExplorerTreeItem e)
         {
-            if (propertyChangedEventArgs.PropertyName == "SelectedItem")
-            {
-                OkCommand.RaiseCanExecuteChanged();
-            }
+            SelectedExplorerItemModel = e;
+            OkCommand.RaiseCanExecuteChanged();
         }
 
         void Init()
         {
-            switch(ActivityType)
+            if (ActivityType == enDsfActivityType.Workflow)
             {
-                case enDsfActivityType.Workflow:
-                    ImageSource = "Workflow-32";
-                    Title = "Select A Service";
-                    break;
-                case enDsfActivityType.Service:
-                    ImageSource = "ToolService-32";
-                    Title = "Select A Data Connector";
-                    break;
-                default:
-                    ImageSource = "ExplorerWarewolfConnection-32";
-                    Title = "Select A Resource";
-                    break;
+                ImageSource = "Workflow-32";
+                Title = "Select A Service";
             }
         }
-
-        #endregion Ctor
-
-        #region Properties
 
         public string Title { get; private set; }
 
@@ -84,137 +59,70 @@ namespace Dev2.Studio.ViewModels.Workflow
 
         public enDsfActivityType ActivityType { get; private set; }
 
-        public INavigationViewModel NavigationViewModel { get; private set; }
-
         public IContextualResourceModel SelectedResourceModel
         {
-            get
-            {
-                return _selectedResource;
-            }
+            get => _selectedResource;
             set
             {
                 _selectedResource = value;
                 NotifyOfPropertyChange("SelectedResourceModel");
-                CommandManager.InvalidateRequerySuggested();
+                OkCommand.RaiseCanExecuteChanged();
             }
         }
 
-        #endregion Properties
+        public RelayCommand OkCommand => _executeCommmand ?? (_executeCommmand = new RelayCommand(param => Okay(), param => CanOkay));
 
-        #region Commands
+        public bool CanOkay => CanSelect();
 
-        public RelayCommand OkCommand
+        bool CanSelect()
         {
-            get
+            var isMatched = false;
+
+            var explorerItemModel = SingleEnvironmentExplorerViewModel.SelectedItem;
+
+            if (explorerItemModel != null)
             {
-                return _executeCommmand ?? (_executeCommmand = new RelayCommand(param => Okay(), param => CanOkay));
-            }
-        }
-        public bool CanOkay { get { return CanSelect(); } }
-
-
-        private bool CanSelect()
-        {
-            bool isMatched = false;
-
-            var explorerItemModel = NavigationViewModel.SelectedItem;
-
-            if(explorerItemModel != null)
-            {
-                switch(ActivityType)
-                {
-                    case enDsfActivityType.Workflow:
-                        isMatched = explorerItemModel.ResourceType == ResourceType.WorkflowService;
-                        break;
-                    case enDsfActivityType.Service:
-                        isMatched = explorerItemModel.ResourceType == ResourceType.DbService ||
-                                    explorerItemModel.ResourceType == ResourceType.PluginService ||
-                                    explorerItemModel.ResourceType == ResourceType.WebService;
-                        break;
-                    case enDsfActivityType.All:
-                        isMatched = explorerItemModel.ResourceType != ResourceType.Folder &&
-                                    explorerItemModel.ResourceType != ResourceType.Server &&
-                                    explorerItemModel.ResourceType != ResourceType.ServerSource;
-                        break;
-                    default:
-                        isMatched = explorerItemModel.ResourceType != ResourceType.Folder &&
-                                    explorerItemModel.ResourceType != ResourceType.WorkflowService &&
-                                    explorerItemModel.ResourceType != ResourceType.DbService &&
-                                    explorerItemModel.ResourceType != ResourceType.PluginService &&
-                                    explorerItemModel.ResourceType != ResourceType.WebService;
-                        break;
-                }
+                isMatched = explorerItemModel.IsService;
             }
 
             return explorerItemModel != null && isMatched;
         }
 
-        public ICommand CancelCommand
-        {
-            get
-            {
-                return _cancelComand ?? (_cancelComand = new DelegateCommand(param => Cancel()));
-            }
-        }
+        public ICommand CancelCommand => _cancelComand ?? (_cancelComand = new DelegateCommand(param => Cancel()));
 
-        #endregion Cammands
+        readonly Func<IServerRepository> GetEnvironmentRepository = () => ServerRepository.Instance;
 
-        #region Methods
-
-        public Func<IEnvironmentRepository> GetEnvironmentRepository = () => EnvironmentRepository.Instance;
-
-        /// <summary>
-        /// Used for saving the data input by the user to the file system and pushing the data back at the workflow
-        /// </summary>
         public void Okay()
         {
-            var selectedItem = NavigationViewModel.SelectedItem;
-            if(selectedItem == null)
+            var selectedItem = SingleEnvironmentExplorerViewModel.SelectedItem;
+            if (selectedItem == null)
             {
                 return;
             }
 
-            var environment = GetEnvironmentRepository().FindSingle(ev => ev.ID == selectedItem.EnvironmentId);
-
-            if(environment == null)
+            var environment = GetEnvironmentRepository().FindSingle(ev => ev.EnvironmentID == selectedItem.Server.EnvironmentID);
+            if (environment == null)
             {
                 return;
             }
-
-            SelectedResourceModel = environment.ResourceRepository.FindSingleWithPayLoad(r => r.ID == selectedItem.ResourceId) as IContextualResourceModel;
             SelectedExplorerItemModel = selectedItem;
-            if(SelectedResourceModel != null)
+            if (SelectedExplorerItemModel != null)
             {
                 RequestClose(ViewModelDialogResults.Okay);
             }
         }
 
-        internal IExplorerItemModel SelectedExplorerItemModel { get; private set; }
+        internal IExplorerTreeItem SelectedExplorerItemModel { get; private set; }
 
-        /// <summary>
-        /// Used for canceling the drop of t    he design surface
-        /// </summary>
         void Cancel()
         {
             RequestClose(ViewModelDialogResults.Cancel);
         }
 
-        #endregion Methods
-
-        #region Implementation of IDisposable
-
         protected override void OnDispose()
         {
-            if(NavigationViewModel != null)
-            {
-                NavigationViewModel.Dispose();
-                NavigationViewModel = null;
-            }
             EventPublishers.Aggregator.Unsubscribe(this);
-
             base.OnDispose();
         }
-        #endregion
     }
 }

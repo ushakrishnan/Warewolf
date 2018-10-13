@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.AppResources.ExtensionMethods
 {
     public static class FrameworkElementExtensionMethods
@@ -23,36 +22,33 @@ namespace Dev2.Studio.AppResources.ExtensionMethods
         /// <param name="frameworkElement">The framework element.</param>
         /// <param name="name">The name of the element.</param>
         /// <param name="partialMatch">Indicates if a partial name match should be performed</param>
-        public static FrameworkElement FindNameAcrossNamescopes(this FrameworkElement frameworkElement, string name, bool partialMatch = false)
-        {
-            return FindNameAcrossNamescopesImpl(frameworkElement, name, partialMatch);
-        }
+        public static FrameworkElement FindNameAcrossNamescopes(this FrameworkElement frameworkElement, string name) => frameworkElement.FindNameAcrossNamescopes(name, false);
+        public static FrameworkElement FindNameAcrossNamescopes(this FrameworkElement frameworkElement, string name, bool partialMatch) => FindNameAcrossNamescopesImpl(frameworkElement, name, partialMatch);
 
-        private static FrameworkElement FindNameAcrossNamescopesImpl(DependencyObject dp, string name, bool partialMatch = false)
+        static FrameworkElement FindNameAcrossNamescopesImpl(DependencyObject dp, string name, bool partialMatch = false)
         {
-            if(dp == null)
+            if (dp == null)
             {
                 return null;
             }
 
-            int childCount = VisualTreeHelper.GetChildrenCount(dp);
-            for(int i = 0; i < childCount; i++)
+            var childCount = VisualTreeHelper.GetChildrenCount(dp);
+            for (int i = 0; i < childCount; i++)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(dp, i);
+                var child = VisualTreeHelper.GetChild(dp, i);
 
-                FrameworkElement feChild = child as FrameworkElement;
-                if(feChild != null && (feChild.Name == name || partialMatch && feChild.Name.Contains(name)))
+                if (child is FrameworkElement feChild && (feChild.Name == name || partialMatch && feChild.Name.Contains(name)))
                 {
                     return feChild;
                 }
             }
 
-            for(int i = 0; i < childCount; i++)
+            for (int i = 0; i < childCount; i++)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(dp, i);
+                var child = VisualTreeHelper.GetChild(dp, i);
 
-                FrameworkElement recursiveResult = FindNameAcrossNamescopesImpl(child, name, partialMatch);
-                if(recursiveResult != null)
+                var recursiveResult = FindNameAcrossNamescopesImpl(child, name, partialMatch);
+                if (recursiveResult != null)
                 {
                     return recursiveResult;
                 }

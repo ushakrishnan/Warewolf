@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -44,10 +43,10 @@ namespace Dev2.Activities.Designers2.Service
         {
             var viewModel = (ServiceDesignerViewModel)DataContext;
 
-            if(viewModel.DataMappingViewModel != null)
+            if(viewModel.MappingManager.DataMappingViewModel != null)
             {
-                var inputsCount = viewModel.DataMappingViewModel.Inputs.Count;
-                var outputsCount = viewModel.DataMappingViewModel.Outputs.Count;
+                var inputsCount = viewModel.MappingManager.DataMappingViewModel.Inputs.Count;
+                var outputsCount = viewModel.MappingManager.DataMappingViewModel.Outputs.Count;
 
                 if(inputsCount == 0 && outputsCount == 0)
                 {
@@ -115,7 +114,7 @@ namespace Dev2.Activities.Designers2.Service
             public double Row { get; set; }
         }
 
-        // ReSharper disable once InconsistentNaming
+
         void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
         {
             e.Row.Tag = e.Row.GetIndex();

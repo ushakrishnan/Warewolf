@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,17 +11,18 @@
 using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Activities.Designers2.DataMerge;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.DataMerge
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DataMergeDesignerViewModelTests
     {
         [TestMethod]
@@ -60,6 +60,25 @@ namespace Dev2.Activities.Designers.Tests.DataMerge
         }
 
         [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DataMergeDesignerViewModel_Handle")]
+        public void DataMergeDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var items = new List<DataMergeDTO> { new DataMergeDTO() };
+            var viewModel = new DataMergeDesignerViewModel(CreateModelItem(items));
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
+        }
+
+        [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("DataMergeDesignerViewModel_Constructor")]
         public void DataMergeDesignerViewModel_Constructor_ModelItemIsValid_MergeCollectionHasTwoItems()
@@ -82,9 +101,46 @@ namespace Dev2.Activities.Designers.Tests.DataMerge
                 new DataMergeDTO("", "None", "", 0, "", "Left"),
                 new DataMergeDTO("", "None", "", 0, "", "Left")
             };
-            var viewModel = new DataMergeDesignerViewModel(CreateModelItem(items));
+            //Assert.IsTrue(items.All(dto => dto.EnablePadding));
+            var viewModel = new DataMergeDesignerViewModel(CreateModelItem(items));            
             dynamic mi = viewModel.ModelItem;
             Assert.AreEqual(5, mi.MergeCollection.Count);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("DataMergeDesignerViewModel_Constructor")]
+        public void DataMergeDesignerViewModel_EnablePadding_IsTrue_ForIndex()
+        {
+            var items = new List<DataMergeDTO>
+            {
+                new DataMergeDTO("", "Index", "", 0, "", "Left"),
+                new DataMergeDTO("", "Index", "", 0, "", "Left"),                
+            };
+            var viewModel = new DataMergeDesignerViewModel(CreateModelItem(items));
+            var itemsList = viewModel.ModelItemCollection;
+            foreach(var i in itemsList)
+            {
+                Assert.AreEqual("True", i.GetProperty("EnablePadding").ToString());
+            }
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("DataMergeDesignerViewModel_Constructor")]
+        public void DataMergeDesignerViewModel_New()
+        {
+            var items = new List<DataMergeDTO>
+            {
+                new DataMergeDTO("[[recordset().a]]", "Index", "", 1, "", "Left"),
+                new DataMergeDTO("[[recordset().b]]", "Index", "", 2, "", "Left"),
+            };
+            var viewModel = new DataMergeDesignerViewModel(CreateModelItem(items));
+            var itemsList = viewModel.ModelItemCollection;
+            foreach(var i in itemsList)
+            {
+                Assert.AreEqual("True", i.GetProperty("EnablePadding").ToString());
+            }
         }
 
         [TestMethod]
@@ -166,7 +222,6 @@ namespace Dev2.Activities.Designers.Tests.DataMerge
             Assert.AreEqual("", at);
             Assert.AreEqual(expectedEnableAt, actualEnableAt);
         }
-
         static ModelItem CreateModelItem(IEnumerable<DataMergeDTO> items, string displayName = "Merge")
         {
             var modelItem = ModelItemUtils.CreateModelItem(new DsfDataMergeActivity());
@@ -178,10 +233,7 @@ namespace Dev2.Activities.Designers.Tests.DataMerge
                 var modelItemCollection = modelProperty.Collection;
                 foreach(var dto in items)
                 {
-                    if(modelItemCollection != null)
-                    {
-                        modelItemCollection.Add(dto);
-                    }
+                    modelItemCollection?.Add(dto);
                 }
             }
             return modelItem;
@@ -200,13 +252,13 @@ namespace Dev2.Activities.Designers.Tests.DataMerge
 
             var dto = new DataMergeDTO("a&]]", DataMergeDTO.MergeTypeIndex, "", 0, "ab", "Left");
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["MergeCollection"].Collection;
             var dtoModelItem = miCollection.Add(dto);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new DataMergeDesignerViewModel(mi);
-            viewModel.GetDatalistString = () =>
+            viewModel._getDatalistString = () =>
                 {
                     const string trueString = "True";
                     const string noneString = "None";
@@ -220,10 +272,10 @@ namespace Dev2.Activities.Designers.Tests.DataMerge
             //------------Assert Results-------------------------
             Assert.AreEqual(4, viewModel.Errors.Count);
 
-            StringAssert.Contains(viewModel.Errors[0].Message, "'Input' - Invalid expression: opening and closing brackets don't match.");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.DataMergeInvalidExpressionErrorTest);
             Verify_IsFocused(dtoModelItem, viewModel.Errors[0].Do, "IsFieldNameFocused");
 
-            StringAssert.Contains(viewModel.Errors[1].Message, "'Using' cannot be empty");
+            StringAssert.Contains(viewModel.Errors[1].Message, Warewolf.Resource.Errors.ErrorResource.DataMergeUsingNullErrorTest);
             Verify_IsFocused(dtoModelItem, viewModel.Errors[1].Do, "IsAtFocused");
         }
 

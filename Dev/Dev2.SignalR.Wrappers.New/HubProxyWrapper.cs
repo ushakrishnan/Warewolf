@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNet.SignalR.Client;
@@ -16,6 +26,12 @@ namespace Dev2.SignalR.Wrappers.New
             _hubProxy = hubProxy; 
         }
 
+        public ISubscriptionWrapper Subscribe(string sendmemo)
+        {
+            var s = _hubProxy.Subscribe(sendmemo);
+            return new SubscriptionWrapper(s);
+        }
+
         #region Implementation of IHubProxyWrapper
 
         /// <summary>
@@ -24,10 +40,7 @@ namespace Dev2.SignalR.Wrappers.New
         /// <param name="method">The name of the method.</param>
         /// <param name="args">The arguments</param>
         /// <returns>A task that represents when invocation returned.</returns>
-        public Task Invoke(string method, params object[] args)
-        {
-            return _hubProxy.Invoke(method,args);
-        }
+        public Task Invoke(string method, params object[] args) => _hubProxy.Invoke(method, args);
 
         /// <summary>
         /// Executes a method on the server side hub asynchronously.
@@ -36,52 +49,11 @@ namespace Dev2.SignalR.Wrappers.New
         /// <param name="method">The name of the method.</param>
         /// <param name="args">The arguments</param>
         /// <returns>A task that represents when invocation returned.</returns>
-        public Task<T> Invoke<T>(string method, params object[] args)
-        {
-            return _hubProxy.Invoke<T>(method, args);
-        }
+        public Task<T> Invoke<T>(string method, params object[] args) => _hubProxy.Invoke<T>(method, args);
 
-        /// <summary>
-        /// Executes a method on the server side hub asynchronously with progress updates.
-        /// </summary>
-        /// <param name="method">The name of the method.</param>
-        /// <param name="onProgress">The callback to invoke when progress updates are received.</param>
-        /// <param name="args">The arguments</param>
-        /// <returns>A task that represents when invocation returned.</returns>
-        public Task Invoke<T>(string method, Action<T> onProgress, params object[] args)
-        {
-            return _hubProxy.Invoke(method,onProgress, args);
-        }
+        public object Object() => _hubProxy;
 
-        /// <summary>
-        /// Executes a method on the server side hub asynchronously with progress updates.
-        /// </summary>
-        /// <typeparam name="TResult">The type of result returned from the hub.</typeparam>
-        /// <typeparam name="TProgress">The type of progress update value.</typeparam>
-        /// <param name="method">The name of the method.</param>
-        /// <param name="onProgress">The callback to invoke when progress updates are received.</param>
-        /// <param name="args">The arguments</param>
-        /// <returns>A task that represents when invocation returned.</returns>
-        public Task<TResult> Invoke<TResult, TProgress>(string method, Action<TProgress> onProgress, params object[] args)
-        {
-            return _hubProxy.Invoke<TResult, TProgress>(method, onProgress, args);
-        }
-
-        public object Object()
-        {
-            return _hubProxy;
-        }
-
-        public  IDisposable On<T>( string eventName, Action<T> onData)
-        {
-            return ((IHubProxy)Object()).On(eventName, onData);
-        }
-
-        public ISubscriptionWrapper Subscribe(string sendmemo)
-        {
-            Subscription s = _hubProxy.Subscribe(sendmemo);
-            return new SubscriptionWrapper(s);
-        }
+        public IDisposable On<T>(string eventName, Action<T> onData) => ((IHubProxy)Object()).On(eventName, onData);
 
         #endregion
     }
@@ -95,11 +67,9 @@ namespace Dev2.SignalR.Wrappers.New
 
         void WrappedReceived(IList<JToken> obj)
         {
-            if (Received != null)
-            {
-                Received(obj);
-            }
+            Received?.Invoke(obj);
         }
+
         public event Action<IList<JToken>> Received;
         public Subscription Wrapped { get; private set; }
     }
@@ -134,7 +104,4 @@ namespace Dev2.SignalR.Wrappers.New
         /// </summary>
         public ConnectionStateWrapped NewState { get; private set; }
     }
-    public class HttpClientExceptionWrapped : HttpClientException { }
-
-
 }

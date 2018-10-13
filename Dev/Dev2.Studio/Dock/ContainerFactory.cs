@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +20,7 @@ using System.Windows.Data;
 using System.Windows.Markup;
 using Infragistics;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Dock
 {
     /// <summary>
@@ -33,10 +32,10 @@ namespace Dev2.Studio.Dock
     {
         #region Member Variables
 
-        private ICollectionView _currentView;
-        private readonly Dictionary<object, DependencyObject> _generatedElements;
-        private bool _isInitializing;
-        private readonly ItemBindingCollection _itemBindings;
+        ICollectionView _currentView;
+        readonly Dictionary<object, DependencyObject> _generatedElements;
+        bool _isInitializing;
+        readonly ItemBindingCollection _itemBindings;
 
         #endregion //Member Variables
 
@@ -60,10 +59,7 @@ namespace Dev2.Studio.Dock
         /// Creates an instance of the class
         /// </summary>
         /// <returns></returns>
-        protected override Freezable CreateInstanceCore()
-        {
-            return (ContainerFactoryBase)Activator.CreateInstance(GetType());
-        }
+        protected override Freezable CreateInstanceCore() => (ContainerFactoryBase)Activator.CreateInstance(GetType());
         #endregion //CreateInstanceCore
 
         #region FreezeCore
@@ -72,10 +68,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="isChecking">True if the ability to freeze is being checked or false when the object is being attempted to be made frozen</param>
         /// <returns>Returns false since this object cannot be frozen.</returns>
-        protected override bool FreezeCore(bool isChecking)
-        {
-            return false;
-        }
+        protected override bool FreezeCore(bool isChecking) => false;
         #endregion //FreezeCore
 
         #endregion //Base class overrides
@@ -90,10 +83,8 @@ namespace Dev2.Studio.Dock
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [Bindable(true)]
-        public ItemBindingCollection ItemBindings
-        {
-            get { return _itemBindings; }
-        }
+        public ItemBindingCollection ItemBindings => _itemBindings;
+
         #endregion //ItemBindings
 
         #region ItemsSource
@@ -104,22 +95,22 @@ namespace Dev2.Studio.Dock
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
             typeof(IEnumerable), typeof(ContainerFactoryBase), new FrameworkPropertyMetadata(null, OnItemsSourceChanged));
 
-        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ContainerFactoryBase ef = (ContainerFactoryBase)d;
+            var ef = (ContainerFactoryBase)d;
             ef.OnItemsSourceChanged((IEnumerable)e.NewValue);
         }
 
-        private void OnItemsSourceChanged(IEnumerable newItems)
+        void OnItemsSourceChanged(IEnumerable newItems)
         {
-            if(_currentView != null)
+            if (_currentView != null)
             {
                 _currentView.CollectionChanged -= OnCollectionChanged;
                 _currentView = null;
                 ClearItems();
             }
 
-            if(null != newItems)
+            if (null != newItems)
             {
                 _currentView = CollectionViewSource.GetDefaultView(newItems);
                 Debug.Assert(_currentView != null);
@@ -154,10 +145,8 @@ namespace Dev2.Studio.Dock
         /// <summary>
         /// Returns a boolean indicating if the object is being initialized.
         /// </summary>
-        protected bool IsInitializing
-        {
-            get { return _isInitializing; }
-        }
+        protected bool IsInitializing => _isInitializing;
+
         #endregion //IsInitializing
 
         #endregion //Protected
@@ -166,14 +155,14 @@ namespace Dev2.Studio.Dock
 
         #region ItemForContainer
 
-        private static readonly DependencyPropertyKey ItemForContainerPropertyKey =
+        static readonly DependencyPropertyKey ItemForContainerPropertyKey =
             DependencyProperty.RegisterAttachedReadOnly("ItemForContainer", typeof(object), typeof(ContainerFactoryBase),
                 new FrameworkPropertyMetadata(null));
 
         /// <summary>
         /// ItemForContainer Attached Dependency Property
         /// </summary>
-        private static readonly DependencyProperty ItemForContainerProperty = ItemForContainerPropertyKey.DependencyProperty;
+        static readonly DependencyProperty ItemForContainerProperty = ItemForContainerPropertyKey.DependencyProperty;
 
         #endregion //ItemForContainer
 
@@ -191,10 +180,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="container">The container to evaluate</param>
         /// <returns>The item associated with the specified container.</returns>
-        public static object GetItemForContainer(DependencyObject container)
-        {
-            return container.GetValue(ItemForContainerProperty);
-        }
+        public static object GetItemForContainer(DependencyObject container) => container.GetValue(ItemForContainerProperty);
         #endregion //GetItemForContainer
 
         #endregion //Public Methods
@@ -243,9 +229,8 @@ namespace Dev2.Studio.Dock
             {
                 foreach(object item in _currentView)
                 {
-                    DependencyObject container;
 
-                    if(_generatedElements.TryGetValue(item, out container))
+                    if (_generatedElements.TryGetValue(item, out DependencyObject container))
                     {
                         yield return container;
                     }
@@ -260,10 +245,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="container">The container whose underlying item is being requested</param>
         /// <returns>The underlying item</returns>
-        protected object GetItemFromContainer(DependencyObject container)
-        {
-            return container.GetValue(ItemForContainerProperty);
-        }
+        protected object GetItemFromContainer(DependencyObject container) => container.GetValue(ItemForContainerProperty);
         #endregion //GetItemFromContainer
 
         #region IsContainerInUse
@@ -274,16 +256,17 @@ namespace Dev2.Studio.Dock
         /// <returns>This will return false if the container has not yet been added, has been removed or is in the process of being removed.</returns>
         protected bool IsContainerInUse(DependencyObject container)
         {
-            object item = container.ReadLocalValue(ItemForContainerProperty);
+            var item = container.ReadLocalValue(ItemForContainerProperty);
 
             // if there is no item associated with the container then it cannot be in use
-            if(item == DependencyProperty.UnsetValue)
+            if (item == DependencyProperty.UnsetValue)
+            {
                 return false;
+            }
 
-            DependencyObject actualContainer;
 
             // get the container we have for the item
-            if(_generatedElements.TryGetValue(item, out actualContainer))
+            if (_generatedElements.TryGetValue(item, out DependencyObject actualContainer))
             {
                 Debug.Assert(ReferenceEquals(actualContainer, container), "There shouldn't be 2 different containers associated with a given item");
                 return ReferenceEquals(actualContainer, container);
@@ -300,10 +283,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="item">The item to evaluate</param>
         /// <returns>Returns true to indicate that a container is needed</returns>
-        protected virtual bool IsItemItsOwnContainer(object item)
-        {
-            return true;
-        }
+        protected virtual bool IsItemItsOwnContainer(object item) => true;
         #endregion //IsItemItsOwnContainer
 
         #region OnItemInserted
@@ -349,9 +329,9 @@ namespace Dev2.Studio.Dock
         {
             for(int i = 0, count = _itemBindings.Count; i < count; i++)
             {
-                ItemBinding itemBinding = _itemBindings[i];
+                var itemBinding = _itemBindings[i];
 
-                if(itemBinding.CanApply(container, item))
+                if (itemBinding.CanApply(container, item))
                 {
                     BindingOperations.SetBinding(container, itemBinding.TargetProperty, itemBinding.Binding);
                 }
@@ -389,26 +369,28 @@ namespace Dev2.Studio.Dock
         #region Private methods
 
         #region AttachContainerToItem
-        private void AttachContainerToItem(DependencyObject container, object item)
+        void AttachContainerToItem(DependencyObject container, object item)
         {
             // store a reference to the item on the container
             container.SetValue(ItemForContainerPropertyKey, item);
             container.SetValue(ContentControl.ContentProperty, item);
 
-            // ReSharper disable once PossibleUnintendedReferenceComparison
-            if(item != container)
+
+            if (item != container)
+            {
                 container.SetValue(FrameworkElement.DataContextProperty, item);
+            }
         }
         #endregion //AttachContainerToItem
 
         #region ClearItems
-        private void ClearItems()
+        void ClearItems()
         {
-            DependencyObject[] elements = new DependencyObject[_generatedElements.Count];
+            var elements = new DependencyObject[_generatedElements.Count];
             _generatedElements.Values.CopyTo(elements, 0);
             _generatedElements.Clear();
 
-            foreach(DependencyObject container in elements)
+            foreach (DependencyObject container in elements)
             {
                 OnItemRemovedImpl(container, container.GetValue(ItemForContainerProperty));
             }
@@ -416,17 +398,14 @@ namespace Dev2.Studio.Dock
         #endregion //ClearItems
 
         #region InsertItem
-        private void InsertItem(int index, object newItem)
+        void InsertItem(int index, object newItem)
         {
             Debug.Assert(!_generatedElements.ContainsKey(newItem));
 
             // create the element and associate it with the new item
             ContentControl container;
 
-            if(IsItemItsOwnContainerImpl(newItem))
-                container = newItem as ContentControl;
-            else
-                container = GetContainerForItem(newItem);
+            container = IsItemItsOwnContainerImpl(newItem) ? newItem as ContentControl : GetContainerForItem(newItem);
 
             // keep a map between the new item and the element
             _generatedElements[newItem] = container;
@@ -443,10 +422,12 @@ namespace Dev2.Studio.Dock
         #endregion //InsertItem
 
         #region IsItemItsOwnContainerImpl
-        private bool IsItemItsOwnContainerImpl(object item)
+        bool IsItemItsOwnContainerImpl(object item)
         {
-            if(item is DependencyObject == false)
+            if (!(item is DependencyObject))
+            {
                 return false;
+            }
 
             return IsItemItsOwnContainer(item);
         }
@@ -454,11 +435,10 @@ namespace Dev2.Studio.Dock
         #endregion //IsItemItsOwnContainerImpl
 
         #region MoveItem
-        private void MoveItem(object item, int oldIndex, int newIndex)
+        void MoveItem(object item, int oldIndex, int newIndex)
         {
-            DependencyObject container;
 
-            if(_generatedElements.TryGetValue(item, out container))
+            if (_generatedElements.TryGetValue(item, out DependencyObject container))
             {
                 OnItemMoved(container, item, oldIndex, newIndex);
             }
@@ -466,14 +446,14 @@ namespace Dev2.Studio.Dock
         #endregion //MoveItem
 
         #region OnItemBindingsChanged
-        private void OnItemBindingsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void OnItemBindingsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             Reset();
         }
         #endregion //OnItemBindingsChanged
 
         #region OnItemRemovedImpl
-        private void OnItemRemovedImpl(DependencyObject container, object oldItem)
+        void OnItemRemovedImpl(DependencyObject container, object oldItem)
         {
             OnItemRemoved(container, oldItem);
 
@@ -484,71 +464,97 @@ namespace Dev2.Studio.Dock
         #endregion //OnItemRemovedImpl
 
         #region OnCollectionChanged
-        private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if(_isInitializing)
+            if (_isInitializing)
+            {
                 return;
+            }
 
             // since its a freezable make sure its not frozen
             WritePreamble();
 
-            switch(e.Action)
+            switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    for(int i = 0; i < e.NewItems.Count; i++)
-                        InsertItem(i + e.NewStartingIndex, e.NewItems[i]);
+                    //Count should always be 1, but add the else in case of some inconsistant adding
+                    if (e.NewItems.Count == 1)
+                    {
+                        InsertItem(e.NewStartingIndex, e.NewItems[0]);
+                    }
+                    else
+                    {
+                        for (int i = 0; i < e.NewItems.Count; i++)
+                        {
+                            InsertItem(i + e.NewStartingIndex, e.NewItems[i]);
+                        }
+                    }
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    foreach(object newItem in e.OldItems)
+                    foreach (object newItem in e.OldItems)
+                    {
                         RemoveItem(newItem);
+                    }
+
                     break;
                 case NotifyCollectionChangedAction.Move:
                     MoveItem(e.OldItems[0], e.OldStartingIndex, e.NewStartingIndex);
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    foreach(object newItem in e.OldItems)
+                    foreach (object newItem in e.OldItems)
+                    {
                         RemoveItem(newItem);
-                    for(int i = 0; i < e.NewItems.Count; i++)
+                    }
+
+                    for (int i = 0; i < e.NewItems.Count; i++)
+                    {
                         InsertItem(i + e.NewStartingIndex, e.NewItems[i]);
+                    }
+
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     ReinitializeElements();
+                    break;
+                default:
                     break;
             }
         }
         #endregion //OnCollectionChanged
 
         #region ReinitializeElements
-        private void ReinitializeElements()
+        void ReinitializeElements()
         {
-            if(_currentView == null || _currentView.IsEmpty)
+            if (_currentView == null || _currentView.IsEmpty)
+            {
                 ClearItems();
+            }
             else
             {
-                if(IsInitializing)
+                if (IsInitializing)
+                {
                     return;
+                }
 
-                HashSet<object> oldItems = new HashSet<object>(_generatedElements.Keys);
+                var oldItems = new HashSet<object>(_generatedElements.Keys);
 
-                foreach(object item in _currentView)
+                foreach (object item in _currentView)
                 {
                     oldItems.Remove(item);
                 }
 
-                foreach(object oldItem in oldItems)
+                foreach (object oldItem in oldItems)
                 {
-                    DependencyObject container = _generatedElements[oldItem];
+                    var container = _generatedElements[oldItem];
                     _generatedElements.Remove(oldItem);
 
                     OnItemRemovedImpl(container, oldItem);
                 }
 
-                int index = 0;
-                foreach(object item in _currentView)
+                var index = 0;
+                foreach (object item in _currentView)
                 {
-                    DependencyObject container;
 
-                    if(!_generatedElements.TryGetValue(item, out container))
+                    if (!_generatedElements.TryGetValue(item, out DependencyObject container))
                     {
                         InsertItem(index, item);
                     }
@@ -569,8 +575,7 @@ namespace Dev2.Studio.Dock
         {
             Debug.Assert(_generatedElements.ContainsKey(oldItem));
 
-            DependencyObject container;
-            if(_generatedElements.TryGetValue(oldItem, out container))
+            if (_generatedElements.TryGetValue(oldItem, out DependencyObject container))
             {
                 _generatedElements.Remove(oldItem);
                 OnItemRemovedImpl(container, oldItem);
@@ -626,28 +631,29 @@ namespace Dev2.Studio.Dock
         #region Base class overrides
 
         #region ApplyItemContainerStyle
-        /// <summary>
-        /// Used to apply a style to the container for an item
-        /// </summary>
-        /// <param name="container">The container associated with the item</param>
-        /// <param name="item">The item from the source collection</param>
+
         protected override void ApplyItemContainerStyle(DependencyObject container, object item)
         {
-            Style style = ContainerStyle;
+            var style = ContainerStyle;
 
-            if(null == style && ContainerStyleSelector != null)
+            if (null == style && ContainerStyleSelector != null)
+            {
                 style = ContainerStyleSelector.SelectStyle(item, container);
+            }
 
-            if(null != style)
+            if (null != style)
             {
                 container.SetValue(AppliedStyleProperty, KnownBoxes.FalseBox);
                 container.SetValue(FrameworkElement.StyleProperty, style);
             }
-            else if(true.Equals(container.GetValue(AppliedStyleProperty)))
+            else
             {
-                // if we don't get a style now but we applied one previously clear it
-                container.ClearValue(AppliedStyleProperty);
-                container.ClearValue(FrameworkElement.StyleProperty);
+                if (true.Equals(container.GetValue(AppliedStyleProperty)))
+                {
+                    // if we don't get a style now but we applied one previously clear it
+                    container.ClearValue(AppliedStyleProperty);
+                    container.ClearValue(FrameworkElement.StyleProperty);
+                }
             }
         }
         #endregion //ApplyItemContainerStyle
@@ -657,10 +663,7 @@ namespace Dev2.Studio.Dock
         /// Invoked when an element needs to be generated for a given item.
         /// </summary>
         /// <returns>The element to represent the item</returns>
-        protected override ContentControl GetContainerForItem(object item)
-        {
-            return (ContentControl)Activator.CreateInstance(ContainerType);
-        }
+        protected override ContentControl GetContainerForItem(object item) => (ContentControl)Activator.CreateInstance(ContainerType);
         #endregion //GetContainerForItem
 
         #endregion //Base class overrides
@@ -677,9 +680,9 @@ namespace Dev2.Studio.Dock
         public static readonly DependencyProperty ContainerStyleProperty = DependencyProperty.Register("ContainerStyle",
             typeof(Style), typeof(ContainerFactory), new FrameworkPropertyMetadata(null, OnContainerStyleChanged));
 
-        private static void OnContainerStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnContainerStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ContainerFactory ef = (ContainerFactory)d;
+            var ef = (ContainerFactory)d;
             ef.RefreshContainerStyles();
         }
 
@@ -741,35 +744,43 @@ namespace Dev2.Studio.Dock
         public static readonly DependencyProperty ContainerTypeProperty = DependencyProperty.Register("ContainerType",
             typeof(Type), typeof(ContainerFactory), new FrameworkPropertyMetadata(null, OnContainerTypeChanged, CoerceContainerType), ValidateContainerType);
 
-        private static void OnContainerTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnContainerTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ContainerFactory ef = (ContainerFactory)d;
+            var ef = (ContainerFactory)d;
             ef.Reset();
         }
 
-        private static object CoerceContainerType(DependencyObject d, object newValue)
+        static object CoerceContainerType(DependencyObject d, object newValue)
         {
-            ContainerFactory ef = (ContainerFactory)d;
-            Type newType = (Type)newValue;
+            var ef = (ContainerFactory)d;
+            var newType = (Type)newValue;
 
-            if(null != newType)
+            if (null != newType)
+            {
                 ef.ValidateContainerType(newType);
+            }
 
             return newValue;
         }
 
-        private static bool ValidateContainerType(object newValue)
+        static bool ValidateContainerType(object newValue)
         {
-            Type type = newValue as Type;
+            var type = newValue as Type;
 
-            if(type == null)
+            if (type == null)
+            {
                 return true;
+            }
 
-            if(type.IsAbstract)
+            if (type.IsAbstract)
+            {
                 throw new ArgumentException("ContainerType must be a non-abstract creatable type.");
+            }
 
-            if(!typeof(DependencyObject).IsAssignableFrom(type))
+            if (!typeof(DependencyObject).IsAssignableFrom(type))
+            {
                 throw new ArgumentException("Element must be a DependencyObject derived type.");
+            }
 
             return true;
         }
@@ -804,7 +815,7 @@ namespace Dev2.Studio.Dock
         /// <summary>
         /// ItemForContainer Attached Dependency Property
         /// </summary>
-        private static readonly DependencyProperty AppliedStyleProperty =
+        static readonly DependencyProperty AppliedStyleProperty =
             DependencyProperty.RegisterAttached("AppliedStyle", typeof(bool), typeof(ContainerFactory),
                 new FrameworkPropertyMetadata(KnownBoxes.FalseBox));
 
@@ -817,9 +828,9 @@ namespace Dev2.Studio.Dock
         #region Methods
 
         #region RefreshContainerStyles
-        private void RefreshContainerStyles()
+        void RefreshContainerStyles()
         {
-            foreach(DependencyObject container in GetElements())
+            foreach (DependencyObject container in GetElements())
             {
                 ApplyItemContainerStyle(container, GetItemFromContainer(container));
             }
@@ -837,165 +848,5 @@ namespace Dev2.Studio.Dock
         #endregion //ValidateContainerType
 
         #endregion //Methods
-    }
-
-    /// <summary>
-    /// Custom <see cref="ContainerFactory"/> used to automatically add/remove elements for items to a given <see cref="CollectionContainerFactory&lt;T&gt;.TargetCollection"/>
-    /// </summary>
-    public class CollectionContainerFactory<T> : ContainerFactory
-        where T : IList
-    {
-        #region Properties
-
-        #region TargetCollection
-
-        /// <summary>
-        /// Identifies the <see cref="TargetCollection"/> dependency property
-        /// </summary>
-        public static readonly DependencyProperty TargetCollectionProperty = DependencyProperty.Register("TargetCollection",
-            typeof(T), typeof(CollectionContainerFactory<T>), new FrameworkPropertyMetadata(null, OnTargetCollectionChanged));
-
-        private static void OnTargetCollectionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            CollectionContainerFactory<T> cef = (CollectionContainerFactory<T>)d;
-
-            // if there are elements we need to move them from the old collection into the new one
-            cef.OnTargetCollectionChanged((T)e.OldValue, (T)e.NewValue);
-        }
-
-        private void OnTargetCollectionChanged(T oldList, T newList)
-        {
-            // ReSharper disable once CompareNonConstrainedGenericWithNull
-            if(oldList != null)
-            {
-                foreach(DependencyObject item in GetElements())
-                    oldList.Remove(item);
-            }
-
-            // ReSharper disable once CompareNonConstrainedGenericWithNull
-            if(newList != null)
-            {
-                foreach(DependencyObject item in GetElements())
-                    newList.Add(item);
-            }
-        }
-
-        /// <summary>
-        /// Returns or sets the collection that will be updated with the elements generated.
-        /// </summary>
-        /// <remarks>
-        /// <para>Note: This collection should only be modified by the element factory. I.e. you should not try to add or remove 
-        /// items directly from the target collection.</para>
-        /// </remarks>
-        /// <seealso cref="TargetCollectionProperty"/>
-        [Description("Returns or sets the collection that will be updated with the elements generated.")]
-        [Category("Behavior")]
-        [Bindable(true)]
-        public T TargetCollection
-        {
-            get
-            {
-                return (T)GetValue(TargetCollectionProperty);
-            }
-            set
-            {
-                SetValue(TargetCollectionProperty, value);
-            }
-        }
-
-        #endregion //TargetCollection
-
-        #endregion //Properties
-
-        #region Base class overrides
-
-        #region OnItemInserted
-        /// <summary>
-        /// Invoked when an element for an item has been generated.
-        /// </summary>
-        /// <param name="item">The underlying item for which the element has been generated</param>
-        /// <param name="container">The element that was generated</param>
-        /// <param name="index">The index at which the item existed</param>
-        protected override void OnItemInserted(DependencyObject container, object item, int index)
-        {
-            // add it to the target collection
-            T target = TargetCollection;
-
-            // ReSharper disable once CompareNonConstrainedGenericWithNull
-            if(null != target)
-            {
-                Debug.Assert(index >= 0 && index <= target.Count);
-                target.Insert(index, container);
-            }
-        }
-        #endregion //OnItemInserted
-
-        #region OnItemMoved
-        /// <summary>
-        /// Invoked when an item has been moved in the source collection.
-        /// </summary>
-        /// <param name="item">The item that was moved</param>
-        /// <param name="container">The associated element</param>
-        /// <param name="oldIndex">The old index</param>
-        /// <param name="newIndex">The new index</param>
-        protected override void OnItemMoved(DependencyObject container, object item, int oldIndex, int newIndex)
-        {
-            T target = TargetCollection;
-
-            // ReSharper disable once CompareNonConstrainedGenericWithNull
-            if(null != target)
-            {
-                int actualIndex = target.IndexOf(container);
-
-                target.RemoveAt(actualIndex);
-                target.Insert(newIndex + (actualIndex - oldIndex), container);
-            }
-        }
-        #endregion //OnItemMoved
-
-        #region OnItemRemoved
-        /// <summary>
-        /// Invoked when an element created for an item has been removed
-        /// </summary>
-        /// <param name="oldItem">The item associated with the element that was removed</param>
-        /// <param name="container">The element that has been removed</param>
-        protected override void OnItemRemoved(DependencyObject container, object oldItem)
-        {
-            T target = TargetCollection;
-
-            // ReSharper disable once CompareNonConstrainedGenericWithNull
-            if(null != target)
-                target.Remove(container);
-        }
-        #endregion //OnItemRemoved
-
-        #region VerifyItemIndex
-        /// <summary>
-        /// Invoked during a verification of the source collection versus the elements generated to ensure the item is in the same location as that source item.
-        /// </summary>
-        /// <param name="item">The item being verified</param>
-        /// <param name="container">The element associated with the item</param>
-        /// <param name="index">The index in the source collection where the item exists</param>
-        protected override void VerifyItemIndex(DependencyObject container, object item, int index)
-        {
-            T target = TargetCollection;
-
-            // ReSharper disable once CompareNonConstrainedGenericWithNull
-            if(null != target)
-            {
-                int oldIndex = target.IndexOf(item);
-
-                if(oldIndex < 0)
-                    target.Insert(index, container);
-                else
-                {
-                    target.RemoveAt(oldIndex);
-                    target.Insert(index, item);
-                }
-            }
-        }
-        #endregion //VerifyItemIndex
-
-        #endregion //Base class overrides
     }
 }

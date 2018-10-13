@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -63,6 +62,10 @@ namespace Dev2.Runtime.Security
                 return _theInstance;
             }
         }
+
+        public RSACryptoServiceProvider SystemKey => _systemKey;
+
+        public RSACryptoServiceProvider ServerKey => _serverKey;
 
         #endregion
 
@@ -161,52 +164,28 @@ namespace Dev2.Runtime.Security
 
         void SetServerID(XmlDocument doc)
         {
-            if (doc.DocumentElement != null)
-            {
-                doc.DocumentElement.SetAttribute("ServerID", ServerID.ToString());
-            }
-        }
-
-        static Guid GetServerID(XmlDocument doc)
-        {
-            if (doc.DocumentElement != null)
-            {
-                var attr = doc.DocumentElement.Attributes["ServerID"];
-                if (attr != null)
-                {
-                    if (!string.IsNullOrEmpty(attr.Value))
-                    {
-                        Guid id;
-                        if (Guid.TryParse(attr.Value, out id))
-                        {
-                            return id;
-                        }
-                    }
-                }
-            }
-            return Guid.Empty;
+            doc.DocumentElement?.SetAttribute("ServerID", ServerID.ToString());
         }
 
         #endregion
 
         #region EnsureSSL
+
         public bool EnsureSsl(string certPath, IPEndPoint endPoint)
         {
-            bool result = false;
+            var result = false;
 
             if (!File.Exists(certPath))
             {
                 try
                 {
                     var certificateBuilder = new SslCertificateBuilder();
-                    result = certificateBuilder.EnsureSslCertificate(certPath, endPoint);
-
+                    certificateBuilder.EnsureSslCertificate(certPath, endPoint);
                     result = File.Exists(certPath);
-
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Log.Error(e);
+                    Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 }
             }
             else
@@ -217,23 +196,6 @@ namespace Dev2.Runtime.Security
             return result;
         }
 
-        public void EnsureAccessToPort(string url)
-        {
-            var args = string.Format("http add urlacl url={0}/ user=\\Everyone", url);
-            try
-            {
-                bool invoke = ProcessHost.Invoke(null, "netsh.exe", args);
-                if (!invoke)
-                {
-                    Dev2Logger.Log.Error(string.Format("There was an error adding url: {0}", url));
-                }
-            }
-            catch (Exception e)
-            {
-                Dev2Logger.Log.Error(e);
-            }
-            
-        }
         #endregion
     }
 }

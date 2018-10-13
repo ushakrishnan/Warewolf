@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,280 +9,365 @@
 */
 
 
-#region
 
+using System;
 using System.Activities.Presentation.Model;
+using System.Activities.Presentation.View;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using Caliburn.Micro;
+using Dev2.Activities.Designers2.Core;
+using Dev2.Activities.Designers2.Decision;
+using Dev2.Activities.Designers2.Switch;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Studio.Controller;
-using Dev2.Data.SystemTemplates;
 using Dev2.Data.SystemTemplates.Models;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core.AppResources.ExtensionMethods;
 using Dev2.Studio.Core.Messages;
 using Dev2.Utilities;
 using Dev2.Webs;
 using Dev2.Webs.Callbacks;
 using Newtonsoft.Json;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Warewolf.Studio.Views;
 
-#endregion
 
-// ReSharper disable CheckNamespace
 namespace Dev2.Studio.Controller
-// ReSharper restore CheckNamespace
+
 {
     public interface IFlowController
     {
-        void ConfigureSwitchExpression(ConfigureSwitchExpressionMessage args);
-
-        void ConfigureSwitchCaseExpression(ConfigureCaseExpressionMessage args);
-
-        void EditSwitchCaseExpression(EditCaseExpressionMessage args);
-
-        void Handle(ConfigureDecisionExpressionMessage message);
-
-        void Handle(ConfigureSwitchExpressionMessage message);
-
-        void Handle(ConfigureCaseExpressionMessage message);
-
-        void Handle(EditCaseExpressionMessage message);
     }
 
-    public class FlowController : IHandle<ConfigureDecisionExpressionMessage>, IHandle<ConfigureSwitchExpressionMessage>,
-                                  IHandle<ConfigureCaseExpressionMessage>, IHandle<EditCaseExpressionMessage>, IFlowController
+    public class FlowController : 
+        IHandle<ConfigureSwitchExpressionMessage>,
+        IHandle<ConfigureCaseExpressionMessage>,
+        IHandle<EditCaseExpressionMessage>, 
+        IFlowController
     {
 
         #region Fields
 
-        private readonly IPopupController _popupController;
-        private Dev2DecisionCallbackHandler _callBackHandler;
+        static readonly IPopupController PopupController = CustomContainer.Get<IPopupController>();
+        static Dev2DecisionCallbackHandler _callBackHandler = new Dev2DecisionCallbackHandler();
 
         #endregion Fields
 
         #region ctor
 
-        public FlowController(IPopupController popupController)
+        public FlowController()
         {
-            _popupController = popupController;
             EventPublishers.Aggregator.Subscribe(this);
-            _callBackHandler = new Dev2DecisionCallbackHandler();
         }
 
         #endregion ctor
 
         #region Public Methods
 
-        /// <summary>
-        ///     Configures the decision expression.
-        ///     Travis.Frisinger - Developed for new Decision Wizard
-        /// </summary>
-        void ConfigureDecisionExpression(ConfigureDecisionExpressionMessage args)
+        public static string ConfigureDecisionExpression(ConfigureDecisionExpressionMessage args)
         {
-            var condition = ConfigureActivity<DsfFlowDecisionActivity>(args.ModelItem, GlobalConstants.ConditionPropertyText, args.IsNew);
-            if(condition == null)
+            var condition = ConfigureActivity<DsfFlowDecisionActivity>(args.ModelItem, GlobalConstants.ConditionPropertyText, args.IsNew, args.IsPaste);
+            if (condition == null)
             {
-                return;
+                return null;
             }
 
             var expression = condition.Properties[GlobalConstants.ExpressionPropertyText];
-            var ds = DataListConstants.DefaultStack;
 
-            if(expression != null && expression.Value != null)
+            _callBackHandler = StartDecisionWizard(condition);
+
+            if (_callBackHandler != null)
             {
-                //we got a model, push it in to the Model region ;)
-                // but first, strip and extract the model data ;)
-
-                var eval = Dev2DecisionStack.ExtractModelFromWorkflowPersistedData(expression.Value.ToString());
-
-                if(!string.IsNullOrEmpty(eval))
+                try
                 {
-                    ds = JsonConvert.DeserializeObject<Dev2DecisionStack>(eval);
+                    var tmp = FlowNodeHelper.CleanModelData(_callBackHandler.ModelData);
+                    var dds = JsonConvert.DeserializeObject<Dev2DecisionStack>(tmp);
+
+                    if (dds == null)
+                    {
+                        return null;
+                    }
+
+                    ActivityHelper.SetArmTextDefaults(dds);
+                    var expr = ActivityHelper.InjectExpression(dds, expression);
+                    ActivityHelper.SetArmText(args.ModelItem, dds);
+                    ActivityHelper.SetDisplayName(args.ModelItem, dds); // PBI 9220 - 2013.04.29 - TWR
+                    return expr;
+                }
+                catch
+                {
+                    //
                 }
             }
-
-            var displayName = args.ModelItem.Properties[GlobalConstants.DisplayNamePropertyText];
-            if(displayName != null && displayName.Value != null)
-            {
-                ds.DisplayText = displayName.Value.ToString();
-            }
-
-            var val = JsonConvert.SerializeObject(ds);
-
-            // Now invoke the Wizard ;)
-            _callBackHandler = StartDecisionWizard(args.EnvironmentModel, val);
-
-            // Wizard finished...
-            try
-            {
-                string tmp = WebHelper.CleanModelData(_callBackHandler);
-                var dds = JsonConvert.DeserializeObject<Dev2DecisionStack>(tmp);
-
-                if(dds == null)
-                {
-                    return;
-                }
-
-                ActivityHelper.SetArmTextDefaults(dds);
-                ActivityHelper.InjectExpression(dds, expression);
-                ActivityHelper.SetArmText(args.ModelItem, dds);
-                ActivityHelper.SetDisplayName(args.ModelItem, dds); // PBI 9220 - 2013.04.29 - TWR
-            }
-            catch
-            {
-                _popupController.Show(GlobalConstants.DecisionWizardErrorString,
-                                      GlobalConstants.DecisionWizardErrorHeading, MessageBoxButton.OK,
-                                      MessageBoxImage.Error, null);
-            }
+            return null;
         }
 
-        public void ConfigureSwitchExpression(ConfigureSwitchExpressionMessage args)
+        public static string ConfigureSwitchExpression(ConfigureSwitchExpressionMessage args)
         {
-            var expression = ConfigureActivity<DsfFlowSwitchActivity>(args.ModelItem, GlobalConstants.SwitchExpressionPropertyText, args.IsNew);
-            if(expression == null)
+            OldSwitchValue = string.Empty;
+            var expression = ConfigureActivity<DsfFlowSwitchActivity>(args.ModelItem, GlobalConstants.SwitchExpressionPropertyText, args.IsNew, args.IsPaste);
+            if (expression == null)
             {
-                return;
+                return null;
             }
-
             var expressionText = expression.Properties[GlobalConstants.SwitchExpressionTextPropertyText];
-            
-            Dev2Switch ds;
-            if(expressionText != null && expressionText.Value != null)
+            var modelProperty = args.ModelItem.Properties[GlobalConstants.DisplayNamePropertyText];
+            if (modelProperty?.Value != null)
             {
-                ds = new Dev2Switch();
-                var val = ActivityHelper.ExtractData(expressionText.Value.ToString());
-                if(!string.IsNullOrEmpty(val))
+                _callBackHandler = StartSwitchDropWizard(expression, modelProperty.Value.ToString());
+            }
+
+            if (_callBackHandler != null)
+            {
+                try
                 {
-                    ds.SwitchVariable = val;
+                    var modelData = _callBackHandler.ModelData;
+                    var resultSwitch = JsonConvert.DeserializeObject<Dev2Switch>(modelData);
+                    var expr = ActivityHelper.InjectExpression(resultSwitch, expressionText);
+                    ActivityHelper.SetDisplayName(args.ModelItem, resultSwitch); // MUST use args.ModelItem otherwise it won't be visible!
+                    return expr;
+                }
+                catch (Exception ex)
+                {
+                    PopupController.Show(GlobalConstants.SwitchWizardErrorString,
+                                          GlobalConstants.SwitchWizardErrorHeading, MessageBoxButton.OK,
+                                          MessageBoxImage.Error, null, false, true, false, false, false, false);
                 }
             }
-            else
-            {
-                ds = DataListConstants.DefaultSwitch;
-            }
-
-            var displayName = args.ModelItem.Properties[GlobalConstants.DisplayNamePropertyText];
-            if(displayName != null && displayName.Value != null)
-            {
-                ds.DisplayText = displayName.Value.ToString();
-            }
-
-            var webModel = JsonConvert.SerializeObject(ds);
-
-            // now invoke the wizard ;)
-            _callBackHandler = StartSwitchDropWizard(args.EnvironmentModel, webModel);
-
-            // Wizard finished...
-            // Now Fetch from DL and push the model data into the workflow
-            try
-            {
-                var resultSwitch = JsonConvert.DeserializeObject<Dev2Switch>(_callBackHandler.ModelData);
-                ActivityHelper.InjectExpression(resultSwitch, expressionText);
-
-                // PBI 9220 - 2013.04.29 - TWR
-                ActivityHelper.SetDisplayName(args.ModelItem, resultSwitch); // MUST use args.ModelItem otherwise it won't be visible!
-            }
-            catch
-            {
-                _popupController.Show(GlobalConstants.SwitchWizardErrorString,
-                                      GlobalConstants.SwitchWizardErrorHeading, MessageBoxButton.OK,
-                                      MessageBoxImage.Error, null);
-            }
+            return null;
         }
 
-        public void ConfigureSwitchCaseExpression(ConfigureCaseExpressionMessage args)
+        static Dev2DecisionCallbackHandler StartSwitchDropWizard(ModelItem modelItem, string display)
         {
-            IEnvironmentModel environment = args.EnvironmentModel;
-            ModelItem switchCase = args.ModelItem;
-
-            string modelData =
-                JsonConvert.SerializeObject(new Dev2Switch
-                    {
-                        SwitchVariable = "",
-                        SwitchExpression = args.ExpressionText
-                    });
-
-            // now invoke the wizard ;)
-            _callBackHandler = RootWebSite.ShowSwitchDragDialog(environment, modelData);
-
-            // Wizard finished...
-            // Now Fetch from DL and push the model data into the workflow
-            try
-            {
-                var ds = JsonConvert.DeserializeObject<Dev2Switch>(_callBackHandler.ModelData);
-                ActivityHelper.SetSwitchKeyProperty(ds, switchCase);
-            }
-            catch
-            {
-                _popupController.Show(GlobalConstants.SwitchWizardErrorString,
-                                      GlobalConstants.SwitchWizardErrorHeading, MessageBoxButton.OK,
-                                      MessageBoxImage.Error, null);
-            }
+            var dataContext = new SwitchDesignerViewModel(modelItem, display);
+            return ShowSwitchDialogWindow(modelItem, dataContext);
         }
 
-        // 28.01.2013 - Travis.Frisinger : Added for Case Edits
-        public void EditSwitchCaseExpression(EditCaseExpressionMessage args)
+        [ExcludeFromCodeCoverage]
+        static Dev2DecisionCallbackHandler ShowSwitchDialogWindow(ModelItem modelItem, SwitchDesignerViewModel dataContext)
         {
-            IEnvironmentModel environment = args.EnvironmentModel;
-            ModelProperty switchCaseValue = args.ModelItem.Properties["Case"];
-
-            string modelData = JsonConvert.SerializeObject(DataListConstants.DefaultCase);
-
-            // Extract existing value ;)
-            if(switchCaseValue != null)
+            var large = new ConfigureSwitch { DataContext = dataContext };
+            var window = new ActivityDefaultWindow();
+            if (Application.Current != null)
             {
-                string val = switchCaseValue.ComputedValue.ToString();
-                modelData = JsonConvert.SerializeObject(new Dev2Switch { SwitchVariable = val });
+                window.Style = Application.Current.TryFindResource("SwitchMainWindowStyle") as Style;
+            }
+            var contentPresenter = window.FindChild<ContentPresenter>();
+            if (contentPresenter != null)
+            {
+                contentPresenter.Content = large;
+            }
+            var parentContentPane = FindDependencyParent.FindParent<DesignerView>(modelItem?.Parent?.View);
+            var dataContext1 = parentContentPane?.DataContext;
+            if (dataContext1 != null && dataContext1.GetType().Name == "ServiceTestViewModel")
+            {
+                window.SetEnableDoneButtonState(false);
             }
 
-            // now invoke the wizard ;)
-            _callBackHandler = RootWebSite.ShowSwitchDragDialog(environment, modelData);
 
-            // Wizard finished...
-            // Now Fetch from DL and push the model data into the workflow
-            try
+            var showDialog = window.ShowDialog();
+            window.SetEnableDoneButtonState(true);
+            if (showDialog.HasValue && showDialog.Value)
             {
-                var ds = JsonConvert.DeserializeObject<Dev2Switch>(_callBackHandler.ModelData);
+                var callBack = new Dev2DecisionCallbackHandler { ModelData = JsonConvert.SerializeObject(dataContext.Switch) };
+                return callBack;
+            }
+            return null;
+        }
 
-                if(ds != null)
+        public static void ConfigureSwitchCaseExpression(ConfigureCaseExpressionMessage args)
+        {
+            OldSwitchValue = string.Empty;
+            if (args.ExpressionText != null)
+            {
+                _callBackHandler = ShowSwitchDragDialog(args.ModelItem, args.ExpressionText);
+            }
+
+            if (_callBackHandler != null)
+            {
+                try
                 {
-                    if(switchCaseValue != null)
+                    var ds = JsonConvert.DeserializeObject<Dev2Switch>(_callBackHandler.ModelData);
+                    ActivityHelper.SetSwitchKeyProperty(ds, args.ModelItem);
+                }
+                catch (Exception ex)
+                {
+                    PopupController.Show(GlobalConstants.SwitchWizardErrorString,
+                                          GlobalConstants.SwitchWizardErrorHeading, MessageBoxButton.OK,
+                                          MessageBoxImage.Error, null, false, true, false, false, false, false);
+                }
+            }
+        }
+
+        static Dev2DecisionCallbackHandler ShowSwitchDragDialog(ModelItem modelData, string variable = "", bool isNew = true)
+        {
+            var switchDesignerViewModel = new SwitchDesignerViewModel(modelData, "") { SwitchVariable = variable };
+            if (isNew)
+            {
+                switchDesignerViewModel.SwitchExpression = string.Empty;
+            }
+            return ShowSwitchArmDialog(switchDesignerViewModel);
+        }
+
+        static Dev2DecisionCallbackHandler ShowSwitchArmDialog(SwitchDesignerViewModel dataContext)
+        {
+            var large = new ConfigureSwitchArm { DataContext = dataContext };
+            var window = new ActivityDefaultWindow();
+            if (Application.Current != null)
+            {
+                window.Style = Application.Current.TryFindResource("SwitchCaseWindowStyle") as Style;
+            }
+            var contentPresenter = window.FindChild<ContentPresenter>();
+            if (contentPresenter != null)
+            {
+                contentPresenter.Content = large;
+            }
+            window.SetEnableDoneButtonState(true);
+
+            var showDialog = window.ShowDialog();
+            if (showDialog.HasValue && showDialog.Value)
+            {
+                var callBack = new Dev2DecisionCallbackHandler { ModelData = JsonConvert.SerializeObject(dataContext.Switch) };
+                return callBack;
+            }
+            return null;
+        }
+        
+        public static void TryEditSwitchCaseExpression(EditCaseExpressionMessage args)
+        {
+            OldSwitchValue = string.Empty;
+            var switchCaseValue = args.ModelItem.Properties["Case"];
+            var switchVal = args.ModelItem.Properties["ParentFlowSwitch"];
+            if (switchVal != null)
+            {
+                var variable = SwitchExpressionValue(switchVal);
+                _callBackHandler = ShowSwitchDragDialog(args.ModelItem, variable, false);
+            }
+            if (_callBackHandler != null)
+            {
+                try
+                {
+                    EditSwitchCaseExpression(switchCaseValue, switchVal);
+                }
+                catch (Exception ex)
+                {
+                    PopupController.Show(GlobalConstants.SwitchWizardErrorString,
+                                          GlobalConstants.SwitchWizardErrorHeading, MessageBoxButton.OK,
+                                          MessageBoxImage.Error, null, false, true, false, false, false, false);
+                }
+            }
+        }
+
+        static void EditSwitchCaseExpression(ModelProperty switchCaseValue, ModelProperty switchVal)
+        {
+            var ds = JsonConvert.DeserializeObject<Dev2Switch>(_callBackHandler.ModelData);
+            if (ds != null)
+            {
+                var validExpression = true;
+                if (switchVal?.ComputedValue is System.Activities.Statements.FlowSwitch<string> flowSwitch && flowSwitch.Cases.Any(flowNode => flowNode.Key == ds.SwitchExpression))
+                {
+                    validExpression = false;
+                }
+
+
+                if (!validExpression)
+                {
+                    PopupController.Show(Warewolf.Studio.Resources.Languages.Core.SwitchCaseUniqueMessage, Warewolf.Studio.Resources.Languages.Core.SwitchFlowErrorHeader,
+                        MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false);
+                }
+                else
+                {
+                    OldSwitchValue = switchCaseValue?.ComputedValue.ToString();
+                    if (switchCaseValue?.ComputedValue.ToString() != ds.SwitchExpression)
                     {
-                        switchCaseValue.SetValue(ds.SwitchVariable);
+                        switchCaseValue?.SetValue(ds.SwitchExpression);
                     }
                 }
             }
-            catch
-            {
-                _popupController.Show(GlobalConstants.SwitchWizardErrorString,
-                                      GlobalConstants.SwitchWizardErrorHeading, MessageBoxButton.OK,
-                                      MessageBoxImage.Error, null);
-            }
         }
 
+        public static string OldSwitchValue { get; private set; }
+
+        static string SwitchExpressionValue(ModelProperty activityExpression)
+        {
+            var tmpModelItem = activityExpression.Value;
+
+            var switchExpressionValue = string.Empty;
+
+            var tmpProperty = tmpModelItem?.Properties["Expression"];
+
+            if (tmpProperty?.Value != null)
+            {
+                var value = tmpProperty.ComputedValue as DsfFlowSwitchActivity;
+                var tmp = value?.ExpressionText;
+                if (!string.IsNullOrEmpty(tmp))
+                {
+                    var start = tmp.IndexOf("(", StringComparison.Ordinal);
+                    var end = tmp.IndexOf(",", StringComparison.Ordinal);
+
+                    if (start < end && start >= 0)
+                    {
+                        start += 2;
+                        end -= 1;
+                        switchExpressionValue = tmp.Substring(start, end - start);
+                    }
+                }
+            }
+            return switchExpressionValue;
+        }
         #endregion public methods
 
         #region Protected Methods
 
-        protected virtual Dev2DecisionCallbackHandler StartDecisionWizard(IEnvironmentModel environmentModel, string val)
+        static Dev2DecisionCallbackHandler StartDecisionWizard(ModelItem mi)
         {
-            return RootWebSite.ShowDecisionDialog(environmentModel, val);
+            var dataContext = new DecisionDesignerViewModel(mi);
+
+            return ShowDecisionDialogWindow(mi, dataContext);
         }
 
-        protected virtual Dev2DecisionCallbackHandler StartSwitchDropWizard(IEnvironmentModel environmentModel, string val)
+        [ExcludeFromCodeCoverage]
+        static Dev2DecisionCallbackHandler ShowDecisionDialogWindow(ModelItem mi, DecisionDesignerViewModel dataContext)
         {
-            return RootWebSite.ShowSwitchDropDialog(environmentModel, val);
+            var large = new Large { DataContext = dataContext };
+            var window = new ActivityDefaultWindow();
+            if (Application.Current != null)
+            {
+                window.Style = Application.Current.TryFindResource("DecisionWindowStyle") as Style;
+            }
+            var contentPresenter = window.FindChild<ContentPresenter>();
+            if (contentPresenter != null)
+            {
+                contentPresenter.Content = large;
+            }
+
+            window.SetEnableDoneButtonState(true);
+            var parentContentPane = FindDependencyParent.FindParent<DesignerView>(mi?.Parent?.View);
+            var dataContext1 = parentContentPane?.DataContext;
+            if (dataContext1 != null && dataContext1.GetType().Name == "ServiceTestViewModel")
+            {
+                window.SetEnableDoneButtonState(false);
+            }
+
+
+            var showDialog = window.ShowDialog();
+            window.SetEnableDoneButtonState(true);
+            if (showDialog.HasValue && showDialog.Value)
+            {
+                var dev2DecisionCallbackHandler = new Dev2DecisionCallbackHandler();
+                dataContext.GetExpressionText();
+                dev2DecisionCallbackHandler.ModelData = dataContext.ExpressionText;
+                return dev2DecisionCallbackHandler;
+            }
+            return null;
         }
 
         #endregion
 
         #region IHandle
-
-        public void Handle(ConfigureDecisionExpressionMessage message)
-        {
-            ConfigureDecisionExpression(message);
-        }
 
         public void Handle(ConfigureSwitchExpressionMessage message)
         {
@@ -297,24 +381,24 @@ namespace Dev2.Studio.Controller
 
         public void Handle(EditCaseExpressionMessage message)
         {
-            EditSwitchCaseExpression(message);
+            TryEditSwitchCaseExpression(message);
         }
 
         #endregion IHandle
 
         #region ConfigureActivity
 
-        ModelItem ConfigureActivity<T>(ModelItem modelItem, string propertyName, bool isNew) where T : class, IFlowNodeActivity, new()
+        static ModelItem ConfigureActivity<T>(ModelItem modelItem, string propertyName, bool isNew,bool isPaste) where T : class, IFlowNodeActivity, new()
         {
             var property = modelItem.Properties[propertyName];
-            if(property == null)
+            if (property == null)
             {
                 return null;
             }
 
             ModelItem result;
             var activity = property.ComputedValue as T;
-            if(activity == null)
+            if (activity == null)
             {
                 activity = new T();
                 result = property.SetValue(activity);
@@ -323,10 +407,13 @@ namespace Dev2.Studio.Controller
             {
                 result = property.Value;
 
-                // BUG 9717 - 2013.06.22 - don't show wizard on copy paste
                 var isCopyPaste = isNew && !string.IsNullOrEmpty(activity.ExpressionText);
-                if(result == null || isCopyPaste)
-                {
+                if (result == null || isCopyPaste)
+                {                    
+                    if (activity is IDev2Activity act && isPaste)
+                    {
+                        act.UniqueID = Guid.NewGuid().ToString();
+                    }
                     return null;
                 }
             }
@@ -334,6 +421,5 @@ namespace Dev2.Studio.Controller
         }
 
         #endregion
-
     }
 }

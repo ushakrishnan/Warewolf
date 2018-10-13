@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +14,12 @@ using System.Collections.ObjectModel;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Studio.Interfaces;
+using System;
+using Dev2.TO;
+using Dev2.Studio.Core;
+using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Activities.Factories.Case;
 
 namespace Dev2.Activities.Designers2.CaseConvert
 {
@@ -22,11 +27,12 @@ namespace Dev2.Activities.Designers2.CaseConvert
     {
         public ObservableCollection<string> ItemsList { get; private set; }
 
+        internal Func<string> _getDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public CaseConvertDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
             AddTitleBarQuickVariableInputToggle();
-            AddTitleBarHelpToggle();
+            AddTitleBarLargeToggle();
             dynamic mi = ModelItem;
             InitializeItems(mi.ConvertCollection);
 
@@ -37,9 +43,10 @@ namespace Dev2.Activities.Designers2.CaseConvert
             }
 
             ItemsList = CaseConverter.ConvertTypes.ToObservableCollection();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Data_Case_Convert;
         }
 
-        public override string CollectionName { get { return "ConvertCollection"; } }
+        public override string CollectionName => "ConvertCollection";
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
@@ -48,7 +55,22 @@ namespace Dev2.Activities.Designers2.CaseConvert
 
         protected override IEnumerable<IActionableErrorInfo> ValidateCollectionItem(ModelItem mi)
         {
-            yield break;
+            var dto = mi.GetCurrentValue() as CaseConvertTO;
+            if (dto == null)
+            {
+                yield break;
+            }
+
+            foreach (var error in dto.GetRuleSet("StringToConvert", _getDatalistString?.Invoke()).ValidateRules("'StringToConvert'", () => mi.SetProperty("IsStringToConvertFocused", true)))
+            {
+                yield return error;
+            }
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

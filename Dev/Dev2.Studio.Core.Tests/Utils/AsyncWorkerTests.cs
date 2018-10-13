@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -18,10 +18,10 @@ using Moq;
 namespace Dev2.Core.Tests.Utils
 {
     [TestClass]
-    // ReSharper disable InconsistentNaming
+    
     public class AsyncWorkerTests
     {
-        [TestMethod, Ignore]
+        [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("AsyncWorker_Start")]
         public async Task AsyncWorker_Start_BackgroundWorkerDoesNotThrowAnException_ForegroundWorkIsCalled()
@@ -46,7 +46,7 @@ namespace Dev2.Core.Tests.Utils
             Assert.IsFalse(onerrorWorkIsCalled);
         }
 
-        [TestMethod, Ignore]
+        [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("AsyncWorker_Start")]
         public async Task AsyncWorker_Start_BackgroundWorkerThrowAnException_ErrorWorkIsCalled()
@@ -86,39 +86,6 @@ namespace Dev2.Core.Tests.Utils
                     return task;
                 });
             return mockWorker;
-        }
-
-        public static Mock<IAsyncWorker> CreateVerifiableAsyncWorker()
-        {
-            var asyncWorker = new Mock<IAsyncWorker>();
-            asyncWorker.Setup(w => w.Start(It.IsAny<Action>(), It.IsAny<Action>())).Returns(new Task(() => { })).Verifiable();
-
-            return asyncWorker;
-        }
-
-        public static Mock<IAsyncWorker> CreateSynchronousAsyncWorkerWithResult<TBackgroundResult>()
-        {
-            var mockWorker = new Mock<IAsyncWorker>();
-            mockWorker.Setup(r => r.Start(It.IsAny<Func<TBackgroundResult>>(), It.IsAny<Action<TBackgroundResult>>()))
-                .Returns((Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> foregroundAction) =>
-                {
-                    var task = new Task(() =>
-                    {
-                        var result = backgroundFunc.Invoke();
-                        foregroundAction.Invoke(result);
-                    });
-                    task.RunSynchronously();
-                    return task;
-                });
-            return mockWorker;
-        }
-
-        public static Mock<IAsyncWorker> CreateVerifiableAsyncWorkerWithResult<TBackgroundResult>()
-        {
-            var asyncWorker = new Mock<IAsyncWorker>();
-            asyncWorker.Setup(w => w.Start(It.IsAny<Func<TBackgroundResult>>(), It.IsAny<Action<TBackgroundResult>>())).Returns(new Task(() => { })).Verifiable();
-
-            return asyncWorker;
         }
     }
 }

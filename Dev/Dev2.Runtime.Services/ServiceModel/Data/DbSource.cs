@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,44 +12,66 @@ using System;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Warewolf.Security.Encryption;
 
 namespace Dev2.Runtime.ServiceModel.Data
 {
-    public class DbSource : Resource
+    public class DbSource : Resource, IResourceSource, IDb
     {
         #region CTOR
 
         public DbSource()
         {
-            ResourceType = ResourceType.DbSource;
+            ResourceType = "DbSource";
+        }
+
+        public DbSource(enSourceType sourceType)
+        {
+            ResourceType = "DbSource";
+            ServerType = sourceType;
         }
 
         public DbSource(XElement xml)
             : base(xml)
         {
-            ResourceType = ResourceType.DbSource;
+
 
             // Setup type include default port
-            switch(xml.AttributeSafe("ServerType"))
+            var attributeSafe = xml.AttributeSafe("ServerType");
+            switch (attributeSafe.ToLowerInvariant())
             {
-                case "SqlDatabase":
+                case "sqldatabase":
                     ServerType = enSourceType.SqlDatabase;
                     Port = 1433;
                     break;
-                case "MySqlDatabase":
+                case "mysqldatabase":
                     ServerType = enSourceType.MySqlDatabase;
                     break;
+                case "oracle":
+                    ServerType = enSourceType.Oracle;
+                    Port = 1521;
+                    break;
+                case "odbc":
+                    ServerType = enSourceType.ODBC;
+                    break;
+                case "postgresql":
+                    ServerType = enSourceType.PostgreSQL;
+                    break;
+                case "sqlite":
+                    ServerType = enSourceType.SQLiteDatabase;
+                    break;
                 default:
+                    ResourceType = "DbSource";
                     ServerType = enSourceType.Unknown;
                     break;
             }
             var conString = xml.AttributeSafe("ConnectionString");
             var connectionString = conString.CanBeDecrypted() ? DpapiWrapper.Decrypt(conString) : conString;
+            ResourceType = ServerType.ToString();
             ConnectionString = connectionString;
         }
 
@@ -66,13 +87,13 @@ namespace Dev2.Runtime.ServiceModel.Data
         public string DatabaseName { get; set; }
 
         public int Port { get; set; }
-
+        public int ConnectionTimeout { get; set; }
         [JsonConverter(typeof(StringEnumConverter))]
         public AuthenticationType AuthenticationType { get; set; }
 
-// ReSharper disable InconsistentNaming
+
         public string UserID { get; set; }
-// ReSharper restore InconsistentNaming
+
 
         public string Password { get; set; }
 
@@ -81,7 +102,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             get
             {
                 var stringBuilder = base.DataList;
-                return stringBuilder != null ? stringBuilder.ToString() : null;
+                return stringBuilder?.ToString();
             }
             set
             {
@@ -100,64 +121,113 @@ namespace Dev2.Runtime.ServiceModel.Data
             //
             get
             {
-                switch(ServerType)
-                {
+                var portString = string.Empty;
+                switch (ServerType)
+                {                    
                     case enSourceType.SqlDatabase:
                         var isNamedInstance = Server != null && Server.Contains('\\');
-                        if (isNamedInstance)
+                        if (isNamedInstance && Port == 1433)
                         {
-                            if (Port == 1433)
-                            {
-                                Port = 0;
-                            }
+                            Port = 0;
                         }
-                        return string.Format("Data Source={0}{2};Initial Catalog={1};{3}", Server, DatabaseName,
-                            Port > 0 ? "," + Port : string.Empty,
-                            AuthenticationType == AuthenticationType.Windows
+
+                        portString = Port > 0 ? "," + Port : string.Empty;
+                        var authString = AuthenticationType == AuthenticationType.Windows
                                 ? "Integrated Security=SSPI;"
-                                : string.Format("User ID={0};Password={1};", UserID, Password));
+                                : $"User ID={UserID};Password={Password};";
+                        return $"Data Source={Server}{portString};Initial Catalog={DatabaseName};{authString};Connection Timeout={ConnectionTimeout}";
 
                     case enSourceType.MySqlDatabase:
-                        return string.Format("Server={0};{4}Database={1};Uid={2};Pwd={3};",
-                            Server, DatabaseName, UserID, Password,
-                            Port > 0 ? string.Format("Port={0};", Port) : string.Empty);
+                        portString = Port > 0 ? $"Port={Port};" : string.Empty;
+                        return $"Server={Server};{portString}Database={DatabaseName};Uid={UserID};Pwd={Password};Connect Timeout={ConnectionTimeout};SslMode=none;";
+
+                    case enSourceType.Oracle:
+                        portString = Port > 0 ? $":{Port}" : string.Empty;
+                        var dbString = DatabaseName != null ? $"Database={DatabaseName};":string.Empty;
+                        return $"User Id={UserID};Password={Password};Data Source={Server}{portString};{dbString};Connection Timeout={ConnectionTimeout};";
+
+                    case enSourceType.ODBC:
+                        return $"DSN={DatabaseName};";
+                    case enSourceType.SQLiteDatabase:
+                        return ":memory:";
+
+                    case enSourceType.PostgreSQL:
+
+                        if (string.IsNullOrEmpty(DatabaseName))
+                        {
+                            DatabaseName = string.Empty;
+                        }
+                        portString = Port > 0 ? $"Port={Port};" : string.Empty;
+                        return $"Host={Server};{portString}Username={UserID};Password={Password};Database={DatabaseName};Timeout={ConnectionTimeout}";
+                    case enSourceType.WebService:
+                        break;
+                    case enSourceType.DynamicService:
+                        break;
+                    case enSourceType.ManagementDynamicService:
+                        break;
+                    case enSourceType.PluginSource:
+                        break;
+                    case enSourceType.Unknown:
+                        break;
+                    case enSourceType.Dev2Server:
+                        break;
+                    case enSourceType.EmailSource:
+                        break;
+                    case enSourceType.WebSource:
+                        break;
+                    case enSourceType.OauthSource:
+                        break;
+                    case enSourceType.SharepointServerSource:
+                        break;
+                    case enSourceType.RabbitMQSource:
+                        break;
+                    case enSourceType.ExchangeSource:
+                        break;
+                    case enSourceType.WcfSource:
+                        break;
+                    case enSourceType.ComPluginSource:
+                        break;
+                    default:
+                        break;
                 }
                 return string.Empty;
             }
 
             set
             {
-                if(string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     return;
                 }
 
                 AuthenticationType = AuthenticationType.Windows;
-                
+                bool containsTimeout = false;
+                int defaultTimeout = 30;
                 foreach (var prm in value.Split(';').Select(p => p.Split('=')))
                 {
                     int port;
-                    switch(prm[0].ToLowerInvariant())
+                    switch (prm[0].ToLowerInvariant())
                     {
                         case "server":
+                        case "host":
                         case "data source":
                             var arr = prm[1].Split(','); // may include port number after comma
                             Server = arr[0];
-                            if(arr.Length > 1)
-                            {
-                                if(Int32.TryParse(arr[1], out port))
-                                {
-                                    Port = port;
-                                }
-                            }
-                            break;
-                        case "port":
-                            if(Int32.TryParse(prm[1], out port))
+                            if (arr.Length > 1 && Int32.TryParse(arr[1], out port))
                             {
                                 Port = port;
                             }
+
+                            break;
+                        case "port":
+                            if (Int32.TryParse(prm[1], out port))
+                            {
+                                Port = port;
+                            }
+
                             break;
                         case "database":
+                        case "dsn":
                         case "initial catalog":
                             DatabaseName = prm[1];
                             break;
@@ -166,6 +236,7 @@ namespace Dev2.Runtime.ServiceModel.Data
                             break;
                         case "user id":
                         case "uid":
+                        case "username":
                             AuthenticationType = AuthenticationType.User;
                             UserID = prm[1];
                             break;
@@ -173,9 +244,30 @@ namespace Dev2.Runtime.ServiceModel.Data
                         case "pwd":
                             Password = prm[1];
                             break;
+                        case "timeout":
+                        case "connect timeout":
+                        case "connection timeout":
+                            containsTimeout = true;
+                            ConnectionTimeout = int.TryParse(prm[1], out int timeout) ? timeout : defaultTimeout;
+                            break;
+                        default:
+                            break;
                     }
                 }
+                if (!containsTimeout)
+                {
+                    ConnectionTimeout = defaultTimeout;
+                }
             }
+        }
+        public string GetConnectionStringWithTimeout(int timeout)
+        {
+            var oldTimeout = ConnectionTimeout;
+            ConnectionTimeout = timeout;
+            var result = ConnectionString;
+            ConnectionTimeout = oldTimeout;
+
+            return result;
         }
 
         #endregion
@@ -186,7 +278,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         {
             var result = base.ToXml();
             result.Add(new XAttribute("ServerType", ServerType));
-            result.Add(new XAttribute("Type", ServerType));
+            result.Add(new XAttribute("Type", GetType().Name));
             result.Add(new XAttribute("ConnectionString", DpapiWrapper.Encrypt(ConnectionString) ?? string.Empty));
 
             result.Add(new XElement("AuthorRoles", string.Empty));
@@ -198,6 +290,14 @@ namespace Dev2.Runtime.ServiceModel.Data
             result.Add(new XElement("WorkflowActivityDef", string.Empty));
             return result;
         }
+
+        public override bool IsSource => true;
+
+        public override bool IsService => false;
+        public override bool IsFolder => false;
+        public override bool IsReservedService => false;
+        public override bool IsServer => false;
+        public override bool IsResourceVersion => false;
 
         #endregion
     }

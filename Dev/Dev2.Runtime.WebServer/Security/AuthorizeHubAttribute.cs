@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -41,10 +40,10 @@ namespace Dev2.Runtime.WebServer.Security
             return result;
         }
 
-        public bool AuthorizeHubMethodInvocation(IHubIncomingInvokerContext context, bool appliesToMethod)
+        public bool AuthorizeHubMethodInvocation(IHubIncomingInvokerContext hubIncomingInvokerContext, bool appliesToMethod)
         {
-            VerifyArgument.IsNotNull("context", context);
-            return Service.IsAuthorized(context.GetAuthorizationRequest());
+            VerifyArgument.IsNotNull("context", hubIncomingInvokerContext);
+            return Service.IsAuthorized(hubIncomingInvokerContext.GetAuthorizationRequest());
         }
     }
 }

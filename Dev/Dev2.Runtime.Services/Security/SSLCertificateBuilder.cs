@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,9 +23,9 @@ namespace Dev2.Runtime.Security
     public class SslCertificateBuilder
     {
         static string _location;
-        static string Location { get { return _location ?? (_location = Assembly.GetExecutingAssembly().Location); } }
+        static string Location => _location ?? (_location = Assembly.GetExecutingAssembly().Location);
 
-        private const string MakeCertPath = @"\SSL Generation\CreateCertificate.bat";
+        const string MakeCertPath = @"\SSL Generation\CreateCertificate.bat";
 
         public bool EnsureSslCertificate(string certPath, IPEndPoint endPoint)
         {
@@ -57,7 +56,7 @@ namespace Dev2.Runtime.Security
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
             }
             finally
             {
@@ -70,10 +69,7 @@ namespace Dev2.Runtime.Security
             return result;
         }
 
-        static string AuthorityName()
-        {
-            return Guid.NewGuid().ToString();
-        }
+        static string AuthorityName() => Guid.NewGuid().ToString();
 
         public static bool BindSslCertToPorts(IPEndPoint endPoint, string sslCertPath)
         {
@@ -88,6 +84,5 @@ namespace Dev2.Runtime.Security
                     endPoint.Address, endPoint.Port, certHash);
             return ProcessHost.Invoke(null, "netsh.exe", args);
         }
-
     }
 }

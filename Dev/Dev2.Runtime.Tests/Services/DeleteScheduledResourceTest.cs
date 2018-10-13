@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
@@ -28,10 +28,38 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DeleteScheduledResourceTest
     {
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var service = new DeleteScheduledResource();
+
+            //------------Execute Test---------------------------
+            var resId = service.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var service = new DeleteScheduledResource();
+
+            //------------Execute Test---------------------------
+            var resId = service.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Administrator, resId);
+        }
+
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteResourceTest_ServiceName()
         {
             SchedulerTestBaseStaticMethods.SaveScheduledResourceTest_ServiceName("DeleteScheduledResourceService", new DeleteScheduledResource());
@@ -39,7 +67,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteResourcesReturnsDynamicService()
         {
             SchedulerTestBaseStaticMethods.GetScheduledResourcesReturnsDynamicService(new DeleteScheduledResource());
@@ -47,7 +75,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ScheduledResource_DeleteValid()
         {
             var output = RunOutput(true);
@@ -56,7 +84,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ScheduledResource_DeleteInValid()
         {
             var output = RunOutput(false);
@@ -64,7 +92,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No Resource Selected", output.Message.ToString());
         }
 
-        private ExecuteMessage RunOutput(bool expectCorrectInput)
+        ExecuteMessage RunOutput(bool expectCorrectInput)
         {
             var esbMethod = new DeleteScheduledResource();
             var factory = new Mock<IServerSchedulerFactory>();
@@ -74,16 +102,16 @@ namespace Dev2.Tests.Runtime.Services
                                               new Dev2DailyTrigger(new TaskServiceConvertorFactory(), new DailyTrigger(21)),
                                               new Dev2TaskService(new TaskServiceConvertorFactory()),
                                               new TaskServiceConvertorFactory());
-            var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave");
+            var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave", Guid.NewGuid().ToString());
             var security = new Mock<ISecurityWrapper>();
             esbMethod.SecurityWrapper = security.Object;
 
-            Dictionary<string, StringBuilder> inp = new Dictionary<string, StringBuilder>();
+            var inp = new Dictionary<string, StringBuilder>();
             factory.Setup(
                 a =>
                 a.CreateModel(GlobalConstants.SchedulerFolderId, It.IsAny<ISecurityWrapper>())).Returns(model.Object);
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
-            if(expectCorrectInput)
+            var serialiser = new Dev2JsonSerializer();
+            if (expectCorrectInput)
             {
 
                 model.Setup(a => a.DeleteSchedule(It.IsAny<ScheduledResource>())).Verifiable();
@@ -93,8 +121,11 @@ namespace Dev2.Tests.Runtime.Services
             esbMethod.SchedulerFactory = factory.Object;
 
             var output = esbMethod.Execute(inp, ws.Object);
-            if(expectCorrectInput)
+            if (expectCorrectInput)
+            {
                 model.Verify(a => a.DeleteSchedule(It.IsAny<ScheduledResource>()));
+            }
+
             return serialiser.Deserialize<ExecuteMessage>(output);
 
         }

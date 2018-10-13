@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +9,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Explorer;
 
@@ -17,6 +18,9 @@ namespace Dev2.Common.Interfaces.Runtime
     public interface IExplorerItemFactory
     {
         IExplorerItem CreateRootExplorerItem(string workSpacePath, Guid workSpaceId);
-        IExplorerItem CreateRootExplorerItem(ResourceType type, string workSpacePath, Guid workSpaceId);
+        IExplorerItem CreateRootExplorerItem(string type, string workSpacePath, Guid workSpaceId);
+        List<string> GetDuplicatedResourcesPaths();
+
+        IExplorerItem CreateResourceItem(IResource resource, Guid workSpaceId);
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +12,7 @@ using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.FindIndex
 {
@@ -21,11 +21,12 @@ namespace Dev2.Activities.Designers2.FindIndex
         public FindIndexDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             IndexList = new List<string> { "First Occurrence", "Last Occurrence", "All Occurrences" };
             DirectionList = new List<string> { "Left to Right", "Right to Left" };
             SelectedIndex = string.IsNullOrEmpty(Index) ? IndexList[0] : Index;
             SelectedDirection = string.IsNullOrEmpty(Direction) ? DirectionList[0] : Direction;
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Data_Find_Index;
         }
 
         public IList<string> IndexList { get; private set; }
@@ -71,12 +72,17 @@ namespace Dev2.Activities.Designers2.FindIndex
             }
         }
         
-        // DO NOT bind to these properties - these are here for convenience only!!!
-        string Index { set { SetProperty(value); } get { return GetProperty<string>(); } }
-        string Direction { set { SetProperty(value); } get { return GetProperty<string>(); } }
+        string Index { set => SetProperty(value); get => GetProperty<string>(); }
+        string Direction { set => SetProperty(value); get => GetProperty<string>(); }
         
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

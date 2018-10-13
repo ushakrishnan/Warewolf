@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +10,10 @@
 
 using System.Windows;
 using Dev2.Common.ExtMethods;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Views.ResourceManagement
 {
     /// <summary>
@@ -21,10 +21,10 @@ namespace Dev2.Studio.Views.ResourceManagement
     /// </summary>
     public partial class RenameResourceDialog
     {
-        // ReSharper disable once ConvertToConstant.Local
-        private readonly bool _openDependencyGraph = false;
 
-        public bool OpenDependencyGraph { get { return _openDependencyGraph; } }
+        readonly bool _openDependencyGraph = false;
+
+        public bool OpenDependencyGraph => _openDependencyGraph;
 
         public RenameResourceDialog(IContextualResourceModel model, string newName, Window owner)
         {
@@ -42,7 +42,7 @@ namespace Dev2.Studio.Views.ResourceManagement
             tbDisplay.Text = message;
         }
 
-        private void Button1_OnClick(object sender, RoutedEventArgs e)
+        void Button1_OnClick(object sender, RoutedEventArgs e)
         {
             DialogResult = true;
         }

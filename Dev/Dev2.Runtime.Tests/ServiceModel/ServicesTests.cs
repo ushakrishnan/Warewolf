@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,30 +8,24 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
 using System.Xml.Linq;
-using Dev2.Runtime.Hosting;
-using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Services.Security;
+using Dev2.Tests.Runtime.Plugins;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using Newtonsoft.Json;
 
-// ReSharper disable InconsistentNaming
 namespace Dev2.Tests.Runtime.ServiceModel
 {
 
     /// <author>trevor.williams-ros</author>
     /// <date>2013/02/13</date>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ServicesTests
     {
         #region CreateInputsMethod
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_Plugin_EmptyType()
@@ -126,15 +119,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
-            Assert.AreEqual(typeof(object), sm.Parameters[0].Type);
+            Assert.AreEqual(typeof(object).FullName, sm.Parameters[0].TypeName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_Plugin_StringType()
@@ -228,15 +221,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
-            Assert.AreEqual(typeof(string), sm.Parameters[0].Type);
+            Assert.AreEqual(typeof(string).FullName, sm.Parameters[0].TypeName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_Plugin_NameCorrect()
@@ -330,15 +323,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
             Assert.AreEqual("EmitStringData", sm.Name);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_PluginEmptyToNullNotSet_EmptyToNullFalse()
@@ -432,15 +425,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
             Assert.AreEqual(false, sm.Parameters[0].EmptyToNull);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_PluginEmptyToNullSet_EmptyToNullTrue()
@@ -534,15 +527,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
             Assert.AreEqual(true, sm.Parameters[0].EmptyToNull);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_PluginRequiredNotSet_RequiredFalse()
@@ -635,15 +628,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
             Assert.AreEqual(false, sm.Parameters[0].IsRequired);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_PluginRequiredSet_RequiredTrue()
@@ -737,15 +730,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
             Assert.AreEqual(true, sm.Parameters[0].IsRequired);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_PluginDefaultValueNotSet_DefaultValueEmpty()
@@ -839,15 +832,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
             Assert.AreEqual(string.Empty, sm.Parameters[0].DefaultValue);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Service_CreateInputsMethods")]
         public void Service_CreateInputsMethods_PluginDefaultValueSet_DefaultValueReturned()
@@ -941,8 +934,8 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
             //------------Execute Test---------------------------
 
-            XElement xe = XElement.Parse(input);
-            ServiceMethod sm = service.CreateInputsMethod(xe);
+            var xe = XElement.Parse(input);
+            var sm = service.CreateInputsMethod(xe);
 
             //------------Assert Results-------------------------
 
@@ -951,104 +944,118 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #endregion
 
-        #region Get
-
-        [TestMethod]
-        public void GetWithNullArgsExpectedReturnsNewService()
-        {
-            var services = new Dev2.Runtime.ServiceModel.Services();
-            var result = services.Get(null, Guid.Empty, Guid.Empty);
-
-            Assert.AreEqual(Guid.Empty, result.ResourceID);
-        }
-
-        [TestMethod]
-        public void GetWithInvalidArgsExpectedReturnsNewService()
-        {
-            var services = new Dev2.Runtime.ServiceModel.Services();
-            var result = services.Get("xxxxx", Guid.Empty, Guid.Empty);
-
-            Assert.AreEqual(Guid.Empty, result.ResourceID);
-        }
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
-        [TestCategory("Services_Get")]
-        public void Services_Get_WithDBServiceWebRequestPoco_ShouldReturnDbService()
+        [TestCategory("Services_Test")]
+        public void Services_Test_WhenTestingPluginHavingARecordSetFieldWithEmptyName_ExpectNotAdded()
         {
             //------------Setup for test--------------------------
+            var path = UnpackDLL("PrimativesTestDLL");
+
+            if (string.IsNullOrEmpty(path))
+            {
+                Assert.Fail("Failed to unpack required DLL [ PrimativesTestDLL ] ");
+            }
+
             var services = new Dev2.Runtime.ServiceModel.Services();
-            var webRequestPoco = new WebRequestPoco { ResourceType = "DbService" };
+            var serviceDef = JsonResource.Fetch("PrimitivePluginReturningDouble");
+            var pluginService = JsonConvert.DeserializeObject<PluginService>(serviceDef, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Objects
+            });
+            pluginService.Recordsets.Add(new Recordset
+            {
+                Name = "Test",
+                Fields = new List<RecordsetField>
+                {
+                    new RecordsetField
+                    {
+                        Name = ""                        
+                    }
+                }
+            });
             //------------Execute Test---------------------------
-            var service = services.Get(JsonConvert.SerializeObject(webRequestPoco), Guid.Empty, Guid.Empty);
-            //------------Assert Results-------------------------
-            Assert.IsNotNull(service);
-            Assert.IsInstanceOfType(service, typeof(DbService));
+            var result = services.FetchRecordset(pluginService,true);
+            ////------------Assert Results-------------------------
+            Assert.AreEqual(1, result[0].Fields.Count);
+            StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
+            StringAssert.Contains(result[0].Fields[0].Name, "PrimitiveReturnValue");
+            StringAssert.Contains(result[0].Fields[0].Path.ActualPath, "PrimitiveReturnValue");
+            StringAssert.Contains(result[0].Fields[0].Path.SampleData, "3.1");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
-        [TestCategory("Services_Get")]
-        public void Services_Get_WithPluginServiceWebRequestPoco_ShouldReturnPluginService()
+        [TestCategory("Services_Test")]
+        public void Services_Test_WhenTestingPluginHavingARecordSetFieldNotInOutput_ExpectNotAdded()
         {
             //------------Setup for test--------------------------
+            var path = UnpackDLL("PrimativesTestDLL");
+
+            if (string.IsNullOrEmpty(path))
+            {
+                Assert.Fail("Failed to unpack required DLL [ PrimativesTestDLL ] ");
+            }
+
             var services = new Dev2.Runtime.ServiceModel.Services();
-            var webRequestPoco = new WebRequestPoco { ResourceType = "PluginService" };
+            var serviceDef = JsonResource.Fetch("PrimitivePluginReturningDouble");
+            var pluginService = JsonConvert.DeserializeObject<PluginService>(serviceDef, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Objects
+            });
+            pluginService.Recordsets.Add(new Recordset
+            {
+                Name = "Test",
+                Fields = new List<RecordsetField>
+                {
+                    new RecordsetField
+                    {
+                        Name = "Bob",
+                        Alias = "BobProp"
+                    }
+                },
+                Records = new List<RecordsetRecord>
+                {
+                    new RecordsetRecord
+                    {
+                        Name = "BobRecord",
+                        Label = "BobRecord"
+                    }
+                }
+            });
             //------------Execute Test---------------------------
-            var service = services.Get(JsonConvert.SerializeObject(webRequestPoco), Guid.Empty, Guid.Empty);
-            //------------Assert Results-------------------------
-            Assert.IsNotNull(service);
-            Assert.IsInstanceOfType(service, typeof(PluginService));
+            var result = services.FetchRecordset(pluginService, true);
+            ////------------Assert Results-------------------------
+            Assert.AreEqual(1, result[0].Fields.Count);
+            StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
+            StringAssert.Contains(result[0].Fields[0].Name, "PrimitiveReturnValue");
+            StringAssert.Contains(result[0].Fields[0].Path.ActualPath, "PrimitiveReturnValue");
+            StringAssert.Contains(result[0].Fields[0].Path.SampleData, "3.1");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
-        [TestCategory("Services_Get")]
-        public void Services_Get_WithWebServiceWebRequestPoco_ShouldReturnWebService()
+        [TestCategory("Services_Test")]
+        public void Services_Test_WhenWebServiceWithResponse_FetchRecordset_ExpectRecordset()
         {
             //------------Setup for test--------------------------
+            
             var services = new Dev2.Runtime.ServiceModel.Services();
-            var webRequestPoco = new WebRequestPoco { ResourceType = "WebService" };
+            var webService = new WebService();
+            webService.RequestResponse = JsonConvert.SerializeObject(new { Name = "Bob", Age = 31 });
             //------------Execute Test---------------------------
-            var service = services.Get(JsonConvert.SerializeObject(webRequestPoco), Guid.Empty, Guid.Empty);
-            //------------Assert Results-------------------------
-            Assert.IsNotNull(service);
-            Assert.IsInstanceOfType(service, typeof(WebService));
+            var result = services.FetchRecordset(webService, true);
+            ////------------Assert Results-------------------------
+            Assert.AreEqual(2, result[0].Fields.Count);
+            StringAssert.Contains(result[0].Fields[0].Name, "Name");
+            StringAssert.Contains(result[0].Fields[1].Name, "Age");
         }
-        #endregion
 
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("Services_IsReadOnly")]
-        public void Services_IsReadOnly_UserIsAuthorized_False()
+        public string UnpackDLL(string name)
         {
-            Verify_IsReadOnly(isAuthorized: true);
+            return DllExtractor.UnloadToFileSystem(name, "Plugins");
         }
 
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("Services_IsReadOnly")]
-        public void Services_IsReadOnly_UserIsNotAuthorized_True()
-        {
-            Verify_IsReadOnly(isAuthorized: false);
-        }
 
-        static void Verify_IsReadOnly(bool isAuthorized)
-        {
-            //------------Setup for test--------------------------
-            var resourceID = Guid.NewGuid();
-
-            var authorizationService = new Mock<IAuthorizationService>();
-            authorizationService.Setup(a => a.IsAuthorized(AuthorizationContext.Contribute, resourceID.ToString())).Returns(isAuthorized).Verifiable();
-
-            var services = new Dev2.Runtime.ServiceModel.Services(new Mock<IResourceCatalog>().Object, authorizationService.Object);
-
-            //------------Execute Test---------------------------
-            var result = services.IsReadOnly(resourceID.ToString(), Guid.NewGuid(), Guid.NewGuid());
-
-            //------------Assert Results-------------------------
-            Assert.AreNotEqual(isAuthorized, result.IsReadOnly);
-            authorizationService.Verify(a => a.IsAuthorized(AuthorizationContext.Contribute, resourceID.ToString()));
-        }
     }
 }

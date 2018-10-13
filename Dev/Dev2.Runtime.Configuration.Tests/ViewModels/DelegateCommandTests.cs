@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +9,13 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Runtime.Configuration.Tests.ViewModels
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class DelegateCommandTests
     {
         [TestMethod]
@@ -27,9 +24,9 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
         [ExpectedException(typeof(ArgumentNullException))]
         public void RelayCommand_Constructor_ActionIsNull_ThrowsException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new DelegateCommand(null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         [TestMethod]
@@ -38,9 +35,9 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
         [ExpectedException(typeof(ArgumentNullException))]
         public void RelayCommand_ConstructorOverload_ActionIsNull_ThrowsException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new DelegateCommand(null, o => false);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         [TestMethod]

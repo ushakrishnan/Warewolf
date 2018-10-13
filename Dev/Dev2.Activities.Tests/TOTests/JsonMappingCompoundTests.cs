@@ -1,7 +1,6 @@
-﻿
-/*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.DynamicServices;
 using Dev2.TO;
 using FluentAssertions;
@@ -18,12 +16,11 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.TOTests
 {
 
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class JsonMappingCompoundTests
     {
         [TestMethod]
@@ -32,7 +29,7 @@ namespace Dev2.Tests.Activities.TOTests
         public void JsonMappingCompoundTo_Constructor_SetsProperties_NotIsCompound()
         {
             //------------Setup for test--------------------------
-            // ReSharper disable RedundantArgumentName
+            
             var dataObject = new DsfDataObject(xmldata: string.Empty, dataListId: Guid.NewGuid());
 
             dataObject.Environment.Assign("[[a]]", "10", 0);
@@ -342,15 +339,15 @@ namespace Dev2.Tests.Activities.TOTests
             dataObject.Environment.Assign("[[rec(2).b]]", "600", 0);
             CheckComplexEvaluatedResultIndexed("[[rec(*).a]],[[rec(*).b]]", "myName", 0, @"{""myName"":[{""a"":50,""b"":500},{""a"":60,""b"":600}]}", dataObject);
         }
-        private void CheckComplexEvaluatedResultIndexed(string expression, string name, int index, string expected, DsfDataObject dataObject)
+        void CheckComplexEvaluatedResultIndexed(string expression, string name, int index, string expected, DsfDataObject dataObject)
         {
             var jsonMappingCompound = new JsonMappingCompoundTo(
                 env: dataObject.Environment,
             compound: new JsonMappingTo
-                {
-                    SourceName = expression,
-                    DestinationName = name
-                }
+            {
+                SourceName = expression,
+                DestinationName = name
+            }
             );
             var a = jsonMappingCompound.ComplexEvaluatedResultIndexed(index);
             if (a is JProperty)
@@ -370,6 +367,6 @@ namespace Dev2.Tests.Activities.TOTests
 
         }
 
-        // ReSharper restore RedundantArgumentName
+
     }
 }

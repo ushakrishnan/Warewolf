@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +12,6 @@ using System;
 using System.Activities.Presentation;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Windows;
 using Caliburn.Micro;
@@ -26,7 +24,6 @@ using Dev2.Communication;
 using Dev2.Data.ServiceModel.Messages;
 using Dev2.Messages;
 using Dev2.Services.Security;
-using Dev2.Settings.Scheduler;
 using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Core.AppResources.Enums;
 using Dev2.Studio.Core.Interfaces;
@@ -47,7 +44,6 @@ using Moq;
 namespace Dev2.Core.Tests.ViewModelTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class WorkSurfaceContextViewModelTests
     {
         [ClassInitialize]
@@ -109,20 +105,6 @@ namespace Dev2.Core.Tests.ViewModelTests
             Assert.IsNotNull(workSurfaceContextViewModel.DebugOutputViewModel);
         }
 
-        [TestMethod]
-        [Owner("Hagashen Naidu")]
-        [TestCategory("WorkSurfaceContextViewModel_Constructor")]
-        public void WorkSurfaceContextViewModel_Constructor_SchedularWorksurfaceContext_DebugOutputViewModelNotNull()
-        {
-            //------------Setup for test--------------------------
-            var workSurfaceKey = new WorkSurfaceKey { WorkSurfaceContext = WorkSurfaceContext.Scheduler };
-            var mockWorkSurfaceViewModel = new SchedulerViewModel();
-            //------------Execute Test---------------------------
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(workSurfaceKey, mockWorkSurfaceViewModel);
-            //------------Assert Results-------------------------
-            Assert.IsNotNull(workSurfaceContextViewModel);
-            Assert.IsNotNull(workSurfaceContextViewModel.DebugOutputViewModel);
-        }
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -145,27 +127,6 @@ namespace Dev2.Core.Tests.ViewModelTests
             mockEnvironmentModel.Raise(model => model.IsConnectedChanged += null, connectedEventArgs);
             //------------Assert Results-------------------------
             Assert.AreEqual(DebugStatus.Finished, workSurfaceContextViewModel.DebugOutputViewModel.DebugStatus);
-        }
-
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("WorkSurfaceContextViewModel_HandleDebugOutputMessage")]
-        public void WorkSurfaceContextViewModel_DebugOutputMessage_DebugStateHasNoData_RootItemsIsZero()
-        {
-            //------------Setup for test--------------------------
-            var workSurfaceKey = new WorkSurfaceKey { WorkSurfaceContext = WorkSurfaceContext.Scheduler };
-            var mockWorkSurfaceViewModel = new Mock<IWorkflowDesignerViewModel>();
-            var mockedConn = new Mock<IEnvironmentConnection>();
-            mockedConn.Setup(conn => conn.ServerEvents).Returns(new Mock<IEventPublisher>().Object);
-            var mockEnvironmentModel = new Mock<IEnvironmentModel>();
-            mockEnvironmentModel.Setup(model => model.Connection).Returns(mockedConn.Object);
-            var environmentModel = mockEnvironmentModel.Object;
-            mockWorkSurfaceViewModel.Setup(model => model.EnvironmentModel).Returns(environmentModel);
-            var workSurfaceViewModel = mockWorkSurfaceViewModel.As<IWorkSurfaceViewModel>().Object;
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(workSurfaceKey, workSurfaceViewModel) { DebugOutputViewModel = { DebugStatus = DebugStatus.Executing } };
-            //------------Execute Test---------------------------
-            workSurfaceContextViewModel.Handle(new DebugOutputMessage(new List<IDebugState>()));
-            //------------Assert Results-------------------------
-            Assert.AreEqual(0, workSurfaceContextViewModel.DebugOutputViewModel.RootItems.Count);
         }
 
 
@@ -205,7 +166,7 @@ namespace Dev2.Core.Tests.ViewModelTests
             //------------Execute Test---------------------------
             workSurfaceContextViewModel.SetDebugStatus(DebugStatus.Configure);
             //------------Assert Results-------------------------
-            Assert.AreEqual(0, workSurfaceContextViewModel.DebugOutputViewModel.ContentItemCount);
+            Assert.AreEqual(1, workSurfaceContextViewModel.DebugOutputViewModel.ContentItemCount);
         }
 
         [TestMethod]
@@ -739,7 +700,7 @@ namespace Dev2.Core.Tests.ViewModelTests
             mockWorkSurfaceViewModel.Setup(m => m.BindToModel()).Verifiable();
             var workSurfaceViewModel = mockWorkSurfaceViewModel.As<IWorkSurfaceViewModel>();
             var popup = new Mock<IPopupController>();
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b) => { });
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b,c) => { });
             var mockResourceModel = new Mock<IContextualResourceModel>();
             mockResourceModel.SetupGet(p => p.Environment).Returns(environmentModel);
             mockResourceModel.Setup(m => m.UserPermissions).Returns(Permissions.Contribute);
@@ -749,7 +710,7 @@ namespace Dev2.Core.Tests.ViewModelTests
             //------------Execute Test---------------------------
             workSurfaceContextViewModel.Handle(new SaveResourceMessage(mockResourceModel.Object, false, false));
             //------------Assert---------------------------------
-            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Saving", MessageBoxButton.OK, MessageBoxImage.Error, "true"));
+            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Saving", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false));
         }
 
 
@@ -779,7 +740,7 @@ namespace Dev2.Core.Tests.ViewModelTests
             var popup = new Mock<IPopupController>();
             bool called = false;
 
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b) => { called = true; });
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b,c) => { called = true; });
             var mockResourceModel = new Mock<IContextualResourceModel>();
             mockResourceModel.SetupGet(p => p.Environment).Returns(environmentModel);
             mockResourceModel.Setup(m => m.UserPermissions).Returns(Permissions.Contribute);
@@ -821,7 +782,7 @@ namespace Dev2.Core.Tests.ViewModelTests
             var mockResourceModel = new Mock<IContextualResourceModel>();
             mockResourceModel.SetupGet(p => p.Environment).Returns(environmentModel);
             mockResourceModel.Setup(m => m.UserPermissions).Returns(Permissions.Contribute);
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b) => { called = true; });
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b,c) => { called = true; });
 
             mockWorkSurfaceViewModel.Setup(a => a.ResourceModel).Returns(mockResourceModel.Object);
             workSurfaceContextViewModel.WorkSurfaceViewModel = new WorkSurfaceViewModelTest();
@@ -862,7 +823,7 @@ namespace Dev2.Core.Tests.ViewModelTests
 
             //  bool called = false;
 
-            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b) => { });
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(new Mock<IEventAggregator>().Object, workSurfaceKey, workSurfaceViewModel.Object, popup.Object, (a, b,c) => { });
             var mockResourceModel = new Mock<IContextualResourceModel>();
             mockResourceModel.SetupGet(p => p.Environment).Returns(environmentModel);
             mockResourceModel.Setup(m => m.UserPermissions).Returns(Permissions.Contribute);
@@ -1074,33 +1035,11 @@ namespace Dev2.Core.Tests.ViewModelTests
             //------------Assert Results-------------------------
             workSurfaceContextViewModel.QuickDebug();
 
-            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Debugging", MessageBoxButton.OK, MessageBoxImage.Error, "true"));
+            popup.Verify(a => a.Show(It.IsAny<string>(), "Error Debugging", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false));
 
         }
 
 
-
-    }
-
-    public class TestWorkSurfaceContextViewModel : WorkSurfaceContextViewModel
-    {
-        public TestWorkSurfaceContextViewModel(WorkSurfaceKey workSurfaceKey, IWorkSurfaceViewModel workSurfaceViewModel)
-            : base(workSurfaceKey, workSurfaceViewModel)
-        {
-        }
-
-        public TestWorkSurfaceContextViewModel(IEventAggregator eventPublisher, WorkSurfaceKey workSurfaceKey, IWorkSurfaceViewModel workSurfaceViewModel)
-            : base(eventPublisher, workSurfaceKey, workSurfaceViewModel, new Mock<IPopupController>().Object, (a, b) => { })
-        {
-        }
-
-        public int SaveHitCount { get; private set; }
-
-        protected override bool Save(IContextualResourceModel resource, bool isLocalSave, bool addToTabManager = true, bool isStudioShutdown = false)
-        {
-            SaveHitCount++;
-            return true;
-        }
 
     }
 
@@ -1190,18 +1129,6 @@ namespace Dev2.Core.Tests.ViewModelTests
 
         #endregion
 
-        public bool HasErrors
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         public object SelectedModelItem
         {
             get { throw new NotImplementedException(); }
@@ -1283,27 +1210,6 @@ namespace Dev2.Core.Tests.ViewModelTests
             {
                 throw new NotImplementedException();
             }
-        }
-    }
-
-    public class DebugVM : DebugOutputViewModel
-    {
-        // ReSharper disable UnusedParameter.Local
-        public DebugVM(IEventPublisher serverEventPublisher, IEnvironmentRepository environmentRepository)
-            // ReSharper restore UnusedParameter.Local
-            : base(new Mock<IEventPublisher>().Object, new Mock<IEnvironmentRepository>().Object, new Mock<IDebugOutputFilterStrategy>().Object)
-        {
-        }
-
-        public override void Append(IDebugState content)
-        {
-            Appended = true;
-        }
-
-        public bool Appended
-        {
-            get;
-            set;
         }
     }
 }

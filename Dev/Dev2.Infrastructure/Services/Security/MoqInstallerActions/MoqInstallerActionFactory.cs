@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,14 +15,8 @@ namespace Dev2.Services.Security.MoqInstallerActions
     public static class MoqInstallerActionFactory
     {
 
-        public static IMoqInstallerActions CreateInstallerActions()
-        {
-            return new InstallerActionsForDevelopment();
-        }
+        public static IMoqInstallerActions CreateInstallerActions() => new InstallerActionsForDevelopment();
 
-        public static IWarewolfSecurityOperations CreateSecurityOperationsObject()
-        {
-            return new WarewolfSecurityOperationsImpl();
-        }
+        public static IWarewolfSecurityOperations CreateSecurityOperationsObject() => new WarewolfSecurityOperationsImpl();
     }
 }

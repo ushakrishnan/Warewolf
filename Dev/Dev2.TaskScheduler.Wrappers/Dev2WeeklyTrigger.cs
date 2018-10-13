@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,24 +28,12 @@ namespace Dev2.TaskScheduler.Wrappers
             set { ((ITriggerDelay) Instance).Delay = value; }
         }
 
-        public new WeeklyTrigger Instance
-        {
-            get { return (WeeklyTrigger) base.Instance; }
-        }
+        public new WeeklyTrigger Instance => (WeeklyTrigger) base.Instance;
 
-        public DaysOfTheWeek DaysOfWeek
-        {
-            get { return Instance.DaysOfWeek; }
-        }
+        public DaysOfTheWeek DaysOfWeek => Instance.DaysOfWeek;
 
-        public TimeSpan RandomDelay
-        {
-            get { return Instance.RandomDelay; }
-        }
+        public TimeSpan RandomDelay => Instance.RandomDelay;
 
-        public short WeeksInterval
-        {
-            get { return Instance.WeeksInterval; }
-        }
+        public short WeeksInterval => Instance.WeeksInterval;
     }
 }

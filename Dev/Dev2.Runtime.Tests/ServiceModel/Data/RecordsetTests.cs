@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,10 +8,9 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
+using Dev2.Data;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 
 namespace Dev2.Tests.Runtime.ServiceModel.Data
 {
@@ -22,12 +20,11 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
     /// <author>trevor.williams-ros</author>
     /// <date>2013/02/13</date>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class RecordsetTests
     {
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ConstructorWithNoParametersExpectedInitializesListProperties()
         {
             var rs = new Recordset();
@@ -39,20 +36,12 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToString
 
-        [TestMethod]
-        public void ToStringExpectedReturnsJson()
-        {
-            var rs = new Recordset { Name = "MyRec" };
-            var jsonStr = rs.ToString();
-            dynamic jsonObj = JsonConvert.DeserializeObject(jsonStr);
-            Assert.AreEqual(rs.Name, jsonObj.Name.Value);
-        }
-
+      
         #endregion
 
         #region NewRecord Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void NewRecordExpectedAddANewRecordToRecordset()
         {
             var rs = new Recordset { Name = "MyRec" };
@@ -65,7 +54,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region SetValue Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SetValueExpectedAddANewRecordToRecordset()
         {
             var rs = new Recordset { Name = "MyRec" };
@@ -75,7 +64,14 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("MyTestData", rs.Records[0][0].Value);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void RecordSet_AddColumn_ShouldAddColumnOnTheRecSet()
+        {
+            var recordset = new RecordSet { Name = "MyRec" };
+            Assert.IsNotNull(recordset);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SetValueWithRecordNotExistiongExpectedAddANewRecordToRecordset()
         {
             var rs = new Recordset { Name = "MyRec" };
@@ -84,7 +80,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("MyTestData", rs.Records[0][0].Value);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SetValueSecondMethodExpectedAddANewRecordToRecordset()
         {
             var rs = new Recordset { Name = "MyRec" };
@@ -101,6 +97,6 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
         }
 
         #endregion
-
+       
     }
 }

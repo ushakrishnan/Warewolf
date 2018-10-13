@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Diagnostics
 {
     public class DebugLineTemplateSelector : DataTemplateSelector
@@ -21,9 +20,6 @@ namespace Dev2.Studio.Diagnostics
         public DataTemplate ItemTemplate { get; set; }
         public DataTemplate GroupTemplate { get; set; }
 
-        public override DataTemplate SelectTemplate(object item, DependencyObject container)
-        {
-            return item is DebugLineGroup ? GroupTemplate : ItemTemplate;
-        }
+        public override DataTemplate SelectTemplate(object item, DependencyObject container) => item is DebugLineGroup ? GroupTemplate : ItemTemplate;
     }
 }

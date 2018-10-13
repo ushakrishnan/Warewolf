@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,13 +18,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
+using Warewolf.Resource.Errors;
 
 namespace System.Windows.Controls
 {
     /// <summary>
     /// A static class providing methods for working with the visual tree.  
     /// </summary>
-    internal static class VisualTreeExtensions
+    static class VisualTreeExtensions
     {
         /// <summary>
         /// Retrieves all the visual children of a framework element.
@@ -34,10 +34,10 @@ namespace System.Windows.Controls
         /// <returns>The visual children of the framework element.</returns>
         internal static IEnumerable<DependencyObject> GetVisualChildren(this DependencyObject parent)
         {
-            Debug.Assert(parent != null, "The parent cannot be null.");
+            Debug.Assert(parent != null, ErrorResource.ParentCannotBeNull);
 
-            int childCount = VisualTreeHelper.GetChildrenCount(parent);
-            for(int counter = 0; counter < childCount; counter++)
+            var childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int counter = 0; counter < childCount; counter++)
             {
                 yield return VisualTreeHelper.GetChild(parent, counter);
             }
@@ -54,14 +54,14 @@ namespace System.Windows.Controls
         /// <returns>The logical children of the framework element.</returns>
         internal static IEnumerable<FrameworkElement> GetLogicalChildrenBreadthFirst(this FrameworkElement parent)
         {
-            Debug.Assert(parent != null, "The parent cannot be null.");
+            Debug.Assert(parent != null, ErrorResource.ParentCannotBeNull);
 
-            Queue<FrameworkElement> queue =
+            var queue =
                 new Queue<FrameworkElement>(parent.GetVisualChildren().OfType<FrameworkElement>());
 
-            while(queue.Count > 0)
+            while (queue.Count > 0)
             {
-                FrameworkElement element = queue.Dequeue();
+                var element = queue.Dequeue();
                 yield return element;
 
                 foreach(FrameworkElement visualChild in element.GetVisualChildren().OfType<FrameworkElement>())

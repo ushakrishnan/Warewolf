@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +20,9 @@ namespace Dev2.Runtime.Configuration.Settings
 
         #region Fields
 
-        private string _error = string.Empty;
-        private bool _hasChanges;
-        private bool _isInitializing;
+        string _error = string.Empty;
+        bool _hasChanges;
+        bool _isInitializing;
 
         #endregion
 
@@ -84,18 +83,15 @@ namespace Dev2.Runtime.Configuration.Settings
             }
         }
 
-        public bool HasError
-        {
-            get { return !string.IsNullOrWhiteSpace(Error); }
-        }
-        
+        public bool HasError => !string.IsNullOrWhiteSpace(Error);
+
         public string SettingName { get; private set; }
 
         public string DisplayName { get; private set; }
 
         public string WebServerUri { get; private set; }
 
-        public override void NotifyOfPropertyChange(string propertyName)
+        public override void NotifyOfPropertyChange(string propertyName="")
         {
             if (IsInitializing)
             {

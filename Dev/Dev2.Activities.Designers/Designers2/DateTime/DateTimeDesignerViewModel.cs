@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +14,7 @@ using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common;
 using Dev2.Common.DateAndTime;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.DateTime
 {
@@ -23,14 +23,15 @@ namespace Dev2.Activities.Designers2.DateTime
         public DateTimeDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             TimeModifierTypes = new List<string>(DateTimeFormatter.TimeModifierTypes);
             SelectedTimeModifierType = string.IsNullOrEmpty(TimeModifierType) ? TimeModifierTypes[0] : TimeModifierType;
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Date_Time;
         }
 
         public List<string> TimeModifierTypes { get; private set; }
 
-        public string Dev2DefaultDateTime { get { return GlobalConstants.Dev2CustomDefaultDateTimeFormat; } }
+        public string Dev2DefaultDateTime => GlobalConstants.Dev2CustomDefaultDateTimeFormat;
 
         public string SelectedTimeModifierType
         {
@@ -54,11 +55,26 @@ namespace Dev2.Activities.Designers2.DateTime
         }
 
         // DO NOT bind to these properties - these are here for convenience only!!!
-        string TimeModifierType { set { SetProperty(value);} get {return  GetProperty<string>();} }
-        string TimeModifierAmountDisplay { set { SetProperty(value); } }
+        string TimeModifierType
+        {
+            set => SetProperty(value);
+            get => GetProperty<string>();
+        }
+
+        string TimeModifierAmountDisplay
+        {
+            set => SetProperty(value);
+            get => GetProperty<string>();
+        }
 
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

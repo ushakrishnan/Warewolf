@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,15 +16,7 @@ namespace Warewolf.ComponentModel
     {
         #region ToStringSafe
 
-        public static string ToStringSafe(this string s)
-        {
-            return string.IsNullOrEmpty(s) ? string.Empty : s;
-        }
-
-        public static string ToStringSafe(this object obj)
-        {
-            return obj == null || Convert.IsDBNull(obj) ? string.Empty : obj.ToString();
-        }
+        public static string ToStringSafe(this object obj) => obj == null || Convert.IsDBNull(obj) ? string.Empty : obj.ToString();
 
         #endregion
     }

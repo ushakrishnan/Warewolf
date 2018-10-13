@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -71,7 +71,11 @@ namespace Dev2.Common.Interfaces.Core.DynamicServices
         /// <summary>
         ///     Represents a custom assembly that will be used for extensibility
         /// </summary>
-        Plugin,
+        Plugin, 
+        /// <summary>
+        ///     Represents a custom assembly that will be used for extensibility
+        /// </summary>
+        ComPlugin,
 
         /// <summary>
         ///     Allows definition of a conditional Service Action that executes different steps based on a value
@@ -108,11 +112,27 @@ namespace Dev2.Common.Interfaces.Core.DynamicServices
         ///     A MySQL database
         /// </summary>
         MySqlDatabase,
+        /// <summary>
+        ///     A ODBC database
+        /// </summary>
+        ODBC,
+        /// <summary>
+        ///     A Oracle database
+        /// </summary>
+        Oracle,
 
         /// <summary>
-        ///     A SOAP based Web Service: REST web services are not supported
+        ///     A PostgreSQL database
         /// </summary>
-        WebService,
+        PostgreSQL,
+		/// <summary>
+		///     A SQLite database
+		/// </summary>
+		SQLiteDatabase,
+		/// <summary>
+		///     A SOAP based Web Service: REST web services are not supported
+		/// </summary>
+		WebService,
 
         /// <summary>
         ///     A Dynamic Service that exists in the ServiceDefinition File
@@ -127,7 +147,7 @@ namespace Dev2.Common.Interfaces.Core.DynamicServices
         /// <summary>
         ///     An assembly that provides custom functionality e.g. Ftp, File Formatting, Workflow Invocation
         /// </summary>
-        Plugin,
+        PluginSource,
 
         /// <summary>
         ///     Indicates an unknown source type. This will not compile.
@@ -142,7 +162,11 @@ namespace Dev2.Common.Interfaces.Core.DynamicServices
         EmailSource,
         WebSource,
         OauthSource,
-        SharepointServerSource
+        SharepointServerSource,
+        RabbitMQSource,
+        ExchangeSource,
+        WcfSource,
+        ComPluginSource
     }
 
     /// <summary>

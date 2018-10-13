@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,9 +12,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Data.Interfaces.Enums;
 
-// ReSharper disable CheckNamespace
-// ReSharper disable InconsistentNaming
+
+
 namespace Dev2.DataList.Contract
 {
     public class DefinitionBuilder
@@ -40,15 +40,15 @@ namespace Dev2.DataList.Contract
         /// <returns></returns>
         public string Generate()
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
 
-            XmlDocument xDoc = new XmlDocument();
-            XmlElement rootNode = xDoc.CreateElement(string.Concat(ArgumentType.ToString(), "s"));
+            var xDoc = new XmlDocument();
+            var rootNode = xDoc.CreateElement(string.Concat(ArgumentType.ToString(), "s"));
 
 
-            foreach(IDev2Definition def in Definitions)
+            foreach (IDev2Definition def in Definitions)
             {
-                XmlElement tmp = xDoc.CreateElement(ArgumentType.ToString());
+                var tmp = xDoc.CreateElement(ArgumentType.ToString());
                 tmp.SetAttribute(_nameAttribute, def.Name);
 
                 tmp.SetAttribute(ArgumentType != enDev2ArgumentType.Input ? _mapsToAttribute : _sourceAttribute, def.MapsTo);
@@ -57,6 +57,8 @@ namespace Dev2.DataList.Contract
                 {
                     tmp.SetAttribute(_valueAttribute, def.Value);
                 }
+
+                tmp.SetAttribute("IsObject", def.IsObject.ToString());
 
                 if(def.RecordSetName.Length > 0)
                 {
@@ -70,7 +72,7 @@ namespace Dev2.DataList.Contract
 
                 if(def.IsRequired && ArgumentType == enDev2ArgumentType.Input)
                 {
-                    XmlElement requiredElm = xDoc.CreateElement(_validateTag);
+                    var requiredElm = xDoc.CreateElement(_validateTag);
                     requiredElm.SetAttribute(_typeAttribute, _requiredValue);
                     tmp.AppendChild(requiredElm);
                 }

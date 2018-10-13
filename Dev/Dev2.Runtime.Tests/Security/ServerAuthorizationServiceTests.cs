@@ -1,17 +1,13 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Communication;
 using Dev2.Runtime.Security;
@@ -19,15 +15,19 @@ using Dev2.Services.Security;
 using Microsoft.AspNet.SignalR.Hosting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using Dev2.Common.Interfaces.Enums;
 
 namespace Dev2.Tests.Runtime.Security
 {
     [TestClass]
     public class ServerAuthorizationServiceTests
     {
-        // ReSharper disable InconsistentNaming
+        
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_Instance")]
         public void ServerAuthorizationService_Instance_Singleton()
@@ -42,7 +42,7 @@ namespace Dev2.Tests.Runtime.Security
             Assert.AreSame(instance1, instance2);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_Constructor")]
         public void ServerAuthorizationService_Constructor_PermissionsChangedEvent_ClearsCachedRequests()
@@ -55,7 +55,7 @@ namespace Dev2.Tests.Runtime.Security
 
             var request = new Mock<IAuthorizationRequest>();
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(true);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.Unknown);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
@@ -69,7 +69,7 @@ namespace Dev2.Tests.Runtime.Security
             Assert.AreEqual(0, authorizationService.CachedRequestCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -86,7 +86,7 @@ namespace Dev2.Tests.Runtime.Security
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_RequestWhenNotAllowedButResultsPendingAndHubConnect_AuthorizationCalculatedAndNotCachedIsTrue()
@@ -103,7 +103,7 @@ namespace Dev2.Tests.Runtime.Security
             request.Setup(r => r.User.Identity.Name).Returns("TestUser");
 
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(false);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.HubConnect);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
@@ -116,12 +116,12 @@ namespace Dev2.Tests.Runtime.Security
             ResultsCache.Instance.FetchResult(reciept);
 
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Exactly(2));
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(0, authorizationService.CachedRequestCount);
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_RequestWhenNotAllowedButResultsPendingAndPayloadFetch_AuthorizationCalculatedAndNotCachedIsTrue()
@@ -138,7 +138,7 @@ namespace Dev2.Tests.Runtime.Security
             request.Setup(r => r.User.Identity.Name).Returns("TestUser");
 
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(false);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.EsbFetchExecutePayloadFragment);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
@@ -151,12 +151,12 @@ namespace Dev2.Tests.Runtime.Security
             ResultsCache.Instance.FetchResult(reciept);
 
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Exactly(2));
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(0, authorizationService.CachedRequestCount);
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_RequestWhenNotAllowedNoResultsPendingAndHubConnect_AuthorizationCalculatedAndNotCachedIsFalse()
@@ -170,7 +170,7 @@ namespace Dev2.Tests.Runtime.Security
             request.Setup(r => r.User.Identity.Name).Returns("TestUser");
 
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(false);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.HubConnect);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
@@ -180,12 +180,12 @@ namespace Dev2.Tests.Runtime.Security
             var result = authorizationService.IsAuthorized(request.Object);
 
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Exactly(2));
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(0, authorizationService.CachedRequestCount);
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_RequestWhenNotAllowedButResultsPendingAndNotHubConnect_AuthorizationCalculatedAndNotCachedIsFalse()
@@ -202,7 +202,7 @@ namespace Dev2.Tests.Runtime.Security
             request.Setup(r => r.User.Identity.Name).Returns("TestUser");
 
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(false);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.EsbWrite);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
@@ -215,12 +215,12 @@ namespace Dev2.Tests.Runtime.Security
             ResultsCache.Instance.FetchResult(reciept);
 
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Exactly(2));
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_RequestIsFirstTime_AuthorizationCalculatedAndCached()
@@ -233,7 +233,7 @@ namespace Dev2.Tests.Runtime.Security
 
             var request = new Mock<IAuthorizationRequest>();
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(true);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.WebGet);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
@@ -243,11 +243,11 @@ namespace Dev2.Tests.Runtime.Security
             authorizationService.IsAuthorized(request.Object);
 
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Once());
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_RequestIsSecondTime_CachedAuthorizationUsed()
@@ -260,23 +260,23 @@ namespace Dev2.Tests.Runtime.Security
             var authorizationService = new TestServerAuthorizationService(securityService.Object);
             var request = new Mock<IAuthorizationRequest>();
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(true);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.WebGet);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
 
             authorizationService.IsAuthorized(request.Object);
-            securityService.VerifyGet(p => p.Permissions, Times.Once());
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
 
             //------------Execute Test---------------------------
             authorizationService.IsAuthorized(request.Object);
 
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Once());
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_TimedOutPeriodExpired_ShouldNotGetFromCache()
@@ -289,22 +289,22 @@ namespace Dev2.Tests.Runtime.Security
 
             var request = new Mock<IAuthorizationRequest>();
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(true);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.WebGet);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
             authorizationService.IsAuthorized(request.Object);
             //-------------Assert Preconditions-------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Once());
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
             //------------Execute Test---------------------------
             Thread.Sleep(1200);
             authorizationService.IsAuthorized(request.Object);
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(2));
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_WithinTimedOutPeriod_ShouldGetFromCache()
@@ -317,21 +317,21 @@ namespace Dev2.Tests.Runtime.Security
 
             var request = new Mock<IAuthorizationRequest>();
             request.Setup(r => r.User.IsInRole(It.IsAny<string>())).Returns(true);
-            request.Setup(r => r.Key).Returns(new Tuple<string, string>("User", "Url"));
+            request.Setup(r => r.Key).Returns(new Tuple<string, string, AuthorizationContext>("User", "Url",AuthorizationContext.Any));
             request.Setup(r => r.RequestType).Returns(WebServerRequestType.WebGet);
             request.Setup(r => r.QueryString[It.IsAny<string>()]).Returns(string.Empty);
             authorizationService.IsAuthorized(request.Object);
             //-------------Assert Preconditions-------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Once());
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
             //------------Execute Test---------------------------
             authorizationService.IsAuthorized(request.Object);
             //------------Assert Results-------------------------
-            securityService.VerifyGet(p => p.Permissions, Times.Once());
+            securityService.VerifyGet(p => p.Permissions, Times.AtLeast(1));
             Assert.AreEqual(1, authorizationService.CachedRequestCount);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_WebInvokeService_CorrectAuthorizations()
@@ -360,7 +360,7 @@ namespace Dev2.Tests.Runtime.Security
             Verify_IsAuthorized(requests);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_WebGetXXX_CorrectAuthorizations()
@@ -379,7 +379,7 @@ namespace Dev2.Tests.Runtime.Security
                 new TestAuthorizationRequest(AuthorizationContext.Any, WebServerRequestType.WebGetImage, string.Format(UrlFormat, "images/clear-filter.png"), queryString.Object, ResourceID),
                 new TestAuthorizationRequest(AuthorizationContext.Any, WebServerRequestType.WebGetScript, string.Format(UrlFormat, "scripts/fx/jquery-1.9.1.min.js"), queryString.Object, ResourceID),
                 new TestAuthorizationRequest(AuthorizationContext.Any, WebServerRequestType.WebGetView, string.Format(UrlFormat, "views/services/dbservice.htm"), queryString.Object, ResourceID),
-                
+
                 new TestAuthorizationRequest(AuthorizationContext.View, WebServerRequestType.WebGetDecisions, string.Format(UrlFormat, "decisions/wizard.htm"), queryStringWithResource.Object, ResourceID),
                 new TestAuthorizationRequest(AuthorizationContext.View, WebServerRequestType.WebGetDialogs, string.Format(UrlFormat, "dialogs/savedialog.htm"), queryString.Object, ResourceID),
                 new TestAuthorizationRequest(AuthorizationContext.View, WebServerRequestType.WebGetServices, string.Format(UrlFormat, "services/webservice.htm"), queryString.Object, ResourceID),
@@ -390,7 +390,7 @@ namespace Dev2.Tests.Runtime.Security
             Verify_IsAuthorized(requests);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_WebExecuteOrBookmarkWorkflow_CorrectAuthorizations()
@@ -409,7 +409,7 @@ namespace Dev2.Tests.Runtime.Security
             Verify_IsAuthorized(requests);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_HubConnect_CorrectAuthorizations()
@@ -425,7 +425,7 @@ namespace Dev2.Tests.Runtime.Security
             Verify_IsAuthorized(requests);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("ServerAuthorizationService_IsAuthorized")]
         public void ServerAuthorizationService_IsAuthorized_EsbXXX_CorrectAuthorizations()
@@ -452,9 +452,9 @@ namespace Dev2.Tests.Runtime.Security
         {
             var isServers = new[] { false, true };
 
-            foreach(var isServer in isServers)
+            foreach (var isServer in isServers)
             {
-                foreach(var request in requests)
+                foreach (var request in requests)
                 {
                     Verify_IsAuthorized(Permissions.None, request, isServer);
                     Verify_IsAuthorized(Permissions.View, request, isServer);
@@ -474,10 +474,9 @@ namespace Dev2.Tests.Runtime.Security
         {
             var configPermission = new WindowsGroupPermission { WindowsGroup = TestAuthorizationRequest.UserRole, IsServer = isServer, Permissions = configPermissions };
 
-            if(!isServer && !string.IsNullOrEmpty(authorizationRequest.Resource))
+            if (!isServer && !string.IsNullOrEmpty(authorizationRequest.Resource))
             {
-                Guid resourceID;
-                if(Guid.TryParse(authorizationRequest.Resource, out resourceID))
+                if (Guid.TryParse(authorizationRequest.Resource, out Guid resourceID))
                 {
                     configPermission.ResourceID = resourceID;
                     configPermission.ResourceName = "TestCategory\\";
@@ -498,7 +497,7 @@ namespace Dev2.Tests.Runtime.Security
 
         void Verify_IsAuthorized(WindowsGroupPermission configPermissions, TestAuthorizationRequest authorizationRequest)
         {
-            //------------Setup for test--------------------------           
+            //------------Setup for test--------------------------
             var allowedPermissions = AuthorizationHelpers.ToPermissions(authorizationRequest.AuthorizationContext);
             var expected = authorizationRequest.UserIsInRole && (configPermissions.Permissions & allowedPermissions) != 0;
 
@@ -514,6 +513,23 @@ namespace Dev2.Tests.Runtime.Security
                 authorizationRequest.UserIsInRole, allowedPermissions, configPermissions.Permissions, configPermissions.IsServer, authorizationRequest.Url));
         }
 
-        // ReSharper restore InconsistentNaming
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Clint Stedman")]
+        [TestCategory("ServerAuthorizationService_IsAuthorized")]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void ServerAuthorizationService_IsAuthorized_ResourceIsNull_ThrowsArgumentNullException()
+        {
+            //------------Setup for test--------------------------
+            var securityService = new Mock<ISecurityService>();
+
+            var authorizationService = new TestServerAuthorizationService(securityService.Object);
+
+            //------------Execute Test---------------------------
+            authorizationService.IsAuthorized(AuthorizationContext.Any, null);
+
+            //------------Assert Results-------------------------
+        }
+
+
     }
 }

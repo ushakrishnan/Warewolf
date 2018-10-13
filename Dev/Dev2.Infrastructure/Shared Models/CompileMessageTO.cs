@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +22,7 @@ namespace Dev2.Data.ServiceModel.Messages
     /// Send compile time messages to the studio ;)
     /// </summary>
     [Serializable]
-    // ReSharper disable InconsistentNaming
+    
     public class CompileMessageTO : ICompileMessageTO
     {
         public Guid UniqueID { get; set; }
@@ -40,36 +39,30 @@ namespace Dev2.Data.ServiceModel.Messages
         // should be json or other sensable string data ;)
         public string MessagePayload { get; set; }
 
-        public ICompileMessageTO Clone()
+        public ICompileMessageTO Clone() => new CompileMessageTO
         {
-            return new CompileMessageTO
-            {
-                UniqueID = UniqueID,
-                WorkspaceID = WorkspaceID,
-                ServiceName = ServiceName,
-                ErrorType = ErrorType,
-                MessageID = MessageID,
-                ServiceID = ServiceID,
-                MessageType = MessageType,
-                MessagePayload = MessagePayload
-            };
-        }
+            UniqueID = UniqueID,
+            WorkspaceID = WorkspaceID,
+            ServiceName = ServiceName,
+            ErrorType = ErrorType,
+            MessageID = MessageID,
+            ServiceID = ServiceID,
+            MessageType = MessageType,
+            MessagePayload = MessagePayload
+        };
 
-        public IErrorInfo ToErrorInfo()
+        public IErrorInfo ToErrorInfo() => new ErrorInfo
         {
-            return new ErrorInfo
-            {
-                InstanceID = UniqueID,
-                ErrorType = ErrorType,
-                FixType = ToFixType(),
-                Message = MessageType.GetDescription(),
-                FixData = MessagePayload,
-            };
-        }
+            InstanceID = UniqueID,
+            ErrorType = ErrorType,
+            FixType = ToFixType(),
+            Message = MessageType.GetDescription(),
+            FixData = MessagePayload,
+        };
 
         public FixType ToFixType()
         {
-            switch(MessageType)
+            switch (MessageType)
             {
                 case CompileMessageType.MappingChange:
                     return FixType.ReloadMapping;
@@ -81,6 +74,8 @@ namespace Dev2.Data.ServiceModel.Messages
                     break;
 
                 case CompileMessageType.ResourceSaved:
+                    break;
+                default:
                     break;
             }
             return FixType.None;

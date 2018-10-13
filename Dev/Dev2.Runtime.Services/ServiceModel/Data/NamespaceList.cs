@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using Dev2.Common.Interfaces;
 using Newtonsoft.Json;
 
 namespace Dev2.Runtime.ServiceModel.Data
@@ -18,30 +18,22 @@ namespace Dev2.Runtime.ServiceModel.Data
     [Serializable]
     public class NamespaceList : List<NamespaceItem>
     {
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
+        public override string ToString() => JsonConvert.SerializeObject(this);
     }
 
     [Serializable]
-    public class NamespaceItem
+    public class NamespaceItem:INamespaceItem
     {
         #region ToString
 
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
+        public override string ToString() => JsonConvert.SerializeObject(this);
 
         #endregion
 
         public string AssemblyLocation { get; set; }
-
         public string AssemblyName { get; set; }
-
         public string FullName { get; set; }
-
         public string MethodName { get; set; }
+        public string JsonObject { get; set; }
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,24 +11,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dev2;
 using Dev2.Activities;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
+using Dev2.Interfaces;
 using Dev2.PathOperations;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
+using Warewolf.Core;
 using Warewolf.Storage;
-// ReSharper disable CheckNamespace
+
 
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
-    /// <summary>
-    /// PBI : 1172
-    /// Status : New
-    /// Purpose : To provide an activity that can read the contents of a file from FTP, FTPS and file system
-    /// </summary>
-    public class DsfFileRead : DsfAbstractFileActivity, IPathInput
+    [ToolDescriptorInfo("FileFolder-Read", "Read File", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Read_File")]
+    public class DsfFileRead : DsfAbstractFileActivity, IPathInput,IEquatable<DsfFileRead>
     {
 
         public DsfFileRead()
@@ -38,56 +38,73 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             InputPath = string.Empty;
         }
 
-        protected override IList<OutputTO> ExecuteConcreteAction(IDSFDataObject dataObject, out ErrorResultTO allErrors, int update)
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name = nameof(InputPath),
+                    Type = StateVariable.StateType.Input,
+                    Value = InputPath
+                },
+                new StateVariable
+                {
+                    Name = nameof(Result),
+                    Type = StateVariable.StateType.Output,
+                    Value = Result
+                }
+            };
+        }
+
+        protected override bool AssignEmptyOutputsToRecordSet => true;
+        protected override IList<OutputTO> TryExecuteConcreteAction(IDSFDataObject context, out ErrorResultTO error, int update)
         {
 
             IList<OutputTO> outputs = new List<OutputTO>();
 
-            allErrors = new ErrorResultTO();
+            error = new ErrorResultTO();
             var colItr = new WarewolfListIterator();
 
             //get all the possible paths for all the string variables
-            var inputItr = new WarewolfIterator(dataObject.Environment.Eval(InputPath, update));
+            var inputItr = new WarewolfIterator(context.Environment.Eval(InputPath, update));
             colItr.AddVariableToIterateOn(inputItr);
 
-            var unameItr = new WarewolfIterator(dataObject.Environment.Eval(Username, update));
-            colItr.AddVariableToIterateOn(unameItr);
-
-            var passItr = new WarewolfIterator(dataObject.Environment.Eval(DecryptedPassword,update)); 
+            var passItr = new WarewolfIterator(context.Environment.Eval(DecryptedPassword, update));
             colItr.AddVariableToIterateOn(passItr);
 
-            var privateKeyItr = new WarewolfIterator(dataObject.Environment.Eval(PrivateKeyFile, update));
+            var privateKeyItr = new WarewolfIterator(context.Environment.Eval(PrivateKeyFile ?? string.Empty, update));
             colItr.AddVariableToIterateOn(privateKeyItr);
 
             outputs.Add(DataListFactory.CreateOutputTO(Result));
 
-            if(dataObject.IsDebugMode())
+            if (context.IsDebugMode())
             {
-                AddDebugInputItem(InputPath, "Input Path", dataObject.Environment, update);
-                AddDebugInputItemUserNamePassword(dataObject.Environment, update);
-                if(!string.IsNullOrEmpty(PrivateKeyFile))
+                AddDebugInputItem(InputPath, "Input Path", context.Environment, update);
+                AddDebugInputItemUserNamePassword(context.Environment, update);
+                if (!string.IsNullOrEmpty(PrivateKeyFile))
                 {
-                    AddDebugInputItem(PrivateKeyFile, "Private Key File", dataObject.Environment, update);
+                    AddDebugInputItem(PrivateKeyFile, "Private Key File", context.Environment, update);
                 }
             }
 
-            while(colItr.HasMoreData())
+            while (colItr.HasMoreData())
             {
-                IActivityOperationsBroker broker = ActivityIOFactory.CreateOperationsBroker();
-                IActivityIOPath ioPath = ActivityIOFactory.CreatePathFromString(colItr.FetchNextValue(inputItr),
-                                                                                colItr.FetchNextValue(unameItr),
+                var broker = ActivityIOFactory.CreateOperationsBroker();
+                var ioPath = ActivityIOFactory.CreatePathFromString(colItr.FetchNextValue(inputItr),
+                                                                                Username,
                                                                                 colItr.FetchNextValue(passItr),
                                                                                 true, colItr.FetchNextValue(privateKeyItr));
-                IActivityIOOperationsEndPoint endpoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(ioPath);
+                var endpoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(ioPath);
                 try
                 {
-                    string result = broker.Get(endpoint);
+                    var result = broker.Get(endpoint);
                     outputs[0].OutputStrings.Add(result);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     outputs[0].OutputStrings.Add(null);
-                    allErrors.AddError(e.Message);
+                    error.AddError(e.Message);
                     break;
                 }
 
@@ -113,7 +130,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null && updates.Count == 1)
+            if (updates != null && updates.Count == 1)
             {
                 InputPath = updates[0].Item2;
             }
@@ -121,29 +138,63 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(InputPath);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(InputPath);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(Result);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
         #endregion
+
+        public bool Equals(DsfFileRead other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && string.Equals(InputPath, other.InputPath);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfFileRead) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (base.GetHashCode() * 397) ^ (InputPath != null ? InputPath.GetHashCode() : 0);
+            }
+        }
     }
 }

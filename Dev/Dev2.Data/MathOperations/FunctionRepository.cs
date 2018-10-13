@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,8 +17,9 @@ using Dev2.Common.Interfaces;
 using Dev2.Data.MathOperations;
 using Infragistics.Calculations.CalcManager;
 using Infragistics.Calculations.Engine;
+using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.MathOperations
 {
     // PBI: 1214
@@ -27,9 +27,9 @@ namespace Dev2.MathOperations
     // to perform evaluations on
     public class FunctionRepository : IFrameworkRepository<IFunction>
     {
-        private readonly List<IFunction> _functions;
-        private static readonly IDev2CalculationManager CalcManager = new Dev2CalculationManager();
-        private bool _isDisposed;
+        readonly List<IFunction> _functions;
+        static readonly IDev2CalculationManager CalcManager = new Dev2CalculationManager();
+        bool _isDisposed;
 
         internal FunctionRepository()
         {
@@ -42,7 +42,7 @@ namespace Dev2.MathOperations
         /// <returns></returns>
         public ICollection<IFunction> All()
         {
-            if(_functions != null)
+            if (_functions != null)
             {
                 return _functions;
             }
@@ -56,13 +56,13 @@ namespace Dev2.MathOperations
         /// <returns></returns>
         public ICollection<IFunction> Find(Expression<Func<IFunction, bool>> expression)
         {
-            if(expression != null)
+            if (expression != null)
             {
                 return _functions.AsQueryable().Where(expression).ToList();
             }
-// ReSharper disable NotResolvedInText
-            throw new ArgumentNullException(@"Expression cannot be null");
-// ReSharper restore NotResolvedInText
+            
+            throw new ArgumentNullException(ErrorResource.ExpressionCannotBeNull);
+            
         }
 
         /// <summary>
@@ -72,17 +72,17 @@ namespace Dev2.MathOperations
         /// <returns></returns>
         public IFunction FindSingle(Expression<Func<IFunction, bool>> expression)
         {
-            if(expression != null)
+            if (expression != null)
             {
 
                 try
                 {
                     return _functions.AsQueryable().First(expression);
                 }
-                catch(InvalidOperationException ioex)
+                catch (InvalidOperationException ioex)
                 {
-                    Dev2Logger.Log.Error(ioex);
-                    IFunction func = MathOpsFactory.CreateFunction();
+                    Dev2Logger.Error(ioex, GlobalConstants.WarewolfError);
+                    var func = MathOpsFactory.CreateFunction();
                     return func;
                 }
             }
@@ -95,9 +95,9 @@ namespace Dev2.MathOperations
         /// </summary>
         public void Load()
         {
-            IEnumerable<CalculationFunction> calcFunctions = CalcManager.GetAllFunctions();
+            var calcFunctions = CalcManager.GetAllFunctions();
 
-            foreach(CalculationFunction calcFunction in calcFunctions)
+            foreach (CalculationFunction calcFunction in calcFunctions)
             {
                 _functions.Add(MathOpsFactory.CreateFunction(calcFunction.Name, calcFunction.ArgList, calcFunction.ArgDescriptors, calcFunction.Description));
             }
@@ -110,18 +110,18 @@ namespace Dev2.MathOperations
         /// <param name="instanceObjs"></param>
         public void Remove(ICollection<IFunction> instanceObjs)
         {
-            if(instanceObjs != null)
+            if (instanceObjs != null)
             {
-                foreach(IFunction func in instanceObjs)
+                foreach (IFunction func in instanceObjs)
                 {
                     _functions.Remove(func);
                 }
             }
             else
             {
-// ReSharper disable NotResolvedInText
-                throw new ArgumentNullException("Cannot remove null List of functions");
-// ReSharper restore NotResolvedInText
+                
+                throw new ArgumentNullException(ErrorResource.CannotRemoveNullListOfFunctions);
+                
             }
         }
 
@@ -131,15 +131,15 @@ namespace Dev2.MathOperations
         /// <param name="instanceObj"></param>
         public void Remove(IFunction instanceObj)
         {
-            if(instanceObj != null)
+            if (instanceObj != null)
             {
                 _functions.Remove(instanceObj);
             }
             else
             {
-// ReSharper disable NotResolvedInText
-                throw new ArgumentNullException("Function cannot be null");
-// ReSharper restore NotResolvedInText
+                
+                throw new ArgumentNullException(ErrorResource.FunctionCannotBeNull);
+                
             }
         }
 
@@ -149,15 +149,15 @@ namespace Dev2.MathOperations
         /// <param name="instanceObjs"></param>
         public void Save(ICollection<IFunction> instanceObjs)
         {
-            if(instanceObjs != null)
+            if (instanceObjs != null)
             {
                 _functions.AddRange(instanceObjs);
             }
             else
             {
-// ReSharper disable NotResolvedInText
-                throw new ArgumentNullException("Cannot Save a Null list of functions");
-// ReSharper restore NotResolvedInText
+                
+                throw new ArgumentNullException(ErrorResource.CannotSaveNullListOfFunctions);
+                
             }
         }
         /// <summary>
@@ -166,27 +166,25 @@ namespace Dev2.MathOperations
         /// <param name="instanceObj"></param>
         public string Save(IFunction instanceObj)
         {
-            if(instanceObj != null)
+            if (instanceObj != null)
             {
                 _functions.Add(instanceObj);
             }
             else
             {
-// ReSharper disable NotResolvedInText
-                throw new ArgumentNullException("Function cannot be null");
-// ReSharper restore NotResolvedInText
+                
+                throw new ArgumentNullException(ErrorResource.FunctionCannotBeNull);
+                
             }
             return "Saved";
         }
 
         public event EventHandler ItemAdded;
 
+    
         protected void OnItemAdded()
         {
-            if(ItemAdded != null)
-            {
-                ItemAdded(this, new EventArgs());
-            }
+            ItemAdded?.Invoke(this, new EventArgs());
         }
 
         #region Implementation of IDisposable
@@ -223,11 +221,11 @@ namespace Dev2.MathOperations
         void Dispose(bool disposing)
         {
             // Check to see if Dispose has already been called.
-            if(!_isDisposed)
+            if (!_isDisposed)
             {
                 // If disposing equals true, dispose all managed
                 // and unmanaged resources.
-                if(disposing)
+                if (disposing)
                 {
                     // Dispose managed resources.                    
                 }

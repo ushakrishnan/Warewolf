@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +19,7 @@ using Dev2.Data.Util;
 using Dev2.Providers.Validation.Rules;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -27,29 +27,27 @@ namespace Dev2.Activities.Designers2.XPath
 {
     public class XPathDesignerViewModel : ActivityCollectionDesignerViewModel<XPathDTO>
     {
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public XPathDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
             AddTitleBarLargeToggle();
             AddTitleBarQuickVariableInputToggle();
-            AddTitleBarHelpToggle();
             dynamic mi = ModelItem;
             InitializeItems(mi.ResultsCollection);
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Xpath;
         }
-        public override string CollectionName { get { return "ResultsCollection"; } }
+        public override string CollectionName => "ResultsCollection";
 
 
-        public bool IsSourceStringFocused { get { return (bool)GetValue(IsSourceStringFocusedProperty); } set { SetValue(IsSourceStringFocusedProperty, value); } }
+        public bool IsSourceStringFocused { get => (bool)GetValue(IsSourceStringFocusedProperty); set => SetValue(IsSourceStringFocusedProperty, value); }
         public static readonly DependencyProperty IsSourceStringFocusedProperty = DependencyProperty.Register("IsSourceStringFocused", typeof(bool), typeof(XPathDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        string SourceString { get { return GetProperty<string>(); } }
+        string SourceString => GetProperty<string>();
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
-        {
-            // ReSharper disable LoopCanBeConvertedToQuery
-            foreach(var error in GetRuleSet("SourceString").ValidateRules("'XML'", () => IsSourceStringFocused = true))
-            // ReSharper restore LoopCanBeConvertedToQuery
+        {            
+            foreach(var error in GetRuleSet("SourceString").ValidateRules("'XML'", () => IsSourceStringFocused = true))            
             {
                 yield return error;
             }
@@ -59,19 +57,21 @@ namespace Dev2.Activities.Designers2.XPath
         {
             var ruleSet = new RuleSet();
 
-            switch(propertyName)
+            switch (propertyName)
             {
                 case "SourceString":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => SourceString));
 
-                    if(!string.IsNullOrEmpty(SourceString) && !DataListUtil.IsEvaluated(SourceString))
+                    if (!string.IsNullOrEmpty(SourceString) && !DataListUtil.IsEvaluated(SourceString))
                     {
                         ruleSet.Add(new IsValidXmlRule(() => SourceString));
                     }
 
-                    var outputExprRule = new IsValidExpressionRule(() => SourceString, GetDatalistString(), "1");
+                    var outputExprRule = new IsValidExpressionRule(() => SourceString, GetDatalistString?.Invoke(), "1", new VariableUtils());
                     ruleSet.Add(outputExprRule);
 
+                    break;
+                default:
                     break;
             }
             return ruleSet;
@@ -85,14 +85,20 @@ namespace Dev2.Activities.Designers2.XPath
                 yield break;
             }
 
-            foreach(var error in dto.GetRuleSet("OutputVariable", GetDatalistString()).ValidateRules("'Results'", () => mi.SetProperty("IsOutputVariableFocused", true)))
+            foreach(var error in dto.GetRuleSet("OutputVariable", GetDatalistString?.Invoke()).ValidateRules("'Results'", () => mi.SetProperty("IsOutputVariableFocused", true)))
             {
                 yield return error;
             }
-            foreach(var error in dto.GetRuleSet("XPath", GetDatalistString()).ValidateRules("'XPath'", () => mi.SetProperty("IsXpathVariableFocused", true)))
+            foreach(var error in dto.GetRuleSet("XPath", GetDatalistString?.Invoke()).ValidateRules("'XPath'", () => mi.SetProperty("IsXpathVariableFocused", true)))
             {
                 yield return error;
             }
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

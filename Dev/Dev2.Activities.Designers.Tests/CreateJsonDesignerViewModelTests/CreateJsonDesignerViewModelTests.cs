@@ -1,19 +1,19 @@
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.CreateJSON;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Dev2.TO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.CreateJsonDesignerViewModelTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class CreateJsonDesignerViewModelTests
     {
         [TestMethod]
@@ -164,6 +164,26 @@ namespace Dev2.Activities.Designers.Tests.CreateJsonDesignerViewModelTests
             //------------Assert Results-------------------------
             Assert.AreEqual("rec", mi.GetProperty<string>("DestinationName"));
             Assert.AreEqual("rec", jsonMappingTo.DestinationName);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("CreateJsonDesignerViewModel_Handle")]
+        public void CreateJsonDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var jsonMappingTo = new JsonMappingTo();
+            var act = new DsfCreateJsonActivity { JsonMappings = new List<JsonMappingTo> { jsonMappingTo } };
+            var viewModel = CreateViewModel(act);
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         public static CreateJsonDesignerViewModel CreateViewModel()

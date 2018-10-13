@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +9,23 @@
 */
 
 using System;
+using System.Collections.Generic;
+using System.Data.OracleClient;
+using System.IO;
 using System.Linq;
-using Dev2.Common.Interfaces.Data;
+using System.Reflection;
+using Dev2.Common;
+using Dev2.Common.ExtMethods;
+using Dev2.Common.Interfaces;
+using Dev2.Runtime;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin;
 using DummyNamespaceForTest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using TestingDotnetDllCascading;
 
 namespace Dev2.Tests.Runtime.ESB.Plugin
 {
@@ -23,23 +33,19 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
     /// Summary description for PluginRuntimeHandlerTest
     /// </summary>
     [TestClass]
+
     public class PluginRuntimeHandlerTest
     {
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext { get; set; }
 
         #region FetchNamespaceListObject
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
         public void PluginRuntimeHandler_FetchNamespaceListObject_WhenValidDll_ExpectNamespaces()
         {
             //------------Setup for test--------------------------
-            var source = CreatePluginSource();
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest));
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
@@ -49,45 +55,90 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Travis Frisinger")]
+        [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
+        public void PluginRuntimeHandler_FetchNamespaceListObjectWithJsonObjects_WhenValidDll_ExpectNamespaces()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest));
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = isolated.Value.FetchNamespaceListObjectWithJsonObjects(source);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
         [ExpectedException(typeof(NullReferenceException))]
         public void PluginRuntimeHandler_FetchNamespaceListObject_WhenNullDll_ExpectException()
         {
             //------------Setup for test--------------------------
-            var source = CreatePluginSource();
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
-                var result = isolated.Value.FetchNamespaceListObject(null);
+                isolated.Value.FetchNamespaceListObject(null);
                 //------------Assert Results-------------------------
             }
-            
+
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Travis Frisinger")]
+        [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
+        [ExpectedException(typeof(NullReferenceException))]
+        public void PluginRuntimeHandler_FetchNamespaceListObjectWithJsonObjects_WhenNullDll_ExpectException()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                isolated.Value.FetchNamespaceListObjectWithJsonObjects(null);
+                //------------Assert Results-------------------------
+            }
+
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
         [ExpectedException(typeof(NullReferenceException))]
         public void PluginRuntimeHandler_FetchNamespaceListObject_WhenNullLocationInSource_ExpectException()
         {
             //------------Setup for test--------------------------
-            var source = CreatePluginSource(true);
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest), true);
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
                 isolated.Value.FetchNamespaceListObject(source);
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Travis Frisinger")]
+        [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
+        [ExpectedException(typeof(NullReferenceException))]
+        public void PluginRuntimeHandler_FetchNamespaceListObjectWithJsonObjects_WhenNullLocationInSource_ExpectException()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest), true);
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                isolated.Value.FetchNamespaceListObjectWithJsonObjects(source);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
         [ExpectedException(typeof(NullReferenceException))]
         public void PluginRuntimeHandler_FetchNamespaceListObject_WhenNullLocationAndInvalidSourceID_ExpectException()
         {
             //------------Setup for test--------------------------
-            var source = CreatePluginSource(true);
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest), true);
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
                 isolated.Value.FetchNamespaceListObject(source);
@@ -95,11 +146,62 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
 
         }
 
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Travis Frisinger")]
+        [TestCategory("PluginRuntimeHandler_FetchNamespaceListObject")]
+        [ExpectedException(typeof(NullReferenceException))]
+        public void PluginRuntimeHandler_FetchNamespaceListObjectWithJsonObjects_WhenNullLocationAndInvalidSourceID_ExpectException()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest), true);
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                isolated.Value.FetchNamespaceListObjectWithJsonObjects(source);
+            }
+
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [ExpectedException(typeof(BadImageFormatException))]
+        public void FetchNamespaceListObject_GivenThrowsBadFormatExceptionError_ShouldRethrowBadFormatException()
+        {
+            //---------------Set up test pack-------------------
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest));
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var mockAssemblyLoader = new Mock<IAssemblyLoader>();
+            Assembly assembly;
+            mockAssemblyLoader.Setup(loader => loader.TryLoadAssembly(It.IsAny<string>(), It.IsAny<string>(), out assembly))
+                .Throws(new BadImageFormatException());
+            var pluginRuntimeHandler = new PluginRuntimeHandler(mockAssemblyLoader.Object);
+            //---------------Test Result -----------------------
+            pluginRuntimeHandler.FetchNamespaceListObject(source);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [ExpectedException(typeof(BadImageFormatException))]
+        public void FetchNamespaceListObjectWithJsonObjects_GivenThrowsBadFormatExceptionError_ShouldRethrowBadFormatException()
+        {
+            //---------------Set up test pack-------------------
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest));
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var mockAssemblyLoader = new Mock<IAssemblyLoader>();
+            Assembly assembly;
+            mockAssemblyLoader.Setup(loader => loader.TryLoadAssembly(It.IsAny<string>(), It.IsAny<string>(), out assembly))
+                .Throws(new BadImageFormatException());
+            var pluginRuntimeHandler = new PluginRuntimeHandler(mockAssemblyLoader.Object);
+            //---------------Test Result -----------------------
+            pluginRuntimeHandler.FetchNamespaceListObjectWithJsonObjects(source);
+        }
+
         #endregion
 
         #region ValidatePlugin
 
-        //[TestMethod]
+        //[TestMethod, DeploymentItem("EnableDocker.txt")]
         //[Owner("Travis Frisinger")]
         //[TestCategory("PluginRuntimeHandler_ValidatePlugin")]
         //public void PluginRuntimeHandler_ValidatePlugin_WhenValidDll_ExpectBlankMessage()
@@ -115,7 +217,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
         //    StringAssert.Contains(result, string.Empty);
         //}
 
-        //[TestMethod]
+        //[TestMethod, DeploymentItem("EnableDocker.txt")]
         //[Owner("Travis Frisinger")]
         //[TestCategory("PluginRuntimeHandler_ValidatePlugin")]
         //public void PluginRuntimeHandler_ValidatePlugin_WhenNotADll_ExpectErrorMessage()
@@ -131,7 +233,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
         //    StringAssert.Contains(result, "Not a Dll file");
         //}
 
-        //[TestMethod]
+        //[TestMethod, DeploymentItem("EnableDocker.txt")]
         //[Owner("Travis Frisinger")]
         //[TestCategory("PluginRuntimeHandler_ValidatePlugin")]
         //public void PluginRuntimeHandler_ValidatePlugin_WhenGacDll_ExpectBlankMessage()
@@ -146,48 +248,18 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
         //    StringAssert.Contains(result, string.Empty);
         //}
 
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginRuntimeHandler_ValidatePlugin")]
-        public void PluginRuntimeHandler_ValidatePlugin_WhenInvalidGacDll_ExpectErrorMessage()
-        {
-            //------------Setup for test--------------------------
-            var pluginRuntimeHandler = new PluginRuntimeHandler();
-
-            //------------Execute Test---------------------------
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
-            {
-                var result = isolated.Value.ValidatePlugin("GAC:mscorlib_foo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089");
-                StringAssert.Contains(result, "Could not load file or assembly 'mscorlib_foo");
-            }
-            
-        }
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginRuntimeHandler_ValidatePlugin")]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void PluginRuntimeHandler_ValidatePlugin_WhenNullDll_ExpectErrorMessage()
-        {
-            //------------Setup for test--------------------------
-            //------------Execute Test---------------------------
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
-            {
-                var result = isolated.Value.ValidatePlugin(null);
-            }
-        }
 
         #endregion
 
         #region ListNamespaces
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_ListNamespaces")]
         public void PluginRuntimeHandler_ListNamespaces_WhenValidLocation_ExpectNamespaces()
         {
             //------------Setup for test--------------------------
-            var source = CreatePluginSource();
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest));
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
@@ -196,7 +268,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_ListNamespaces")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -206,11 +278,11 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
-                var result = isolated.Value.ListNamespaces(null, "Foo");
+                isolated.Value.ListNamespaces(null, "Foo");
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginRuntimeHandler_ListNamespaces")]
         public void PluginRuntimeHandler_ListNamespaces_WhenInvalidLocation_ExpectNoResults()
@@ -221,123 +293,673 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             {
                 var result = isolated.Value.ListNamespaces("z:\foo\asm.dll", "Foo");
                 Assert.IsFalse(result.Any());
-            }            
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethods")]
+        public void PluginRuntimeHandler_ListMethods_WhenInvalidLocation_ExpectNoResults()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = isolated.Value.ListMethods("z:\foo\asm.dll", "asm.dll", "asm.dll");
+                Assert.IsFalse(result.Any());
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethods")]
+        public void PluginRuntimeHandler_ListConstructors_WhenInvalidLocation_ExpectNoResults()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = isolated.Value.ListConstructors("z:\foo\asm.dll", "asm.dll", "asm.dll");
+                Assert.IsFalse(result.Any());
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethods")]
+        public void PluginRuntimeHandler_ListMethods_WhenValidLocation_ExpectResults()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var fullName = Assembly.GetExecutingAssembly().Location;
+                var dllName = Path.GetFileName(fullName);
+                var result = isolated.Value.ListMethods(fullName, dllName, typeof(Main).FullName);
+                Assert.IsTrue(result.Any());
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethods")]
+        public void PluginRuntimeHandler_ListConstructors_WhenValidLocation_ExpectResults()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var fullName = Assembly.GetExecutingAssembly().Location;
+                var dllName = Path.GetFileName(fullName);
+                var result = isolated.Value.ListConstructors(fullName, dllName, typeof(Main).FullName);
+                Assert.IsTrue(result.Any());
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethodsWithReturns")]
+        public void PluginRuntimeHandler_ListMethodsWithReturns_WhenValidLocation_ExpectResults()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var fullName = Assembly.GetExecutingAssembly().Location;
+                var dllName = Path.GetFileName(fullName);
+                var result = isolated.Value.ListMethodsWithReturns(fullName, dllName, typeof(Main).FullName);
+                Assert.IsTrue(result.Any());
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethodsWithReturns")]
+        public void PluginRuntimeHandler_ListMethodsWithReturns_WhenValidLocationAndVoid_ExpectResultsWithVoidMethod()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var fullName = Assembly.GetExecutingAssembly().Location;
+                var dllName = Path.GetFileName(fullName);
+                var result = isolated.Value.ListMethodsWithReturns(fullName, dllName, typeof(Main).FullName);
+                Assert.IsTrue(result.Any());
+                Assert.IsTrue(result.Any(method => method.IsVoid));
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethodsWithReturns")]
+        public void PluginRuntimeHandler_ListMethodsWithReturns_WhenValidLocationAndIsProperty_ExpectResultsWithPropertyMethod()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var fullName = Assembly.GetExecutingAssembly().Location;
+                var dllName = Path.GetFileName(fullName);
+                var result = isolated.Value.ListMethodsWithReturns(fullName, dllName, typeof(Main).FullName);
+                Assert.IsTrue(result.Any());
+                Assert.IsTrue(result.Any(method => method.IsProperty));
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ListMethodsWithReturns")]
+        public void PluginRuntimeHandler_ListMethodsWithReturns_WhenListFoods_ExpectJSonArrayReturnType()
+        {
+            //------------Setup for test--------------------------
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var fullName = Assembly.GetExecutingAssembly().Location;
+                var dllName = Path.GetFileName(fullName);
+                var result = isolated.Value.ListMethodsWithReturns(fullName, dllName, typeof(Main).FullName);
+                Assert.IsTrue(result.Any());
+                var serviceMethods = result.Where(method => !method.IsVoid);
+                var condition = serviceMethods.Any(method => method.Dev2ReturnType.Contains("["));
+                Assert.IsTrue(condition);
+            }
         }
 
         #endregion
 
-        #region Run
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginRuntimeHandler_Run")]
-        public void PluginRuntimeHandler_Run_WhenValidLocation_ExpectResult()
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_CreateInstance")]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void PluginRuntimeHandler_CreateInstance_WhenNullParameters_ExpectException()
         {
             //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            var source = CreatePluginSource();
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = source.AssemblyLocation, AssemblyName = "Foo", Fullname = svc.Namespace, Method = svc.Method.Name, Parameters = svc.Method.Parameters };
-                var result = isolated.Value.Run(args);
-                var castResult = result as DummyClassForPluginTest;
-                //------------Assert Results-------------------------
-                if (castResult != null)
+                isolated.Value.CreateInstance(null);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_CreateInstance")]
+        public void PluginRuntimeHandler_CreateInstance_WhenHuman_ExpectHumanStringObject()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "ToString" } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var instance = isolated.Value.CreateInstance(new PluginInvokeArgs
                 {
-                    StringAssert.Contains(castResult.Name, "test data");
-                }
-                else
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>(),
+
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                });
+
+                var deserializeToObject = instance.ObjectString.DeserializeToObject(type, new KnownTypesBinder() { KnownTypes = new List<Type>(type.Assembly.ExportedTypes) });
+                Assert.IsNotNull(deserializeToObject);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_CreateInstance")]
+        public void PluginRuntimeHandler_CreateInstance_WhenHumanWithInputs_ExpectHumanStringObjectWithInputs()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "ToString" } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var instance = isolated.Value.CreateInstance(new PluginInvokeArgs
                 {
-                    Assert.Fail("Failed Conversion for Assert");
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>()
+                        {
+                            new ConstructorParameter()
+                            {
+                                  Name = "name"
+                                , Value = "Jimmy"
+                                , TypeName = typeof(string).AssemblyQualifiedName
+                                , IsRequired = true
+                            }
+                        },
+
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                });
+
+                var deserializeToObject = instance.ObjectString.DeserializeToObject(type, new KnownTypesBinder() { KnownTypes = new List<Type>(type.Assembly.ExportedTypes) });
+                if (deserializeToObject is Human firstOrDefault)
+                {
+
+                    Assert.AreEqual("Jimmy", firstOrDefault.Name);
                 }
-            }   
-
-            
-        }
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginRuntimeHandler_Run")]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void PluginRuntimeHandler_Run_WhenNullLocation_ExpectException()
-        {
-            //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
-            {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = null, AssemblyName = "Foo", Fullname = svc.Namespace, Method = svc.Method.Name, Parameters = svc.Method.Parameters };
-                var result = isolated.Value.Run(args);            
-            }   
-        }
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginRuntimeHandler_Run")]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void PluginRuntimeHandler_Run_WhenInvalidNamespace_ExpectException()
-        {
-            //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            var source = CreatePluginSource();
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
-            {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = source.AssemblyLocation, AssemblyName = "Foo", Fullname = "foo.bar", Method = svc.Method.Name, Parameters = svc.Method.Parameters };
-                var result = isolated.Value.Run(args);
+                Assert.IsNotNull(deserializeToObject);
             }
         }
 
-        [TestMethod]
-        [Owner("Travis Frisinger")]
+
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginRuntimeHandler_Run")]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void PluginRuntimeHandler_Run_WhenInvalidMethod_ExpectException()
+        public void PluginRuntimeHandler_Run_WhenObjectStringIsNotNull_ExpectRunsCorrectly()
         {
             //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            var source = CreatePluginSource();
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "set_Name" , Parameters = new List<IMethodParameter>()
+            {
+                new ConstructorParameter()
+                {
+                    Name = "value", Value = "Micky", TypeName = typeof(string).FullName, IsRequired = true
+                }
+            } } }, type, new ServiceConstructor());
             //------------Execute Test---------------------------
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            using (var isolated = new Isolated<PluginRuntimeHandler>())
             {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = source.AssemblyLocation, AssemblyName = "Foo", Fullname = svc.Namespace, Method = "InvalidName", Parameters = svc.Method.Parameters };
-                var result = isolated.Value.Run(args);
+                var pluginInvokeArgs = new PluginInvokeArgs
+                {
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>(),
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                };
+                var instance = isolated.Value.CreateInstance(pluginInvokeArgs);
+
+                var deserializeToObject = instance.ObjectString.DeserializeToObject(type, new KnownTypesBinder() { KnownTypes = new List<Type>(type.Assembly.ExportedTypes) });
+                Assert.IsNotNull(deserializeToObject);
+                instance.Args = pluginInvokeArgs;
+                var dev2MethodInfo = instance.Args.MethodsToRun.First();
+                var run = isolated.Value.Run(dev2MethodInfo, instance, out string stringOBj);
+                Assert.IsNotNull(run);
+                StringAssert.Contains(stringOBj, "Default");
             }
         }
 
-        [TestMethod]
-        [Owner("Travis Frisinger")]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginRuntimeHandler_Run")]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void PluginRuntimeHandler_Run_WhenNullParameters_ExpectException()
+        public void PluginRuntimeHandler_Run_WhenHasInnerError_ExpectInerErrors()
         {
             //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            var source = CreatePluginSource();
-            //------------Execute Test---------------------------
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "set_Name" , Parameters = new List<IMethodParameter>()
             {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = source.AssemblyLocation, AssemblyName = "Foo", Fullname = svc.Namespace, Method = svc.Method.Name, Parameters = null };
-                var result = isolated.Value.Run(args);
+                new ConstructorParameter()
+                {
+                    Name = "value", Value = "Micky", TypeName = typeof(string).FullName, IsRequired = true
+                }
+            } } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            var mock = new Mock<IAssemblyLoader>();
+            Assembly loadedAssembly;
+
+            var handler = new PluginRuntimeHandler(mock.Object);
+
+            var pluginInvokeArgs = new PluginInvokeArgs
+            {
+                MethodsToRun = svc.MethodsToRun,
+                PluginConstructor = new PluginConstructor
+                {
+                    ConstructorName = svc.Constructor.Name,
+                    Inputs = new List<IConstructorParameter>(),
+                },
+                AssemblyLocation = type.Assembly.Location,
+                AssemblyName = type.Assembly.FullName,
+                Fullname = type.FullName,
+
+            };
+            var pluginExecutionDto = new PluginExecutionDto(String.Empty)
+            {
+                Args = pluginInvokeArgs
+            };
+            var exception = new Exception("err", new Exception());
+            mock.Setup(loader => loader.TryLoadAssembly(It.IsAny<string>(), It.IsAny<string>(), out loadedAssembly))
+                .Throws(exception);
+
+            var dev2MethodInfo = pluginInvokeArgs.MethodsToRun.First();
+            var run = handler.Run(dev2MethodInfo, pluginExecutionDto, out string stringOBj);
+            Assert.IsNotNull(run);
+            Assert.IsTrue(run.HasError);
+            Assert.IsFalse(string.IsNullOrEmpty(run.ErrorMessage));
+
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_Test")]
+        public void PluginRuntimeHandler_Test_WhenHasInnerError_ExpectInerErrors()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "set_Name" , Parameters = new List<IMethodParameter>()
+            {
+                new ConstructorParameter()
+                {
+                    Name = "value", Value = "Micky", TypeName = typeof(string).FullName, IsRequired = true
+                }
+            } } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            var mock = new Mock<IAssemblyLoader>();
+            Assembly loadedAssembly;
+
+            var handler = new PluginRuntimeHandler(mock.Object);
+
+            var pluginInvokeArgs = new PluginInvokeArgs
+            {
+                MethodsToRun = svc.MethodsToRun,
+                PluginConstructor = new PluginConstructor
+                {
+                    ConstructorName = svc.Constructor.Name,
+                    Inputs = new List<IConstructorParameter>(),
+                },
+                AssemblyLocation = type.Assembly.Location,
+                AssemblyName = type.Assembly.FullName,
+                Fullname = type.FullName,
+
+            };
+
+            var exception = new Exception("err", new Exception());
+            mock.Setup(loader => loader.TryLoadAssembly(It.IsAny<string>(), It.IsAny<string>(), out loadedAssembly))
+                .Throws(exception);
+            var run = handler.Test(pluginInvokeArgs, out string stringOBj);
+            Assert.IsNull(run);
+            Assert.IsTrue(string.IsNullOrEmpty(stringOBj));
+
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_Run")]
+        [ExpectedException(typeof(AccessViolationException))]
+        public void PluginRuntimeHandler_Run_WhenHasError_ExpectErrors()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "set_Name" , Parameters = new List<IMethodParameter>()
+            {
+                new ConstructorParameter()
+                {
+                    Name = "value", Value = "Micky", TypeName = typeof(string).FullName, IsRequired = true
+                }
+            } } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            var mock = new Mock<IAssemblyLoader>();
+            Assembly loadedAssembly;
+
+            var handler = new PluginRuntimeHandler(mock.Object);
+
+            var pluginInvokeArgs = new PluginInvokeArgs
+            {
+                MethodsToRun = svc.MethodsToRun,
+                PluginConstructor = new PluginConstructor
+                {
+                    ConstructorName = svc.Constructor.Name,
+                    Inputs = new List<IConstructorParameter>(),
+                },
+                AssemblyLocation = type.Assembly.Location,
+                AssemblyName = type.Assembly.FullName,
+                Fullname = type.FullName,
+
+            };
+            var pluginExecutionDto = new PluginExecutionDto(string.Empty)
+            {
+                Args = pluginInvokeArgs
+            };
+            //var instance = handler.CreateInstance(pluginInvokeArgs);
+            var exception = new AccessViolationException("err");
+            mock.Setup(loader => loader.TryLoadAssembly(It.IsAny<string>(), It.IsAny<string>(), out loadedAssembly))
+                .Throws(exception);
+
+            var dev2MethodInfo = pluginInvokeArgs.MethodsToRun.First();
+            var run = handler.Run(dev2MethodInfo, pluginExecutionDto, out string stringOBj);
+
+
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_CreateInstance")]
+        public void PluginRuntimeHandler_Run_WhenClassIsStatic_ExpectRunsCorrectly()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(StaticClass);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "ToString", Parameters = new List<IMethodParameter>() } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            using (var isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var pluginInvokeArgs = new PluginInvokeArgs
+                {
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>(),
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                };
+                var instance = isolated.Value.CreateInstance(pluginInvokeArgs);
+                Assert.IsTrue(string.IsNullOrEmpty(instance.ObjectString));
+                Assert.IsTrue(instance.IsStatic);
             }
         }
 
-        #endregion
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_CreateInstance")]
+        public void PluginRuntimeHandler_Run_WhenClassIsStatic_ExpectRunsMethodsCorrectly()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(StaticClass);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "ToStringOnStatic", Parameters = new List<IMethodParameter>() } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            using (var isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var pluginInvokeArgs = new PluginInvokeArgs
+                {
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>(),
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                };
+                var instance = isolated.Value.CreateInstance(pluginInvokeArgs);
+                instance.Args = pluginInvokeArgs;
+                isolated.Value.Run(svc.MethodsToRun.First(), instance, out string str);
+                Assert.IsTrue(string.IsNullOrEmpty(str));
+                Assert.IsTrue(instance.IsStatic);
+            }
+        }
+
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_CreateInstance")]
+        public void PluginRuntimeHandler_Run_WhenClassIsSealed_ExpectRunsCorrectly()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(SealedClass);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "ToString", Parameters = new List<IMethodParameter>() } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            using (var isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var pluginInvokeArgs = new PluginInvokeArgs
+                {
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>(),
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                };
+                var instance = isolated.Value.CreateInstance(pluginInvokeArgs);
+                Assert.IsTrue(!string.IsNullOrEmpty(instance.ObjectString));
+                Assert.IsFalse(instance.IsStatic);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_ExecuteConstructor")]
+        public void PluginRuntimeHandler_ExecuteConstructor_WhenClassIsSealed_ExpectRunsCorrectly()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "ToString", Parameters = new List<IMethodParameter>() } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            using (var isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var pluginInvokeArgs = new PluginInvokeArgs
+                {
+                    MethodsToRun = svc.MethodsToRun,
+                    PluginConstructor = new PluginConstructor
+                    {
+                        ConstructorName = svc.Constructor.Name,
+                        Inputs = new List<IConstructorParameter>(),
+                    },
+                    AssemblyLocation = type.Assembly.Location,
+                    AssemblyName = type.Assembly.FullName,
+                    Fullname = type.FullName,
+
+                };
+                var instance = isolated.Value.ExecuteConstructor(new PluginExecutionDto(string.Empty)
+                {
+                    Args = pluginInvokeArgs
+                });
+                Assert.IsTrue(!string.IsNullOrEmpty(instance.ObjectString));
+                Assert.IsFalse(instance.IsStatic);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_Test")]
+        public void PluginRuntimeHandler_Test_WhenValid_ExpectRunsCorrectly()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(Human);
+            var svc = CreatePluginService(new List<IDev2MethodInfo> { new Dev2MethodInfo { Method = "EmptyIsNullTest", Parameters = new List<IMethodParameter>() } }, type, new ServiceConstructor());
+            //------------Execute Test---------------------------
+            var isolated = new PluginRuntimeHandler();
+
+            var pluginInvokeArgs = new PluginInvokeArgs
+            {
+                MethodsToRun = svc.MethodsToRun,
+                PluginConstructor = new PluginConstructor
+                {
+                    ConstructorName = svc.Constructor.Name,
+                    Inputs = new List<IConstructorParameter>(),
+                },
+                AssemblyLocation = type.Assembly.Location,
+                AssemblyName = type.Assembly.FullName,
+                Fullname = type.FullName,
+                Parameters = new List<MethodParameter>()
+                {
+                    new MethodParameter()
+                    {
+                        Name = "value",
+                        TypeName = typeof(string).FullName,
+                        Value = "a"
+                    }
+                },
+
+                Method = "EmptyIsNullTest"
+
+            };
+            var instance = isolated.Test(pluginInvokeArgs, out string jresult);
+            Assert.IsTrue(!string.IsNullOrEmpty(jresult));
+            var count = instance.DataSourceShapes.Count;
+            Assert.AreEqual(1, count);
+
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void GetPropertiesJObject_GivenOracleCommand_ShouldRetunWithTwoProperties()
+        {
+            //---------------Set up test pack-------------------
+            var runtimeHandler = typeof(PluginRuntimeHandler);
+            var type = new PrivateType(runtimeHandler);
+#pragma warning disable 618
+            var type1 = typeof(OracleCommand);
+#pragma warning restore 618
+            //---------------Assert Precondition----------------
+            var invokeStatic = type.InvokeStatic("GetPropertiesJObject", type1);
+            //---------------Execute Test ----------------------
+            var jObject = invokeStatic as JObject;
+            //---------------Test Result -----------------------
+            Assert.IsNotNull(jObject);
+            var hasValues = jObject.HasValues;
+            Assert.IsTrue(hasValues);
+            Assert.AreEqual(8, jObject.Count);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void GetPropertiesJObject_GivenOracleCommand_ShouldHaveCorrectShape()
+        {
+            //---------------Set up test pack-------------------
+            var runtimeHandler = typeof(PluginRuntimeHandler);
+            var type = new PrivateType(runtimeHandler);
+#pragma warning disable 618
+            var type1 = typeof(OracleCommand);
+#pragma warning restore 618
+            //---------------Assert Precondition----------------
+            var invokeStatic = type.InvokeStatic("GetPropertiesJObject", type1);
+            //---------------Execute Test ----------------------
+            var jObject = invokeStatic as JObject;
+            Assert.IsNotNull(jObject);
+            var hasValues = jObject.HasValues;
+            Assert.IsTrue(hasValues);
+            Assert.AreEqual(8, jObject.Count);
+            //---------------Test Result -----------------------
+            const string str = "{\"CommandText\":\"\",\"CommandTimeout\":\"\",\"CommandType\":\"\",\"Connection\":\"\",\"DesignTimeVisible\":\"\",\"Transaction\":\"\",\"UpdatedRowSource\":\"\",\"Site\":\"\"}";
+            var s = jObject.ToString(Formatting.None);
+            Assert.AreEqual(str, s);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginRuntimeHandler_AdjustPluginResult")]
+        public void PluginRuntimeHandler_AdjustPluginResult_WhenClassIsSealed_ExpectRunsCorrectly()
+        {
+            //------------Setup for test--------------------------
+
+            var type = typeof(PluginRuntimeHandler);
+
+            var methodInfo = type.GetMethod("AdjustPluginResult", BindingFlags.NonPublic | BindingFlags.Instance);
+            var human = new Human();
+            var memberInfo = human.GetType().GetMethod("ToString", BindingFlags.Instance | BindingFlags.Public);
+            object result = "string";
+            //------------Execute Test---------------------------
+            var runtimeHandler = new PluginRuntimeHandler();
+            var resultAdgusted = methodInfo.Invoke(runtimeHandler, new[] { result, memberInfo });
+            Assert.AreEqual("<PrimitiveReturnValue>string</PrimitiveReturnValue>", resultAdgusted);
+        }
+
 
         #region Helper Methods
 
-        static PluginSource CreatePluginSource(bool nullLocation = false, bool invalidResourceID = false)
+        static PluginSource CreatePluginSource(Type type, bool nullLocation = false, bool invalidResourceID = false)
         {
-            var type = typeof(DummyClassForPluginTest);
             var assembly = type.Assembly;
 
             string loc = null;
-            if(!nullLocation)
+            if (!nullLocation)
             {
                 loc = assembly.Location;
             }
 
-            Guid resourceID = Guid.Empty;
-            if(!invalidResourceID)
+            var resourceID = Guid.Empty;
+            if (!invalidResourceID)
             {
                 resourceID = Guid.NewGuid();
             }
@@ -347,71 +969,63 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
                 AssemblyLocation = loc,
                 ResourceID = resourceID,
                 ResourceName = "Dummy",
-                ResourceType = ResourceType.PluginSource,
-                ResourcePath = "Test",
+                ResourceType = "PluginSource",
+                AssemblyName = assembly.GetName().Name
             };
         }
 
-        public static PluginService CreatePluginService()
+        static PluginService CreatePluginService()
         {
-            return CreatePluginService(new ServiceMethod
+            return CreatePluginService(new List<IDev2MethodInfo>
             {
-                Name = "DummyMethod"
-            });
+                new Dev2MethodInfo
+                {
+                    Method = "DummyMethod"
+                }
+            }, typeof(DummyClassForPluginTest));
         }
 
-        public static PluginService CreatePluginService(ServiceMethod method)
+        static PluginService CreatePluginService(List<IDev2MethodInfo> method, Type type, ServiceConstructor constructor = null)
         {
-            var type = typeof(DummyClassForPluginTest);
-
-            var source = CreatePluginSource();
+            var source = CreatePluginSource(typeof(DummyClassForPluginTest));
             var service = new PluginService
             {
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "DummyPluginService",
-                ResourceType = ResourceType.PluginService,
-                ResourcePath = "Tests",
+                ResourceType = "PluginService",
                 Namespace = type.FullName,
-                Method = method,
-                Source = source
+                MethodsToRun = method,
+                Source = source,
+                Constructor = constructor,
+
             };
             return service;
         }
 
         #endregion
     }
-
-    public sealed class Isolated<T> : IDisposable where T : MarshalByRefObject
+    public class Main
     {
-        private AppDomain _domain;
-        private T _value;
+        readonly string _a;
 
-        public Isolated()
+        public Main(string a)
         {
-            _domain = AppDomain.CreateDomain("Isolated:" + Guid.NewGuid(),
-               null, AppDomain.CurrentDomain.SetupInformation);
-
-            Type type = typeof(T);
-
-            _value = (T)_domain.CreateInstanceAndUnwrap(type.Assembly.FullName, type.FullName);
+            _a = a;
         }
 
-        public T Value
+        public string A
         {
             get
             {
-                return _value;
+                return _a;
             }
         }
 
-        public void Dispose()
+        public void VoidMethod()
         {
-            if (_domain != null)
-            {
-                AppDomain.Unload(_domain);
 
-                _domain = null;
-            }
         }
+
+        public List<Main> Mains { get; set; }
     }
 }

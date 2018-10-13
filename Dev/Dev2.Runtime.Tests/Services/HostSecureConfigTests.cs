@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,6 @@
 
 using System;
 using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Runtime.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -21,7 +19,6 @@ namespace Dev2.Tests.Runtime.Services
     /// Summary description for HostSecureConfigTest
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class HostSecureConfigTests
     {
         public static Guid DefaultServerID = Guid.Parse("{D53BBCC5-4794-4DFA-B096-3AA815692E66}");
@@ -55,36 +52,36 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Ctor
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
-        // ReSharper disable InconsistentNaming
+        
         public void HostSecureConfig_WithoutConfig_Expected_ThrowsArgumentNullException()
-        // ReSharper restore InconsistentNaming
+
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new HostSecureConfig(null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // The tests run in parallel??? so there is no guarantee that the config saved is the one actually being used!!! 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        //[TestMethod]
+        //[TestMethod, DeploymentItem("EnableDocker.txt")]
         //public void HostSecureConfig_WithConfig_Expected_LoadsDefaultValues()
         //{
         //    HostSecureConfig.SaveConfig(_defaultSettings);
         //    TestConfig(DefaultServerID, DefaultServerKey, DefaultSystemKeyPublic, false, new HostSecureConfig());
         //}
 
-        [TestMethod]
-        // ReSharper disable InconsistentNaming
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        
         public void HostSecureConfig_WithDefaultSettings_Expected_LoadsDefaultValues()
         {
             TestConfig(DefaultServerID, DefaultServerKey, DefaultSystemKeyPublic, false);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void HostSecureConfig_WithNewSettings_Expected_LoadsNewValues()
         {
             TestConfig(DefaultServerID, DefaultServerKey, DefaultSystemKeyPublic, true);
@@ -139,7 +136,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #endregion
 
-        // ReSharper restore InconsistentNaming
+
 
     }
 }

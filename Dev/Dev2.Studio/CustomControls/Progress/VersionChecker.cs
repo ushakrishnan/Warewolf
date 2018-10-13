@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,28 +11,29 @@
 using System;
 using System.Configuration;
 using System.Net;
-using Dev2.Helpers;
+using System.Threading.Tasks;
+using Dev2.Common.Interfaces;
 using Dev2.Studio.Utils;
+using Warewolf.Core;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.Core.Helpers
 {
     public class VersionChecker : IVersionChecker
     {
-        readonly IDev2WebClient _webClient;
+        readonly IWarewolfWebClient _webClient;
         readonly Func<Version> _versionGetter;
 
         bool _isDone;
         Version _latest;
         Version _current;
-        private string _latestVersionCheckSum;
 
         public VersionChecker()
-            : this(new Dev2WebClient(new WebClient()), VersionInfo.FetchVersionInfoAsVersion)
+            : this(new WarewolfWebClient(new WebClient()), VersionInfo.FetchVersionInfoAsVersion)
         {
         }
 
-        public VersionChecker(IDev2WebClient webClient, Func<Version> versionGetter)
+        public VersionChecker(IWarewolfWebClient webClient, Func<Version> versionGetter)
         {
             VerifyArgument.IsNotNull("webClient", webClient);
             VerifyArgument.IsNotNull("versionGetter", versionGetter);
@@ -70,24 +70,6 @@ namespace Dev2.Studio.Core.Helpers
 
         #region StartPageUri
 
-        public string StartPageUri
-        {
-            get
-            {
-                Check();
-                return StringResources.Warewolf_Homepage_Start;
-            }
-        }
-
-        public string LatestVersionCheckSum
-        {
-            get
-            {
-                Check();
-                return _latestVersionCheckSum;
-            }
-
-        }
         public string CommunityPageUri
         {
             get
@@ -101,42 +83,43 @@ namespace Dev2.Studio.Core.Helpers
 
         #region IsLatest?
 
-        public bool GetNewerVersion()
+        public async Task<bool> GetNewerVersionAsync()
         {
-            return Latest > Current;
+            var latest = await GetLatestVersionAsync();
+            return latest > Current;
         }
 
         #endregion
 
         #region Check
 
-        protected virtual void Check()
+        protected void Check()
         {
             if(!_isDone)
             {
                 _isDone = true;
                 _latest = GetLatestVersion();
                 _current = GetCurrentVersion();
-                _latestVersionCheckSum = GetLatestVersionCheckSum();
-            }
-        }
-
-        private string GetLatestVersionCheckSum()
-        {
-            try
-            {
-                return _webClient.DownloadString(InstallerResources.WarewolfChecksum);
-
-            }
-            catch
-            {
-                return null;
             }
         }
 
         #endregion
 
         #region GetLatestVersion
+
+        async Task<Version> GetLatestVersionAsync()
+        {
+
+            try
+            {
+                var version = await _webClient.DownloadStringAsync(InstallerResources.WarewolfVersion);
+                return new Version(version);
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
 
         Version GetLatestVersion()
         {
@@ -146,7 +129,7 @@ namespace Dev2.Studio.Core.Helpers
                 var version = _webClient.DownloadString(InstallerResources.WarewolfVersion);
                 return new Version(version);
             }
-            catch
+            catch (Exception ex)
             {
                 return null;
             }
@@ -156,36 +139,19 @@ namespace Dev2.Studio.Core.Helpers
 
         #region GetCurrentVersion
 
-        protected virtual Version GetCurrentVersion()
-        {
-            return _versionGetter();
-        }
+        protected virtual Version GetCurrentVersion() => _versionGetter();
 
         #endregion
     }
 
-    internal class InstallerResources
+    class InstallerResources
     {
-
-        public static bool InstallerTesting
+        protected InstallerResources()
         {
-            get { return ConfigurationManager.AppSettings["InstallerTesting"] == null || bool.Parse(ConfigurationManager.AppSettings["InstallerTesting"]); }
         }
 
-
-        public static string WarewolfVersion
-        {
-            get
-            {
-                return InstallerTesting ? ConfigurationManager.AppSettings["TestVersionLocation"] : ConfigurationManager.AppSettings["VersionLocation"];
-            }
-        }
-        public static string WarewolfChecksum
-        {
-            get
-            {
-                return InstallerTesting ? ConfigurationManager.AppSettings["TestCheckSumLocation"] : ConfigurationManager.AppSettings["CheckSumLocation"];
-            }
-        }
+        public static bool InstallerTesting => ConfigurationManager.AppSettings["InstallerTesting"] == null || bool.Parse(ConfigurationManager.AppSettings["InstallerTesting"]);
+        public static string WarewolfVersion => InstallerTesting ? ConfigurationManager.AppSettings["TestVersionLocation"] : ConfigurationManager.AppSettings["VersionLocation"];
+        public static string WarewolfChecksum => InstallerTesting ? ConfigurationManager.AppSettings["TestCheckSumLocation"] : ConfigurationManager.AppSettings["CheckSumLocation"];
     }
 }

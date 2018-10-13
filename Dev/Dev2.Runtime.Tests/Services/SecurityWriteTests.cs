@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,28 +10,27 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
+using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Runtime.ESB.Management.Services;
-using Dev2.Runtime.Security;
 using Dev2.Services.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 
 namespace Dev2.Tests.Runtime.Services
 {
-    // ReSharper disable InconsistentNaming
+    
 
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class SecurityWriteTests
     {
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SecurityWrite_Execute")]
         [ExpectedException(typeof(InvalidDataException))]
@@ -45,7 +43,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SecurityWrite_Execute")]
         [ExpectedException(typeof(InvalidDataException))]
@@ -58,7 +56,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SecurityWrite_Execute")]
         [ExpectedException(typeof(InvalidDataException))]
@@ -71,7 +69,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SecurityWrite_Execute")]
         public void SecurityWrite_Execute_SecuritySettingsValuePassedValidJSON_ShouldWriteFile()
@@ -85,19 +83,20 @@ namespace Dev2.Tests.Runtime.Services
             //------------Execute Test---------------------------
             securityWrite.Execute(new Dictionary<string, StringBuilder> { { "SecuritySettings", new StringBuilder(securitySettingsValue) } }, null);
             //------------Assert Results-------------------------
-            Assert.IsTrue(File.Exists("secure.config"));
-            var fileData = File.ReadAllText("secure.config");
+            var serverSecuritySettingsFile = EnvironmentVariables.ServerSecuritySettingsFile;
+            Assert.IsTrue(File.Exists(serverSecuritySettingsFile));
+            var fileData = File.ReadAllText(serverSecuritySettingsFile);
             Assert.IsFalse(fileData.StartsWith("{"));
             Assert.IsFalse(fileData.EndsWith("}"));
             Assert.IsFalse(fileData.Contains("IsServer"));
-            File.Delete("secure.config");
+            File.Delete(serverSecuritySettingsFile);
         }
 
         #endregion Exeute
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SecurityWrite_HandlesType_ReturnsSecurityWriteService()
         {
             var esb = new SecurityWrite();
@@ -109,7 +108,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SecurityWrite_CreateServiceEntry_ReturnsDynamicService()
         {
             var esb = new SecurityWrite();
@@ -126,7 +125,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #endregion
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("SecurityWrite_Write")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -140,15 +139,15 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("SecurityWrite_Write")]
         public void SecurityWrite_Write_SecuritySettingsIsNotNull_PersistsSecuritySettings()
         {
             //------------Setup for test--------------------------
-            if(File.Exists(ServerSecurityService.FileName))
+            if(File.Exists(EnvironmentVariables.ServerSecuritySettingsFile))
             {
-                File.Delete(ServerSecurityService.FileName);
+                File.Delete(EnvironmentVariables.ServerSecuritySettingsFile);
             }
 
             var securitySettings = new SecuritySettingsTO();
@@ -157,8 +156,36 @@ namespace Dev2.Tests.Runtime.Services
             SecurityWrite.Write(securitySettings);
 
             //------------Assert Results-------------------------
-            Assert.IsTrue(File.Exists(ServerSecurityService.FileName));
-            File.Delete(ServerSecurityService.FileName);
+            Assert.IsTrue(File.Exists(EnvironmentVariables.ServerSecuritySettingsFile));
+            File.Delete(EnvironmentVariables.ServerSecuritySettingsFile);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var securityWrite = new SecurityWrite();
+
+            //------------Execute Test---------------------------
+            var resId = securityWrite.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var securityWrite = new SecurityWrite();
+
+            //------------Execute Test---------------------------
+            var resId = securityWrite.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
         }
     }
 }

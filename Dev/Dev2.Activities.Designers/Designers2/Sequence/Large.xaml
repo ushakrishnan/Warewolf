@@ -9,84 +9,92 @@
                                xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
                                xmlns:presentation="clr-namespace:System.Activities.Core.Presentation"
                                xmlns:sa="http://schemas.microsoft.com/netfx/2009/xaml/activities"
-                               xmlns:help="clr-namespace:Dev2.Activities.Designers2.Core.Help"
                                xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-                               MinWidth="200"
+                               xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
+                               xmlns:core1="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
+                               xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
+                               MinWidth="315"
                                MinHeight="188"
-                               MaxWidth="Infinity"
+                               MaxWidth="700"
                                MaxHeight="Infinity"
-                               Padding="7"
                                mc:Ignorable="d"
                                d:DataContext="{d:DesignInstance local:SequenceDesignerViewModel}"
-                               ToolTip="{x:Static help:HelpTextResources.SequenceTooltipSequence}">
+                               ToolTip="{x:Static languages:Tooltips.SequenceTooltipSequence}">
+
     <core:ActivityDesignerTemplate.Resources>
-        <ResourceDictionary x:Name="TheResources"
-                            Source="pack://application:,,,/Dev2.Activities.Designers;component/Themes/ActivityResources.xaml" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <luna:SharedResourceDictionary Source="/Warewolf.Studio.Themes.Luna;component/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </core:ActivityDesignerTemplate.Resources>
-    <Grid>
+
+    <core:ActivityDesignerTemplate.RightButtons>
+        <core:ActivityDesignerButton x:Name="DoneButton"
+                                     Content="Done"
+                                     Margin="0,0,7,12"
+                                     IsValidatedBefore="True"
+                                     IsClosedAfter="True"
+                                     Style="{StaticResource ActivityDesignerButtonStyle}" />
+    </core:ActivityDesignerTemplate.RightButtons>
+
+    <Grid Margin="{StaticResource ElementBorder}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Border Grid.Row="0">
-        <sap:WorkflowItemsPresenter x:Uid="sad:WorkflowItemsPresenter_1"                                    
-                                    x:Name="ActivitiesPresenter"
-                                    AllowedItemType="{x:Type sa:Activity}"
-                                    HintText="Add New Activity"
-                                    ToolTip="{x:Static help:HelpTextResources.SequenceTooltipSequence}"
-                                    IsDefaultContainer="true">
-            <sap:WorkflowItemsPresenter.CommandBindings>
-                    <CommandBinding
-                        Command="Copy" Executed="CopyCommandExecuted"
-                        CanExecute="CopyCommandCanExecute"
-                        PreviewExecuted="CopyCommandPreviewExecuted"
-                        PreviewCanExecute="CopyCommandPreviewCanExecute"/>
-                    <CommandBinding
-                        Command="sap:DesignerView.CopyCommand" 
-                        Executed="SapvCopyCommandExecuted"
-                        PreviewExecuted="SapvCopyCommandPreviewExecuted"/>
-                    <CommandBinding
-                        Command="Paste" Executed="CopyCommandExecuted"
-                        CanExecute="CopyCommandCanExecute"
-                        PreviewExecuted="CopyCommandPreviewExecuted"
-                        PreviewCanExecute="CopyCommandPreviewCanExecute"/>
-                    <CommandBinding
-                        Command="sap:DesignerView.PasteCommand" 
-                        Executed="SapvCopyCommandExecuted"
-                        PreviewExecuted="SapvCopyCommandPreviewExecuted"/>
+            <sap:WorkflowItemsPresenter x:Uid="sad:WorkflowItemsPresenter_1"
+                                        x:Name="ActivitiesPresenter"
+                                        HintText="AddMode New Activity"
+                                        ToolTip="{x:Static languages:Tooltips.SequenceTooltipSequence}"
+                                        IsDefaultContainer="true">
+                <sap:WorkflowItemsPresenter.CommandBindings>
+                    <CommandBinding Command="Copy" Executed="CopyCommandExecuted"
+                                    CanExecute="CopyCommandCanExecute"
+                                    PreviewExecuted="CopyCommandPreviewExecuted"
+                                    PreviewCanExecute="CopyCommandPreviewCanExecute"/>
+                    <CommandBinding Command="sap:DesignerView.CopyCommand" 
+                                    Executed="SapvCopyCommandExecuted"
+                                    PreviewExecuted="SapvCopyCommandPreviewExecuted"/>
+                    <CommandBinding Command="Paste" Executed="CopyCommandExecuted"
+                                    CanExecute="CopyCommandCanExecute"
+                                    PreviewExecuted="CopyCommandPreviewExecuted"
+                                    PreviewCanExecute="CopyCommandPreviewCanExecute"/>
+                    <CommandBinding Command="sap:DesignerView.PasteCommand" 
+                                    Executed="SapvCopyCommandExecuted"
+                                    PreviewExecuted="SapvCopyCommandPreviewExecuted"/>
                 </sap:WorkflowItemsPresenter.CommandBindings>
-            <sap:WorkflowItemsPresenter.Items>
-                <Binding Path="ModelItem.Activities"/>
-            </sap:WorkflowItemsPresenter.Items>
-            <sap:WorkflowItemsPresenter.SpacerTemplate>
-                <DataTemplate x:Uid="DataTemplate_9">
-                    <presentation:VerticalConnector x:Uid="sacd:VerticalConnector_1"
-                                                    AllowedItemType="{x:Type sa:Activity}"
-                                                    Focusable="true"
-                                                    Context="{Binding Path=Context}" />
-                </DataTemplate>
-            </sap:WorkflowItemsPresenter.SpacerTemplate>
-            <sap:WorkflowItemsPresenter.ItemsPanel>
-                <ItemsPanelTemplate x:Uid="ItemsPanelTemplate_1">
-                    <StackPanel x:Uid="StackPanel_1"
-                                Orientation="Vertical" />
-                </ItemsPanelTemplate>
-            </sap:WorkflowItemsPresenter.ItemsPanel>
-            <i:Interaction.Behaviors>
-        <help:HelpSetter Text="{x:Static help:HelpTextResources.SequenceHelpSequence}"
-                         DataContext="{Binding}" />
-    </i:Interaction.Behaviors>
-            <AutomationProperties.AutomationId>
+                <sap:WorkflowItemsPresenter.Items>
+                    <Binding Path="ModelItem.Activities"/>
+                </sap:WorkflowItemsPresenter.Items>
+                <sap:WorkflowItemsPresenter.SpacerTemplate>
+                    <DataTemplate x:Uid="DataTemplate_9">
+                        <presentation:VerticalConnector x:Uid="sacd:VerticalConnector_1"
+                                                        AllowedItemType="{x:Type sa:Activity}"
+                                                        Focusable="true"
+                                                        Context="{Binding Path=Context}" />
+                    </DataTemplate>
+                </sap:WorkflowItemsPresenter.SpacerTemplate>
+                <sap:WorkflowItemsPresenter.ItemsPanel>
+                    <ItemsPanelTemplate x:Uid="ItemsPanelTemplate_1">
+                        <StackPanel x:Uid="StackPanel_1" Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </sap:WorkflowItemsPresenter.ItemsPanel>
+                <i:Interaction.Behaviors>
+                    <core1:HelpSetter Text="{x:Static languages:HelpText.SequenceHelpSequence}" DataContext="{Binding}" />
+                </i:Interaction.Behaviors>
+                <AutomationProperties.AutomationId>
                     <MultiBinding StringFormat="UI_{0}_ActivitiesPresenter_AutoID">
                         <Binding Path="ModelItem.AutomationID" />
                     </MultiBinding>
                 </AutomationProperties.AutomationId>
-        </sap:WorkflowItemsPresenter>    
+            </sap:WorkflowItemsPresenter>
         </Border>
-        
+
         <errors:OnError Grid.Row="1"
                         Width="{Binding ElementName=ActivitiesPresenter, Path=Width}"
                         Margin="2" />
     </Grid>
-     
+
 </core:ActivityDesignerTemplate>

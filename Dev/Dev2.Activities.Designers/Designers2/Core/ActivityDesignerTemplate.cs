@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Dev2.Activities.Designers2.Core.Controls;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Core
 {
@@ -41,13 +41,14 @@ namespace Dev2.Activities.Designers2.Core
             }
             set
             {
-                // ReSharper disable PossibleUnintendedReferenceComparison
+                
                 if(_dataGrid != value)
-                // ReSharper restore PossibleUnintendedReferenceComparison
+                
                 {
                     if(_dataGrid != null)
                     {
                         _dataGrid.SelectionChanged -= OnSelectionChanged;
+                        _dataGrid.PreviewTextInput -= DataGridOnPreviewTextInput;
                     }
 
                     _dataGrid = value;
@@ -55,9 +56,15 @@ namespace Dev2.Activities.Designers2.Core
                     if(_dataGrid != null)
                     {
                         _dataGrid.SelectionChanged += OnSelectionChanged;
+                        _dataGrid.PreviewTextInput += DataGridOnPreviewTextInput;
                     }
                 }
             }
+        }
+
+        void DataGridOnPreviewTextInput(object sender, TextCompositionEventArgs textCompositionEventArgs)
+        {
+            CallWorkflowUpdateEvent();
         }
 
         public void SetInitialFocus()
@@ -77,18 +84,25 @@ namespace Dev2.Activities.Designers2.Core
 
         void OnSelectionChanged(object sender, SelectionChangedEventArgs args)
         {
-            var viewModel = DataGrid.DataContext as ActivityCollectionDesignerViewModel;
-            if(viewModel != null)
+            if (DataGrid.DataContext is ActivityCollectionDesignerViewModel viewModel)
             {
                 var oldItem = args.RemovedItems != null && args.RemovedItems.Count > 0 ? args.RemovedItems[0] : null;
                 var newItem = args.AddedItems != null && args.AddedItems.Count > 0 ? args.AddedItems[0] : null;
 
                 // basic null checks ppl - 3 days of crap for this  ;) 
-                if(newItem != null)
+                if (newItem != null)
                 {
                     viewModel.OnSelectionChanged(oldItem as ModelItem, newItem as ModelItem);
+                    CallWorkflowUpdateEvent();
                 }
             }
+        }
+
+        static void CallWorkflowUpdateEvent()
+        {
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            var workflowDesignerViewModel = shellViewModel?.GetWorkflowDesigner();
+            workflowDesignerViewModel?.WorkflowChanged?.Invoke();
         }
     }
 }

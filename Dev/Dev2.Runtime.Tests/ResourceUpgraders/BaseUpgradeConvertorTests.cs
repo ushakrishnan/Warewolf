@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,23 +17,23 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
     [TestClass]
     public class BaseUpgradeConvertorTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("BaseResourceUpgrader_Upgrade")]
-// ReSharper disable InconsistentNaming
+        
         public void BaseResourceUpgrader_Upgrade_HasMatchin_ExpectReplace()
 
         {
             //------------Setup for test--------------------------
             var baseResourceUpgrader = new BaseResourceUpgrader();
-            
+
             //------------Execute Test---------------------------
             Assert.AreEqual("<a>clr-namespace:Dev2.Common.Interfaces.Infrastructure.Providers.Errors;assembly=Dev2.Common.Interfaces</a>", baseResourceUpgrader.UpgradeFunc(XElement.Parse("<a>clr-namespace:Dev2.Providers.Errors;assembly=Dev2.Infrastructure</a>")).ToString());
             //------------Assert Results-------------------------
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("BaseResourceUpgrader_Upgrade")]
         public void BaseResourceUpgrader_Upgrade_HasMatchin_ExpectReplaceAlt()
@@ -48,7 +47,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("BaseResourceUpgrader_Upgrade")]
         public void BaseResourceUpgrader_Upgrade_NoMatch_NoReplace()
@@ -57,9 +56,9 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
             var baseResourceUpgrader = new BaseResourceUpgrader();
 
             //------------Execute Test---------------------------
-            Assert.AreEqual("<a>bob</a>", baseResourceUpgrader.UpgradeFunc( XElement.Parse("<a>bob</a>")).ToString());
+            Assert.AreEqual("<a>bob</a>", baseResourceUpgrader.UpgradeFunc(XElement.Parse("<a>bob</a>")).ToString());
             //------------Assert Results-------------------------
         }
-        // ReSharper restore InconsistentNaming
+
     }
 }

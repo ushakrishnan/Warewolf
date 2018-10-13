@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,27 +13,25 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.Data.Settings;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    public class SettingsWrite : IEsbManagementEndpoint
+    public class SettingsWrite : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             if(values == null)
             {
-                throw new InvalidDataException("Empty values passed.");
+                throw new InvalidDataException(ErrorResource.EmptyValuesPassed);
             }
 
-            StringBuilder settingsJson;
-            values.TryGetValue("Settings", out settingsJson);
-            if(settingsJson == null || settingsJson.Length == 0)
+            values.TryGetValue("Settings", out StringBuilder settingsJson);
+            if (settingsJson == null || settingsJson.Length == 0)
             {
                 throw new InvalidDataException("Error: Unable to parse values.");
             }
@@ -45,12 +42,13 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var settings = serializer.Deserialize<Settings>(settingsJson.ToString());
                 WriteSecuritySettings(theWorkspace, settings, result);
                 WriteLoggingSettings(theWorkspace, settings, result);
+                WritePerfCounterSettings(theWorkspace, settings, result);
             }
             catch (Exception ex)
             {
-                Dev2Logger.Log.Error("Error writing settings.", ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingSettings, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
-                result.Message.AppendLine("Error writing settings.");
+                result.Message.AppendLine(ErrorResource.ErrorWritingSettings);
             }
             return serializer.SerializeToBuilder(result);
         }
@@ -67,9 +65,27 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception ex)
             {
-                Dev2Logger.Log.Error("Error writing logging configuration.", ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingLoggingConfiguration, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
-                result.Message.AppendLine("Error writing logging configuration.");
+                result.Message.AppendLine(ErrorResource.ErrorWritingLoggingConfiguration);
+            }
+        }
+
+        static void WritePerfCounterSettings(IWorkspace theWorkspace, Settings settings, ExecuteMessage result)
+        {
+            try
+            {
+                if (settings.Logging != null)
+                {
+                    var executionResult = ExecuteService(theWorkspace, new SavePerformanceCounters(), "PerformanceCounterTo", settings.PerfCounters);
+                    result.Message.AppendLine(executionResult);
+                }
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error(ErrorResource.ErrorWritingLoggingConfiguration, ex, GlobalConstants.WarewolfError);
+                result.HasError = true;
+                result.Message.AppendLine(ErrorResource.ErrorWritingLoggingConfiguration);
             }
         }
 
@@ -85,42 +101,21 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception ex)
             {
-                Dev2Logger.Log.Error("Error writing settings configuration.", ex);
+                Dev2Logger.Error(ErrorResource.ErrorWritingSettingsConfiguration, ex, GlobalConstants.WarewolfError);
                 result.HasError = true;
-                result.Message.AppendLine("Error writing settings configuration.");
+                result.Message.AppendLine(ErrorResource.ErrorWritingSettingsConfiguration);
             }
         }
 
         static string ExecuteService(IWorkspace theWorkspace, IEsbManagementEndpoint service, string valuesKey, object valuesValue)
         {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var values = new Dictionary<string, StringBuilder> { { valuesKey, serializer.SerializeToBuilder(valuesValue) } };
             return service.Execute(values, theWorkspace).ToString();
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            var dynamicService = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Settings ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Settings ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            var serviceAction = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            dynamicService.Actions.Add(serviceAction);
-
-            return dynamicService;
-        }
-
-        public string HandlesType()
-        {
-            return "SettingsWriteService";
-        }
+        public override string HandlesType() => "SettingsWriteService";
     }
 }

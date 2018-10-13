@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +16,7 @@ using System.Windows.Input;
 using System.Xml;
 using Dev2.Activities.Preview;
 using Dev2.Common;
+using Dev2.Common.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
@@ -26,23 +26,25 @@ using Dev2.Providers.Errors;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Services.Events;
 using Dev2.Studio.Core.Messages;
+using Warewolf.Resource.Errors;
+
 
 namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 {
     public class QuickVariableInputViewModel : DependencyObject, IClosable, IValidator, IErrorsSource
     {
-        public const string SplitTypeIndex = "Index";
-        public const string SplitTypeChars = "Chars";
-        public const string SplitTypeNewLine = "New Line";
-        public const string SplitTypeSpace = "Space";
-        public const string SplitTypeTab = "Tab";
+        const string splitTypeIndex = "Index";
+        const string splitTypeChars = "Chars";
+        const string splitTypeNewLine = "New Line";
+        const string splitTypeSpace = "Space";
+        const string splitTypeTab = "Tab";
 
         readonly Action<IEnumerable<string>, bool> _addToCollection;
 
         readonly PreviewViewModel _previewViewModel;
-        // ReSharper disable CollectionNeverQueried.Local
+
         readonly List<IErrorInfo> _tokenizerValidationErrors = new List<IErrorInfo>();
-        // ReSharper restore CollectionNeverQueried.Local
+
 
         #region CTOR
 
@@ -104,7 +106,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
         {
             var viewModel = (QuickVariableInputViewModel)d;
             var isClosed = (bool)e.NewValue;
-            if(isClosed)
+            if (isClosed)
             {
                 viewModel.DoClear(null);
             }
@@ -239,10 +241,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             set
             {
                 SetValue(CanAddProperty, value);
-                if(AddCommand != null)
-                {
-                    AddCommand.RaiseCanExecuteChanged();
-                }
+                AddCommand?.RaiseCanExecuteChanged();
             }
         }
 
@@ -258,13 +257,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
         public static readonly DependencyProperty RemoveEmptyEntriesProperty =
             DependencyProperty.Register("RemoveEmptyEntries", typeof(bool), typeof(QuickVariableInputViewModel), new PropertyMetadata(true));
 
-        public PreviewViewModel PreviewViewModel
-        {
-            get
-            {
-                return _previewViewModel;
-            }
-        }
+        public PreviewViewModel PreviewViewModel => _previewViewModel;
 
         static void OnUiStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -289,7 +282,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             PreviewViewModel.Output = string.Empty;
             Validate();
 
-            if(IsValid)
+            if (IsValid)
             {
                 PreviewViewModel.Output = GetPreviewOutput();
             }
@@ -303,7 +296,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             var count = 1;
 
             var result = string.Join(Environment.NewLine, PreviewViewModel.Inputs.Take(MaxCount).Select(input => string.Format("{0} {1}", count++, input.Key)));
-            if(PreviewViewModel.Inputs.Count > MaxCount)
+            if (PreviewViewModel.Inputs.Count > MaxCount)
             {
                 result = string.Join(Environment.NewLine, result, "...");
             }
@@ -336,7 +329,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             UpdatePreviewViewModelInputs();
 
             var inputs = PreviewViewModel.Inputs.Select(input => input.Key);
-            var enumerable  = inputs as IList<string> ?? inputs.ToList();
+            var enumerable = inputs as IList<string> ?? inputs.ToList();
             EventPublishers.Aggregator.Publish(new AddStringListToDataListMessage(enumerable.ToList()));
             _addToCollection(enumerable, Overwrite);
             DoClear(o);
@@ -364,17 +357,17 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             var splitType = SplitType;
             var at = SplitToken;
 
-            if(string.IsNullOrWhiteSpace(stringToSplit))
+            if (string.IsNullOrWhiteSpace(stringToSplit))
             {
                 return null;
             }
 
-            var dtb = new Dev2TokenizerBuilder { ToTokenize = stringToSplit };
+            var dtb = new Dev2TokenizerBuilder { ToTokenize = stringToSplit.ToStringBuilder() };
 
-            switch(splitType)
+            switch (splitType)
             {
                 case "Index":
-                    if(!string.IsNullOrEmpty(at))
+                    if (!string.IsNullOrEmpty(at))
                     {
                         // No need for try..parse as ValidationErrors() function checks this!
                         var indexNum = int.Parse(at);
@@ -391,15 +384,15 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                     break;
 
                 case "New Line":
-                    if(stringToSplit.Contains("\r\n"))
+                    if (stringToSplit.Contains("\r\n"))
                     {
                         dtb.AddTokenOp("\r\n", false);
                     }
-                    else if(stringToSplit.Contains("\n"))
+                    else if (stringToSplit.Contains("\n"))
                     {
                         dtb.AddTokenOp("\n", false);
                     }
-                    else if(stringToSplit.Contains("\r"))
+                    else if (stringToSplit.Contains("\r"))
                     {
                         dtb.AddTokenOp("\r", false);
                     }
@@ -411,10 +404,12 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                     break;
 
                 case "Chars":
-                    if(!string.IsNullOrEmpty(at))
+                    if (!string.IsNullOrEmpty(at))
                     {
                         dtb.AddTokenOp(at, false);
                     }
+                    break;
+                default:
                     break;
             }
 
@@ -423,7 +418,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             {
                 return dtb.Generate();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _tokenizerValidationErrors.Add(new ErrorInfo { ErrorType = ErrorType.Critical, Message = ex.Message });
             }
@@ -441,6 +436,16 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
             private set { SetValue(IsValidProperty, value); }
         }
 
+        public static string SplitTypeIndex => splitTypeIndex;
+
+        public static string SplitTypeChars => splitTypeChars;
+
+        public static string SplitTypeNewLine => splitTypeNewLine;
+
+        public static string SplitTypeSpace => splitTypeSpace;
+
+        public static string SplitTypeTab => splitTypeTab;
+
         public static readonly DependencyProperty IsValidProperty =
             DependencyProperty.Register("IsValid", typeof(bool), typeof(QuickVariableInputViewModel), new PropertyMetadata(true));
 
@@ -451,36 +456,38 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 
         IEnumerable<IActionableErrorInfo> ValidationErrorsImpl()
         {
-            if(string.IsNullOrWhiteSpace(VariableListString))
+            if (string.IsNullOrWhiteSpace(VariableListString))
             {
                 var doFocused = new Action(() => { IsVariableListFocused = true; });
-                yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Variable List String can not be blank/empty" };
+                yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = ErrorResource.VariableListStringRequired };
             }
 
-            switch(SplitType)
+            switch (SplitType)
             {
                 case "Index":
-                    foreach(var error in ValidationErrorsForIndexSplit())
+                    foreach (var error in ValidationErrorsForIndexSplit())
                     {
                         yield return error;
                     }
                     break;
 
                 case "Chars":
-                    foreach(var error in ValidationErrorsForCharsSplit())
+                    foreach (var error in ValidationErrorsForCharsSplit())
                     {
                         yield return error;
                     }
                     break;
+                default:
+                    break;
             }
 
-            if(!string.IsNullOrEmpty(Prefix) && !IsValidRecordsetPrefix(Prefix))
+            if (!string.IsNullOrEmpty(Prefix) && !IsValidRecordsetPrefix(Prefix))
             {
                 var doFocused = new Action(() => { IsPrefixFocused = true; });
                 yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Prefix contains invalid characters" };
             }
 
-            if(!string.IsNullOrEmpty(Suffix) && !IsValidName(Suffix))
+            if (!string.IsNullOrEmpty(Suffix) && !IsValidName(Suffix))
             {
                 var doFocused = new Action(() => { IsSuffixFocused = true; });
 
@@ -492,17 +499,15 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
         {
             var doFocused = new Action(() => { IsSplitOnFocused = true; });
 
-            if(!SplitToken.IsWholeNumber())
+            if (!SplitToken.IsWholeNumber())
             {
                 yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Please supply a whole positive number for an Index split" };
             }
             else
             {
-                int indexToSplitOn;
-                if(!int.TryParse(SplitToken, out indexToSplitOn))
+                if (!int.TryParse(SplitToken, out int indexToSplitOn))
                 {
-                    double doubleToSplitOn;
-                    if(double.TryParse(SplitToken, out doubleToSplitOn))
+                    if (double.TryParse(SplitToken, out double doubleToSplitOn))
                     {
                         yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Please supply a number less then 2,147,483,647 for an Index split" };
                     }
@@ -512,7 +517,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
                     }
                 }
 
-                if(indexToSplitOn < 1)
+                if (indexToSplitOn < 1)
                 {
                     yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Please supply a whole positive number for an Index split" };
                 }
@@ -523,7 +528,7 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
         {
             var doFocused = new Action(() => { IsSplitOnFocused = true; });
 
-            if(string.IsNullOrEmpty(SplitToken))
+            if (string.IsNullOrEmpty(SplitToken))
             {
                 yield return new ActionableErrorInfo(doFocused) { ErrorType = ErrorType.Critical, Message = "Please supply a value for a Character split" };
             }
@@ -531,18 +536,18 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 
         static bool IsValidRecordsetPrefix(string value)
         {
-            if(value.Contains("(") && value.Contains(")."))
+            if (value.Contains("(") && value.Contains(")."))
             {
                 var startIndex = value.IndexOf("(", StringComparison.Ordinal) + 1;
                 var endIndex = value.LastIndexOf(").", StringComparison.Ordinal);
 
                 var tmp = value.Substring(startIndex, endIndex - startIndex);
                 var idxNum = 1;
-                if(tmp != "*" && !string.IsNullOrEmpty(tmp) && !int.TryParse(tmp, out idxNum))
+                if (tmp != "*" && !string.IsNullOrEmpty(tmp) && !int.TryParse(tmp, out idxNum))
                 {
                     return false;
                 }
-                if(idxNum < 1)
+                if (idxNum < 1)
                 {
                     return false;
                 }
@@ -553,14 +558,14 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 
         static bool IsValidName(string value)
         {
-            if(!string.IsNullOrWhiteSpace(value) && !value.Contains("."))
+            if (!string.IsNullOrWhiteSpace(value) && !value.Contains("."))
             {
                 try
                 {
                     XmlConvert.VerifyName(value);
                     return true;
                 }
-                catch(Exception)
+                catch (Exception)
                 {
                     return false;
                 }
@@ -574,10 +579,10 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
 
         void SplitTypeChanged()
         {
-            if(!String.IsNullOrEmpty(SplitType))
+            if (!String.IsNullOrEmpty(SplitType))
             {
                 var val = SplitType;
-                if(val == "Index" || val == "Chars")
+                if (val == "Index" || val == "Chars")
                 {
                     IsSplitTokenEnabled = true;
                 }
@@ -593,13 +598,12 @@ namespace Dev2.Activities.Designers2.Core.QuickVariableInput
         void UpdateUiState()
         {
             CanAdd = !string.IsNullOrWhiteSpace(VariableListString) && (!IsSplitTokenEnabled || !string.IsNullOrEmpty(SplitToken));
-            if(PreviewViewModel != null)
+            if (PreviewViewModel != null)
             {
                 PreviewViewModel.CanPreview = CanAdd;
             }
         }
 
         #endregion
-
     }
 }

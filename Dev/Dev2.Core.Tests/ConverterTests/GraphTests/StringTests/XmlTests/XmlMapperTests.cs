@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,6 @@
 */
 
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -19,7 +17,6 @@ using Unlimited.Framework.Converters.Graph.String.Xml;
 namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.XmlTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class XmlMapperTests
     {
         internal string Given()
@@ -67,10 +64,10 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.Xml
         [TestMethod]
         public void MapXmlWithAttribute_Expected_PathToAttribute()
         {
-            XmlMapper xmlMapper = new XmlMapper();
+            var xmlMapper = new XmlMapper();
 
-            string xml = Given();
-            IEnumerable<IPath> paths = xmlMapper.Map(xml);
+            var xml = Given();
+            var paths = xmlMapper.Map(xml);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Company:Name"));
         }
@@ -81,10 +78,10 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.Xml
         [TestMethod]
         public void MapXmlWithScalarValue_Expected_PathToScalarValue()
         {
-            XmlMapper xmlMapper = new XmlMapper();
+            var xmlMapper = new XmlMapper();
 
-            string xml = Given();
-            IEnumerable<IPath> paths = xmlMapper.Map(xml);
+            var xml = Given();
+            var paths = xmlMapper.Map(xml);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Company.Motto"));
         }
@@ -95,10 +92,10 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.Xml
         [TestMethod]
         public void MapXmlWithBlankScalarValue_Expected_PathToScalarValue()
         {
-            XmlMapper xmlMapper = new XmlMapper();
+            var xmlMapper = new XmlMapper();
 
-            string xml = Given();
-            IEnumerable<IPath> paths = xmlMapper.Map(xml);
+            var xml = Given();
+            var paths = xmlMapper.Map(xml);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Company.PreviousMotto"));
         }
@@ -109,10 +106,10 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.Xml
         [TestMethod]
         public void MapXmlWithARecordsetAndAttributesOnItemsInTheRecordset_Expected_PathToAttributeOfElementsInRecordset()
         {
-            XmlMapper xmlMapper = new XmlMapper();
+            var xmlMapper = new XmlMapper();
 
-            string xml = Given();
-            IEnumerable<IPath> paths = xmlMapper.Map(xml);
+            var xml = Given();
+            var paths = xmlMapper.Map(xml);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Company.Departments().Department:Name"));
         }
@@ -123,10 +120,10 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.Xml
         [TestMethod]
         public void MapXmlWithARecordsetAndAttributesOnTheRecordset_Expected_PathToAttributeOfRecordset()
         {
-            XmlMapper xmlMapper = new XmlMapper();
+            var xmlMapper = new XmlMapper();
 
-            string xml = Given();
-            IEnumerable<IPath> paths = xmlMapper.Map(xml);
+            var xml = Given();
+            var paths = xmlMapper.Map(xml);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Company.Departments:TestAttrib"));
         }
@@ -137,10 +134,10 @@ namespace Unlimited.UnitTest.Framework.ConverterTests.GraphTests.StringTests.Xml
         [TestMethod]
         public void MapXmlWithAInlineRecordset_Expected_PathToItemsInInnerRecordset()
         {
-            XmlMapper xmlMapper = new XmlMapper();
+            var xmlMapper = new XmlMapper();
 
-            string xml = Given();
-            IEnumerable<IPath> paths = xmlMapper.Map(xml);
+            var xml = Given();
+            var paths = xmlMapper.Map(xml);
 
             Assert.IsTrue(paths.Any(p => p.ActualPath == "Company().InlineRecordSet"));
         }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,14 +9,15 @@
 */
 
 using System.Collections.Generic;
+using Dev2.Data.Interfaces;
 
 namespace Dev2.DataList.Contract
 {
     public class RecordSetCollection : IRecordSetCollection {
 
         #region Attributes
-        private readonly IList<IRecordSetDefinition> _recordSets;
-        private readonly IList<string> _recordSetNames;
+        readonly IList<IRecordSetDefinition> _recordSets;
+        readonly IList<string> _recordSetNames;
 
         #endregion
 
@@ -29,18 +29,9 @@ namespace Dev2.DataList.Contract
         #endregion
 
         #region Properties
-        public IList<IRecordSetDefinition> RecordSets {
+        public IList<IRecordSetDefinition> RecordSets => _recordSets;
 
-            get {
-                return _recordSets;
-            }
-        }
-
-        public IList<string> RecordSetNames {
-            get {
-                return _recordSetNames;
-            }
-        }
+        public IList<string> RecordSetNames => _recordSetNames;
 
         #endregion
     }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,76 +18,62 @@ using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
+using Oracle.ManagedDataAccess.Client;
+using System.Data.Odbc;
+using System.Data.SQLite;
 using MySql.Data.MySqlClient;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    // NOTE: Only use for design time in studio as errors will NOT be forwarded!
-    public class GetDatabaseColumnsForTable : IEsbManagementEndpoint
+    public class GetDatabaseColumnsForTable : DefaultEsbManagementEndpoint
     {
-        #region Implementation of ISpookyLoadable<string>
-
-        public string HandlesType()
+        #region Implementation of DefaultEsbManagementEndpoint
+        
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            return "GetDatabaseColumnsForTableService";
-        }
-
-        #endregion
-
-        #region Implementation of IEsbManagementEndpoint
-
-        /// <summary>
-        /// Executes the service
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <param name="theWorkspace">The workspace.</param>
-        /// <returns></returns>
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
-        {
-            if(values == null)
+            if (values == null)
             {
-                throw new InvalidDataContractException("No parameter values provided.");
+                throw new InvalidDataContractException(ErrorResource.NoParameter);
             }
             string database = null;
             string tableName = null;
             string schema = null;
-            StringBuilder tmp;
-            values.TryGetValue("Database", out tmp);
-            if(tmp != null)
+            values.TryGetValue("Database", out StringBuilder tmp);
+            if (tmp != null)
             {
                 database = tmp.ToString();
             }
             values.TryGetValue("TableName", out tmp);
-            if(tmp != null)
+            if (tmp != null)
             {
                 tableName = tmp.ToString();
             }
 
             values.TryGetValue("Schema", out tmp);
-            if(tmp != null)
+            if (tmp != null)
             {
                 schema = tmp.ToString();
             }
 
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
 
-            if(string.IsNullOrEmpty(database))
+            if (string.IsNullOrEmpty(database))
             {
                 var res = new DbColumnList("No database set.");
-                Dev2Logger.Log.Debug("No database set.");
+                Dev2Logger.Debug("No database set.", GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
-            if(string.IsNullOrEmpty(tableName))
+            if (string.IsNullOrEmpty(tableName))
             {
                 var res = new DbColumnList("No table name set.");
-                Dev2Logger.Log.Debug("No table name set.");
+                Dev2Logger.Debug("No table name set.", GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
-            Dev2Logger.Log.Info(String.Format("Get Database Columns For Table. Database:{0} Schema:{1} Table{2}" ,database,schema,tableName));
+            Dev2Logger.Info($"Get Database Columns For Table. Database:{database} Schema:{schema} Table{tableName}", GlobalConstants.WarewolfInfo);
             try
             {
                 var dbSource = serializer.Deserialize<DbSource>(database);
@@ -97,24 +82,82 @@ namespace Dev2.Runtime.ESB.Management.Services
                 switch (dbSource.ServerType)
                 {
                     case enSourceType.MySqlDatabase:
-                    {
-                        using (var connection = new MySqlConnection(runtTimedbSource.ConnectionString))
                         {
-                            // Connect to the database then retrieve the schema information.
-                            connection.Open();
-                            var sql = @"select  * from  " + tableName.Trim('"').Replace("[","").Replace("]","") + " Limit 1 ";
-
-                                                     using (var sqlcmd = new MySqlCommand(sql, connection))
+                            using (var connection = new MySqlConnection(runtTimedbSource.ConnectionString))
                             {
-                                // force it closed so we just get the proper schema ;)
-                                using (var sdr = sqlcmd.ExecuteReader(CommandBehavior.CloseConnection))
+                                // Connect to the database then retrieve the schema information.
+                                connection.Open();
+                                var sql = @"select  * from  " + tableName.Trim('"').Replace("[", "").Replace("]", "") + " Limit 1 ";
+
+                                using (var sqlcmd = new MySqlCommand(sql, connection))
                                 {
-                                    columnInfo = sdr.GetSchemaTable();
+                                    // force it closed so we just get the proper schema ;)
+                                    using (var sdr = sqlcmd.ExecuteReader(CommandBehavior.CloseConnection))
+                                    {
+                                        columnInfo = sdr.GetSchemaTable();
+                                    }
                                 }
                             }
+                            break;
                         }
-                        break;
-                    }
+					case enSourceType.SQLiteDatabase:
+						{
+							using (var connection = new SQLiteConnection(runtTimedbSource.ConnectionString))
+							{
+								// Connect to the database then retrieve the schema information.
+								connection.Open();
+								var sql = @"select  * from  " + tableName.Trim('"').Replace("[", "").Replace("]", "") + " Limit 1 ";
+
+								using (var sqlcmd = new SQLiteCommand(sql, connection))
+								{
+									// force it closed so we just get the proper schema ;)
+									using (var sdr = sqlcmd.ExecuteReader(CommandBehavior.CloseConnection))
+									{
+										columnInfo = sdr.GetSchemaTable();
+									}
+								}
+							}
+							break;
+						}
+					case enSourceType.Oracle:
+                        {
+                            using (var connection = new OracleConnection(runtTimedbSource.ConnectionString))
+                            {
+                                // Connect to the database then retrieve the schema information.
+                                connection.Open();
+                                var sql = @"select  * from  " + tableName.Trim('"').Replace("[", "").Replace("]", "") + " Limit 1 ";
+
+                                using (var sqlcmd = new OracleCommand(sql, connection))
+                                {
+                                    // force it closed so we just get the proper schema ;)
+                                    using (var sdr = sqlcmd.ExecuteReader(CommandBehavior.CloseConnection))
+                                    {
+                                        columnInfo = sdr.GetSchemaTable();
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    case enSourceType.ODBC:
+                        {
+                            using (var connection = new OdbcConnection(runtTimedbSource.ConnectionString))
+                            {
+                                // Connect to the database then retrieve the schema information.
+                                connection.Open();
+                                var sql = @"select  * from  " + tableName.Trim('"').Replace("[", "").Replace("]", "") + " Limit 1 ";
+
+                                using (var sqlcmd = new OdbcCommand(sql, connection))
+                                {
+                                    // force it closed so we just get the proper schema ;)
+                                    using (var sdr = sqlcmd.ExecuteReader(CommandBehavior.CloseConnection))
+                                    {
+                                        columnInfo = sdr.GetSchemaTable();
+                                    }
+                                }
+                            }
+                            break;
+                        }
+
                     default:
                         {
                             using (var connection = new SqlConnection(runtTimedbSource.ConnectionString))
@@ -144,61 +187,45 @@ namespace Dev2.Runtime.ESB.Management.Services
 
                 var dbColumns = new DbColumnList();
 
-                if(columnInfo != null)
+                if (columnInfo != null)
                 {
-                    foreach(DataRow row in columnInfo.Rows)
+                    foreach (DataRow row in columnInfo.Rows)
                     {
-                        var columnName = row["ColumnName"] as string;
-                        var isNullable = row["AllowDBNull"] is bool && (bool)row["AllowDBNull"];
-                        var isIdentity = row["IsIdentity"] is bool && (bool)row["IsIdentity"];
-                        var dbColumn = new DbColumn { ColumnName = columnName, IsNullable = isNullable, IsAutoIncrement = isIdentity };
-
-                        SqlDbType sqlDataType;
-                        var typeValue = dbSource.ServerType == enSourceType.SqlDatabase? row["DataTypeName"] as string:((Type)row["DataType"]).Name;
-                        if(Enum.TryParse(typeValue, true, out sqlDataType))
-                        {
-                            dbColumn.SqlDataType = sqlDataType;
-                        }
-
-                        var columnLength = row["ColumnSize"] is int ? (int)row["ColumnSize"] : -1;
-                        dbColumn.MaxLength = columnLength;
-                        dbColumns.Items.Add(dbColumn);
+                        AddDbColumn(dbSource, dbColumns, row);
                     }
                 }
                 return serializer.SerializeToBuilder(dbColumns);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                Dev2Logger.Log.Error(ex);
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 var res = new DbColumnList(ex);
                 return serializer.SerializeToBuilder(res);
             }
         }
 
-        /// <summary>
-        /// Creates the service entry.
-        /// </summary>
-        /// <returns></returns>
-        public DynamicService CreateServiceEntry()
+        static void AddDbColumn(DbSource dbSource, DbColumnList dbColumns, DataRow row)
         {
-            var ds = new DynamicService
+            var columnName = row["ColumnName"] as string;
+            var isNullable = row["AllowDBNull"] is bool && (bool)row["AllowDBNull"];
+            var isIdentity = row["IsIdentity"] is bool && (bool)row["IsIdentity"];
+            var dbColumn = new DbColumn { ColumnName = columnName, IsNullable = isNullable, IsAutoIncrement = isIdentity };
+
+            var typeValue = dbSource.ServerType == enSourceType.SqlDatabase ? row["DataTypeName"] as string : ((Type)row["DataType"]).Name;
+            if (Enum.TryParse(typeValue, true, out SqlDbType sqlDataType))
             {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Database ColumnIODirection=\"Input\"/><TableName ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
+                dbColumn.SqlDataType = sqlDataType;
+            }
 
-            var sa = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            ds.Actions.Add(sa);
-
-            return ds;
+            var columnLength = row["ColumnSize"] as int? ?? -1;
+            dbColumn.MaxLength = columnLength;
+            dbColumns.Items.Add(dbColumn);
         }
 
         #endregion
+
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Database ColumnIODirection=\"Input\"/><TableName ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public override string HandlesType() => "GetDatabaseColumnsForTableService";
     }
 }

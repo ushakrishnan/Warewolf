@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,6 +11,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Dev2.Common.Interfaces.Threading;
 
 namespace Dev2.Threading
 {
@@ -29,7 +29,7 @@ namespace Dev2.Threading
         public Task Start(Action backgroundAction, Action uiAction)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundAction).ContinueWith(_ => uiAction(), scheduler);
+            return Task.Run(backgroundAction).ContinueWith(_ => uiAction?.Invoke(), scheduler);
         }
 
         /// <summary>
@@ -43,15 +43,45 @@ namespace Dev2.Threading
         public Task Start(Action backgroundAction, Action uiAction, Action<Exception> onError)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundAction).ContinueWith(_ =>
+            return Task.Run(backgroundAction).ContinueWith(_ =>
             {
                 if(_.Exception != null)
                 {
-                    onError(_.Exception.Flatten());
+                    onError?.Invoke(_.Exception.Flatten());
                 }
                 else
                 {
-                    uiAction();
+                    uiAction?.Invoke();
+                }
+            }, scheduler);
+        }
+
+        /// <summary>
+        /// Starts the specified background action and continues with the UI action 
+        /// on the thread this was invoked from (typically the UI thread).
+        /// </summary>
+        /// <param name="backgroundAction">The background action.</param>
+        /// <param name="uiAction">The UI action.</param>
+        /// <param name="cancellationTokenSource">Allows the task to be cancelled.</param>
+        /// <param name="onError"></param>
+        /// <returns></returns>
+        /// <author>Trevor.Williams-Ros</author>
+        /// <date>2013/08/08</date>
+        public Task Start(Action backgroundAction, Action uiAction, CancellationTokenSource cancellationTokenSource, Action<Exception> onError)
+        {
+            var scheduler = GetTaskScheduler();
+            return Task.Run(backgroundAction, cancellationTokenSource.Token).ContinueWith(_ =>
+            {
+                if (!cancellationTokenSource.IsCancellationRequested)
+                {
+                    if (_.Exception != null)
+                    {
+                        onError?.Invoke(_.Exception.Flatten());
+                    }
+                    else
+                    {
+                        uiAction?.Invoke();
+                    }
                 }
             }, scheduler);
         }
@@ -64,9 +94,33 @@ namespace Dev2.Threading
         /// <returns></returns>
         /// <author>Trevor.Williams-Ros</author>
         /// <date>2013/08/08</date>
-        public Task Start(Action backgroundAction)
+        public Task Start(Action backgroundAction) => Task.Run(backgroundAction);
+
+        /// <summary>
+        /// Starts the specified background function and continues with the UI action 
+        /// on the thread this was invoked from (typically the UI thread).
+        /// </summary>
+        /// <param name="backgroundFunc">The background function - returns the result to be processed on the UI thread.</param>
+        /// <param name="uiAction">The UI action to be taken on the given background result.</param>
+        /// <param name="onError">ACtion to perform if an error occurs during execution of the Task</param>
+        /// <returns></returns>
+        /// <author>Trevor.Williams-Ros</author>
+        /// <date>2013/10/12</date>
+        public Task Start<TBackgroundResult>(Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> uiAction, Action<Exception> onError)
         {
-            return Task.Factory.StartNew(backgroundAction);
+            var scheduler = GetTaskScheduler();
+            return Task.Run(backgroundFunc).ContinueWith(task =>
+            {
+                if (task.Exception != null)
+                {
+                    onError?.Invoke(task.Exception.Flatten());
+                }
+                else
+                {
+                    uiAction?.Invoke(task.Result);
+                }
+                
+            }, scheduler);
         }
 
         /// <summary>
@@ -81,9 +135,41 @@ namespace Dev2.Threading
         public Task Start<TBackgroundResult>(Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> uiAction)
         {
             var scheduler = GetTaskScheduler();
-            return Task.Factory.StartNew(backgroundFunc).ContinueWith(task => uiAction(task.Result), scheduler);
+            return Task.Run(backgroundFunc).ContinueWith(task =>
+            {
+                uiAction?.Invoke(task.Result);
+            }, scheduler);
         }
 
+        /// <summary>
+        /// Starts the specified background function and continues with the UI action 
+        /// on the thread this was invoked from (typically the UI thread).
+        /// </summary>
+        /// <param name="backgroundFunc">The background function - returns the result to be processed on the UI thread.</param>
+        /// <param name="uiAction">The UI action to be taken on the given background result.</param>
+        /// <param name="cancellationTokenSource">Allows the task to be cancelled.</param>
+        /// <param name="onError">ACtion to perform if an error occurs during execution of the Task</param>
+        /// <returns></returns>
+        /// <author>Trevor.Williams-Ros</author>
+        /// <date>2013/10/12</date>
+        public Task Start<TBackgroundResult>(Func<TBackgroundResult> backgroundFunc, Action<TBackgroundResult> uiAction, CancellationTokenSource cancellationTokenSource, Action<Exception> onError)
+        {
+            var scheduler = GetTaskScheduler();
+            return Task.Run(backgroundFunc, cancellationTokenSource.Token).ContinueWith(task =>
+            {
+                if(!cancellationTokenSource.IsCancellationRequested)
+                {
+                    if (task.Exception != null)
+                    {
+                        onError?.Invoke(task.Exception.Flatten());
+                    }
+                    else
+                    {
+                        uiAction?.Invoke(task.Result);
+                    }
+                }
+            }, scheduler);
+        }
 
         static TaskScheduler GetTaskScheduler()
         {

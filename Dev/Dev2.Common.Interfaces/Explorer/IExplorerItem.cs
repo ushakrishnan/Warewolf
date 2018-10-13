@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Common.Interfaces.Versioning;
 
@@ -21,12 +20,16 @@ namespace Dev2.Common.Interfaces.Explorer
         string DisplayName { get; set; }
         Guid ServerId { get; set; }
         Guid ResourceId { get; set; }
-        ResourceType ResourceType { get; set; }
+        string ResourceType { get; set; }
         IList<IExplorerItem> Children { get; set; }
         Permissions Permissions { get; set; }
         IVersionInfo VersionInfo { get; set; }
         string ResourcePath { get; set; }
         IExplorerItem Parent { get; set; }
-        string WebserverUri { get; set; }
+        bool IsSource { get; set; }
+        bool IsService { get; set; }
+        bool IsFolder { get; set; }
+        bool IsServer { get; set; }
+        bool IsResourceVersion { get; set; }
     }
 }

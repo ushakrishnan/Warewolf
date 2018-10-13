@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,17 +9,15 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Providers.Errors;
 using Dev2.Providers.Validation.Rules;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class RuleSetTests
     {
         [TestMethod]
@@ -138,7 +135,7 @@ namespace Dev2.Infrastructure.Tests.Providers.Validation.Rules
             //------------Assert Results-------------------------
             Assert.IsNotNull(errors);
             Assert.AreEqual(1, errors.Count);
-            Assert.AreEqual(LabelText + " cannot be empty", errors[0].Message);
+            Assert.AreEqual(LabelText + " Cannot be null", errors[0].Message);
             errors[0].Do();
             Assert.IsTrue(doErrorWasAssigned);
         }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,16 +9,14 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace Dev2.Core.Tests.AppResources.Comparers
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ContexttualResourceModelEqualityComparerTests
     {
         [TestMethod]
@@ -31,8 +28,8 @@ namespace Dev2.Core.Tests.AppResources.Comparers
 
             var firstResource = new Mock<IContextualResourceModel>();
             var secondResource = new Mock<IContextualResourceModel>();
-            var firstEnvironment = new Mock<IEnvironmentModel>();
-            var secondEnvironment = new Mock<IEnvironmentModel>();
+            var firstEnvironment = new Mock<IServer>();
+            var secondEnvironment = new Mock<IServer>();
             var firstConnection = new Mock<IEnvironmentConnection>();
             var secondConnection = new Mock<IEnvironmentConnection>();
 
@@ -61,8 +58,8 @@ namespace Dev2.Core.Tests.AppResources.Comparers
 
             var firstResource = new Mock<IContextualResourceModel>();
             var secondResource = new Mock<IContextualResourceModel>();
-            var sameEnvironment = new Mock<IEnvironmentModel>();
-            sameEnvironment.Setup(e => e.Equals(It.IsAny<IEnvironmentModel>())).Returns(true);
+            var sameEnvironment = new Mock<IServer>();
+            sameEnvironment.Setup(e => e.Equals(It.IsAny<IServer>())).Returns(true);
 
             firstResource.Setup(res => res.Environment).Returns(sameEnvironment.Object);
             firstResource.Setup(res => res.ResourceName).Returns(resourceName);

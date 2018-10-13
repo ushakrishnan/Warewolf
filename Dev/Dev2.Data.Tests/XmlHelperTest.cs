@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,9 +8,9 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Data.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 
 namespace Dev2.Data.Tests
 {
@@ -19,7 +18,6 @@ namespace Dev2.Data.Tests
     /// Summary description for XmlHelperTest
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class XmlHelperTest
     {
         /// <summary>
@@ -27,20 +25,14 @@ namespace Dev2.Data.Tests
         ///information about and functionality for the current test run.
         ///</summary>
         public TestContext TestContext { get; set; }
-
+       
         [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("XmlHelper_MakeErrorsUserReadable")]
-        public void XmlHelper_MakeErrorsUserReadable_Scenerio_Result()
+        [Owner("Nkosinathi Sangweni")]
+        public void IsXml_GivenValidXml_ShouldReturnTrue()
         {
-            //------------Setup for test--------------------------
+            //---------------Set up test pack-------------------
 
-            const string expected = @"Message: Login failed for user 'testuser2'.";
-
-            const string expected2 =
-                @"2 ExecuteReader requires an open and available Connection. The connection's current state is closed.";
-
-            const string xmlFragment = @"<InnerError>Index #0
+            const string XmlFragment = @"<InnerError>Index #0
 Message: Login failed for user 'testuser2'.
 LineNumber: 65536
 Source: .Net SqlClient Data Provider
@@ -54,15 +46,61 @@ Procedure:
    at Dev2.Services.Sql.SqlServer.ExecuteReader[T](SqlCommand command, CommandBehavior commandBehavior, Func`2 handler) in c:\Development\Dev\Dev2.Services.Sql\SqlServer.cs:line 121
    at Dev2.Services.Sql.SqlServer.FetchDataTable(SqlParameter[] parameters) in c:\Development\Dev\Dev2.Services.Sql\SqlServer.cs:line 61
    at Dev2.Services.Execution.DatabaseServiceExecution.SqlExecution(ErrorResultTO errors, Object& executeService) in c:\Development\Dev\Dev2.Services.Execution\DatabaseServiceExecution.cs:line 118</InnerError>";
-
-            //------------Execute Test---------------------------
-
-            var result = XmlHelper.MakeErrorsUserReadable(xmlFragment);
-
-            //------------Assert Results-------------------------
-
-            StringAssert.Contains(result, expected);
-            StringAssert.Contains(result, expected2);
+            var isXml = XmlHelper.IsXml(XmlFragment, out bool isFragment, out bool isHtml);
+            //---------------Test Result -----------------------
+            Assert.IsTrue(isXml);
         }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void IsXml_GivenValidIvalidXml_ShouldReturnFalse()
+        {
+            //---------------Set up test pack-------------------
+
+            const string XmlFragment = @"HHHHHHH";
+            var isXml = XmlHelper.IsXml(XmlFragment, out bool isFragment, out bool isHtml);
+            //---------------Test Result -----------------------
+            Assert.IsFalse(isXml);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ToCleanXml_GivenDirtXmlWithToStripTags_ShouldReuturnCleanXml()
+        {
+            //---------------Set up test pack-------------------
+            var xml = @"<XmlData>Hello world<XmlData>";
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var cleanXml = xml.ToCleanXml();
+            //---------------Test Result -----------------------
+            Assert.AreEqual("Hello world", cleanXml);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ToCleanXml_GivenDirtXmlWithnaughtyTags_ShouldReuturnNoData()
+        {
+            //---------------Set up test pack-------------------
+            var xml = @"<WebXMLConfiguration>Hello world</WebXMLConfiguration>";
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var cleanXml = xml.ToCleanXml();
+            //---------------Test Result -----------------------
+            Assert.AreEqual("", cleanXml);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void ToCleanXml_GivenDirtXmlWithnaughtyTagsAndValid_ShouldReuturnCleanXml()
+        {
+            //---------------Set up test pack-------------------
+            var xml = @"<Person><WebXMLConfiguration>Hello world</WebXMLConfiguration></Person>";
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var cleanXml = xml.ToCleanXml();
+            //---------------Test Result -----------------------
+            Assert.AreEqual("<Person></Person>", cleanXml);
+        }
+
     }
 }

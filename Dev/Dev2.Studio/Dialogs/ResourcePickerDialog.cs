@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,20 +9,19 @@
 */
 
 using System;
+using System.Threading.Tasks;
 using Caliburn.Micro;
-using Dev2.AppResources.Repositories;
 using Dev2.Common;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.ConnectionHelpers;
-using Dev2.Models;
 using Dev2.Services.Events;
-using Dev2.Studio.Core;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Enums;
-using Dev2.Studio.ViewModels.Navigation;
+using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Studio.Views.Workflow;
 using Dev2.Threading;
+using Warewolf.Studio.ViewModels;
 
 namespace Dev2.Dialogs
 {
@@ -33,92 +31,114 @@ namespace Dev2.Dialogs
     {
         readonly enDsfActivityType _activityType;
 
-        readonly INavigationViewModel _navigationViewModel;
-        IEnvironmentModel _environmentModel;
-        IStudioResourceRepository _studio;
-
+        public IExplorerViewModel SingleEnvironmentExplorerViewModel{get; private set;}
+        IServer _server;
+        IExplorerTreeItem _selectedResource;
 
         /// <summary>
         /// Creates a picker suitable for dropping from the toolbox.
         /// </summary>
+        /// //todo:fix ctor for testing
         public ResourcePickerDialog(enDsfActivityType activityType)
-            : this(activityType, EnvironmentRepository.Instance, EventPublishers.Aggregator, new AsyncWorker(), true, StudioResourceRepository.Instance, ConnectControlSingleton.Instance)
+            : this(activityType, null, EventPublishers.Aggregator, new AsyncWorker(), ConnectControlSingleton.Instance)
         {
         }
 
         /// <summary>
         /// Creates a picker suitable for picking from the given environment.
         /// </summary>
-        public ResourcePickerDialog(enDsfActivityType activityType, IEnvironmentModel source)
-            : this(activityType, EnvironmentRepository.Create(source), EventPublishers.Aggregator, new AsyncWorker(), false, StudioResourceRepository.Instance, ConnectControlSingleton.Instance)
+        public ResourcePickerDialog(enDsfActivityType activityType, IEnvironmentViewModel source)
+            : this(activityType, source, EventPublishers.Aggregator, new AsyncWorker(), ConnectControlSingleton.Instance)
         {
         }
 
-        public ResourcePickerDialog(enDsfActivityType activityType, IEnvironmentRepository environmentRepository, IEventAggregator eventPublisher, IAsyncWorker asyncWorker, bool isFromDrop, IStudioResourceRepository studioResourceRepository, IConnectControlSingleton connectControlSingleton)
+        public ResourcePickerDialog(enDsfActivityType activityType, IEnvironmentViewModel environmentViewModel, IEventAggregator eventPublisher, IAsyncWorker asyncWorker, IConnectControlSingleton connectControlSingleton)
         {
-            VerifyArgument.IsNotNull("environmentRepository", environmentRepository);
+            VerifyArgument.IsNotNull("environmentRepository", environmentViewModel);
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             VerifyArgument.IsNotNull("connectControlSingleton", connectControlSingleton);
-            _studio = studioResourceRepository;
-            _navigationViewModel = new NavigationViewModel(eventPublisher, asyncWorker, null, environmentRepository, studioResourceRepository,connectControlSingleton, () => {}, isFromDrop, activityType);
+
+            SingleEnvironmentExplorerViewModel = new SingleEnvironmentExplorerViewModel(environmentViewModel, Guid.Empty, true);
+            SingleEnvironmentExplorerViewModel.SelectedItemChanged += (sender, item) => { SelectedResource = item; };
             _activityType = activityType;
         }
 
-        public IResourceModel SelectedResource { get; set; }
-
-        public bool ShowDialog(IEnvironmentModel environmentModel = null)
+        public static Task<IResourcePickerDialog> CreateAsync(enDsfActivityType activityType, IEnvironmentViewModel source)
         {
-            DsfActivityDropViewModel dropViewModel;
-            _environmentModel = environmentModel;
-            return ShowDialog(out dropViewModel);
+            var ret = new ResourcePickerDialog(activityType, source, EventPublishers.Aggregator, new AsyncWorker(), ConnectControlSingleton.Instance);
+            return ret.InitializeAsync(source);
         }
 
-        bool ShowDialog(out DsfActivityDropViewModel dropViewModel)
+        protected  async Task<IResourcePickerDialog> InitializeAsync(IEnvironmentViewModel environmentViewModel)
         {
-            if(_environmentModel != null)
-            {
-                _navigationViewModel.FilterEnvironment = _environmentModel;
-                _navigationViewModel.Filter(model => model.EnvironmentId == _environmentModel.ID);
-            }
-            else
-            {
+            environmentViewModel.Connect();
 
-                _navigationViewModel.Filter(null,false,false);
-                var explorerItemModels = _navigationViewModel.ExplorerItemModels;
-                if(explorerItemModels != null)
-                {
-                    foreach(ExplorerItemModel explorerItemModel in explorerItemModels)
-                    {
-                        if(explorerItemModel != null)
-                        {
-                            explorerItemModel.IsResourcePickerExpanded = true;
-                        }
-                    }
-                }
-            }
-            dropViewModel = new DsfActivityDropViewModel(_navigationViewModel, _activityType);
-            var contextualResourceModel = SelectedResource as IContextualResourceModel;
-            if(SelectedResource != null && contextualResourceModel != null)
+            await environmentViewModel.LoadDialogAsync("");
+            switch (_activityType)
             {
-                dropViewModel.SelectedResourceModel = contextualResourceModel;
-                _navigationViewModel.BringItemIntoView(contextualResourceModel);
+                case enDsfActivityType.Workflow:
+                case enDsfActivityType.Service:
+                    environmentViewModel.Filter(a => a.IsFolder || a.IsService);
+                    break;
+                case enDsfActivityType.Source:
+                    environmentViewModel.Filter(a => a.IsFolder || a.IsSource);
+                    break;
+                case enDsfActivityType.All:
+                    break;
+                default:
+                    break;
+            }
+            environmentViewModel.SelectAction = a => SelectedResource = a;
+            return this;
+        }
+
+        public IExplorerTreeItem SelectedResource
+        {
+            get
+            {
+                return _selectedResource;
+            }
+            set
+            {
+                _selectedResource = value;
+            }
+        }
+
+        public bool ShowDialog() => ShowDialog(null);
+        public bool ShowDialog(IServer server)
+        {
+            _server = server;
+            return ShowDialog(out DsfActivityDropViewModel dropViewModel);
+        }
+
+        public void SelectResource(Guid id)
+        {
+           SingleEnvironmentExplorerViewModel.SelectItem(id);
+        }
+
+        public bool ShowDialog(out DsfActivityDropViewModel dropViewModel)
+        {            
+            dropViewModel = new DsfActivityDropViewModel(SingleEnvironmentExplorerViewModel, _activityType);
+         
+            var selected = SelectedResource;
+            if (SelectedResource != null && selected != null)
+            {
+                dropViewModel.SelectedResourceModel = _server.ResourceRepository.FindSingle(c => c.ID == selected.ResourceId, true) as IContextualResourceModel;    
             }
             var dropWindow = CreateDialog(dropViewModel);
             dropWindow.ShowDialog();
             if(dropViewModel.DialogResult == ViewModelDialogResults.Okay)
             {
-                SelectedResource = dropViewModel.SelectedResourceModel;
+                var model = dropViewModel;
+                SelectedResource = model.SelectedExplorerItemModel;
                 return true;
             }
             SelectedResource = null;
             return false;
         }
 
-        protected virtual IDialog CreateDialog(DsfActivityDropViewModel dataContext)
-        {
-            return new DsfActivityDropWindow { DataContext = dataContext };
-        }
+        protected virtual IDialog CreateDialog(DsfActivityDropViewModel dataContext) => new DsfActivityDropWindow { DataContext = dataContext };
 
         public static enDsfActivityType DetermineDropActivityType(string typeName)
         {
@@ -129,28 +149,7 @@ namespace Dev2.Dialogs
                 return enDsfActivityType.Workflow;
             }
 
-            if(typeName.Contains(GlobalConstants.ResourcePickerServiceString))
-            {
-                return enDsfActivityType.Service;
-            }
-
             return enDsfActivityType.All;
-        }
-
-        public static bool ShowDropDialog<T>(ref T picker, string typeName, out DsfActivityDropViewModel dropViewModel)
-            where T : ResourcePickerDialog
-        {
-            var activityType = DetermineDropActivityType(typeName);
-            if(activityType != enDsfActivityType.All)
-            {
-                if(picker == null)
-                {
-                    picker = (T)Activator.CreateInstance(typeof(T), activityType);
-                }
-                return picker.ShowDialog(out dropViewModel);
-            }
-            dropViewModel = null;
-            return false;
         }
     }
 }

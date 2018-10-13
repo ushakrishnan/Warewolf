@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,10 +25,10 @@ namespace Dev2.Tests.Runtime.Util
     public class FindResourceHelperTest
     {
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("FindResourceHelper_SerializeResourceForStudio")]
-// ReSharper disable InconsistentNaming
+
         public void FindResourceHelper_SerializeResourceForStudio_WhenNewResource_ExpectValidResource()
 
         {
@@ -39,7 +38,7 @@ namespace Dev2.Tests.Runtime.Util
 
             //------------Execute Test---------------------------
 
-            var result = new FindResourceHelper().SerializeResourceForStudio(res);
+            var result = new FindResourceHelper().SerializeResourceForStudio(res,Guid.Empty);
 
             //------------Assert Results-------------------------
 
@@ -47,7 +46,7 @@ namespace Dev2.Tests.Runtime.Util
             Assert.AreEqual(id, result.ResourceID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("FindResourceHelper_SerializeResourceForStudio")]
         public void FindResourceHelper_SerializeResourceForStudio_WhenNotNewResource_ExpectValidResource()
@@ -58,7 +57,7 @@ namespace Dev2.Tests.Runtime.Util
 
             //------------Execute Test---------------------------
 
-            var result = new FindResourceHelper().SerializeResourceForStudio(res);
+            var result = new FindResourceHelper().SerializeResourceForStudio(res, Guid.Empty);
 
             //------------Assert Results-------------------------
 
@@ -66,7 +65,7 @@ namespace Dev2.Tests.Runtime.Util
             Assert.AreEqual(id, result.ResourceID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("FindResourceHelper_SerializeResourceForStudio")]
         public void FindResourceHelper_SerializeResourceForStudio_WhenCheckingAllProperties_ExpectValidResource()
@@ -86,7 +85,7 @@ namespace Dev2.Tests.Runtime.Util
                     }
             };
 
-            Resource res = new Resource
+            var res = new Resource
             {
                 Inputs = "inputs",
                 Outputs = "outputs",
@@ -94,15 +93,14 @@ namespace Dev2.Tests.Runtime.Util
                 IsNewResource = false,
                 DataList = new StringBuilder("abc"),
                 IsValid = true,
-                ResourcePath = "Category",
                 ResourceName = "Workflow",
-                ResourceType = ResourceType.WorkflowService,
+                ResourceType = "WorkflowService",
                 Errors = theErrors,
                 VersionInfo = new VersionInfo(DateTime.Now,"","u","1",id,Guid.NewGuid())
             };
 
             //------------Execute Test---------------------------
-            var result = new FindResourceHelper().SerializeResourceForStudio(res);
+            var result = new FindResourceHelper().SerializeResourceForStudio(res, Guid.Empty);
 
             //------------Assert Results-------------------------
 
@@ -115,9 +113,8 @@ namespace Dev2.Tests.Runtime.Util
 
             Assert.AreEqual(id, result.ResourceID);
             Assert.AreEqual("abc", result.DataList);
-            Assert.AreEqual("Category", result.ResourceCategory);
             Assert.AreEqual("Workflow", result.ResourceName);
-            Assert.AreEqual(ResourceType.WorkflowService, result.ResourceType);
+            Assert.AreEqual("WorkflowService", result.ResourceType);
             Assert.AreEqual(errorString, resultErrorString);
             Assert.AreEqual("inputs", result.Inputs);
             Assert.AreEqual("outputs", result.Outputs);
@@ -125,5 +122,5 @@ namespace Dev2.Tests.Runtime.Util
         }
 
     }
-    // ReSharper restore InconsistentNaming
+    
 }

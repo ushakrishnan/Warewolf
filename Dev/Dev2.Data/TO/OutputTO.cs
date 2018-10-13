@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,12 +10,12 @@
 
 using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.DataList.Contract
 {
     public class OutputTO {
-        private readonly string _outPutDescription;
-        private readonly IList<string> _outputStrings;
+        readonly string _outPutDescription;
+        readonly IList<string> _outputStrings;
 
         internal OutputTO(string outputDescription) {
             _outPutDescription = outputDescription;
@@ -38,16 +37,8 @@ namespace Dev2.DataList.Contract
 
         }
         
-        public string OutPutDescription {
-            get {
-                return _outPutDescription;
-            }
-        }
+        public string OutPutDescription => _outPutDescription;
 
-        public IList<string> OutputStrings{
-            get {                
-                return _outputStrings;
-            }
-        }
+        public IList<string> OutputStrings => _outputStrings;
     }
 }

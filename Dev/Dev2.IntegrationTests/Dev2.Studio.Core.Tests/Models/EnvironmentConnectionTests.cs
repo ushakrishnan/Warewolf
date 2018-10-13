@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,12 +11,12 @@
 using System;
 using System.Text;
 using System.Xml;
-using Dev2.Common.Common;
 using Dev2.Communication;
 using Dev2.Network;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Dev2.Studio.Interfaces.Enums;
+using Dev2.Common.Common;
 
 namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests.Models
 {
@@ -45,7 +44,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests.Models
         [TestMethod]
         public void EnvironmentConnection_ConnectToAvailableServer_Expected_ConnectionSuccesful()
         {
-            IEnvironmentConnection conn = CreateConnection();
+            var conn = CreateConnection();
 
             conn.Connect(Guid.Empty);
             Assert.IsTrue(conn.IsConnected);
@@ -64,7 +63,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests.Models
         {
             var request = CreateDataObject("FindResourceService", "*");
 
-            IEnvironmentConnection conn = CreateConnection();
+            var conn = CreateConnection();
 
             conn.Connect(Guid.Empty);
             if(conn.IsConnected)
@@ -87,7 +86,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests.Models
         public void EnvironmentConnection_AddResource_NewResource_Expected_NewResourceAddedToServer()
         {
             var xmlString = CreateDataObject("FindResourceService", "*");
-            IEnvironmentConnection conn = CreateConnection();
+            var conn = CreateConnection();
 
             conn.Connect(Guid.Empty);
             if(conn.IsConnected)
@@ -107,18 +106,18 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests.Models
 
         #region Private Test Methods
 
-        private StringBuilder CreateDataObject(string serviceName, string resourceName = null, string xmlFileLocation = null)
+        StringBuilder CreateDataObject(string serviceName, string resourceName = null, string xmlFileLocation = null)
         {
             var request = new EsbExecuteRequest { ServiceName = serviceName };
 
-            if(serviceName == "FindResourceService" || serviceName == "GetResourceService")
+            if (serviceName == "FindResourceService" || serviceName == "GetResourceService")
             {
                 request.AddArgument("ResourceName", new StringBuilder(resourceName));
                 request.AddArgument("ResourceType", new StringBuilder(ResourceType.WorkflowService.ToString()));
             }
-            else if(serviceName == "AddResourceService")
+            else if (serviceName == "AddResourceService")
             {
-                if(xmlFileLocation != null)
+                if (xmlFileLocation != null)
                 {
                     request.AddArgument("ResourceXml", new StringBuilder(XmlReader.Create(xmlFileLocation).ReadContentAsString()));
                 }
@@ -135,7 +134,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests.Models
 
         static IEnvironmentConnection CreateConnection()
         {
-            return CreateConnection(ServerSettings.DsfAddress);
+            return CreateConnection("http://localhost:3142/dsf");
         }
 
         static IEnvironmentConnection CreateConnection(string appServerUri)

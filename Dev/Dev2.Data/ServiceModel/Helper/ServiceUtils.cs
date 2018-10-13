@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,27 +24,6 @@ namespace Dev2.Data.ServiceModel.Helper
     /// </summary>
     public static class ServiceUtils
     {
-
-        /// <summary>
-        /// Extracts the data list.
-        /// </summary>
-        /// <param name="serviceDef">The service def.</param>
-        /// <returns></returns>
-        public static string ExtractDataList(string serviceDef)
-        {
-            string result = string.Empty;
-            XElement xe = XElement.Parse(serviceDef);
-
-            var dl = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.DataListRootTag);
-
-            if(dl != null)
-            {
-                result = dl.ToString(SaveOptions.DisableFormatting);
-            }
-
-            return result;
-        }
-
         /// <summary>
         /// Extracts the data list.
         /// </summary>
@@ -53,7 +31,7 @@ namespace Dev2.Data.ServiceModel.Helper
         /// <returns></returns>
         public static string ExtractDataList(StringBuilder serviceDef)
         {
-            string result = string.Empty;
+            var result = string.Empty;
 
             var xe = serviceDef.ToXElement();
 
@@ -67,136 +45,8 @@ namespace Dev2.Data.ServiceModel.Helper
             return result;
         }
 
-        public static string ExtractOutputMapping(string serviceDef)
-        {
-            string result = string.Empty;
-            XElement xe = XElement.Parse(serviceDef);
 
-            // could have service as its root ;(
-            var tmpB = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionsRootTag);
-
-            var tmpA = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-
-            if(tmpB != null)
-            {
-                tmpA = tmpB.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-            }
-
-
-            if(tmpA != null)
-            {
-                var dl = tmpA.Elements().FirstOrDefault(c => c.Name == GlobalConstants.OutputRootTag);
-
-                if(dl != null)
-                {
-                    result = dl.ToString();
-                }
-            }
-
-            return result;
-        }
-
-        public static string ExtractOutputMapping(StringBuilder serviceDef)
-        {
-            string result = string.Empty;
-
-            var xe = serviceDef.ToXElement();
-
-            // could have service as its root ;(
-            var tmpB = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionsRootTag);
-
-            var tmpA = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-
-            if (tmpB != null)
-            {
-                tmpA = tmpB.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-            }
-
-
-            if (tmpA != null)
-            {
-                var dl = tmpA.Elements().FirstOrDefault(c => c.Name == GlobalConstants.OutputRootTag);
-
-                if (dl != null)
-                {
-                    result = dl.ToString();
-                }
-            }
-
-
-            return result;
-        }
-
-        public static string ExtractInputMapping(string serviceDef)
-        {
-            string result = string.Empty;
-            XElement xe = XElement.Parse(serviceDef);
-
-            // could have service as its root ;(
-            var tmpB = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionsRootTag);
-
-            var tmpA = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-
-            if(tmpB != null)
-            {
-                tmpA = tmpB.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-            }
-
-
-            if(tmpA != null)
-            {
-                var dl = tmpA.Elements().FirstOrDefault(c => c.Name == GlobalConstants.InputRootTag);
-
-                if(dl != null)
-                {
-                    result = dl.ToString();
-                }
-            }
-
-            return result;
-        }
-
-        public static string ExtractInputMapping(StringBuilder serviceDef)
-        {
-            string result = string.Empty;
-
-            var xe = serviceDef.ToXElement();
-
-            // could have service as its root ;(
-            var tmpB = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionsRootTag);
-
-            var tmpA = xe.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-
-            if (tmpB != null)
-            {
-                tmpA = tmpB.Elements().FirstOrDefault(c => c.Name == GlobalConstants.ActionRootTag);
-            }
-
-
-            if (tmpA != null)
-            {
-                var dl = tmpA.Elements().FirstOrDefault(c => c.Name == GlobalConstants.InputRootTag);
-
-                if (dl != null)
-                {
-                    result = dl.ToString();
-                }
-            }
-
-            return result;
-        }
-
-
-        public static bool MappingValuesChanged(IList<IDev2Definition> oldMappings, IList<IDev2Definition> newMappings)
-        {
-            return MappingChanged(oldMappings, newMappings, (oldMapping, newMapping) => oldMapping.Value == newMapping.Value);
-        }
-
-        public static bool MappingNamesChanged(IList<IDev2Definition> oldMappings, IList<IDev2Definition> newMappings)
-        {
-            return MappingChanged(oldMappings, newMappings, (oldMapping, newMapping) => oldMapping.Name == newMapping.Name);
-        }
-
+        public static bool MappingNamesChanged(IList<IDev2Definition> oldMappings, IList<IDev2Definition> newMappings) => MappingChanged(oldMappings, newMappings, (oldMapping, newMapping) => oldMapping.Name == newMapping.Name);
 
         static bool MappingChanged(ICollection<IDev2Definition> oldMappings, ICollection<IDev2Definition> newMappings, Func<IDev2Definition, IDev2Definition, bool> equals)
         {
@@ -205,7 +55,7 @@ namespace Dev2.Data.ServiceModel.Helper
                 return true;
             }
 
-            return newMappings.Select(newMapping => oldMappings.FirstOrDefault(old => @equals(old, newMapping))).Any(oldMapping => oldMapping == null);
+            return newMappings.Select(newMapping => oldMappings.FirstOrDefault(old => @equals?.Invoke(old, newMapping) ?? default(bool))).Any(oldMapping => oldMapping == null);
         }
 
     }

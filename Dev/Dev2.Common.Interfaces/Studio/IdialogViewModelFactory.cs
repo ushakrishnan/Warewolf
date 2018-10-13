@@ -2,8 +2,6 @@
 {
     public interface IDialogViewModelFactory
     {
-        IDialogueViewModel CreateAboutDialog();
-         IDialogueViewModel CreateServerAboutDialog(string serverVersion);
     } 
 }
 

@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,7 @@ namespace Dev2.TaskScheduler.Wrappers
 {
     public class Dev2RepetitionPattern : IRepetitionPattern
     {
-        private readonly RepetitionPattern _nativeInstance;
+        readonly RepetitionPattern _nativeInstance;
 
         public Dev2RepetitionPattern(RepetitionPattern nativeInstance)
         {
@@ -26,12 +26,20 @@ namespace Dev2.TaskScheduler.Wrappers
         public void Dispose()
         {
             Instance.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public RepetitionPattern Instance
+        protected virtual void Dispose(bool disposing)
         {
-            get { return _nativeInstance; }
+            // Cleanup
         }
+
+        public bool IsSet()
+        {
+            return Instance.IsSet();
+        }
+        public RepetitionPattern Instance => _nativeInstance;
 
         public TimeSpan Duration
         {
@@ -49,11 +57,6 @@ namespace Dev2.TaskScheduler.Wrappers
         {
             get { return Instance.StopAtDurationEnd; }
             set { Instance.StopAtDurationEnd = value; }
-        }
-
-        public bool IsSet()
-        {
-            return Instance.IsSet();
         }
     }
 }

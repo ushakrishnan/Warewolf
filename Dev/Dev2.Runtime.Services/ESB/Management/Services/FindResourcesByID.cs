@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,72 +13,57 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Find a resource by its id
-    /// </summary>
-    // ReSharper disable InconsistentNaming
-    public class FindResourcesByID : IEsbManagementEndpoint
-        // ReSharper restore InconsistentNaming
+    public class FindResourcesByID : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs) => Guid.Empty;
+
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Any;
+
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
             {
+                var guidCsv = string.Empty;
+                string type = null;
 
+                values.TryGetValue("GuidCsv", out StringBuilder tmp);
+                if (tmp != null)
+                {
+                    guidCsv = tmp.ToString();
+                }
+                values.TryGetValue("ResourceType", out tmp);
+                if (tmp != null)
+                {
+                    type = tmp.ToString();
+                }
 
-            string guidCsv = string.Empty;
-            string type = null;
+                var resources = ResourceCatalog.Instance.GetResourceList(theWorkspace.ID, new Dictionary<string, string> { { "guidCsv", guidCsv }, { "type", type } });
 
-            StringBuilder tmp;
-            values.TryGetValue("GuidCsv", out tmp);
-            if(tmp != null)
-            {
-                guidCsv = tmp.ToString();
-            }
-            values.TryGetValue("ResourceType", out tmp);
-            if(tmp != null)
-            {
-                type = tmp.ToString();
-            }
-            Dev2Logger.Log.Info("Find Resource By Id. "+guidCsv);
-            // BUG 7850 - TWR - 2013.03.11 - ResourceCatalog refactor
-            var resources = ResourceCatalog.Instance.GetResourceList(theWorkspace.ID, guidCsv, type);
+                IList<SerializableResource> resourceList = resources.Select(r=>new FindResourceHelper().SerializeResourceForStudio(r,theWorkspace.ID)).ToList();
+                var serializer = new Dev2JsonSerializer();
+                var message = new CompressedExecuteMessage();
+                message.SetMessage(serializer.Serialize(resourceList));
 
-            IList<SerializableResource> resourceList = resources.Select(new FindResourceHelper().SerializeResourceForStudio).ToList();
-
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-            return serializer.SerializeToBuilder(resourceList);
+                return serializer.SerializeToBuilder(message);
             }
             catch (Exception err)
             {
-                Dev2Logger.Log.Error(err);
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
                 throw;
             }
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            var findResourcesByIdAction = new ServiceAction { Name = HandlesType(), SourceMethod = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService };
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><GuidCsv ColumnIODirection=\"Input\"/><ResourceType ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            var findResourcesByIdService = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><GuidCsv ColumnIODirection=\"Input\"/><ResourceType ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-            findResourcesByIdService.Actions.Add(findResourcesByIdAction);
-
-            return findResourcesByIdService;
-        }
-
-        public string HandlesType()
-        {
-            return "FindResourcesByID";
-        }
+        public override string HandlesType() => "FindResourcesByID";
     }
 }

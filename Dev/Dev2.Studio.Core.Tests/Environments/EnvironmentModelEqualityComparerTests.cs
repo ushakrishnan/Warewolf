@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +9,12 @@
 */
 
 using System;
+using System.Net;
+using Dev2.Network;
 using Dev2.Studio.Core.AppResources.DependencyInjection.EqualityComparers;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Core.Models;
+using Dev2.Studio.Interfaces;
+using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -46,7 +49,7 @@ namespace Dev2.Core.Tests.Environments
             const string ServerUri = "https://myotherserver1:3143";
             const string Name = "test";
 
-            var environment = EnvironmentModelTest.CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
+            var environment = CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
 
             //------------Execute Test---------------------------
             var actual = EnvironmentModelEqualityComparer.Current.Equals(null, environment);
@@ -66,7 +69,7 @@ namespace Dev2.Core.Tests.Environments
             const string ServerUri = "https://myotherserver1:3143";
             const string Name = "test";
 
-            var environment = EnvironmentModelTest.CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
+            var environment = CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
 
             //------------Execute Test---------------------------
             var actual = EnvironmentModelEqualityComparer.Current.Equals(environment, null);
@@ -74,35 +77,15 @@ namespace Dev2.Core.Tests.Environments
             //------------Assert Results-------------------------
             Assert.IsFalse(actual);
         }
-
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("EnvironmentModelEqualityComparer_Equals")]
-        public void EnvironmentModelEqualityComparer_Equals_YIsNotEnvironmentModel_False()
-        {
-            //------------Setup for test--------------------------
-            var resourceID = Guid.NewGuid();
-            var serverID = Guid.NewGuid();
-            const string ServerUri = "https://myotherserver1:3143";
-            const string Name = "test";
-
-            var environment = EnvironmentModelTest.CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
-
-            //------------Execute Test---------------------------
-            var actual = EnvironmentModelEqualityComparer.Current.Equals(environment, new object());
-
-            //------------Assert Results-------------------------
-            Assert.IsFalse(actual);
-        }
-
+        
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("EnvironmentModelEqualityComparer_Equals")]
         public void EnvironmentModelEqualityComparer_Equals_YIsEnvironmentModel_InvokesEqualsOfX()
         {
             //------------Setup for test--------------------------
-            var environment1 = new Mock<IEnvironmentModel>();
-            var environment2 = new Mock<IEnvironmentModel>();
+            var environment1 = new Mock<IServer>();
+            var environment2 = new Mock<IServer>();
 
             environment1.Setup(e => e.Equals(environment2.Object)).Verifiable();
 
@@ -124,7 +107,7 @@ namespace Dev2.Core.Tests.Environments
             const string ServerUri = "https://myotherserver1:3143";
             const string Name = "test";
 
-            var environment = EnvironmentModelTest.CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
+            var environment = CreateEqualityEnvironmentModel(resourceID, Name, serverID, ServerUri);
             var expected = environment.GetHashCode();
 
             //------------Execute Test---------------------------
@@ -132,6 +115,21 @@ namespace Dev2.Core.Tests.Environments
 
             //------------Assert Results-------------------------
             Assert.AreEqual(expected, actual);
+        }
+
+        public static IServer CreateEqualityEnvironmentModel(Guid resourceID, string resourceName, Guid serverID, string serverUri)
+        {
+            var proxy = new TestEqualityConnection(serverID, serverUri);
+            return new Server(resourceID, proxy) { Name = resourceName };
+        }
+    }
+
+    public class TestEqualityConnection : ServerProxy
+    {
+        public TestEqualityConnection(Guid serverID, string serverUri)
+            : base(serverUri, CredentialCache.DefaultCredentials, new SynchronousAsyncWorker())
+        {
+            ServerID = serverID;
         }
     }
 }

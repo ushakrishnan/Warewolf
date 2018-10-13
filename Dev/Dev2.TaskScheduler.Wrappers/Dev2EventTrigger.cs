@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers;
 using Dev2.TaskScheduler.Wrappers.Interfaces;
 using Microsoft.Win32.TaskScheduler;
@@ -29,10 +28,7 @@ namespace Dev2.TaskScheduler.Wrappers
             set { Instance.Delay = value; }
         }
 
-        public new EventTrigger Instance
-        {
-            get { return (EventTrigger) base.Instance; }
-        }
+        public new EventTrigger Instance => (EventTrigger) base.Instance;
 
         public string Subscription
         {
@@ -40,20 +36,6 @@ namespace Dev2.TaskScheduler.Wrappers
             set { Instance.Subscription = value; }
         }
 
-        public NamedValueCollection ValueQueries
-        {
-            get { return Instance.ValueQueries; }
-        }
-
-        [ExcludeFromCodeCoverage]
-        public bool GetBasic(out string log, out string source, out int? eventId)
-        {
-            return Instance.GetBasic(out log, out source, out eventId);
-        }
-
-        public void SetBasic(string log, string source, int? eventId)
-        {
-            Instance.SetBasic(log, source, eventId);
-        }
+        public NamedValueCollection ValueQueries => Instance.ValueQueries;
     }
 }

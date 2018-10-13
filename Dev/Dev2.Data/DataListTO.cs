@@ -3,14 +3,19 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common;
-using Dev2.Data.Binary_Objects;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Util;
 
 namespace Dev2.Data
 {
     public class DataListTO
     {
-        public DataListTO(string dataList, bool ignoreColumnDirection = false)
+        public DataListTO(string dataList)
+            : this(dataList, false)
+        {
+        }
+
+        public DataListTO(string dataList, bool ignoreColumnDirection)
         {
             var fixedDataList = dataList.Replace(GlobalConstants.SerializableResourceQuote, "\"").Replace(GlobalConstants.SerializableResourceSingleQuote, "\'");
             Inputs = new List<string>();
@@ -46,21 +51,38 @@ namespace Dev2.Data
             Inputs.AddRange(
                 rootEl.Elements().Where(el =>
                 {
-                    var firstOrDefault = el.Attributes("ColumnIODirection").FirstOrDefault();
-                    var removeCondition = firstOrDefault != null &&
-                                          (firstOrDefault.Value == enDev2ColumnArgumentDirection.Input.ToString() ||
-                                           firstOrDefault.Value == enDev2ColumnArgumentDirection.Both.ToString());
-                    return removeCondition && !el.HasElements;
-                }).Select(element => element.Name.ToString()));
+                    var ioDirection = el.Attributes("ColumnIODirection").FirstOrDefault();
+                    var isJsonAttribute = el.Attribute("IsJson");
+                    var isJson = false;
+                    if (isJsonAttribute != null)
+                    {
+                        isJson = isJsonAttribute.Value.ToLower() == "true";
+                    }
+                    var removeCondition = ioDirection != null &&
+                                          (ioDirection.Value == enDev2ColumnArgumentDirection.Input.ToString() ||
+                                           ioDirection.Value == enDev2ColumnArgumentDirection.Both.ToString());
+                    return removeCondition && (!el.HasElements || isJson);
+                }).Select(element =>
+                {
+                    var name = element.Name.ToString();                   
+                    return name;
+                    
+                }));
 
             Outputs.AddRange(
                 rootEl.Elements().Where(el =>
                 {
                     var firstOrDefault = el.Attributes("ColumnIODirection").FirstOrDefault();
+                    var isJsonAttribute = el.Attribute("IsJson");
+                    var isJson = false;
+                    if (isJsonAttribute != null)
+                    {
+                        isJson = isJsonAttribute.Value.ToLower() == "true";
+                    }
                     var removeCondition = firstOrDefault != null &&
                                           (firstOrDefault.Value == enDev2ColumnArgumentDirection.Output.ToString() ||
                                            firstOrDefault.Value == enDev2ColumnArgumentDirection.Both.ToString());
-                    return removeCondition && !el.HasElements;
+                    return removeCondition && (!el.HasElements || isJson);
                 }).Select(element => element.Name.ToString()));
 
             var xElements = rootEl.Elements().Where(el => el.HasElements);
@@ -71,13 +93,11 @@ namespace Dev2.Data
                 var include = xAttribute != null &&
                               (xAttribute.Value == enDev2ColumnArgumentDirection.Input.ToString() ||
                                xAttribute.Value == enDev2ColumnArgumentDirection.Both.ToString());
-                if (include)
+                if (include && element.Parent != null)
                 {
-                    if (element.Parent != null)
-                    {
-                        return DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(element.Parent.Name.ToString(), element.Name.ToString(), "*"));
-                    }
+                    return DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(element.Parent.Name.ToString(), element.Name.ToString(), "*"));
                 }
+
                 return "";
             }));
 
@@ -87,13 +107,11 @@ namespace Dev2.Data
                 var include = xAttribute != null &&
                               (xAttribute.Value == enDev2ColumnArgumentDirection.Output.ToString() ||
                                xAttribute.Value == enDev2ColumnArgumentDirection.Both.ToString());
-                if (include)
+                if (include && element.Parent != null)
                 {
-                    if (element.Parent != null)
-                    {
-                        return DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(element.Parent.Name.ToString(), element.Name.ToString(), "*"));
-                    }
+                    return DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(element.Parent.Name.ToString(), element.Name.ToString(), "*"));
                 }
+
                 return "";
             }));
         }

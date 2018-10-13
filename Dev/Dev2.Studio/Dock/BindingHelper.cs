@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +13,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Xml;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Dock
 {
     /// <summary>
@@ -24,7 +23,7 @@ namespace Dev2.Studio.Dock
     {
         #region Member Variables
 
-        private static bool _xmlLoaded;
+        static bool _xmlLoaded;
 
         #endregion //Member Variables
 
@@ -41,14 +40,20 @@ namespace Dev2.Studio.Dock
         public static void BindPath(DependencyObject container, object item, string path, DependencyProperty targetProperty)
         {
             if(string.IsNullOrEmpty(path))
+            {
                 return;
+            }
 
-            Binding b = new Binding();
+            var b = new Binding();
 
-            if(IsXmlNode(item))
+            if (IsXmlNode(item))
+            {
                 b.XPath = path;
+            }
             else
+            {
                 b.Path = new PropertyPath(path);
+            }
 
             BindingOperations.SetBinding(container, targetProperty, b);
         }
@@ -71,7 +76,7 @@ namespace Dev2.Studio.Dock
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static bool IsXmlNodeHelper(object item)
+        static bool IsXmlNodeHelper(object item)
         {
             _xmlLoaded = true;
             return item is XmlNode;

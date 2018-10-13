@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,7 @@ using System.Collections.Generic;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Studio.Interfaces;
 using Dev2.Validation;
 
 namespace Dev2.Activities.Designers2.SortRecords
@@ -23,21 +23,23 @@ namespace Dev2.Activities.Designers2.SortRecords
         public SortRecordsDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             SortOrderTypes = new List<string> { "Forward", "Backwards" };
             SelectedSelectedSort = string.IsNullOrEmpty(SelectedSort) ? SortOrderTypes[0] : SelectedSort;
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Recordset_Sort;
         }
 
         public List<string> SortOrderTypes { get; private set; }
 
-        public string SelectedSelectedSort { get { return (string)GetValue(SelectedSelectedSortProperty); } set { SetValue(SelectedSelectedSortProperty, value); } }
+        public string SelectedSelectedSort { get => (string)GetValue(SelectedSelectedSortProperty); set => SetValue(SelectedSelectedSortProperty, value); }
 
         public static readonly DependencyProperty SelectedSelectedSortProperty =
             DependencyProperty.Register("SelectedSelectedSort", typeof(string), typeof(SortRecordsDesignerViewModel), new PropertyMetadata(null, OnSelectedSelectedSortChanged));
 
-        // DO NOT bind to these properties - these are here for convenience only!!!
-       private  string SelectedSort { set { SetProperty(value);  }
-            get { return  GetProperty<string>(); }
+        string SelectedSort
+        {
+            set { SetProperty(value); }
+            get { return GetProperty<string>(); }
         }
 
         static void OnSelectedSelectedSortChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -53,19 +55,24 @@ namespace Dev2.Activities.Designers2.SortRecords
 
         public override void Validate()
         {
-
-
-            // ReSharper disable once ExplicitCallerInfoArgument
-            IsSingleRecordSetRule rule = new IsSingleRecordSetRule(() => GetProperty<string>("SortField"));
+            
+            var rule = new IsSingleRecordSetRule(() => GetProperty<string>("SortField"));
             var single = rule.Check();
             if (single != null)
             {
                 if (Errors == null )
+                {
                     Errors = new List<IActionableErrorInfo>();
+                }
+
                 Errors.Add(single);
             }
         }
 
-
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
+        }
     }
 }

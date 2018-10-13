@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -13,10 +12,15 @@ using System;
 using System.Activities;
 using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
-using System.Collections;
-using System.Collections.ObjectModel;
+using System.Activities.Statements;
+using System.Linq;
+using System.Reflection;
+using System.Windows;
+using System.Windows.Media;
+using Dev2.Studio.Core.Interfaces;
+using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Warewolf.Core;
 
-// ReSharper disable once CheckNamespace
 namespace Dev2.Studio.Core.Activities.Utils
 {
     public static class ModelItemUtils
@@ -28,77 +32,53 @@ namespace Dev2.Studio.Core.Activities.Utils
 
         public static void SetProperty<T>(string propertyName, T value, ModelItem modelItem)
         {
-            var modelProperty = modelItem.Properties[propertyName];
-            if(modelProperty != null)
+            if (propertyName != null)
             {
-                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                if(modelProperty.PropertyType == typeof(InArgument<T>))
+                var modelProperty = modelItem?.Properties[propertyName];
+                if (modelProperty != null)
                 {
-                    modelProperty.SetValue(InArgument<T>.FromValue(value));
-                }
-                else
-                {
-                    modelProperty.SetValue(value);
+                    if (modelProperty.PropertyType == typeof(InArgument<T>))
+                    {
+                        modelProperty.SetValue(InArgument<T>.FromValue(value));
+                    }
+                    else
+                    {
+                        modelProperty.SetValue(value);
+                    }
                 }
             }
         }
 
-        public static ModelItem CreateModelItem(object objectToMakeModelItem)
-        {
-            EditingContext ec = new EditingContext();
-            ModelTreeManager mtm = new ModelTreeManager(ec);
-            
-            mtm.Load(objectToMakeModelItem);
-           
-            return mtm.Root;
-        }
-
         public static ModelItem CreateModelItem(object parent, object objectToMakeModelItem)
         {
-            EditingContext ec = new EditingContext();
-            ModelTreeManager mtm = new ModelTreeManager(ec);
+            var ec = new EditingContext();
+            var mtm = new ModelTreeManager(ec);
 
             return mtm.CreateModelItem(CreateModelItem(parent), objectToMakeModelItem);
         }
 
-        public static ModelItem CreateModelItem()
-        {
-            return CreateModelItem(new object());
-        }
 
-        public static ModelItemCollection CreateModelItemCollection(ICollection objectToMakeModelItem)
+        public static ModelItem CreateModelItem() => CreateModelItem(new object());
+
+        public static ModelItem CreateModelItem(object objectToMakeModelItem)
         {
-            EditingContext ec = new EditingContext();
-            ModelTreeManager mtm = new ModelTreeManager(ec);
+            var ec = new EditingContext();
+            var mtm = new ModelTreeManager(ec);
 
             mtm.Load(objectToMakeModelItem);
 
-            return mtm.Root as ModelItemCollection;
-        }
-
-        public static ModelItemCollection CreateModelItemCollection(object parent, object objectToMakeModelItem)
-        {
-            EditingContext ec = new EditingContext();
-            ModelTreeManager mtm = new ModelTreeManager(ec);
-
-            return mtm.CreateModelItem(CreateModelItem(parent), objectToMakeModelItem) as ModelItemCollection;
-        }
-
-        public static ModelItemCollection CreateModelItemCollection()
-        {
-            return CreateModelItemCollection(new Collection<object>());
+            return mtm.Root;
         }
 
         public static T GetProperty<T>(this ModelItem modelItem, string propertyName)
         {
             var modelProperty = modelItem.Properties[propertyName];
             object value = default(T);
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                if(modelProperty.PropertyType == typeof(InArgument<T>))
+                if (modelProperty.PropertyType == typeof(InArgument<T>))
                 {
-                    var arg = modelProperty.ComputedValue as InArgument<T>;
-                    if(arg != null)
+                    if (modelProperty.ComputedValue is InArgument<T> arg)
                     {
                         value = arg.Expression.ToString();
                     }
@@ -108,14 +88,10 @@ namespace Dev2.Studio.Core.Activities.Utils
                     value = modelProperty.ComputedValue;
                 }
 
-                if(value != null)
+                if (value != null && typeof(T) == typeof(Guid))
                 {
-                    if(typeof(T) == typeof(Guid))
-                    {
-                        Guid guid;
-                        Guid.TryParse(value.ToString(), out guid);
-                        value = guid;
-                    }
+                    Guid.TryParse(value.ToString(), out Guid guid);
+                    value = guid;
                 }
             }
             return (T)value;
@@ -124,52 +100,70 @@ namespace Dev2.Studio.Core.Activities.Utils
         public static object GetProperty(string propertyName, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties[propertyName];
-            return modelProperty != null ? modelProperty.ComputedValue : null;
+            return modelProperty?.ComputedValue;
         }
 
-        public static object GetProperty(this ModelItem modelItem, string propertyName)
-        {
-            return GetProperty(propertyName, modelItem);
-        }
-
-        /// <summary>
-        /// Determines whether [is local service] [the specified URI].
-        /// </summary>
-        /// <param name="uri">The URI.</param>
-        /// <returns>
-        ///   <c>true</c> if [is local service] [the specified URI]; otherwise, <c>false</c>.
-        /// </returns>
-        public static bool IsLocalService(string uri)
-        {
-            if(uri.IndexOf("localhost:", StringComparison.Ordinal) >= 0 || uri.IndexOf("127.0.0.1:", StringComparison.Ordinal) >= 0)
-            {
-                return true;
-            }
-
-            return false;
-        }
+        public static object GetProperty(this ModelItem modelItem, string propertyName) => GetProperty(propertyName, modelItem);
 
         public static Guid GetUniqueID(ModelItem modelItem)
         {
             var instanceIDStr = GetProperty("UniqueID", modelItem) as string;
-            Guid instanceID;
-            Guid.TryParse(instanceIDStr, out instanceID);
+            Guid.TryParse(instanceIDStr, out var instanceID);
             return instanceID;
         }
 
         public static Guid TryGetResourceID(ModelItem modelItem)
         {
-            var resourceIDArg = modelItem.Properties["ResourceID"];
-            if(resourceIDArg != null && resourceIDArg.ComputedValue != null)
+            var resourceIdArg = modelItem.Properties["ResourceID"];
+            if (resourceIdArg != null && resourceIdArg.ComputedValue != null)
             {
-                if(resourceIDArg.ComputedValue is InArgument<Guid>)
+                if (resourceIdArg.ComputedValue is InArgument<Guid> argument)
                 {
-                    var resourceIDStr = (resourceIDArg.ComputedValue as InArgument<Guid>).Expression;
-                    return Guid.Parse(resourceIDStr.ToString());
+                    var resourceIdStr = argument.Expression;
+                    return Guid.Parse(resourceIdStr.ToString());
                 }
-                return (Guid)resourceIDArg.ComputedValue;
+                return (Guid)resourceIdArg.ComputedValue;
             }
             return Guid.Empty;
+        }
+
+        public static T GetCurrentValue<T>(this ModelItem modelItem) where T : class
+        {
+            var currentValue = modelItem.GetCurrentValue();
+            return currentValue as T;
+        }
+
+        public static ImageSource GetImageSourceForTool(this ModelItem modelItem)
+        {
+            var computedValue = modelItem.GetCurrentValue();
+            if (computedValue is FlowStep && modelItem.Content?.Value != null)
+            {
+                computedValue = modelItem.Content.Value.GetCurrentValue();
+            }
+
+            var type = computedValue.GetType();
+            var image = GetImageSourceForToolFromType(type);
+            return image;
+        }
+        public static ImageSource GetImageSourceForToolFromType(Type itemType)
+        {
+            var type = itemType;
+            if (type.Name == "DsfDecision" || type.Name == "FlowDecision")
+            {
+                type = typeof(DsfFlowDecisionActivity);
+            }
+            if (type.Name == "DsfSwitch")
+            {
+                type = typeof(DsfFlowSwitchActivity);
+            }
+            var currentApp = CustomContainer.Get<IApplicationAdaptor>();
+            var application = currentApp ?? new ApplicationAdaptor(Application.Current);
+            if (type.GetCustomAttributes().Any(a => a is ToolDescriptorInfo))
+            {
+                var desc = type.GetDescriptorFromAttribute();
+                return application?.TryFindResource(desc.Icon) as ImageSource;
+            }
+            return application?.TryFindResource("Explorer-WorkflowService") as ImageSource;
         }
     }
 }

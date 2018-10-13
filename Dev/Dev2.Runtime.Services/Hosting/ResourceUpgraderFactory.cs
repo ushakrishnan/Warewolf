@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,23 +18,20 @@ namespace Dev2.Runtime.Hosting
     public static class ResourceUpgraderFactory
     {
 
-        public static IResourceUpgrader GetUpgrader()
-        {
-            return new ResourceUpgrader(CreateUpgradePath());
-        }
+        public static IResourceUpgrader GetUpgrader() => new ResourceUpgrader(CreateUpgradePath());
 
-        private static List<IUpgradePath> CreateUpgradePath()
+        static List<IUpgradePath> CreateUpgradePath()
         {
-            List<IUpgradePath> upgrades = new List<IUpgradePath>
+            var upgrades = new List<IUpgradePath>
             {
                 new UpgradePath(
-                    upgradesFrom: new Version(), 
-                    upgradesTo: new Version(0, 4, 17, 27001), 
+                    upgradesFrom: new Version(),
+                    upgradesTo: new Version(0, 4, 17, 27001),
                     upgrade: new BaseResourceUpgrader()
                     ),
                     new UpgradePath(
-                    upgradesFrom: new Version(0,4,2,3), 
-                    upgradesTo: new Version(0, 5, 22, 27001), 
+                    upgradesFrom: new Version(0,4,2,3),
+                    upgradesTo: new Version(0, 5, 22, 27001),
                     upgrade: new EncryptionResourceUpgrader()
                     )
             };

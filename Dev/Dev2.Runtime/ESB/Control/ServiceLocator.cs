@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,16 +11,21 @@
 using System;
 using System.IO;
 using System.Linq;
+using Dev2.Common.Interfaces.Monitoring;
 using Dev2.DynamicServices;
 using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Control
 {
     /// <summary>
     /// Used to locate a service to execute ;)
     /// </summary>
-    public class ServiceLocator
+    public class ServiceLocator : IServiceLocator
     {
+        readonly IPerformanceCounter _perfCounter = CustomContainer.Get<IWarewolfPerformanceCounterLocater>().GetCounter("Count of requests for workflows which don't exist");
+        readonly IResourceCatalog _resourceCatalog = ResourceCatalog.Instance;
         #region New Mgt Methods
 
         /// <summary>
@@ -33,14 +37,26 @@ namespace Dev2.Runtime.ESB.Control
         /// <exception cref="System.Runtime.Serialization.InvalidDataContractException">Null workspace</exception>
         public DynamicService FindService(string serviceName, Guid workspaceID)
         {
-
             if(string.IsNullOrEmpty(serviceName))
             {
-                throw new InvalidDataException("Empty or null service passed in");
+                throw new InvalidDataException(ErrorResource.ServiceIsNull);
             }
 
-            var services = ResourceCatalog.Instance.GetDynamicObjects<DynamicService>(workspaceID, serviceName);
-            return services.FirstOrDefault();
+            var res = _resourceCatalog.GetResource(workspaceID, serviceName);
+            DynamicService ret = null;
+            if (res != null)
+            {
+                ret = ServiceActionRepo.Instance.ReadCache(res.ResourceID);
+            }
+            if (ret == null)
+            {
+                ret = _resourceCatalog.GetDynamicObjects<DynamicService>(workspaceID, serviceName).FirstOrDefault();                
+                if (ret == null)
+                {
+                    _perfCounter.Increment();
+                }
+            }
+            return ret;
         }
 
         /// <summary>
@@ -52,22 +68,30 @@ namespace Dev2.Runtime.ESB.Control
         /// <exception cref="System.Runtime.Serialization.InvalidDataContractException">Null workspace</exception>
         public DynamicService FindService(Guid serviceID, Guid workspaceID)
         {
-
             if(serviceID == Guid.Empty)
             {
-                throw new InvalidDataException("Empty or null service passed in");
+                throw new InvalidDataException(ErrorResource.ServiceIsNull);
             }
 
-            var services = ResourceCatalog.Instance.GetDynamicObjects<DynamicService>(workspaceID, serviceID);
-            var firstOrDefault = services.FirstOrDefault();
-            if(firstOrDefault != null)
+            var firstOrDefault = ServiceActionRepo.Instance.ReadCache(serviceID);
+                        
+            if (firstOrDefault == null)
             {
-                firstOrDefault.ServiceId = serviceID;
-                firstOrDefault.Actions.ForEach(action =>
+                firstOrDefault = _resourceCatalog.GetDynamicObjects<DynamicService>(workspaceID, serviceID).FirstOrDefault();
+                if (firstOrDefault != null)
                 {
-                    action.ServiceID = serviceID;
-                });
+                    firstOrDefault.ServiceId = serviceID;
+                    firstOrDefault.Actions.ForEach(action =>
+                    {
+                        action.ServiceID = serviceID;
+                    });
+                }
+                if (firstOrDefault == null)
+                {
+                    _perfCounter.Increment();
+                }
             }
+
             return firstOrDefault;
         }
 
@@ -80,17 +104,17 @@ namespace Dev2.Runtime.ESB.Control
         /// <exception cref="System.Runtime.Serialization.InvalidDataContractException">Null workspace</exception>
         public Source FindSourceByName(string sourceName, Guid workspaceID)
         {
-
-            if(string.IsNullOrEmpty(sourceName))
+            if (string.IsNullOrEmpty(sourceName))
             {
-                throw new InvalidDataException("Empty or null service passed in");
+                throw new InvalidDataException(ErrorResource.ServiceIsNull);
             }
 
-            var sources = ResourceCatalog.Instance.GetDynamicObjects<Source>(workspaceID, sourceName);
-            return sources.FirstOrDefault();
+            return _resourceCatalog.GetDynamicObjects<Source>(workspaceID, sourceName).FirstOrDefault();
         }
 
         #endregion
 
     }
+
+
 }

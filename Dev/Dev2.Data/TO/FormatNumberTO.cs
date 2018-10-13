@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +9,15 @@
 */
 
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.DataList.Contract;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Data.TO
 {
-    // ReSharper disable InconsistentNaming
-    public class FormatNumberTO
-    // ReSharper restore InconsistentNaming
+    
+    public class FormatNumberTO : IFormatNumberTO
+    
+
     {
         #region Properties
 
@@ -58,10 +59,7 @@ namespace Dev2.Data.TO
 
         #region Methods
 
-        public enRoundingType GetRoundingTypeEnum()
-        {
-            return (enRoundingType)Dev2EnumConverter.GetEnumFromStringDiscription(RoundingType, typeof(enRoundingType));
-        }
+        public enRoundingType GetRoundingTypeEnum() => (enRoundingType)Dev2EnumConverter.GetEnumFromStringDiscription(RoundingType, typeof(enRoundingType));
 
         #endregion Methods
     }

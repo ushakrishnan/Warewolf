@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +21,9 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
     {
         #region Class Members
 
-        private const string _nodeSeperatorSymbol = ".";
-        private const string _attributeSeperatorSymbol = ":";
-        private const string _enumerableSymbol = "()";
+        const string _nodeSeperatorSymbol = ".";
+        const string _attributeSeperatorSymbol = ":";
+        const string _enumerableSymbol = "()";
 
         #endregion Class Members
 
@@ -63,7 +63,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
 
             foreach (string segment in ActualPath.Split(NodeSeperatorSymbol.ToCharArray()))
             {
-                string[] nestedSegments = segment.Split(AttributeSeperatorSymbol.ToCharArray());
+                var nestedSegments = segment.Split(AttributeSeperatorSymbol.ToCharArray());
 
                 if (nestedSegments.Length >= 1)
                 {
@@ -82,50 +82,25 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
         public override IPathSegment CreatePathSegment(string pathSegmentString)
         {
             XmlPathSegment xmlPathSegment;
-            if (pathSegmentString.EndsWith(EnumerableSymbol))
-            {
-                xmlPathSegment = new XmlPathSegment(pathSegmentString.TrimEnd(EnumerableSymbol.ToArray()), true);
-            }
-            else
-            {
-                xmlPathSegment = new XmlPathSegment(pathSegmentString, false);
-            }
+            xmlPathSegment = pathSegmentString.EndsWith(EnumerableSymbol) ? new XmlPathSegment(pathSegmentString.TrimEnd(EnumerableSymbol.ToArray()), true) : new XmlPathSegment(pathSegmentString, false);
             return xmlPathSegment;
         }
 
-        public IPathSegment CreatePathSegment(XElement element)
-        {
-            return new XmlPathSegment(element.Name.ToString(), element.Elements().Count() > 1);
-        }
+        public IPathSegment CreatePathSegment(XElement element) => new XmlPathSegment(element.Name.ToString(), element.Elements().Count() > 1);
 
-        public IPathSegment CreatePathSegment(XAttribute attribute)
-        {
-            return new XmlPathSegment(attribute.Name.ToString(), false);
-        }
+        public IPathSegment CreatePathSegment(XAttribute attribute) => new XmlPathSegment(attribute.Name.ToString(), false);
 
-        public IPathSegment CreateAttributePathSegment(string attribute)
-        {
-            return new XmlPathSegment(attribute, false, true);
-        }
+        public IPathSegment CreateAttributePathSegment(string attribute) => new XmlPathSegment(attribute, false, true);
 
         #endregion Methods
 
         #region Static Properties
 
-        public static string EnumerableSymbol
-        {
-            get { return _enumerableSymbol; }
-        }
+        public static string EnumerableSymbol => _enumerableSymbol;
 
-        public static string NodeSeperatorSymbol
-        {
-            get { return _nodeSeperatorSymbol; }
-        }
+        public static string NodeSeperatorSymbol => _nodeSeperatorSymbol;
 
-        public static string AttributeSeperatorSymbol
-        {
-            get { return _attributeSeperatorSymbol; }
-        }
+        public static string AttributeSeperatorSymbol => _attributeSeperatorSymbol;
 
         #endregion Static Properties
     }

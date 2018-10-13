@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +8,6 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -20,8 +18,7 @@ namespace Dev2.Tests.Activities.TOTests
     /// Summary description for DataMergeTOTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class DataMergeTOTests
     {
         [TestMethod]
@@ -177,7 +174,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataMergeDTO { InputVariable = "[[ddd&]]", MergeType = DataMergeDTO.MergeTypeNone, Alignment = "Right", At = "1", Padding = " " };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "Input", "Variable name [[ddd&]] contains invalid character(s)");
+            Verify_RuleSet(dto, "Input", "Variable name [[ddd&]] contains invalid character(s). Only use alphanumeric _ and - ");
 
         }
 
@@ -236,7 +233,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataMergeDTO { Padding = "h]]", At = "1" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "Padding", "Invalid expression: opening and closing brackets don't match");
+            Verify_RuleSet(dto, "Padding", "Result - Invalid expression: opening and closing brackets don't match");
         }
 
         [TestMethod]
@@ -260,7 +257,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataMergeDTO { Padding = "aa", At = "1" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "Padding", "must be a single character");
+            Verify_RuleSet(dto, "Padding", "Must be a single character");
         }
 
         [TestMethod]
@@ -294,9 +291,9 @@ namespace Dev2.Tests.Activities.TOTests
         {
             //------------Setup for test--------------------------
             var dto = new DataMergeDTO { InputVariable = "[[a]]", At = "h]]" };
-
+            
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", "Invalid expression: opening and closing brackets don't match");
+            Verify_RuleSet(dto, "At", "Result - Invalid expression: opening and closing brackets don't match");
         }
 
         [TestMethod]
@@ -320,7 +317,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataMergeDTO { InputVariable = "[[a]]", At = "" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", "cannot be empty");
+            Verify_RuleSet(dto, "At", Warewolf.Resource.Errors.ErrorResource.CannotBeNull);
         }
 
         [TestMethod]
@@ -344,7 +341,7 @@ namespace Dev2.Tests.Activities.TOTests
             var dto = new DataMergeDTO { InputVariable = "[[a]]", At = "-1" };
 
             //------------Execute Test---------------------------
-            Verify_RuleSet(dto, "At", "must be a real number");
+            Verify_RuleSet(dto, "At", Warewolf.Resource.Errors.ErrorResource.MustBeRealNumber);
         }
 
         [TestMethod]

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,7 @@ using System.Collections.Generic;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.DateAndTime;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.DateTimeDifference
 {
@@ -22,9 +22,10 @@ namespace Dev2.Activities.Designers2.DateTimeDifference
         public DateTimeDifferenceDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             OutputTypes = new List<string>(DateTimeComparer.OutputFormatTypes);
             SelectedOutputType = string.IsNullOrEmpty(OutputType) ? OutputTypes[0] : OutputType;
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Date_Time_Diff;
         }
 
         public List<string> OutputTypes { get; private set; }
@@ -46,10 +47,20 @@ namespace Dev2.Activities.Designers2.DateTimeDifference
         }
 
         // DO NOT bind to these properties - these are here for convenience only!!!
-        string OutputType { set { SetProperty(value); } get { return GetProperty<string>(); } }
+        string OutputType
+        {
+            set { SetProperty(value); }
+            get { return GetProperty<string>(); }
+        }
 
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

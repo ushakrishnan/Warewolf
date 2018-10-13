@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,51 +19,46 @@ using System.Xml.Linq;
 using ChinhDo.Transactions;
 using Dev2.Common;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces.Scheduler.Interfaces;
+using Dev2.Data.ServiceModel;
 using Dev2.Runtime.Security;
 using Dev2.Runtime.ServiceModel.Data;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.Hosting
 {
-
-    /// <summary>
-    /// Transfer FileStream and FilePath together
-    /// </summary>
-    // ReSharper disable InconsistentNaming
-    internal class ResourceBuilderTO
-    // ReSharper restore InconsistentNaming
+    class ResourceBuilderTO
     {
         internal string FilePath;
         internal FileStream FileStream;
     }
 
-    /// <summary>
-    /// Used to build up the resource catalog ;)
-    /// </summary>
     public class ResourceCatalogBuilder
     {
-        private readonly List<IResource> _resources = new List<IResource>();
-        private readonly HashSet<Guid> _addedResources = new HashSet<Guid>();
-        private readonly IResourceUpgrader _resourceUpgrader;
-        private readonly object _addLock = new object();
+        readonly List<IResource> _resources = new List<IResource>();
+        readonly HashSet<Guid> _addedResources = new HashSet<Guid>();
+        readonly IResourceUpgrader _resourceUpgrader;
+        readonly List<DuplicateResource> _duplicateResources = new List<DuplicateResource>();
+        readonly object _addLock = new object();
+        readonly List<string> _convertToBiteExtension = new List<string>();
 
-        public ResourceCatalogBuilder(IResourceUpgrader resourceUpgrader)
-        {
-            _resourceUpgrader = resourceUpgrader;
-        }
-        public ResourceCatalogBuilder()
-        {
-            _resourceUpgrader = ResourceUpgraderFactory.GetUpgrader();
-        }
-        public IList<IResource> ResourceList { get { return _resources; } }
+        public ResourceCatalogBuilder(IResourceUpgrader resourceUpgrader) => _resourceUpgrader = resourceUpgrader;
+
+        public ResourceCatalogBuilder() => _resourceUpgrader = ResourceUpgraderFactory.GetUpgrader();
+
+        public IList<IResource> ResourceList => _resources;
+        public List<DuplicateResource> DuplicateResources => _duplicateResources;
 
 
-        public void BuildCatalogFromWorkspace(string workspacePath, params string[] folders)
+        public void TryBuildCatalogFromWorkspace(string workspacePath, params string[] folders)
         {
             if (string.IsNullOrEmpty(workspacePath))
             {
                 throw new ArgumentNullException("workspacePath");
             }
+
             if (folders == null)
             {
                 throw new ArgumentNullException("folders");
@@ -79,135 +73,7 @@ namespace Dev2.Runtime.Hosting
 
             try
             {
-
-                foreach (var path in folders.Where(f => !string.IsNullOrEmpty(f) && !f.EndsWith("VersionControl")).Select(f => Path.Combine(workspacePath, f)))
-                {
-                    if (!Directory.Exists(path))
-                    {
-                        continue;
-                    }
-
-                    var files = Directory.GetFiles(path, "*.xml");
-                    foreach (var file in files)
-                    {
-
-                        FileAttributes fa = File.GetAttributes(file);
-
-                        if ((fa & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
-                        {
-                            Dev2Logger.Log.Info("Removed READONLY Flag from [ " + file + " ]");
-                            File.SetAttributes(file, FileAttributes.Normal);
-                        }
-
-                        // Use the FileStream class, which has an option that causes asynchronous I/O to occur at the operating system level.  
-                        // In many cases, this will avoid blocking a ThreadPool thread.  
-                        var sourceStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, true);
-                        streams.Add(new ResourceBuilderTO { FilePath = file, FileStream = sourceStream });
-
-                    }
-                }
-
-                // Use the parallel task library to process file system ;)
-                streams.ForEach(currentItem =>
-                {
-
-                    XElement xml = null;
-
-                    try
-                    {
-                        xml = XElement.Load(currentItem.FileStream);
-                    }
-                    catch (Exception e)
-                    {
-                        Dev2Logger.Log.Error("Resource [ " + currentItem.FilePath + " ] caused " + e.Message);
-                    }
-
-                    StringBuilder result = xml.ToStringBuilder();
-
-                    var isValid = xml != null && HostSecurityProvider.Instance.VerifyXml(result);
-                    if (isValid)
-                    {
-                        var resource = new Resource(xml)
-                        {
-                            FilePath = currentItem.FilePath
-                        };
-
-                        //2013.08.26: Prevent duplicate unassigned folder in save dialog and studio explorer tree by interpreting 'unassigned' as blank
-                        if (resource.ResourcePath.ToUpper() == "UNASSIGNED")
-                        {
-                            resource.ResourcePath = string.Empty;
-                            // DON'T FORCE A SAVE HERE - EVER!!!!
-                        }
-                        xml = _resourceUpgrader.UpgradeResource(xml, Assembly.GetExecutingAssembly().GetName().Version, a =>
-                        {
-
-                            var fileManager = new TxFileManager();
-                            using (TransactionScope tx = new TransactionScope())
-                            {
-                                try
-                                {
-
-                                    StringBuilder updateXml = a.ToStringBuilder();
-                                    var signedXml = HostSecurityProvider.Instance.SignXml(updateXml);
-
-                                    signedXml.WriteToFile(currentItem.FilePath, Encoding.UTF8, fileManager);
-                                    tx.Complete();
-                                }
-                                catch 
-                                {
-                                    try
-                                    {
-                                        Transaction.Current.Rollback();
-                                    }
-                                    catch (Exception err)
-                                    {
-                                        Dev2Logger.Log.Error(err);
-                                    }
-                                    throw;
-                                }
-                            }
-
-                        });
-                        if (resource.IsUpgraded)
-                        {
-                            // Must close the source stream first and then add a new target stream 
-                            // otherwise the file will be remain locked
-                            currentItem.FileStream.Close();
-
-                            xml = resource.UpgradeXml(xml, resource);
-
-                            StringBuilder updateXml = xml.ToStringBuilder();
-                            var signedXml = HostSecurityProvider.Instance.SignXml(updateXml);
-                             var fileManager = new TxFileManager();
-                             using (TransactionScope tx = new TransactionScope())
-                             {
-                                 try
-                                 {
-                                     signedXml.WriteToFile(currentItem.FilePath, Encoding.UTF8,fileManager);
-                                     tx.Complete();
-                                 }
-                                 catch
-                                 {
-                                     Transaction.Current.Rollback();
-                                     throw;
-                                 }
-                             }
-                        }
-                        if (resource.VersionInfo == null)
-                        {
-
-                        }
-
-                        lock (_addLock)
-                        {
-                            AddResource(resource, currentItem.FilePath);
-                        }
-                    }
-                    else
-                    {
-                        Dev2Logger.Log.Debug(string.Format("'{0}' wasn't loaded because it isn't signed or has modified since it was signed.", currentItem.FilePath));
-                    }
-                });
+                BuildCatalogFromWorkspace(workspacePath, folders, streams);
             }
             finally
             {
@@ -218,7 +84,234 @@ namespace Dev2.Runtime.Hosting
                 {
                     stream.FileStream.Close();
                 }
+                UpdateExtensions(_convertToBiteExtension);
             }
+        }
+       
+        private void BuildCatalogFromWorkspace(string workspacePath, string[] folders, List<ResourceBuilderTO> streams)
+        {
+            foreach (var path in folders.Where(f => !string.IsNullOrEmpty(f)).Select(f => Path.Combine(workspacePath, f)))
+            {
+                if (!Directory.Exists(path))
+                {
+                    continue;
+                }
+                var dir = new DirectoryHelper();
+                var files = dir.GetFilesByExtensions(path, ".xml", ".bite");
+                foreach (var file in files)
+                {
+
+                    var fa = File.GetAttributes(file);
+
+                    if ((fa & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
+                    {
+                        Dev2Logger.Info("Removed READONLY Flag from [ " + file + " ]", GlobalConstants.WarewolfInfo);
+                        File.SetAttributes(file, FileAttributes.Normal);
+                    }
+
+                    // Use the FileStream class, which has an option that causes asynchronous I/O to occur at the operating system level.  
+                    // In many cases, this will avoid blocking a ThreadPool thread.  
+                    var sourceStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, true);
+                    streams.Add(new ResourceBuilderTO { FilePath = file, FileStream = sourceStream });
+
+                }
+            }
+
+            // Use the parallel task library to process file system ;)
+            IList<Type> allTypes = new List<Type>();
+            var connectionTypeName = typeof(Connection).Name;
+            var dropBoxSourceName = typeof(DropBoxSource).Name;
+            var sharepointSourceName = typeof(SharepointSource).Name;
+            var dbType = typeof(DbSource).Name;
+            try
+            {
+                var resourceBaseType = typeof(IResourceSource);
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                var types = assemblies
+                    .SelectMany(s => s.GetTypes())
+                    .Where(p => resourceBaseType.IsAssignableFrom(p));
+                allTypes = types as IList<Type> ?? types.ToList();
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error(ErrorResource.ErrorLoadingTypes, e, GlobalConstants.WarewolfError);
+            }
+            streams.ForEach(currentItem =>
+            {
+
+                XElement xml = null;
+                try
+                {
+                    xml = XElement.Load(currentItem.FileStream);
+                }
+                catch (Exception e)
+                {
+                    Dev2Logger.Error("Resource [ " + currentItem.FilePath + " ] caused " + e.Message, GlobalConstants.WarewolfError);
+                }
+
+                var result = xml?.ToStringBuilder();
+
+                var isValid = result != null && HostSecurityProvider.Instance.VerifyXml(result);
+                var typeName = xml?.AttributeSafe("Type");
+                if (isValid)
+                {
+                    //TODO: Remove this after V1 is released. All will be updated.
+                    #region old typing to be removed after V1
+                    if (!IsWarewolfResource(xml))
+                    {
+                        return;
+                    }
+                    if (typeName == "Unknown")
+                    {
+                        var servertype = xml.AttributeSafe("ResourceType");
+                        if (servertype != null && servertype == dbType)
+                        {
+                            xml.SetAttributeValue("Type", dbType);
+                            typeName = dbType;
+                        }
+                    }
+
+                    if (typeName == "Dev2Server" || typeName == "Server" || typeName == "ServerSource")
+                    {
+                        xml.SetAttributeValue("Type", connectionTypeName);
+                        typeName = connectionTypeName;
+                    }
+
+                    if (typeName == "OauthSource")
+                    {
+                        xml.SetAttributeValue("Type", dropBoxSourceName);
+                        typeName = dropBoxSourceName;
+                    }
+                    if (typeName == "SharepointServerSource")
+                    {
+                        xml.SetAttributeValue("Type", sharepointSourceName);
+                        typeName = sharepointSourceName;
+                    }
+                    #endregion
+
+                    Type type = null;
+                    if (allTypes.Count != 0)
+                    {
+                        type = allTypes.FirstOrDefault(type1 => type1.Name == typeName);
+                    }
+                    Resource resource;
+                    if (type != null)
+                    {
+                        resource = (Resource)Activator.CreateInstance(type, xml);
+                    }
+                    else
+                    {
+                        resource = new Resource(xml);
+                    }
+                    if (currentItem.FilePath.EndsWith(".xml"))
+                    {
+                        _convertToBiteExtension.Add(currentItem.FilePath);
+                        resource.FilePath = currentItem.FilePath.Replace(".xml", ".bite");
+                    }
+                    else
+                    {
+                        resource.FilePath = currentItem.FilePath;
+                    }
+                    xml = _resourceUpgrader.UpgradeResource(xml, Assembly.GetExecutingAssembly().GetName().Version, a =>
+                    {
+
+                        var fileManager = new TxFileManager();
+                        using (TransactionScope tx = new TransactionScope())
+                        {
+                            try
+                            {
+
+                                var updateXml = a.ToStringBuilder();
+                                var signedXml = HostSecurityProvider.Instance.SignXml(updateXml);
+                                signedXml.WriteToFile(currentItem.FilePath, Encoding.UTF8, fileManager);
+                                tx.Complete();
+                            }
+                            catch
+                            {
+                                try
+                                {
+                                    Transaction.Current.Rollback();
+                                }
+                                catch (Exception err)
+                                {
+                                    Dev2Logger.Error(err, GlobalConstants.WarewolfError);
+                                }
+                                throw;
+                            }
+                        }
+
+                    });
+                    if (resource.IsUpgraded)
+                    {
+                        // Must close the source stream first and then add a new target stream 
+                        // otherwise the file will be remain locked
+                        currentItem.FileStream.Close();
+
+                        xml = resource.UpgradeXml(xml, resource);
+
+                        var updateXml = xml.ToStringBuilder();
+                        var signedXml = HostSecurityProvider.Instance.SignXml(updateXml);
+                        var fileManager = new TxFileManager();
+                        using (TransactionScope tx = new TransactionScope())
+                        {
+                            try
+                            {
+                                signedXml.WriteToFile(currentItem.FilePath, Encoding.UTF8, fileManager);
+                                tx.Complete();
+                            }
+                            catch
+                            {
+                                Transaction.Current.Rollback();
+                                throw;
+                            }
+                        }
+                    }
+
+                    lock (_addLock)
+                    {
+                        AddResource(resource, currentItem.FilePath);
+                    }
+                }
+                else
+                {
+                    Dev2Logger.Debug(string.Format("'{0}' wasn't loaded because it isn't signed or has modified since it was signed.", currentItem.FilePath), GlobalConstants.WarewolfDebug);
+                }
+            });
+        }
+
+        private void UpdateExtensions(List<string> extensionsToUpdateToBite)
+        {
+            foreach (var item in extensionsToUpdateToBite)
+            {
+                var updatedFile = String.Empty;
+                updatedFile = Path.ChangeExtension(item, ".bite");
+                if (File.Exists(updatedFile) && File.Exists(item))
+                {
+                    File.Delete(updatedFile);
+                    File.Move(item, updatedFile);
+                }
+                else
+                {
+                    File.Move(item, updatedFile);
+                }
+            }
+        }
+
+        private bool IsWarewolfResource(XElement xml)
+        {
+            var resourceType = xml.AttributeSafe("ResourceType");
+            var type = xml.AttributeSafe("Type");
+            var action = xml.Descendants("Action").FirstOrDefault();
+            var actionResourceType = action?.AttributeSafe("ResourceType");
+            var actionType = action?.AttributeSafe("Type");
+            if (string.IsNullOrEmpty(resourceType)
+                && string.IsNullOrEmpty(type)
+                && string.IsNullOrEmpty(actionResourceType)
+                && string.IsNullOrEmpty(actionType))
+            {
+                return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -228,30 +321,65 @@ namespace Dev2.Runtime.Hosting
         /// <param name="filePath">The file path.</param>
         private void AddResource(IResource res, string filePath)
         {
-            if (!_addedResources.Contains(res.ResourceID))
+            if (!filePath.Contains("VersionControl"))
             {
-                _resources.Add(res);
-                _addedResources.Add(res.ResourceID);
-            }
-            else
-            {
-                var dupRes = _resources.Find(c => c.ResourceID == res.ResourceID);
-                if (dupRes != null)
+                if (!_addedResources.Contains(res.ResourceID))
                 {
-                    Dev2Logger.Log.Debug(
-                        string.Format(
-                            "Resource '{0}' from file '{1}' wasn't loaded because a resource with the same name has already been loaded from file '{2}'.",
-                            res.ResourceName, filePath, dupRes.ResourceName));
+                    _resources.Add(res);
+                    _addedResources.Add(res.ResourceID);
                 }
                 else
                 {
-                    Dev2Logger.Log.Debug(
-                        string.Format(
-                            "Resource '{0}' from file '{1}' wasn't loaded because a resource with the same name has already been loaded but cannot find its location.",
-                            res.ResourceName, filePath));
+                    var dupRes = _resources.Find(c => c.ResourceID == res.ResourceID);
+                    if (dupRes != null)
+                    {
+                        CreateDupResource(dupRes, filePath);
+                        Dev2Logger.Debug(
+                            string.Format(ErrorResource.ResourceAlreadyLoaded,
+                                res.ResourceName, filePath, dupRes.FilePath), GlobalConstants.WarewolfDebug);
+                    }
+                    else
+                    {
+                        Dev2Logger.Debug(string.Format(
+                                "Resource '{0}' from file '{1}' wasn't loaded because a resource with the same name has already been loaded but cannot find its location.",
+                                res.ResourceName, filePath), GlobalConstants.WarewolfDebug);
+                    }
                 }
             }
         }
 
+        void CreateDupResource(IResource resource, string filePath)
+        {
+
+            {
+                var dupRes = _resources.Find(c => c.ResourceID == resource.ResourceID);
+                if (dupRes != null)
+                {
+                    if (_duplicateResources.Any(p => p.ResourceId == dupRes.ResourceID))
+                    {
+                        var firstDup = _duplicateResources.First(p => p.ResourceId == dupRes.ResourceID);
+                        if (!firstDup.ResourcePath.Contains(filePath))
+                        {
+                            firstDup.ResourcePath.Add(filePath);
+                        }
+                    }
+                    var duplicatePaths = filePath == dupRes.FilePath ? string.Empty : filePath;
+                    var resourcePaths = new List<string> { dupRes.FilePath };
+                    if (!string.IsNullOrEmpty(duplicatePaths))
+                    {
+                        resourcePaths.Add(duplicatePaths);
+                        var dupresource = new DuplicateResource
+                        {
+                            ResourceId = resource.ResourceID
+                            ,
+                            ResourceName = resource.ResourceName
+                            ,
+                            ResourcePath = resourcePaths
+                        };
+                        _duplicateResources.Add(dupresource);
+                    }
+                }
+            }
+        }
     }
 }

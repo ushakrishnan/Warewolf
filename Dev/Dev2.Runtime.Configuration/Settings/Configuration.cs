@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,30 +12,20 @@ using System;
 using System.Activities.XamlIntegration;
 using System.Collections.Concurrent;
 using System.ComponentModel;
-using System.Windows.Controls;
 using System.Xml.Linq;
 using Caliburn.Micro;
-using Dev2.Runtime.Configuration.ComponentModel;
-using Dev2.Runtime.Configuration.ViewModels;
-using Dev2.Runtime.Configuration.Views;
 
 namespace Dev2.Runtime.Configuration.Settings
 {
-    // ------------------------------------------------------------------------------
-    // - Add new SettingsBase derived class in this name space
-    // - Then add new property for class here and initialize it in constructors
-    // - Then add property to ToXml() 
-    // ------------------------------------------------------------------------------
     public sealed class Configuration : PropertyChangedBase
     {
-        public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache = new ConcurrentDictionary<Guid, TextExpressionCompilerResults>(); 
-
+        static ConcurrentDictionary<Guid, TextExpressionCompilerResults> resultscache = new ConcurrentDictionary<Guid, TextExpressionCompilerResults>();
 
         #region Fields
 
-        private LoggingSettings _logging;
-        private SecuritySettings _security;
-        private BackupSettings _backup;
+        LoggingSettings _logging;
+        SecuritySettings _security;
+        BackupSettings _backup;
 
         #endregion
 
@@ -67,27 +56,14 @@ namespace Dev2.Runtime.Configuration.Settings
 
         public string WebServerUri { get; set; }
 
-        public bool HasChanges
-        {
-            get
-            {
-                return Logging != null && Logging.HasChanges ||
-                     Security != null && Security.HasChanges ||
-                      Backup != null && Backup.HasChanges;
-            }
-        }
+        public bool HasChanges => Logging != null && Logging.HasChanges ||
+                                  Security != null && Security.HasChanges ||
+                                  Backup != null && Backup.HasChanges;
 
-        public bool HasError
-        {
-            get
-            {
-                return Logging != null && Logging.HasError ||
-                       Security != null && Security.HasError ||
-                       Backup != null && Backup.HasError;
-            }
-        }
+        public bool HasError => Logging != null && Logging.HasError ||
+                                Security != null && Security.HasError ||
+                                Backup != null && Backup.HasError;
 
-        [SettingsObject(typeof(LoggingView), typeof(LoggingViewModel))]
         public LoggingSettings Logging
         {
             get { return _logging; }
@@ -118,6 +94,8 @@ namespace Dev2.Runtime.Configuration.Settings
             }
         }
 
+        public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache { get => resultscache; set => resultscache = value; }
+
         #endregion
 
         #region Methods
@@ -131,11 +109,6 @@ namespace Dev2.Runtime.Configuration.Settings
                 Backup.ToXml()
                 );
             return result;
-        }
-
-        public void IncrementVersion()
-        {
-            Version = Version == null ? new Version(1, 0) : new Version(Version.Major, Version.Minor + 1);
         }
 
         #endregion
@@ -171,15 +144,15 @@ namespace Dev2.Runtime.Configuration.Settings
 
         #region Event Handlers
 
-        private void SettingChanged(object sender, PropertyChangedEventArgs e)
+        void SettingChanged(object sender, PropertyChangedEventArgs e)
         {
-            if(e.PropertyName == "HasError" || e.PropertyName == "Error")
+            if (e.PropertyName == "HasError" || e.PropertyName == "Error")
             {
                 NotifyOfPropertyChange(() => HasError);
                 return;
             }
 
-            if(e.PropertyName == "HasChanges")
+            if (e.PropertyName == "HasChanges")
             {
                 NotifyOfPropertyChange(() => HasChanges);
             }
@@ -188,20 +161,6 @@ namespace Dev2.Runtime.Configuration.Settings
         #endregion
 
         #region Static Methods
-
-        public static UserControl EntryPoint(XElement configurationXML, Func<XElement, XElement> saveCallback, System.Action cancelCallback, System.Action settingChangedCallback)
-        {
-            MainView settingsView = new MainView();
-            MainViewModel mainViewModel = new MainViewModel(configurationXML, saveCallback, cancelCallback, settingChangedCallback);
-            settingsView.DataContext = mainViewModel;
-
-            if(mainViewModel.SettingsObjects != null && mainViewModel.SettingsObjects.Count > 0)
-            {
-                mainViewModel.SelectedSettingsObjects = mainViewModel.SettingsObjects[0];
-            }
-
-            return settingsView;
-        }
 
         #endregion
     }

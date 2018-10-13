@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,18 +8,16 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.String.Xml;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class XmlPathTests {
 
         #region GetSegments Tests
@@ -28,10 +25,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
         [TestMethod]
         public void GetSegments_Expected_CorrectSegmentCount()
         {
-            XmlPath path = new XmlPath("Company.Departments().Department:Name", "Company.Departments.Department:Name");
+            var path = new XmlPath("Company.Departments().Department:Name", "Company.Departments.Department:Name");
 
             const int expected = 4;
-            int actual = path.GetSegements().Count();
+            var actual = path.GetSegements().Count();
 
             Assert.AreEqual(expected, actual);
         }
@@ -39,10 +36,10 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
         [TestMethod]
         public void GetSegments_Expected_LastSegmentIsCorrect()
         {
-            XmlPath path = new XmlPath("Company.Departments().Department:Name", "Company.Departments.Department:Name");
+            var path = new XmlPath("Company.Departments().Department:Name", "Company.Departments.Department:Name");
 
             const string expected = "Name";
-            string actual = path.GetSegements().Last().ToString();
+            var actual = path.GetSegements().Last().ToString();
 
             Assert.AreEqual(expected, actual);
         }
@@ -55,15 +52,15 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
         [TestMethod]
         public void CreateEnumerablePathSegmentFromXElement_Expected_EnumerableXmlPathSegment()
         {
-            XElement element = new XElement("Departments",
+            var element = new XElement("Departments",
                 new XElement("Department"),
                 new XElement("Department"));
 
-            XmlPath path = new XmlPath();
-            IPathSegment segment = path.CreatePathSegment(element);
+            var path = new XmlPath();
+            var segment = path.CreatePathSegment(element);
 
             const bool expected = true;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }
@@ -71,12 +68,12 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
         [TestMethod]
         public void CreateScalarPathSegmentFromXElement_Expected_ScalarXmlPathSegment()
         {
-            XElement element = new XElement("Departments");
-            XmlPath path = new XmlPath();
-            IPathSegment segment = path.CreatePathSegment(element);
+            var element = new XElement("Departments");
+            var path = new XmlPath();
+            var segment = path.CreatePathSegment(element);
 
             const bool expected = false;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }
@@ -84,11 +81,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
         [TestMethod]
         public void CreateEnumerablePathSegmentFromSegmentText_Expected_EnumerableXmlPathSegment()
         {
-            XmlPath path = new XmlPath();
-            IPathSegment segment = path.CreatePathSegment("Departments()");
+            var path = new XmlPath();
+            var segment = path.CreatePathSegment("Departments()");
 
             const bool expected = true;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }
@@ -96,11 +93,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.XmlTests
         [TestMethod]
         public void CreateScalarPathSegmentFromSegmentText_Expected_ScalarXmlPathSegment()
         {
-            XmlPath path = new XmlPath();
-            IPathSegment segment = path.CreatePathSegment("Name");
+            var path = new XmlPath();
+            var segment = path.CreatePathSegment("Name");
 
             const bool expected = false;
-            bool actual = segment.IsEnumarable;
+            var actual = segment.IsEnumarable;
 
             Assert.AreEqual(expected, actual);
         }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,19 +13,23 @@ using System.Collections.Generic;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums.Enums;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Studio.Interfaces;
+using System;
+using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Core;
 
 namespace Dev2.Activities.Designers2.GatherSystemInformation
 {
     public class GatherSystemInformationDesignerViewModel : ActivityCollectionDesignerViewModel<GatherSystemInformationTO>
     {
         public IList<string> ItemsList { get; private set; }
-
+        internal Func<string> _getDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public GatherSystemInformationDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
             AddTitleBarQuickVariableInputToggle();
-            AddTitleBarHelpToggle();
+            AddTitleBarLargeToggle();
             dynamic mi = ModelItem;
             InitializeItems(mi.SystemInformationCollection);
 
@@ -37,8 +40,9 @@ namespace Dev2.Activities.Designers2.GatherSystemInformation
             }
 
             ItemsList = Dev2EnumConverter.ConvertEnumsTypeToStringList<enTypeOfSystemInformationToGather>();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Sys_Info;
         }
-        public override string CollectionName { get { return "SystemInformationCollection"; } }
+        public override string CollectionName => "SystemInformationCollection";
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
@@ -47,7 +51,22 @@ namespace Dev2.Activities.Designers2.GatherSystemInformation
 
         protected override IEnumerable<IActionableErrorInfo> ValidateCollectionItem(ModelItem mi)
         {
-            yield break;
+            var dto = mi.GetCurrentValue() as GatherSystemInformationTO;
+            if (dto == null)
+            {
+                yield break;
+            }
+
+            foreach (var error in dto.GetRuleSet("Result", _getDatalistString?.Invoke()).ValidateRules("", () => mi.SetProperty("IsResultFocused", true)))
+            {
+                yield return error;
+            }
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

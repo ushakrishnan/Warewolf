@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +12,8 @@ using System;
 using System.Collections.Generic;
 using Dev2.Common;
 using Dev2.DynamicServices;
+using Dev2.Runtime.Interfaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management
 {
@@ -20,28 +21,22 @@ namespace Dev2.Runtime.ESB.Management
     /// Responsible for loading all the managment services ;)
     /// Replaces GetDefaultServices() in DynamicservicesHost
     /// </summary>
-    public class EsbManagementServiceLocator : SpookyAction<IEsbManagementEndpoint, string>
+    public class EsbManagementServiceLocator : SpookyAction<IEsbManagementEndpoint, string>, IEsbManagementServiceLocator
     {
         /// <summary>
         /// Loads the managment services.
         /// </summary>
         /// <returns></returns>
-        public IList<IEsbManagementEndpoint> FetchManagmentServices()
-        {
-            return FindAll();
-        }
+        public IEnumerable<IEsbManagementEndpoint> FetchManagmentServices() => FindAll();
 
         /// <summary>
         /// Locates the management service.
         /// </summary>
         /// <param name="serviceName">Name of the service.</param>
         /// <returns></returns>
-        public IEsbManagementEndpoint LocateManagementService(string serviceName)
-        {
-            return FindMatch(serviceName);
-        }
+        public IEsbManagementEndpoint LocateManagementService(string serviceName) => FindMatch(serviceName);
 
-        public static List<DynamicService> GetServices()
+        public static IEnumerable<DynamicService> GetServices()
         {
             var result = new List<DynamicService>();
 
@@ -56,7 +51,7 @@ namespace Dev2.Runtime.ESB.Management
                 }
                 else
                 {
-                    Dev2Logger.Log.Error("EsbManagementServiceLocator", new Exception("Failed to load management service [ " + endpoint.HandlesType() + " ]"));
+                    Dev2Logger.Error("EsbManagementServiceLocator", new Exception(string.Format(ErrorResource.FailedToLoadManagementService, endpoint.HandlesType())), GlobalConstants.WarewolfError);
                 }
             }
 

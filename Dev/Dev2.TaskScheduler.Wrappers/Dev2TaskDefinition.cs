@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,8 +19,8 @@ namespace Dev2.TaskScheduler.Wrappers
 {
     public class Dev2TaskDefinition : IDev2TaskDefinition
     {
-        private readonly TaskDefinition _taskDefinition;
-        private readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
+        readonly TaskDefinition _taskDefinition;
+        readonly ITaskServiceConvertorFactory _taskServiceConvertorFactory;
 
         public Dev2TaskDefinition(ITaskServiceConvertorFactory taskServiceConvertorFactory,
             TaskDefinition taskDefinition)
@@ -29,10 +29,7 @@ namespace Dev2.TaskScheduler.Wrappers
             _taskDefinition = taskDefinition;
         }
 
-        public IActionCollection Actions
-        {
-            get { return _taskServiceConvertorFactory.CreateActionCollection(Instance.Actions); }
-        }
+        public IActionCollection Actions => _taskServiceConvertorFactory.CreateActionCollection(Instance.Actions);
 
         public string Data
         {
@@ -40,15 +37,9 @@ namespace Dev2.TaskScheduler.Wrappers
             set { _taskDefinition.Data = value; }
         }
 
-        public ITaskSettings Settings
-        {
-            get { return _taskServiceConvertorFactory.CreateTaskSettings(_taskDefinition.Settings); }
-        }
+        public ITaskSettings Settings => _taskServiceConvertorFactory.CreateTaskSettings(_taskDefinition.Settings);
 
-        public ITriggerCollection Triggers
-        {
-            get { return _taskServiceConvertorFactory.CreateTriggerCollection(_taskDefinition.Triggers); }
-        }
+        public ITriggerCollection Triggers => _taskServiceConvertorFactory.CreateTriggerCollection(_taskDefinition.Triggers);
 
         public string XmlText
         {
@@ -62,14 +53,20 @@ namespace Dev2.TaskScheduler.Wrappers
             {
                 return false;
             }
-            if (Actions.First().ActionType != TaskActionType.Execute) return false;
-            IExecAction action = _taskServiceConvertorFactory.CreateExecAction(Actions.First());
+            if (Actions.First().ActionType != TaskActionType.Execute)
+            {
+                return false;
+            }
+
+            var action = _taskServiceConvertorFactory.CreateExecAction(Actions.First());
             if (action.Arguments != null)
             {
-                List<string> output =
+                var output =
                     action.Arguments.Split('"').Where(a => !String.IsNullOrEmpty(a.Trim())).ToList();
-                if (output.Count != 2 || !output.All(a => a.Contains(":")))
+                if (output.Count >3 || output.Count < 2 || !output.All(a => a.Contains(":")))
+                {
                     return false;
+                }
             }
 
 
@@ -80,15 +77,9 @@ namespace Dev2.TaskScheduler.Wrappers
             return true;
         }
 
-        public IAction Action
-        {
-            get { return Actions.FirstOrDefault(); }
-        }
+        public IAction Action => Actions.FirstOrDefault();
 
-        public ITrigger Trigger
-        {
-            get { return Triggers.FirstOrDefault(); }
-        }
+        public ITrigger Trigger => Triggers.FirstOrDefault();
 
         public void AddAction(IAction action)
         {
@@ -103,16 +94,17 @@ namespace Dev2.TaskScheduler.Wrappers
         public void Dispose()
         {
             _taskDefinition.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        public TaskDefinition Instance
+        protected virtual void Dispose(bool disposing)
         {
-            get { return _taskDefinition; }
+            // Cleanup
         }
 
-        public string UserName
-        {
-            get { return _taskDefinition.Principal.UserId; }
-        }
+        public TaskDefinition Instance => _taskDefinition;
+
+        public string UserName => _taskDefinition.Principal.UserId;
     }
 }

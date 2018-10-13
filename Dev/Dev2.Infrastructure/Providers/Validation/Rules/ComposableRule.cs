@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,22 +25,6 @@ namespace Dev2.Providers.Validation.Rules
 
         }
 
-        public ComposableRule<T> And(Rule<T> andRule)
-        {
-
-            VerifyArgument.IsNotNull("andRule", andRule);
-            var b = _check;
-            _check = () =>
-                {
-                    var a = b();
-
-                    if (a != null)
-                        return a;
-                    return andRule.Check();
-                };
-            return this;
-        }
-
         public ComposableRule<T> Or(Rule<T> orRule)
         {
 
@@ -52,7 +35,10 @@ namespace Dev2.Providers.Validation.Rules
                     var a = b();
                     if (a == null)
                     {
-                        return orRule.Check();
+                        orRule.DoError = DoError;
+                        _baseRule.DoError = DoError;
+                        var actionableErrorInfo = orRule.Check();
+                        return actionableErrorInfo;
                     }
                     return a;
 
@@ -60,9 +46,6 @@ namespace Dev2.Providers.Validation.Rules
             return this;
         }
 
-        public override IActionableErrorInfo Check()
-        {
-            return _check();
-        }
+        public override IActionableErrorInfo Check() => _check?.Invoke();
     }
 }

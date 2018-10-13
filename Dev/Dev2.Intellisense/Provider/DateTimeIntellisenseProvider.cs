@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,19 +13,20 @@ using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common.DateAndTime;
 using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList.Contract;
 using Dev2.Intellisense.Provider;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.InterfaceImplementors
 {
     public class DateTimeIntellisenseProvider : IIntellisenseProvider
     {
         #region Class Members
 
-        private List<IIntellisenseResult>  _intellisenseResults;
+        List<IIntellisenseResult> _intellisenseResults;
 
         #endregion Class Members
 
@@ -36,10 +36,10 @@ namespace Dev2.Studio.InterfaceImplementors
         {
             Optional = false;
             IntellisenseProviderType = IntellisenseProviderType.NonDefault;
-            IDateTimeParser dateTimeParser = DateTimeConverterFactory.CreateParser();
+            var dateTimeParser = DateTimeConverterFactory.CreateStandardParser();
             _intellisenseResults = dateTimeParser.DateTimeFormatParts.Select(p => 
                 {
-                    IIntellisenseResult intellisenseResult = IntellisenseFactory.CreateDateTimeResult(IntellisenseFactory.CreateDateTimePart(p.Value, p.Description));
+                    var intellisenseResult = IntellisenseFactory.CreateDateTimeResult(IntellisenseFactory.CreateDateTimePart(p.Value, p.Description));
                     return intellisenseResult;
                 }).OrderBy(p => p.Option.DisplayValue).ToList();
         }
@@ -68,21 +68,19 @@ namespace Dev2.Studio.InterfaceImplementors
                 return new List<IntellisenseProviderResult>();
             }
 
-            IList<IIntellisenseResult> oldResults = GetIntellisenseResultsImpl(context);
-            
+            var oldResults = GetIntellisenseResultsImpl(context);
+
             var results = new List<IntellisenseProviderResult>();
 
             if (oldResults != null)
             {
                 foreach (IIntellisenseResult currentResult in oldResults)
                 {
-                    if (currentResult.ErrorCode != enIntellisenseErrorCode.None)
+                    if (currentResult.ErrorCode != enIntellisenseErrorCode.None && currentResult.Type == enIntellisenseResultType.Error && currentResult.IsClosedRegion)
                     {
-                        if (currentResult.Type == enIntellisenseResultType.Error && currentResult.IsClosedRegion)
-                        {
-                            results.Add(new IntellisenseProviderResult(this, currentResult.Option.DisplayValue, currentResult.Message, currentResult.Message, true));
-                        }
+                        results.Add(new IntellisenseProviderResult(this, currentResult.Option.DisplayValue, currentResult.Message, currentResult.Message, true));
                     }
+
 
                     if (currentResult.Type == enIntellisenseResultType.Selectable)
                     {
@@ -96,17 +94,20 @@ namespace Dev2.Studio.InterfaceImplementors
 
         public IList<IIntellisenseResult> GetIntellisenseResultsImpl(IntellisenseProviderContext context)
         {
-            string searchText = context.FindTextToSearch();
+            var searchText = context.FindTextToSearch();
             var results = new List<IIntellisenseResult>();
 
             if (context.DesiredResultSet == IntellisenseDesiredResultSet.EntireSet)
             {
                 results.AddRange(IntellisenseResults);
             }
-            else if (!InLiteralRegion(context.InputText, context.CaretPosition))
+            else
             {
-                var filteredResults = IntellisenseResults.Where(i => i.Option.DisplayValue.ToLower().StartsWith(searchText.ToLower()));
-                results.AddRange(filteredResults);
+                if (!InLiteralRegion(context.InputText, context.CaretPosition))
+                {
+                    var filteredResults = IntellisenseResults.Where(i => i.Option.DisplayValue.ToLower(System.Globalization.CultureInfo.CurrentCulture).StartsWith(searchText.ToLower(System.Globalization.CultureInfo.CurrentCulture)));
+                    results.AddRange(filteredResults);
+                }
             }
             return results;
         }
@@ -125,9 +126,9 @@ namespace Dev2.Studio.InterfaceImplementors
         /// </summary>
         public static bool InLiteralRegion(string inputText, int caretPosition)
         {
-            bool inLiteralRegion = false;
+            var inLiteralRegion = false;
 
-            string text = inputText;
+            var text = inputText;
             if (caretPosition <= text.Length)
             {
                 text = text.Replace("\\\\", "##").Replace("\\'", "##").Replace("'''", "###");
@@ -145,10 +146,7 @@ namespace Dev2.Studio.InterfaceImplementors
         public bool Optional { get; set; }
         public bool HandlesResultInsertion { get; set; }
 
-        public List<IIntellisenseResult> IntellisenseResults
-        {
-            get { return _intellisenseResults; }
-        }
+        public List<IIntellisenseResult> IntellisenseResults => _intellisenseResults;
 
         #endregion Properties
     }

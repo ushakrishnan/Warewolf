@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +20,10 @@ using Dev2.Common.Interfaces;
 using Dev2.Data.MathOperations;
 using Dev2.Intellisense.Provider;
 using Dev2.MathOperations;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Warewolf.Resource.Errors;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.InterfaceImplementors
 {
     public sealed class CalculateIntellisenseProvider : IIntellisenseProvider
@@ -31,8 +31,8 @@ namespace Dev2.Studio.InterfaceImplementors
         readonly ISyntaxTreeBuilderHelper _syntaxTreeBuilderHelper;
 
         #region Static Members
-        private static HashSet<string> _functionNames;
-        private static readonly IList<IntellisenseProviderResult> EmptyResults = new List<IntellisenseProviderResult>();
+        static HashSet<string> _functionNames = new HashSet<string>(StringComparer.Ordinal);
+        static readonly IList<IntellisenseProviderResult> EmptyResults = new List<IntellisenseProviderResult>();
         #endregion
 
         #region Instance Fields
@@ -46,27 +46,9 @@ namespace Dev2.Studio.InterfaceImplementors
         #endregion
 
         #region Public Properties
-        public bool Optional
-        {
-            get
-            {
-                return false;
-            }
-            set
-            {
-            }
-        }
+        public bool Optional => false;
 
-        public bool HandlesResultInsertion
-        {
-            get
-            {
-                return false;
-            }
-            set
-            {
-            }
-        }
+        public bool HandlesResultInsertion => false;
         #endregion
 
         #region Constructors
@@ -77,23 +59,19 @@ namespace Dev2.Studio.InterfaceImplementors
         {
             _syntaxTreeBuilderHelper = syntaxTreeBuilderHelper;
             IntellisenseProviderType = IntellisenseProviderType.NonDefault;
-            IFrameworkRepository<IFunction> functionList = MathOpsFactory.FunctionRepository();
+            var functionList = MathOpsFactory.FunctionRepository();
             functionList.Load();
-            bool creatingFunctions = false;
-
-            if(_functionNames == null)
-            {
-                creatingFunctions = true;
-                _functionNames = new HashSet<string>(StringComparer.Ordinal);
-            }
-
             IntellisenseResult = functionList.All().Select(currentFunction =>
             {
-                string description = currentFunction.Description;
-                string dropDownDescription = description;
-                if(description != null && description.Length > 80) dropDownDescription = description.Substring(0, 77) + "...";
-                if(creatingFunctions) _functionNames.Add(currentFunction.FunctionName);
-                IntellisenseProviderResult result = new IntellisenseProviderResult(this, currentFunction.FunctionName, dropDownDescription, description, currentFunction.arguments != null ? currentFunction.arguments.ToArray() : new string[0], currentFunction.ArgumentDescriptions != null ? currentFunction.ArgumentDescriptions.ToArray() : new string[0]);
+                var description = currentFunction.Description;
+                var dropDownDescription = description;
+                if (description != null && description.Length > 80)
+                {
+                    dropDownDescription = description.Substring(0, 77) + "...";
+                }
+                _functionNames.Add(currentFunction.FunctionName);
+
+                var result = new IntellisenseProviderResult(this, currentFunction.FunctionName, dropDownDescription, description, currentFunction.arguments?.ToArray() ?? new string[0], currentFunction.ArgumentDescriptions?.ToArray() ?? new string[0]);
                 return result;
             }).OrderBy(p => p.Name).ToList();
         }
@@ -118,21 +96,15 @@ namespace Dev2.Studio.InterfaceImplementors
             var parseEventLog = _syntaxTreeBuilderHelper.EventLog;
             var intellisenseDesiredResultSet = context.DesiredResultSet;
 
-            if((caretPosition == 0 || string.IsNullOrEmpty(inputText))
-                && intellisenseDesiredResultSet != IntellisenseDesiredResultSet.EntireSet)
-            {
-                return EmptyResults;
-            }
-
             if(context.IsInCalculateMode)
             {
-                if(intellisenseDesiredResultSet == IntellisenseDesiredResultSet.EntireSet)
+                if(intellisenseDesiredResultSet == IntellisenseDesiredResultSet.EntireSet && (caretPosition == 0 || string.IsNullOrEmpty(inputText)))
                 {
-                    if(parseEventLog != null) parseEventLog.Clear();
+                    parseEventLog?.Clear();
 
                     if(_syntaxTreeBuilderHelper.EventLog != null && _syntaxTreeBuilderHelper.HasEventLogs)
                     {
-                        List<IntellisenseProviderResult> tResults = new List<IntellisenseProviderResult>();
+                        var tResults = new List<IntellisenseProviderResult>();
                         tResults.AddRange(IntellisenseResult);
                         return EvaluateEventLogs(tResults, inputText);
                     }
@@ -140,48 +112,23 @@ namespace Dev2.Studio.InterfaceImplementors
                     return IntellisenseResult;
                 }
 
-                Token[] tokens;
-                if(intellisenseDesiredResultSet == IntellisenseDesiredResultSet.ClosestMatch)
-                {
-                    var searchText = context.FindTextToSearch();
-                    _syntaxTreeBuilderHelper.Build(searchText, true, out tokens);
-                    string sub = string.IsNullOrEmpty(searchText) ? inputText : searchText;
+                var searchText = context.FindTextToSearch();
+                _syntaxTreeBuilderHelper.Build(searchText, true, out Token[] tokens);
+                var sub = string.IsNullOrEmpty(searchText) ? inputText : searchText;
 
-                    List<IntellisenseProviderResult> subResults = IntellisenseResult.Where(t => t.Name.StartsWith(sub)).ToList();
+                var subResults = IntellisenseResult.Where(t => t.Name.StartsWith(sub)).ToList();
 
-                    if(_syntaxTreeBuilderHelper.EventLog != null && _syntaxTreeBuilderHelper.HasEventLogs)
-                    {
-                        return EvaluateEventLogs(subResults, inputText);
-                    }
-
-                    return subResults;
-                }
-
-                _syntaxTreeBuilderHelper.Build(inputText, false, out tokens);
-
-                if(_syntaxTreeBuilderHelper.HasEventLogs)
-                {
-                    return EvaluateEventLogs(inputText);
-                }
+                return subResults;
             }
 
             return EmptyResults;
         }
 
-        private IList<IntellisenseProviderResult> EvaluateEventLogs(IList<IntellisenseProviderResult> errors, string expression)
+        IList<IntellisenseProviderResult> EvaluateEventLogs(IList<IntellisenseProviderResult> errors, string expression)
         {
             var parseEventLog = _syntaxTreeBuilderHelper.EventLog;
             parseEventLog.Clear();
-            errors.Add(new IntellisenseProviderResult(this, "Syntax Error", null, "An error occurred while parsing { " + expression + " } It appears to be malformed", true, 0, expression.Length));
-            return errors;
-        }
-
-        private IList<IntellisenseProviderResult> EvaluateEventLogs(string expression)
-        {
-            IList<IntellisenseProviderResult> errors = new List<IntellisenseProviderResult>();
-            var parseEventLog = _syntaxTreeBuilderHelper.EventLog;
-            parseEventLog.Clear();
-            errors.Add(new IntellisenseProviderResult(this, "Syntax Error", null, "An error occurred while parsing { " + expression + " } It appears to be malformed", true, 0, expression.Length));
+            errors.Add(new IntellisenseProviderResult(this, "Syntax Error", null, string.Format(ErrorResource.MalformedExpression, expression), true, 0, expression.Length));
             return errors;
         }
 
@@ -199,19 +146,15 @@ namespace Dev2.Studio.InterfaceImplementors
         {
             if(value != null)
             {
-                string text = (string)value;
-                bool allowUserCalculateMode = (string)parameter == "True";
+                var text = (string)value;
+                var allowUserCalculateMode = (string)parameter == "True";
 
-                if(allowUserCalculateMode && text.Length > 0)
+                if (allowUserCalculateMode && text.Length > 0 && text.StartsWith(GlobalConstants.CalculateTextConvertPrefix) && text.EndsWith(GlobalConstants.CalculateTextConvertSuffix))
                 {
-                    if(text.StartsWith(GlobalConstants.CalculateTextConvertPrefix))
-                    {
-                        if(text.EndsWith(GlobalConstants.CalculateTextConvertSuffix))
-                        {
-                            text = "=" + text.Substring(GlobalConstants.CalculateTextConvertPrefix.Length, text.Length - (GlobalConstants.CalculateTextConvertSuffix.Length + GlobalConstants.CalculateTextConvertPrefix.Length));
-                        }
-                    }
+                    text = "=" + text.Substring(GlobalConstants.CalculateTextConvertPrefix.Length, text.Length - (GlobalConstants.CalculateTextConvertSuffix.Length + GlobalConstants.CalculateTextConvertPrefix.Length));
                 }
+
+
 
                 return text;
             }
@@ -223,16 +166,14 @@ namespace Dev2.Studio.InterfaceImplementors
         {
             if(value != null)
             {
-                string text = (string)value;
-                bool allowUserCalculateMode = (string)parameter == "True";
+                var text = (string)value;
+                var allowUserCalculateMode = (string)parameter == "True";
 
-                if(allowUserCalculateMode && text.Length > 0)
+                if (allowUserCalculateMode && text.Length > 0 && text[0] == '=')
                 {
-                    if(text[0] == '=')
-                    {
-                        text = String.Format(GlobalConstants.CalculateTextConvertFormat, text.Substring(1));
-                    }
+                    text = String.Format(GlobalConstants.CalculateTextConvertFormat, text.Substring(1));
                 }
+
 
                 return text;
             }

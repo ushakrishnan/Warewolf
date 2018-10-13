@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,12 +16,14 @@ using System.Linq;
 using System.Windows;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
+using Dev2.Activities.Designers2.Core.Extensions;
 using Dev2.Activities.Designers2.Core.QuickVariableInput;
 using Dev2.Activities.Properties;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Data.Parsers;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
@@ -33,8 +34,7 @@ using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Events;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Messages;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.TO;
 using Dev2.Validation;
@@ -43,11 +43,10 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 {
     public class SqlBulkInsertDesignerViewModel : ActivityCollectionDesignerViewModel<DataColumnMapping>
     {
-
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
 
         readonly IEventAggregator _eventPublisher;
-        readonly IEnvironmentModel _environmentModel;
+        readonly IServer _server;
         readonly IAsyncWorker _asyncWorker;
 
         bool _isInitializing;
@@ -69,26 +68,24 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             TableName = "Select a Table..."
         };
 
-        //ModelItem Modelitem;
         public SqlBulkInsertDesignerViewModel(ModelItem modelItem)
-            : this(modelItem, new AsyncWorker(), EnvironmentRepository.Instance.ActiveEnvironment, EventPublishers.Aggregator)
+            : this(modelItem, new AsyncWorker(), ServerRepository.Instance.ActiveServer, EventPublishers.Aggregator)
         {
-           // Modelitem = modelItem;
+            this.RunViewSetup();
         }
 
-        public SqlBulkInsertDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IEnvironmentModel environmentModel, IEventAggregator eventPublisher)
+        public SqlBulkInsertDesignerViewModel(ModelItem modelItem, IAsyncWorker asyncWorker, IServer server, IEventAggregator eventPublisher)
             : base(modelItem)
         {
             VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             _asyncWorker = asyncWorker;
-            VerifyArgument.IsNotNull("environmentModel", environmentModel);
-            _environmentModel = environmentModel;
+            VerifyArgument.IsNotNull("environmentModel", server);
+            _server = server;
             VerifyArgument.IsNotNull("eventPublisher", eventPublisher);
             _eventPublisher = eventPublisher;
 
             AddTitleBarLargeToggle();
             AddTitleBarQuickVariableInputToggle();
-            AddTitleBarHelpToggle();
 
             dynamic mi = ModelItem;
             ModelItemCollection = mi.InputMappings;
@@ -104,11 +101,12 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             {
                 IsSqlDatabase = SelectedDatabase.ServerType == enSourceType.SqlDatabase;
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Database_SQL_Bulk_Insert;
         }
 
         #region Properties
 
-        public override string CollectionName { get { return "InputMappings"; } }
+        public override string CollectionName => "InputMappings";
 
         public ObservableCollection<DbSource> Databases { get; private set; }
 
@@ -118,16 +116,16 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
         public RelayCommand RefreshTablesCommand { get; private set; }
 
-        public bool IsDatabaseSelected { get { return SelectedDatabase != SelectDbSource; } }
+        public bool IsDatabaseSelected => SelectedDatabase != SelectDbSource;
 
-        public bool IsTableSelected { get { return SelectedTable != SelectDbTable; } }
+        public bool IsTableSelected => SelectedTable != SelectDbTable;
 
-        public bool IsRefreshing { get { return (bool)GetValue(IsRefreshingProperty); } set { SetValue(IsRefreshingProperty, value); } }
+        public bool IsRefreshing { get => (bool)GetValue(IsRefreshingProperty); set => SetValue(IsRefreshingProperty, value); }
 
         public static readonly DependencyProperty IsRefreshingProperty =
             DependencyProperty.Register("IsRefreshing", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
 
-        public bool IsSqlDatabase { get { return (bool)GetValue(IsSqlDatabaseProperty); } set { SetValue(IsSqlDatabaseProperty, value); } }
+        public bool IsSqlDatabase { get => (bool)GetValue(IsSqlDatabaseProperty); set => SetValue(IsSqlDatabaseProperty, value); }
 
         public static readonly DependencyProperty IsSqlDatabaseProperty =
             DependencyProperty.Register("IsSqlDatabase", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
@@ -142,7 +140,10 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             set
             {
                 SetValue(SelectedDatabaseProperty, value);
-
+                if (SelectedDatabase != null)
+                {
+                    IsSqlDatabase = SelectedDatabase.ServerType == enSourceType.SqlDatabase;
+                }
                 EditDatabaseCommand.RaiseCanExecuteChanged();
             }
         }
@@ -189,39 +190,30 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             viewModel.RefreshTablesCommand.RaiseCanExecuteChanged();
         }
 
-
         bool _isFieldFocused;
-        public bool IsFieldFocused { get { return _isFieldFocused; } set { _isFieldFocused = value; } }
+        public bool IsFieldFocused { get => _isFieldFocused; set => _isFieldFocused = value; }
 
-
-
-        public bool IsSelectedDatabaseFocused { get { return (bool)GetValue(IsSelectedDatabaseFocusedProperty); } set { SetValue(IsSelectedDatabaseFocusedProperty, value); } }
+        public bool IsSelectedDatabaseFocused { get => (bool)GetValue(IsSelectedDatabaseFocusedProperty); set => SetValue(IsSelectedDatabaseFocusedProperty, value); }
 
         public static readonly DependencyProperty IsSelectedDatabaseFocusedProperty =
             DependencyProperty.Register("IsSelectedDatabaseFocused", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
 
-        public bool IsSelectedTableFocused { get { return (bool)GetValue(IsSelectedTableFocusedProperty); } set { SetValue(IsSelectedTableFocusedProperty, value); } }
+        public bool IsSelectedTableFocused { get => (bool)GetValue(IsSelectedTableFocusedProperty); set => SetValue(IsSelectedTableFocusedProperty, value); }
 
         public static readonly DependencyProperty IsSelectedTableFocusedProperty =
             DependencyProperty.Register("IsSelectedTableFocused", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
-
-       
         
-
-        public bool IsMappingFieldFocused { get { return (bool)GetValue(IsSelectedTableFocusedProperty); } set { SetValue(IsMappingFieldFocusedProperty, value); } }
+        public bool IsMappingFieldFocused { get => (bool)GetValue(IsSelectedTableFocusedProperty); set => SetValue(IsMappingFieldFocusedProperty, value); }
 
         public static readonly DependencyProperty IsMappingFieldFocusedProperty =
             DependencyProperty.Register("IsMappingFieldFocused", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
-
-
-
-
-        public bool IsBatchSizeFocused { get { return (bool)GetValue(IsBatchSizeFocusedProperty); } set { SetValue(IsBatchSizeFocusedProperty, value); } }
+        
+        public bool IsBatchSizeFocused { get => (bool)GetValue(IsBatchSizeFocusedProperty); set => SetValue(IsBatchSizeFocusedProperty, value); }
 
         public static readonly DependencyProperty IsBatchSizeFocusedProperty =
             DependencyProperty.Register("IsBatchSizeFocused", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
 
-        public bool IsTimeoutFocused { get { return (bool)GetValue(IsTimeoutFocusedProperty); } set { SetValue(IsTimeoutFocusedProperty, value); } }
+        public bool IsTimeoutFocused { get => (bool)GetValue(IsTimeoutFocusedProperty); set => SetValue(IsTimeoutFocusedProperty, value); }
 
         public static readonly DependencyProperty IsTimeoutFocusedProperty =
             DependencyProperty.Register("IsTimeoutFocused", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
@@ -243,11 +235,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
         public static readonly DependencyProperty IsResultFocusedProperty =
             DependencyProperty.Register("IsResultFocused", typeof(bool), typeof(SqlBulkInsertDesignerViewModel), new PropertyMetadata(false));
-
-
-
-
-
+        
         #endregion
 
         #region DO NOT bind to these properties - these are here for internal view model use only!!!
@@ -277,14 +265,13 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             }
         }
 
-        string BatchSize { get { return GetProperty<string>(); } }
+        string BatchSize => GetProperty<string>();
 
-        string Timeout { get { return GetProperty<string>(); } }
+        string Timeout => GetProperty<string>();
 
-        string Result { get { return GetProperty<string>(); } }
+        string Result => GetProperty<string>();
 
-        bool KeepIdentity { get { return GetProperty<bool>(); } }
-
+        bool KeepIdentity => GetProperty<bool>();
 
         #endregion
 
@@ -298,7 +285,6 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
             IsRefreshing = true;
             IsSqlDatabase = SelectedDatabase.ServerType == enSourceType.SqlDatabase;
-            // Save selection
             var selectedTableName = GetTableName(SelectedTable);
 
             Databases.Remove(SelectDbSource);
@@ -307,7 +293,6 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             Tables.Clear();
             LoadDatabaseTables(() =>
             {
-                // Restore Selection
                 SetSelectedTable(selectedTableName);
                 LoadTableColumns(() => { IsRefreshing = false; });
             });
@@ -376,10 +361,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     Databases.Add(database);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -389,36 +371,22 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
             if (!IsDatabaseSelected)
             {
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
-
-            // Get Selected values on UI thread BEFORE starting asyncWorker
+            
             var selectedDatabase = SelectedDatabase;
             _asyncWorker.Start(() => GetDatabaseTables(selectedDatabase), tableList =>
             {
-                if (tableList.HasErrors)
-                {
-                    Errors = new List<IActionableErrorInfo>
+                Errors = tableList.HasErrors ? new List<IActionableErrorInfo>
                     {
                         new ActionableErrorInfo(() => IsSelectedTableFocused = true) { ErrorType = ErrorType.Critical, Message = tableList.Errors }
-                    };
-                }
-                else
-                {
-                    Errors = null;
-                }
+                    } : null;
                 foreach (var table in tableList.Items.OrderBy(t => t.TableName))
                 {
                     Tables.Add(table);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
@@ -430,10 +398,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 {
                     ModelItemCollection.Clear();
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
                 return;
             }
 
@@ -441,35 +406,25 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             ModelItemCollection.Clear();
             var selectedDatabase = SelectedDatabase;
             var selectedTable = SelectedTable;
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             _asyncWorker.Start(() => GetDatabaseTableColumns(selectedDatabase, selectedTable), columnList =>
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             {
-                if (columnList.HasErrors)
-                {
-                    Errors = new List<IActionableErrorInfo>
+                Errors = columnList.HasErrors ? new List<IActionableErrorInfo>
                     {
                         new ActionableErrorInfo(() => IsSelectedTableFocused = true) { ErrorType = ErrorType.Critical, Message = columnList.Errors }
-                    };
-                }
-                else
-                {
-                    Errors = null;
-                }
+                    } : null;
                 foreach (var mapping in columnList.Items.Select(column => new DataColumnMapping { OutputColumn = column }))
                 {
                     var mapping1 = mapping;
                     var oldColumn = oldColumns.FirstOrDefault(c => c.OutputColumn.ColumnName == mapping1.OutputColumn.ColumnName);
-                    if (oldColumn != null)
+                    if (oldColumn?.InputColumn != null)
                     {
-                        if (oldColumn.InputColumn != null)
-                        {
-                            var inputcolumn = oldColumn.InputColumn;
-                            inputcolumn = inputcolumn.Replace("[", "");
-                            inputcolumn = inputcolumn.Replace("]", "");
-                            inputcolumn = inputcolumn.Replace(" ", "");
-                            mapping.InputColumn = string.Format("[[{0}]]", inputcolumn);
-                        }
+                        var inputcolumn = oldColumn.InputColumn;
+                        inputcolumn = inputcolumn.Replace("[", "");
+                        inputcolumn = inputcolumn.Replace("]", "");
+                        inputcolumn = inputcolumn.Replace(" ", "");
+                        mapping.InputColumn = string.Format("[[{0}]]", inputcolumn);
                     }
                     if (string.IsNullOrEmpty(mapping.InputColumn))
                     {
@@ -478,43 +433,41 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
 
                     ModelItemCollection.Add(mapping);
                 }
-                if (continueWith != null)
-                {
-                    continueWith();
-                }
+                continueWith?.Invoke();
             });
         }
 
         void EditDbSource()
         {
-            var resourceModel = _environmentModel.ResourceRepository.FindSingle(c => c.ResourceName == SelectedDatabase.ResourceName);
-            if (resourceModel != null)
+            var shellViewModel = CustomContainer.Get<IShellViewModel>();
+            if(shellViewModel != null)
             {
-                _eventPublisher.Publish(new ShowEditResourceWizardMessage(resourceModel));
+                shellViewModel.OpenResource(SelectedDatabase.ResourceID,_server.EnvironmentID, shellViewModel.ActiveServer);
                 RefreshDatabases();
-            }
+            }            
         }
 
         void CreateDbSource()
         {
-            _eventPublisher.Publish(new ShowNewResourceWizard("DbSource"));
+            CustomContainer.Get<IShellViewModel>().NewSqlServerSource(string.Empty);
             RefreshDatabases();
         }
 
         IEnumerable<DbSource> GetDatabases()
         {
-            return _environmentModel.ResourceRepository.FindSourcesByType<DbSource>(_environmentModel, enSourceType.SqlDatabase);
+            var dbSources = _server.ResourceRepository.FindSourcesByType<DbSource>(_server, enSourceType.SqlDatabase);
+            return dbSources.Where(source => source.ResourceType== "SqlDatabase" || source.ServerType==enSourceType.SqlDatabase);
         }
 
         DbTableList GetDatabaseTables(DbSource dbSource)
         {
-            var tables = _environmentModel.ResourceRepository.GetDatabaseTables(dbSource);
+            var tables = _server.ResourceRepository.GetDatabaseTables(dbSource);
             return tables ?? EmptyDbTables;
         }
 
         IDbColumnList GetDatabaseTableColumns(DbSource dbSource, DbTable dbTable)
         {
-            var columns = _environmentModel.ResourceRepository.GetDatabaseTableColumns(dbSource, dbTable);
+            var columns = _server.ResourceRepository.GetDatabaseTableColumns(dbSource, dbTable);
             return columns ?? EmptyDbColumns;
         }
 
@@ -546,10 +499,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             SelectedTable = selectedTable;
         }
 
-        static string GetTableName(DbTable table)
-        {
-            return table == null ? null : table.FullName;
-        }
+        static string GetTableName(DbTable table) => table?.FullName;
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
@@ -576,24 +526,19 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             }
 
             var batchSize = BatchSize;
-            if (!IsVariable(batchSize))
+            var value = 0;
+            if (!IsVariable(batchSize) && (!int.TryParse(batchSize, out value) || value < 0))
             {
-                int value;
-                if (!int.TryParse(batchSize, out value) || value < 0)
-                {
-                    yield return new ActionableErrorInfo(() => IsBatchSizeFocused = true) { ErrorType = ErrorType.Critical, Message = ActivityResources.BatchsizeMustBeNumberMsg };
-                }
+                yield return new ActionableErrorInfo(() => IsBatchSizeFocused = true) { ErrorType = ErrorType.Critical, Message = ActivityResources.BatchsizeMustBeNumberMsg };
             }
 
+
             var timeout = Timeout;
-            if (!IsVariable(timeout))
+            if (!IsVariable(timeout) && (!int.TryParse(timeout, out value) || value < 0))
             {
-                int value;
-                if (!int.TryParse(timeout, out value) || value < 0)
-                {
-                    yield return new ActionableErrorInfo(() => IsTimeoutFocused = true) { ErrorType = ErrorType.Critical, Message = ActivityResources.TimeoutMustBeNumberMsg };
-                }
+                yield return new ActionableErrorInfo(() => IsTimeoutFocused = true) { ErrorType = ErrorType.Critical, Message = ActivityResources.TimeoutMustBeNumberMsg };
             }
+
 
             var nonEmptyCount = ModelItemCollection.Count(mi => !string.IsNullOrEmpty(((DataColumnMapping)mi.GetCurrentValue()).InputColumn));
             if (nonEmptyCount == 0)
@@ -605,47 +550,29 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
         IEnumerable<IActionableErrorInfo> ValidateVariables()
         {
             var parser = new Dev2DataLanguageParser();
-
-            var error = ValidateVariable(parser, BatchSize, () => IsBatchSizeFocused = true);
-            if (error != null)
-            {
-                error.Message = "Batch Size " + error.Message;
-                yield return error;
-            }
-
-            error = ValidateVariable(parser, Timeout, () => IsTimeoutFocused = true);
-            if (error != null)
-            {
-                error.Message = "Timeout " + error.Message;
-                yield return error;
-            }
-
-            error = ValidateVariable(parser, Result, () => IsResultFocused = true);
-            if (error != null)
-            {
-                error.Message = "Result " + error.Message;
-                yield return error;
-            }
+            var allActionableErrors = new List<IActionableErrorInfo>();
+            AddBatchSizeError(parser, ref allActionableErrors);
+            AddTimeoutError(parser, ref allActionableErrors);
+            AddResultError(parser, ref allActionableErrors);
 
             foreach (var dc in GetInputMappings())
             {
                 var output = dc.OutputColumn;
                 var inputColumn = dc.InputColumn;
-                bool identityChecked = false;
-
+                var identityChecked = false;
 
                 if (output.IsAutoIncrement)
                 {
                     if (KeepIdentity && string.IsNullOrEmpty(inputColumn))
                     {
                         var msg = string.Format(ActivityResources.IdentityWithKeepOptionEnabledMsg, output.ColumnName);
-                        yield return new ActionableErrorInfo(() => IsInputMappingsFocused = true) { ErrorType = ErrorType.Critical, Message = msg };
+                        allActionableErrors.Add(new ActionableErrorInfo(() => IsInputMappingsFocused = true) { ErrorType = ErrorType.Critical, Message = msg });
                     }
 
                     if (!KeepIdentity && !string.IsNullOrEmpty(inputColumn))
                     {
                         var msg = string.Format(ActivityResources.IdentityWithKeepOptionDisabledMsg, output.ColumnName);
-                        yield return new ActionableErrorInfo(() => IsInputMappingsFocused = true) { ErrorType = ErrorType.Critical, Message = msg };
+                        allActionableErrors.Add(new ActionableErrorInfo(() => IsInputMappingsFocused = true) { ErrorType = ErrorType.Critical, Message = msg });
                     }
 
                     identityChecked = true;
@@ -654,26 +581,61 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
                 if (!output.IsNullable && string.IsNullOrEmpty(inputColumn) && !identityChecked)
                 {
                     var msg = string.Format(ActivityResources.NotNullableMsg, output.ColumnName);
-                    yield return new ActionableErrorInfo(() => IsInputMappingsFocused = true) { ErrorType = ErrorType.Critical, Message = msg };
+                    allActionableErrors.Add(new ActionableErrorInfo(() => IsInputMappingsFocused = true) { ErrorType = ErrorType.Critical, Message = msg });
                 }
 
-
-                error = ValidateVariable(parser, inputColumn, () => IsInputMappingsFocused = true);
-                if (error != null)
-                {
-                    error.Message = "Input Mapping To Field '" + output.ColumnName + "' " + error.Message;
-                    yield return error;
-                }
+                AddInputMapToFieldError(parser, output, inputColumn, ref allActionableErrors);
 
                 if (!identityChecked)
                 {
-                    List<IActionableErrorInfo> rs = GetRuleSet("InputColumn", inputColumn).ValidateRules("'Input Data or [[Variable]]'", () => ModelItem.SetProperty("IsMappingFieldFocused", true));
+                    var rs = GetRuleSet("InputColumn", inputColumn).ValidateRules("'Input Data or [[Variable]]'", () => ModelItem.SetProperty("IsMappingFieldFocused", true));
 
-                    foreach(var looperror in rs)
-                        yield return looperror;
+                    foreach (var looperror in rs)
+                    {
+                        allActionableErrors.Add(looperror);
+                    }
                 }
+            }
+            return allActionableErrors;
+        }
 
+        void AddInputMapToFieldError(Dev2DataLanguageParser parser, IDbColumn output, string inputColumn, ref List<IActionableErrorInfo> allActionableErrors)
+        {
+            var error = ValidateVariable(parser, inputColumn, () => IsInputMappingsFocused = true);
+            if (error != null)
+            {
+                error.Message = "Input Mapping To Field '" + output.ColumnName + "' " + error.Message;
+                allActionableErrors.Add(error);
+            }
+        }
 
+        void AddResultError(Dev2DataLanguageParser parser, ref List<IActionableErrorInfo> allActionableErrors)
+        {
+            var error = ValidateVariable(parser, Result, () => IsResultFocused = true);
+            if (error != null)
+            {
+                error.Message = "Result " + error.Message;
+                allActionableErrors.Add(error);
+            }
+        }
+
+        void AddTimeoutError(Dev2DataLanguageParser parser, ref List<IActionableErrorInfo> allActionableErrors)
+        {
+            var error = ValidateVariable(parser, Timeout, () => IsTimeoutFocused = true);
+            if (error != null)
+            {
+                error.Message = "Timeout " + error.Message;
+                allActionableErrors.Add(error);
+            }
+        }
+
+        void AddBatchSizeError(Dev2DataLanguageParser parser, ref List<IActionableErrorInfo> allActionableErrors)
+        {
+            var error = ValidateVariable(parser, BatchSize, () => IsBatchSizeFocused = true);
+            if (error != null)
+            {
+                error.Message = "Batch Size " + error.Message;
+                allActionableErrors.Add(error);
             }
         }
 
@@ -696,12 +658,9 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
         public IRuleSet GetRuleSet(string propertyName, string datalist)
         {
             var ruleSet = new RuleSet();
-
-            switch (propertyName)
+            if (propertyName == "InputColumn")
             {
-                case "InputColumn":
-                    ruleSet.Add(new IsValidExpressionRule(() => datalist, GetDatalistString(), "1"));
-                    break;
+                ruleSet.Add(new IsValidExpressionRule(() => datalist, GetDatalistString?.Invoke(), "1", new VariableUtils()));
             }
             return ruleSet;
         }
@@ -712,20 +671,23 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             return regions.Count > 0;
         }
 
-        IEnumerable<DataColumnMapping> GetInputMappings()
-        {
-            return ModelItemCollection.Select(mi => (DataColumnMapping)mi.GetCurrentValue());
-        }
+        IEnumerable<DataColumnMapping> GetInputMappings() => ModelItemCollection.Select(mi => (DataColumnMapping)mi.GetCurrentValue());
 
-        protected override void AddToCollection(IEnumerable<string> source, bool overWrite)
+        protected override void AddToCollection(IEnumerable<string> sources, bool overwrite)
         {
-            var newMappings = source.ToList();
+            var newMappings = sources.ToList();
             var max = Math.Min(newMappings.Count, ItemCount);
             for (var i = 0; i < max; i++)
             {
                 var mi = ModelItemCollection[i];
                 mi.SetProperty("InputColumn", newMappings[i]);
             }
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
         protected override void OnToggleCheckedChanged(string propertyName, bool isChecked)
@@ -749,10 +711,7 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             }
         }
 
-        static string GetFieldName(DataColumnMapping dc)
-        {
-            return string.IsNullOrEmpty(dc.InputColumn) ? string.Empty : DataListUtil.ExtractFieldNameFromValue(dc.InputColumn);
-        }
+        static string GetFieldName(DataColumnMapping dc) => string.IsNullOrEmpty(dc.InputColumn) ? string.Empty : DataListUtil.ExtractFieldNameFromValue(dc.InputColumn);
 
         string GetRecordsetName(IEnumerable<DataColumnMapping> mappings)
         {

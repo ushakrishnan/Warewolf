@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,30 +20,38 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data;
+using Dev2.Data.Interfaces;
 using Dev2.Data.Operations;
+using Dev2.Data.TO;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
+using Dev2.Comparer;
+using Dev2.Common.State;
+using Dev2.Utilities;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    public class DsfDataMergeActivity : DsfActivityAbstract<string>, ICollectionActivity
+    [ToolDescriptorInfo("Data-DataMerge", "Data Merge", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Data_Merge")]
+    public class DsfDataMergeActivity : DsfActivityAbstract<string>, ICollectionActivity, IEquatable<DsfDataMergeActivity>
     {
         #region Class Members
 
-        private string _result;
+        string _result;
 
         #endregion Class Members
 
         #region Properties
 
-        private IList<DataMergeDTO> _mergeCollection;
+        IList<DataMergeDTO> _mergeCollection;
         public IList<DataMergeDTO> MergeCollection
         {
             get
@@ -71,13 +78,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        protected override bool CanInduceIdle
-        {
-            get
-            {
-                return true;
-            }
-        }
+        protected override bool CanInduceIdle => true;
 
         #endregion
 
@@ -92,16 +93,13 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         #endregion
 
         #region Overridden NativeActivity Methods
-        // ReSharper disable RedundantOverridenMember
-        protected override void CacheMetadata(NativeActivityMetadata metadata)
-        {
-            base.CacheMetadata(metadata);
-        }
-        // ReSharper restore RedundantOverridenMember
+
+        protected override void CacheMetadata(NativeActivityMetadata metadata) => base.CacheMetadata(metadata);
+
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
@@ -110,171 +108,32 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 
             IDev2MergeOperations mergeOperations = new Dev2MergeOperations();
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errorResultTo = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var errorResultTo = new ErrorResultTO();
 
             InitializeDebug(dataObject);
             try
             {
                 CleanArguments(MergeCollection);
 
-                if(MergeCollection.Count <= 0)
+                if (MergeCollection.Count <= 0)
                 {
                     return;
                 }
-                IWarewolfListIterator warewolfListIterator = new WarewolfListIterator();
-                allErrors.MergeErrors(errorResultTo);
-                Dictionary<int, List<IWarewolfIterator>> listOfIterators = new Dictionary<int, List<IWarewolfIterator>>();
-
-                #region Create a iterator for each row in the data grid in the designer so that the right iteration happen on the data
-
-                int dictionaryKey = 0;
-                foreach(DataMergeDTO row in MergeCollection)
-                {
-                    allErrors.MergeErrors(errorResultTo);
-
-                    if(dataObject.IsDebugMode())
-                    {
-                        DebugItem debugItem = new DebugItem();
-                        AddDebugItem(new DebugItemStaticDataParams("", (MergeCollection.IndexOf(row) + 1).ToString(CultureInfo.InvariantCulture)), debugItem);
-                        AddDebugItem(new DebugEvalResult(row.InputVariable, "", dataObject.Environment, update, true), debugItem);
-                        AddDebugItem(new DebugItemStaticDataParams(row.MergeType, "With"), debugItem);
-                        AddDebugItem(new DebugEvalResult(row.At, "Using", dataObject.Environment, update), debugItem);
-                        AddDebugItem(new DebugEvalResult(row.Padding, "Pad", dataObject.Environment, update), debugItem);
-
-                        //Old workflows don't have this set. 
-                        if(row.Alignment == null)
-                        {
-                            row.Alignment = string.Empty;
-                        }
-
-                        AddDebugItem(DataListUtil.IsEvaluated(row.Alignment) ? new DebugItemStaticDataParams("", row.Alignment, "Align") : new DebugItemStaticDataParams(row.Alignment, "Align"), debugItem);
-
-                        _debugInputs.Add(debugItem);
-                    }
-                    var listOfEvalResultsForInput = dataObject.Environment.EvalForDataMerge(row.InputVariable, update);
-                    var innerIterator = new WarewolfListIterator();
-                    var innerListOfIters = new List<WarewolfIterator>();
-
-                    foreach(var listOfIterator in listOfEvalResultsForInput)
-                    {
-                        var inIterator = new WarewolfIterator(listOfIterator);
-                        innerIterator.AddVariableToIterateOn(inIterator);
-                        innerListOfIters.Add(inIterator);
-                    }
-                    var atomList = new List<DataASTMutable.WarewolfAtom>();
-                    while(innerIterator.HasMoreData())
-                    {
-                        var stringToUse = "";
-                        foreach(var warewolfIterator in innerListOfIters)
-                        {
-                            stringToUse += warewolfIterator.GetNextValue();
-                        }
-                        atomList.Add(DataASTMutable.WarewolfAtom.NewDataString(stringToUse));
-                    }
-                    var finalString = string.Join("", atomList);
-                    var inputListResult = WarewolfDataEvaluationCommon.WarewolfEvalResult.NewWarewolfAtomListresult(new WarewolfAtomList<DataASTMutable.WarewolfAtom>(DataASTMutable.WarewolfAtom.Nothing, atomList));
-                    if(DataListUtil.IsFullyEvaluated(finalString))
-                    {
-                        inputListResult = dataObject.Environment.Eval(finalString, update);
-                    }
-
-                    var inputIterator = new WarewolfIterator(inputListResult);
-                    var atIterator = new WarewolfIterator(dataObject.Environment.Eval(row.At, update));
-                    var paddingIterator = new WarewolfIterator(dataObject.Environment.Eval(row.Padding, update));
-                    warewolfListIterator.AddVariableToIterateOn(inputIterator);
-                    warewolfListIterator.AddVariableToIterateOn(atIterator);
-                    warewolfListIterator.AddVariableToIterateOn(paddingIterator);
-
-                    listOfIterators.Add(dictionaryKey, new List<IWarewolfIterator> { inputIterator, atIterator, paddingIterator });
-                    dictionaryKey++;
-                }
-
-                #endregion
-
-                #region Iterate and Merge Data
-
-                if(!allErrors.HasErrors())
-                {
-                    while(warewolfListIterator.HasMoreData())
-                    {
-                        int pos = 0;
-                        foreach(var iterator in listOfIterators)
-                        {
-                            var val = warewolfListIterator.FetchNextValue(iterator.Value[0]);
-                            var at = warewolfListIterator.FetchNextValue(iterator.Value[1]);
-                            var pad = warewolfListIterator.FetchNextValue(iterator.Value[2]);
-
-                            if(val != null)
-                            {
-                                if(at != null)
-                                {
-                                    if(pad != null)
-                                    {
-                                        if(MergeCollection[pos].MergeType == "Index")
-                                        {
-                                            if(string.IsNullOrEmpty(at))
-                                            {
-                                                allErrors.AddError("The 'Using' value cannot be blank.");
-                                            }
-
-                                            int atValue;
-                                            if(!Int32.TryParse(at, out atValue) || atValue < 0)
-                                            {
-                                                allErrors.AddError("The 'Using' value must be a real number.");
-                                            }
-                                            if(pad.Length > 1)
-                                            {
-                                                allErrors.AddError("'Padding' must be a single character");
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if(MergeCollection[pos].MergeType == "Chars" && string.IsNullOrEmpty(at))
-                                            {
-                                                allErrors.AddError("The 'Using' value cannot be blank.");
-                                            }
-                                        }
-                                        mergeOperations.Merge(val, MergeCollection[pos].MergeType, at, pad, MergeCollection[pos].Alignment);
-                                        pos++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if(!allErrors.HasErrors())
-                    {
-                        if(string.IsNullOrEmpty(Result))
-                        {
-                            AddDebugOutputItem(new DebugItemStaticDataParams("", ""));
-                        }
-                        else
-                        {
-                            dataObject.Environment.Assign(Result, mergeOperations.MergeData.ToString(), update);
-                            allErrors.MergeErrors(errorResultTo);
-
-                            if(dataObject.IsDebugMode() && !allErrors.HasErrors())
-                            {
-                                AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
-                            }
-                        }
-                    }
-                }
-
-                #endregion Iterate and Merge Data
+                TryExecuteTool(dataObject, update, mergeOperations, allErrors, errorResultTo);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Dev2Logger.Log.Error("DSFDataMerge", e);
+                Dev2Logger.Error("DSFDataMerge", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
             {
                 #region Handle Errors
 
-                if(allErrors.HasErrors())
+                if (allErrors.HasErrors())
                 {
-                    if(dataObject.IsDebugMode())
+                    if (dataObject.IsDebugMode())
                     {
                         AddDebugOutputItem(new DebugItemStaticDataParams("", Result, ""));
                     }
@@ -283,7 +142,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     dataObject.Environment.AddError(errorString);
                 }
 
-                if(dataObject.IsDebugMode())
+                if (dataObject.IsDebugMode())
                 {
                     DispatchDebugState(dataObject, StateType.Before, update);
                     DispatchDebugState(dataObject, StateType.After, update);
@@ -293,21 +152,166 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        public override enFindMissingType GetFindMissingType()
+        private void TryExecuteTool(IDSFDataObject dataObject, int update, IDev2MergeOperations mergeOperations, ErrorResultTO allErrors, ErrorResultTO errorResultTo)
         {
-            return enFindMissingType.MixedActivity;
+            IWarewolfListIterator warewolfListIterator = new WarewolfListIterator();
+            allErrors.MergeErrors(errorResultTo);
+            var listOfIterators = new Dictionary<int, List<IWarewolfIterator>>();
+
+            #region Create a iterator for each row in the data grid in the designer so that the right iteration happen on the data
+
+            var dictionaryKey = 0;
+            foreach (DataMergeDTO row in MergeCollection)
+            {
+                allErrors.MergeErrors(errorResultTo);
+
+                if (dataObject.IsDebugMode())
+                {
+                    var debugItem = new DebugItem();
+                    AddDebugItem(new DebugItemStaticDataParams("", (MergeCollection.IndexOf(row) + 1).ToString(CultureInfo.InvariantCulture)), debugItem);
+                    AddDebugItem(new DebugEvalResult(row.InputVariable, "", dataObject.Environment, update, true), debugItem);
+                    AddDebugItem(new DebugItemStaticDataParams(row.MergeType, "With"), debugItem);
+                    AddDebugItem(new DebugEvalResult(row.At, "Using", dataObject.Environment, update), debugItem);
+                    AddDebugItem(new DebugEvalResult(row.Padding, "Pad", dataObject.Environment, update), debugItem);
+
+                    //Old workflows don't have this set. 
+                    if (row.Alignment == null)
+                    {
+                        row.Alignment = string.Empty;
+                    }
+
+                    AddDebugItem(DataListUtil.IsEvaluated(row.Alignment) ? new DebugItemStaticDataParams("", row.Alignment, "Align") : new DebugItemStaticDataParams(row.Alignment, "Align"), debugItem);
+
+                    _debugInputs.Add(debugItem);
+                }
+                var listOfEvalResultsForInput = dataObject.Environment.EvalForDataMerge(row.InputVariable, update);
+                var innerIterator = new WarewolfListIterator();
+                var innerListOfIters = new List<WarewolfIterator>();
+
+                foreach (var listOfIterator in listOfEvalResultsForInput)
+                {
+                    var inIterator = new WarewolfIterator(listOfIterator);
+                    innerIterator.AddVariableToIterateOn(inIterator);
+                    innerListOfIters.Add(inIterator);
+                }
+                var atomList = new List<DataStorage.WarewolfAtom>();
+                while (innerIterator.HasMoreData())
+                {
+                    var stringToUse = "";
+                    foreach (var warewolfIterator in innerListOfIters)
+                    {
+                        stringToUse += warewolfIterator.GetNextValue();
+                    }
+                    atomList.Add(DataStorage.WarewolfAtom.NewDataString(stringToUse));
+                }
+                var finalString = string.Join("", atomList);
+                var inputListResult = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomListresult(new WarewolfAtomList<DataStorage.WarewolfAtom>(DataStorage.WarewolfAtom.Nothing, atomList));
+                if (DataListUtil.IsFullyEvaluated(finalString))
+                {
+                    inputListResult = dataObject.Environment.Eval(finalString, update);
+                }
+
+                var inputIterator = new WarewolfIterator(inputListResult);
+                var atIterator = new WarewolfIterator(dataObject.Environment.Eval(row.At, update));
+                var paddingIterator = new WarewolfIterator(dataObject.Environment.Eval(row.Padding, update));
+                warewolfListIterator.AddVariableToIterateOn(inputIterator);
+                warewolfListIterator.AddVariableToIterateOn(atIterator);
+                warewolfListIterator.AddVariableToIterateOn(paddingIterator);
+
+                listOfIterators.Add(dictionaryKey, new List<IWarewolfIterator> { inputIterator, atIterator, paddingIterator });
+                dictionaryKey++;
+            }
+
+            #endregion
+
+            #region Iterate and Merge Data
+
+            if (!allErrors.HasErrors())
+            {
+                while (warewolfListIterator.HasMoreData())
+                {
+                    var pos = 0;
+                    foreach (var iterator in listOfIterators)
+                    {
+                        var val = warewolfListIterator.FetchNextValue(iterator.Value[0]);
+                        var at = warewolfListIterator.FetchNextValue(iterator.Value[1]);
+                        var pad = warewolfListIterator.FetchNextValue(iterator.Value[2]);
+                        pos = AddErrorAndMerge(mergeOperations, allErrors, pos, val, at, pad);
+                    }
+                }
+                if (!allErrors.HasErrors())
+                {
+                    if (string.IsNullOrEmpty(Result))
+                    {
+                        AddDebugOutputItem(new DebugItemStaticDataParams("", ""));
+                    }
+                    else
+                    {
+                        AddToErrorsToDebugOutput(dataObject, update, mergeOperations, allErrors, errorResultTo);
+                    }
+                }
+            }
+
+            #endregion Iterate and Merge Data
         }
+
+        private void AddToErrorsToDebugOutput(IDSFDataObject dataObject, int update, IDev2MergeOperations mergeOperations, ErrorResultTO allErrors, ErrorResultTO errorResultTo)
+        {
+            dataObject.Environment.Assign(Result, mergeOperations.MergeData.ToString(), update);
+            allErrors.MergeErrors(errorResultTo);
+
+            if (dataObject.IsDebugMode() && !allErrors.HasErrors())
+            {
+                AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+            }
+        }
+
+        private int AddErrorAndMerge(IDev2MergeOperations mergeOperations, ErrorResultTO allErrors, int pos, string val, string at, string pad)
+        {
+            if (val != null && at != null && pad != null)
+            {
+                if (MergeCollection[pos].MergeType == "Index")
+                {
+                    if (string.IsNullOrEmpty(at))
+                    {
+                        allErrors.AddError(ErrorResource.BlankUSINGValue);
+                    }
+
+                    if (!Int32.TryParse(at, out int atValue) || atValue < 0)
+                    {
+                        allErrors.AddError(ErrorResource.USINGMustBeARealNumber);
+                    }
+                    if (pad.Length > 1)
+                    {
+                        allErrors.AddError(ErrorResource.PADDINGMustBeSingleCharecter);
+                    }
+                }
+                else
+                {
+                    if (MergeCollection[pos].MergeType == "Chars" && string.IsNullOrEmpty(at))
+                    {
+                        allErrors.AddError(ErrorResource.BlankUSINGValue);
+                    }
+                }
+                mergeOperations.Merge(val, MergeCollection[pos].MergeType, at, pad, MergeCollection[pos].Alignment);
+                pos++;
+            }
+
+            return pos;
+        }
+
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.MixedActivity;
 
         #endregion
 
         #region Private Methods
 
-        private void CleanArguments(IList<DataMergeDTO> args)
+        void CleanArguments(IList<DataMergeDTO> args)
         {
-            int count = 0;
-            while(count < args.Count)
+            var count = 0;
+            while (count < args.Count)
             {
-                if(args[count].IsEmpty())
+                if (args[count].IsEmpty())
                 {
                     args.RemoveAt(count);
                 }
@@ -318,50 +322,52 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        private void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
+        void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties["MergeCollection"];
-            if(modelProperty != null)
+            if (modelProperty == null)
             {
-                ModelItemCollection mic = modelProperty.Collection;
+                return;
+            }
+            var mic = modelProperty.Collection;
 
-                if(mic != null)
+            if (mic == null)
+            {
+                return;
+            }
+            var listOfValidRows = MergeCollection.Where(c => !c.CanRemove()).ToList();
+            if (listOfValidRows.Count > 0)
+            {
+                var dataMergeDto = MergeCollection.Last(c => !c.CanRemove());
+                var startIndex = MergeCollection.IndexOf(dataMergeDto) + 1;
+                foreach (string s in listToAdd)
                 {
-                    List<DataMergeDTO> listOfValidRows = MergeCollection.Where(c => !c.CanRemove()).ToList();
-                    if(listOfValidRows.Count > 0)
-                    {
-                        DataMergeDTO dataMergeDto = MergeCollection.Last(c => !c.CanRemove());
-                        int startIndex = MergeCollection.IndexOf(dataMergeDto) + 1;
-                        foreach(string s in listToAdd)
-                        {
-                            mic.Insert(startIndex, new DataMergeDTO(s, MergeCollection[startIndex - 1].MergeType, MergeCollection[startIndex - 1].At, startIndex + 1, MergeCollection[startIndex - 1].Padding, MergeCollection[startIndex - 1].Alignment));
-                            startIndex++;
-                        }
-                        CleanUpCollection(mic, modelItem, startIndex);
-                    }
-                    else
-                    {
-                        AddToCollection(listToAdd, modelItem);
-                    }
+                    mic.Insert(startIndex, new DataMergeDTO(s, MergeCollection[startIndex - 1].MergeType, MergeCollection[startIndex - 1].At, startIndex + 1, MergeCollection[startIndex - 1].Padding, MergeCollection[startIndex - 1].Alignment));
+                    startIndex++;
                 }
+                CleanUpCollection(mic, modelItem, startIndex);
+            }
+            else
+            {
+                AddToCollection(listToAdd, modelItem);
             }
         }
 
-        private void AddToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
+        void AddToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties["MergeCollection"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                ModelItemCollection mic = modelProperty.Collection;
+                var mic = modelProperty.Collection;
 
-                if(mic != null)
+                if (mic != null)
                 {
-                    int startIndex = 0;
-                    string firstRowMergeType = MergeCollection[0].MergeType;
-                    string firstRowPadding = MergeCollection[0].Padding;
-                    string firstRowAlignment = MergeCollection[0].Alignment;
+                    var startIndex = 0;
+                    var firstRowMergeType = MergeCollection[0].MergeType;
+                    var firstRowPadding = MergeCollection[0].Padding;
+                    var firstRowAlignment = MergeCollection[0].Alignment;
                     mic.Clear();
-                    foreach(string s in listToAdd)
+                    foreach (string s in listToAdd)
                     {
                         mic.Add(new DataMergeDTO(s, firstRowMergeType, string.Empty, startIndex + 1, firstRowPadding, firstRowAlignment));
                         startIndex++;
@@ -371,27 +377,27 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        private void CleanUpCollection(ModelItemCollection mic, ModelItem modelItem, int startIndex)
+        void CleanUpCollection(ModelItemCollection mic, ModelItem modelItem, int startIndex)
         {
-            if(startIndex < mic.Count)
+            if (startIndex < mic.Count)
             {
                 mic.RemoveAt(startIndex);
             }
             mic.Add(new DataMergeDTO(string.Empty, "None", string.Empty, startIndex + 1, " ", "Left To Right"));
             var modelProperty = modelItem.Properties["DisplayName"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
                 modelProperty.SetValue(CreateDisplayName(modelItem, startIndex + 1));
             }
         }
 
-        private string CreateDisplayName(ModelItem modelItem, int count)
+        string CreateDisplayName(ModelItem modelItem, int count)
         {
             var modelProperty = modelItem.Properties["DisplayName"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }
@@ -409,16 +415,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update) => _debugInputs;
+
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
-            return _debugInputs;
-        }
-
-
-
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
-        {
-            foreach(IDebugItem debugOutput in _debugOutputs)
+            foreach (IDebugItem debugOutput in _debugOutputs)
             {
                 debugOutput.FlushStringBuilder();
             }
@@ -432,16 +433,16 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            if (updates != null)
             {
-                foreach(Tuple<string, string> t in updates)
+                foreach (Tuple<string, string> t in updates)
                 {
                     // locate all updates for this tuple
-                    Tuple<string, string> t1 = t;
+                    var t1 = t;
                     var items = MergeCollection.Where(c => !string.IsNullOrEmpty(c.InputVariable) && c.InputVariable.Equals(t1.Item1));
 
                     // issues updates
-                    foreach(var a in items)
+                    foreach (var a in items)
                     {
                         a.InputVariable = t.Item2;
                     }
@@ -451,13 +452,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
@@ -474,7 +472,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         public override IList<DsfForEachItem> GetForEachOutputs()
         {
             var items = new string[1];
-            if(!string.IsNullOrEmpty(Result))
+            if (!string.IsNullOrEmpty(Result))
             {
                 items[0] = Result;
             }
@@ -485,14 +483,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Implementation of ICollectionActivity
 
-        public int GetCollectionCount()
-        {
-            return MergeCollection.Count(caseConvertTo => !caseConvertTo.CanRemove());
-        }
+        public int GetCollectionCount() => MergeCollection.Count(caseConvertTo => !caseConvertTo.CanRemove());
 
         public void AddListToCollection(IList<string> listToAdd, bool overwrite, ModelItem modelItem)
         {
-            if(!overwrite)
+            if (!overwrite)
             {
                 InsertToCollection(listToAdd, modelItem);
             }
@@ -503,5 +498,74 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion
+
+        public override List<string> GetOutputs() => new List<string> { Result };
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name="Merge Collection",
+                    Type=StateVariable.StateType.Input,
+                    Value= ActivityHelper.GetSerializedStateValueFromCollection(MergeCollection)
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type=StateVariable.StateType.Output,
+                    Value=Result
+                }
+            };
+        }
+
+        public bool Equals(DsfDataMergeActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var mergeCollsAreEqual = CommonEqualityOps.CollectionEquals(MergeCollection, other.MergeCollection, new DataMergeDtoComparer());
+            return base.Equals(other) && string.Equals(Result, other.Result)
+                && mergeCollsAreEqual;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfDataMergeActivity)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (MergeCollection != null ? MergeCollection.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

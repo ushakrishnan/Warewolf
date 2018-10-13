@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +9,16 @@
 */
 
 using System.Activities.Presentation.Model;
-using System.Diagnostics.CodeAnalysis;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.FormatNumber
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class FormatNumberDesignerViewModelTests
     {
         [TestMethod]
@@ -30,6 +30,7 @@ namespace Dev2.Activities.Designers.Tests.FormatNumber
             var viewModel = new TestFormatNumberDesignerViewModel(modelItem);
             Assert.AreEqual("None", viewModel.SelectedRoundingType);
             Assert.AreEqual("None", viewModel.RoundingType);
+            Assert.IsTrue(viewModel.HasLargeView);
         }
 
         [TestMethod]
@@ -39,7 +40,26 @@ namespace Dev2.Activities.Designers.Tests.FormatNumber
         {
             var modelItem = CreateModelItem();
             var viewModel = new TestFormatNumberDesignerViewModel(modelItem);
+            viewModel.Validate();
             Assert.AreEqual(4, viewModel.RoundingTypes.Count);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("FormatNumberDesignerViewModel_Handle")]
+        public void FormatNumberDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var viewModel = new TestFormatNumberDesignerViewModel(CreateModelItem());
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         [TestMethod]

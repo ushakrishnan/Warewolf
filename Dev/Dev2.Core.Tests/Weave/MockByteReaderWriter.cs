@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,11 +18,6 @@ namespace Dev2.Tests.Weave
         readonly List<dynamic> _values = new List<dynamic>();
         int _current;
 
-        public void Reset()
-        {
-            _values.Clear();
-            _current = 0;
-        }
 
         #region Implementation of IDisposable
 
@@ -33,6 +27,13 @@ namespace Dev2.Tests.Weave
         public void Dispose()
         {
             _values.Clear();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            // Cleanup
         }
 
         #endregion

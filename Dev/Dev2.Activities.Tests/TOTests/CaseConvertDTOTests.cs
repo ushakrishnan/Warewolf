@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,17 +8,12 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Activities.TOTests
 {
-    /// <summary>
-    /// Summary description for CaseConvertDTOTests
-    /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class CaseConvertDTOTests
     {
         [TestMethod]
@@ -34,7 +28,7 @@ namespace Dev2.Tests.Activities.TOTests
             Assert.AreEqual("UPPER", caseConvertDTO.ConvertType);            
             Assert.AreEqual(string.Empty, caseConvertDTO.Result);
             Assert.AreEqual(1, caseConvertDTO.IndexNumber);
-            Assert.IsNull(caseConvertDTO.Errors);
+            Assert.IsNotNull(caseConvertDTO.Errors);
         }
 
         #region CanAdd Tests
@@ -61,6 +55,43 @@ namespace Dev2.Tests.Activities.TOTests
             var caseConvertTO = new CaseConvertTO { StringToConvert = "Value" };
             //------------Assert Results-------------------------
             Assert.IsTrue(caseConvertTO.CanAdd());
+        }
+
+        [TestMethod]
+        public void CaseConvertTO_GetRuleSet_StringToConvert_ReturnsStringToConvertRule()
+        {
+            //------------Setup for test--------------------------
+            var caseConvertTO = new CaseConvertTO { StringToConvert = "Value" };
+            //------------Execute Test---------------------------
+            var ruleSet = caseConvertTO.GetRuleSet("StringToConvert", "");
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(ruleSet);
+            Assert.AreEqual(1, ruleSet.Rules.Count);
+        }
+
+        [TestMethod]
+        public void CaseConvertTO_ClearRow_StringToConvert_ReturnsStringToConvertRule()
+        {
+            //------------Setup for test--------------------------
+            var caseConvertTO = new CaseConvertTO { StringToConvert = "Value" };
+            //------------Execute Test---------------------------
+            caseConvertTO.ClearRow();
+            //------------Assert Results-------------------------
+            Assert.AreEqual("UPPER", caseConvertTO.ConvertType);
+            Assert.AreEqual(string.Empty, caseConvertTO.StringToConvert);
+            Assert.AreEqual(string.Empty, caseConvertTO.Result);
+        }
+
+        [TestMethod]
+        public void CaseConvertTO_GetRuleSet_ConvertType_ReturnsNoRule()
+        {
+            //------------Setup for test--------------------------
+            var caseConvertTO = new CaseConvertTO { StringToConvert = "Value" };
+            //------------Execute Test---------------------------
+            var ruleSet = caseConvertTO.GetRuleSet("ConvertType", "");
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(ruleSet);
+            Assert.AreEqual(0, ruleSet.Rules.Count);
         }
 
         #endregion

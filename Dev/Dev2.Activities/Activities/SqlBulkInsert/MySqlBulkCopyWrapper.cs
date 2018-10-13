@@ -10,22 +10,26 @@ namespace Dev2.Activities.SqlBulkInsert
     {
         #region Implementation of IDisposable
 
-        private readonly MySqlBulkLoader _sbc;
-        public MySqlBulkCopyWrapper(MySqlBulkLoader copyTool)
-        {
-            _sbc = copyTool;
-           
-        }
+        bool disposedValue; // To detect redundant calls
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                disposedValue = true;
+            }
+        }
         public void Dispose()
         {
-            if(_sbc != null)
-            {
-             //   _sbc.();
-            }
+            Dispose(true);
+        }
+
+        #endregion
+
+        readonly MySqlBulkLoader _sbc;
+        public MySqlBulkCopyWrapper(MySqlBulkLoader copyTool)
+        {
+            _sbc = copyTool;           
         }
 
         public bool WriteToServer(DataTable dt)
@@ -36,54 +40,20 @@ namespace Dev2.Activities.SqlBulkInsert
             }
             var filename = Path.GetTempFileName();
             try
-            {
-
-         
-           _sbc.Connection.Open();
+            {         
+                _sbc.Connection.Open();
            
-             WriteDataTable(dt, File.CreateText(filename));
-             _sbc.LineTerminator = Environment.NewLine;
-            _sbc.FileName = filename;
-            _sbc.Local = true;
-            var res =_sbc.Load();
-
-         
-            return res>0;
+                 WriteDataTable(dt, File.CreateText(filename));
+                 _sbc.LineTerminator = Environment.NewLine;
+                _sbc.FileName = filename;
+                _sbc.Local = true;
+                var res =_sbc.Load();         
+                return res>0;
             }
             finally 
             {
 
                _sbc.Connection.Close();
-                File.Delete(filename);
-            }
-        }
-
-        public bool WriteToServer(IDataReader dataTableToInsert)
-        {
-            if (_sbc == null)
-            {
-                throw new ArgumentException("_sbc");
-            }
-            var filename = Path.GetTempFileName();
-            try
-            {
-
-
-                _sbc.Connection.Open();
-
-                WriteDataTable(dataTableToInsert, File.CreateText(filename));
-                _sbc.LineTerminator = Environment.NewLine;
-                _sbc.FileName = filename;
-                _sbc.Local = true;
-                var res = _sbc.Load();
-
-
-                return res > 0;
-            }
-            finally
-            {
-
-                _sbc.Connection.Close();
                 File.Delete(filename);
             }
         }
@@ -94,33 +64,14 @@ namespace Dev2.Activities.SqlBulkInsert
 
             foreach (DataRow row in sourceTable.Rows)
             {
-                string[] items = row.ItemArray.Select(o => QuoteValue(o.ToString())).ToArray();
+                var items = row.ItemArray.Select(o => QuoteValue(o.ToString())).ToArray();
                 writer.WriteLine(String.Join(",", items));
             }
 
             writer.Flush();
             writer.Close();
         }
-        
-        public static void WriteDataTable(IDataReader sourceTable, StreamWriter writer)
-        {
-            while (sourceTable.Read())
-            {
-                object[] items = {};
-                sourceTable.GetValues(items);
-                var actualItems = items.Select(o => QuoteValue(o.ToString())).ToArray();
-                writer.WriteLine(String.Join(",", actualItems));
-            }
 
-            writer.Flush();
-            writer.Close();
-        }
-
-        private static string QuoteValue(string value)
-        {
-            return value;
-        }
-
-        #endregion
+        static string QuoteValue(string value) => value;
     }
 }

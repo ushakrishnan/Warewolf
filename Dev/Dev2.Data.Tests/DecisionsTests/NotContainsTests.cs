@@ -1,7 +1,6 @@
-
-/*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +14,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Data.Tests.DecisionsTests
 {
     [TestClass]
+    //
     public class NotContainsTests
     {
         [TestMethod]
@@ -24,13 +24,13 @@ namespace Dev2.Data.Tests.DecisionsTests
         {
             //------------Setup for test--------------------------
             var notStartsWith = new NotContains();
-            string[] cols = new string[2];
+            var cols = new string[2];
             cols[0] = "TestData";
             cols[1] = "Test";
 
             //------------Execute Test---------------------------
 
-            bool result = notStartsWith.Invoke(cols);
+            var result = notStartsWith.Invoke(cols);
 
             //------------Assert Results-------------------------
             Assert.IsFalse(result);
@@ -43,16 +43,31 @@ namespace Dev2.Data.Tests.DecisionsTests
         {
             //------------Setup for test--------------------------
             var notStartsWith = new NotContains();
-            string[] cols = new string[2];
+            var cols = new string[2];
             cols[0] = "TestData";
             cols[1] = "No";
 
             //------------Execute Test---------------------------
 
-            bool result = notStartsWith.Invoke(cols);
+            var result = notStartsWith.Invoke(cols);
 
             //------------Assert Results-------------------------
             Assert.IsTrue(result);
+
+        }
+
+
+        [TestMethod]
+        [Owner("Sanele Mthmembu")]
+        [TestCategory("NotContains_HandlesType")]
+        public void NotContains_HandlesType_ReturnsNotContainsType()
+        {
+            var decisionType = enDecisionType.NotContain;
+            //------------Setup for test--------------------------
+            var notContains = new NotContains();
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            Assert.AreEqual(decisionType, notContains.HandlesType());
         }
     }
 }

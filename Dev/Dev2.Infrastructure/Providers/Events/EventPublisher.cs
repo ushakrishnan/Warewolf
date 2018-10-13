@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,14 +28,10 @@ namespace Dev2.Providers.Events
 
         }
 
-        public int Count { get { return _subjects.Count; } }
+        public int Count => _subjects.Count;
 
         public bool RemoveEvent<TEvent>()
-            where TEvent : class, new()
-        {
-            object value;
-            return _subjects.TryRemove(typeof(TEvent), out value);
-        }
+            where TEvent : class, new() => _subjects.TryRemove(typeof(TEvent), out object value);
 
         public IObservable<TEvent> GetEvent<TEvent>()
             where TEvent : class, new()
@@ -55,8 +50,7 @@ namespace Dev2.Providers.Events
         {
             VerifyArgument.IsNotNull("sampleEvent", sampleEvent);
 
-            object subject;
-            if(_subjects.TryGetValue(typeof(TEvent), out subject))
+            if (_subjects.TryGetValue(typeof(TEvent), out object subject))
             {
                 ((ISubject<TEvent>)subject).OnNext(sampleEvent);
             }

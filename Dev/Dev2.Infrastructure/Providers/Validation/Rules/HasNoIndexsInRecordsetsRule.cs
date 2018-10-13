@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Providers.Validation.Rules
 {
@@ -20,17 +20,18 @@ namespace Dev2.Providers.Validation.Rules
         public HasNoIndexsInRecordsetsRule(Func<string> getValue)
             : base(getValue)
         {
-            ErrorText = "Cannot have index's for recordsets in this field";
+            ErrorText = ErrorResource.CannotHaveIndexsForRecordsets;
         }
 
         public override IActionableErrorInfo Check()
         {
             var value = GetValue();
 
-            string[] fields = value.Split(',');
-            for(int i = 0; i < fields.Length; i++)
+            var fields = value.Split(',');
+            for (int i = 0; i < fields.Length; i++)
             {
-                if(!string.IsNullOrEmpty(ExtractIndexRegionFromRecordset(fields[i])))
+                var indexValue = ExtractIndexRegionFromRecordset(fields[i]);
+                if (!string.IsNullOrEmpty(indexValue) && indexValue!="*")
                 {
                     return CreatError();
                 }
@@ -46,13 +47,13 @@ namespace Dev2.Providers.Validation.Rules
         /// <returns></returns>
         public static string ExtractIndexRegionFromRecordset(string rs)
         {
-            string result = string.Empty;
+            var result = string.Empty;
 
-            int start = rs.IndexOf("(", StringComparison.Ordinal);
-            if(start > 0)
+            var start = rs.IndexOf("(", StringComparison.Ordinal);
+            if (start > 0)
             {
-                int end = rs.LastIndexOf(")", StringComparison.Ordinal);
-                if(end < 0)
+                var end = rs.LastIndexOf(")", StringComparison.Ordinal);
+                if (end < 0)
                 {
                     end = rs.Length;
                 }

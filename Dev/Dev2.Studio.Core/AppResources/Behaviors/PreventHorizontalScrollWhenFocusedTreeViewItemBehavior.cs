@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Interactivity;
 using Dev2.Studio.Core.AppResources.ExtensionMethods;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Behaviors
 {
     public class PreventHorizontalScrollWhenFocusedTreeViewItemBehavior : Behavior<UIElement>
@@ -34,7 +33,9 @@ namespace Dev2.Studio.Core.AppResources.Behaviors
         protected override void OnDetaching()
         {
             if(_treeViewItem != null)
+            {
                 _treeViewItem.RequestBringIntoView -= AssociatedObject_RequestBringIntoView;
+            }
         }
 
         void AssociatedObject_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)

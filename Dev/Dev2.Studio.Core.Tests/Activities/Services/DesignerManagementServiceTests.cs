@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +10,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Studio.Core.Activities.Services;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -21,14 +19,13 @@ using Moq;
 namespace Dev2.Core.Tests.Activities.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DesignerManagementServiceTests
     {
 
         [TestInitialize]
         public void Initialize()
         {
-            AppSettings.LocalHost = "http://localhost:3142";
+            AppUsageStats.LocalHost = "http://localhost:3142";
         }
 
         [TestMethod]
@@ -59,13 +56,13 @@ namespace Dev2.Core.Tests.Activities.Services
         [Owner("Trevor Williams-Ros")]
         public void DesignerManagementService_UnitTest_GetResourceModel_SameAsConstructorInstance()
         {
-            Mock<IContextualResourceModel> resourceModel = Dev2MockFactory.SetupResourceModelMock();
-            Mock<IResourceRepository> resourceRepository = Dev2MockFactory.SetupFrameworkRepositoryResourceModelMock(resourceModel, new List<IResourceModel>());
+            var resourceModel = Dev2MockFactory.SetupResourceModelMock();
+            var resourceRepository = Dev2MockFactory.SetupFrameworkRepositoryResourceModelMock(resourceModel, new List<IResourceModel>());
 
             var designerManagementService = new DesignerManagementService(resourceModel.Object, resourceRepository.Object);
 
-            IContextualResourceModel expected = resourceModel.Object;
-            IContextualResourceModel actual = designerManagementService.GetRootResourceModel();
+            var expected = resourceModel.Object;
+            var actual = designerManagementService.GetRootResourceModel();
 
             Assert.AreEqual(expected, actual);
         }

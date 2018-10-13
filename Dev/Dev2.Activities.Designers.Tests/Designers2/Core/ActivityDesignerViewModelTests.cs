@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,34 +9,44 @@
 */
 
 using System;
+using System.Activities;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Windows;
-using System.Windows.Data;
 using Caliburn.Micro;
 using Dev2.Activities.Designers.Tests.Designers2.Core.Stubs;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Service;
 using Dev2.Collections;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Collections;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Common.Interfaces.Studio.Controller;
+using Dev2.Communication;
 using Dev2.Core.Tests;
-using Dev2.Core.Tests.Utils;
+using Dev2.Core.Tests.Environments;
 using Dev2.Providers.Errors;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Threading;
+using Dev2.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Moq.Protected;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.Designers2.Core
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ActivityDesignerViewModelTests
     {
+        [TestInitialize]
+        public void Init()
+        {
+            var serverRepo = new Mock<IServerRepository>();
+            CustomContainer.Register(serverRepo.Object);
+        }
 
         [TestMethod]
         [TestCategory("ActivityDesignerViewModel_UnitTest")]
@@ -74,35 +83,9 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
             Assert.IsTrue(wasCalled);
         }
 
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("ActivityDesignerViewModel_AddTitleBarHelpToggle")]
-        public void ActivityDesignerViewModel_AddTitleBarHelpToggle_Added()
-        {
-            //------------Setup for test--------------------------
-            var mockModelItem = GenerateMockModelItem();
-            var viewModel = new TestActivityDesignerViewModel(mockModelItem.Object);
-
-            //------------Execute Test---------------------------
-            viewModel.TestAddTitleBarHelpToggle();
-
-            //------------Assert Results-------------------------
-            Assert.AreEqual(1, viewModel.TitleBarToggles.Count);
-
-            var toggle = viewModel.TitleBarToggles[0];
-
-            Assert.AreEqual("pack://application:,,,/Dev2.Activities.Designers;component/Images/ServiceHelp-32.png", toggle.CollapseImageSourceUri);
-            Assert.AreEqual("Close Help", toggle.CollapseToolTip);
-            Assert.AreEqual("pack://application:,,,/Dev2.Activities.Designers;component/Images/ServiceHelp-32.png", toggle.ExpandImageSourceUri);
-            Assert.AreEqual("Open Help", toggle.ExpandToolTip);
-            Assert.AreEqual("HelpToggle", toggle.AutomationID);
-
-            var binding = BindingOperations.GetBinding(viewModel, ActivityDesignerViewModel.ShowHelpProperty);
-            Assert.IsNotNull(binding);
-            Assert.AreEqual(toggle, binding.Source);
-            Assert.AreEqual(ActivityDesignerToggle.IsCheckedProperty.Name, binding.Path.Path);
-            Assert.AreEqual(BindingMode.TwoWay, binding.Mode);
-        }
+        /*
+         * REMOVED ADD HELP TOGGLE TEST. THE HELP TOGGLE ON THE DESIGNERS HAVE BEEN REMOVED
+        */
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]
@@ -127,22 +110,22 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
         {
             //------------Setup for test--------------------------
             var mockModelItem = GenerateMockModelItem();
-            Mock<IContextualResourceModel> setupResourceModelMock = Dev2MockFactory.SetupResourceModelMock();
-            ErrorInfo errorInfo = new ErrorInfo { InstanceID = new Guid() };
+            var setupResourceModelMock = Dev2MockFactory.SetupResourceModelMock();
+            var errorInfo = new ErrorInfo { InstanceID = new Guid() };
 
-            var envRepo = new Mock<IEnvironmentRepository>();
-            envRepo.Setup(e => e.ActiveEnvironment).Returns(setupResourceModelMock.Object.Environment);
+            var envRepo = new Mock<IServerRepository>();
+            envRepo.Setup(e => e.ActiveServer).Returns(setupResourceModelMock.Object.Environment);
 
             IObservableReadOnlyList<IErrorInfo> testErrors = new ObservableReadOnlyList<IErrorInfo> { errorInfo };
             setupResourceModelMock.Setup(c => c.Errors).Returns(testErrors);
             setupResourceModelMock.Setup(c => c.GetErrors(It.IsAny<Guid>())).Returns(new List<IErrorInfo> { errorInfo });
-            var viewModel = new ServiceDesignerViewModel(mockModelItem.Object, setupResourceModelMock.Object, envRepo.Object, new Mock<IEventAggregator>().Object, new TestAsyncWorker());
+            var viewModel = new ServiceDesignerViewModel(mockModelItem.Object, setupResourceModelMock.Object, envRepo.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
 
             Assert.AreEqual(1, viewModel.TitleBarToggles.Count);
 
             viewModel.ShowLarge = true;
 
-            Assert.AreEqual(2, viewModel.TitleBarToggles.Count);
+            Assert.AreEqual(1, viewModel.TitleBarToggles.Count);
 
             //------------Execute Test---------------------------
             viewModel.Collapse();
@@ -164,7 +147,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
             viewModel.Restore();
 
             //------------Assert Results-------------------------
-            Assert.IsTrue(viewModel.ShowLarge);
+            Assert.IsFalse(viewModel.ShowLarge);
         }
 
         [TestMethod]
@@ -426,29 +409,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
             //------------Assert Results-------------------------
             Assert.AreEqual(ZIndexPosition.Back, viewModel.ZIndexPosition);
         }
-
-        [TestMethod]
-        [Owner("Trevor Williams-Ros")]
-        [TestCategory("ActivityDesignerViewModel_ShowItemHelpCommand")]
-        public void ActivityDesignerViewModel_ShowItemHelpCommand_InvokesGivenAction()
-        {
-            //------------Setup for test--------------------------
-            Type showExampleType = null;
-            var mockModelItem = GenerateMockModelItem();
-
-            var viewModel = new TestActivityDesignerViewModel(mockModelItem.Object, type =>
-            {
-                showExampleType = type;
-            });
-
-            //------------Execute Test---------------------------
-            viewModel.ShowItemHelpCommand.Execute(null);
-
-            //------------Assert Results-------------------------
-            Assert.IsNotNull(showExampleType);
-            Assert.AreEqual(mockModelItem.Object.ItemType, showExampleType);
-        }
-
+        
         static Mock<ModelItem> GenerateMockModelItem()
         {
             var properties = new Dictionary<string, Mock<ModelProperty>>();
@@ -463,7 +424,46 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core
             mockModelItem.Setup(mi => mi.ItemType).Returns(typeof(TestActivity));
             mockModelItem.Setup(s => s.Properties).Returns(propertyCollection.Object);
 
+            var repo = new Mock<IResourceRepository>();
+            repo.Setup(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
+            var env = EnviromentRepositoryTest.CreateMockEnvironment();
+            env.Setup(e => e.ResourceRepository).Returns(repo.Object);
+            var crm = new Mock<IContextualResourceModel>();
+            crm.Setup(r => r.Environment).Returns(env.Object);
+            crm.Setup(r => r.ResourceName).Returns("Test");
+
+            var wfd = CreateWorkflowDesignerViewModel(crm.Object);
+
+            mockModelItem.Setup(mi => mi.View).Returns(wfd.DesignerView);
+
             return mockModelItem;
+        }
+
+        static WorkflowDesignerViewModel CreateWorkflowDesignerViewModel(IContextualResourceModel resourceModel, IWorkflowHelper workflowHelper = null, bool createDesigner = true, string helperText = null)
+        {
+            return CreateWorkflowDesignerViewModel(null, resourceModel, workflowHelper, createDesigner, helperText);
+        }
+
+        static WorkflowDesignerViewModel CreateWorkflowDesignerViewModel(IEventAggregator eventPublisher, IContextualResourceModel resourceModel, IWorkflowHelper workflowHelper = null, bool createDesigner = true, string helperText = null)
+        {
+            eventPublisher = eventPublisher ?? new Mock<IEventAggregator>().Object;
+
+            var popupController = new Mock<IPopupController>();
+
+            if (workflowHelper == null)
+            {
+                var wh = new Mock<IWorkflowHelper>();
+                wh.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(() => new ActivityBuilder { Implementation = new DynamicActivity() });
+                if (helperText != null)
+                {
+                    wh.Setup(h => h.SanitizeXaml(It.IsAny<StringBuilder>())).Returns(new StringBuilder(helperText));
+                }
+                workflowHelper = wh.Object;
+            }
+
+            var viewModel = new WorkflowDesignerViewModel(eventPublisher, resourceModel, workflowHelper, popupController.Object, new SynchronousAsyncWorker(), createDesigner, true);
+
+            return viewModel;
         }
     }
 

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,21 +9,14 @@
 */
 
 using System.Windows;
-// ReSharper disable CheckNamespace
+
 
 namespace Dev2.Studio.AppResources.AttachedProperties
 {
     public static class WizardEngineAttachedProperties
     {
-        public static bool GetDontOpenWizard(DependencyObject obj)
-        {
-            return (bool)obj.GetValue(DontOpenWizardProperty);
-        }
-
-        public static void SetDontOpenWizard(DependencyObject obj, bool value)
-        {
-            obj.SetValue(DontOpenWizardProperty, value);
-        }
+        public static bool GetDontOpenWizard(DependencyObject obj) => (bool)obj.GetValue(DontOpenWizardProperty);
+        public static void SetDontOpenWizard(DependencyObject obj, bool value) => obj.SetValue(DontOpenWizardProperty, value);
 
         // Using a DependencyProperty as the backing store for DontOpenWizard.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty DontOpenWizardProperty =

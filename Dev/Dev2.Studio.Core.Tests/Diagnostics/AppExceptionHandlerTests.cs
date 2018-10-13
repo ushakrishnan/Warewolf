@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +9,12 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Caliburn.Micro;
-using Dev2.Interfaces;
 using Dev2.Studio;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Diagnostics;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Moq.Protected;
@@ -24,7 +22,6 @@ using Moq.Protected;
 namespace Dev2.Core.Tests.Diagnostics
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class AppExceptionHandlerTests
     {
         static readonly object TestGuard = new object();
@@ -91,7 +88,7 @@ namespace Dev2.Core.Tests.Diagnostics
         //{
         //    //------------Setup for test--------------------------
         //    var testTraceListner = new TestTraceListner(new StringBuilder());
-        //    Trace.Listeners.Add(testTraceListner);
+        //    Trace.Listeners.AddMode(testTraceListner);
         //    var e = GetException();
         //    var mockHandler = new Mock<AppExceptionHandlerAbstract>();
         //    var popupController = new Mock<IAppExceptionPopupController>();
@@ -159,7 +156,7 @@ namespace Dev2.Core.Tests.Diagnostics
             mockApp.Setup(c => c.Shutdown()).Verifiable();
             mockApp.SetupProperty(c => c.ShouldRestart);
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
 
             //Execute
             var handler = new MockExceptionHandler(mockApp.Object, mainViewModel.Object);
@@ -181,7 +178,7 @@ namespace Dev2.Core.Tests.Diagnostics
             mockApp.Setup(c => c.Shutdown()).Verifiable();
             mockApp.SetupProperty(c => c.ShouldRestart);
 
-            var mainViewModel = new Mock<IMainViewModel>();
+            var mainViewModel = new Mock<IShellViewModel>();
 
             //Execute
             var handler = new MockExceptionHandler(mockApp.Object, mainViewModel.Object);
@@ -196,7 +193,7 @@ namespace Dev2.Core.Tests.Diagnostics
 
         #region Private Test Methods
 
-        private static Exception GetException()
+        static Exception GetException()
         {
             return new Exception("Test Exception", new Exception("Test inner Exception"));
         }

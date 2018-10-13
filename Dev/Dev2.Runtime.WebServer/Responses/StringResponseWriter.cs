@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -53,13 +52,16 @@ namespace Dev2.Runtime.WebServer.Responses
             if(contentLength > WebServerStartup.SizeCapForDownload && _enforceSizeCap)
             {
                 string extension = null;
-                if(ContentTypes.Json.Equals(_contentType))
+                if (ContentTypes.Json.Equals(_contentType))
                 {
                     extension = "json";
                 }
-                else if(ContentTypes.Xml.Equals(_contentType))
+                else
                 {
-                    extension = "xml";
+                    if (ContentTypes.Xml.Equals(_contentType))
+                    {
+                        extension = "xml";
+                    }
                 }
                 if(extension != null)
                 {

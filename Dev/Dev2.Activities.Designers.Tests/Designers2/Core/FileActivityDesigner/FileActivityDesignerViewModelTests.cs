@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +13,8 @@ using System.Collections.Generic;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Interfaces.DataList;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.DataList;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -55,8 +54,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidateInputPathInvokesValidatePathDone()
         {
             //------------Setup for test-------------------------      
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><a></a></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -79,8 +78,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidateOutputPathInvokesValidatePathDone()
         {
             //------------Setup for test-------------------------  
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><a></a></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -103,8 +102,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidateInputAndOutputPathsInvokesBothDone()
         {
             //------------Setup for test-------------------------         
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><a></a></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -141,10 +140,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidatePathPathIsEmptyAndIsRequiredHasErrors()
         {
             var path = string.Empty;
-            const string ExpectedMessageFormat = "{0} cannot be empty or only white space";
-            const string LabelText = "Label";
-            var viewModel = VerifyValidatePath(path, true, path, ExpectedMessageFormat);
-            if (string.IsNullOrEmpty(ExpectedMessageFormat))
+            var viewModel = VerifyValidatePath(path, true, path, Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotNullErrorTest);
+            if (string.IsNullOrEmpty(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotNullErrorTest))
             {
                 Assert.IsNull(viewModel.Errors);
             }
@@ -152,12 +149,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             {
                 if (viewModel.Errors != null)
                 {
-
                     Assert.IsNotNull(viewModel.Errors);
                     Assert.AreEqual(1, viewModel.Errors.Count);
 
                     var error = viewModel.Errors[0];
-                    Assert.AreEqual(string.Format(ExpectedMessageFormat, LabelText), error.Message);
+                    Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotNullErrorTest, error.Message);
 
                     error.Do();
                     Assert.IsTrue(_onErrorAssigned);
@@ -171,10 +167,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidatePathPathIsNotValidUriAndDoesNotExistHasErrors()
         {
             var path = Guid.NewGuid().ToString();
-            const string ExpectedMessageFormat = "Please supply a valid {0}";
-            const string LabelText = "Label";
-            var viewModel = VerifyValidatePath(path, true, path, ExpectedMessageFormat);
-            if (string.IsNullOrEmpty(ExpectedMessageFormat))
+            var viewModel = VerifyValidatePath(path, true, path, Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest);
+            if (string.IsNullOrEmpty(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest))
             {
                 Assert.IsNull(viewModel.Errors);
             }
@@ -182,12 +176,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             {
                 if (viewModel.Errors != null)
                 {
-
                     Assert.IsNotNull(viewModel.Errors);
                     Assert.AreEqual(1, viewModel.Errors.Count);
 
                     var error = viewModel.Errors[0];
-                    Assert.AreEqual(string.Format(ExpectedMessageFormat, LabelText), error.Message);
+                    Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest, error.Message);
 
                     error.Do();
                     Assert.IsTrue(_onErrorAssigned);
@@ -215,10 +208,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidatePathPathIsValidUriAndSchemIsNotValidHasErrors()
         {
             const string Path = "http://";
-            const string ExpectedMessageFormat = "Please supply a valid {0}";
-            const string LabelText = "Label";
-            var viewModel = VerifyValidatePath(Path, true, Path, ExpectedMessageFormat);
-            if (string.IsNullOrEmpty(ExpectedMessageFormat))
+            var viewModel = VerifyValidatePath(Path, true, Path, Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest);
+            if (string.IsNullOrEmpty(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest))
             {
                 Assert.IsNull(viewModel.Errors);
             }
@@ -226,12 +217,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             {
                 if (viewModel.Errors != null)
                 {
-
                     Assert.IsNotNull(viewModel.Errors);
                     Assert.AreEqual(1, viewModel.Errors.Count);
 
                     var error = viewModel.Errors[0];
-                    Assert.AreEqual(string.Format(ExpectedMessageFormat, LabelText), error.Message);
+                    Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest, error.Message);
 
                     error.Do();
                     Assert.IsTrue(_onErrorAssigned);
@@ -259,9 +249,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidatePathPathIsInvalidExpressionHasErrors()
         {
             const string Path = "a]]";
-            const string ExpectedMessageFormat = "Label - Invalid expression: opening and closing brackets don't match.";
-            var viewModel = VerifyValidatePath(Path, true, Path, ExpectedMessageFormat);
-            if (string.IsNullOrEmpty(ExpectedMessageFormat))
+            var viewModel = VerifyValidatePath(Path, true, Path, Warewolf.Resource.Errors.ErrorResource.FileActivityLabelInvalidExpressionErrorTest);
+            if (string.IsNullOrEmpty(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelInvalidExpressionErrorTest))
             {
                 Assert.IsNull(viewModel.Errors);
             }
@@ -269,12 +258,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             {
                 if (viewModel.Errors != null)
                 {
-
                     Assert.IsNotNull(viewModel.Errors);
                     Assert.AreEqual(1, viewModel.Errors.Count);
 
                     var error = viewModel.Errors[0];
-                    Assert.AreEqual(string.Format(ExpectedMessageFormat), error.Message);
+                    Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelInvalidExpressionErrorTest, error.Message);
 
                     error.Do();
                     Assert.IsTrue(_onErrorAssigned);
@@ -290,11 +278,9 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidateUrlError()
         {
             const string Path = "htp://www.cowbell.co.za";
-            const string ExpectedMessageFormat = "Please supply a valid Label";
+            var viewModel = VerifyValidatePath(Path, true, Path, Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest);
 
-            var viewModel = VerifyValidatePath(Path, true, Path, ExpectedMessageFormat);
-
-            if (string.IsNullOrEmpty(ExpectedMessageFormat))
+            if (string.IsNullOrEmpty(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest))
             {
                 Assert.IsNull(viewModel.Errors);
             }
@@ -302,12 +288,11 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             {
                 if (viewModel.Errors != null)
                 {
-
                     Assert.IsNotNull(viewModel.Errors);
                     Assert.AreEqual(1, viewModel.Errors.Count);
 
                     var error = viewModel.Errors[0];
-                    Assert.AreEqual(string.Format(ExpectedMessageFormat), error.Message);
+                    Assert.AreEqual(Warewolf.Resource.Errors.ErrorResource.FileActivityLabelNotValidErrorTest, error.Message);
 
                     error.Do();
                     Assert.IsTrue(_onErrorAssigned);
@@ -321,11 +306,10 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelVerifyValidateFileContentEmptyPass()
         {
             var content = string.Empty;
-            string expectedResult = string.Empty;
+            var expectedResult = string.Empty;
 
             var viewModel = VerifyValidateFileContent(content, expectedResult);
             Assert.IsNull(viewModel.Errors);
-
         }
 
 
@@ -339,7 +323,6 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
 
             var viewModel = VerifyValidateFileContent(Content, ExpectedResult);
             Assert.IsNull(viewModel.Errors);
-
         }
 
 
@@ -352,7 +335,6 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             const string ExpectedResult = "File [[contains]] Stored Here";
             var viewModel = VerifyValidateFileContent(Content, ExpectedResult);
             Assert.IsNull(viewModel.Errors);
-
         }
 
 
@@ -363,7 +345,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         {
             const string Content = "File [[contains&]] Stored Here";
             const string ExpectedResult = "File [[contains&]] Stored Here";
-            const string ExpectedMessageFormat = "Label - Variable name [[contains&]] contains invalid character(s)";
+            const string ExpectedMessageFormat = "Label - Variable name [[contains&]] contains invalid character(s). Only use alphanumeric _ and - ";
 
             var viewModel = VerifyValidateFileContent(Content, ExpectedResult);
             Assert.AreEqual(1, viewModel.Errors.Count);
@@ -372,8 +354,6 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             error.Do();
             Assert.IsTrue(_onErrorAssigned);
         }
-
-
 
         [TestMethod]
         [Owner("Robin van den Heever")]
@@ -392,8 +372,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         [TestCategory("FileActivityDesignerViewModel_ValidateArchivePassword")]
         public void FileActivityDesignerViewModelValidateArchiveNoPasswordPass()
         {
-            string password = String.Empty;
-            string expectedResult = String.Empty;
+            var password = String.Empty;
+            var expectedResult = String.Empty;
             var viewModel = VerifyValidateArchivePassword(password, expectedResult);
             Assert.IsNull(viewModel.Errors);
         }
@@ -408,7 +388,6 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             const string ExpectedResult = "[[password]]";
             var viewModel = VerifyValidateArchivePassword(Password, ExpectedResult);
             Assert.IsNull(viewModel.Errors);
-
         }
 
 
@@ -419,7 +398,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         {
             const string Password = "[[password&]]";
             const string ExpectedResult = "[[password&]]";
-            const string ExpectedMessageFormat = "Label - Variable name [[password&]] contains invalid character(s)";
+            const string ExpectedMessageFormat = "Label - Variable name [[password&]] contains invalid character(s). Only use alphanumeric _ and - ";
 
             var viewModel = VerifyValidateArchivePassword(Password, ExpectedResult);
             
@@ -437,8 +416,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidateFileContent()
         {
             //------------Setup for test-------------------------  
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><a></a></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -455,8 +434,6 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.ValidateFileContentHitCount);
             Assert.AreEqual(Content, viewModel.FileContentValue);
-
-
         }
 
 
@@ -466,8 +443,8 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
         public void FileActivityDesignerViewModelValidatePassword()
         {
             //------------Setup for test-------------------------  
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><a></a></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -484,19 +461,15 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.ValidateArchivePasswordCount);
             Assert.AreEqual(Password, viewModel.ArchivePasswordValue);
-
         }
-
-
 
         public TestFileActivityDesignerViewModel VerifyValidatePath(string path, bool pathIsRequired, string expectedResult, string expectedMessageFormat)
         {
             //------------Setup for test-------------------------
             const string LabelText = "Label";
 
-
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><contains></contains></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -508,15 +481,14 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
 
             Assert.AreEqual(expectedResult, result);
             return viewModel;
-
         }
 
         public TestFileActivityDesignerViewModel VerifyValidateFileContent(string content, string expectedResult)
         {
             //------------Setup for test-------------------------
             const string LabelText = "Label";
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><contains></contains></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -527,16 +499,14 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             var result = viewModel.TestValidateFileContent(content, LabelText, () => { _onErrorAssigned = true; }, true);
             Assert.AreEqual(expectedResult, result);
             return viewModel;
-
         }
-
 
         public TestFileActivityDesignerViewModel VerifyValidateArchivePassword(string password, string expectedResult)
         {
             //------------Setup for test-------------------------
             const string LabelText = "Label";
-            Mock<IDataListViewModel> mockDataListViewModel = new Mock<IDataListViewModel>();
-            Mock<IResourceModel> mockResourceModel = new Mock<IResourceModel>();
+            var mockDataListViewModel = new Mock<IDataListViewModel>();
+            var mockResourceModel = new Mock<IResourceModel>();
             mockResourceModel.Setup(model => model.DataList).Returns("<DataList><password></password></DataList>");
             mockDataListViewModel.Setup(model => model.Resource).Returns(mockResourceModel.Object);
             DataListSingleton.SetDataList(mockDataListViewModel.Object);
@@ -547,7 +517,6 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.FileActivityDesigner
             var result = viewModel.TestValidateArchivePassword(password, LabelText, () => { _onErrorAssigned = true; }, true);
             Assert.AreEqual(expectedResult, result);
             return viewModel;
-
         }
 
         static TestFileActivityDesignerViewModel CreateViewModel(string inputPathLabel = "Input Label", string outputPathLabel = "Output Label", string inputPath = null, string outputPath = null)

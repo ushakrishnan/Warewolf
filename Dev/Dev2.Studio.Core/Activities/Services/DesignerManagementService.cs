@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +10,9 @@
 
 using System;
 using Dev2.Services.Events;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.Activities.Services
 {
     public class DesignerManagementService : IDesignerManagementService
@@ -26,10 +25,7 @@ namespace Dev2.Studio.Core.Activities.Services
 
         protected void OnExpandAllRequested()
         {
-            if(ExpandAllRequested != null)
-            {
-                ExpandAllRequested(this, new EventArgs());
-            }
+            ExpandAllRequested?.Invoke(this, new EventArgs());
         }
 
         #endregion ExpandAllRequested
@@ -40,10 +36,7 @@ namespace Dev2.Studio.Core.Activities.Services
 
         protected void OnCollapseAllRequested()
         {
-            if(CollapseAllRequested != null)
-            {
-                CollapseAllRequested(this, new EventArgs());
-            }
+            CollapseAllRequested?.Invoke(this, new EventArgs());
         }
 
         #endregion CollapseAllRequested
@@ -54,10 +47,7 @@ namespace Dev2.Studio.Core.Activities.Services
 
         protected void OnRestoreAllRequested()
         {
-            if(RestoreAllRequested != null)
-            {
-                RestoreAllRequested(this, new EventArgs());
-            }
+            RestoreAllRequested?.Invoke(this, new EventArgs());
         }
 
         #endregion RestoreAllRequested
@@ -67,7 +57,7 @@ namespace Dev2.Studio.Core.Activities.Services
         #region Class Members
 
         readonly IContextualResourceModel _rootModel;
-        private bool _disposed;
+        bool _disposed;
 
         #endregion Class Members
 
@@ -75,18 +65,11 @@ namespace Dev2.Studio.Core.Activities.Services
 
         public DesignerManagementService(IContextualResourceModel rootModel, IResourceRepository resourceRepository)
         {
-            if(rootModel == null)
+            if (resourceRepository == null)
             {
-                throw new ArgumentNullException("rootModel");
+                throw new ArgumentNullException(nameof(resourceRepository));
             }
-            if(resourceRepository == null)
-            {
-                throw new ArgumentNullException("resourceRepository");
-            }
-            //VerifyArgument.IsNotNull("rootModel", rootModel);
-            //VerifyArgument.IsNotNull("resourceRepository", resourceRepository);
-
-            _rootModel = rootModel;
+            _rootModel = rootModel ?? throw new ArgumentNullException(nameof(rootModel));
 
             EventPublishers.Aggregator.Subscribe(this);
         }
@@ -95,10 +78,7 @@ namespace Dev2.Studio.Core.Activities.Services
 
         #region Methods
 
-        public IContextualResourceModel GetRootResourceModel()
-        {
-            return _rootModel;
-        }
+        public IContextualResourceModel GetRootResourceModel() => _rootModel;
 
         public void RequestExpandAll()
         {

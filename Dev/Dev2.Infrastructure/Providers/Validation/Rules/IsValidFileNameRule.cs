@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +20,12 @@ namespace Dev2.Providers.Validation.Rules
         static readonly char[] InvalidFileNameChars = Path.GetInvalidFileNameChars();
         static readonly char[] InvalidPathChars = Path.GetInvalidPathChars();
 
-        public IsValidFileNameRule(Func<string> getValue, char splitToken = ';')
+        public IsValidFileNameRule(Func<string> getValue)
+            : this(getValue, ';')
+        {
+        }
+
+        public IsValidFileNameRule(Func<string> getValue, char splitToken)
             : base(getValue, "file name", splitToken)
         {
         }
@@ -64,9 +68,6 @@ namespace Dev2.Providers.Validation.Rules
             return true;
         }
 
-        static bool HasIllegalCharacters(IEnumerable<char> invalidChars, string path)
-        {
-            return path.Any(pathChar => invalidChars.Any(invalidChar => pathChar == invalidChar));
-        }
+        static bool HasIllegalCharacters(IEnumerable<char> invalidChars, string path) => path.Any(pathChar => invalidChars.Any(invalidChar => pathChar == invalidChar));
     }
 }

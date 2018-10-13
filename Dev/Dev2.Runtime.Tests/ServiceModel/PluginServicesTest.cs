@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +9,9 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Tests.Runtime.JSON;
 using Dev2.Tests.Runtime.Plugins;
 using Dev2.Tests.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
@@ -26,13 +22,12 @@ namespace Dev2.Tests.Runtime.ServiceModel
 {
     // BUG 9500 - 2013.05.31 - TWR - Created
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class PluginServicesTest
     {
 
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void PluginServicesContructorWithNullResourceCatalogExpectedThrowsArgumentNullException()
         {
@@ -52,7 +47,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region DeserializeService
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void PluginServicesDeserializeServiceWithNullJsonExpectedThrowsArgumentNullException()
         {
@@ -60,7 +55,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             services.DeserializeService(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesDeserializeServiceWithInvalidJsonExpectedReturnsNewPluginService()
         {
             var services = new PluginServicesMock();
@@ -68,7 +63,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(result.ResourceID, Guid.Empty);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesDeserializeServiceWithValidJsonExpectedReturnsPluginService()
         {
             var xml = XmlResource.Fetch("PluginService");
@@ -80,22 +75,22 @@ namespace Dev2.Tests.Runtime.ServiceModel
             PluginServiceTests.VerifyEmbeddedPluginService(result as PluginService);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesDeserializeServiceWithNullXmlExpectedReturnsNewPluginService()
         {
             var services = new PluginServicesMock();
-            var result = services.DeserializeService(null, ResourceType.PluginService);
+            var result = services.DeserializeService(null, "PluginService");
 
             Assert.AreEqual(result.ResourceID, Guid.Empty);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesDeserializeServiceWithValidXmlExpectedReturnsPluginService()
         {
             var xml = XmlResource.Fetch("PluginService");
 
             var services = new PluginServicesMock();
-            var result = services.DeserializeService(xml, ResourceType.PluginService);
+            var result = services.DeserializeService(xml, "PluginService");
 
             PluginServiceTests.VerifyEmbeddedPluginService(result as PluginService);
         }
@@ -104,7 +99,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region Namespaces
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesNamespacesWithNullArgsExpectedReturnsEmptyList()
         {
             var services = new PluginServices();
@@ -112,15 +107,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(0, result.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesNamespacesWithInvalidArgsExpectedReturnsEmptyList()
         {
             var services = new PluginServices();
-            var result = services.Namespaces("xxxx", Guid.Empty, Guid.Empty);
+            var result = services.Namespaces(new PluginSource(), Guid.Empty, Guid.Empty);
             Assert.AreEqual(0, result.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesNamespacesWithValidArgsExpectedReturnsList()
         {
             var source = CreatePluginSource();
@@ -130,7 +125,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             EnvironmentVariables.GetWorkspacePath(workspaceID);
 
             var services = new PluginServices();
-            var result = services.Namespaces(args, workspaceID, Guid.Empty);
+            var result = services.Namespaces(source, workspaceID, Guid.Empty);
 
             // DO NOT assert equality on Count as this will 
             // change as new namespaces are added to this assembly!
@@ -141,7 +136,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region Methods
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesMethodsWithNullArgsExpectedReturnsEmptyList()
         {
             var services = new PluginServices();
@@ -149,34 +144,100 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.AreEqual(0, result.Count);
         }
 
-        [TestMethod]
-        public void PluginServicesMethodsWithInvalidArgsExpectedReturnsEmptyList()
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void PluginServicesMethodsWithReturnsNullArgsExpectedReturnsEmptyList()
         {
             var services = new PluginServices();
-            var result = services.Methods("xxxx", Guid.Empty, Guid.Empty);
+            var result = services.MethodsWithReturns(null, Guid.Empty, Guid.Empty);
             Assert.AreEqual(0, result.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void PluginServicesMethodsWithInvalidArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.Methods(new PluginService(), Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void PluginServicesMethodsWithReturnsWithInvalidArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.MethodsWithReturns(new PluginService(), Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesMethodsWithValidArgsExpectedReturnsList()
         {
             var service = CreatePluginService();
-            var args = service.ToString();
             var workspaceID = Guid.NewGuid();
 
             EnvironmentVariables.GetWorkspacePath(workspaceID);
 
             var services = new PluginServices();
-            var result = services.Methods(args, workspaceID, Guid.Empty);
+            var result = services.Methods(service, workspaceID, Guid.Empty);
 
             Assert.AreEqual(9, result.Count);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void PluginServicesMethodsWithReturnsWithValidArgsExpectedReturnsList()
+        {
+            var service = CreatePluginService();
+            var workspaceID = Guid.NewGuid();
+
+            EnvironmentVariables.GetWorkspacePath(workspaceID);
+
+            var services = new PluginServices();
+            var result = services.MethodsWithReturns(service, workspaceID, Guid.Empty);
+
+            Assert.AreEqual(7, result.Count);
+        }
+
+        #endregion
+
+        #region Constuctors
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void PluginServicesConstuctorsWithNullArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.Constructors(null, Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void PluginServicesConstuctorsWithInvalidArgsExpectedReturnsEmptyList()
+        {
+            var services = new PluginServices();
+            var result = services.Constructors(new PluginService(), Guid.Empty, Guid.Empty);
+            Assert.AreEqual(0, result.Count);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void PluginServicesConstructorsWithValidArgsExpectedReturnsList()
+        {
+            var service = CreatePluginService();
+            var workspaceID = Guid.NewGuid();
+
+            EnvironmentVariables.GetWorkspacePath(workspaceID);
+
+            var services = new PluginServices();
+            var result = services.Constructors(service, workspaceID, Guid.Empty);
+
+            Assert.AreEqual(2, result.Count);
         }
 
         #endregion
 
         #region Test
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServices_Test")]
         public void PluginServices_Test_WhenTestingPluginReturningBool_ExpectValidPaths()
@@ -193,7 +254,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningBool");
 
             //------------Execute Test---------------------------
-            var result = pluginServices.Test(serviceDef, Guid.Empty, Guid.Empty);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
@@ -202,7 +263,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             StringAssert.Contains(result[0].Fields[0].Path.SampleData, "False");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServices_Test")]
         public void PluginServices_Test_WhenTestingPluginReturningDouble_ExpectValidPaths()
@@ -219,7 +280,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningDouble");
 
             //------------Execute Test---------------------------
-            var result = pluginServices.Test(serviceDef, Guid.Empty, Guid.Empty);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
@@ -228,7 +289,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             StringAssert.Contains(result[0].Fields[0].Path.SampleData, "3.1");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServices_Test")]
         public void PluginServices_Test_WhenTestingPluginReturningPlainString_ExpectValidPaths()
@@ -245,7 +306,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningPlainString");
 
             //------------Execute Test---------------------------
-            var result = pluginServices.Test(serviceDef, Guid.Empty, Guid.Empty);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "PrimitiveReturnValue");
@@ -254,7 +315,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             StringAssert.Contains(result[0].Fields[0].Path.SampleData, "Hello__COMMA__ bob");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServices_Test")]
         public void PluginServices_Test_WhenTestingPluginReturningXmlString_ExpectValidPaths()
@@ -271,7 +332,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningXmlString");
 
             //------------Execute Test---------------------------
-            var result = pluginServices.Test(serviceDef, Guid.Empty, Guid.Empty);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "Message");
@@ -280,7 +341,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             StringAssert.Contains(result[0].Fields[0].Path.SampleData, "Howdy__COMMA__");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServices_Test")]
         public void PluginServices_Test_WhenTestingPluginReturningJsonString_ExpectValidPaths()
@@ -297,7 +358,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             var serviceDef = JsonResource.Fetch("PrimitivePluginReturningJsonString");
 
             //------------Execute Test---------------------------
-            var result = pluginServices.Test(serviceDef, Guid.Empty, Guid.Empty);
+            var result = pluginServices.Test(serviceDef, out string serializedResult);
             ////------------Assert Results-------------------------
             Assert.AreEqual(1, result[0].Fields.Count);
             StringAssert.Contains(result[0].Fields[0].Alias, "message");
@@ -306,58 +367,28 @@ namespace Dev2.Tests.Runtime.ServiceModel
             StringAssert.Contains(result[0].Fields[0].Path.SampleData, "Howzit__COMMA__");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesTestWithNullArgsExpectedReturnsRecordsetWithError()
         {
             //------------Setup for test--------------------------
             var services = new PluginServicesMock();
             //------------Execute Test---------------------------
-            var result = services.Test(null, Guid.Empty, Guid.Empty);
+            var result = services.Test(null, out string serializedResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result[0].HasErrors);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServicesTestWithInvalidArgsExpectedReturnsRecordsetWithError()
         {
             //------------Setup for test--------------------------
             var services = new PluginServicesMock();
             //------------Execute Test---------------------------
-            var result = services.Test("xxx", Guid.Empty, Guid.Empty);
+            var result = services.Test("xxx", out string serializedResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result[0].HasErrors);
         }
-
-        [TestMethod]
-        public void PluginServicesTestWithValidArgsExpectedAddsRecordsetFields()
-        {
-            //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            var args = svc.ToString();
-            var workspaceID = Guid.NewGuid();
-            //------------Execute Test---------------------------
-            var services = new PluginServicesMock();
-            var result = services.Test(args, workspaceID, Guid.Empty);
-            ////------------Assert Results-------------------------
-            Assert.IsTrue(services.FetchRecordsetAddFields);
-            Assert.AreEqual(1, result[0].Fields.Count);
-        }
-
-        [TestMethod]
-        public void PluginServicesTestWithValidArgsExpectedFetchesRecordset()
-        {
-            //------------Setup for test--------------------------
-            var svc = CreatePluginService();
-            var args = svc.ToString();
-            var workspaceID = Guid.NewGuid();
-            //------------Execute Test---------------------------
-            var services = new PluginServicesMock();
-            var result = services.Test(args, workspaceID, Guid.Empty);
-            //------------Assert Results-------------------------
-            Assert.AreEqual(1, services.FetchRecordsetHitCount);
-            Assert.AreEqual(1, result.Count);
-        }
-
+        
         #endregion
 
         #region CreatePluginService
@@ -379,8 +410,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             {
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "DummyPluginService",
-                ResourceType = ResourceType.PluginService,
-                ResourcePath = "Tests",
+                ResourceType = "PluginService",
                 Namespace = type.FullName,
                 Method = method,
                 Source = source
@@ -401,8 +431,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
                 AssemblyLocation = assembly.Location,
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "Dummy",
-                ResourceType = ResourceType.PluginSource,
-                ResourcePath = "Test",
+                ResourceType = "PluginSource"
             };
         }
 

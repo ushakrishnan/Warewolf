@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,104 +9,62 @@
 */
 
 using System;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Studio.AppResources.Comparers;
-using Dev2.Studio.Core;
-using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
+using Dev2.Studio.Interfaces.Enums;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Factory
 {
-    /// <summary>
-    /// Used to generate unique keys for every work surface
-    /// </summary>
-    /// <author>Jurie.smit</author>
-    /// <date>2/28/2013</date>
     public static class WorkSurfaceKeyFactory
     {
-        /// <summary>
-        /// Create a key which are unique to the entire studio
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <returns></returns>
-        /// <author>Jurie.smit</author>
-        /// <date>2/28/2013</date>
-        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context)
+        public static IWorkSurfaceKey CreateKey(WorkSurfaceContext context) => new WorkSurfaceKey
         {
-            return new WorkSurfaceKey
-                {
-                    WorkSurfaceContext = context,
-                    ResourceID = Guid.Empty,
-                    ServerID = Guid.Empty
-                };
-        }
-
-        /// <summary>
-        /// Creates a key for a worksurface that identifies a unique resource
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <param name="resourceID">The resource ID.</param>
-        /// <param name="serverID">The server ID.</param>
-        /// <param name="environmentID">The environment ID.</param>
-        /// <returns></returns>
-        /// <author>Jurie.smit</author>
-        /// <date>2/28/2013</date>
-        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid resourceID, Guid serverID, Guid? environmentID = null)
+            WorkSurfaceContext = context,
+            ResourceID = Guid.NewGuid(),
+            ServerID = Guid.Empty
+        };
+        
+        public static IWorkSurfaceKey CreateEnvKey(WorkSurfaceContext context, Guid environemt) => new WorkSurfaceKey
         {
-            return new WorkSurfaceKey
-            {
-                WorkSurfaceContext = context,
-                ResourceID = resourceID,
-                ServerID = serverID,
-                EnvironmentID = environmentID
-            };
-        }
+            WorkSurfaceContext = context,
+            ResourceID = environemt,
+            ServerID = environemt
+        };
+        
 
-        /// <summary>
-        /// Creates a key used for worksurfaces unique to a specific server
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <param name="serverID">The server ID.</param>
-        /// <returns></returns>
-        /// <author>Jurie.smit</author>
-        /// <date>2/28/2013</date>
-        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid serverID)
+        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid resourceID, Guid serverID) => CreateKey(context, resourceID, serverID, null);
+        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, Guid resourceID, Guid serverID, Guid? environmentID) => new WorkSurfaceKey
         {
-            return new WorkSurfaceKey
-            {
-                WorkSurfaceContext = context,
-                ResourceID = Guid.Empty,
-                ServerID = serverID
-            };
-        }
-
-        /// <summary>
-        /// Creates the for a specific Contextual Resource
-        /// </summary>
-        /// <param name="resourceModel">The resource model.</param>
-        /// <returns></returns>
-        /// <author>Jurie.smit</author>
-        /// <date>3/4/2013</date>
-        public static WorkSurfaceKey CreateKey(IContextualResourceModel resourceModel)
+            WorkSurfaceContext = context,
+            ResourceID = resourceID,
+            ServerID = serverID,
+            EnvironmentID = environmentID
+        };
+        
+        public static IWorkSurfaceKey CreateKey(IContextualResourceModel resourceModel)
         {
             var context = resourceModel.ResourceType.ToWorkSurfaceContext();
             return new WorkSurfaceKey
-                {
-                    WorkSurfaceContext = context,
-                    ResourceID = resourceModel.ID,
-                    ServerID = resourceModel.ServerID,
-                    EnvironmentID = resourceModel.Environment.ID
-                };
+            {
+                WorkSurfaceContext = context,
+                ResourceID = resourceModel.ID,
+                ServerID = resourceModel.ServerID,
+                EnvironmentID = resourceModel.Environment.EnvironmentID
+            };
         }
 
+    
         public static WorkSurfaceKey CreateKey(IDebugState debugState)
         {
             var origin = debugState.WorkspaceID;
-            if(origin != Guid.Empty)
+            if (origin != Guid.Empty)
             {
-                IEnvironmentModel environmentModel = EnvironmentRepository.Instance.FindSingle(model => model.Connection.WorkspaceID == origin);
-                Guid environmentID = environmentModel.ID;
+                var serverRepository = CustomContainer.Get<IServerRepository>();
+                var server = serverRepository.FindSingle(model => model.Connection.WorkspaceID == origin);
+                var environmentID = server.EnvironmentID;
                 return new WorkSurfaceKey
                 {
                     WorkSurfaceContext = WorkSurfaceContext.Workflow,
@@ -117,30 +74,11 @@ namespace Dev2.Factory
                 };
             }
             return new WorkSurfaceKey
-                {
-                    WorkSurfaceContext = WorkSurfaceContext.Workflow,
-                    ResourceID = debugState.OriginatingResourceID,
-                    ServerID = debugState.ServerID,
-                };
-        }
-
-        /// <summary>
-        /// Creates a key used for worksurfaces unique to a specific server
-        /// </summary>
-        /// <param name="context">The context.</param>
-        /// <param name="resource">The resource.</param>
-        /// <returns></returns>
-        /// <author>Jurie.smit</author>
-        /// <date>2/28/2013</date>
-        public static WorkSurfaceKey CreateKey(WorkSurfaceContext context, IContextualResourceModel resource)
-        {
-            return new WorkSurfaceKey
             {
-                WorkSurfaceContext = context,
-                ResourceID = resource.ID,
-                ServerID = resource.ServerID
+                WorkSurfaceContext = WorkSurfaceContext.Workflow,
+                ResourceID = debugState.OriginatingResourceID,
+                ServerID = debugState.ServerID,
             };
         }
-
     }
 }

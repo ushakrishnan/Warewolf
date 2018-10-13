@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,24 +25,24 @@ namespace Dev2.Runtime.Hosting
             UpgradesFrom = upgradesFrom;
         }
 
-        #region Implementation of IUpgradePath
-
-        public Version UpgradesFrom { get; private set; }
-        public Version UpgradesTo { get; private set; }
+        public Version UpgradesFrom { get; }
+        public Version UpgradesTo { get; }
 
         public bool CanUpgrade(XElement sourceVersion)
         {
             var version = GetVersionFromXML(sourceVersion);
             return version.CompareTo(UpgradesFrom) < 0 || version.CompareTo(new Version()) ==0 && UpgradesFrom.CompareTo(version)==0 ;
         }
-        private Version GetVersionFromXML(XElement resource)
+        Version GetVersionFromXML(XElement resource)
         {
             if (resource.Attribute("ServerVersion") == null)
+            {
                 return new Version();
+            }
+
             return Version.Parse(resource.Attribute("ServerVersion").Value);
         }
-        public IResourceUpgrade Upgrade { get; private set; }
+        public IResourceUpgrade Upgrade { get; }
 
-        #endregion
     }
 }

@@ -1,7 +1,7 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -10,11 +10,16 @@
 
 using System;
 using System.IO;
+using Dev2.Common.Interfaces.Scheduler.Interfaces;
 
 namespace Dev2.Common.Common
 {
-    public class DeleteHelper
+    public static class DeleteHelper
     {
+        public static IDirectoryHelper DirectoryHelperInstance()
+        {
+            return new DirectoryHelper();
+        }
         public static bool Delete(string path)
         {
             if (path == null)
@@ -22,33 +27,24 @@ namespace Dev2.Common.Common
                 return false;
             }
 
-            string dirRoot = Path.GetDirectoryName(path);
-            string pattern = Path.GetFileName(path);
+            var dirRoot = Path.GetDirectoryName(path);
+            var pattern = Path.GetFileName(path);
             // directory
             if (IsDirectory(path))
             {
-                DirectoryHelper.CleanUp(path);
+                DirectoryHelperInstance().CleanUp(path);
                 return true;
             }
 
             // wild-card char
             if (path.IndexOf("*", StringComparison.Ordinal) >= 0)
             {
-                if (pattern != null && dirRoot != null)
+                if (dirRoot != null)
                 {
-                    string[] fileList = Directory.GetFileSystemEntries(dirRoot, pattern, SearchOption.TopDirectoryOnly);
+                    var fileList = Directory.GetFileSystemEntries(dirRoot, pattern, SearchOption.TopDirectoryOnly);
                     foreach (string file in fileList)
                     {
-                        if (IsDirectory(file))
-                        {
-                            //it's a directory
-                            Directory.Delete(file, true);
-                        }
-                        else
-                        {
-                            // we can before, we want to avoid deleting an already deleted file in sub-directory
-                            File.Delete(file);
-                        }
+                        DeletePath(file);
                     }
                 }
             }
@@ -61,15 +57,26 @@ namespace Dev2.Common.Common
             return true;
         }
 
+        static void DeletePath(string path)
+        {
+            if (IsDirectory(path))
+            {
+                Directory.Delete(path, true);
+            }
+            else
+            {
+                File.Delete(path);
+            }
+        }
 
-        private static bool IsDirectory(string path)
+        static bool IsDirectory(string path)
         {
             if (path.IndexOf("*", StringComparison.Ordinal) >= 0)
             {
                 return false;
             }
 
-            FileAttributes attr = File.GetAttributes(path);
+            var attr = File.GetAttributes(path);
             if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
             {
                 return true;

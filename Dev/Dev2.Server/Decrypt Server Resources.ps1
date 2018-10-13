@@ -1,22 +1,38 @@
 Write-Host Getting script path.
 $Invocation = (Get-Variable MyInvocation -Scope 0).Value
-$CurrentDirectory = Split-Path $Invocation.MyCommand.Path
-Write-Host Got script path as "$CurrentDirectory".
+$SolutionDirectory = (get-item (Split-Path $Invocation.MyCommand.Path)).parent.FullName
+Write-Host Got solution path as `"$SolutionDirectory`".
 
-Write-Host Starting compile using compiler at "$env:vs120comntools..\IDE\devenv.com".
-[System.Diagnostics.Process]::Start("""" + $env:vs120comntools + "..\IDE\devenv.com""", """" + $CurrentDirectory + "\..\Dev2.Runtime.Services\Dev2.Runtime.Services.csproj"" /Build ""Debug|Any CPU""")
-Write-Host Compile finished.
+Write-Host Loading assembly at `"$SolutionDirectory\Dev2.Runtime.Services\bin\Debug\Dev2.Runtime.Services.dll`".
+if (Test-Path "$SolutionDirectory\Dev2.Runtime.Services\bin\Debug\Dev2.Runtime.Services.dll") {
+    Add-Type -Path "$SolutionDirectory\Dev2.Runtime.Services\bin\Debug\Dev2.Runtime.Services.dll"
+} else {
+    Write-Host Cannot find assembly at "$SolutionDirectory\Dev2.Runtime.Services\bin\Debug\Dev2.Runtime.Services.dll", please compile that before running this tool.
+    pause
+    exit 1
+}
+Write-Host Assembly loaded.
 
-Write-Host Loading assembly at "$CurrentDirectory\..\Dev2.Runtime.Services\bin\Debug\Dev2.Runtime.Services.dll".
-Add-Type -Path "$CurrentDirectory\..\Dev2.Runtime.Services\bin\Debug\Dev2.Runtime.Services.dll"
-Write-Host Assembly loaded. 
+Write-Host Loading assembly at `"$SolutionDirectory\Dev2.Warewolf.Security\bin\Debug\Warewolf.Security.dll`".
+if (Test-Path "$SolutionDirectory\Warewolf.Security\bin\Debug\Warewolf.Security.dll") {
+    Add-Type -Path "$SolutionDirectory\Warewolf.Security\bin\Debug\Warewolf.Security.dll"
+} else {
+    Write-Host Cannot find assembly at "$SolutionDirectory\Warewolf.Security\bin\Debug\Warewolf.Security.dll", please compile that before running this tool.
+    pause
+    exit 1
+}
+Write-Host Assembly loaded.
 
 Write-Host Loading type.
-$ResourceHandler = New-Object Dev2.Runtime.ESB.Management.Services.FetchResourceDefintition
+$ResourceHandler = New-Object Dev2.Runtime.ESB.Management.Services.FetchResourceDefinition
 Write-Host Type loaded.
 
 Write-Host Recursing through resources.
-get-childitem "$CurrentDirectory\bin\Debug\Resources" -recurse | where {$_.extension -eq ".xml"} | % {
+get-childitem "$SolutionDirectory\Resources - Release\Resources",
+"$SolutionDirectory\Resources - ServerTests\Resources",
+"$SolutionDirectory\Resources - UITests\Resources",
+"$env:ProgramData\Warewolf\Resources",
+"$SolutionDirectory\Dev2.Server\bin\Debug\Resources" -recurse | where {$_.extension -eq ".xml"} | % {
 
 	Write-Host Resource found at $_.FullName.
 	$sb = New-Object System.Text.StringBuilder

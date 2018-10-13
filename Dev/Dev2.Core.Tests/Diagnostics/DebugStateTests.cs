@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,28 +9,26 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Diagnostics;
 using Dev2.Diagnostics.Debug;
 using Dev2.Tests.Weave;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Newtonsoft.Json.Serialization;
 
 namespace Dev2.Tests.Diagnostics
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DebugStateTests
     {
 
-        #region Constructor
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming - Unit Test
+
         public void Constructor_Expected_InitializesInputsAndOutputsAsEmptyLists()
-        // ReSharper restore InconsistentNaming
+
         {
             var debugState = new DebugState();
 
@@ -43,9 +40,174 @@ namespace Dev2.Tests.Diagnostics
         }
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming - Unit Test
+        [Owner("Nkosinathi Sangweni")]
+        public void Constructor_GivenIsNew_ShouldSetNullParentId()
+        {
+            //---------------Set up test pack-------------------
+            var debugState = new DebugState();
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+
+            //---------------Test Result -----------------------
+            Assert.IsNull(debugState.ParentID);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void Equals_GivenSameIdAndSessionId_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var sessionID = Guid.NewGuid();
+            var debugState = new DebugState()
+            {
+                ID = sessionID,
+                SessionID = sessionID
+
+            };
+            var debugState1 = new DebugState()
+            {
+                ID = sessionID,
+                SessionID = sessionID
+
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsFalse(ReferenceEquals(debugState, debugState1));
+            //---------------Execute Test ----------------------
+            var @equals = debugState.Equals(debugState1);
+            //---------------Test Result -----------------------
+            Assert.IsTrue(equals);
+
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void op_Equals_GivenSameIdAndSessionId_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var sessionID = Guid.NewGuid();
+            var debugState = new DebugState()
+            {
+                ID = sessionID,
+                SessionID = sessionID
+
+            };
+            var debugState1 = new DebugState()
+            {
+                ID = sessionID,
+                SessionID = sessionID
+
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsFalse(ReferenceEquals(debugState, debugState1));
+            //---------------Execute Test ----------------------
+            var @equals = debugState == debugState1;
+            //---------------Test Result -----------------------
+            Assert.IsTrue(equals);
+
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void GetHashCode_GivenSameIdAndSessionId_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var sessionID = Guid.NewGuid();
+            var debugState = new DebugState()
+            {
+                ID = sessionID,
+                SessionID = sessionID
+
+            };
+            var debugState1 = new DebugState()
+            {
+                ID = sessionID,
+                SessionID = sessionID
+
+            };
+            //---------------Assert Precondition----------------
+            Assert.AreNotEqual(0, debugState.GetHashCode());
+            Assert.AreNotEqual(0, debugState1.GetHashCode());
+            //---------------Execute Test ----------------------
+            var @equals = debugState.GetHashCode() == debugState1.GetHashCode();
+            //---------------Test Result -----------------------
+            Assert.IsTrue(equals);
+
+        }
+
+        
+
+
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void IsFinalStep_GivenValidEndStateArgs_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var debugState = new DebugState()
+            {
+                StateType = StateType.End,
+                OriginalInstanceID = Guid.Empty,
+                ID = Guid.Empty,
+                ParentID = Guid.Empty,
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsNull(debugState.ParentID);
+            //---------------Execute Test ----------------------
+            var isFinalStep = debugState.IsFinalStep();
+            //---------------Test Result -----------------------
+            Assert.IsTrue(isFinalStep);
+        }
+
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void IsFirstStep_GivenValidEndStateArgs_ShouldReturnTrue()
+        {
+            //---------------Set up test pack-------------------
+            var debugState = new DebugState()
+            {
+                StateType = StateType.Start,
+                OriginalInstanceID = Guid.Empty,
+                ID = Guid.Empty,
+            };
+            //---------------Assert Precondition----------------
+            Assert.IsNull(debugState.ParentID);
+            //---------------Execute Test ----------------------
+            var isFirstStep = debugState.IsFirstStep();
+            //---------------Test Result -----------------------
+            Assert.IsTrue(isFirstStep);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PropertyChange_GivenEmptyGuidParent_ShouldSetNullParentId()
+        {
+            //---------------Set up test pack-------------------
+            var debugState = new DebugState();
+            var wasCalled = false;
+            //---------------Assert Precondition----------------
+
+            //---------------Execute Test ----------------------
+            debugState.PropertyChanged += (sender, args) =>
+            {
+                if (args.PropertyName == "ParentID")
+                {
+                    wasCalled = true;
+                }
+            };
+            debugState.ParentID = Guid.Empty;
+            Assert.IsTrue(wasCalled);
+            //---------------Test Result -----------------------
+            Assert.IsNull(debugState.ParentID);
+        }
+
+
+
+        [TestMethod]
+
         public void Constructor_With_ByteReaderBase_Expected_InvokesByteReaderBase()
-        // ReSharper restore InconsistentNaming
+
         {
             var reader = new Mock<IByteReaderBase>();
             reader.Setup(w => w.ReadInt32()).Verifiable();
@@ -54,9 +216,9 @@ namespace Dev2.Tests.Diagnostics
             reader.Setup(w => w.ReadGuid()).Verifiable();
             reader.Setup(w => w.ReadDateTime()).Verifiable();
 
-            // ReSharper disable ObjectCreationAsStatement
+            
             new DebugState(reader.Object);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             reader.Verify(w => w.ReadInt32());
             reader.Verify(w => w.ReadString());
@@ -64,14 +226,15 @@ namespace Dev2.Tests.Diagnostics
             reader.Verify(w => w.ReadGuid());
             reader.Verify(w => w.ReadDateTime());
         }
-        #endregion
+
+
 
         #region Write
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming - Unit Test
+
         public void Write_With_ByteWriterBase_Expected_InvokesByteWriterBase()
-        // ReSharper restore InconsistentNaming
+
         {
             var debugState = new DebugState();
 
@@ -95,15 +258,15 @@ namespace Dev2.Tests.Diagnostics
         #region Serialization
 
         [TestMethod]
-        // ReSharper disable InconsistentNaming - Unit Test
+
         public void Serialized_Expected_CanBeDeserialized()
-        // ReSharper restore InconsistentNaming
+
         {
             var rw = new MockByteReaderWriter();
 
             var debugStateIn = DebugStateIn();
 
-            DebugItem itemToAdd = new DebugItem();
+            var itemToAdd = new DebugItem();
             itemToAdd.Add(new DebugItemResult { GroupIndex = 0, GroupName = "Group1", Type = DebugItemResultType.Label, Value = "MyLabel" });
             itemToAdd.Add(new DebugItemResult { GroupIndex = 0, GroupName = "Group1", Type = DebugItemResultType.Variable, Value = "[[MyVar]]" });
             itemToAdd.Add(new DebugItemResult { GroupIndex = 0, GroupName = "Group1", Type = DebugItemResultType.Value, Value = "MyValue" });
@@ -130,16 +293,15 @@ namespace Dev2.Tests.Diagnostics
             Assert.AreEqual(debugStateIn.EndTime, debugStateOut.EndTime);
             Assert.AreEqual(debugStateIn.SessionID, debugStateOut.SessionID);
 
-            Assert.IsTrue(debugStateOut.Inputs[0].FetchResultsList().SequenceEqual(debugStateIn.Inputs[0].FetchResultsList(), new DebugItemResultEqualityComparer()));
         }
 
-        // ReSharper disable InconsistentNaming
+        
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("DebugItem_Add")]
         public void DebugItem_Add_GroupIndexIsGreaterThan10_MoreLinkHasData()
         {
-            DebugItem itemToAdd = new DebugItem();
+            var itemToAdd = new DebugItem();
             itemToAdd.Add(new DebugItemResult { GroupIndex = 1, GroupName = "[[record(*).row]]", Label = "", Operator = "=", Value = "1", Type = DebugItemResultType.Variable, Variable = "[[record(1).row]]" });
             itemToAdd.Add(new DebugItemResult { GroupIndex = 2, GroupName = "[[record(*).row]]", Label = "", Operator = "=", Value = "2", Type = DebugItemResultType.Variable, Variable = "[[record(2).row]]" });
             itemToAdd.Add(new DebugItemResult { GroupIndex = 3, GroupName = "[[record(*).row]]", Label = "", Operator = "=", Value = "3", Type = DebugItemResultType.Variable, Variable = "[[record(3).row]]" });
@@ -169,6 +331,19 @@ namespace Dev2.Tests.Diagnostics
             Assert.IsFalse(string.IsNullOrEmpty(itemToAdd.ResultsList[10].MoreLink));
         }
 
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void JsonConverter_GivenStatetype_ShouldConvertToString()
+        {
+            //---------------Set up test pack-------------------
+            var debugState = new DebugState() { StateType = StateType.End };
+            //---------------Assert Precondition----------------
+            Assert.IsFalse(debugState.IsAdded);
+            //---------------Execute Test ----------------------
+            var serializeToJsonString = debugState.SerializeToJsonString(new DefaultSerializationBinder());
+            //---------------Test Result -----------------------
+            StringAssert.Contains(serializeToJsonString, "\"StateType\": \"End\"");
+        }
         #endregion
 
         #region CreateDebugItemWithLongValue
@@ -195,7 +370,12 @@ namespace Dev2.Tests.Diagnostics
                 ServerID = Guid.NewGuid(),
                 StartTime = DateTime.Now,
                 EndTime = DateTime.Now.AddMinutes(3),
-                SessionID = Guid.NewGuid()
+                SessionID = Guid.NewGuid(),
+                IsAdded = false,
+                ActualType = "type",
+                WorkSurfaceMappingId = Guid.Empty,
+                Message = String.Empty,
+               
             };
             return debugStateIn;
         }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +16,7 @@ namespace Dev2.Data.Binary_Objects
     [Serializable]
     public class IndexList
     {
-        private int _maxValue;
+        int _maxValue;
 
         public int MaxValue
         {
@@ -32,9 +31,14 @@ namespace Dev2.Data.Binary_Objects
 
         public HashSet<int> Gaps { get; private set; }
 
-        private IndexList() { }
+        IndexList() { }
 
-        public IndexList(HashSet<int> gaps, int maxValue, int minValue = 1)
+        public IndexList(HashSet<int> gaps, int maxValue)
+            : this(gaps, maxValue, 1)
+        {
+        }
+
+        public IndexList(HashSet<int> gaps, int maxValue, int minValue)
         {
             if(gaps == null)
             {
@@ -48,41 +52,11 @@ namespace Dev2.Data.Binary_Objects
 
         public int GetMaxIndex()
         {
-            int result = MaxValue;
-            while(Gaps.Contains(result) && result >= 1)
+            var result = MaxValue;
+            while (Gaps.Contains(result) && result >= 1)
             {
                 result--;
             }
-            return result;
-        }
-        public int GetMinIndex()
-        {
-            int result = MinValue;
-            while(Gaps.Contains(result))
-            {
-                result++;
-            }
-
-            return result;
-        }
-
-        public void AddGap(int idx)
-        {
-            if(idx > 0)
-            {
-                Gaps.Add(idx);
-            }
-        }
-
-        public void RemoveGap(int idx)
-        {
-            Gaps.Remove(idx);
-        }
-
-        public bool Contains(int idx)
-        {
-            bool result = idx <= MaxValue && idx >= 0 && !Gaps.Contains(idx);
-
             return result;
         }
 
@@ -97,42 +71,9 @@ namespace Dev2.Data.Binary_Objects
             }
 
             // Travis.Frisinger - Count bug change
-            int result = MaxValue - Gaps.Count;
+            var result = MaxValue - Gaps.Count;
 
             return result;
-        }
-
-        public void SetMaxValue(int idx, bool isEmpty)
-        {
-            var currMax = MaxValue;
-
-            if(idx > MaxValue && idx > 0)
-            {
-                MaxValue = idx;
-
-                // set to zero so we populate gaps correctly ;)
-                if(isEmpty)
-                {
-                    currMax = 0;
-                }
-
-                // now fill in the gaps?!
-                for(int i = currMax + 1; i < idx; i++)
-                {
-                    Gaps.Add(i);
-                }
-            }
-
-        }
-
-        public void SetGapsCollection(HashSet<int> myGaps)
-        {
-            Gaps = new HashSet<int>(myGaps);
-        }
-
-        public IIndexIterator FetchIterator()
-        {
-            return new IndexIterator(Gaps, MaxValue, MinValue);
         }
     }
 }

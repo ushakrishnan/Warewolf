@@ -1,17 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Providers.Validation.Rules;
 using Dev2.TO;
 using Dev2.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.TOTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class SharepointSearchToTests
     {
         [TestMethod]
@@ -64,9 +62,9 @@ namespace Dev2.Tests.Activities.TOTests
             var searchTo = new SharepointSearchTo();
             const string searchType = "MyValue";
             //------------Execute Test---------------------------
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             var notifyPropertyChanged = TestUtils.PropertyChangedTester(searchTo, () => searchTo.SearchType, () => searchTo.SearchType = searchType);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             //------------Assert Results-------------------------
             Assert.AreEqual(searchType, searchTo.SearchType);
             Assert.IsTrue(notifyPropertyChanged);
@@ -81,9 +79,9 @@ namespace Dev2.Tests.Activities.TOTests
             var searchTo = new SharepointSearchTo();
             const string searchCriteria = "MyValue";
             //------------Execute Test---------------------------
-            // ReSharper disable ImplicitlyCapturedClosure
+            
             var notifyPropertyChanged = TestUtils.PropertyChangedTester(searchTo, () => searchTo.ValueToMatch, () => searchTo.ValueToMatch = searchCriteria);
-            // ReSharper restore ImplicitlyCapturedClosure
+            
             //------------Assert Results-------------------------
             Assert.AreEqual(searchCriteria, searchTo.ValueToMatch);
             Assert.IsTrue(notifyPropertyChanged);

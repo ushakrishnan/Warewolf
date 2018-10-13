@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common;
 using System;
 using System.IO;
 using System.Net;
@@ -26,7 +26,12 @@ namespace Dev2.Runtime.WebServer.Responses.Streams
         readonly MediaTypeHeaderValue _contentType;
         readonly int _chunkSize;
 
-        protected HttpPushContentStream(HttpResponseMessage response, MediaTypeHeaderValue contentType, int chunkSize = DefaultChunkSize)
+        protected HttpPushContentStream(HttpResponseMessage response, MediaTypeHeaderValue contentType)
+            : this(response, contentType, DefaultChunkSize)
+        {
+        }
+
+        protected HttpPushContentStream(HttpResponseMessage response, MediaTypeHeaderValue contentType, int chunkSize)
         {
             VerifyArgument.IsNotNull("response", response);
             VerifyArgument.IsNotNull("mediaType", contentType);
@@ -55,13 +60,14 @@ namespace Dev2.Runtime.WebServer.Responses.Streams
                     while (length > 0 && bytesRead > 0)
                     {
                         bytesRead = inputStream.Read(buffer, 0, Math.Min(length, buffer.Length));
-                        await outputStream.WriteAsync(buffer, 0, bytesRead);
+                        await outputStream.WriteAsync(buffer, 0, bytesRead).ConfigureAwait(true);
                         length -= bytesRead;
                     }
                 }
             }
-            catch (HttpException)
+            catch (HttpException e)
             {
+                Dev2Logger.Warn("Error writing to stream. " + e.Message, "Warewolf Warn");
             }
             finally
             {

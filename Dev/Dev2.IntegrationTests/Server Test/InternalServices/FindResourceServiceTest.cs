@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +9,10 @@
 */
 
 using System.Xml;
+using Dev2.Common;
 using Dev2.Integration.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 
 namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
 {
@@ -21,12 +22,6 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
     [TestClass]
     public class FindResourceServiceTest
     {
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext { get; set; }
-
         #region Additional test attributes
         //
         // You can use the following additional attributes as you write your tests:
@@ -53,25 +48,37 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
         public void ExecutionWithStar_ExpectedValidXML()
         {
 
-            string path = ServerSettings.WebserverURI + "FindResourcesService?ResourceName=*&ResourceType=*&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=*&Roles=*";
 
-            string result = TestHelper.PostDataToWebserver(path);
+            var result = TestHelper.PostDataToWebserver(path);
 
-            XmlDocument xDoc = new XmlDocument();
+            var xDoc = new XmlDocument();
             xDoc.LoadXml(result);
             // 1 == 1, else an error will be thrown
             Assert.IsTrue(true);
         }
 
         [TestMethod]
+        public void ExecutionWithNoStartNode_ExpectedInvalidValidResult()
+        {
+
+            var path = "http://localhost:3142/services/" + "Acceptance%20Testing%20Resources/WorkflowWithNoStartNodeConnected";
+
+            var result = TestHelper.PostDataToWebserver(path);
+
+            Assert.IsTrue(result.Contains("An internal error occurred while executing the service request"));
+            Assert.IsTrue(result.Contains(GlobalConstants.NoStartNodeError));
+        }
+
+        [TestMethod]
         public void ExecutionWithSource_ExpectedValidXML()
         {
 
-            string path = ServerSettings.WebserverURI + "FindResourcesService?ResourceName=*&ResourceType=Source&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=Source&Roles=*";
 
-            string result = TestHelper.PostDataToWebserver(path);
+            var result = TestHelper.PostDataToWebserver(path);
 
-            XmlDocument xDoc = new XmlDocument();
+            var xDoc = new XmlDocument();
             xDoc.LoadXml(result);
             // 1 == 1, else an error will be thrown
             Assert.IsTrue(true);
@@ -81,11 +88,11 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
         public void ExecutionWithWorkflowService_ExpectedValidXML()
         {
 
-            string path = ServerSettings.WebserverURI + "FindResourcesService?ResourceName=*&ResourceType=WorkflowService&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=WorkflowService&Roles=*";
 
-            string result = TestHelper.PostDataToWebserver(path);
+            var result = TestHelper.PostDataToWebserver(path);
 
-            XmlDocument xDoc = new XmlDocument();
+            var xDoc = new XmlDocument();
             xDoc.LoadXml(result);
             // 1 == 1, else an error will be thrown
             Assert.IsTrue(true);
@@ -95,11 +102,11 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
         public void ExecutionWithActivity_ExpectedValidXML()
         {
 
-            string path = ServerSettings.WebserverURI + "FindResourcesService?ResourceName=*&ResourceType=Activity&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=Activity&Roles=*";
 
-            string result = TestHelper.PostDataToWebserver(path);
+            var result = TestHelper.PostDataToWebserver(path);
 
-            XmlDocument xDoc = new XmlDocument();
+            var xDoc = new XmlDocument();
             xDoc.LoadXml(result);
             // 1 == 1, else an error will be thrown
             Assert.IsTrue(true);

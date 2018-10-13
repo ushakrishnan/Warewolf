@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +10,10 @@
 
 using System;
 using System.Linq;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Studio.Core.Helpers
 {
-    /// <summary>
-    ///     NO TEST COVERAGE!!!!
-    /// </summary>
     public static class TypeSwitch
     {
         public static void Do(object source, params CaseInfo[] cases)
@@ -28,7 +26,9 @@ namespace Dev2.Studio.Core.Helpers
             if (source == null)
             {
                 if (!cases.ToList().Any(c => c.IsDefault))
-                    throw new Exception("Can not do switch on null type argument if no default implementation provided");
+                {
+                    throw new Exception(ErrorResource.CannotDoSwitchOnNullType);
+                }
 
                 foreach (CaseInfo entry in cases.Where(entry => entry.IsDefault))
                 {
@@ -38,7 +38,7 @@ namespace Dev2.Studio.Core.Helpers
             }
             else
             {
-                Type type = source.GetType();
+                var type = source.GetType();
                 foreach (CaseInfo entry in cases.Where(entry => entry.IsDefault || entry.Target.IsAssignableFrom(type)))
                 {
                     entry.Action(source);
@@ -47,32 +47,23 @@ namespace Dev2.Studio.Core.Helpers
             }
         }
 
-        public static CaseInfo Case<T>(Action action)
+        public static CaseInfo Case<T>(Action action) => new CaseInfo
         {
-            return new CaseInfo
-            {
-                Action = x => action(),
-                Target = typeof (T)
-            };
-        }
+            Action = x => action?.Invoke(),
+            Target = typeof(T)
+        };
 
-        public static CaseInfo Case<T>(Action<T> action)
+        public static CaseInfo Case<T>(Action<T> action) => new CaseInfo
         {
-            return new CaseInfo
-            {
-                Action = x => action((T) x),
-                Target = typeof (T)
-            };
-        }
+            Action = x => action?.Invoke((T)x),
+            Target = typeof(T)
+        };
 
-        public static CaseInfo Default(Action action)
+        public static CaseInfo Default(Action action) => new CaseInfo
         {
-            return new CaseInfo
-            {
-                Action = x => action(),
-                IsDefault = true
-            };
-        }
+            Action = x => action?.Invoke(),
+            IsDefault = true
+        };
 
         public class CaseInfo
         {

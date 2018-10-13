@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Runtime;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -25,28 +23,27 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
     /// <author>trevor.williams-ros</author>
     /// <date>2013/02/13</date>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class RecordsetRecordTests
     {
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ConstructorWithNoParametersExpectedCreatesEmpty()
         {
             var record = new RecordsetRecord();
             Assert.AreEqual(0, record.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void ConstructorWithNullExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new RecordsetRecord(null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ConstructorWithRecordsetCellsExpectedAddsRecordsetCells()
         {
             var cells = new[]
@@ -64,7 +61,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region AddRange
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void AddRangeWithNullExpectedThrowsArgumentNullException()
         {
@@ -72,7 +69,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             record.AddRange(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void AddRangeWithRecordsetCellsExpectedAddsRecordsetCells()
         {
             var record = new RecordsetRecord();
@@ -90,7 +87,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Add
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void AddWithNullExpectedThrowsArgumentNullException()
         {
@@ -98,7 +95,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             record.Add(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void AddWithRecordsetCellExpectedAddsRecordsetCell()
         {
             var record = new RecordsetRecord();
@@ -113,7 +110,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Clear
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ClearWithCellsExpectedRemovesCells()
         {
             var record = new RecordsetRecord(new[]
@@ -130,7 +127,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region JsonSerialization
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void JsonSerializationExpectedDoesNotImplementIEnumerable()
         {
             var record = new RecordsetRecord();
@@ -138,7 +135,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.IsNull(enumerable);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void JsonSerializationExpectedIncludesLabel()
         {
             var record = new RecordsetRecord
@@ -152,7 +149,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
                 record.Add(new RecordsetCell
                 {
                     Name = record.Label + "." + colName,
-                    Value = random.GenerateString(30, string.Empty, true)
+                    Value = random.GenerateString(30, string.Empty)
                 });
             }
             var jsonStr = JsonConvert.SerializeObject(record);

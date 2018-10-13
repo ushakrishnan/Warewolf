@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,33 +19,33 @@ namespace Dev2.Tests.Runtime.Hosting
     public class ResourceUpgradeTest
     {
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrade_Ctor")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void ResourceUpgrade_Ctor_Null_Params_Func()
         {
             //------------Setup for test--------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             new ResourceUpgrade( null);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Execute Test---------------------------
 
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrade_Ctor")]
         public void ResourceUpgrade_Properties()
         {
             //------------Setup for test--------------------------
-            // ReSharper disable ObjectCreationAsStatement
+            
             var x = new Func<XElement,XElement>( async=>async);
             var a = new ResourceUpgrade(x);
             Assert.AreEqual(x,a.UpgradeFunc);
-            // ReSharper restore ObjectCreationAsStatement
+            
 
             //------------Execute Test---------------------------
 

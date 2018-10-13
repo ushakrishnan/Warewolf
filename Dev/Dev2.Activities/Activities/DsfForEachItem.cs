@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +13,8 @@ namespace Dev2.Activities
 {
     public class DsfForEachItem
     {
-        public static DsfForEachItem[] EmptyList = new DsfForEachItem[0];
-
+        public static DsfForEachItem[] EmptyList { get => emptyList; set => emptyList = value; }
+        static DsfForEachItem[] emptyList = new DsfForEachItem[0];
         public string Name { get; set; }
 
         public string Value { get; set; }

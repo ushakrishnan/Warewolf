@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,16 +21,16 @@ namespace Dev2.Activities.AttachedProperties
         public static readonly DependencyProperty BindPassword = DependencyProperty.RegisterAttached(
             "BindPassword", typeof(bool), typeof(PasswordBoxAssistant), new PropertyMetadata(false, OnBindPasswordChanged));
 
-        private static readonly DependencyProperty UpdatingPassword =
+        static readonly DependencyProperty UpdatingPassword =
             DependencyProperty.RegisterAttached("UpdatingPassword", typeof(bool), typeof(PasswordBoxAssistant), new PropertyMetadata(false));
 
-        private static void OnBoundPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnBoundPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var box = d as PasswordBox;
 
             // only handle this event when the property is attached to a PasswordBox
             // and when the BindPassword attached property has been set to true
-            if(box == null || !GetBindPassword(d))
+            if (box == null || !GetBindPassword(d))
             {
                 return;
             }
@@ -41,7 +40,7 @@ namespace Dev2.Activities.AttachedProperties
 
             var newPassword = (string)e.NewValue;
 
-            if(!GetUpdatingPassword(box))
+            if (!GetUpdatingPassword(box))
             {
                 box.Password = newPassword;
             }
@@ -49,14 +48,14 @@ namespace Dev2.Activities.AttachedProperties
             box.PasswordChanged += HandlePasswordChanged;
         }
 
-        private static void OnBindPasswordChanged(DependencyObject dp, DependencyPropertyChangedEventArgs e)
+        static void OnBindPasswordChanged(DependencyObject dp, DependencyPropertyChangedEventArgs e)
         {
             // when the BindPassword attached property is set on a PasswordBox,
             // start listening to its PasswordChanged event
 
             var box = dp as PasswordBox;
 
-            if(box == null)
+            if (box == null)
             {
                 return;
             }
@@ -64,21 +63,21 @@ namespace Dev2.Activities.AttachedProperties
             var wasBound = (bool)e.OldValue;
             var needToBind = (bool)e.NewValue;
 
-            if(wasBound)
+            if (wasBound)
             {
                 box.PasswordChanged -= HandlePasswordChanged;
             }
 
-            if(needToBind)
+            if (needToBind)
             {
                 box.PasswordChanged += HandlePasswordChanged;
             }
         }
 
-        private static void HandlePasswordChanged(object sender, RoutedEventArgs e)
+        static void HandlePasswordChanged(object sender, RoutedEventArgs e)
         {
             var box = sender as PasswordBox;
-            if(box == null)
+            if (box == null)
             {
                 return;
             }
@@ -95,27 +94,16 @@ namespace Dev2.Activities.AttachedProperties
             dp.SetValue(BindPassword, value);
         }
 
-        public static bool GetBindPassword(DependencyObject dp)
-        {
-            return (bool)dp.GetValue(BindPassword);
-        }
-
-        public static string GetBoundPassword(DependencyObject dp)
-        {
-            return (string)dp.GetValue(BoundPassword);
-        }
+        public static bool GetBindPassword(DependencyObject dp) => (bool)dp.GetValue(BindPassword);
 
         public static void SetBoundPassword(DependencyObject dp, string value)
         {
             dp.SetValue(BoundPassword, value);
         }
 
-        private static bool GetUpdatingPassword(DependencyObject dp)
-        {
-            return (bool)dp.GetValue(UpdatingPassword);
-        }
+        static bool GetUpdatingPassword(DependencyObject dp) => (bool)dp.GetValue(UpdatingPassword);
 
-        private static void SetUpdatingPassword(DependencyObject dp, bool value)
+        static void SetUpdatingPassword(DependencyObject dp, bool value)
         {
             dp.SetValue(UpdatingPassword, value);
         }

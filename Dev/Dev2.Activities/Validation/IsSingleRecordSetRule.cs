@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,7 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Data.Util;
 using Dev2.DataList.Contract;
 using Dev2.Providers.Validation.Rules;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Validation
 {
@@ -22,7 +22,7 @@ namespace Dev2.Validation
         public IsSingleRecordSetRule(Func<string> getValue)
             : base(getValue)
         {
-            ErrorText = "sort field is invalid. You may only sort on a single RecordSet columns";
+            ErrorText = ErrorResource.InvalidSortField;
         }
 
 
@@ -31,14 +31,20 @@ namespace Dev2.Validation
 
         public override IActionableErrorInfo Check()
         {
-            string exp = GetValue();
+            var exp = GetValue();
             if (!string.IsNullOrEmpty(exp))
             {
                 var regions = DataListCleaningUtils.SplitIntoRegions(exp);
                 if (regions.Count > 1)
+                {
                     return CreatError();
+                }
+
                 if (regions.Count == 1 && !DataListUtil.IsValueRecordsetWithFields(regions[0]))
-                    return CreatError(); 
+                {
+                    return CreatError();
+                }
+
                 return null;
             }
             return null;

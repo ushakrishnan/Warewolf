@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +16,7 @@ using Dev2.Activities.Designers2.Core;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Enums.Enums;
 using Dev2.Common.Lookups;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Zip
 {
@@ -28,7 +28,6 @@ namespace Dev2.Activities.Designers2.Zip
             : base(modelItem, "File or Folder", "Destination")
         {
             AddTitleBarLargeToggle();
-            AddTitleBarHelpToggle();
 
             CompressionRatioList = Dev2EnumConverter.ConvertEnumsTypeToStringList<CompressionRatios>();
 
@@ -37,6 +36,7 @@ namespace Dev2.Activities.Designers2.Zip
                 : (CompressionRatios)Enum.Parse(typeof(CompressionRatios), CompressionRatio);
 
             SelectedCompressionRatioDescription = selectionRatio.GetDescription();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_File_Zip;
         }
 
         public string SelectedCompressionRatioDescription
@@ -58,8 +58,7 @@ namespace Dev2.Activities.Designers2.Zip
                 viewModel.CompressionRatio = enumValue.ToString();
             }
         }
-
-        // This MUST be the enum.ToString()!!!
+        
         string CompressionRatio
         {
             set { SetProperty(value); }
@@ -69,15 +68,20 @@ namespace Dev2.Activities.Designers2.Zip
         public override void Validate()
         {
             Errors = null;
-            string password = ArchivePassword;
+            var password = ArchivePassword;
             ValidateUserNameAndPassword();
             ValidateDestinationUsernameAndPassword();
             ValidateInputAndOutputPaths();
             ValidateArchivePassword(password, "Archive Password");
         }
 
-        string ArchivePassword { set { SetProperty(value); } get { return GetProperty<string>(); } }
+        string ArchivePassword => GetProperty<string>();
 
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
+        }
     }
 }
 

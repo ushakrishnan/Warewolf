@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Providers.Errors;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Providers.Validation.Rules
 {
@@ -32,12 +32,12 @@ namespace Dev2.Providers.Validation.Rules
             var values = new List<string> { GetValue() };
             if(_otherValues != null)
             {
-                values.AddRange(_otherValues.Select(otherValue => otherValue()));
+                values.AddRange(_otherValues.Select(otherValue => otherValue?.Invoke()));
             }
 
             return values.Any(value => !string.IsNullOrEmpty(value)) ? null : new ActionableErrorInfo(DoError)
             {
-                Message = string.Format("Please supply at least one of the following: {0}", LabelText)
+                Message = string.Format(ErrorResource.SupplyAtLeastOne, LabelText)
             };
         }
     }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,30 +11,31 @@
 using System;
 using System.Xml.Linq;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Data;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Runtime.ServiceModel.Data
 {
     [Serializable]
-    public class PluginSource : Resource
+    public class PluginSource : Resource, IResourceSource, IPlugin
     {
         #region CTOR
 
         public PluginSource()
         {
             ResourceID = Guid.Empty;
-            ResourceType = ResourceType.PluginSource;
+            ResourceType = "PluginSource";
         }
 
         public PluginSource(XElement xml)
             : base(xml)
         {
-            ResourceType = ResourceType.PluginSource;
+            ResourceType = "PluginSource";
 
             AssemblyLocation = xml.AttributeSafe("AssemblyLocation");
             AssemblyName = xml.AttributeSafe("AssemblyName");
+            ConfigFilePath = xml.AttributeSafe("ConfigFilePath");
         }
 
         #endregion
@@ -55,11 +55,24 @@ namespace Dev2.Runtime.ServiceModel.Data
             result.Add(
                 new XAttribute("AssemblyLocation", AssemblyLocation ?? string.Empty),
                 new XAttribute("AssemblyName", AssemblyName ?? string.Empty),
-                new XAttribute("Type", enSourceType.Plugin),
-                new XElement("TypeOf", enSourceType.Plugin)
+                new XAttribute("ConfigFilePath", ConfigFilePath ?? string.Empty),
+                new XAttribute("Type", GetType().Name),
+                new XElement("TypeOf", enSourceType.PluginSource)
                 );
             return result;
         }
+
+        public override bool IsSource => true;
+
+        public override bool IsService => false;
+
+        public override bool IsFolder => false;
+
+        public override bool IsReservedService => false;
+
+        public override bool IsServer => false;
+        public override bool IsResourceVersion => false;
+        public string ConfigFilePath { get; set; }
 
         #endregion
     }

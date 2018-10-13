@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,47 +9,25 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml.Linq;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Data.ServiceModel;
+using Dev2.Common.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.ServiceModel.Data
 {
 
     // PBI 1220 - 2013.05.26 - TWR - Created
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class WebServiceTests
     {
         #region CTOR
 
-        [TestMethod]
-        public void WebServiceConstructorWithXmlWithoutActionElementExpectedDoesNotThrowException()
-        {
-            //------------Setup for test--------------------------
-            const string XmlDataString = @"<Service Name=""Test WebService"" ID=""51a58300-7e9d-4927-a57b-e5d700b11b55"">
-	<Actions>
-	</Actions>
-	<Category>System</Category>
-</Service>";
-            //------------Execute Test---------------------------
-            var testElm = XElement.Parse(XmlDataString);
-            var webService = new WebService(testElm);
-            //------------Assert Results-------------------------
-            Assert.AreEqual("Test WebService", webService.ResourceName);
-            Assert.AreEqual(ResourceType.WebService, webService.ResourceType);
-            Assert.AreEqual("51a58300-7e9d-4927-a57b-e5d700b11b55", webService.ResourceID.ToString());
-            Assert.AreEqual("System", webService.ResourcePath);
-            Assert.IsNull(webService.Source);
-        }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServiceConstructorExpectedCorrectWebService()
         {
             //------------Setup for test--------------------------
@@ -77,51 +54,49 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 			</Outputs>
 		</Action>
 	</Actions>
-	<Category>System</Category>
 </Service>";
             //------------Execute Test---------------------------
             var testElm = XElement.Parse(XmlDataString);
             var webService = new WebService(testElm);
             //------------Assert Results-------------------------
             Assert.AreEqual("Test WebService", webService.ResourceName);
-            Assert.AreEqual(ResourceType.WebService, webService.ResourceType);
+            Assert.AreEqual("WebService", webService.ResourceType);
             Assert.AreEqual("51a58300-7e9d-4927-a57b-e5d700b11b55", webService.ResourceID.ToString());
             Assert.AreEqual("$.apath", webService.JsonPath);
-            Assert.AreEqual("System", webService.ResourcePath);
             Assert.IsNotNull(webService.Source);
         }
         #endregion
 
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServiceContructorWithDefaultExpectedInitializesProperties()
         {
             var service = new WebService();
             Assert.AreEqual(Guid.Empty, service.ResourceID);
-            Assert.AreEqual(ResourceType.WebService, service.ResourceType);
+            Assert.AreEqual("WebService", service.ResourceType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServiceContructorWithNullXmlExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new WebService(null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServiceContructorWithInvalidXmlExpectedDoesNotThrowExceptionAndInitializesProperties()
         {
             var xml = new XElement("root");
             var service = new WebService(xml);
             Assert.AreNotEqual(Guid.Empty, service.ResourceID);
             Assert.IsTrue(service.IsUpgraded);
-            Assert.AreEqual(ResourceType.WebService, service.ResourceType);
+            Assert.AreEqual("WebService", service.ResourceType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServiceContructorWithValidXmlExpectedInitializesProperties()
         {
             var xml = XmlResource.Fetch("WebService");
@@ -134,7 +109,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToXml
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServiceToXmlExpectedSerializesProperties()
         {
             var expected = new WebService
@@ -236,7 +211,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
             foreach(var expectedParameter in expected.Method.Parameters)
             {
-                MethodParameter parameter = expectedParameter;
+                var parameter = expectedParameter;
                 var actualParameter = actual.Method.Parameters.First(p => p.Name == parameter.Name);
                 Assert.AreEqual(expectedParameter.DefaultValue, actualParameter.DefaultValue);
             }
@@ -244,11 +219,11 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             foreach(var expectedRecordset in expected.Recordsets)
             {
                 // expect actual to have removed recordset notation ()...
-                Recordset recordset = expectedRecordset;
+                var recordset = expectedRecordset;
                 var actualRecordset = actual.Recordsets.First(rs => rs.Name == recordset.Name.Replace("()", ""));
                 foreach(var expectedField in expectedRecordset.Fields)
                 {
-                    RecordsetField field = expectedField;
+                    var field = expectedField;
                     var actualField = actualRecordset.Fields.First(f => f.Name == field.Name);
                     Assert.AreEqual(expectedField.Alias, actualField.Alias);
                     // expect actual to have removed recordset notation ()...
@@ -259,7 +234,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("WebService_ToXml")]
         public void WebService_ToXml_WhenRequestValuesHaveEnter_ShouldBeRespectedWhenReHydrated()
@@ -292,7 +267,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Dispose
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebServiceDisposeExpectedDisposesAndNullsSource()
         {
             var service = new WebService { Source = new WebSource() };
@@ -309,7 +284,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
         public static void VerifyEmbeddedWebService(WebService service)
         {
             Assert.AreEqual(Guid.Parse("ec2df7f9-53aa-4873-a13e-4001cef21508"), service.ResourceID);
-            Assert.AreEqual(ResourceType.WebService, service.ResourceType);
+            Assert.AreEqual("WebService", service.ResourceType);
             Assert.AreEqual("/GetWeather?CityName=[[CityName]]&CountryName=[[CountryName]]", service.RequestUrl);
             Assert.AreEqual(WebRequestMethod.Get, service.RequestMethod);
             Assert.AreEqual(Guid.Parse("518edc28-e348-4a52-a900-f6aa75cfe92b"), service.Source.ResourceID);
@@ -329,7 +304,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #endregion
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("WebService_ApplyPath")]
         public void WebService_ApplyPath_WhenResponseDataNull_NothingHappens()
@@ -342,7 +317,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.IsNull(webService.RequestResponse);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("WebService_ApplyPath")]
         public void WebService_ApplyPath_WhenResponseDataEmpty_NothingHappens()
@@ -355,7 +330,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("", webService.RequestResponse);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("WebService_ApplyPath")]
         public void WebService_ApplyPath_WhenJsonPathNull_NothingHappens()
@@ -371,7 +346,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual(expected, webService.RequestResponse);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("WebService_ApplyPath")]
         public void WebService_ApplyPath_WhenJsonPathEmpty_NothingHappens()
@@ -387,7 +362,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual(expected, webService.RequestResponse);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("WebService_ApplyPath")]
         public void WebService_ApplyPath_ResponseDataNotJsonData_ExceptionThrown()

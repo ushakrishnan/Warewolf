@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +14,7 @@ using System.Windows;
 using System.Windows.Data;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.AppResources.Converters
 {
     public class SchedulerStatusToCheckedConverter : DependencyObject, IValueConverter
@@ -24,17 +23,9 @@ namespace Dev2.AppResources.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string isEnabledRadioButton = parameter as string;
-            SchedulerStatus schedulerStatus = (SchedulerStatus)value;
-            if(isEnabledRadioButton == "true")
-            {
-                if(schedulerStatus == SchedulerStatus.Enabled)
-                {
-                    return true;
-                }
-                return false;
-            }
-            if(schedulerStatus == SchedulerStatus.Disabled)
+            var schedulerStatus = (SchedulerStatus)value;
+
+            if (schedulerStatus == SchedulerStatus.Enabled)
             {
                 return true;
             }
@@ -43,8 +34,8 @@ namespace Dev2.AppResources.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string isEnabledRadioButton = parameter as string;
-            if(isEnabledRadioButton == "true" && (bool)value || isEnabledRadioButton == "false" && !(bool)value)
+            var isEnabledRadioButton = parameter as string;
+            if (isEnabledRadioButton == "true" && (bool)value || isEnabledRadioButton == "false" && !(bool)value)
             {
                 return SchedulerStatus.Enabled;
             }

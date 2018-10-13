@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,9 +13,9 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Converters
 {
 
@@ -32,10 +31,9 @@ namespace Dev2.Studio.Core.AppResources.Converters
 
             var enumValue = Dev2EnumConverter.GetEnumFromStringDiscription(value as string, typeof(enForEachType));
 
-            enForEachType visibleEnumValue;
-            Enum.TryParse((string)parameter, out visibleEnumValue);
+            Enum.TryParse((string)parameter, out enForEachType visibleEnumValue);
 
-            if(visibleEnumValue.Equals(enumValue))
+            if (visibleEnumValue.Equals(enumValue))
             {
                 return Visibility.Visible;
             }

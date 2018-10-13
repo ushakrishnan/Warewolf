@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,14 +8,12 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using System.Xml.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Runtime.Configuration.Tests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ExtensionMethodsTests
     {
         const string AttributeName = "say";
@@ -56,31 +53,6 @@ namespace Dev2.Runtime.Configuration.Tests
 
         #endregion
 
-        #region ElementSafe
 
-        [TestMethod]
-        public void ElementSafeWithInvalidArgumentsReturnsEmptyString()
-        {
-            var result = ExtensionMethods.ElementSafe(null, null);
-            Assert.AreEqual(string.Empty, result);
-
-            var elem = CreateXml();
-            result = elem.ElementSafe(null);
-            Assert.AreEqual(string.Empty, result);
-            result = elem.ElementSafe(string.Empty);
-            Assert.AreEqual(string.Empty, result);
-            result = elem.ElementSafe("y");
-            Assert.AreEqual(string.Empty, result);
-        }
-
-        [TestMethod]
-        public void ElementSafeWithValidArgumentsReturnsElementValue()
-        {
-            var elem = CreateXml();
-            var result = elem.ElementSafe(ElementName);
-            Assert.AreEqual(ElementValue, result);
-        }
-
-        #endregion
     }
 }

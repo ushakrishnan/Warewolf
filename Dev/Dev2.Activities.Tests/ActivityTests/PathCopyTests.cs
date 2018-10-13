@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using ActivityUnitTests;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Common.State;
+using Dev2.Data.Interfaces;
 using Dev2.Diagnostics;
 using Dev2.Tests.Activities.Mocks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -26,8 +26,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class PathCopyTests : BaseActivityUnitTest
     {
 
@@ -40,6 +39,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("DsfPathCopy_UpdateForEachInputs")]
+        [DeploymentItem(@"x86\SQLite.Interop.dll")]
         public void DsfPathCopy_UpdateForEachInputs_NullUpdates_DoesNothing()
         {
             //------------Setup for test--------------------------
@@ -176,15 +176,12 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             foreach(string fileName in fileNames)
             {
-                // ReSharper disable LocalizableElement
+                
                 File.WriteAllText(fileName, "TestData");
-                // ReSharper restore LocalizableElement
+                
             }
 
-            string dataListWithData;
-            string dataListShape;
-
-            CreateDataListWithRecsetAndCreateShape(fileNames, "FileNames", "Name", out dataListShape, out dataListWithData);
+            CreateDataListWithRecsetAndCreateShape(fileNames, "FileNames", "Name", out string dataListShape, out string dataListWithData);
 
             var activityOperationBrokerMock = new ActivityOperationBrokerMock();
 
@@ -200,11 +197,8 @@ namespace Dev2.Tests.Activities.ActivityTests
                     GetOperationBroker = () => activityOperationBrokerMock
                 };
 
-            List<DebugItem> inRes;
-            List<DebugItem> outRes;
-
             CheckPathOperationActivityDebugInputOutput(act, dataListShape,
-                                                                dataListWithData, out inRes, out outRes);
+                                                                dataListWithData, out List<DebugItem> inRes, out List<DebugItem> outRes);
 
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Password, "destPWord");
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Username, "destUName");
@@ -220,6 +214,99 @@ namespace Dev2.Tests.Activities.ActivityTests
             var pathCopy = new DsfPathCopy();
             IDestinationUsernamePassword password = pathCopy;
             Assert.IsNotNull(password);
+        }
+
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DsfPathCopy_GetState")]
+        public void DsfPathCopy_GetState_ReturnsStateVariable()
+        {
+            var act = new DsfPathCopy
+            {
+                InputPath = "/inpath",
+                Username = "myuser",
+                Password = "secret",
+                PrivateKeyFile = "/path/to/secret",
+                OutputPath = "/outpath",
+                DestinationUsername = "destmyuser",
+                DestinationPassword = "destsecret",
+                DestinationPrivateKeyFile = "/dest/path/to/secret",
+                Overwrite = true,
+                Result = "[[result]]"
+            };
+
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(8, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "InputPath",
+                    Value = "/inpath",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Username",
+                    Value = "myuser",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "PrivateKeyFile",
+                    Value = "/path/to/secret",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "OutputPath",
+                    Value = "/outpath",
+                    Type = StateVariable.StateType.Output
+                },
+                new StateVariable
+                {
+                    Name = "DestinationUsername",
+                    Value = "destmyuser",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "DestinationPrivateKeyFile",
+                    Value = "/dest/path/to/secret",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Overwrite",
+                    Value = "True",
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Result",
+                    Value = "[[result]]",
+                    Type = StateVariable.StateType.Output
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
     }
 }

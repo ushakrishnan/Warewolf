@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,9 +13,9 @@ using System.Net;
 using System.Net.Mail;
 using System.Text;
 using System.Xml.Linq;
-using Dev2.Common;
 using Dev2.Runtime.Diagnostics;
 using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Newtonsoft.Json;
 
@@ -38,7 +37,7 @@ namespace Dev2.Runtime.ServiceModel
         {
             if(resourceCatalog == null)
             {
-                throw new ArgumentNullException("resourceCatalog");
+                throw new ArgumentNullException(nameof(resourceCatalog));
             }
             _resourceCatalog = resourceCatalog;
         }
@@ -48,6 +47,7 @@ namespace Dev2.Runtime.ServiceModel
         #region Get
 
         // POST: Service/EmailSources/Get
+    
         public EmailSource Get(string resourceId, Guid workspaceId, Guid dataListId)
         {
             var result = new EmailSource();
@@ -69,35 +69,10 @@ namespace Dev2.Runtime.ServiceModel
 
         #endregion
 
-        #region Save
-
-        // POST: Service/EmailSources/Save
-        public string Save(string args, Guid workspaceId, Guid dataListId)
-        {
-            try
-            {
-                var source = JsonConvert.DeserializeObject<EmailSource>(args);
-
-                _resourceCatalog.SaveResource(workspaceId, source);
-                if(workspaceId != GlobalConstants.ServerWorkspaceID)
-                {
-                    _resourceCatalog.SaveResource(GlobalConstants.ServerWorkspaceID, source);
-                }
-
-                return source.ToString();
-            }
-            catch(Exception ex)
-            {
-                RaiseError(ex);
-                return new ValidationResult { IsValid = false, ErrorMessage = ex.Message }.ToString();
-            }
-        }
-
-        #endregion
-
         #region Test
 
         // POST: Service/EmailSources/Test
+    
         public ValidationResult Test(string args, Guid workspaceId, Guid dataListId)
         {
             try
@@ -150,8 +125,8 @@ namespace Dev2.Runtime.ServiceModel
                 }
                 var errors = new StringBuilder();
                 errors.AppendFormat("{0} ", message);
-                Exception ex = sex.InnerException;
-                while(ex != null)
+                var ex = sex.InnerException;
+                while (ex != null)
                 {
                     errors.AppendFormat("{0} ", ex.Message);
                     ex = ex.InnerException;

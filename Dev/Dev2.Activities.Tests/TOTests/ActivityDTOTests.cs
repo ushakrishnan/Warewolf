@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,6 @@
 */
 
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Providers.Validation.Rules;
@@ -18,12 +16,11 @@ using Dev2.Validation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
-// ReSharper disable ImplicitlyCapturedClosure
+
+
 namespace Dev2.Tests.Activities.TOTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class ActivityDtoTests
     {
         [TestMethod]
@@ -252,7 +249,7 @@ namespace Dev2.Tests.Activities.TOTests
             var activityDTO = new ActivityDTO();
 
             //------------Execute Test---------------------------
-            var convertToOutputTO = activityDTO.ConvertToOutputTO();
+            var convertToOutputTO = activityDTO.ConvertToOutputTo();
             //------------Assert Results-------------------------
             Assert.IsNotNull(convertToOutputTO);
         }
@@ -293,7 +290,7 @@ namespace Dev2.Tests.Activities.TOTests
             //------------Setup for test--------------------------
             var activityDTO = new ActivityDTO();
             //------------Execute Test---------------------------
-            bool isValid = activityDTO.Validate("FieldName", new RuleSet());
+            var isValid = activityDTO.Validate("FieldName", new RuleSet());
             //------------Assert Results-------------------------
             Assert.IsTrue(isValid);
         }
@@ -308,7 +305,7 @@ namespace Dev2.Tests.Activities.TOTests
             var ruleSet = new RuleSet();
             ruleSet.Add(new IsNullRule(() => activityDTO.FieldName));
             //------------Execute Test---------------------------
-            bool isValid = activityDTO.Validate("FieldName", ruleSet);
+            var isValid = activityDTO.Validate("FieldName", ruleSet);
             //------------Assert Results-------------------------
             Assert.IsFalse(isValid);
         }
@@ -323,7 +320,7 @@ namespace Dev2.Tests.Activities.TOTests
             var ruleSet = new RuleSet();
             ruleSet.Add(new IsNullRule(() => activityDTO.FieldName));
             //------------Execute Test---------------------------
-            bool isValid = activityDTO.Validate("FieldName", ruleSet);
+            var isValid = activityDTO.Validate("FieldName", ruleSet);
             //------------Assert Results-------------------------
             Assert.IsTrue(isValid);
         }

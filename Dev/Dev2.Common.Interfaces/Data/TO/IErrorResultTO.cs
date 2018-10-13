@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,8 +18,9 @@ namespace Dev2.Common.Interfaces.Data.TO
         ///     Adds the error.
         /// </summary>
         /// <param name="msg">The MSG.</param>
-        /// <param name="checkForDuplicates"></param>
-        void AddError(string msg, bool checkForDuplicates = false);
+        /// <param name="checkForDuplicates" default="false"></param>
+        void AddError(string msg, bool checkForDuplicates);
+        void AddError(string msg);
 
         /// <summary>
         ///     Remove the error from the list
@@ -41,19 +42,7 @@ namespace Dev2.Common.Interfaces.Data.TO
         /// </returns>
         bool HasErrors();
 
-        /// <summary>
-        ///     Merges the errors.
-        /// </summary>
-        /// <param name="toMerge">To merge.</param>
-        void MergeErrors(IErrorResultTO toMerge);
-
         void ClearErrors();
-
-        /// <summary>
-        ///     Makes the error collection user ready.
-        /// </summary>
-        /// <returns></returns>
-        string MakeUserReady();
 
         /// <summary>
         ///     Makes the error collection user ready.
@@ -65,6 +54,6 @@ namespace Dev2.Common.Interfaces.Data.TO
         ///     Makes the error collection data list insert ready.
         /// </summary>
         /// <returns></returns>
-        string MakeDataListReady(bool AsXML = true);
+        string MakeDataListReady(bool asXml);
     }
 }

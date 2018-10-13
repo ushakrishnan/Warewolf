@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,8 +10,10 @@
 
 using System;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Providers.Validation.Rules;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Validation
 {
@@ -21,7 +22,7 @@ namespace Dev2.Validation
         public IsSingleValueRule(Func<string> getValue)
             : base(getValue)
         {
-            ErrorText = "result field only allows a single result";
+            ErrorText = ErrorResource.SingleResultAllowed;
         }
 
 
@@ -30,12 +31,15 @@ namespace Dev2.Validation
 
         public override IActionableErrorInfo Check()
         {
-            string exp = GetValue();
+            var exp = GetValue();
             if (!String.IsNullOrEmpty(exp))
             {
                 var regions = DataListCleaningUtils.SplitIntoRegions(exp);
                 if (regions.Count > 1)
+                {
                     return CreatError();
+                }
+
                 return null;
             }
             return null;
@@ -48,7 +52,9 @@ namespace Dev2.Validation
             var rule = new IsSingleValueRule(() => value);
             var single = rule.Check();
             if (single != null)
+            {
                 errors.AddError(single.Message);
+            }
         }
     }
 }

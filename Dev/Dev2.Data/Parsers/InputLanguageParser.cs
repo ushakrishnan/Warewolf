@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Data.Interfaces;
 
 namespace Dev2.DataList.Contract
 {
@@ -29,27 +29,10 @@ namespace Dev2.DataList.Contract
         #endregion
 
         #region Methods
-        /// <summary>
-        /// Parses the specified input definition.
-        /// </summary>
-        /// <param name="InputDefinition">The input definition.</param>
-        /// <returns></returns>
-        public IList<IDev2Definition> Parse(string InputDefinition)
-        {
-            return base.Parse(InputDefinition);
-        }
 
-        /// <summary>
-        /// Parses the and allow blanks.
-        /// </summary>
-        /// <param name="InputDefinition">The input definition.</param>
-        /// <returns></returns>
-        public IList<IDev2Definition> ParseAndAllowBlanks(string InputDefinition)
-        {
-            // ReSharper disable RedundantBaseQualifier
-            return base.Parse(InputDefinition, false);
-            // ReSharper restore RedundantBaseQualifier
-        }
+        public IList<IDev2Definition> Parse(string OutputDefinition) => base.Parse(OutputDefinition);        
+        public IList<IDev2Definition> ParseAndAllowBlanks(string OutputDefinition) => base.Parse(OutputDefinition, false);
+
         #endregion
     }
 }

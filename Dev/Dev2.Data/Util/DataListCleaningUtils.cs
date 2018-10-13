@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,130 +11,60 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dev2.Common;
+using Dev2.Data.Interfaces;
 using Dev2.Data.Parsers;
-using Dev2.Data.TO;
 using Dev2.Data.Util;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.DataList.Contract
-// ReSharper restore CheckNamespace
 {
-    public class DataListCleaningUtils
+    public static class DataListCleaningUtils
     {
-
-        // ReSharper disable InconsistentNaming
-        public static string stripDoubleBracketsAndRecordsetNotation(string canidate)
-        // ReSharper restore InconsistentNaming
-        {
-            string result = canidate;
-            bool isCanidate = IsDoubleBracketCanidate(canidate);
-
-
-            if(canidate.Contains("[[") && isCanidate)
-            {
-                result = result.Replace("[[", "");
-            }
-
-            if(canidate.Contains("]]") && isCanidate)
-            {
-                result = result.Replace("]]", "");
-            }
-
-            if(result.Contains("(") && result.Contains(")") && isCanidate)
-            {
-                result = result.Remove(result.IndexOf("(", StringComparison.Ordinal));
-            }
-
-            return result;
-        }
-
-        //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
         public static List<string> SplitIntoRegions(string result)
         {
             if(!String.IsNullOrEmpty(result))
             {
-                try
-                {
-                    var allRegions = new List<string>();
-                    Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
-                    IList<ParseTO> makeParts = parser.MakeParts(result);
-                    foreach(var makePart in makeParts.Where(c => !c.HangingOpen))
-                    {
-                        if(makePart.Child != null)
-                        {
-                            int indexOfBracket = makePart.Payload.IndexOf("(", StringComparison.Ordinal);
-                            string tmpresult = makePart.Payload.Insert(indexOfBracket + 1, DataListUtil.AddBracketsToValueIfNotExist(makePart.Child.Payload));
-                            allRegions.Add(string.Concat("[[", tmpresult, "]]"));
-                        }
-                        else
-                        {
-                            allRegions.Add(string.Concat("[[", makePart.Payload, "]]"));
-                        }
-                    }
-                    return allRegions;
-                }
-                catch(Exception)
-                {
-
-                    return new List<string> { null };
-                }
+                return TrySplitIntoRegions(result);
             }
             return new List<string> { null };
         }
 
-        public static List<string> FindAllLanguagePieces(string dataListRegion)
+        private static List<string> TrySplitIntoRegions(string result)
         {
-            var allValidRegions = new List<string>();
-            if(!string.IsNullOrEmpty(dataListRegion))
+            try
             {
-                try
+                var allRegions = new List<string>();
+                var parser = new Dev2DataLanguageParser();
+                var makeParts = parser.MakeParts(result);
+                foreach (var makePart in makeParts.Where(c => !c.HangingOpen))
                 {
-                    if(DataListUtil.IsEvaluated(dataListRegion))
+                    if (makePart.Child != null)
                     {
-                        Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
-                        var allParts = parser.MakeParts(dataListRegion);
-                        foreach(var part in allParts)
-                        {
-                            var parseTO = part.Child;
-                            while(parseTO != null)
-                            {
-                                AddPart(parseTO, allValidRegions);
-                                parseTO = parseTO.Child;
-                            }
-
-                            AddPart(part, allValidRegions);
-                        }
+                        var indexOfBracket = makePart.Payload.IndexOf("(", StringComparison.Ordinal);
+                        var tmpresult = makePart.Payload.Insert(indexOfBracket + 1, DataListUtil.AddBracketsToValueIfNotExist(makePart.Child.Payload));
+                        allRegions.Add(string.Concat("[[", tmpresult, "]]"));
+                    }
+                    else
+                    {
+                        allRegions.Add(string.Concat("[[", makePart.Payload, "]]"));
                     }
                 }
-                catch(Exception)
-                {
-                    //Do Something usefull like log
-                    Dev2Logger.Log.Info("Error parsing");
-                }
+                return allRegions;
             }
-            return allValidRegions;
-        }
+            catch (Exception)
+            {
 
-        static void AddPart(ParseTO part, List<string> allValidRegions)
-        {
-            if(string.IsNullOrEmpty(part.Payload) && part.Child == null)
-            {
-                allValidRegions.Add(string.Concat("[[", part.Payload, "]]"));
-            }
-            if(!string.IsNullOrEmpty(part.Payload))
-            {
-                allValidRegions.Add(string.Concat("[[", part.Payload, "]]"));
+                return new List<string> { null };
             }
         }
 
-        private static IEnumerable<string> AddChildrenPart(ParseTO child)
+        static IEnumerable<string> AddChildrenPart(IParseTO child)
         {
-            List<string> results = new List<string>();
-            if(child != null)
+            var results = new List<string>();
+            if (child != null)
             {
                 results.Add(DataListUtil.AddBracketsToValueIfNotExist(child.Payload));
-                if(child.Child != null)
+                if (child.Child != null)
                 {
                     results.AddRange(AddChildrenPart(child.Child).Select(DataListUtil.AddBracketsToValueIfNotExist));
                 }
@@ -150,9 +79,9 @@ namespace Dev2.DataList.Contract
                 try
                 {
                     var allRegions = new List<string>();
-                    Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
-                    IList<ParseTO> makeParts = parser.MakeParts(result);
-                    foreach(var makePart in makeParts.Where(c => !c.HangingOpen))
+                    var parser = new Dev2DataLanguageParser();
+                    var makeParts = parser.MakeParts(result);
+                    foreach (var makePart in makeParts.Where(c => !c.HangingOpen))
                     {
                         allRegions.Add(DataListUtil.AddBracketsToValueIfNotExist(makePart.Payload));
                         allRegions.AddRange(AddChildrenPartForFindMissing(makePart.Child));
@@ -168,13 +97,13 @@ namespace Dev2.DataList.Contract
 
         }
 
-        private static IEnumerable<string> AddChildrenPartForFindMissing(ParseTO child)
+        static IEnumerable<string> AddChildrenPartForFindMissing(IParseTO child)
         {
-            List<string> results = new List<string>();
-            if(child != null)
+            var results = new List<string>();
+            if (child != null)
             {
                 results.Add(DataListUtil.AddBracketsToValueIfNotExist(child.Payload));
-                if(child.Child != null)
+                if (child.Child != null)
                 {
                     results.AddRange(AddChildrenPart(child.Child).Select(DataListUtil.AddBracketsToValueIfNotExist));
                 }
@@ -183,22 +112,6 @@ namespace Dev2.DataList.Contract
         }
 
         #region Private Method
-
-        private static bool IsDoubleBracketCanidate(string canidate)
-        {
-            bool result = false;
-            char[] tokens = { ']' };
-
-            string[] parts = canidate.Split(tokens);
-
-            if(parts.Length == 3)
-            {
-                result = true;
-            }
-
-
-            return result;
-        }
 
         #endregion
     }

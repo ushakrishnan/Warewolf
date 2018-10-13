@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -11,27 +10,46 @@
 
 
 
-// ReSharper disable once CheckNamespace
+using System.Collections.Generic;
+using Caliburn.Micro;
+using System.Collections.ObjectModel;
+using Dev2.Studio.Interfaces.DataList;
+
 namespace Dev2.Studio.Core.Models.DataList
 {
-    public class DataListHeaderItemModel : BaseDataListItemModel
+    public class DataListHeaderItemModel : PropertyChangedBase
     {
-        #region Ctor
+        string _displayName;
+        IEnumerable<IDataListItemModel> _children;
 
-        internal DataListHeaderItemModel(string displayName)
+        public DataListHeaderItemModel(string displayName)
         {
             DisplayName = displayName;
         }
 
-        #endregion Ctor
-
-        #region Override Methods
-
-        public override string ValidateName(string name)
+        public string DisplayName
         {
-            return name;
+            get
+            {
+                return _displayName;
+            }
+            set
+            {
+                _displayName = value;
+                NotifyOfPropertyChange(() => DisplayName);
+            }
         }
 
-        #endregion Override Methods
+        public IEnumerable<IDataListItemModel> Children
+        {
+            get { return _children ?? (_children = new ObservableCollection<IDataListItemModel>()); }
+            set
+            {
+                _children = value;
+                NotifyOfPropertyChange(() => Children);
+            }
+        }
+
+        public override string ToString() => DisplayName;
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,23 +12,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Dev2.DataList;
+using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 
 namespace Dev2.BussinessLogic
 {
+
     public class RsOpNotBetween : AbstractRecsetSearchValidation
     {
-        public override Func<DataASTMutable.WarewolfAtom, bool> CreateFunc(IEnumerable<DataASTMutable.WarewolfAtom> values, IEnumerable<DataASTMutable.WarewolfAtom> warewolfAtoms, IEnumerable<DataASTMutable.WarewolfAtom> tovals, bool all)
+        public override Func<DataStorage.WarewolfAtom, bool> CreateFunc(IEnumerable<DataStorage.WarewolfAtom> values, IEnumerable<DataStorage.WarewolfAtom> from, IEnumerable<DataStorage.WarewolfAtom> to, bool all) => a => !RunBetween(from, to, a);
+
+        static bool RunBetween(IEnumerable<DataStorage.WarewolfAtom> warewolfAtoms, IEnumerable<DataStorage.WarewolfAtom> tovals, DataStorage.WarewolfAtom a)
         {
-
-            return a => !RunBetween(warewolfAtoms, tovals, a);
-
-        }
-
-
-        static bool RunBetween(IEnumerable<DataASTMutable.WarewolfAtom> warewolfAtoms, IEnumerable<DataASTMutable.WarewolfAtom> tovals, DataASTMutable.WarewolfAtom a)
-        {
-            WarewolfListIterator iterator = new WarewolfListIterator();
+            var iterator = new WarewolfListIterator();
             var from = new WarewolfAtomIterator(warewolfAtoms);
             var to = new WarewolfAtomIterator(tovals);
             iterator.AddVariableToIterateOn(@from);
@@ -39,33 +34,25 @@ namespace Dev2.BussinessLogic
                 var fromval = iterator.FetchNextValue(@from);
                 var toVal = iterator.FetchNextValue(to);
 
-                DateTime fromDt;
-                if (DateTime.TryParse(fromval, out fromDt))
+                if (DateTime.TryParse(fromval, out DateTime fromDt))
                 {
-                    DateTime toDt;
-                    if (!DateTime.TryParse(toVal, out toDt))
+                    if (!DateTime.TryParse(toVal, out DateTime toDt))
                     {
-                        throw new InvalidDataException("IsBetween Numeric and DateTime mis-match");
+                        throw new InvalidDataException(ErrorResource.IsBetweenDataTypeMismatch);
                     }
-                    DateTime recDateTime;
-                    if (DateTime.TryParse(a.ToString(), out recDateTime))
+                    if (DateTime.TryParse(a.ToString(), out DateTime recDateTime) && recDateTime > fromDt && recDateTime < toDt)
                     {
-                        if (recDateTime > fromDt && recDateTime < toDt)
-                        {
-                            return true;
-                        }
+                        return true;
                     }
+
                 }
-                double fromNum;
-                if (double.TryParse(fromval, out fromNum))
+                if (double.TryParse(fromval, out double fromNum))
                 {
-                    double toNum;
-                    if (!double.TryParse(toVal, out toNum))
+                    if (!double.TryParse(toVal, out double toNum))
                     {
                         return false;
                     }
-                    double recNum;
-                    if (!double.TryParse(a.ToString(), out recNum))
+                    if (!double.TryParse(a.ToString(), out double recNum))
                     {
                         continue;
                     }
@@ -77,10 +64,9 @@ namespace Dev2.BussinessLogic
             }
             return false;
         }
-        public override string HandlesType()
-        {
-            return "Not Between";
-        }
+        public override string HandlesType() => "Not Between";
+
+        public override int ArgumentCount => 3;
     }
 }
 

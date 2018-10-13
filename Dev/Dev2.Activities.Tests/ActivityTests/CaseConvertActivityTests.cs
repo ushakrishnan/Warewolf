@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,11 +11,16 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using ActivityUnitTests;
-using Dev2.Common.Interfaces.Core.Convertors.Case;
+using Dev2.Common.Interfaces.Core.Convertors.Case;             
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Dev2.Activities.Factories.Case;
+using Moq;
+using Dev2.Communication;
+using System.Linq;
+using Dev2.Common.State;
+using Dev2.Utilities;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -24,8 +28,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for CaseConvertActivityTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class CaseConvertActivityTests : BaseActivityUnitTest
     {
         /// <summary>
@@ -43,10 +46,8 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testVar>change this to upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
             const string expected = @"CHANGE THIS TO UPPER CASE";
 
             // remove test datalist ;)
@@ -54,7 +55,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(expected, actual);
         }
 
-        //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in case convert result
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfCaseConvertActivity_GetOutputs")]
+        public void DsfCaseConvertActivity_GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO> { CaseConverterFactory.CreateCaseConverterTO("[[testVar]]", "UPPER", "[[testVar]]", 1), CaseConverterFactory.CreateCaseConverterTO("[[testVar2]]", "UPPER", "[[testVar2]]", 1) };
+            var act = new DsfCaseConvertActivity { ConvertCollection = convertCollection };
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, outputs.Count);
+            Assert.AreEqual("[[testVar]]", outputs[0]);
+            Assert.AreEqual("[[testVar2]]", outputs[1]);
+        }
+
         [TestMethod]
         public void CaseConvertWithAllUpperAndMultipleRegionsExpectedAllUpperCase()
         {
@@ -62,12 +78,9 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(ActivityStrings.CaseConvert_MixedRegionTypes_CurrentDL, ActivityStrings.CaseConvert_MixedRegionTypes_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
             const string expected = @"CHANGE THIS TO UPPER CASE";
 
             // remove test datalist ;)
@@ -87,10 +100,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(@"<root><NewVar>change this to upper case</NewVar><testVar>NewVar</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "NewVar", out actual, out error);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "NewVar", out string actual, out string error);
 
             //------------Assert Results-------------------------
             const string expected = @"CHANGE THIS TO UPPER CASE";
@@ -105,12 +116,9 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(ActivityStrings.CaseConvert_MixedRegionTypes_CurrentDL, ActivityStrings.CaseConvert_MixedRegionTypes_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
 
             // remove test datalist ;)
 
@@ -134,12 +142,9 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.CaseConvert_MixedRegionTypes_CurrentDL, ActivityStrings.CaseConvert_MixedRegionTypes_DLShape, convertCollection);
 
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
 
             // remove test datalist ;)
 
@@ -163,12 +168,9 @@ namespace Dev2.Tests.Activities.ActivityTests
             SetupArguments(ActivityStrings.CaseConvert_MixedRegionTypes_CurrentDL, ActivityStrings.CaseConvert_MixedRegionTypes_DLShape, convertCollection);
 
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
-            string actualScalar;
-            IList<string> actualRecset;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actualScalar, out error);
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out actualRecset, out error);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actualScalar, out string error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "field", out IList<string> actualRecset, out error);
 
             // remove test datalist ;)
 
@@ -187,12 +189,10 @@ namespace Dev2.Tests.Activities.ActivityTests
             IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO> { CaseConverterFactory.CreateCaseConverterTO("[[testVar]]", "lower", "[[testVar]]", 1) };
 
             SetupArguments(@"<root><testVar>CHANGE THIS TO LOWER CASE</testVar>  </root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = @"change this to lower case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -210,11 +210,9 @@ namespace Dev2.Tests.Activities.ActivityTests
             IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO> { CaseConverterFactory.CreateCaseConverterTO("[[testVar]]", "Sentence", "[[testVar]]", 1) };
 
             SetupArguments(@"<root><testVar>change this to first leter upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Change this to first leter upper case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -233,11 +231,9 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testVar>change this to first leter upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -252,11 +248,9 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testVar>change this to first leter upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -271,13 +265,11 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testVar>change this 5435123130t lete2435r upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = @"Change This 5435123130T Lete2435r Upper Case";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -292,13 +284,11 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testVar>change this 5435123130t lete2435r upper case</testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = @"change this 5435123130t lete2435r upper case";
-            string actual;
-            string error;
 
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
+            GetScalarValueFromEnvironment(result.Environment, "testVar", out string actual, out string error);
 
             // remove test datalist ;)
 
@@ -307,28 +297,6 @@ namespace Dev2.Tests.Activities.ActivityTests
         }
 
         #endregion AllFirstUpper Tests
-
-        #region Blank  Test
-        // Bug 8474 - Travis.Frisinger : Issue was a empty check, not language notation
-        public void CaseConvert_BlankValue_Expected_BlankValue()
-        {
-            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO> { CaseConverterFactory.CreateCaseConverterTO("[[testVar]]", "UPPER", "[[testVar]]", 1) };
-
-            SetupArguments(@"<root><testVar></testVar></root>", ActivityStrings.CaseConvert_DLShape, convertCollection);
-
-            IDSFDataObject result = ExecuteProcess();
-            const string expected = @"";
-            string actual;
-            string error;
-            GetScalarValueFromEnvironment(result.Environment, "testVar", out actual, out error);
-
-            // remove test datalist ;)
-
-            Assert.AreEqual(expected, actual);
-
-        }
-
-        #endregion
 
         #region Error Handling Tests
 
@@ -343,7 +311,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfCaseConvert_UpdateForEachInputs_WhenContainsMatchingStarAndOtherData_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<ICaseConvertTO> fieldsCollection = new List<ICaseConvertTO>
+            var fieldsCollection = new List<ICaseConvertTO>
 	        {
 		        new CaseConvertTO( "[[rs(*).val]] [[result]]","text", "[[result]]",1)
 	        };
@@ -370,7 +338,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfCaseConvert_UpdateForEachInputs_WhenContainsMatchingStar_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<ICaseConvertTO> fieldsCollection = new List<ICaseConvertTO>
+            var fieldsCollection = new List<ICaseConvertTO>
 	        {
 		        new CaseConvertTO( "[[rs(*).val]]","text", "[[result]]",1)
 	        };
@@ -397,7 +365,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfCaseConvert_UpdateForEachOutputs_WhenContainsMatchingStar_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<ICaseConvertTO> fieldsCollection = new List<ICaseConvertTO>
+            var fieldsCollection = new List<ICaseConvertTO>
 	        {
 		        new CaseConvertTO( "[[result]]","text", "[[rs(*).val]]",1)
 	        };
@@ -423,7 +391,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfCaseConvert_GetForEachInputs_Normal_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<ICaseConvertTO> fieldsCollection = new List<ICaseConvertTO>
+            var fieldsCollection = new List<ICaseConvertTO>
 	        {
 		        new CaseConvertTO( "[[rs(*).val]]","text", "[[result]]",1)
 	        };
@@ -446,7 +414,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfCaseConvert_GetForEachOutputs_Normal_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<ICaseConvertTO> fieldsCollection = new List<ICaseConvertTO>
+            var fieldsCollection = new List<ICaseConvertTO>
 	        {
 		        new CaseConvertTO( "[[result]]","text", "[[rs(*).val]]",1)
 	        };
@@ -461,6 +429,27 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[result]]", inputs[0].Value);
             Assert.AreEqual("[[rs(*).val]]", inputs[0].Name);
         }
+
+
+        [TestMethod]
+        public void DsfCaseConvertActivity_GetState_Returns_Inputs_And_Outputs()
+        {            
+            //------------Setup for test--------------------------
+            var fieldsCollection = new List<ICaseConvertTO>
+            {
+                new CaseConvertTO( "[[result]]","text", "[[rs(*).val]]",1)
+            };
+            var dsfCaseConvert = new DsfCaseConvertActivity { ConvertCollection = fieldsCollection };
+            var expectedResults = ActivityHelper.GetSerializedStateValueFromCollection(fieldsCollection);
+            //------------Execute Test---------------------------
+            var stateList = dsfCaseConvert.GetState();
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(stateList);
+            Assert.AreEqual(1, stateList.Count());
+            Assert.AreEqual(StateVariable.StateType.InputOutput, stateList.ToList()[0].Type);
+            Assert.AreEqual("Convert Collection", stateList.ToList()[0].Name);            
+            Assert.AreEqual(expectedResults, stateList.ToList()[0].Value);
+        }
         #endregion
 
         #region RecordSet Tests
@@ -472,14 +461,12 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testRecSet><testVar>do not change this to first leter upper case</testVar></testRecSet><testRecSet><testVar>change this to first leter upper case</testVar></testRecSet></root>", ActivityStrings.CaseConvert_DLWithRecordSetShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out IList<string> actual, out string error);
 
 
-            string actualValue = actual[1];
+            var actualValue = actual[1];
 
             // remove test datalist ;)
 
@@ -493,15 +480,13 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments(@"<root><testRecSet><testVar>do not change this to first leter upper case</testVar></testRecSet><testRecSet><testVar>change this to first leter upper case</testVar></testRecSet></root>", ActivityStrings.CaseConvert_DLWithRecordSetShape, convertCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Change This To First Leter Upper Case";
-            IList<string> actual;
-            string error;
-            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out actual, out error);
+            GetRecordSetFieldValueFromDataList(result.Environment, "testRecSet", "testVar", out IList<string> actual, out string error);
 
 
             // This should be an index of 2
-            string actualValue = actual[1];
+            var actualValue = actual[1];
 
             // remove test datalist ;)
 
@@ -510,9 +495,66 @@ namespace Dev2.Tests.Activities.ActivityTests
         }
         #endregion RecordSet Tests
 
+        #region InsertToCollection
+        
+        [TestMethod]
+        public void AddListToCollectionWhereNotOverwriteExpectInsertToCollection()
+        {
+            //------------Setup for test--------------------------
+            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO>
+            {
+                new CaseConvertTO("String to Convert", "UPPER", "[[testVar]]", 1),
+                new CaseConvertTO("String to Convert", "UPPER", "[[testLanguage]]", 2)
+            };
+            var activity = new DsfCaseConvertActivity();
+            activity.ConvertCollection = convertCollection;
+            var modelItem = TestModelItemUtil.CreateModelItem(activity);
+            //------------Execute Test---------------------------
+            activity.AddListToCollection(new[] { "[[Var1]]" }, false, modelItem);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(4, activity.ConvertCollection.Count);
+        }
+
+        [TestMethod]
+        public void AddListToCollectionWhereNotOverwriteEmptyListExpectAddToCollection()
+        {
+            //------------Setup for test--------------------------
+            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO>()
+            {
+                new CaseConvertTO("", "UPPER", "[[testVar]]", 1)
+            };
+            var activity = new DsfCaseConvertActivity();
+            activity.ConvertCollection = convertCollection;
+            var modelItem = TestModelItemUtil.CreateModelItem(activity);
+            //------------Execute Test---------------------------
+            activity.AddListToCollection(new[] { "[[Var1]]" }, false, modelItem);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, activity.ConvertCollection.Count);
+        }
+
+        [TestMethod]
+        public void AddListToCollectionWhereOverwriteExpectAddToCollection()
+        {
+            //------------Setup for test--------------------------
+            IList<ICaseConvertTO> convertCollection = new List<ICaseConvertTO>
+            {
+                new CaseConvertTO("String to Convert", "UPPER", "[[testVar]]", 1),
+                new CaseConvertTO("String to Convert", "UPPER", "[[testLanguage]]", 2)
+            };
+            var activity = new DsfCaseConvertActivity();
+            activity.ConvertCollection = convertCollection;
+            var modelItem = TestModelItemUtil.CreateModelItem(activity);
+            //------------Execute Test---------------------------
+            activity.AddListToCollection(new[] { "[[Var1]]" }, true, modelItem);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, activity.ConvertCollection.Count);
+        }
+
+        #endregion
+
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, IList<ICaseConvertTO> convertCollection)
+        void SetupArguments(string currentDL, string testData, IList<ICaseConvertTO> convertCollection)
         {
             TestStartNode = new FlowStep
             {

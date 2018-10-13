@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,34 +12,37 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-// ReSharper disable CheckNamespace
+
 namespace Dev2.DataList
 {
     /// <summary>
     /// Class for the "regex" recordset search option 
     /// </summary>
+
     public class RsOpRegex : AbstractRecsetSearchValidation
     {
-        public override Func<DataASTMutable.WarewolfAtom, bool> CreateFunc(IEnumerable<DataASTMutable.WarewolfAtom> values, IEnumerable<DataASTMutable.WarewolfAtom> warewolfAtoms, IEnumerable<DataASTMutable.WarewolfAtom> to, bool all)
+        public override Func<DataStorage.WarewolfAtom, bool> CreateFunc(IEnumerable<DataStorage.WarewolfAtom> values, IEnumerable<DataStorage.WarewolfAtom> from, IEnumerable<DataStorage.WarewolfAtom> to, bool all)
         {
             if (all)
+            {
                 return a => values.All(x =>
                 {
-                    Regex exp = new Regex(x.ToString());
+                    var exp = new Regex(x.ToString());
                     return exp.IsMatch(a.ToString());
 
                 });
+            }
+
             return a => values.Any(x =>
             {
-                Regex exp = new Regex(x.ToString());
+                var exp = new Regex(x.ToString());
                 return exp.IsMatch(a.ToString());
 
             });
         }
 
-        public override string HandlesType()
-        {
-            return "Is Regex";
-        }
+        public override string HandlesType() => "Is Regex";
+
+        public override int ArgumentCount => 2;
     }
 }

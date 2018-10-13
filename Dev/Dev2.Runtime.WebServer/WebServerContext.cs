@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -58,15 +57,12 @@ namespace Dev2.Runtime.WebServer
         }
 
         #region Implementation of IDisposable
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        
         public void Dispose()
         {
             try
             {
-                if(Request != null && Request.InputStream != null)
+                if(Request?.InputStream != null)
                 {
                     Request.InputStream.Close();
                     Request.InputStream.Dispose();
@@ -76,10 +72,8 @@ namespace Dev2.Runtime.WebServer
                     ResponseMessage.Dispose();
                     Response.Response.Dispose();
                 }
-            }
-            // ReSharper disable EmptyGeneralCatchClause
-            catch
-            // ReSharper restore EmptyGeneralCatchClause
+            }            
+            catch            
             {
                 // best effort to clean up ;)
             }

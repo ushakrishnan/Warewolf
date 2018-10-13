@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,11 +9,13 @@
 */
 
 using System;
-using Dev2.Common.Interfaces.Data;
+using System.Linq;
+using Dev2.Runtime;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin;
 using DummyNamespaceForTest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 
 namespace Dev2.Tests.Runtime.ESB.Plugin
 {
@@ -31,7 +32,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
         public TestContext TestContext { get; set; }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         public void PluginRuntimeHandler_GetNamespaces_WhenValidDll_ExpectNamespaces()
@@ -39,15 +40,33 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             //------------Setup for test--------------------------
             var source = CreatePluginSource();
             //------------Execute Test---------------------------
-            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            //using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
+
                 var result = PluginServiceExecutionFactory.GetNamespaces(source);
                 //------------Assert Results-------------------------
                 Assert.IsTrue(result.Count > 0);
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
+        public void PluginRuntimeHandler_GetNamespacesWithJsonObjects_WhenValidDll_ExpectNamespaces()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            //------------Execute Test---------------------------
+            //using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+
+                var result = PluginServiceExecutionFactory.GetNamespacesWithJsonObjects(source);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -57,33 +76,18 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             PluginServiceExecutionFactory.GetNamespaces(null);
         }
 
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginServiceExecutionFactory_Validate")]
-        public void PluginRuntimeHandler_Validate_WhenValidDll_ExpectBlankMessage()
-        {
-            //------------Setup for test--------------------------
-            var source = CreatePluginSource();
-
-            //------------Execute Test---------------------------
-            var result = PluginServiceExecutionFactory.ValidatePlugin(source.AssemblyLocation);
-
-            //------------Assert Results-------------------------
-            StringAssert.Contains(result, string.Empty);
-        }
-
-        [TestMethod]
-        [Owner("Travis Frisinger")]
-        [TestCategory("PluginServiceExecutionFactory_Validate")]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         [ExpectedException(typeof(NullReferenceException))]
-        public void PluginRuntimeHandler_Validate_WhenNullDll_ExpectException()
+        public void PluginRuntimeHandler_GetNamespacesWithJsonObjects_WhenNullDll_ExpectException()
         {
             //------------Execute Test---------------------------
-            PluginServiceExecutionFactory.ValidatePlugin(null);
+            PluginServiceExecutionFactory.GetNamespacesWithJsonObjects(null);
         }
 
-        [TestMethod]
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetMethods")]
         public void PluginRuntimeHandler_GetMethods_WhenValidDll_ExpectValidResults()
@@ -97,10 +101,62 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
                 var result = PluginServiceExecutionFactory.GetMethods(source.AssemblyLocation, source.AssemblyName, service.Namespace);
                 //------------Assert Results-------------------------
                 Assert.IsTrue(result.Count > 0);
-            }            
+            }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetMethods")]
+        public void PluginRuntimeHandler_GetConstructors_WhenValidDll_ExpectValidResults()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            var service = CreatePluginService();
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = PluginServiceExecutionFactory.GetConstructors(source.AssemblyLocation, source.AssemblyName, service.Namespace);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetMethods")]
+        public void PluginRuntimeHandler_GetMethodsWithReturns_WhenValidDll_ExpectValidResults()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            var service = CreatePluginService();
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = PluginServiceExecutionFactory.GetMethodsWithReturns(source.AssemblyLocation, source.AssemblyName, service.Namespace);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory("PluginServiceExecutionFactory_GetMethods")]
+        public void PluginRuntimeHandler_GetMethodsWithReturns_WhenValidDllMethodIsVoid_ExpectValidResultsWithVoidMethod()
+        {
+            //------------Setup for test--------------------------
+            var source = CreatePluginSource();
+            var service = CreatePluginService();
+            //------------Execute Test---------------------------
+            using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
+            {
+                var result = PluginServiceExecutionFactory.GetMethodsWithReturns(source.AssemblyLocation, source.AssemblyName, service.Namespace);
+                //------------Assert Results-------------------------
+                Assert.IsTrue(result.Count > 0);
+                Assert.IsTrue(result.Any(method => method.IsVoid));
+            }
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_InvokePlugin")]
         public void PluginRuntimeHandler_InvokePlugin_WhenValidDll_ExpectValidResults()
@@ -108,26 +164,37 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             //------------Setup for test--------------------------
             var source = CreatePluginSource();
             var svc = CreatePluginService();
-                     
-            
+
+
 
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
-                PluginInvokeArgs args = new PluginInvokeArgs { AssemblyLocation = source.AssemblyLocation, AssemblyName = "Foo", Fullname = svc.Namespace, Method = svc.Method.Name, Parameters = svc.Method.Parameters };
+                var args = new PluginInvokeArgs
+                {
+                    AssemblyLocation = source.AssemblyLocation
+                    ,
+                    AssemblyName = "Foo"
+                    ,
+                    Fullname = svc.Namespace
+                    ,
+                    Method = svc.Method.Name
+                    ,
+                    Parameters = svc.Method.Parameters
+                };
                 var result = PluginServiceExecutionFactory.InvokePlugin(args);
-                var castResult = result as DummyClassForPluginTest;
                 //------------Assert Results-------------------------
+                var castResult = JsonConvert.DeserializeObject(result.ToString()) as dynamic;
                 if (castResult != null)
                 {
-                    StringAssert.Contains(castResult.Name, "test data");
+                    StringAssert.Contains(castResult.Name.ToString(), "test data");
                 }
                 else
                 {
                     Assert.Fail("Failed Conversion for Assert");
                 }
-            }  
-            
+            }
+
         }
 
         #region Helper Methods
@@ -138,13 +205,13 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             var assembly = type.Assembly;
 
             string loc = null;
-            if(!nullLocation)
+            if (!nullLocation)
             {
                 loc = assembly.Location;
             }
 
-            Guid resourceID = Guid.Empty;
-            if(!invalidResourceID)
+            var resourceID = Guid.Empty;
+            if (!invalidResourceID)
             {
                 resourceID = Guid.NewGuid();
             }
@@ -154,8 +221,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
                 AssemblyLocation = loc,
                 ResourceID = resourceID,
                 ResourceName = "Dummy",
-                ResourceType = ResourceType.PluginSource,
-                ResourcePath = "Test",
+                ResourceType = "PluginSource"
             };
         }
 
@@ -176,8 +242,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             {
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "DummyPluginService",
-                ResourceType = ResourceType.PluginService,
-                ResourcePath = "Tests",
+                ResourceType = "PluginService",
                 Namespace = type.FullName,
                 Method = method,
                 Source = source

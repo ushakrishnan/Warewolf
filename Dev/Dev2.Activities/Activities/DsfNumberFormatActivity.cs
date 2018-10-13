@@ -1,45 +1,49 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Activities;
-using System.Collections.Generic;
-using System.Linq;
-using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.Operations;
 using Dev2.Data.TO;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Util;
 using Dev2.Validation;
+using System;
+using System.Activities;
+using System.Collections.Generic;
+using System.Linq;
+using Dev2.Data.Interfaces;
+using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
+using Dev2.Common.State;
 
-// ReSharper disable CheckNamespace
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
-{
 
-    public class DsfNumberFormatActivity : DsfActivityAbstract<string>
+{
+    [ToolDescriptorInfo("Utility-FormatNumber", "Format Number", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Format Number")]
+    public class DsfNumberFormatActivity : DsfActivityAbstract<string>,IEquatable<DsfNumberFormatActivity>
     {
         #region Class Members
 
-        // ReSharper disable InconsistentNaming
-        private static readonly IDev2NumberFormatter _numberFormatter; //  REVIEW : Should this not be an instance variable....
-        // ReSharper restore InconsistentNaming
+
+        static readonly IDev2NumberFormatter _numberFormatter; //  REVIEW : Should this not be an instance variable....
+
+
 
         #endregion Class Members
 
@@ -54,8 +58,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         static DsfNumberFormatActivity()
         {
             _numberFormatter = new Dev2NumberFormatter(); // REVIEW : Please use a factory method to create
-
         }
+
         #endregion Constructors
 
         #region Properties
@@ -79,15 +83,49 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         [FindMissing]
         public new string Result { get; set; }
 
-        protected override bool CanInduceIdle
+
+        public override IEnumerable<StateVariable> GetState()
         {
-            get
-            {
-                return true;
-            }
+            return new[] {
+                new StateVariable
+                {
+                    Name = "Expression",
+                    Value = Expression,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "RoundingType",
+                    Value = RoundingType,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "RoundingDecimalPlaces",
+                    Value = RoundingDecimalPlaces,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "DecimalPlacesToShow",
+                    Value = DecimalPlacesToShow,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
         }
 
+
+        protected override bool CanInduceIdle => true;
+
         #endregion Properties
+
+        public override List<string> GetOutputs() => new List<string> { Result };
 
         #region Override Methods
 
@@ -99,8 +137,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
-
             var allErrors = new ErrorResultTO();
 
             InitializeDebug(dataObject);
@@ -110,16 +146,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 var roundingDecimalPlaces = RoundingDecimalPlaces ?? string.Empty;
                 var decimalPlacesToShow = DecimalPlacesToShow ?? string.Empty;
 
-                if(dataObject.IsDebugMode())
-                {
-                    AddDebugInputItem(expression, "Number", dataObject.Environment, update);
-                    if(!String.IsNullOrEmpty(RoundingType))
-                    {
-                        AddDebugInputItem(new DebugItemStaticDataParams(RoundingType, "Rounding"));
-                    }
-                    AddDebugInputItem(roundingDecimalPlaces, "Rounding Value", dataObject.Environment, update);
-                    AddDebugInputItem(decimalPlacesToShow, "Decimals to show", dataObject.Environment, update);
-                }
+                AddDebugInputItems(dataObject, update, expression, roundingDecimalPlaces, decimalPlacesToShow);
                 var colItr = new WarewolfListIterator();
                 var expressionIterator = CreateDataListEvaluateIterator(expression, dataObject.Environment, update);
                 var roundingDecimalPlacesIterator = CreateDataListEvaluateIterator(roundingDecimalPlaces, dataObject.Environment, update);
@@ -130,53 +157,56 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 // Loop data ;)
                 var rule = new IsSingleValueRule(() => Result);
                 var single = rule.Check();
-
-                while(colItr.HasMoreData())
+                var counter = 1;
+                while (colItr.HasMoreData())
                 {
-                    int decimalPlacesToShowValue;
                     var tmpDecimalPlacesToShow = colItr.FetchNextValue(decimalPlacesToShowIterator);
-                    var adjustDecimalPlaces = tmpDecimalPlacesToShow.IsRealNumber(out decimalPlacesToShowValue);
-                    if(!string.IsNullOrEmpty(tmpDecimalPlacesToShow) && !adjustDecimalPlaces)
+                    var adjustDecimalPlaces = tmpDecimalPlacesToShow.IsRealNumber(out int decimalPlacesToShowValue);
+                    if (!string.IsNullOrEmpty(tmpDecimalPlacesToShow) && !adjustDecimalPlaces)
                     {
-                        throw new Exception("Decimals to show is not valid");
+                        throw new Exception(ErrorResource.DecimalsNotValid);
                     }
 
                     var tmpDecimalPlaces = colItr.FetchNextValue(roundingDecimalPlacesIterator);
                     var roundingDecimalPlacesValue = 0;
-                    if(!string.IsNullOrEmpty(tmpDecimalPlaces) && !tmpDecimalPlaces.IsRealNumber(out roundingDecimalPlacesValue))
+                    if (!string.IsNullOrEmpty(tmpDecimalPlaces) && !tmpDecimalPlaces.IsRealNumber(out roundingDecimalPlacesValue))
                     {
-                        throw new Exception("Rounding decimal places is not valid");
+                        throw new Exception(ErrorResource.RoundingNotValid);
                     }
-
+                    string result;
                     var binaryDataListItem = colItr.FetchNextValue(expressionIterator);
                     var val = binaryDataListItem;
-                    FormatNumberTO formatNumberTo = new FormatNumberTO(val, RoundingType, roundingDecimalPlacesValue, adjustDecimalPlaces, decimalPlacesToShowValue);
-                    var result = _numberFormatter.Format(formatNumberTo);
+                    {
+                        var formatNumberTo = new FormatNumberTO(val, RoundingType, roundingDecimalPlacesValue, adjustDecimalPlaces, decimalPlacesToShowValue);
+                        result = _numberFormatter.Format(formatNumberTo);
+                    }
 
-                    if(single != null)
+
+                    if (single != null)
                     {
                         allErrors.AddError(single.Message);
                     }
                     else
                     {
-                        UpdateResultRegions(dataObject.Environment, result, update);
-                        if(dataObject.IsDebugMode())
-                        {
-                            AddDebugOutputItem(new DebugItemStaticDataParams(result, Result, "", "="));
-                        }
+                        UpdateResultRegions(dataObject.Environment, result, update == 0 ? counter : update);
+                        counter++;
                     }
                 }
+                if (dataObject.IsDebugMode())
+                {
+                    AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Dev2Logger.Log.Error("DSFNumberFormatActivity", e);
+                Dev2Logger.Error("DSFNumberFormatActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
             {
-                if(allErrors.HasErrors())
+                if (allErrors.HasErrors())
                 {
-                    if(dataObject.IsDebugMode())
+                    if (dataObject.IsDebugMode())
                     {
                         AddDebugOutputItem(new DebugItemStaticDataParams("", Result, ""));
                     }
@@ -185,11 +215,25 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     dataObject.Environment.AddError(errorString);
                 }
 
-                if(dataObject.IsDebugMode())
+                if (dataObject.IsDebugMode())
                 {
                     DispatchDebugState(dataObject, StateType.Before, update);
                     DispatchDebugState(dataObject, StateType.After, update);
                 }
+            }
+        }
+
+        void AddDebugInputItems(IDSFDataObject dataObject, int update, string expression, string roundingDecimalPlaces, string decimalPlacesToShow)
+        {
+            if (dataObject.IsDebugMode())
+            {
+                AddDebugInputItem(expression, "Number", dataObject.Environment, update);
+                if (!String.IsNullOrEmpty(RoundingType))
+                {
+                    AddDebugInputItem(new DebugItemStaticDataParams(RoundingType, "Rounding"));
+                }
+                AddDebugInputItem(roundingDecimalPlaces, "Rounding Value", dataObject.Environment, update);
+                AddDebugInputItem(decimalPlacesToShow, "Decimals to show", dataObject.Environment, update);
             }
         }
 
@@ -198,13 +242,13 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             environment.Assign(Result, result, update);
         }
 
-        #endregion
+        #endregion Override Methods
 
         #region Private Methods
 
-        private void AddDebugInputItem(string expression, string labelText, IExecutionEnvironment environment, int update)
+        void AddDebugInputItem(string expression, string labelText, IExecutionEnvironment environment, int update)
         {
-            DebugItem itemToAdd = new DebugItem();
+            var itemToAdd = new DebugItem();
             if (environment != null)
             {
                 AddDebugItem(new DebugEvalResult(expression, labelText, environment, update), itemToAdd);
@@ -217,55 +261,54 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             _debugInputs.Add(itemToAdd);
         }
 
-        #endregion
+        #endregion Private Methods
 
         #region Get Debug Inputs/Outputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
-            foreach(IDebugItem debugInput in _debugInputs)
+            foreach (IDebugItem debugInput in _debugInputs)
             {
                 debugInput.FlushStringBuilder();
             }
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
-            foreach(IDebugItem debugOutput in _debugOutputs)
+            foreach (IDebugItem debugOutput in _debugOutputs)
             {
                 debugOutput.FlushStringBuilder();
             }
             return _debugOutputs;
         }
 
-        #endregion
+        #endregion Get Debug Inputs/Outputs
 
         #region Update ForEach Inputs/Outputs
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            if (updates != null)
             {
-                foreach(Tuple<string, string> t in updates)
+                foreach (Tuple<string, string> t in updates)
                 {
-
-                    if(t.Item1 == Expression)
+                    if (t.Item1 == Expression)
                     {
                         Expression = t.Item2;
                     }
 
-                    if(t.Item1 == RoundingType)
+                    if (t.Item1 == RoundingType)
                     {
                         RoundingType = t.Item2;
                     }
 
-                    if(t.Item1 == RoundingDecimalPlaces)
+                    if (t.Item1 == RoundingDecimalPlaces)
                     {
                         RoundingDecimalPlaces = t.Item2;
                     }
 
-                    if(t.Item1 == DecimalPlacesToShow)
+                    if (t.Item1 == DecimalPlacesToShow)
                     {
                         DecimalPlacesToShow = t.Item2;
                     }
@@ -275,31 +318,75 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
-        #endregion
+        #endregion Update ForEach Inputs/Outputs
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(Expression, RoundingType, RoundingDecimalPlaces, DecimalPlacesToShow);
+
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
+
+        #endregion GetForEachInputs/Outputs
+
+        public bool Equals(DsfNumberFormatActivity other)
         {
-            return GetForEachItems(Expression, RoundingType, RoundingDecimalPlaces, DecimalPlacesToShow);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(Expression, other.Expression) 
+                && string.Equals(RoundingType, other.RoundingType) 
+                && string.Equals(RoundingDecimalPlaces, other.RoundingDecimalPlaces) 
+                && string.Equals(DecimalPlacesToShow, other.DecimalPlacesToShow) 
+                && string.Equals(Result, other.Result);
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public override bool Equals(object obj)
         {
-            return GetForEachItems(Result);
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfNumberFormatActivity) obj);
         }
 
-        #endregion
-
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Expression != null ? Expression.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (RoundingType != null ? RoundingType.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (RoundingDecimalPlaces != null ? RoundingDecimalPlaces.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (DecimalPlacesToShow != null ? DecimalPlacesToShow.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

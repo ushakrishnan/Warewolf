@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +10,7 @@
 
 using Dev2.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.Activities.Utils
 {
@@ -32,19 +31,6 @@ namespace Dev2.Tests.Activities.Utils
             Assert.AreEqual("<=", FindRecordsDisplayUtil.ConvertForDisplay("<="));
             Assert.AreEqual("Doesn't Contain", FindRecordsDisplayUtil.ConvertForDisplay("Not Contains"));
             Assert.AreEqual("Is Regex", FindRecordsDisplayUtil.ConvertForDisplay("Regex"));
-        }
-
-        [TestMethod]
-        [Owner("Massimo Guerrera")]
-        [TestCategory("FindRecordsMigrationUtil_ConvertForWriting")]
-        public void FindRecordsMigrationUtil_ConvertForWriting_TryAllOptions_CorrectStringsReturned()
-        {
-            Assert.AreEqual("Equals", FindRecordsDisplayUtil.ConvertForWriting("="));
-            Assert.AreEqual("Not Equals", FindRecordsDisplayUtil.ConvertForWriting("<> (Not Equal)"));
-            Assert.AreEqual(">=", FindRecordsDisplayUtil.ConvertForWriting(">="));
-            Assert.AreEqual("<=", FindRecordsDisplayUtil.ConvertForWriting("<="));
-            Assert.AreEqual("Not Contains", FindRecordsDisplayUtil.ConvertForWriting("Doesn't Contain"));
-            Assert.AreEqual("Regex", FindRecordsDisplayUtil.ConvertForWriting("Is Regex"));
-        }
+        }        
     }
 }

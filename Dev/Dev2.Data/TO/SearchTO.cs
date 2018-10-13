@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Data.Interfaces;
 
 namespace Dev2.DataList.Contract
 {
@@ -20,7 +20,7 @@ namespace Dev2.DataList.Contract
         /// <summary>
         /// Internal constructor, must be created from the DTOFactory
         /// </summary>
-        internal SearchTO(string fieldsToSearch, string searchType, string searchCriteria, string result)
+        public SearchTO(string fieldsToSearch, string searchType, string searchCriteria, string result)
             : this(fieldsToSearch, searchType, searchCriteria, string.Empty, result,false,string.Empty,string.Empty)
         {
 

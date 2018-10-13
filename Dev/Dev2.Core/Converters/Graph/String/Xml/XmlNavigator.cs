@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +14,9 @@ using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Converters.Graph;
+using Warewolf.Resource.Errors;
 
-// ReSharper disable once CheckNamespace
+
 namespace Unlimited.Framework.Converters.Graph.String.Xml
 {
     [Serializable]
@@ -39,24 +40,16 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                 throw new ArgumentNullException("path");
             }
 
-            var xmlPath = path as XmlPath;
 
-            if (xmlPath == null)
+            if (!(path is XmlPath xmlPath))
             {
-                throw new Exception(string.Format("Path of type '{0}' expected, path of type '{1}' received.",
-                    typeof (XmlPath), path.GetType()));
+                throw new Exception(string.Format(ErrorResource.PathMismatch,
+                    typeof(XmlPath), path.GetType()));
             }
 
             var document = Data as XDocument;
-
-            if (document == null)
-            {
-                throw new Exception(string.Format("Type of {0} was expected for data, type of {1} was found instead.",
-                    typeof (XDocument), Data.GetType()));
-            }
-
-            string returnData = string.Empty;
-            XElement currentElement = document.Root;
+            var returnData = string.Empty;
+            var currentElement = document.Root;
 
             if (path.ActualPath == XmlPath.NodeSeperatorSymbol)
             {
@@ -68,60 +61,76 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
             else
             {
                 var pathSegments = new List<XmlPathSegment>(xmlPath.GetSegements().OfType<XmlPathSegment>());
-                int segmentIndex = 0;
+                var segmentIndex = 0;
 
                 while (currentElement != null && segmentIndex < pathSegments.Count)
                 {
-                    if (segmentIndex == 0 && currentElement.Name != pathSegments[segmentIndex].ActualSegment && currentElement.Name.LocalName!=pathSegments[segmentIndex].ActualSegment)
+                    if (segmentIndex == 0 && currentElement.Name != pathSegments[segmentIndex].ActualSegment && currentElement.Name.LocalName != pathSegments[segmentIndex].ActualSegment)
                     {
                         currentElement = null;
                         returnData = null;
                     }
                     else if (segmentIndex == 0 && pathSegments.Count == 1 &&
-                             currentElement.Name == pathSegments[segmentIndex].ActualSegment)
+                             currentElement.Name.LocalName == pathSegments[segmentIndex].ActualSegment)
                     {
                         returnData = currentElement.Value;
                     }
-                    else if (segmentIndex > 0)
+                    else
                     {
-                        if (pathSegments[segmentIndex].IsAttribute)
-                        {
-                            XAttribute attribute = currentElement.Attribute(pathSegments[segmentIndex].ActualSegment);
-
-                            if (attribute != null)
-                            {
-                                currentElement = null;
-                                returnData = attribute.Value;
-                            }
-                        }
-                        else
-                        {
-                            var actualSegment = pathSegments[segmentIndex].ActualSegment;
-                            var newCurrentElement =
-                                currentElement.Elements(actualSegment).LastOrDefault();
-                            // Travis.Frisinger : 09/10/2012 - Fix for null element, naughty Brendan ;)
-                            if (newCurrentElement != null)
-                            {
-                                returnData = newCurrentElement.Value;
-                                currentElement = newCurrentElement;
-                            }
-                            else
-                            {
-                                newCurrentElement = currentElement.Elements().LastOrDefault(element => element.Name.LocalName.Equals(actualSegment, StringComparison.InvariantCultureIgnoreCase));
-                                if (newCurrentElement != null)
-                                {
-                                    returnData = newCurrentElement.Value;
-                                    currentElement = newCurrentElement;
-                                }
-                                else
-                                {
-                                    returnData = string.Empty;
-                                }
-                            }
-                        }
+                        returnData = ScalarSegment(ref currentElement, pathSegments, segmentIndex);
                     }
 
                     segmentIndex++;
+                }
+            }
+
+            return returnData;
+        }
+
+        static string ScalarSegment(ref XElement currentElement, List<XmlPathSegment> pathSegments, int segmentIndex)
+        {
+            var returnData = string.Empty;
+            if (segmentIndex > 0)
+            {
+                if (pathSegments[segmentIndex].IsAttribute)
+                {
+                    var attribute = currentElement.Attribute(pathSegments[segmentIndex].ActualSegment);
+
+                    if (attribute != null)
+                    {
+                        currentElement = null;
+                        returnData = attribute.Value;
+                    }
+                }
+                else
+                {
+                    returnData = ActualSegment(ref currentElement, pathSegments, segmentIndex);
+                }
+            }
+            return returnData;
+        }
+
+        static string ActualSegment(ref XElement currentElement, List<XmlPathSegment> pathSegments, int segmentIndex)
+        {
+            string returnData;
+            var actualSegment = pathSegments[segmentIndex].ActualSegment;
+            var newCurrentElement = currentElement.Elements(actualSegment).LastOrDefault();
+            if (newCurrentElement != null)
+            {
+                returnData = newCurrentElement.Value;
+                currentElement = newCurrentElement;
+            }
+            else
+            {
+                newCurrentElement = currentElement.Elements().LastOrDefault(element => element.Name.LocalName.Equals(actualSegment, StringComparison.InvariantCultureIgnoreCase));
+                if (newCurrentElement != null)
+                {
+                    returnData = newCurrentElement.Value;
+                    currentElement = newCurrentElement;
+                }
+                else
+                {
+                    returnData = string.Empty;
                 }
             }
 
@@ -139,20 +148,14 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
 
             if (xmlPath == null)
             {
-                throw new Exception(string.Format("Path of type '{0}' expected, path of type '{1}' received.",
+                throw new Exception(string.Format(ErrorResource.PathMismatch,
                     typeof (XmlPath), path.GetType()));
             }
 
             var document = Data as XDocument;
 
-            if (document == null)
-            {
-                throw new Exception(string.Format("Type of {0} was expected for data, type of {1} was found instead.",
-                    typeof (XDocument), Data.GetType()));
-            }
-
             List<object> returnData = null;
-            XElement currentElement = document.Root;
+            var currentElement = document.Root;
 
             if (path.ActualPath == XmlPath.NodeSeperatorSymbol)
             {
@@ -193,13 +196,6 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
             {
                 var document = Data as XDocument;
 
-                if (document == null)
-                {
-                    throw new Exception(
-                        string.Format("Type of {0} was expected for data, type of {1} was found instead.",
-                            typeof (XDocument), Data.GetType()));
-                }
-
                 //
                 // Create the root node
                 //
@@ -216,7 +212,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                 {
                     BuildIndexedTree(validPaths, indexedPathSegments, rootIndexedValueTreeNode);
                     WriteToResults(validPaths, indexedPathSegments, rootIndexedValueTreeNode, results);
-                    // ReSharper disable once LoopVariableIsNeverChangedInsideLoop
+                    
                 } while (EnumerateIndexedTree(rootIndexedValueTreeNode) > 0);
             }
             return results;
@@ -237,8 +233,8 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
         {
             foreach (IPath path in paths)
             {
-                IndexedPathSegmentTreeNode<string> indexedPathSegmentTreeNode = rootIndexedValueTreeNode;
-                int pathSegmentCount = 0;
+                var indexedPathSegmentTreeNode = rootIndexedValueTreeNode;
+                var pathSegmentCount = 0;
 
                 while (pathSegmentCount < indexedPathSegments[path].Count)
                 {
@@ -246,19 +242,12 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                     var pathSegment = indexedPathSegments[path][pathSegmentCount] as XmlPathSegment;
                     XmlPathSegment parentPathSegment;
 
-                    if (pathSegmentCount > 0)
-                    {
-                        parentPathSegment = indexedPathSegments[path][pathSegmentCount - 1] as XmlPathSegment;
-                    }
-                    else
-                    {
-                        parentPathSegment = null;
-                    }
+                    parentPathSegment = pathSegmentCount > 0 ? indexedPathSegments[path][pathSegmentCount - 1] as XmlPathSegment : null;
 
                     if (indexedPathSegmentTreeNode != null && pathSegment != null && !indexedPathSegmentTreeNode.TryGetValue(pathSegment.ActualSegment,
                         out tmpIndexedPathSegmentTreeNode))
                     {
-                        IndexedPathSegmentTreeNode<string> newIndexedPathSegmentTreeNode =
+                        var newIndexedPathSegmentTreeNode =
                             CreatePathSegmentIndexedPathSegmentTreeNode(pathSegment, parentPathSegment,
                                 indexedPathSegmentTreeNode);
                         indexedPathSegmentTreeNode.Add(pathSegment.ActualSegment, newIndexedPathSegmentTreeNode);
@@ -280,25 +269,24 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
         {
             foreach (IPath path in paths)
             {
-                List<IPathSegment> list = indexedPathSegments[path];
+                var list = indexedPathSegments[path];
 
-                IndexedPathSegmentTreeNode<string> indexedPathSegmentTreeNode =
+                var indexedPathSegmentTreeNode =
                     rootIndexedValueTreeNode[list.Select(p => p.ActualSegment).ToList()];
 
-                var element = indexedPathSegmentTreeNode.CurrentValue as XElement;
-                if (element != null)
+                if (indexedPathSegmentTreeNode.CurrentValue is XElement element)
                 {
                     results[path].Add(element.Value);
                 }
                 else
                 {
                     var value = indexedPathSegmentTreeNode.CurrentValue as XAttribute;
-                    results[path].Add(value != null ? value.Value : indexedPathSegmentTreeNode.CurrentValue.ToString());
+                    results[path].Add(value?.Value ?? indexedPathSegmentTreeNode.CurrentValue.ToString());
                 }
             }
         }
 
-        private IndexedPathSegmentTreeNode<string> CreatePathSegmentIndexedPathSegmentTreeNode(
+        IndexedPathSegmentTreeNode<string> CreatePathSegmentIndexedPathSegmentTreeNode(
             XmlPathSegment pathSegment, IPathSegment parentPathSegment, IndexedPathSegmentTreeNode<string> parentNode)
         {
             var newIndexedValueTreeNode = new IndexedPathSegmentTreeNode<string>();
@@ -317,82 +305,91 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                 }
                 else
                 {
-                    var parentCurentElement = parentNode.CurrentValue as XElement;
-
-                    if (parentPathSegment != null && parentPathSegment.IsEnumarable)
-                    {
-                        if (parentCurentElement != null)
-                        {
-                            List<XElement> childElements =
-                                parentCurentElement.Elements(pathSegment.ActualSegment).ToList();
-                            newIndexedValueTreeNode.EnumerableValue = childElements;
-
-                            if (childElements.Count == 0)
-                            {
-                                newIndexedValueTreeNode.CurrentValue = string.Empty;
-                                newIndexedValueTreeNode.EnumerationComplete = true;
-                            }
-                            else
-                            {
-                                newIndexedValueTreeNode.Enumerator =
-                                    newIndexedValueTreeNode.EnumerableValue.GetEnumerator();
-
-                                newIndexedValueTreeNode.Enumerator.Reset();
-
-                                if (!newIndexedValueTreeNode.Enumerator.MoveNext())
-                                {
-                                    newIndexedValueTreeNode.CurrentValue = string.Empty;
-                                    newIndexedValueTreeNode.EnumerationComplete = true;
-                                }
-                                else
-                                {
-                                    newIndexedValueTreeNode.CurrentValue = newIndexedValueTreeNode.Enumerator.Current;
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (pathSegment.IsAttribute)
-                        {
-                            if (parentCurentElement != null)
-                            {
-                                newIndexedValueTreeNode.CurrentValue =
-                                    parentCurentElement.Attribute(pathSegment.ActualSegment);
-                            }
-
-                            if (newIndexedValueTreeNode.CurrentValue == null)
-                            {
-                                newIndexedValueTreeNode.CurrentValue = string.Empty;
-                                newIndexedValueTreeNode.EnumerationComplete = true;
-                            }
-                        }
-                        else
-                        {
-                            if (parentCurentElement != null)
-                            {
-                                newIndexedValueTreeNode.CurrentValue =
-                                    parentCurentElement.Element(pathSegment.ActualSegment);
-                            }
-
-                            if (newIndexedValueTreeNode.CurrentValue == null)
-                            {
-                                newIndexedValueTreeNode.CurrentValue = string.Empty;
-                                newIndexedValueTreeNode.EnumerationComplete = true;
-                            }
-                        }
-                    }
+                    XElementSegment(pathSegment, parentPathSegment, parentNode, newIndexedValueTreeNode);
                 }
             }
 
             return newIndexedValueTreeNode;
         }
 
-        private IEnumerable<string> SelectEnumberable(IList<IPathSegment> pathSegments, IPathSegment parentPathSegment,
-            XElement element)
+        static void XElementSegment(XmlPathSegment pathSegment, IPathSegment parentPathSegment, IndexedPathSegmentTreeNode<string> parentNode, IndexedPathSegmentTreeNode<string> newIndexedValueTreeNode)
+        {
+            var parentCurentElement = parentNode.CurrentValue as XElement;
+
+            if (parentPathSegment != null && parentPathSegment.IsEnumarable)
+            {
+                if (parentCurentElement != null)
+                {
+                    ActualXElementSegment(pathSegment, newIndexedValueTreeNode, parentCurentElement);
+                }
+            }
+            else
+            {
+                if (pathSegment.IsAttribute)
+                {
+                    if (parentCurentElement != null)
+                    {
+                        newIndexedValueTreeNode.CurrentValue =
+                            parentCurentElement.Attribute(pathSegment.ActualSegment);
+                    }
+
+                    if (newIndexedValueTreeNode.CurrentValue == null)
+                    {
+                        newIndexedValueTreeNode.CurrentValue = string.Empty;
+                        newIndexedValueTreeNode.EnumerationComplete = true;
+                    }
+                }
+                else
+                {
+                    if (parentCurentElement != null)
+                    {
+                        newIndexedValueTreeNode.CurrentValue =
+                            parentCurentElement.Element(pathSegment.ActualSegment);
+                    }
+
+                    if (newIndexedValueTreeNode.CurrentValue == null)
+                    {
+                        newIndexedValueTreeNode.CurrentValue = string.Empty;
+                        newIndexedValueTreeNode.EnumerationComplete = true;
+                    }
+                }
+            }
+        }
+
+        static void ActualXElementSegment(XmlPathSegment pathSegment, IndexedPathSegmentTreeNode<string> newIndexedValueTreeNode, XElement parentCurentElement)
+        {
+            var childElements =
+                                    parentCurentElement.Elements(pathSegment.ActualSegment).ToList();
+            newIndexedValueTreeNode.EnumerableValue = childElements;
+
+            if (childElements.Count == 0)
+            {
+                newIndexedValueTreeNode.CurrentValue = string.Empty;
+                newIndexedValueTreeNode.EnumerationComplete = true;
+            }
+            else
+            {
+                newIndexedValueTreeNode.Enumerator =
+                    newIndexedValueTreeNode.EnumerableValue.GetEnumerator();
+
+                newIndexedValueTreeNode.Enumerator.Reset();
+
+                if (!newIndexedValueTreeNode.Enumerator.MoveNext())
+                {
+                    newIndexedValueTreeNode.CurrentValue = string.Empty;
+                    newIndexedValueTreeNode.EnumerationComplete = true;
+                }
+                else
+                {
+                    newIndexedValueTreeNode.CurrentValue = newIndexedValueTreeNode.Enumerator.Current;
+                }
+            }
+        }
+
+        IEnumerable<string> SelectEnumberable(IList<IPathSegment> pathSegments, IPathSegment parentPathSegment, XElement element)
         {
             var returnData = new List<string>();
-            XElement currentElement = element;
+            var currentElement = element;
 
             if (pathSegments.Count > 0)
             {
@@ -401,105 +398,114 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
                     var pathSegment = pathSegments[i] as XmlPathSegment;
                     XmlPathSegment previousPathSegment;
 
-                    if (i > 0)
-                    {
-                        previousPathSegment = pathSegments[i - 1] as XmlPathSegment;
-                    }
-                    else
-                    {
-                        previousPathSegment = parentPathSegment as XmlPathSegment;
-                    }
+                    previousPathSegment = i > 0 ? pathSegments[i - 1] as XmlPathSegment : parentPathSegment as XmlPathSegment;
 
-                    bool lastSegment = i == pathSegments.Count - 1;
+                    var lastSegment = i == pathSegments.Count - 1;
 
                     if (previousPathSegment != null && previousPathSegment.IsEnumarable)
                     {
-                        if (currentElement != null)
-                        {
-                            if (pathSegment != null)
-                            {
-                                List<XElement> childElements =
-                                    currentElement.Elements(pathSegment.ActualSegment).ToList();
-
-                                if (childElements.Count > 0)
-                                {
-                                    if (lastSegment)
-                                    {
-                                        foreach (XElement childElement in childElements)
-                                        {
-                                            if (pathSegment.IsAttribute)
-                                            {
-                                                XAttribute attribute = childElement.Attribute(pathSegment.ActualSegment);
-
-                                                if (attribute != null)
-                                                {
-                                                    returnData.Add(attribute.Value);
-                                                }
-                                                else
-                                                {
-                                                    throw new Exception(string.Format("Attribute {0} not found.",
-                                                        pathSegment.ActualSegment));
-                                                }
-                                            }
-                                            else
-                                            {
-                                                returnData.Add(childElement.Value);
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        foreach (XElement childElement in childElements)
-                                        {
-                                            returnData.AddRange(SelectEnumberable(pathSegments.Skip(i + 1).ToList(),
-                                                pathSegment, childElement));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        return returnData;
+                        return SelectEnumerable(pathSegments, returnData, i, pathSegment, lastSegment, currentElement);
                     }
-                    if (pathSegment != null && pathSegment.IsAttribute)
+                    currentElement = SelectEnumerable(ref returnData, currentElement, pathSegment, lastSegment);
+                }
+            }
+            else
+            {
+                if (currentElement.Name == parentPathSegment.ActualSegment)
+                {
+                    returnData.Add(currentElement.Value);
+                }
+            }
+
+            return returnData;
+        }
+
+        private static XElement SelectEnumerable(ref List<string> returnData, XElement currentElement, XmlPathSegment pathSegment, bool lastSegment)
+        {
+            if (pathSegment != null && pathSegment.IsAttribute)
+            {
+                var attribute = currentElement?.Attribute(pathSegment.ActualSegment);
+
+                if (attribute != null)
+                {
+                    currentElement = null;
+
+                    if (lastSegment)
                     {
-                        if (currentElement != null)
-                        {
-                            XAttribute attribute = currentElement.Attribute(pathSegment.ActualSegment);
-
-                            if (attribute != null)
-                            {
-                                currentElement = null;
-
-                                if (lastSegment)
-                                {
-                                    returnData.Add(attribute.Value);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (currentElement != null)
-                        {
-                            if (pathSegment != null)
-                            {
-                                currentElement = currentElement.Element(pathSegment.ActualSegment);
-                            }
-                        }
-
-                        if (currentElement != null && lastSegment)
-                        {
-                            returnData.Add(currentElement.Value);
-                        }
+                        returnData.Add(attribute.Value);
                     }
                 }
             }
-            else if (currentElement.Name == parentPathSegment.ActualSegment)
+            else
             {
-                returnData.Add(currentElement.Value);
+                if (currentElement != null && pathSegment != null)
+                {
+                    currentElement = currentElement.Element(pathSegment.ActualSegment);
+                }
+
+                if (currentElement != null && lastSegment)
+                {
+                    returnData.Add(currentElement.Value);
+                }
             }
 
+            return currentElement;
+        }
+
+        List<string> SelectEnumerable(IList<IPathSegment> pathSegments, List<string> returnData, int i, XmlPathSegment pathSegment, bool lastSegment, XElement currentElement)
+        {
+            if (currentElement != null && pathSegment != null)
+            {
+                var childElements =
+                    currentElement.Elements(pathSegment.ActualSegment).ToList();
+
+                if (childElements.Count > 0)
+                {
+                    SelectEnumarable(pathSegments, returnData, i, pathSegment, lastSegment, childElements);
+                }
+            }
+            return returnData;
+        }
+
+        void SelectEnumarable(IList<IPathSegment> pathSegments, List<string> returnData, int i, XmlPathSegment pathSegment, bool lastSegment, List<XElement> childElements)
+        {
+            if (lastSegment)
+            {
+                foreach (XElement childElement in childElements)
+                {
+                    if (pathSegment.IsAttribute)
+                    {
+                        returnData.AddRange(AddAttribute(returnData, pathSegment, childElement));
+                    }
+                    else
+                    {
+                        returnData.Add(childElement.Value);
+                    }
+                }
+            }
+            else
+            {
+                foreach (XElement childElement in childElements)
+                {
+                    returnData.AddRange(SelectEnumberable(pathSegments.Skip(i + 1).ToList(),
+                        pathSegment, childElement));
+                }
+            }
+        }
+
+        static List<string> AddAttribute(List<string> returnData, XmlPathSegment pathSegment, XElement childElement)
+        {
+            var attribute = childElement.Attribute(pathSegment.ActualSegment);
+
+            if (attribute != null)
+            {
+                returnData.Add(attribute.Value);
+            }
+            else
+            {
+                throw new Exception(string.Format("Attribute {0} not found.",
+                    pathSegment.ActualSegment));
+            }
             return returnData;
         }
 

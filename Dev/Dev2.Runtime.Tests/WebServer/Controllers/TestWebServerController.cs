@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +21,16 @@ namespace Dev2.Tests.Runtime.WebServer.Controllers
     public class TestWebServerController : WebServerController
     {
         Action _verifyProcessRequestInvoked;
+
+        public TestWebServerController(HttpMethod method, string requestUrl)
+        {
+            Request = new HttpRequestMessage
+            {
+                Method = method,
+                Content = new StringContent(""),
+                RequestUri = new Uri(requestUrl)
+            };
+        }
 
         public TestWebServerController(HttpMethod method)
         {
@@ -45,7 +54,7 @@ namespace Dev2.Tests.Runtime.WebServer.Controllers
             ProcessRequestHandlerType = typeof(TRequestHandler);
             ProcessRequestVariables = requestVariables;
             var result = base.ProcessRequest<TRequestHandler>(requestVariables);
-            _verifyProcessRequestInvoked();
+            _verifyProcessRequestInvoked?.Invoke();
             return result;
         }
 

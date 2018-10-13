@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,13 +9,17 @@
 */
 
 using System;
+using Dev2.Common.Interfaces.Attribute;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Security;
 
 namespace Dev2.Services.Security
 {
     public static class AuthorizationHelpers
     {
-        public static string ToReason(this AuthorizationContext value, bool isAuthorized = false)
+        public static string ToReason(this AuthorizationContext value) => value.ToReason(false);
+
+        public static string ToReason(this AuthorizationContext value, bool isAuthorized)
         {
             //
             // MUST return null and NOT empty string as the result is used as TargetNullValue in bindings!
@@ -29,47 +32,48 @@ namespace Dev2.Services.Security
             var field = value.GetType().GetField(value.ToString());
             var attribute = Attribute.GetCustomAttribute(field, typeof(ReasonAttribute)) as ReasonAttribute;
 
-            return attribute == null || String.IsNullOrEmpty(attribute.Reason) ? null : attribute.Reason;
+            return String.IsNullOrEmpty(attribute?.Reason) ? null : attribute.Reason;
         }
 
-        public static bool IsContributor(this Permissions permissions)
-        {
-            return permissions.HasFlag(Permissions.Contribute) || permissions.HasFlag(Permissions.Administrator);
+        public static bool IsContributor(this Permissions permissions) => permissions.HasFlag(Permissions.Contribute) || permissions.HasFlag(Permissions.Administrator);
 
-        }
-
-        public static bool CanDebug(this Permissions permissions)
-        {
-            return permissions.IsContributor() ||
+        public static bool CanDebug(this Permissions permissions) => permissions.IsContributor() ||
                    permissions.HasFlag(Permissions.View) && permissions.HasFlag(Permissions.Execute);
-        }
 
         public static Permissions ToPermissions(this AuthorizationContext context)
         {
-            switch(context)
+            if (context == AuthorizationContext.None)
             {
-                case AuthorizationContext.Administrator:
-                    return Permissions.Administrator;
-
-                case AuthorizationContext.View:
-                    return Permissions.Administrator | Permissions.Contribute | Permissions.View;
-
-                case AuthorizationContext.Execute:
-                    return Permissions.Administrator | Permissions.Contribute | Permissions.Execute;
-
-                case AuthorizationContext.Contribute:
-                    return Permissions.Administrator | Permissions.Contribute;
-
-                case AuthorizationContext.DeployTo:
-                    return Permissions.Administrator | Permissions.DeployTo;
-
-                case AuthorizationContext.DeployFrom:
-                    return Permissions.Administrator | Permissions.DeployFrom;
-
-                case AuthorizationContext.Any:
-                    return Permissions.Administrator | Permissions.View | Permissions.Contribute | Permissions.Execute | Permissions.DeployFrom | Permissions.DeployTo;
+                return Permissions.None;
             }
-            return Permissions.None;
+            var permission = Permissions.Administrator;
+
+            if (context.HasFlag(AuthorizationContext.DeployTo))
+            {
+                permission |= Permissions.DeployTo;
+            }
+            if (context.HasFlag(AuthorizationContext.Contribute))
+            {
+                permission |= Permissions.Contribute;
+            }
+            if (context.HasFlag(AuthorizationContext.DeployFrom))
+            {
+                permission |= Permissions.DeployFrom;
+            }
+            if (context.HasFlag(AuthorizationContext.Execute))
+            {
+                permission |= Permissions.Execute | Permissions.Contribute;
+            }
+            if (context.HasFlag(AuthorizationContext.View))
+            {
+                permission |= Permissions.View | Permissions.Contribute;
+            }
+            if (context.HasFlag(AuthorizationContext.Any))
+            {
+                permission = Permissions.Administrator | Permissions.View | Permissions.Contribute | Permissions.Execute | Permissions.DeployFrom | Permissions.DeployTo;
+            }
+
+            return permission;
         }
 
         public static bool Matches(this WindowsGroupPermission permission, string resource)
@@ -79,17 +83,12 @@ namespace Dev2.Services.Security
                 return true;
             }
 
-            Guid resourceId;
-            if(Guid.TryParse(resource, out resourceId))
+            if (Guid.TryParse(resource, out Guid resourceId))
             {
                 return permission.ResourceID == resourceId;
             }
-
-            // ResourceName is in the format: {categoryName}\{resourceName}
-            if(resource != null)
-            {
-                resource = resource.Replace('/', '\\');
-            }
+            
+            resource = resource?.Replace('/', '\\');
             if(string.IsNullOrEmpty(resource))
             {
                 return true;

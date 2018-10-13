@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,7 +24,7 @@ namespace Dev2.Activities.Designers2.Core
     {
         public static void SetZIndex(this FrameworkElement element, ZIndexPosition position)
         {
-            switch(position)
+            switch (position)
             {
                 case ZIndexPosition.Front:
                     Panel.SetZIndex(element, Int32.MaxValue);
@@ -33,6 +32,8 @@ namespace Dev2.Activities.Designers2.Core
 
                 case ZIndexPosition.Back:
                     Panel.SetZIndex(element, Int32.MinValue);
+                    break;
+                default:
                     break;
             }
         }

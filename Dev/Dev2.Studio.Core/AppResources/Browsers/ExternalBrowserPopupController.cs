@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,39 +8,19 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
 using System.Diagnostics;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Browsers
 {
-    // BUG 9798 - 2013.06.25 - TWR : added
     public class ExternalBrowserPopupController : BrowserPopupControllerAbstract
     {
-        public override bool ShowPopup(string url)
+        public override void ShowPopup(string url)
         {
             if(!string.IsNullOrEmpty(url))
             {
                 Process.Start(url);
             }
-            return true;
-        }
-
-        public override IntPtr FindPopup()
-        {
-            return IntPtr.Zero;
-        }
-
-        public override void SetPopupTitle(IntPtr hwnd)
-        {
-        }
-
-        public override void SetPopupForeground(IntPtr hwnd)
-        {
-        }
-
-        public override void SetPopupIcon(IntPtr hwnd)
-        {
         }
     }
 }

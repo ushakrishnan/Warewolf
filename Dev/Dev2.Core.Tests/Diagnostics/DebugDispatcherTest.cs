@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,21 +9,15 @@
 */
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
 using Dev2.Diagnostics.Debug;
-using Dev2.Runtime.ESB.WF;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Warewolf.Storage;
 
 namespace Dev2.Tests.Diagnostics
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DebugDispatcherTest
     {
 
@@ -124,7 +117,7 @@ namespace Dev2.Tests.Diagnostics
         public void WriteWithNull()
         {
 
-            DebugDispatcher.Instance.Write(null);
+            DebugDispatcher.Instance.Write(null,false,false,"");
 
             // No exception thrown
             Assert.IsTrue(true);
@@ -135,9 +128,9 @@ namespace Dev2.Tests.Diagnostics
         [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("DebugDispatcher_Write")]
-        // ReSharper disable InconsistentNaming
+        
         public void DebugDispatcher_Write_WhenRemoteInvoke_ExpectRemoteItemsAddedToRepo()
-        // ReSharper restore InconsistentNaming
+
         {
             //------------Setup for test--------------------------
             var workspaceID = Guid.NewGuid();
@@ -152,7 +145,7 @@ namespace Dev2.Tests.Diagnostics
             var remoteID = Guid.NewGuid();
 
             //------------Execute Test---------------------------
-            DebugDispatcher.Instance.Write(state.Object, true, remoteID.ToString()); // queue remote item ;)
+            DebugDispatcher.Instance.Write(state.Object, false,false,"",true, remoteID.ToString()); // queue remote item ;)
 
             //------------Assert Results-------------------------
 

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,18 +18,21 @@ using System.Threading.Tasks;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Infrastructure.Events;
+using Dev2.Common.Interfaces.Studio.Core;
+using Dev2.Common.Interfaces.Threading;
 using Dev2.Data.ServiceModel.Messages;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Security;
 using Dev2.SignalR.Wrappers;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Threading;
+using Dev2.Studio.Interfaces;
+
+
 
 namespace Dev2.Network
 {
     public class ServerProxy :  IEnvironmentConnection
     {
-        IEnvironmentConnection _wrappedConnection;
+        readonly IEnvironmentConnection _wrappedConnection;
         public ServerProxy(Uri serverUri)
         {
            _wrappedConnection = new ServerProxyWithoutChunking(serverUri);
@@ -45,7 +47,7 @@ namespace Dev2.Network
             _wrappedConnection.NetworkStateChanged += (sender, args) => OnNetworkStateChanged(args);           
         }
 
-        // ReSharper disable MemberCanBeProtected.Global
+        
         public ServerProxy(string serverUri, ICredentials credentials, IAsyncWorker worker)
         {
             _wrappedConnection = new ServerProxyWithoutChunking(serverUri,credentials,worker);
@@ -58,27 +60,10 @@ namespace Dev2.Network
             SetupPassthroughEvents();
         }
 
-        #region Implementation of IDisposable
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            _wrappedConnection.Dispose();
-        }
-
-        #endregion
-
         #region Implementation of IEnvironmentConnection
 
-        public IEventPublisher ServerEvents
-        {
-            get
-            {
-                return _wrappedConnection.ServerEvents;
-            }
-        }
+        public IEventPublisher ServerEvents => _wrappedConnection.ServerEvents;
+
         public Guid ServerID
         {
             get
@@ -90,48 +75,17 @@ namespace Dev2.Network
                 _wrappedConnection.ServerID = value;
             }
         }
-        public Guid WorkspaceID
-        {
-            get
-            {
-                return _wrappedConnection.WorkspaceID; 
-            }
-        }
-        public Uri AppServerUri
-        {
-            get
-            {
-                return _wrappedConnection.AppServerUri ;
-            }
-        }
-        public Uri WebServerUri
-        {
-            get
-            {
-                return _wrappedConnection.WebServerUri;
-            }
-        }
-        public AuthenticationType AuthenticationType
-        {
-            get
-            {
-                return _wrappedConnection.AuthenticationType;
-            }
-        }
-        public string UserName
-        {
-            get
-            {
-                return _wrappedConnection.UserName;
-            }
-        }
-        public string Password
-        {
-            get
-            {
-                return _wrappedConnection.Password;
-            }
-        }
+        public Guid WorkspaceID => _wrappedConnection.WorkspaceID;
+
+        public Uri AppServerUri => _wrappedConnection.AppServerUri;
+
+        public Uri WebServerUri => _wrappedConnection.WebServerUri;
+
+        public AuthenticationType AuthenticationType => _wrappedConnection.AuthenticationType;
+
+        public string UserName => _wrappedConnection.UserName;
+
+        public string Password => _wrappedConnection.Password;
 
 
         public bool IsAuthorized
@@ -147,29 +101,16 @@ namespace Dev2.Network
             }
         }
 
-        public StringBuilder ExecuteCommand(StringBuilder xmlRequest, Guid workspaceId)
-        {
-            return _wrappedConnection.ExecuteCommand(xmlRequest,workspaceId);
-        }
+        public StringBuilder ExecuteCommand(StringBuilder xmlRequest, Guid workspaceId) => _wrappedConnection.ExecuteCommand(xmlRequest, workspaceId);
 
-        public async Task<StringBuilder> ExecuteCommandAsync(StringBuilder xmlRequest, Guid workspaceId)
-        {
-            return await _wrappedConnection.ExecuteCommandAsync(xmlRequest, workspaceId);
-        }
-        public IHubProxyWrapper EsbProxy
-        {
-            get
-            {
-                return _wrappedConnection.EsbProxy;
-            }
-        }
-        public bool IsConnected
-        {
-            get
-            {
-                return _wrappedConnection.IsConnected;
-            }
-        }
+        public async Task<StringBuilder> ExecuteCommandAsync(StringBuilder xmlRequest, Guid workspaceId) => await _wrappedConnection.ExecuteCommandAsync(xmlRequest, workspaceId).ConfigureAwait(true);
+
+        public IHubProxyWrapper EsbProxy => _wrappedConnection.EsbProxy;
+
+        public bool IsConnected => _wrappedConnection.IsConnected;
+
+        public bool IsConnecting => _wrappedConnection.IsConnecting;
+
         public string Alias
         {
             get
@@ -198,41 +139,46 @@ namespace Dev2.Network
             try
             {
                 _wrappedConnection.Connect(_wrappedConnection.ID);
+            }
            
+            catch (Exception err)
+            {
+                Dev2Logger.Error(err, "Warewolf Error");
+            }
+        }
+        
+        public async Task<bool> ConnectAsync(Guid id)
+        {
+            try
+            {
+                return await _wrappedConnection.ConnectAsync(_wrappedConnection.ID).ConfigureAwait(true);
             }
              catch( FallbackException)
             {
-                Dev2Logger.Log.Info("Falling Back to previous signal r client");
+                Dev2Logger.Info("Falling Back to previous signal r client", "Warewolf Info");
                 var name = _wrappedConnection.DisplayName;
                 
-                if (AuthenticationType == AuthenticationType.User)
-                {
-                    _wrappedConnection = new ServerProxyWithChunking(_wrappedConnection.WebServerUri.ToString(),UserName,Password)
-                    {
-                        DisplayName = name,
-                    };
-                }
-                else
-                {
-                    _wrappedConnection = new ServerProxyWithChunking(_wrappedConnection.WebServerUri) { DisplayName = name };
-                }
                 SetupPassthroughEvents();
                 _wrappedConnection.Connect(_wrappedConnection.ID);
                 _wrappedConnection.DisplayName = name;
             }
             catch (Exception err)
             {
-                Dev2Logger.Log.Error(err);
+                Dev2Logger.Error(err, "Warewolf Error");
                 throw;
             }
+            return false;
         }
-        public Guid ID { get { return _wrappedConnection.ID; } }
+        public Guid ID => _wrappedConnection.ID;
+
         public void Disconnect()
         {
             _wrappedConnection.Disconnect();
         }
 
-        public void Verify(Action<ConnectResult> callback, bool wait = true)
+        public void Verify(Action<ConnectResult> callback) => Verify(callback, true);
+
+        public void Verify(Action<ConnectResult> callback, bool wait)
         {
             _wrappedConnection.Verify(callback,wait);
         }
@@ -242,13 +188,8 @@ namespace Dev2.Network
             _wrappedConnection.StartAutoConnect();
         }
 
-        public bool IsLocalHost
-        {
-            get
-            {
-                return _wrappedConnection.IsLocalHost;
-            }
-        }
+        public bool IsLocalHost => _wrappedConnection.IsLocalHost;
+
         public Action<IExplorerItem> ItemAddedMessageAction
         {
             get
@@ -260,20 +201,9 @@ namespace Dev2.Network
                 _wrappedConnection.ItemAddedMessageAction = value;
             }
         }
-        public IAsyncWorker AsyncWorker
-        {
-            get
-            {
-                return _wrappedConnection.AsyncWorker;
-            }
-        }
-        public IPrincipal Principal
-        {
-            get
-            {
-                return _wrappedConnection.Principal;
-            }
-        }
+        public IAsyncWorker AsyncWorker => _wrappedConnection.AsyncWorker;
+
+        public IPrincipal Principal => _wrappedConnection.Principal;
 
         public Action<Guid, CompileMessageList> ReceivedResourceAffectedMessage
         {
@@ -286,25 +216,19 @@ namespace Dev2.Network
                 _wrappedConnection.ReceivedResourceAffectedMessage = value;
             }
         }
-        public IHubConnectionWrapper HubConnection
+        public IHubConnectionWrapper HubConnection => _wrappedConnection.HubConnection;
+
+        public void FetchResourcesAffectedMemo(Guid resourceId)
         {
-            get
-            {
-                return _wrappedConnection.HubConnection;
-            }
+            _wrappedConnection.FetchResourcesAffectedMemo(resourceId);
         }
-
-
 
         public event EventHandler<NetworkStateEventArgs> NetworkStateChanged;
         public event EventHandler PermissionsChanged;
 
         void RaisePermissionsChanged()
         {
-            if (PermissionsChanged != null)
-            {
-                PermissionsChanged(this, EventArgs.Empty);
-            }
+            PermissionsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public event EventHandler<List<WindowsGroupPermission>> PermissionsModified;
@@ -313,32 +237,31 @@ namespace Dev2.Network
         {
             if (PermissionsModified != null)
             {
-                Dev2Logger.Log.Debug("Permissions Modified: "+args);
+                Dev2Logger.Debug("Permissions Modified: "+args, "Warewolf Debug");
                 PermissionsModified(this, args);
             }
         }
 
-        // ReSharper disable UnusedMember.Local
-        void UpdateIsAuthorized(bool isAuthorized)
-            // ReSharper restore UnusedMember.Local
-        {
-            if (IsAuthorized != isAuthorized)
-            {
-                _wrappedConnection.IsAuthorized = isAuthorized;
-                RaisePermissionsChanged();
-            }
-        }
-
-        // ReSharper disable VirtualMemberNeverOverriden.Global
-        protected virtual void OnNetworkStateChanged(NetworkStateEventArgs e)
-            // ReSharper restore VirtualMemberNeverOverriden.Global
+        protected void OnNetworkStateChanged(NetworkStateEventArgs e)
         {
             var handler = NetworkStateChanged;
-            if (handler != null)
-            {
-                handler(this, e);
-            }
+            handler?.Invoke(this, e);
         }
         #endregion
+
+        public bool Equals(IEnvironmentConnection other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            var isEqual = other.ID == ID && other.AuthenticationType == AuthenticationType &&
+                          other.AppServerUri.Equals(AppServerUri) && other.WebServerUri.Equals(WebServerUri);
+            return isEqual;
+        }
+
+        public override bool Equals(object obj) => Equals(obj as IEnvironmentConnection);
+
+        public override int GetHashCode() => ID.GetHashCode();
     }
 }

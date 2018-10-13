@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,25 +26,19 @@ namespace Dev2.DataList.Contract
 
         public string RecordsetIndex { get; private set; }
 
-        public bool HasRecordsetIndex
+        public bool HasRecordsetIndex => !string.IsNullOrEmpty(RecordsetIndex);
+
+        public bool IsScalar => Recordset != null && Recordset.Length == 0;
+
+        public bool IsJson
         {
-
-            get
-            {
-                return RecordsetIndex != string.Empty;
-            }
-
+            get;set;
         }
 
-        public bool IsScalar
+        internal DataListVerifyPart(string displayName)
         {
-
-            get
-            {
-                return Recordset.Length == 0;
-            }
+            DisplayValue = displayName;
         }
-
         internal DataListVerifyPart(string recordset, string field) : this(recordset, field, string.Empty, string.Empty) { }
 
         internal DataListVerifyPart(string recordset, string field, bool useRaw) : this(recordset, field, string.Empty, string.Empty, useRaw) { }
@@ -58,79 +51,64 @@ namespace Dev2.DataList.Contract
             Recordset = recordset;
             RecordsetIndex = index;
 
-            if(recordset != null)
+            if (recordset != null && recordset.Contains("[") && recordset.Contains("]"))
             {
-                if(recordset.Contains("[") && recordset.Contains("]"))
-                {
-                    int start = recordset.IndexOf("(", StringComparison.Ordinal);
-                    if(start != -1)
-                    {
-                        Recordset = recordset.Substring(0, start);
-                    }
-                    else
-                    {
-                        Recordset = recordset.Replace("[", "").Replace("]", "");
-                    }
-                }
+                var start = recordset.IndexOf("(", StringComparison.Ordinal);
+                Recordset = start != -1 ? recordset.Substring(0, start) : recordset.Replace("[", "").Replace("]", "");
             }
-
+            
             Field = field;
             Description = description;
-
-
+            
             if(useRaw)
             {
-                if(field.Length > 0)
-                {
-                    DisplayValue = "[[" + recordset + field + "]]";
-                }
-                else
-                {
-                    DisplayValue = "[[" + field + "]]";
-                }
+                DisplayValue = field.Length > 0 ? "[[" + recordset + field + "]]" : "[[" + field + "]]";
             }
             else
             {
                 if(string.IsNullOrEmpty(Recordset))
                 {
                     Recordset = string.Empty;
-                    if(field.Contains("(") && !field.Contains(")"))
-                    {
-                        DisplayValue = "[[" + field;
-                    }
-                    else
-                    {
-                        DisplayValue = "[[" + field + "]]";
-                    }
+                    DisplayValue = field.Contains("(") && !field.Contains(")") ? "[[" + field : "[[" + field + "]]";
                 }
                 else
                 {
                     if(field.Length > 0)
                     {
-                        if(recordset != null && recordset.Contains("(") && recordset.Contains(")"))
-                        {
-                            string tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
-
-                            DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")." + field + "]]";
-                        }
-                        else
-                        {
-                            DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")." + field + "]]";
-                        }
+                        DisplayRecordsetWithField(recordset, field);
                     }
                     else
                     {
-                        if(recordset != null && recordset.Contains("(") && recordset.Contains(")"))
-                        {
-                            string tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
-                            DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")]]";
-                        }
-                        else
-                        {
-                            DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")]]";
-                        }
+                        DisplayRecordsetOnly(recordset);
                     }
                 }
+            }
+        }
+
+        private void DisplayRecordsetOnly(string recordset)
+        {
+            if (recordset != null && recordset.Contains("(") && recordset.Contains(")"))
+            {
+                var tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
+                DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")]]";
+            }
+            else
+            {
+                DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")]]";
+            }
+        }
+
+        private void DisplayRecordsetWithField(string recordset, string field)
+        {
+            if (recordset != null && recordset.Contains("(") && recordset.Contains(")"))
+            {
+                var tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
+
+                DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")." + field + "]]";
+            }
+            else
+            {
+                DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")." + field + "]]";
             }
         }
     }

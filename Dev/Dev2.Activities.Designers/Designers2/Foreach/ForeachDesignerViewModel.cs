@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -16,7 +15,11 @@ using System.Linq;
 using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums.Enums;
-using Dev2.Data.Enums;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Studio.Interfaces;
+using System.Activities;
+using System.Windows.Media;
+using Dev2.Studio.Core.Activities.Utils;
 
 namespace Dev2.Activities.Designers2.Foreach
 {
@@ -25,9 +28,17 @@ namespace Dev2.Activities.Designers2.Foreach
         public ForeachDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             ForeachTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enForEachType>();
             SelectedForeachType = Dev2EnumConverter.ConvertEnumValueToString(ForEachType);
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_LoopConstruct_For_Each;
+            var dataFunc = modelItem.Properties["DataFunc"]?.ComputedValue as ActivityFunc<string, bool>;
+            DataFuncDisplayName = dataFunc?.Handler == null ? "" : dataFunc?.Handler?.DisplayName;
+            var type = dataFunc?.Handler?.GetType();
+            if (type != null)
+            {
+                DataFuncIcon = ModelItemUtils.GetImageSourceForToolFromType(type);
+            }
         }
 
         public IList<string> ForeachTypes { get; private set; }
@@ -141,7 +152,7 @@ namespace Dev2.Activities.Designers2.Foreach
             }
         }
 
-        public bool MultipleItemsToSequence(IDataObject dataObject)
+        public static bool MultipleItemsToSequence(IDataObject dataObject)
         {
             if(dataObject != null)
             {
@@ -154,36 +165,44 @@ namespace Dev2.Activities.Designers2.Foreach
                 if(!String.IsNullOrEmpty(modelItemString))
                 {
                     var objectData = dataObject.GetData(modelItemString);
-                    var data = objectData as List<ModelItem>;
 
-                    if(data != null && data.Count > 1)
+                    if (objectData is List<ModelItem> data && data.Count > 1)
                     {
-
-                        return true; //This is to short circuit the multiple activities to Sequence re-introduce when we tackle this issue
-                        //                        DsfSequenceActivity dsfSequenceActivity = new DsfSequenceActivity();
-                        //                        foreach(var item in data)
-                        //                        {
-                        //                            object currentValue = item.GetCurrentValue();
-                        //                            var activity = currentValue as Activity;
-                        //                            if(activity != null)
-                        //                            {
-                        //                                dsfSequenceActivity.Activities.Add(activity);
-                        //                            }
-                        //                        }
-                        //                        ModelItem modelItem = ModelItemUtils.CreateModelItem(dsfSequenceActivity);
-                        //                        return modelItem;
+                        return true;
                     }
                 }
             }
             return false;
         }
 
-        // DO NOT bind to these properties - these are here for convenience only!!!
-        enForEachType ForEachType { set { SetProperty(value); } get { return GetProperty<enForEachType>(); } }
+        enForEachType ForEachType { set => SetProperty(value); get => GetProperty<enForEachType>(); }
 
+        public string DataFuncDisplayName
+        {
+            get { return (string)GetValue(DataFuncDisplayNameProperty); }
+            set { SetValue(DataFuncDisplayNameProperty, value); }
+        }
+
+        public static readonly DependencyProperty DataFuncDisplayNameProperty =
+            DependencyProperty.Register("DataFuncDisplayName", typeof(string), typeof(ForeachDesignerViewModel), new PropertyMetadata(null));
+
+        public ImageSource DataFuncIcon
+        {
+            get { return (ImageSource)GetValue(DataFuncIconProperty); }
+            set { SetValue(DataFuncIconProperty, value); }
+        }
+
+        public static readonly DependencyProperty DataFuncIconProperty =
+            DependencyProperty.Register("DataFuncIcon", typeof(ImageSource), typeof(ForeachDesignerViewModel), new PropertyMetadata(null));
 
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

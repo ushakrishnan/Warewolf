@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,22 +17,22 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers2.DataMerge
 {
     public class DataMergeDesignerViewModel : ActivityCollectionDesignerViewModel<DataMergeDTO>
     {
-        public Func<string> GetDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
+        internal Func<string> _getDatalistString = () => DataListSingleton.ActiveDataList.Resource.DataList;
         public IList<string> ItemsList { get; private set; }
         public IList<string> AlignmentTypes { get; private set; }
-
+        
         public DataMergeDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
-        {
+        {            
             AddTitleBarLargeToggle();
             AddTitleBarQuickVariableInputToggle();
-            AddTitleBarHelpToggle();
 
             ItemsList = new List<string> { "None", "Index", "Chars", "New Line", "Tab" };
             AlignmentTypes = new List<string> { "Left", "Right" };
@@ -41,14 +40,13 @@ namespace Dev2.Activities.Designers2.DataMerge
 
             dynamic mi = ModelItem;
             InitializeItems(mi.MergeCollection);
-
-            for(var i = 0; i < mi.MergeCollection.Count; i++)
+            for (var i = 0; i < mi.MergeCollection.Count; i++)
             {
                 OnMergeTypeChanged(i);
             }
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Data_Data_Merge;
         }
-
-        public override string CollectionName { get { return "MergeCollection"; } }
+        public override string CollectionName => "MergeCollection";
 
         public ICommand MergeTypeUpdatedCommand { get; private set; }
 
@@ -99,19 +97,29 @@ namespace Dev2.Activities.Designers2.DataMerge
                 yield break;
             }
 
-            foreach (var error in dto.GetRuleSet("Input", GetDatalistString()).ValidateRules("'Input'", () => mi.SetProperty("IsFieldNameFocused", true)))
+            foreach (var error in dto.GetRuleSet("Input", _getDatalistString?.Invoke()).ValidateRules("'Input'", () => mi.SetProperty("IsFieldNameFocused", true)))
             {
                 yield return error;
             }
 
-            foreach(var error in dto.GetRuleSet("At", GetDatalistString()).ValidateRules("'Using'", () => mi.SetProperty("IsAtFocused", true)))
+            foreach(var error in dto.GetRuleSet("At", _getDatalistString?.Invoke()).ValidateRules("'Using'", () => mi.SetProperty("IsAtFocused", true)))
             {
                 yield return error;
             }
-            foreach(var error in dto.GetRuleSet("Padding", GetDatalistString()).ValidateRules("'Padding'", () => mi.SetProperty("IsPaddingFocused", true)))
+            foreach(var error in dto.GetRuleSet("Padding", _getDatalistString?.Invoke()).ValidateRules("'Padding'", () => mi.SetProperty("IsPaddingFocused", true)))
             {
                 yield return error;
             }
+        }
+
+        protected override void RunValidation(int index)
+        {
+            if (index == -1)
+            {
+                return;
+            }
+
+            OnMergeTypeChanged(index);
         }
 
         protected override void OnDispose()
@@ -125,6 +133,12 @@ namespace Dev2.Activities.Designers2.DataMerge
                 }
             }
             base.OnDispose();
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

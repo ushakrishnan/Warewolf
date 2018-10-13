@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +9,6 @@
 */
 
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Data;
 using Dev2.DataList.Contract;
 using Dev2.Tests.Properties;
@@ -19,7 +17,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Unlimited.UnitTest.Framework.Parsing
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class LanguageParserTest
     {
 
@@ -44,7 +41,7 @@ namespace Unlimited.UnitTest.Framework.Parsing
         [TestMethod]
         public void Parse_InputMappingWithEmptyToNullTrue_Expected_InputCreateWithPropertyEmptyToNullSetTrue()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullTrue);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullTrue);
 
             Assert.IsTrue(inputs.Count == 2 && inputs[0].EmptyToNull);
         }
@@ -53,24 +50,24 @@ namespace Unlimited.UnitTest.Framework.Parsing
         [TestMethod]
         public void InputMappingWithEmptyToNullFalse_Expected_InputCreateWithPropertyEmptyToNullSetFalse()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullFalse);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullFalse);
 
-            Assert.IsTrue(inputs.Count == 2 && inputs[0].EmptyToNull == false);
+            Assert.IsTrue(inputs.Count == 2 && !inputs[0].EmptyToNull);
         }
 
         // Sashen Added : PBI 5779
         [TestMethod]
         public void Parse_EmptyToNullAttributeNotInXML_InputMappingWithEmptyToFalse()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullNotInXML);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputsWithEmptyToNullNotInXML);
 
-            Assert.IsTrue(inputs.Count == 2 && inputs[0].EmptyToNull == false);
+            Assert.IsTrue(inputs.Count == 2 && !inputs[0].EmptyToNull);
         }
 
         [TestMethod]
         public void TestInputMappingExtactScalars()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.sampleActivityInputScalar);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.sampleActivityInputScalar);
 
             Assert.IsTrue(inputs.Count == 2 && inputs[0].Name == "fname");
         }
@@ -78,7 +75,7 @@ namespace Unlimited.UnitTest.Framework.Parsing
         [TestMethod]
         public void TestInputMappingExtractRecordSet()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.sampleActivityInputRecordSet);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.sampleActivityInputRecordSet);
 
             Assert.IsTrue(inputs.Count == 1 && inputs[0].Name == "Person");
         }
@@ -86,7 +83,7 @@ namespace Unlimited.UnitTest.Framework.Parsing
         [TestMethod]
         public void TestInputMappingExtractMixed()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.sampleActivityInputMixed);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.sampleActivityInputMixed);
 
             Assert.IsTrue(inputs.Count == 2);
         }
@@ -94,7 +91,7 @@ namespace Unlimited.UnitTest.Framework.Parsing
         [TestMethod]
         public void TestInputMappingExtractRequiredRegions()
         {
-            IList<IDev2Definition> inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputMappingRequiredRegion);
+            var inputs = DataListFactory.CreateInputParser().Parse(TestStrings.inputMappingRequiredRegion);
 
             Assert.IsTrue(inputs.Count == 7 && inputs[0].Name == "Host" && inputs[0].DefaultValue == "mail.bellevuenet.co.za" && inputs[0].IsRequired);
         }

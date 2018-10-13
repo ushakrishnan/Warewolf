@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,11 +9,12 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -22,7 +22,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class FetchCurrentServerLogTests
     {
         #region Static Class Init
@@ -47,10 +46,10 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchCurrentServerLogConstructorWithDefaultExpectedInitializesServerLogPath()
         {
-            var serverLogPath = Path.Combine(EnvironmentVariables.ApplicationPath, "WareWolf-Server.log");
+            var serverLogPath = EnvironmentVariables.ServerLogFile;
 
             var esb = new FetchCurrentServerLog();
             Assert.AreEqual(serverLogPath, esb.ServerLogPath);
@@ -60,7 +59,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchCurrentServerLogExecuteWithNonExistingLogExpectedReturnsEmptyString()
         {
             var serverLogPath = Path.Combine(_testDir, string.Format("ServerLog_{0}.txt", Guid.NewGuid()));
@@ -72,7 +71,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchCurrentServerLogExecuteWithExistingLogExpectedReturnsContentsOfLog()
         {
             const string Expected = "Hello world";
@@ -89,7 +88,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchCurrentServerLogHandlesTypeExpectedReturnsFetchCurrentServerLogService()
         {
             var esb = new FetchCurrentServerLog();
@@ -101,7 +100,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void FetchCurrentServerLogCreateServiceEntryExpectedReturnsDynamicService()
         {
             var esb = new FetchCurrentServerLog();
@@ -117,5 +116,33 @@ namespace Dev2.Tests.Runtime.Services
         }
 
         #endregion
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var fetchCurrentServerLog = new FetchCurrentServerLog();
+
+            //------------Execute Test---------------------------
+            var resId = fetchCurrentServerLog.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var fetchCurrentServerLog = new FetchCurrentServerLog();
+
+            //------------Execute Test---------------------------
+            var resId = fetchCurrentServerLog.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
     }
 }

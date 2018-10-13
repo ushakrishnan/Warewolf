@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 using System.IO;
 
 namespace Dev2.Common.Interfaces.Wrappers
@@ -16,14 +17,32 @@ namespace Dev2.Common.Interfaces.Wrappers
     {
         string ReadAllText(string fileName);
         void Move(string source, string destination);
-        Stream Open(string fileName, FileMode fileMode);
+
         bool Exists(string path);
         void Delete(string tmpFileName);
         void WriteAllText(string p1, string p2);
         void Copy(string source, string destination);
 
+        void WriteAllBytes(string path, byte[] contents);
+        void AppendAllText(string path, string contents);
+
         byte[] ReadAllBytes(string path);
 
-        void WriteAllBytes(string path, byte[] contents);
+        FileAttributes GetAttributes(string path);
+
+        void SetAttributes(string path, FileAttributes fileAttributes);
+        Stream OpenRead(string path);
+        IDev2StreamWriter AppendText(string filePath);
+
+        DateTime GetLastWriteTime(string filePath);
+    }
+
+    public interface IDev2StreamWriter : IDisposable
+    {
+        TextWriter SynchronizedTextWriter { get; }
+
+        void WriteLine(string v);
+        void WriteLine();
+        void Flush();
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,36 +9,56 @@
 */
 
 using System.Activities.Presentation.Model;
-using System.Diagnostics.CodeAnalysis;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.SortRecords
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class SortRecordsDesignerViewModelTests
     {
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("SortRecordsDesignerViewModel_Constructor")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_Constructor_ModelItemIsValid_SelectedSortIsInitialized()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             var viewModel = new TestSortRecordsDesignerViewModel(modelItem);
             Assert.AreEqual("Forward", viewModel.SelectedSort);
             Assert.AreEqual("Forward", viewModel.SelectedSelectedSort);
+            Assert.IsTrue(viewModel.HasLargeView);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("SortRecordsDesignerViewModel_Handle")]
+        public void SortRecordsDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var viewModel = new TestSortRecordsDesignerViewModel(CreateModelItem());
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("SortRecordsDesignerViewModel_Constructor")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_Constructor_ModelItemIsValid_SortOrderTypesHasTwoItems()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             var viewModel = new TestSortRecordsDesignerViewModel(modelItem);
@@ -49,9 +68,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("SortRecordsDesignerViewModel_SetSelectedSelectedSort")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_SetSelectedSelectedSort_ValidOrderType_SelectedOrderTypeOnModelItemIsAlsoSet()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             var viewModel = new TestSortRecordsDesignerViewModel(modelItem);
@@ -63,9 +82,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SortRecordsDesignerViewModel_RehydratesSortOrder")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_RehydratesSortOrder_ValidOrderType_ExpectUnderlyingValueBackwards()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedSort","Backwards");
@@ -77,9 +96,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SortRecordsDesignerViewModel_Validate")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_Validate_ValidatesSingleRegion_ExpectNoErrors()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedSort", "Backwards");
@@ -92,9 +111,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SortRecordsDesignerViewModel_Validate")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_Validate_ValidatesSingleRegion_ExpectErrors()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedSort", "Backwards");
@@ -107,9 +126,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SortRecordsDesignerViewModel_Validate")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_Validate_ValidatesSingleRegion_NoErrors()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedSort", "Backwards");
@@ -122,9 +141,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SortRecordsDesignerViewModel_RehydratesSortOrder")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_RehydratesSortOrder_ValidOrderType_ExpectUnderlyingValueForwards()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedSort", "Forward");
@@ -137,9 +156,9 @@ namespace Dev2.Activities.Designers.Tests.SortRecords
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("SortRecordsDesignerViewModel_RehydratesSortOrder")]
-// ReSharper disable InconsistentNaming
+
         public void SortRecordsDesignerViewModel_RehydratesSortOrder_ValidOrderType_ExpectUnderlyingValueEmpty()
-// ReSharper restore InconsistentNaming
+
         {
             var modelItem = CreateModelItem();
             modelItem.SetProperty("SelectedSort", "");

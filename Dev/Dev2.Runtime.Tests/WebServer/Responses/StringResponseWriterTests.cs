@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +22,7 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
     [TestClass]
     public class StringResponseWriterTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("StringResponseWriter_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -37,7 +36,7 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("StringResponseWriter_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -51,7 +50,7 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("StringResponseWriter_Constructor")]
         [ExpectedException(typeof(FormatException))]
@@ -65,17 +64,12 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("StringResponseWriter_Write")]
         public void StringResponseWriter_Write_WebServerContext_WritesContent()
         {
-            //------------Setup for test--------------------------
-            string content;
-            NameValueCollection boundVars;
-            NameValueCollection queryStr;
-            NameValueCollection headers;
-            var request = WebServerRequestTests.CreateHttpRequest(out content, out boundVars, out queryStr, out headers);
+            var request = WebServerRequestTests.CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers);
 
             var context = new WebServerContext(request, boundVars);
 
@@ -95,17 +89,12 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
             Assert.AreEqual(NewContent, task.Result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("StringResponseWriter_Write")]
         public void StringResponseWriter_Write_LargeContentWebServerContext_WritesContentAndUpdateContentDisposition()
         {
-            //------------Setup for test--------------------------
-            string content;
-            NameValueCollection boundVars;
-            NameValueCollection queryStr;
-            NameValueCollection headers;
-            var request = WebServerRequestTests.CreateHttpRequest(out content, out boundVars, out queryStr, out headers);
+            var request = WebServerRequestTests.CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers);
 
             var context = new WebServerContext(request, boundVars);
 

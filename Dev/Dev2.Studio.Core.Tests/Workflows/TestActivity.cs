@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,19 +10,17 @@
 
 using System;
 using System.Activities;
+using System.Activities.Statements;
 using System.Collections.Generic;
-using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Common;
+using Dev2.Common.State;
+using Dev2.Interfaces;
 
 namespace Dev2.Core.Tests.Workflows
 {
     public class TestActivity : Activity, IDev2Activity
     {
         public string UniqueID { get; set; }
-
-        public IList<IActionableErrorInfo> PerformValidation()
-        {
-            return null;
-        }
 
         public enFindMissingType GetFindMissingType()
         {
@@ -37,16 +34,25 @@ namespace Dev2.Core.Tests.Workflows
 
         public IEnumerable<IDev2Activity> NextNodes { get; set; }
         public Guid ActivityId { get; set; }
+        public List<string> GetOutputs()
+        {
+            return new List<string>();
+        }
+
+        public string GetDisplayName()
+        {
+            return "";
+        }
+        public FlowNode GetFlowNode() => throw new NotImplementedException();
+        IEnumerable<IDev2Activity> IDev2Activity.GetChildrenNodes() => throw new NotImplementedException();
+        public IEnumerable<IDev2Activity> GetNextNodes() => throw new NotImplementedException();
+        public List<(string Description, string Key, string SourceUniqueId, string DestinationUniqueId)> ArmConnectors() => throw new NotImplementedException();
+        public IEnumerable<StateVariable> GetState() => throw new NotImplementedException();
     }
 
     public class TestDecisionActivity : Activity<bool>, IDev2Activity
     {
         public string UniqueID { get; set; }
-
-        public IList<IActionableErrorInfo> PerformValidation()
-        {
-            return null;
-        }
 
         public enFindMissingType GetFindMissingType()
         {
@@ -57,8 +63,21 @@ namespace Dev2.Core.Tests.Workflows
         {
             return null;
         }
-
+        public string GetDisplayName()
+        {
+            return "";
+        }
         public IEnumerable<IDev2Activity> NextNodes { get; set; }
         public Guid ActivityId { get; set; }
+        public List<string> GetOutputs()
+        {
+            return new List<string>();
+        }
+
+        public FlowNode GetFlowNode() => throw new NotImplementedException();
+        IEnumerable<IDev2Activity> IDev2Activity.GetChildrenNodes() => throw new NotImplementedException();
+        public IEnumerable<IDev2Activity> GetNextNodes() => throw new NotImplementedException();
+        public List<(string Description, string Key, string SourceUniqueId, string DestinationUniqueId)> ArmConnectors() => throw new NotImplementedException();
+        public IEnumerable<StateVariable> GetState() => throw new NotImplementedException();
     }
 }

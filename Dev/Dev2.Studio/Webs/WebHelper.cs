@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,17 +10,16 @@
 
 using Dev2.Common.Common;
 using Dev2.Data.SystemTemplates.Models;
-using Dev2.Webs.Callbacks;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Webs
 {
-    public static class WebHelper
+    public static class FlowNodeHelper
     {
-        internal static string CleanModelData(Dev2DecisionCallbackHandler callBackHandler)
+        internal static string CleanModelData(string callBackHandler)
         {
             // Remove naughty chars...
-            string tmp = callBackHandler.ModelData;
+            var tmp = callBackHandler;
             // remove the silly Choose... from the string
             tmp = Dev2DecisionStack.RemoveDummyOptionsFromModel(tmp.ToStringBuilder());
             // remove [[]], &, !

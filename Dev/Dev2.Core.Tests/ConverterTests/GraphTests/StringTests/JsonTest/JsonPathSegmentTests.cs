@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,17 +8,15 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Common.Interfaces.Core.Graph;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Framework.Converters.Graph.String.Json;
 
-// ReSharper disable InconsistentNaming
+
 
 namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class JsonPathSegmentTests {
         
         #region CreatePathSegment Tests
@@ -30,11 +27,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
         [TestMethod]
         public void ToStringOnEnumerableSegment_Expected_EnumerableFormat()
         {
-            JsonPath path = new JsonPath();
-            IPathSegment segment = path.CreatePathSegment("Collection()");
+            var path = new JsonPath();
+            var segment = path.CreatePathSegment("Collection()");
 
             const string expected = "Collection()";
-            string actual = segment.ToString();
+            var actual = segment.ToString();
 
             Assert.AreEqual(expected, actual);
         }
@@ -45,11 +42,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
         [TestMethod]
         public void ToStringOnScalarSegment_Expected_ScalarFormat()
         {
-            JsonPath path = new JsonPath();
-            IPathSegment segment = path.CreatePathSegment("Name");
+            var path = new JsonPath();
+            var segment = path.CreatePathSegment("Name");
 
             const string expected = "Name";
-            string actual = segment.ToString();
+            var actual = segment.ToString();
 
             Assert.AreEqual(expected, actual);
         }
@@ -60,11 +57,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
         [TestMethod]
         public void ToStringOnEnumerableSegment_WhereEnumerablesArentConsidered_Expected_ScalarFormat()
         {
-            JsonPath path = new JsonPath();
-            IPathSegment segment = path.CreatePathSegment("Collection()");
+            var path = new JsonPath();
+            var segment = path.CreatePathSegment("Collection()");
 
             const string expected = "Collection";
-            string actual = segment.ToString(false);
+            var actual = segment.ToString(false);
 
             Assert.AreEqual(expected, actual);
         }
@@ -75,11 +72,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
         [TestMethod]
         public void ToStringOnEnumerableSegment_WhereEnumerablesAreConsidered_Expected_ScalarFormat()
         {
-            JsonPath path = new JsonPath();
-            IPathSegment segment = path.CreatePathSegment("Collection()");
+            var path = new JsonPath();
+            var segment = path.CreatePathSegment("Collection()");
 
             const string expected = "Collection()";
-            string actual = segment.ToString(true);
+            var actual = segment.ToString(true);
 
             Assert.AreEqual(expected, actual);
         }
@@ -90,11 +87,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
         [TestMethod]
         public void ToStringOnScalarSegment_WhereEnumerablesArentConsidered__Expected_ScalarFormat()
         {
-            JsonPath path = new JsonPath();
-            IPathSegment segment = path.CreatePathSegment("Name");
+            var path = new JsonPath();
+            var segment = path.CreatePathSegment("Name");
 
             const string expected = "Name";
-            string actual = segment.ToString(false);
+            var actual = segment.ToString(false);
 
             Assert.AreEqual(expected, actual);
         }
@@ -105,11 +102,11 @@ namespace Dev2.Tests.ConverterTests.GraphTests.StringTests.JsonTest
         [TestMethod]
         public void ToStringOnScalarSegment_WhereEnumerablesAreConsidered__Expected_ScalarFormat()
         {
-            JsonPath path = new JsonPath();
-            IPathSegment segment = path.CreatePathSegment("Name");
+            var path = new JsonPath();
+            var segment = path.CreatePathSegment("Name");
 
             const string expected = "Name";
-            string actual = segment.ToString(true);
+            var actual = segment.ToString(true);
 
             Assert.AreEqual(expected, actual);
         }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,75 +12,97 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
+using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Hosting;
 using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Explorer;
 using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class RenameItemService : IEsbManagementEndpoint
     {
-        private IExplorerServerResourceRepository _serverExplorerRepository;
-
-        public string HandlesType()
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
         {
-            return "RenameItemService";
+            requestArgs.TryGetValue("itemToRename", out StringBuilder tmp);
+            if (tmp != null && Guid.TryParse(tmp.ToString(), out Guid resourceId))
+            {
+                return resourceId;
+            }
+
+
+            return Guid.Empty;
         }
+
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Contribute;
+        IExplorerServerResourceRepository _serverExplorerRepository;
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            IExplorerRepositoryResult item;
+            IExplorerRepositoryResult item=null;
             var serializer = new Dev2JsonSerializer();
             try
             {
                 if(values == null)
                 {
-                    throw new ArgumentNullException("values");
+                    throw new ArgumentNullException(nameof(values));
                 }
-                StringBuilder itemToBeRenamed;
-                StringBuilder newName;
-                if(!values.TryGetValue("itemToRename", out itemToBeRenamed))
+                StringBuilder folderToBeRenamed = null;
+                if (!values.TryGetValue("itemToRename", out StringBuilder itemToBeRenamed) && !values.TryGetValue("folderToRename", out folderToBeRenamed))
                 {
-                    throw new ArgumentException("itemToRename value not supplied.");
+                    throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "itemToRename"));
                 }
-                if(!values.TryGetValue("newName", out newName))
+
+                if (!values.TryGetValue("newName", out StringBuilder newName))
                 {
-                    throw new ArgumentException("newName value not supplied.");
+                    throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "newName"));
                 }
-                
-                var itemToRename = serializer.Deserialize<ServerExplorerItem>(itemToBeRenamed);
-                Dev2Logger.Log.Info(String.Format("Rename Item. Path:{0} NewPath:{1}", itemToBeRenamed, newName));
-                item = ServerExplorerRepo.RenameItem(itemToRename, newName.ToString(), GlobalConstants.ServerWorkspaceID);
+                IExplorerItem explorerItem;
+                if (itemToBeRenamed != null)
+                {
+                    explorerItem = ServerExplorerRepo.Find(Guid.Parse(itemToBeRenamed.ToString()));
+                    if (explorerItem == null)
+                    {
+                        throw new ArgumentException(string.Format(ErrorResource.FailedToFindResource, "newName"));
+                    }
+                    Dev2Logger.Info($"Rename Item. Path:{explorerItem.ResourcePath} NewPath:{newName}", GlobalConstants.WarewolfInfo);
+                    item = ServerExplorerRepo.RenameItem(explorerItem, newName.ToString(), GlobalConstants.ServerWorkspaceID);
+                }
+                else
+                {
+                    if (folderToBeRenamed != null)
+                    {
+                        explorerItem = new ServerExplorerItem()
+                        {
+                            ResourceType = "Folder",
+                            ResourcePath = folderToBeRenamed.ToString()
+
+                        };
+                        item = ServerExplorerRepo.RenameItem(explorerItem, newName.ToString(), GlobalConstants.ServerWorkspaceID);
+                    }
+                }
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 item = new ExplorerRepositoryResult(ExecStatus.Fail, e.Message);
             }
             return serializer.SerializeToBuilder(item);
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            var findServices = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><itemToRename ColumnIODirection=\"Input\"/><newName ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-
-            var fetchItemsAction = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-
-            findServices.Actions.Add(fetchItemsAction);
-
-            return findServices;
-        }
-
         public IExplorerServerResourceRepository ServerExplorerRepo
         {
-            get { return _serverExplorerRepository ?? ServerExplorerRepository.Instance; }
-            set { _serverExplorerRepository = value; }
+            get => _serverExplorerRepository ?? ServerExplorerRepository.Instance;
+            set => _serverExplorerRepository = value;
         }
+
+        public DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><itemToRename ColumnIODirection=\"Input\"/><newName ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public string HandlesType() => "RenameItemService";
     }
 }

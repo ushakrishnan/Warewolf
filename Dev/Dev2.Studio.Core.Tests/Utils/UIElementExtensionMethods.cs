@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,11 +18,6 @@ namespace Dev2.Core.Tests.Utils
 {
     public static class UIElementExtensionMethods
     {
-        /// <summary>
-        /// Render a UIElement such that the visual tree is generated, 
-        /// without actually displaying the UIElement
-        /// anywhere
-        /// </summary>
         public static void CreateVisualTree(this UIElement element)
         {
             var fixedDoc = new FixedDocument();
@@ -39,7 +33,6 @@ namespace Dev2.Core.Tests.Utils
                 var w = f.CreateSerializerWriter(s);
                 w.Write(fixedDoc);
             }
-
         }
     }
 }

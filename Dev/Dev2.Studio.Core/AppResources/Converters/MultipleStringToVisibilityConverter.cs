@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +15,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Core.AppResources.Converters
 {
     public class MultipleStringToVisilityValueConverter : IMultiValueConverter
@@ -35,13 +34,14 @@ namespace Dev2.Studio.Core.AppResources.Converters
             var strings = new List<string>();
             values.ToList().ForEach(o =>
             {
-                var s = o as string;
-                if(s != null) strings.Add(s);
+                if (o is string s)
+                {
+                    strings.Add(s);
+                }
             });
 
-            bool invert;
             var invertStr = parameter as string;
-            bool.TryParse(invertStr, out invert);
+            bool.TryParse(invertStr, out bool invert);
 
             var result = strings.Any(string.IsNullOrEmpty) ? Visibility.Collapsed : Visibility.Visible;
 
@@ -59,10 +59,7 @@ namespace Dev2.Studio.Core.AppResources.Converters
         /// An array of values that have been converted from the target value back to the source values.
         /// </returns>
         /// <param name="value">The value that the binding target produces.</param><param name="targetTypes">The array of types to convert to. The array length indicates the number and types of values that are suggested for the method to return.</param><param name="parameter">The converter parameter to use.</param><param name="culture">The culture to use in the converter.</param>
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            return new object[] { };
-        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => new object[] { };
 
         #endregion
     }

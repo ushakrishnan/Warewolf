@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +14,7 @@ using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Enums.Enums;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Random
 {
@@ -23,9 +23,10 @@ namespace Dev2.Activities.Designers2.Random
         public RandomDesignerViewModel(ModelItem modelItem)
             : base(modelItem)
         {
-            AddTitleBarHelpToggle();
             RandomTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enRandomType>();
             SelectedRandomType = Dev2EnumConverter.ConvertEnumValueToString(RandomType);
+            AddTitleBarLargeToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Utility_Random;
         }
 
         public IList<string> RandomTypes { get; private set; }
@@ -98,12 +99,17 @@ namespace Dev2.Activities.Designers2.Random
                 viewModel.RandomType = (enRandomType)Dev2EnumConverter.GetEnumFromStringDiscription(value, typeof(enRandomType)); 
             }
         }
-
-        // DO NOT bind to these properties - these are here for convenience only!!!
-        enRandomType RandomType { set { SetProperty(value); } get { return GetProperty<enRandomType>(); } }
+        
+        enRandomType RandomType { set => SetProperty(value); get => GetProperty<enRandomType>(); }
 
         public override void Validate()
         {
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +23,7 @@ namespace Dev2.Tests.Runtime.WebServer.Security
     [TestClass]
     public class AuthorizationRequestHelperTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("AuthorizationRequestHelper_GetAuthorizationRequest")]
         public void AuthorizationRequestHelper_GetAuthorizationRequest_HttpActionContext_RequestTypeIsParsedCorrectly()
@@ -42,7 +41,7 @@ namespace Dev2.Tests.Runtime.WebServer.Security
             });
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("AuthorizationRequestHelper_GetAuthorizationRequest")]
         public void AuthorizationRequestHelper_GetAuthorizationRequest_HubDescriptor_RequestTypeIsParsedCorrectly()
@@ -54,7 +53,7 @@ namespace Dev2.Tests.Runtime.WebServer.Security
             }, WebServerRequestType.HubConnect);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("AuthorizationRequestHelper_GetAuthorizationRequest")]
         public void AuthorizationRequestHelper_GetAuthorizationRequest_IHubIncomingInvokerContext_RequestTypeIsParsedCorrectly()
@@ -69,12 +68,11 @@ namespace Dev2.Tests.Runtime.WebServer.Security
             var hubs = new[]
             {
                 new Tuple<Type, string>(typeof(EsbHub), "esb"),
-                new Tuple<Type, string>(typeof(ResourcesHub), "resources")
             };
 
             foreach(var hub in hubs)
             {
-                Tuple<Type, string> hub1 = hub;
+                var hub1 = hub;
                 Func<string, AuthorizationRequest> getAuthorizationRequest = methodName =>
                 {
                     var context = AuthorizeHubAttributeTests.CreateHubIncomingInvokerContext(true, methodName, hub1.Item2);
@@ -92,14 +90,14 @@ namespace Dev2.Tests.Runtime.WebServer.Security
                 var expectedRequestType = (WebServerRequestType)Enum.Parse(typeof(WebServerRequestType), handlerPrefix + methodName, true);
 
                 var actionName = methodName;
-                Verify_RequestType(() => getAuthorizationRequest(actionName), expectedRequestType);
+                Verify_RequestType(() => getAuthorizationRequest?.Invoke(actionName), expectedRequestType);
             }
         }
 
         static void Verify_RequestType(Func<AuthorizationRequest> getAuthorizationRequest, WebServerRequestType expectedRequestType)
         {
             //------------Execute Test---------------------------
-            var authorizationRequest = getAuthorizationRequest();
+            var authorizationRequest = getAuthorizationRequest?.Invoke();
 
             //------------Assert Results-------------------------
             Assert.IsNotNull(authorizationRequest);

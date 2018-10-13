@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,6 @@
 */
 
 using System;
-using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Explorer;
 using Dev2.Common.Interfaces.Hosting;
 
@@ -17,23 +16,17 @@ namespace Dev2.Common.Interfaces.Infrastructure
 {
     public interface IExplorerResourceRepository
     {
+        IExplorerItem Load(Guid workSpaceId, bool reload);
         IExplorerItem Load(Guid workSpaceId);
-        IExplorerItem Load(ResourceType type, Guid workSpaceId);
         IExplorerRepositoryResult RenameItem(IExplorerItem itemToRename, string newName, Guid workSpaceId);
-        IExplorerRepositoryResult RenameFolder(string path, string newName, Guid workSpaceId);
-        IExplorerRepositoryResult DeleteItem(IExplorerItem itemToRename, Guid workSpaceId);
-        IExplorerRepositoryResult AddItem(IExplorerItem itemToRename, Guid workSpaceId);
-        IExplorerRepositoryResult MoveItem(IExplorerItem itemToMove, string newPath, Guid empty);
-    }
-    public interface IClientExplorerResourceRepository:IExplorerResourceRepository
-    {
-        string GetServerVersion();
+        IExplorerRepositoryResult DeleteItem(IExplorerItem itemToDelete, Guid workSpaceId);
+        IExplorerRepositoryResult AddItem(IExplorerItem itemToAdd, Guid workSpaceId);
+        IExplorerRepositoryResult MoveItem(IExplorerItem itemToMove, string newPath, Guid workSpaceId);
     }
 
     public interface IExplorerRepositoryResult
     {
-        ExecStatus Status { get; }
-
-        string Message { get; }
+        ExecStatus Status { get; set; }
+        string Message { get; set; }
     }
 }

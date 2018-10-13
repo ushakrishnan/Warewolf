@@ -4,58 +4,42 @@ using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    public class GetSharepointListService : IEsbManagementEndpoint
+
+    public class GetSharepointListService : DefaultEsbManagementEndpoint
     {
-        #region Implementation of ISpookyLoadable<string>
-
-        public string HandlesType()
+        #region Implementation of DefaultEsbManagementEndpoint
+        
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            return "GetSharepointListService";
-        }
+            var serializer = new Dev2JsonSerializer();
 
-        #endregion
-
-        #region Implementation of IEsbManagementEndpoint
-
-        /// <summary>
-        /// Executes the service
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <param name="theWorkspace">The workspace.</param>
-        /// <returns></returns>
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
-        {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-
-            if(values == null)
+            if (values == null)
             {
-                throw new InvalidDataContractException("No parameter values provided.");
+                throw new InvalidDataContractException(ErrorResource.NoParameter);
             }
             string serializedSource = null;
-            StringBuilder tmp;
-            values.TryGetValue("SharepointServer", out tmp);
-            if(tmp != null)
+            values.TryGetValue("SharepointServer", out StringBuilder tmp);
+            if (tmp != null)
             {
                 serializedSource = tmp.ToString();
             }
 
             if(string.IsNullOrEmpty(serializedSource))
             {
-                ExecuteMessage message = new ExecuteMessage();
+                var message = new ExecuteMessage();
                 message.HasError = true;
-                message.SetMessage("No sharepoint server set.");
-                Dev2Logger.Log.Debug("No sharepoint server set.");
+                message.SetMessage(ErrorResource.NoSharepointServerSet);
+                Dev2Logger.Debug(ErrorResource.NoSharepointServerSet, GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(message);
             }
 
@@ -77,27 +61,27 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 var res = new DbTableList("Invalid JSON data for sharepoint server parameter. Exception: {0}", e.Message);
                 return serializer.SerializeToBuilder(res);
             }
             if(runtimeSource == null)
             {
-                var res = new DbTableList("Invalid sharepoint server source");
-                Dev2Logger.Log.Debug("Invalid sharepoint server source");
+                var res = new DbTableList(ErrorResource.InvalidSharepointServerSource);
+                Dev2Logger.Debug(ErrorResource.InvalidSharepointServerSource, GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
             if(string.IsNullOrEmpty(runtimeSource.Server))
             {
-                var res = new DbTableList("Invalid sharepoint server sent {0}.", serializedSource);
-                Dev2Logger.Log.Debug(String.Format("Invalid sharepoint server sent {0}.", serializedSource));
+                var res = new DbTableList(ErrorResource.InvalidSharepointServerSent, serializedSource);
+                Dev2Logger.Debug(string.Format(ErrorResource.InvalidSharepointServerSent, serializedSource), GlobalConstants.WarewolfDebug);
                 return serializer.SerializeToBuilder(res);
             }
 
             try
             {
-                Dev2Logger.Log.Info("Get Sharepoint Server Lists. " + source.Server);
-                List<SharepointListTo> lists = runtimeSource.LoadLists();
+                Dev2Logger.Info("Get Sharepoint Server Lists. " + source.Server, GlobalConstants.WarewolfDebug);
+                var lists = runtimeSource.LoadLists();
                 return serializer.SerializeToBuilder(lists);
             }
             catch(Exception ex)
@@ -107,30 +91,10 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        /// <summary>
-        /// Creates the service entry.
-        /// </summary>
-        /// <returns></returns>
-        public DynamicService CreateServiceEntry()
-        {
-            var ds = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Database ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
-
-            var sa = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            ds.Actions.Add(sa);
-
-            return ds;
-        }
-
         #endregion
+
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Database ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public override string HandlesType() => "GetSharepointListService";
     }
 }

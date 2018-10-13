@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,6 +27,7 @@ using System.Collections.Generic;
 using System.Runtime.DurableInstancing;
 using System.Threading;
 using System.Xml.Linq;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.DynamicServices
 {
@@ -200,7 +200,7 @@ namespace Dev2.DynamicServices
                 if(instanceId == Guid.Empty)
                 {
                     throw new InstanceKeyNotReadyException(
-                        String.Format("Unable to load instance for key: {0}",
+                        String.Format(ErrorResource.UnableToLoadInstance,
                             command.LookupInstanceKey));
                 }
 
@@ -238,7 +238,7 @@ namespace Dev2.DynamicServices
             else
             {
                 throw new InstanceNotReadyException(
-                    String.Format("Unable to load instance: {0}", instanceId));
+                    String.Format(ErrorResource.UnableToLoadInstance, instanceId));
             }
         }
 

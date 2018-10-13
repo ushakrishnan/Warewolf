@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +9,8 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Xml.Linq;
-using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Tests.Runtime.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -24,77 +19,43 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 {
     // PBI 5656 - 2013.05.20 - TWR - Created
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class WebSourceTests
     {
-        #region Save
-
-        [TestMethod]
-        public void SaveWebSourceWithExistingSourceExpectedServerWorkspaceUpdated()
-        {
-            //Initialize test resource, save then change path
-            string uniquePathText = Guid.NewGuid().ToString() + "\\test web source";
-            var testResource = new Resource { ResourceName = "test web source", ResourcePath = "initialpath\\test web source", ResourceType = ResourceType.WebSource, ResourceID = Guid.NewGuid() };
-            new WebSources().Save(testResource.ToString(), GlobalConstants.ServerWorkspaceID, Guid.Empty);
-            testResource.ResourcePath = uniquePathText;
-
-            //Execute save again on test resource
-            new WebSources().Save(testResource.ToString(), GlobalConstants.ServerWorkspaceID, Guid.Empty);
-
-            //Assert resource saved
-            var getSavedResource = Resources.ReadXml(GlobalConstants.ServerWorkspaceID, ResourceType.WebSource, testResource.ResourceID.ToString());
-            const string PathStartText = "<Category>";
-            int start = getSavedResource.IndexOf(PathStartText, StringComparison.Ordinal);
-            if(start > 0)
-            {
-                start += PathStartText.Length;
-                int end = (getSavedResource.IndexOf("</Category>", start, StringComparison.Ordinal));
-                var savedPath = getSavedResource.Substring(start, end - start);
-                Assert.AreEqual(uniquePathText, savedPath);
-            }
-            else
-            {
-                Assert.Fail("Resource xml malformed after save");
-            }
-        }
-
-        #endregion
-
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourceContructorWithDefaultExpectedInitializesProperties()
         {
             var source = new WebSource();
             Assert.AreEqual(Guid.Empty, source.ResourceID);
-            Assert.AreEqual(ResourceType.WebSource, source.ResourceType);
+            Assert.AreEqual("WebSource", source.ResourceType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebSourceContructorWithNullXmlExpectedThrowsArgumentNullException()
         {
             var source = new WebSource(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourceContructorWithInvalidXmlExpectedDoesNotThrowExceptionAndInitializesProperties()
         {
             var xml = new XElement("root");
             var source = new WebSource(xml);
             Assert.AreNotEqual(Guid.Empty, source.ResourceID);
             Assert.IsTrue(source.IsUpgraded);
-            Assert.AreEqual(ResourceType.WebSource, source.ResourceType);
+            Assert.AreEqual("WebSource", source.ResourceType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourceContructorWithValidXmlExpectedInitializesProperties()
         {
             var xml = XmlResource.Fetch("WebSource");
 
             var source = new WebSource(xml);
             Assert.AreEqual(Guid.Parse("f62e08d9-0359-4baa-8af3-08e0d812d6c6"), source.ResourceID);
-            Assert.AreEqual(ResourceType.WebSource, source.ResourceType);
+            Assert.AreEqual("WebSource", source.ResourceType);
             Assert.AreEqual("http://www.webservicex.net/globalweather.asmx", source.Address);
             Assert.AreEqual("/GetCitiesByCountry?CountryName=South%20Africa", source.DefaultQuery);
             Assert.AreEqual("user1234", source.UserName);
@@ -105,7 +66,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToXml
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourceToXmlExpectedSerializesProperties()
         {
             var expected = new WebSource
@@ -133,7 +94,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Dispose
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourceDisposeClientExpectedDisposesAndNullsClient()
         {
             var source = new WebSource { Client = new WebClient() };
@@ -143,7 +104,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.IsNull(source.Client);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WebSourceDisposeExpectedDisposesAndNullsClient()
         {
             var source = new WebSource { Client = new WebClient() };

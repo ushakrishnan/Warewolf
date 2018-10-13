@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,14 +13,11 @@ using Unlimited.Framework.Converters.Graph.Ouput;
 
 namespace Unlimited.Framework.Converters.Graph
 {
-    public class OutputDescriptionFactory
+    public static class OutputDescriptionFactory
     {
-        public static IOutputDescription CreateOutputDescription(OutputFormats format)
+        public static IOutputDescription CreateOutputDescription(OutputFormats format) => new OutputDescription
         {
-            return new OutputDescription
-            {
-                Format = format,
-            };
-        }
+            Format = format,
+        };
     }
 }

@@ -1,10 +1,16 @@
-﻿// ReSharper disable RedundantUsingDirective
-//Disabled so that logging can easily be put back
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
-using Dev2.Providers.Logs;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Transports;
 
@@ -16,11 +22,10 @@ namespace Dev2.SignalR.Wrappers.New
 
         #region Implementation of IHubConnectionWrapper
 
-        private HubConnectionWrapper(HubConnection wrapped)
+        HubConnectionWrapper(HubConnection wrapped)
         {
             _wrapped = wrapped;
-//            _wrapped.TraceLevel = TraceLevels.All;
-//            _wrapped.TraceWriter = new Dev2LoggingTextWriter();
+            _wrapped.DeadlockErrorTimeout = TimeSpan.FromSeconds(30);
         }
 
         public HubConnectionWrapper(string uriString)
@@ -28,10 +33,7 @@ namespace Dev2.SignalR.Wrappers.New
         {
         }
 
-        public IHubProxyWrapper CreateHubProxy(string hubName)
-        {
-           return new HubProxyWrapper(_wrapped.CreateHubProxy(hubName));
-        }
+        public IHubProxyWrapper CreateHubProxy(string hubName) => new HubProxyWrapper(_wrapped.CreateHubProxy(hubName));
 
         public event Action<Exception> Error
         {
@@ -44,6 +46,7 @@ namespace Dev2.SignalR.Wrappers.New
                 _wrapped.Error -= value;
             }
         }
+
         public event Action Closed
         {
             add
@@ -55,24 +58,20 @@ namespace Dev2.SignalR.Wrappers.New
                 _wrapped.Closed -= value;
             }
         }
+
         public event Action<IStateChangeWrapped> StateChanged
         {
             add
             {
-                _wrapped.StateChanged += change => value(new StateChangeWrapped(change));
+                _wrapped.StateChanged += change => value?.Invoke(new StateChangeWrapped(change));
             }
             remove
             {
+                throw new NotImplementedException();
             }
         }
-        public ConnectionStateWrapped State
-        {
-            get
-            {
-                return (ConnectionStateWrapped)_wrapped.State;
-            }
-    
-        }
+
+        public ConnectionStateWrapped State => (ConnectionStateWrapped)_wrapped.State;
 
         public Task Start()
         {
@@ -84,7 +83,6 @@ namespace Dev2.SignalR.Wrappers.New
         {
             _wrapped.Stop(timeSpan);
         }
-
 
         public ICredentials Credentials
         {

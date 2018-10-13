@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,8 +10,11 @@
 
 using System.Activities.Presentation.Model;
 using Dev2.Activities.Designers2.Replace;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Activities.Designers.Tests.Replace
@@ -29,22 +31,33 @@ namespace Dev2.Activities.Designers.Tests.Replace
 
             //------------Execute Test---------------------------
             var viewModel = new ReplaceDesignerViewModel(CreateModelItem());
-
+            viewModel.Validate();
             //------------Assert Results-------------------------
-            Assert.AreEqual(1, viewModel.TitleBarToggles.Count);
-            StringAssert.Contains(viewModel.TitleBarToggles[0].ExpandToolTip, "Help");
+            Assert.AreEqual(0, viewModel.TitleBarToggles.Count);
+            Assert.IsTrue(viewModel.HasLargeView);
         }
 
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("ReplaceDesignerViewModel_Handle")]
+        public void ReplaceDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var viewModel = new ReplaceDesignerViewModel(CreateModelItem());
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
+        }
 
         static ModelItem CreateModelItem()
         {
             return ModelItemUtils.CreateModelItem(new DsfReplaceActivity());
-        }
-
-        static ReplaceDesignerViewModel CreateViewModel()
-        {
-            var viewModel = new ReplaceDesignerViewModel(ModelItemUtils.CreateModelItem(CreateModelItem()));
-            return viewModel;
         }
     }
 }

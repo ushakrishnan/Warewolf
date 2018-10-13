@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,14 +10,15 @@
 
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Data.Interfaces;
 
 namespace Dev2.DataList.Contract
 {
     public class RecordSetDefinition : IRecordSetDefinition {
 
         #region Attributes
-        private readonly string _setName;
-        private readonly IList<IDev2Definition> _columns;
+        readonly string _setName;
+        readonly IList<IDev2Definition> _columns;
 
         #endregion
 
@@ -31,25 +31,12 @@ namespace Dev2.DataList.Contract
         #endregion
 
         #region Properties
-        public string SetName {
-            get {
-                return _setName;
-            }
-        }
+        public string SetName => _setName;
 
-        public string XmlSetName {
+        public string XmlSetName => _setName.Replace("()", "");
 
-            get {
-                return _setName.Replace("()", "");
-            }
+        public IList<IDev2Definition> Columns => _columns;
 
-        }
-
-        public IList<IDev2Definition> Columns {
-            get {
-                return _columns;
-            }
-        }
         #endregion
 
     }

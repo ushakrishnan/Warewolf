@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,20 +22,16 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Xaml;
+using System.Xml;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Data.Decision;
-using Microsoft.VisualBasic.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Utilities
 {
-    // BUG 9304 - 2013.05.08 - TWR - .NET 4.5 upgrade
     public class WorkflowHelper : IWorkflowHelper
     {
-        #region Singleton Instance
-
-        //
         // Multi-threaded implementation - see http://msdn.microsoft.com/en-us/library/ff650316.aspx
         //
         // This approach ensures that only one instance is created and only when the instance is needed. 
@@ -47,14 +42,9 @@ namespace Dev2.Utilities
 
         // NOTE : This singleton instance causes memory leaks ;)
 
-
-        #endregion
-
-        #region SerializeWorkflow
-
         public StringBuilder SerializeWorkflow(ModelService modelService)
         {
-            var builder = EnsureImplementation(modelService);
+            var builder = GetActivityBuilder(modelService);
             var text = GetXamlDefinition(builder);
 
             return text;
@@ -62,31 +52,57 @@ namespace Dev2.Utilities
 
         public StringBuilder GetXamlDefinition(ActivityBuilder builder)
         {
-            StringBuilder text = new StringBuilder();
-            if(builder != null)
+            var text = new StringBuilder();
+            try
             {
-                var sb = new StringBuilder();
-                using(var sw = new StringWriter(sb))
+                if(builder != null)
                 {
-                    var xw = ActivityXamlServices.CreateBuilderWriter(new XamlXmlWriter(sw, new XamlSchemaContext()));
-                    XamlServices.Save(xw, builder);
-
-                    text = sb.Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "");
+                    var sb = new StringBuilder();
+                    using(var sw = new StringWriter(sb))
+                    {
+                        var xamlXmlWriterSettings = new XamlXmlWriterSettings { AssumeValidInput = true };
+                        var xamlSchemaContext = new XamlSchemaContext();
+                        var xw = ActivityXamlServices.CreateBuilderWriter(new XamlXmlWriter(sw, xamlSchemaContext,xamlXmlWriterSettings));                    
+                        XamlServices.Save(xw, builder);
+                        text = sb.Replace("<?xml version=\"1.0\" encoding=\"utf-16\"?>", "");
+                    }
                 }
+                text = SanitizeXaml(text);
             }
-            text = SanitizeXaml(text);
+            catch(Exception e)
+            {
+                Dev2Logger.Error("Error loading XAML: ",e, GlobalConstants.WarewolfError);
+            }
             return text;
         }
 
-        #endregion
-
-        #region CreateWorkflow
+        public ActivityBuilder ReadXamlDefinition(StringBuilder xaml)
+        {
+            try
+            {
+                if(xaml != null && xaml.Length!=0)
+                {
+                    using(var sw = new StringReader(xaml.ToString()))
+                    {
+                        var xamlXmlWriterSettings = new XamlXmlReaderSettings();
+                        var xw = ActivityXamlServices.CreateBuilderReader(new XamlXmlReader(sw, new XamlSchemaContext(),xamlXmlWriterSettings));
+                        var load = XamlServices.Load(xw);
+                        return load as ActivityBuilder;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Dev2Logger.Error("Error loading XAML: ",e, GlobalConstants.WarewolfError);
+            }
+            return null;
+        }
 
         public ActivityBuilder CreateWorkflow(string displayName)
         {
             if(string.IsNullOrEmpty(displayName))
             {
-                throw new ArgumentNullException("displayName");
+                throw new ArgumentNullException(nameof(displayName));
             }
 
             var chart = new Flowchart
@@ -105,13 +121,20 @@ namespace Dev2.Utilities
             return builder;
         }
 
-        #endregion
-
-        #region EnsureImplementation
-
         public ActivityBuilder EnsureImplementation(ModelService modelService)
         {
-            if(modelService == null || modelService.Root == null)
+            var builder = GetActivityBuilder(modelService);
+            var chart = builder?.Implementation as Flowchart;
+            if(chart != null)
+            {
+                EnsureImplementation(builder, chart);
+            }
+            return builder;
+        }
+
+        public static ActivityBuilder GetActivityBuilder(ModelService modelService)
+        {
+            if (modelService?.Root == null)
             {
                 return null;
             }
@@ -119,171 +142,20 @@ namespace Dev2.Utilities
             var root = modelService.Root.GetCurrentValue();
 
             var builder = root as ActivityBuilder;
-            if(builder != null)
-            {
-                var chart = builder.Implementation as Flowchart;
-                if(chart != null)
-                {
-                    EnsureImplementation(builder, chart);
-                }
-            }
             return builder;
         }
 
         void EnsureImplementation(ActivityBuilder builder, Flowchart chart)
         {
-            SetProperties(builder.Properties);
             FixExpressions(chart);
             SetVariables(chart.Variables);
             SetNamespaces(builder);
         }
 
-        #endregion
+        public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache { get => resultscache; set => resultscache = value; }
+        static ConcurrentDictionary<Guid, TextExpressionCompilerResults> resultscache = GlobalConstants.Resultscache;
 
-        #region CompileExpressions
-
-        /// <summary>
-        /// Only invoke from the server!
-        /// </summary>
-        public void CompileExpressions(DynamicActivity dynamicActivity, Guid resourceID)
-        {
-            if(dynamicActivity != null)
-            {
-                FixAndCompileExpressions(dynamicActivity,resourceID);
-            }
-        }
-
-        /// <summary>
-        /// Only invoke from the server!
-        /// </summary>
-        public void CompileExpressions<TResult>(DynamicActivity<TResult> dynamicActivity, Guid resourceID)
-        {
-            if(dynamicActivity != null)
-            {
-                FixAndCompileExpressions(dynamicActivity,resourceID);
-            }
-        }
-
-        void FixAndCompileExpressions(Activity dynamicActivity, Guid resourceID)
-        {
-            // NOTE: DO NOT set properties or variables!
-            SetNamespaces(dynamicActivity);
-            // MS Memory Leak ;(
-            var chart = WorkflowInspectionServices.GetActivities(dynamicActivity).FirstOrDefault() as Flowchart;
-            if (chart != null)
-            {
-                FixExpressions(chart, true);
-            }
-            Dev2Logger.Log.Info("Fix Expressions");
-           CompileExpressionsImpl(dynamicActivity,resourceID);
-        }
-
-        #endregion
-
-        #region CompileExpressionsImpl
-
-        public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache = GlobalConstants.Resultscache;
-       
- 
-
-        // NOTE : Static method here causes memory leak in the TextExpressioncCompiler ;)
-        void CompileExpressionsImpl(Activity dynamicActivity, Guid resourceID)
-        {
-            // http://msdn.microsoft.com/en-us/library/jj591618.aspx
-
-            // activity.Name is the Namespace.Type of the activity that contains the C# expressions. 
-            // activity.Name must be in the form Namespace.Type
-            string activityName = ToNamespaceTypeString(dynamicActivity.GetType());
-
-            // Split activityName into Namespace and Type and append _CompiledExpressionRoot to the type name to represent 
-            // the new type that represents the compiled expressions. Take everything after the last . for the type name.
-            var activityType = activityName.Replace(" ", "_").Split('.').Last() + "_CompiledExpressionRoot";
-
-            // Take everything before the last . for the namespace.
-            var activityNamespace = string.Join(".", activityName.Split('.').Reverse().Skip(1).Reverse());
-
-            var settings = new TextExpressionCompilerSettings
-            {
-                Activity = dynamicActivity,
-                Language = "C#",
-                ActivityName = activityType,
-                ActivityNamespace = activityNamespace,
-                RootNamespace = null,
-                GenerateAsPartialClass = false,
-                AlwaysGenerateSource = true,
-                ForImplementation = true
-            };
-            TextExpressionCompilerResults results;
-            if (Resultscache.ContainsKey(resourceID))
-            {
-                results = Resultscache[resourceID];
-            }
-            //// Compile the C# expression.
-            else{
-            var compiler = new TextExpressionCompiler(settings);
-             results = compiler.Compile(); // Nasty MS memory leak ;(
-             Resultscache.TryAdd(resourceID,results);
-            }
-
-            if(results.HasErrors)
-            {
-                var err = new StringBuilder("Compilation failed.\n");
-                foreach(var message in results.CompilerMessages)
-                {
-                    err.AppendFormat("{0} : {1} ({2}) --> {3}\n", message.Number, message.IsWarning ? "WARNING" : "ERROR  ", message.SourceLineNumber, message.Message);
-                }
-                throw new Exception(err.ToString());
-            }
-
-            var compiledExpressionRoot = Activator.CreateInstance(results.ResultType, dynamicActivity) as ICompiledExpressionRoot;
-            CompiledExpressionInvoker.SetCompiledExpressionRootForImplementation(dynamicActivity, compiledExpressionRoot);
-        }
-
-        #endregion
-
-
-        #region SetProperties
-
-        public void SetProperties(ICollection<DynamicActivityProperty> properties)
-        {
-            if(properties == null)
-            {
-                throw new ArgumentNullException("properties");
-            }
-
-            properties.Clear();
-
-            properties.Add(new DynamicActivityProperty { Name = "AmbientDataList", Type = typeof(InOutArgument<List<string>>) });
-            properties.Add(new DynamicActivityProperty { Name = "ParentWorkflowInstanceId", Type = typeof(InOutArgument<Guid>) });
-            properties.Add(new DynamicActivityProperty { Name = "ParentServiceName", Type = typeof(InOutArgument<string>) });
-        }
-
-        #endregion
-
-        #region SetVariables
-
-        public void SetVariables(Collection<Variable> variables)
-        {
-            if(variables == null)
-            {
-                throw new ArgumentNullException("variables");
-            }
-
-            variables.Clear();
-            variables.Add(new Variable<List<string>> { Name = "InstructionList" });
-            variables.Add(new Variable<string> { Name = "LastResult" });
-            variables.Add(new Variable<bool> { Name = "HasError" });
-            variables.Add(new Variable<string> { Name = "ExplicitDataList" });
-            variables.Add(new Variable<bool> { Name = "IsValid" });
-            variables.Add(new Variable<Unlimited.Applications.BusinessDesignStudio.Activities.Util> { Name = "t" });
-            variables.Add(new Variable<Dev2DataListDecisionHandler> { Name = "Dev2DecisionHandler" });
-        }
-
-        #endregion
-
-        #region SetNamespaces
-
-        public void SetNamespaces(object target)
+        void SetNamespaces(object target)
         {
             var dev2ActivitiesAssembly = typeof(WorkflowHelper).Assembly;
             var dev2CommonAssembly = typeof(GlobalConstants).Assembly;
@@ -311,25 +183,7 @@ namespace Dev2.Utilities
             AttachablePropertyServices.SetProperty(target, impl, namespaces.Keys.ToList());
 
             #endregion
-
-            #region Set VB assembly references
-
-            var vbSettings = VisualBasic.GetSettings(target) ?? new VisualBasicSettings();
-            vbSettings.ImportReferences.Clear();
-
-            foreach(var ns in namespaces.Keys)
-            {
-                vbSettings.ImportReferences.Add(new VisualBasicImportReference { Assembly = namespaces[ns].GetName().Name, Import = ns });
-            }
-
-            VisualBasic.SetSettings(target, vbSettings);
-
-            #endregion
         }
-
-        #endregion
-
-        #region FixExpressions
 
         void FixExpressions(Flowchart chart, bool isServerInvocation = false)
         {
@@ -339,50 +193,24 @@ namespace Dev2.Utilities
                 if(fd != null)
                 {
                     var decisionActivity = fd.Condition as DsfFlowDecisionActivity;
-                    //TryFixExpression(decisionActivity, GlobalConstants.InjectedDecisionHandlerOld, GlobalConstants.InjectedDecisionHandler);
                     if(isServerInvocation)
                     {
                         // CompileExpressionsImpl will strip out backslashes!!
                         TryFixExpression(decisionActivity, "\\", "\\\\");
                     }
                 }
-
-                //var fs = node as FlowSwitch<string>;
-                //if(fs != null)
-                //{
-                //    TryFixExpression(fs.Expression as DsfFlowSwitchActivity, GlobalConstants.InjectedSwitchDataFetchOld, GlobalConstants.InjectedSwitchDataFetch);
-                //}
             }
         }
 
         void TryFixExpression<TResult>(DsfFlowNodeActivity<TResult> activity, string oldExpr, string newExpr)
         {
-            if(activity != null)
+            if(!string.IsNullOrEmpty(activity?.ExpressionText))
             {
-                if(!string.IsNullOrEmpty(activity.ExpressionText))
-                {
-                    activity.ExpressionText = activity.ExpressionText.Replace(oldExpr, newExpr);
-                }
+                activity.ExpressionText = activity.ExpressionText.Replace(oldExpr, newExpr);
             }
         }
 
-        #endregion
-
-        #region SanitizeXaml
-
-        public StringBuilder SanitizeXaml(StringBuilder workflowXaml)
-        {
-            // A rehosted designer generates the following exception when trying to export (serialize) a workflow:
-            //
-            //    System.Xaml.XamlDuplicateMemberException: 'Symbol' property has already been set on 'Flowchart' 
-            //
-            // Clearing the following element resolves the issue
-            return RemoveNodeValue(workflowXaml, "<sads:DebugSymbol.Symbol>");
-        }
-
-        #endregion
-
-        #region RemoveNodeValue
+        public StringBuilder SanitizeXaml(StringBuilder workflowXaml) => RemoveNodeValue(workflowXaml, "<sads:DebugSymbol.Symbol>");
 
         StringBuilder RemoveNodeValue(StringBuilder xml, string nodeName)
         {
@@ -403,16 +231,99 @@ namespace Dev2.Utilities
             return length > 0 ? xml.Remove(startIdx, length) : xml;
         }
 
-        #endregion
-
-        #region ToNamespaceType
-
-        public string ToNamespaceTypeString(Type activityType)
+        void SetVariables(Collection<Variable> variables)
         {
-            // Name must be in the form Namespace.Type (and does not have to be related to the actual activity!)
-            return string.Format("{0}.{1}", activityType.Namespace, activityType.Name.Replace("`", ""));
+            try
+            {
+                if (variables == null)
+                {
+                    throw new ArgumentNullException(nameof(variables));
+                }
+
+                variables.Clear();
+                variables.Add(new Variable<List<string>> { Name = "InstructionList" });
+                variables.Add(new Variable<string> { Name = "LastResult" });
+                variables.Add(new Variable<bool> { Name = "HasError" });
+                variables.Add(new Variable<string> { Name = "ExplicitDataList" });
+                variables.Add(new Variable<bool> { Name = "IsValid" });
+                variables.Add(new Variable<Unlimited.Applications.BusinessDesignStudio.Activities.Util> { Name = "t" });
+                variables.Add(new Variable<Dev2DataListDecisionHandler> { Name = "Dev2DecisionHandler" });
+            }
+            catch (Exception)
+            {
+                variables = new Collection<Variable>();
+                variables.Clear();
+            }
         }
 
-        #endregion
+
+        public static bool AreWorkflowsEqual(string left, string right)
+        {
+            if (left != "")
+            {
+                var xmlDoc_Left = new XmlDocument();
+                xmlDoc_Left.LoadXml(left);
+                var xmlDoc_Right = new XmlDocument();
+                xmlDoc_Right.LoadXml(right);
+                return CompareWorkflows(xmlDoc_Left, xmlDoc_Right);
+            }
+            return false;
+        }
+        private static bool CompareWorkflows(XmlNode lnode, XmlNode rnode)
+        {
+            if (lnode is null || rnode is null)
+            {
+                return lnode == rnode;
+            }
+            if (lnode.Name.Equals("av:Size"))
+            {
+                return true;
+            }
+
+            bool result = lnode.Name.Equals(rnode.Name);
+            if (!result)
+            {
+                return result;
+            }
+            if (lnode.Name.Equals("#text"))
+            {
+                result = lnode.InnerText.Equals(rnode.InnerText);
+                if (!result)
+                {
+                    return result;
+                }
+            }
+            if (lnode.HasChildNodes)
+            {
+                for (var i = 0; i < lnode.ChildNodes.Count; i++)
+                {
+                    var eq = CompareWorkflows(lnode.ChildNodes[i], rnode.ChildNodes[i]);
+                    if (!eq)
+                    {
+                        return eq;
+                    }
+                }
+            }
+
+            if (!(lnode.Attributes is null))
+            {
+                result = CompareAttributes(lnode, rnode);
+            }
+
+            return result;
+        }
+        private static bool CompareAttributes(XmlNode lnode, XmlNode rnode)
+        {
+            for (int i = 0; i < lnode.Attributes.Count; i++)
+            {
+                var eq = lnode.Attributes[i].Name.Equals(rnode.Attributes[i].Name);
+                eq &= lnode.Attributes[i].Value.Equals(rnode.Attributes[i].Value);
+                if (!eq)
+                {
+                    return eq;
+                }
+            }
+            return true;
+        }
     }
 }

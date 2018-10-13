@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +10,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using ActivityUnitTests;
-using Dev2.Data.PathOperations.Interfaces;
+using Dev2.Common.State;
+using Dev2.Communication;
+using Dev2.Data.Interfaces;
 using Dev2.Diagnostics;
 using Dev2.Tests.Activities.Mocks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -27,8 +28,7 @@ namespace Dev2.Tests.Activities.ActivityTests
     /// Summary description for DateTimeDifferenceTests
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class PathMoveTests : BaseActivityUnitTest
     {
 #pragma warning disable 649
@@ -90,7 +90,25 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         #endregion
 
-        
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfPathMove_UpdateForEachInputs")]
+        public void DsfPathMove_Serialize_ShouldDeserializeCorrectly()
+        {
+            //------------Setup for test--------------------------
+            var newGuid = Guid.NewGuid();
+            var inputPath = string.Concat(TestContext.TestRunDirectory, "\\", newGuid + "[[CompanyName]].txt");
+            var outputPath = string.Concat(TestContext.TestRunDirectory, "\\", newGuid + "[[CompanyName]]2.txt");
+            var act = new DsfPathMove { InputPath = inputPath, OutputPath = outputPath, Result = "[[CompanyName]]" };
+            var serializer = new Dev2JsonSerializer();
+            var serialized = serializer.Serialize(act);
+            //------------Execute Test---------------------------
+            var deSerialized = serializer.Deserialize<DsfPathMove>(serialized);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(inputPath, deSerialized.InputPath);
+            Assert.AreEqual(outputPath, deSerialized.OutputPath);
+        }
+
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
@@ -224,14 +242,15 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("DsfPathMove_Execute")]
+        [DeploymentItem(@"x86\SQLite.Interop.dll")]
         public void Move_Execute_Workflow_SourceFile_And_DestinationFile_Has_Separate_Passwords_Both_Passwords_Are_Sent_To_OperationBroker()
         {
-            List<string> fileNames = new List<string>
+            var fileNames = new List<string>
             {
                 Path.Combine(TestContext.TestRunDirectory, "NewFileFolder\\Dev2.txt")
             };
 
-            List<string> directoryNames = new List<string>();
+            var directoryNames = new List<string>();
             directoryNames.Add(Path.Combine(TestContext.TestRunDirectory, "NewFileFolder"));
             directoryNames.Add(Path.Combine(TestContext.TestRunDirectory, "NewFileFolder2"));
 
@@ -247,7 +266,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             var activityOperationBrokerMock = new ActivityOperationBrokerMock();
 
-            DsfPathMove act = new DsfPathMove
+            var act = new DsfPathMove
             {
                 InputPath = @"c:\OldFile.txt",
                 OutputPath = Path.Combine(TestContext.TestRunDirectory, "NewName.txt"),
@@ -259,11 +278,8 @@ namespace Dev2.Tests.Activities.ActivityTests
                 GetOperationBroker = () => activityOperationBrokerMock
             };
 
-            List<DebugItem> inRes;
-            List<DebugItem> outRes;
-
             CheckPathOperationActivityDebugInputOutput(act, ActivityStrings.DebugDataListShape,
-                                                       ActivityStrings.DebugDataListWithData, out inRes, out outRes);
+                                                       ActivityStrings.DebugDataListWithData, out List<DebugItem> inRes, out List<DebugItem> outRes);
 
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Password, "destPWord");
             Assert.AreEqual(activityOperationBrokerMock.Destination.IOPath.Username, "destUName");
@@ -279,6 +295,96 @@ namespace Dev2.Tests.Activities.ActivityTests
             var pathMove = new DsfPathMove();
             IDestinationUsernamePassword password = pathMove;
             Assert.IsNotNull(password);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DsfPathMove_GetState")]
+        public void DsfPathMove_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfPathMove
+            {
+                InputPath = "[[InputPath]]",
+                Username = "Bob",
+                PrivateKeyFile = "abcde",
+                OutputPath = "[[OutputPath]]",
+                DestinationUsername = "John",
+                DestinationPrivateKeyFile = "fghij",
+                Result = "[[res]]"
+            };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(8, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "InputPath",
+                    Type = StateVariable.StateType.Input,
+                    Value = "[[InputPath]]"
+                },
+                new StateVariable
+                {
+                    Name = "Username",
+                    Type = StateVariable.StateType.Input,
+                    Value = "Bob"
+                },
+                new StateVariable
+                {
+                    Name = "PrivateKeyFile",
+                    Type = StateVariable.StateType.Input,
+                    Value = "abcde"
+                },
+                new StateVariable
+                {
+                    Name = "OutputPath",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[OutputPath]]"
+                },
+                new StateVariable
+                {
+                    Name = "DestinationUsername",
+                    Type = StateVariable.StateType.Input,
+                    Value = "John"
+                },
+                new StateVariable
+                {
+                    Name = "DestinationPrivateKeyFile",
+                    Type = StateVariable.StateType.Input,
+                    Value = "fghij"
+                },
+                new StateVariable
+                {
+                    Name = nameof(Overwrite),
+                    Type = StateVariable.StateType.Input,
+                    Value = Overwrite.ToString()
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[res]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
     }
 }

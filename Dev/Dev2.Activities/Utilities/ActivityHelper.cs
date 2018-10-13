@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,44 +10,52 @@
 
 using System;
 using System.Activities.Presentation.Model;
+using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls.Primitives;
-using System.Windows.Input;
 using Dev2.Common;
+using Dev2.Communication;
 using Dev2.Data.SystemTemplates.Models;
 
 namespace Dev2.Utilities
 {
     public static class ActivityHelper
     {
-        public static void InjectExpression(Dev2Switch ds, ModelProperty activityExpression)
+        public static string InjectExpression(Dev2Switch ds, ModelProperty activityExpression)
         {
-            if(ds == null) return;
+            if(ds == null)
+            {
+                return null;
+            }
 
             // FetchSwitchData
-            string expressionToInject = String.Join("", GlobalConstants.InjectedSwitchDataFetch,
+            var expressionToInject = String.Join("", GlobalConstants.InjectedSwitchDataFetch,
                                                     "(\"", ds.SwitchVariable, "\",",
                                                     GlobalConstants.InjectedDecisionDataListVariable,
                                                     ")");
-            if(activityExpression != null)
+            if (activityExpression != null)
             {
                 activityExpression.SetValue(expressionToInject);
             }
+            return expressionToInject;
         }
 
-        public static void InjectExpression(Dev2DecisionStack ds, ModelProperty activityExpression)
+        public static string InjectExpression(Dev2DecisionStack ds, ModelProperty activityExpression)
         {
-            if(ds == null) return;
+            if(ds == null)
+            {
+                return null;
+            }
 
-            string modelData = ds.ToVBPersistableModel();
-            string expressionToInject = String.Join("", GlobalConstants.InjectedDecisionHandler, "(\"",
+            var modelData = ds.ToVBPersistableModel();
+            var expressionToInject = String.Join("", GlobalConstants.InjectedDecisionHandler, "(\"",
                                                     modelData, "\",",
                                                     GlobalConstants.InjectedDecisionDataListVariable, ")");
 
-            if(activityExpression != null)
+            if (activityExpression != null)
             {
                 activityExpression.SetValue(expressionToInject);
             }
+            return expressionToInject;
         }
 
         public static string ExtractData(string val)
@@ -56,12 +63,12 @@ namespace Dev2.Utilities
             if(val.IndexOf(GlobalConstants.InjectedSwitchDataFetch, StringComparison.Ordinal) >= 0)
             {
                 // Time to extract the data
-                int start = val.IndexOf("(", StringComparison.Ordinal);
-                if(start > 0)
+                var start = val.IndexOf("(", StringComparison.Ordinal);
+                if (start > 0)
                 {
-                    int end = val.IndexOf(@""",AmbientData", StringComparison.Ordinal);
+                    var end = val.IndexOf(@""",AmbientData", StringComparison.Ordinal);
 
-                    if(end > start)
+                    if (end > start)
                     {
                         start += 2;
                         val = val.Substring(start, end - start);
@@ -78,11 +85,11 @@ namespace Dev2.Utilities
         {
             if(ds != null)
             {
-                ModelProperty keyProperty = switchCase.Properties["Key"];
+                var keyProperty = switchCase.Properties["Key"];
 
-                if(keyProperty != null)
+                if (keyProperty != null)
                 {
-                    keyProperty.SetValue(ds.SwitchVariable);
+                    keyProperty.SetValue(ds.SwitchExpression);
 
                 }
             }
@@ -90,12 +97,12 @@ namespace Dev2.Utilities
 
         public static void SetArmTextDefaults(Dev2DecisionStack dds)
         {
-            if(String.IsNullOrEmpty(dds.TrueArmText.Trim()))
+            if(String.IsNullOrEmpty(dds.TrueArmText) || String.IsNullOrEmpty(dds.TrueArmText.Trim()))
             {
                 dds.TrueArmText = GlobalConstants.DefaultTrueArmText;
             }
 
-            if(String.IsNullOrEmpty(dds.FalseArmText.Trim()))
+            if (String.IsNullOrEmpty(dds.FalseArmText) || String.IsNullOrEmpty(dds.FalseArmText.Trim()))
             {
                 dds.FalseArmText = GlobalConstants.DefaultFalseArmText;
             }
@@ -109,9 +116,9 @@ namespace Dev2.Utilities
 
         public static void SetArmText(ModelItem decisionActivity, string armType, string val)
         {
-            ModelProperty tArm = decisionActivity.Properties[armType];
+            var tArm = decisionActivity.Properties[armType];
 
-            if(tArm != null)
+            if (tArm != null)
             {
                 tArm.SetValue(val);
             }
@@ -132,17 +139,15 @@ namespace Dev2.Utilities
 
         #endregion
 
-        public static void HandleMouseDoubleClick(MouseButtonEventArgs e)
-        {
-            if(!(e.OriginalSource is IScrollInfo))
-            {
-                e.Handled = true;
-            }
-        }
-
         public static void HandleDragEnter(DragEventArgs e)
         {
             //This is to ensure nothing can be dragged onto a Activity Designer
+        }
+
+        public static string GetSerializedStateValueFromCollection<T>(IList<T> collection)
+        {
+            var dev2JsonSerializer = new Dev2JsonSerializer();
+            return dev2JsonSerializer.Serialize(collection);
         }
     }
 }

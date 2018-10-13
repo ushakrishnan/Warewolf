@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,66 +16,59 @@ namespace Dev2.Activities.Debug
 {
     public class DebugItemStaticDataParams : DebugOutputBase
     {
-        readonly string _value;
-        readonly string _labelText;
         readonly string _operand;
-        readonly string _variable;
-        readonly DebugItemResultType _type;
 
         public DebugItemStaticDataParams(string value, string labelText)
+            : this(value, labelText, false)
         {
-            _value = value;
-            _labelText = labelText;
-            _type = DebugItemResultType.Value;
+        }
+
+        public DebugItemStaticDataParams(string value, string labelText, bool mockSelected)
+        {
+            Value = value;
+            LabelText = labelText;
+            Type = DebugItemResultType.Value;
+            MockSelected = mockSelected;
         }
 
         public DebugItemStaticDataParams(string value, string variable, string labelText)
+            : this(value, variable, labelText, false)
         {
-            _value = value;
-            _labelText = labelText;
-            _variable = variable;
-            _type = DebugItemResultType.Variable;
+        }
+
+        public DebugItemStaticDataParams(string value, string variable, string labelText, bool mockSelected)
+        {
+            Value = value;
+            LabelText = labelText;
+            Variable = variable;
+            Type = DebugItemResultType.Variable;
+            MockSelected = mockSelected;
         }
 
         public DebugItemStaticDataParams(string value, string variable, string labelText, string operand)
+            : this(value, variable, labelText, operand, false)
         {
-            _value = value;
-            _labelText = labelText;
+        }
+
+        public DebugItemStaticDataParams(string value, string variable, string labelText, string operand, bool mockSelected)
+        {
+            Value = value;
+            LabelText = labelText;
             _operand = operand;
-            _variable = variable;
-            _type = DebugItemResultType.Variable;
+            Variable = variable;
+            Type = DebugItemResultType.Variable;
+            MockSelected = mockSelected;
         }
 
-        public string Value
-        {
-            get
-            {
-                return _value;
-            }
-        }
+        public string Value { get; }
 
-        public override string LabelText
-        {
-            get
-            {
-                return _labelText;
-            }
-        }
+        public bool MockSelected { get; }
 
-        public string Variable
-        {
-            get
-            {
-                return _variable;
-            }
-        }
-        public DebugItemResultType Type
-        {
-            get
-            {
-                return _type;
-            }
-        }
+        public override string LabelText { get; }
+
+        public string Variable { get; }
+
+        public DebugItemResultType Type { get; }
 
         public override List<IDebugItemResult> GetDebugItemResult()
         {
@@ -88,7 +80,8 @@ namespace Dev2.Activities.Debug
                         Value = Value,
                         Label = LabelText,
                         Variable = Variable,
-                        Operator = string.IsNullOrWhiteSpace(_operand) ? "" : "="
+                        Operator = string.IsNullOrWhiteSpace(_operand) ? "" : "=",
+                        MockSelected = MockSelected
                     }};
             return debugItemsResults;
         }

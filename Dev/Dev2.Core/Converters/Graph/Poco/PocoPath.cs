@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,8 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Dev2;
 using Dev2.Common.Interfaces.Core.Graph;
 
 namespace Unlimited.Framework.Converters.Graph.Poco
@@ -22,8 +20,8 @@ namespace Unlimited.Framework.Converters.Graph.Poco
     {
         #region Class Members
 
-        private const string _seperatorSymbol = ".";
-        private const string _enumerableSymbol = "()";
+        const string _seperatorSymbol = ".";
+        const string _enumerableSymbol = "()";
 
         #endregion Class Members
 
@@ -56,43 +54,24 @@ namespace Unlimited.Framework.Converters.Graph.Poco
 
         #region Methods
 
-        public override IEnumerable<IPathSegment> GetSegements()
-        {
-            return ActualPath.Split(SeperatorSymbol.ToCharArray()).Select(CreatePathSegment).ToList();
-        }
+        public override IEnumerable<IPathSegment> GetSegements() => ActualPath.Split(SeperatorSymbol.ToCharArray()).Select(CreatePathSegment).ToList();
 
         public override IPathSegment CreatePathSegment(string pathSegmentString)
         {
             PocoPathSegment pathSegment;
-            if (pathSegmentString.EndsWith(EnumerableSymbol))
-            {
-                pathSegment = new PocoPathSegment(pathSegmentString.TrimEnd(EnumerableSymbol.ToArray()), true);
-            }
-            else
-            {
-                pathSegment = new PocoPathSegment(pathSegmentString, false);
-            }
+            pathSegment = pathSegmentString.EndsWith(EnumerableSymbol) ? new PocoPathSegment(pathSegmentString.TrimEnd(EnumerableSymbol.ToArray()), true) : new PocoPathSegment(pathSegmentString, false);
             return pathSegment;
         }
 
-        public IPathSegment CreatePathSegment(PropertyInfo property)
-        {
-            return new PocoPathSegment(property.Name, property.PropertyType.IsEnumerable());
-        }
+        public IPathSegment CreatePathSegment(string name, bool isEnumerable) => new PocoPathSegment(name, isEnumerable);
 
         #endregion Methods
 
         #region Static Properties
 
-        public static string EnumerableSymbol
-        {
-            get { return _enumerableSymbol; }
-        }
+        public static string EnumerableSymbol => _enumerableSymbol;
 
-        public static string SeperatorSymbol
-        {
-            get { return _seperatorSymbol; }
-        }
+        public static string SeperatorSymbol => _seperatorSymbol;
 
         #endregion Static Properties
     }

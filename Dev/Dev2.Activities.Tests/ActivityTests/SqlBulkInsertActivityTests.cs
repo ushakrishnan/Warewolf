@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +13,6 @@ using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics.CodeAnalysis;
 using ActivityUnitTests;
 using Dev2.Activities;
 using Dev2.Activities.SqlBulkInsert;
@@ -25,11 +23,10 @@ using Dev2.TO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Activities.ActivityTests
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class SqlBulkInsertActivityTests : BaseActivityUnitTest
     {
         public TestContext TestContext { get; set; }
@@ -58,7 +55,9 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Setup for test--------------------------
             var dsfSqlBulkInsertActivity = new DsfSqlBulkInsertActivity();
             //------------Execute Test---------------------------
-            var sqlBulkInserter = dsfSqlBulkInsertActivity.SqlBulkInserter;
+            var px = new PrivateObject(dsfSqlBulkInsertActivity);
+
+            var sqlBulkInserter = px.GetProperty("SqlBulkInserter");
             //------------Assert Results-------------------------
             Assert.IsInstanceOfType(sqlBulkInserter, typeof(ISqlBulkInserter));
             Assert.IsInstanceOfType(sqlBulkInserter, typeof(SqlBulkInserter));
@@ -70,9 +69,12 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfSqlBulkInsertActivity_SqlBulkInserter_WhenSet_ReturnsSetValue()
         {
             //------------Setup for test--------------------------
-            var dsfSqlBulkInsertActivity = new DsfSqlBulkInsertActivity { SqlBulkInserter = new Mock<ISqlBulkInserter>().Object };
+            var dsfSqlBulkInsertActivity = new DsfSqlBulkInsertActivity();
+            var p = new PrivateObject(dsfSqlBulkInsertActivity);
+            p.SetProperty("SqlBulkInserter",new Mock<ISqlBulkInserter>().Object);
+            
             //------------Execute Test---------------------------
-            var sqlBulkInserter = dsfSqlBulkInsertActivity.SqlBulkInserter;
+            var sqlBulkInserter = p.GetProperty("SqlBulkInserter");
             //------------Assert Results-------------------------
             Assert.IsInstanceOfType(sqlBulkInserter, typeof(ISqlBulkInserter));
             Assert.IsNotInstanceOfType(sqlBulkInserter, typeof(SqlBulkInserter));
@@ -94,6 +96,20 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Assert Results-------------------------
             mockSqlBulkInserter.Verify(inserter => inserter.Insert(It.IsAny<ISqlBulkCopy>(), It.IsAny<DataTable>()), Times.Never());
             Assert.IsNull(returnedDataTable);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetOutputs")]
+        public void GetOutputs_Called_ShouldReturnListWithResultValueInIt()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfSqlBulkInsertActivity { TableName = "myTable", Result = "[[insResult]]"};
+            //------------Execute Test---------------------------
+            var outputs = act.GetOutputs();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, outputs.Count);
+            Assert.AreEqual("[[insResult]]", outputs[0]);
         }
 
         [TestMethod]
@@ -202,8 +218,8 @@ namespace Dev2.Tests.Activities.ActivityTests
         static DbSource CreateDbSource()
         {
             var resourceID = Guid.NewGuid();
-            var dbSource = new DbSource { ResourcePath = "SQL Tests\\" + resourceID, ResourceName = resourceID.ToString(), ResourceID = resourceID };
-            ResourceCatalog.Instance.SaveResource(Guid.Empty, dbSource);
+            var dbSource = new DbSource { ResourceName = resourceID.ToString(), ResourceID = resourceID };
+            ResourceCatalog.Instance.SaveResource(Guid.Empty, dbSource, "SQL Tests\\" + resourceID, "", "");
             return dbSource;
         }
 
@@ -959,7 +975,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             if(dataObject != null)
             {
                 var executionErrors = dataObject.Environment.FetchErrors();
-                StringAssert.Contains(executionErrors, "Invalid recordset:[[recset1(-1).field2]]");
+                StringAssert.Contains(executionErrors, "[[recset1(-1).field2]]");
             }
             else
             {
@@ -1258,6 +1274,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("DsfSqlBulkInsertActivity_Execute")]
+        [DeploymentItem(@"x86\SQLite.Interop.dll")]
         public void DsfSqlBulkInsertActivity_Execute_WithInputMappingsWithNonNullableColumnWithDataMappedWhenMultiTable_HasDataTableWithData()
         {
             //------------Setup for test--------------------------
@@ -1946,29 +1963,32 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, ISqlBulkInserter sqlBulkInserter, IList<DataColumnMapping> inputMappings, string resultString, DbSource dbSource = null, string destinationTableName = null, PopulateOptions populateOptions = PopulateOptions.IgnoreBlankRows, bool keepIdentity = false)
+        void SetupArguments(string currentDL, string testData, ISqlBulkInserter sqlBulkInserter, IList<DataColumnMapping> inputMappings, string resultString, DbSource dbSource = null, string destinationTableName = null, PopulateOptions populateOptions = PopulateOptions.IgnoreBlankRows, bool keepIdentity = false)
         {
             var ignoreBlankRows = populateOptions == PopulateOptions.IgnoreBlankRows;
-            if(dbSource == null)
+            if (dbSource == null)
             {
                 dbSource = CreateDbSource();
             }
-            if(destinationTableName == null)
+            if (destinationTableName == null)
             {
                 destinationTableName = "SomeTestTable";
             }
+            var x = new DsfSqlBulkInsertActivity
+            {
+                Database = dbSource,
+                TableName = destinationTableName,
+                InputMappings = inputMappings,
+                Result = resultString,
+                IgnoreBlankRows = ignoreBlankRows,
+                KeepIdentity = keepIdentity
+            };
+            var p = new PrivateObject(x);
+            p.SetProperty("SqlBulkInserter", sqlBulkInserter);
+
             TestStartNode = new FlowStep
             {
-                Action = new DsfSqlBulkInsertActivity
-                {
-                    Database = dbSource,
-                    TableName = destinationTableName,
-                    InputMappings = inputMappings,
-                    SqlBulkInserter = sqlBulkInserter,
-                    Result = resultString,
-                    IgnoreBlankRows = ignoreBlankRows,
-                    KeepIdentity = keepIdentity
-                }
+                Action = x
             };
 
             CurrentDl = testData;

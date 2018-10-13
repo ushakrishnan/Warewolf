@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,17 +14,14 @@ using Dev2.Common;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.UI;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio
 {
-    /// <summary>
-    /// Holds all static routed event handlers
-    /// </summary>
     public static class ClassRoutedEventHandlers
     {
         #region Fields
 
-        private static bool _registered;
+        static bool _registered;
 
         #endregion Fields
 
@@ -50,11 +46,9 @@ namespace Dev2.Studio
         {
             Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
-                IPopupController popup = CustomContainer.Get<IPopupController>();
-                popup.Show("You have pasted text which contins tabs into a textbox on the design surface. Tabs are not allowed in textboxes on the design surface and will be replaced with spaces. "
-                    + Environment.NewLine + Environment.NewLine +
-                    "Please note that tabs are fully supported at runtime, in variables and when reading from files.",
-                    "Tabs Pasted", MessageBoxButton.OK, MessageBoxImage.Information, GlobalConstants.Dev2MessageBoxDesignSurfaceTabPasteDialog);
+                var popup = CustomContainer.Get<IPopupController>();
+                popup.Show(Warewolf.Studio.Resources.Languages.Core.IntellisenseTabInserted,
+                    Warewolf.Studio.Resources.Languages.Core.IntellisenseTabInsertedHeader, MessageBoxButton.OK, MessageBoxImage.Information, GlobalConstants.Dev2MessageBoxDesignSurfaceTabPasteDialog, false, false, true, false, false, false);
             }), null);
         }
 

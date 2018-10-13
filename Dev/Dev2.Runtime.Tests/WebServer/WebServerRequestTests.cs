@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,20 +13,47 @@ using System.Collections.Specialized;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using Dev2.DataList.Contract;
+using Dev2.Interfaces;
 using Dev2.Runtime.WebServer;
+using Dev2.Web;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using Warewolf.Storage;
 
 namespace Dev2.Tests.Runtime.WebServer
 {
     [TestClass]
     public class WebServerRequestTests
     {
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Rory McGuire")]
+        [TestCategory("WebServerRequest")]
+        public void WebServerRequest_CreateResponseWriter()
+        {
+            var executionDto = new ExecutionDto();
+            var mock = new Mock<IDSFDataObject>();
+            mock.SetupGet(o => o.Environment).Returns(new ExecutionEnvironment());
+            mock.SetupGet(o => o.IsDebug).Returns(true);
+            mock.SetupGet(o => o.RemoteInvoke).Returns(false);
+            mock.SetupGet(o => o.RemoteNonDebugInvoke).Returns(false);
+            executionDto.DataListFormat = DataListFormat.CreateFormat("JSON", EmitionTypes.JSON, "application/json");
+            executionDto.ErrorResultTO = new Data.TO.ErrorResultTO();
+            executionDto.DataObject = mock.Object;
 
-        [TestMethod]
+
+            executionDto.Request = new Communication.EsbExecuteRequest();
+            executionDto.Request.WasInternalService = false;
+
+            executionDto.CreateResponseWriter();
+        }
+
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
-        [TestCategory("WebServerRequest_Constructor")]
+        [TestCategory("WebServerRequest")]
         [ExpectedException(typeof(ArgumentNullException))]
-        // ReSharper disable InconsistentNaming
+        
         public void WebServerRequest_Constructor_RequestIsNull_ThrowsArgumentNullException()
         {
             //------------Setup for test--------------------------
@@ -40,9 +66,9 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
-        [TestCategory("WebServerRequest_Constructor")]
+        [TestCategory("WebServerRequest")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WebServerRequest_Constructor_BoundVariablesIsNull_ThrowsArgumentNullException()
         {
@@ -56,23 +82,36 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
-        [TestCategory("WebServerRequest_Constructor")]
+        [TestCategory("WebServerRequest")]
         public void WebServerRequest_Constructor_PropertiesInitialized()
         {
-            //------------Setup for test--------------------------            
-            string content;
-            NameValueCollection boundVars;
-            NameValueCollection queryStr;
-            NameValueCollection headers;
-            var request = CreateHttpRequest(out content, out boundVars, out queryStr, out headers);
+            var request = CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers);
 
             //------------Execute Test---------------------------
             var webServerRequest = new WebServerRequest(request, boundVars);
 
             //------------Assert Results-------------------------
             VerifyProperties(request, webServerRequest, content, queryStr, boundVars);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Ashley Lewis")]
+        [TestCategory("WebServerRequest")]
+        public void WebServerRequest_GetContentEncoding_ParseSimpleEncoding()
+        {
+            var Content = new StringContent("Number42", Encoding.UTF8)
+            {
+                Headers = { ContentType = new MediaTypeHeaderValue("text/plain") }
+            };
+            Content.Headers.Add("Content-Encoding", "utf8");
+
+            //------------Execute Test---------------------------
+            var ContentEncoding = Content.GetContentEncoding();
+
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Encoding.UTF8, ContentEncoding, "WebServerRequest parsed the wrong content encoding.");
         }
 
         public static HttpRequestMessage CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers)
@@ -125,6 +164,6 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(expectedContent, content);
         }
 
-        // ReSharper restore InconsistentNaming
+
     }
 }

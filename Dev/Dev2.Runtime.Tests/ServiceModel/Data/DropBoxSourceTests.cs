@@ -1,0 +1,112 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Xml.Linq;
+using Dev2.Data.ServiceModel;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
+
+namespace Dev2.Tests.Runtime.ServiceModel.Data
+{
+
+    [TestClass]
+    public class DropBoxSourceTests
+    {
+        #region ToString Tests
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void ToStringFullySetupObjectExpectedJsonSerializedObjectReturnedAsString()
+        {
+            var testDropBoxSource = SetupDefaultDropBoxSource();
+            var actualDropBoxSourceToString = testDropBoxSource.ToString();
+            var expected = JsonConvert.SerializeObject(testDropBoxSource);
+            Assert.AreEqual(expected, actualDropBoxSourceToString);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void ToStringEmptyObjectExpected()
+        {
+            var testDropBoxSource = new DropBoxSource();
+            var actualSerializedDropBoxSource = testDropBoxSource.ToString();
+            var expected = JsonConvert.SerializeObject(testDropBoxSource);
+            Assert.AreEqual(expected, actualSerializedDropBoxSource);
+        }
+
+        #endregion ToString Tests
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DropBoxSource_AppKey")]
+        public void DropBoxSource_AppKey_CannotBeEmpty()
+        {
+            //------------Setup for test--------------------------
+            var dbSource = new DropBoxSource
+            {
+                AppKey = "",
+                AccessToken = ""
+            };
+            //------------Execute Test---------------------------
+            var appKey = dbSource.AppKey;
+            //------------Assert Results-------------------------
+            StringAssert.Contains(appKey, "");
+        }
+
+        #region ToXml Tests
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void ToXmlAllPropertiesSetupExpectedXElementContainingAllObjectInformation()
+        {
+            var testDropBoxSource = SetupDefaultDropBoxSource();
+            var expectedXml = testDropBoxSource.ToXml();
+            var workflowXamlDefintion = expectedXml.Element("XamlDefinition");
+            var attrib = expectedXml.Attributes();
+            var attribEnum = attrib.GetEnumerator();
+            while (attribEnum.MoveNext())
+            {
+                if (attribEnum.Current.Name == "Name")
+                {
+                    Assert.AreEqual("TestResource", attribEnum.Current.Value);
+                    break;
+                }
+            }
+            Assert.IsNull(workflowXamlDefintion);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void ToXmlEmptyObjectExpectedXElementContainingNoInformationRegardingSource()
+        {
+            var testDropBoxSource = new DropBoxSource();
+            var expectedXml = testDropBoxSource.ToXml();
+
+            var attrib = expectedXml.Attributes();
+            var attribEnum = attrib.GetEnumerator();
+            while (attribEnum.MoveNext())
+            {
+                if (attribEnum.Current.Name == "Name")
+                {
+                    Assert.AreEqual(string.Empty, attribEnum.Current.Value);
+                    break;
+                }
+            }
+        }
+
+        #endregion ToXml Tests
+
+        #region Private Test Methods
+
+        DropBoxSource SetupDefaultDropBoxSource()
+        {
+            var testDropBoxSource = new DropBoxSource
+            {
+                ResourceID = Guid.NewGuid(),
+                AppKey = "",
+                AccessToken = "",
+                ResourceName = "TestResource",
+                ResourceType = "DropBoxSource"
+            };
+
+            return testDropBoxSource;
+        }
+
+        #endregion Private Test Methods
+    }
+}

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,17 +11,18 @@
 using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.Activities.Designers2.DataSplit;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.DataSplit
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class DataSplitDesignerViewModelSplitTests
     {
         [TestMethod]
@@ -54,6 +54,25 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
             var viewModel = new DataSplitDesignerViewModel(modelItem);
             dynamic mi = viewModel.ModelItem;
             Assert.AreEqual(2, mi.ResultsCollection.Count);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DataSplitDesignerViewModel_Handle")]
+        public void DataSplitDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var modelItem = ModelItemUtils.CreateModelItem(new DsfDataSplitActivity());
+            var viewModel = new DataSplitDesignerViewModel(modelItem);
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         [TestMethod]
@@ -129,13 +148,13 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
             var modelItem = ModelItemUtils.CreateModelItem(new DsfDataSplitActivity());
             modelItem.SetProperty("DisplayName", displayName);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var modelItemCollection = modelItem.Properties["ResultsCollection"].Collection;
             foreach(var dto in items)
             {
                 modelItemCollection.Add(dto);
             }
-            // ReSharper restore PossibleNullReferenceException
+            
             return modelItem;
         }
 
@@ -186,7 +205,7 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
 
             //------------Assert Results-------------------------
             Assert.AreEqual(1, viewModel.Errors.Count);
-            StringAssert.Contains(viewModel.Errors[0].Message, "'String to Split' cannot be empty or only white space");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.DataSplitStringToSplitErrorTest);
         }
 
 
@@ -202,10 +221,10 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
 
             var dto = new DataSplitDTO("a]]", DataSplitDTO.SplitTypeIndex, "a", 0);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["ResultsCollection"].Collection;
             var dtoModelItem = miCollection.Add(dto);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new DataSplitDesignerViewModel(mi);
             viewModel.GetDatalistString = () =>
@@ -222,10 +241,10 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
             //------------Assert Results-------------------------
             Assert.AreEqual(2, viewModel.Errors.Count);
 
-            StringAssert.Contains(viewModel.Errors[0].Message, "'Results' - Invalid expression: opening and closing brackets don't match");
+            StringAssert.Contains(viewModel.Errors[0].Message, Warewolf.Resource.Errors.ErrorResource.DataSplitInvalidExpressionErrorTest);
             Verify_IsFocused(dtoModelItem, viewModel.Errors[0].Do, "IsOutputVariableFocused");
 
-            StringAssert.Contains(viewModel.Errors[1].Message, "'Using' must be a real number");
+            StringAssert.Contains(viewModel.Errors[1].Message, Warewolf.Resource.Errors.ErrorResource.DataSplitUsingNullErrorTest);
             Verify_IsFocused(dtoModelItem, viewModel.Errors[1].Do, "IsAtFocused");
         }
 
@@ -259,10 +278,10 @@ namespace Dev2.Activities.Designers.Tests.DataSplit
 
             var dto = new DataSplitDTO("a]]", DataSplitDTO.SplitTypeIndex, "a", 0);
 
-            // ReSharper disable PossibleNullReferenceException
+            
             var miCollection = mi.Properties["ResultsCollection"].Collection;
             miCollection.Add(dto);
-            // ReSharper restore PossibleNullReferenceException
+            
 
             var viewModel = new DataSplitDesignerViewModel(mi);
             return viewModel;

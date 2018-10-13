@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Providers.Validation.Rules
 {
@@ -19,21 +19,18 @@ namespace Dev2.Providers.Validation.Rules
         public IsPositiveNumberRule(Func<string> getValue)
             : base(getValue)
         {
-            ErrorText = "must be a real number";
+            ErrorText = ErrorResource.MustBeRealNumber;
         }
 
         public override IActionableErrorInfo Check()
         {
             var isValid = false;
-            int x;
             var value = GetValue();
-            if(int.TryParse(value, out x))
+            if (int.TryParse(value, out int x) && x >= 0)
             {
-                if(x >= 0)
-                {
-                    isValid = true;
-                }
+                isValid = true;
             }
+
             return isValid ? null : CreatError();
         }
     }

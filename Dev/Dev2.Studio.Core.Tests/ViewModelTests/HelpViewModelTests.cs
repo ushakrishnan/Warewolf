@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,11 +8,9 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using Dev2.Studio.Core.AppResources.Enums;
-using Dev2.Studio.Core.Messages;
 using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.Views.Help;
 using Dev2.ViewModels.Help;
@@ -25,7 +22,6 @@ namespace Dev2.Core.Tests.ViewModelTests
 {
     // ReSharper disable InconsistentNaming
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class HelpViewModelTests
     {
         [TestMethod]
@@ -133,45 +129,7 @@ namespace Dev2.Core.Tests.ViewModelTests
             var helpViewModel = new HelpViewModel();
             //------------Assert Results-------------------------
             Assert.AreEqual(WorkSurfaceContext.Help, helpViewModel.WorkSurfaceContext);
-        }
-
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("HelpViewModel_Handle")]
-        public void HelpViewModel_Handle_TabClosedMessageContextIsThisInstance_IsDisposed()
-        {
-            //------------Setup for test--------------------------
-            var helpViewWrapper = new Mock<IHelpViewWrapper>();
-            WebBrowser webBrowser = new WebBrowser();
-            helpViewWrapper.SetupGet(m => m.WebBrowser).Returns(webBrowser);
-            helpViewWrapper.Setup(m => m.Navigate(It.IsAny<string>())).Verifiable();
-            var helpViewModel = new HelpViewModel(null, helpViewWrapper.Object, false);
-            HelpView helpView = new HelpView();
-            helpViewWrapper.SetupGet(m => m.HelpView).Returns(helpView);
-            //------------Execute Test---------------------------
-            helpViewModel.Handle(new TabClosedMessage(helpViewModel));
-            //------------Assert Results-------------------------
-            Assert.IsTrue(helpViewModel.HelpViewDisposed);
-        }
-        
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("HelpViewModel_Handle")]
-        public void HelpViewModel_Handle_TabClosedMessageContextIsAnotherInstance_IsNotDisposed()
-        {
-            //------------Setup for test--------------------------
-            var helpViewWrapper = new Mock<IHelpViewWrapper>();
-            WebBrowser webBrowser = new WebBrowser();
-            helpViewWrapper.SetupGet(m => m.WebBrowser).Returns(webBrowser);
-            helpViewWrapper.Setup(m => m.Navigate(It.IsAny<string>())).Verifiable();
-            var helpViewModel = new HelpViewModel(null, helpViewWrapper.Object, false);
-            HelpView helpView = new HelpView();
-            helpViewWrapper.SetupGet(m => m.HelpView).Returns(helpView);
-            //------------Execute Test---------------------------
-            helpViewModel.Handle(new TabClosedMessage(new HelpViewModel()));
-            //------------Assert Results-------------------------
-            Assert.IsFalse(helpViewModel.HelpViewDisposed);
-        }
+        }        
     }
 }
     

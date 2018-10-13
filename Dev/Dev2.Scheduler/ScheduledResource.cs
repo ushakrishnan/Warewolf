@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +13,9 @@ using System.ComponentModel;
 using System.Linq;
 using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
+using Newtonsoft.Json;
+using Dev2.Common;
 
 namespace Dev2.Scheduler
 {
@@ -24,18 +25,19 @@ namespace Dev2.Scheduler
         string _workflowName;
         SchedulerStatus _status;
 
-        private bool _runAsapIfScheduleMissed;
-        private bool _allowMultipleIstances;
+        bool _runAsapIfScheduleMissed;
+        bool _allowMultipleIstances;
         int _numberOfHistoryToKeep;
         IScheduleTrigger _trigger;
         bool _isDirty;
-        private string _userName;
-        private string _password;
+        string _userName;
+        string _password;
         string _oldName;
-        private IErrorResultTO _errors;
+        IErrorResultTO _errors;
         DateTime _nextRunDate;
+        bool _isNew;
 
-        public ScheduledResource(string name, SchedulerStatus status, DateTime nextRunDate, IScheduleTrigger trigger, string workflowName)
+        public ScheduledResource(string name, SchedulerStatus status, DateTime nextRunDate, IScheduleTrigger trigger, string workflowName, string resourceId)
         {
 
             var history = name.Split('~');
@@ -44,12 +46,19 @@ namespace Dev2.Scheduler
             Trigger = trigger;
 
             NextRunDate = nextRunDate;
-            Status = status;
+            _status = status;
             Name = history.First();
             if(history.Length == 2)
+            {
                 NumberOfHistoryToKeep = int.Parse(history[1]);
+            }
+
             IsDirty = false;
             _errors = new ErrorResultTO();
+            if(!String.IsNullOrEmpty(resourceId) )
+            {
+                ResourceId = Guid.Parse(resourceId);
+            }
         }
 
         public bool IsDirty
@@ -62,6 +71,7 @@ namespace Dev2.Scheduler
             {
                 _isDirty = value;
                 OnPropertyChanged("IsDirty");
+                OnPropertyChanged("NameForDisplay");
             }
         }
 
@@ -75,6 +85,10 @@ namespace Dev2.Scheduler
             {
                 _oldName = value;
                 OnPropertyChanged("OldName");
+                if (!IsDirty)
+                {
+                    OnPropertyChanged("NameForDisplay");
+                }
             }
         }
 
@@ -86,9 +100,26 @@ namespace Dev2.Scheduler
             }
             set
             {
+                if (NameForDisplay != value)
+                {
+                    IsDirty = true;
+                }
                 _name = value;
                 OnPropertyChanged("Name");
+                OnPropertyChanged("NameForDisplay");
             }
+        }
+        
+        public string NameForDisplay
+        {
+            get
+            {
+                if (IsDirty)
+                {
+                    return Name + " *";
+                }
+                return Name;
+            }            
         }
 
         public SchedulerStatus Status
@@ -99,8 +130,30 @@ namespace Dev2.Scheduler
             }
             set
             {
+                if (Status != value)
+                {
+                    IsDirty = true;
+                }
                 _status = value;
                 OnPropertyChanged("Status");
+                OnPropertyChanged("StatusAlt");
+            }
+        }
+
+        [JsonIgnore]
+        public SchedulerStatus StatusAlt
+        {
+            get
+            {
+                return _status;
+            }
+            set
+            {
+                IsDirty = true;
+                _status = _status==SchedulerStatus.Disabled?SchedulerStatus.Enabled:SchedulerStatus.Disabled;
+                OnPropertyChanged("StatusAlt");
+                OnPropertyChanged("Status");
+                Dev2Logger.Info("Scheduled Resource Alt Status set to " + value, GlobalConstants.WarewolfInfo);
             }
         }
 
@@ -208,7 +261,19 @@ namespace Dev2.Scheduler
                 OnPropertyChanged("Errors");
             }
         }
-        public bool IsNew { get; set; }
+        public bool IsNew
+        {
+            get
+            {
+                return _isNew;
+            }
+            set
+            {
+                IsDirty = value;
+                _isNew = value;
+            }
+        }
+        public bool IsNewItem { get; set; }
 
         #region INotifyPropertyChanged
 
@@ -216,18 +281,96 @@ namespace Dev2.Scheduler
 
         protected void OnPropertyChanged(string propertyName)
         {
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion INotifyPropertyChanged
 
-        public override string ToString()
+        public bool Equals(IScheduledResource other)
         {
-            return String.Format("Name:{0} ResourceId:{1}", Name, ResourceId);
+            if (other == null)
+            {
+                return false;
+            }
+            if (IsNew)
+            {
+                return false;
+            }
+            var nameEqual = other.Name.Equals(Name, StringComparison.CurrentCultureIgnoreCase);
+            var statusEqual = other.Status == Status;
+            var nextRunDateEqual = other.NextRunDate == NextRunDate;
+            var triggerEqual = TriggerEqual(other.Trigger, Trigger);
+            var numberOfHistoryToKeepEqual = other.NumberOfHistoryToKeep == NumberOfHistoryToKeep;
+            var workflowNameEqual = other.WorkflowName.Equals(WorkflowName,StringComparison.InvariantCultureIgnoreCase);
+            var runAsapIfMissedEqual = other.RunAsapIfScheduleMissed == RunAsapIfScheduleMissed;
+            var allowMultipleInstancesEqual = other.AllowMultipleIstances == AllowMultipleIstances;
+            var userNameEqual = !string.IsNullOrEmpty(other.UserName) && !string.IsNullOrEmpty(UserName) ? other.UserName.Equals(UserName,StringComparison.InvariantCultureIgnoreCase) : string.IsNullOrEmpty(other.UserName) && string.IsNullOrEmpty(UserName);
+            return nameEqual && statusEqual && nextRunDateEqual && triggerEqual && numberOfHistoryToKeepEqual && workflowNameEqual
+                    && runAsapIfMissedEqual && allowMultipleInstancesEqual && userNameEqual;
         }
+
+        bool TriggerEqual(IScheduleTrigger otherTrigger, IScheduleTrigger trigger)
+        {
+            if (otherTrigger.State != trigger.State)
+            {
+                return false;
+            }
+            if (otherTrigger.Trigger == null && trigger.Trigger != null)
+            {
+                return false;
+            }
+            if (otherTrigger.Trigger != null && trigger.Trigger == null)
+            {
+                return false;
+            }
+            if (otherTrigger.Trigger != null && trigger.Trigger != null)
+            {
+                if (otherTrigger.Trigger.Enabled != trigger.Trigger.Enabled)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.EndBoundary != trigger.Trigger.EndBoundary)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.StartBoundary != trigger.Trigger.StartBoundary)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.TriggerType != trigger.Trigger.TriggerType)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.Repetition == null && otherTrigger.Trigger.Repetition != null)
+                {
+                    return false;
+                }
+
+                if (otherTrigger.Trigger.Repetition != null && otherTrigger.Trigger.Repetition == null)
+                {
+                    return false;
+                }
+                if (otherTrigger.Trigger.Repetition != null && trigger.Trigger.Repetition != null)
+                {
+                    if (otherTrigger.Trigger.Repetition.Duration != trigger.Trigger.Repetition.Duration)
+                    {
+                        return false;
+                    }
+                    if (otherTrigger.Trigger.Repetition.Interval != trigger.Trigger.Repetition.Interval)
+                    {
+                        return false;
+                    }
+                    if (otherTrigger.Trigger.Repetition.StopAtDurationEnd != trigger.Trigger.Repetition.StopAtDurationEnd)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        public override string ToString() => String.Format("Name:{0} ResourceId:{1}", Name, ResourceId);
+
         public Guid ResourceId { get; set; }
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,16 +13,16 @@ using System.Collections.Generic;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.SqlBulkInsert;
 using Dev2.Runtime.ServiceModel.Data;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Dev2.TO;
 
 namespace Dev2.Activities.Designers.Tests.SqlBulkInsert
 {
-    internal class TestSqlBulkInsertDesignerViewModel : SqlBulkInsertDesignerViewModel
+    class TestSqlBulkInsertDesignerViewModel : SqlBulkInsertDesignerViewModel
     {
-        public TestSqlBulkInsertDesignerViewModel(ModelItem modelItem, IEnvironmentModel environmentModel, IEventAggregator eventPublisher)
-            : base(modelItem, new TestAsyncWorker(), environmentModel, eventPublisher)
+        public TestSqlBulkInsertDesignerViewModel(ModelItem modelItem, IServer server, IEventAggregator eventPublisher)
+            : base(modelItem, new SynchronousAsyncWorker(), server, eventPublisher)
         {
         }
 

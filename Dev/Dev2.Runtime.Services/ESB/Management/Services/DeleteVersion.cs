@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,14 +12,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Common.Wrappers;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
+
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
@@ -28,36 +27,33 @@ namespace Dev2.Runtime.ESB.Management.Services
     {
         IServerVersionRepository _serverExplorerRepository;
 
-        #region Implementation of ISpookyLoadable<string>
-
-        public string HandlesType()
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
         {
-            return "DeleteVersion";
+            requestArgs.TryGetValue("resourceId", out StringBuilder tmp);
+            if (tmp != null && Guid.TryParse(tmp.ToString(), out Guid resourceId))
+            {
+                return resourceId;
+            }
+            return Guid.Empty;
         }
 
-        #endregion
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Contribute;
 
         #region Implementation of IEsbManagementEndpoint
 
-        /// <summary>
-        /// Executes the service
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <param name="theWorkspace">The workspace.</param>
-        /// <returns></returns>
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var execMessage = new ExecuteMessage { HasError = false };
-            if(!values.ContainsKey("resourceId"))
+            if (!values.ContainsKey("resourceId"))
             {
-                Dev2Logger.Log.Info("Delete Version. Invalid Resource Id");
+                Dev2Logger.Info("Delete Version. Invalid Resource Id", GlobalConstants.WarewolfInfo);
                 execMessage.HasError = true;
-                execMessage.Message = new StringBuilder( "No resourceId sent to server");
+                execMessage.Message = new StringBuilder("No resourceId sent to server");
             }
-            else if(!values.ContainsKey("versionNumber") )
+            else if (!values.ContainsKey("versionNumber"))
             {
-                Dev2Logger.Log.Info("Delete Version. Invalid Version number");
+                Dev2Logger.Info("Delete Version. Invalid Version number", GlobalConstants.WarewolfInfo);
                 execMessage.HasError = true;
                 execMessage.Message = new StringBuilder("No versionNumber sent to server");
             }
@@ -67,35 +63,36 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     var guid = Guid.Parse(values["resourceId"].ToString());
                     var version = values["versionNumber"].ToString();
-                    Dev2Logger.Log.Info(String.Format("Delete Version. ResourceId:{0} VersionNumber{1}",guid,version));
-                    var res = ServerVersionRepo.DeleteVersion(guid,version);
-                    execMessage.Message = serializer.SerializeToBuilder(res); 
+                    Dev2Logger.Info($"Delete Version. ResourceId:{guid} VersionNumber{version}", GlobalConstants.WarewolfInfo);
+                    var resourcePath = "";
+                    values.TryGetValue("resourcePath", out StringBuilder tmp);
+                    if (tmp != null)
+                    {
+                        resourcePath = tmp.ToString();
+                    }
+                    var res = ServerVersionRepo.DeleteVersion(guid, version, resourcePath);
+                    execMessage.Message = serializer.SerializeToBuilder(res);
                 }
                 catch (Exception e)
                 {
-                    Dev2Logger.Log.Error(String.Format("Delete Version Error."),e);
+                    Dev2Logger.Error("Delete Version Error.", e, GlobalConstants.WarewolfError);
                     execMessage.HasError = true;
-                    execMessage.Message = new StringBuilder( e.Message);
+                    execMessage.Message = new StringBuilder(e.Message);
                 }
             }
             return serializer.SerializeToBuilder(execMessage);
         }
 
-
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService newDs = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><Roles ColumnIODirection=\"Input\"/><ResourceXml ColumnIODirection=\"Input\"/><WorkspaceID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-            newDs.Actions.Add(sa);
-            return newDs;
-        }
-
         public IServerVersionRepository ServerVersionRepo
         {
-            get { return _serverExplorerRepository ?? new ServerVersionRepository(new VersionStrategy(), ResourceCatalog.Instance, new DirectoryWrapper(), EnvironmentVariables.GetWorkspacePath(GlobalConstants.ServerWorkspaceID), new FileWrapper()); }
+            get { return _serverExplorerRepository ?? new ServerVersionRepository(new VersionStrategy(), ResourceCatalog.Instance, new DirectoryWrapper(), EnvironmentVariables.GetWorkspacePath(GlobalConstants.ServerWorkspaceID), new FileWrapper(), new FilePathWrapper()); }
             set { _serverExplorerRepository = value; }
         }
 
         #endregion
+
+        public DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Roles ColumnIODirection=\"Input\"/><ResourceXml ColumnIODirection=\"Input\"/><WorkspaceID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public string HandlesType() => "DeleteVersion";
     }
 }

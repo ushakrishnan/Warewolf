@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Xml.Linq;
 using Dev2.Common.Interfaces.Core.Graph;
 using Newtonsoft.Json;
 
@@ -25,16 +23,16 @@ namespace Dev2.Runtime.ServiceModel.Data
         #region CTOR
 
         public ServiceMethod()
-            : this(string.Empty, string.Empty, null, null, null,null)
+            : this(string.Empty, string.Empty, null, null, null, null)
         {
         }
 
         public ServiceMethod(string error, string stackTrace)
-            : this("Error : " + error, stackTrace, null, null, null,null)
+            : this("Error : " + error, stackTrace, null, null, null, null)
         {
         }
 
-        public ServiceMethod(string name, string sourceCode, IEnumerable<MethodParameter> parameters, IOutputDescription outputDescription, IEnumerable<MethodOutput> outputs,string executeAction)
+        public ServiceMethod(string name, string sourceCode, IEnumerable<MethodParameter> parameters, IOutputDescription outputDescription, IEnumerable<MethodOutput> outputs, string executeAction)
         {
             Name = name;
             SourceCode = sourceCode;
@@ -43,17 +41,30 @@ namespace Dev2.Runtime.ServiceModel.Data
             OutParameters = new List<MethodParameter>();
             Outputs = new List<MethodOutput>();
             ExecuteAction = executeAction;
-            if(parameters != null)
+            if (parameters != null)
             {
                 Parameters.AddRange(parameters);
             }
 
-            if(outputs != null)
+            if (outputs != null)
             {
                 Outputs.AddRange(outputs);
             }
         }
-        [DataMember]
+		public ServiceMethod(string name, string sourceCode, string queryString, IOutputDescription outputDescription, IEnumerable<MethodOutput> outputs)
+		{
+			Name = name;
+			SourceCode = sourceCode;
+			QueryString = queryString;
+			OutputDescription = outputDescription;
+			OutParameters = new List<MethodParameter>();
+			Outputs = new List<MethodOutput>();
+			if (outputs != null)
+			{
+				Outputs.AddRange(outputs);
+			}
+		}
+		[DataMember]
         public List<MethodParameter> OutParameters { get; set; }
 
         #endregion
@@ -64,18 +75,30 @@ namespace Dev2.Runtime.ServiceModel.Data
         public string Name { get; set; }
 
         [DataMember]
+        public string Dev2ReturnType { get; set; }
+
+        [DataMember]
         public List<MethodParameter> Parameters { get; set; }
 
         [DataMember]
         public string SourceCode { get; set; }
-
-        [DataMember]
+		public string QueryString { get; }
+		[DataMember]
         public string FullName { get; set; }
 
         [DataMember]
         public string ExecuteAction { get; set; }
 
-        public List<MethodOutput> Outputs { get; private set; }
+        [DataMember]
+        public bool IsObject { get; set; }
+
+        [DataMember]
+        public bool IsVoid { get; set; }
+
+        [DataMember]
+        public bool IsProperty { get; internal set; }
+
+        public List<MethodOutput> Outputs { get; set; }
 
         public IOutputDescription OutputDescription { get; set; }
 
@@ -83,19 +106,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         #region ToString
 
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
-
-        #endregion
-
-        #region ToXml
-
-        public XElement ToXml()
-        {
-            return new XElement("ServiceMethod");
-        }
+        public override string ToString() => JsonConvert.SerializeObject(this);
 
         #endregion
 

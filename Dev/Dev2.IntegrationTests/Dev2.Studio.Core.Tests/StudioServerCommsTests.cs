@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,7 @@
 using System;
 using System.Threading;
 using Dev2.Network;
-using Dev2.Studio.Core.Interfaces;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests
@@ -35,7 +34,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests
         [TestMethod]
         public void EnvironmentConnectionWithServerAuthenticationExpectedClientDetailsRecieved()
         {
-            IEnvironmentConnection conn = CreateConnection();
+            var conn = CreateConnection();
 
             conn.Connect(Guid.Empty);
             // The IsConnected property of the EnvironmentConnection references the TCPDispatch Client
@@ -51,14 +50,14 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests
         [TestMethod]
         public void EnvironmentConnectionReconnectToServerExpecetedClientConnectionSuccessful()
         {
-            IEnvironmentConnection conn = CreateConnection();
+            var conn = CreateConnection();
 
             conn.Connect(Guid.Empty);
             conn.Disconnect();
             Thread.Sleep(100);
             conn.Connect(Guid.Empty);
             Thread.Sleep(500);
-            bool afterReconnection = conn.IsConnected;
+            var afterReconnection = conn.IsConnected;
 
             Assert.IsTrue(afterReconnection);
 
@@ -76,7 +75,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests
 
         static IEnvironmentConnection CreateConnection()
         {
-            return CreateConnection(ServerSettings.DsfAddress);
+            return CreateConnection("http://localhost:3142/dsf");
         }
 
         static IEnvironmentConnection CreateConnection(string appServerUri)

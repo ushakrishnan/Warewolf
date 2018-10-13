@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,22 +10,20 @@
 
 using System;
 using System.Activities.Presentation.Model;
-using Dev2.Studio.Core.Interfaces;
 
-// ReSharper disable once CheckNamespace
+
+
 namespace Dev2.Studio.Core.Messages
 {
     public class EditActivityMessage : IMessage
     {
-        public ModelItem ModelItem { get; set; }
-        public Guid ParentEnvironmentID { get; set; }
-        public IEnvironmentRepository EnvironmentRepository { get; set; }
+        public ModelItem ModelItem { get; private set; }
+        public Guid ParentEnvironmentID { get; private set; }
 
-        public EditActivityMessage(ModelItem modelItem, Guid parentEnvironmentID, IEnvironmentRepository environmentRepository)
+        public EditActivityMessage(ModelItem modelItem, Guid parentEnvironmentID)
         {
             ModelItem = modelItem;
             ParentEnvironmentID = parentEnvironmentID;
-            EnvironmentRepository = environmentRepository ?? Core.EnvironmentRepository.Instance;
         }
     }
 }

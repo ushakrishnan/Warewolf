@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,10 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
+using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.Settings;
 using Dev2.Runtime.ESB.Management.Services;
@@ -22,11 +22,10 @@ using Dev2.Services.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class SettingsWriteTests
     {
 
@@ -41,13 +40,13 @@ namespace Dev2.Tests.Runtime.Services
 
         ExecuteMessage ToMsg(StringBuilder sb)
         {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             return serializer.Deserialize<ExecuteMessage>(sb);
         }
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SettingsWrite_Execute")]
         [ExpectedException(typeof(InvalidDataException))]
@@ -60,7 +59,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SettingsWrite_Execute")]
         [ExpectedException(typeof(InvalidDataException))]
@@ -73,7 +72,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SettingsWrite_Execute")]
         public void SettingsWrite_Execute_SettingsValuePassedNotValidJSON_ExceptionThrown()
@@ -88,7 +87,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("SettingsWrite_Execute")]
         public void SettingsWrite_Execute_SettingsWriteValuePassedValidJSON_ShouldDoSecurityWrite()
@@ -100,10 +99,11 @@ namespace Dev2.Tests.Runtime.Services
             var serializeObject = JsonConvert.SerializeObject(settings);
             var settingsWrite = new SettingsWrite();
             //------------Execute Test---------------------------
-            StringBuilder execute = settingsWrite.Execute(new Dictionary<string, StringBuilder> { { "Settings", new StringBuilder(serializeObject) } }, null);
+            var execute = settingsWrite.Execute(new Dictionary<string, StringBuilder> { { "Settings", new StringBuilder(serializeObject) } }, null);
             //------------Assert Results-------------------------
-            Assert.IsTrue(File.Exists("secure.config"));
-            File.Delete("secure.config");
+            var serverSecuritySettingsFile = EnvironmentVariables.ServerSecuritySettingsFile;
+            Assert.IsTrue(File.Exists(serverSecuritySettingsFile));
+            File.Delete(serverSecuritySettingsFile);
 
             var msg = ToMsg(execute);
 
@@ -114,7 +114,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SettingsWrite_HandlesType_ReturnsSettingsWriteService()
         {
             var esb = new SettingsWrite();
@@ -126,7 +126,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SettingsWrite_CreateServiceEntry_ReturnsDynamicService()
         {
             var esb = new SettingsWrite();
@@ -143,5 +143,32 @@ namespace Dev2.Tests.Runtime.Services
 
         #endregion
 
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var settingsWrite = new SettingsWrite();
+
+            //------------Execute Test---------------------------
+            var resId = settingsWrite.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var settingsWrite = new SettingsWrite();
+
+            //------------Execute Test---------------------------
+            var resId = settingsWrite.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
     }
 }

@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -21,43 +20,28 @@ namespace Dev2.Activities.Designers2.Sequence
         public Small()
         {
             InitializeComponent();
-            DropPoint.PreviewDragOver += DropPoint_OnDragOver;
             DropPoint.PreviewDrop += DropPoint_OnPreviewDrop;
             _dropEnabledActivityDesignerUtils = new DropEnabledActivityDesignerUtils();
         }
 
-        void AllowDrag(DragEventArgs e)
-        {
-            if(_dropEnabledActivityDesignerUtils != null)
-            {
-                var dropEnabled = _dropEnabledActivityDesignerUtils.LimitDragDropOptions(e.Data);
-                if(!dropEnabled)
-                {
-                    e.Effects = DragDropEffects.None;
-                    e.Handled = true;
-                }
-            }
-        }
-
-        protected override IInputElement GetInitialFocusElement()
-        {
-            return InitialFocusElement;
-        }
+        protected override IInputElement GetInitialFocusElement() => InitialFocusElement;
 
         void DropPoint_OnPreviewDrop(object sender, DragEventArgs e)
         {
-            var viewModel = DataContext as SequenceDesignerViewModel;
-            if(viewModel != null)
+            if (DataContext is SequenceDesignerViewModel viewModel)
             {
+                if (_dropEnabledActivityDesignerUtils != null)
+                {
+                    var dropEnabled = _dropEnabledActivityDesignerUtils.LimitDragDropOptions(e.Data);
+                    if (!dropEnabled)
+                    {
+                        e.Effects = DragDropEffects.None;
+                        e.Handled = true;
+                    }
+                }
                 viewModel.DoDrop(e.Data);
             }
             DropPoint.Item = null;
-        }
-
-        void DropPoint_OnDragOver(object sender, DragEventArgs e)
-        {
-            AllowDrag(e);
-            OnDragOver(e);
         }
     }
 }

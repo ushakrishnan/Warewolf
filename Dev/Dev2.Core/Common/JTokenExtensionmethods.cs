@@ -1,6 +1,6 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,27 +14,17 @@ namespace Dev2
 {
     public static class JTokenExtensionmethods
     {
-        public static bool IsEnumerable(this JToken token)
-        {
-            return token is JArray;
-        }
+        public static bool IsEnumerable(this JToken token) => token is JArray;
 
-        public static bool IsPrimitive(this JToken token)
-        {
-            return token is JValue;
-        }
+        public static bool IsPrimitive(this JToken token) => token is JValue;
 
-        public static bool IsObject(this JToken token)
-        {
-            return token is JObject;
-        }
+        public static bool IsObject(this JToken token) => token is JObject;
 
         public static bool IsEnumerableOfPrimitives(this JToken property)
         {
-            bool returnValue = false;
-            var array = property as JArray;
+            var returnValue = false;
 
-            if (array != null && array.Count > 0)
+            if (property is JArray array && array.Count > 0)
             {
                 returnValue = array[0].IsPrimitive();
             }

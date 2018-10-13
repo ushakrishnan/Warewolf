@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,11 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management;
 using Dev2.Runtime.Execution;
@@ -27,13 +26,12 @@ using Newtonsoft.Json;
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class TerminateExecutionTest
     {
-        private static readonly Guid WorkspaceID = Guid.Parse("34c0ce48-1f02-4a47-ad51-19ee3789ed4c");
-        private static readonly Guid ResourceID = Guid.Parse("34c0ce48-1f02-4a47-ad51-19ee3789ed4c");
-        private static readonly object SyncRoot = new object();
-        private const string HandleType = "TerminateExecutionService";
+        static readonly Guid WorkspaceID = Guid.Parse("34c0ce48-1f02-4a47-ad51-19ee3789ed4c");
+        static readonly Guid ResourceID = Guid.Parse("34c0ce48-1f02-4a47-ad51-19ee3789ed4c");
+        static readonly object SyncRoot = new object();
+        const string HandleType = "TerminateExecutionService";
 
         [TestInitialize]
         public void TerminateExecutionInit()
@@ -47,7 +45,7 @@ namespace Dev2.Tests.Runtime.Services
             Monitor.Exit(SyncRoot);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void CreateServiceEntryExpectsDynamicService()
         {
             var terminateExecution = new TerminateExecution();
@@ -57,21 +55,9 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("<DataList><Roles ColumnIODirection=\"Input\"/><ResourceID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>", ds.DataListSpecification.ToString());
         }
 
-        [TestMethod]
-        public void ExecuteExpectTaskTerminated()
-        {
-            ExecutableServiceRepository.Instance.Clear();
-            var service = GetExecutableService();
-            ExecutableServiceRepository.Instance.Add(service.Object);
-            var terminateExecution = new TerminateExecution();
-            terminateExecution.Execute(GetDictionary(), GetWorkspace().Object);
-            service.Verify(s => s.Terminate(), Times.Once());
-        }
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ExecuteExpectSuccessResult()
         {
-            ExecutableServiceRepository.Instance.Clear();
             var service = GetExecutableService();
             ExecutableServiceRepository.Instance.Add(service.Object);
             var terminateExecution = new TerminateExecution();
@@ -84,11 +70,11 @@ namespace Dev2.Tests.Runtime.Services
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ExecuteExpectFailResultIfNoServiceExist()
         {
-            ExecutableServiceRepository.Instance.Clear();
             const string Expected = "Message: Failed to stop the workflow execution. It may have completed already.";
+            ExecutableServiceRepository.Instance.Clear();
             var terminateExecution = new TerminateExecution();
             var result = terminateExecution.Execute(GetDictionary(), GetWorkspace().Object);
 
@@ -97,10 +83,9 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Expected, obj.Message.ToString());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void TwoServicesAddedExpectServiceWithOneAssociatedServiceFromRepository()
         {
-            ExecutableServiceRepository.Instance.Clear();
             var service1 = GetExecutableService();
             var service2 = GetExecutableService();
             service2.SetupGet(executableService => executableService.ParentID).Returns(service1.Object.ID);
@@ -110,8 +95,8 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsTrue(service != null && service.AssociatedServices.Count == 1);
         }
 
-        [TestMethod]
-        public void ThreeServicesAddedTwoRemovedExpectsOneRepository()
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void ThreeServicesAddedOneRemovedExpectsTwoInRepository()
         {
             var guid = Guid.NewGuid();
             ExecutableServiceRepository.Instance.Clear();
@@ -131,22 +116,49 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(0, service.AssociatedServices.Count);
         }
 
-        private Dictionary<string, StringBuilder> GetDictionary()
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var terminateExecution = new TerminateExecution();
+
+            //------------Execute Test---------------------------
+            var resId = terminateExecution.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var terminateExecution = new TerminateExecution();
+
+            //------------Execute Test---------------------------
+            var resId = terminateExecution.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+        Dictionary<string, StringBuilder> GetDictionary()
         {
             var dict = new Dictionary<string, StringBuilder>();
-            // ReSharper disable ImpureMethodCallOnReadonlyValueField
+
             dict["ResourceID"] = new StringBuilder(ResourceID.ToString());
             return dict;
         }
 
-        private Mock<IWorkspace> GetWorkspace()
+        Mock<IWorkspace> GetWorkspace()
         {
             var mock = new Mock<IWorkspace>();
             mock.Setup(w => w.ID).Returns(WorkspaceID);
             return mock;
         }
 
-        private static Mock<IExecutableService> GetExecutableService()
+        static Mock<IExecutableService> GetExecutableService()
         {
             var service = new Mock<IExecutableService>();
             service.SetupGet(s => s.ID).Returns(ResourceID);
@@ -155,7 +167,7 @@ namespace Dev2.Tests.Runtime.Services
             return service;
         }
 
-        private ExecuteMessage ConvertToMsg(string payload)
+        ExecuteMessage ConvertToMsg(string payload)
         {
             return JsonConvert.DeserializeObject<ExecuteMessage>(payload);
         }

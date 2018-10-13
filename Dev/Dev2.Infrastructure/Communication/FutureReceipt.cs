@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +9,7 @@
 */
 
 using System;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Communication
 {
@@ -30,17 +30,17 @@ namespace Dev2.Communication
         {
             if(PartID < 0)
             {
-                throw new Exception("Invalid PartID");
+                throw new Exception(ErrorResource.InvalidPartID);
             }
 
             if(string.IsNullOrEmpty(User))
             {
-                throw new Exception("Invalid User");
+                throw new Exception(ErrorResource.InvalidUser);
             }
 
             if(RequestID == Guid.Empty)
             {
-                throw new Exception("Invalid RequestID");
+                throw new Exception(ErrorResource.InvalidRequestID);
             }
 
             return RequestID + "-" + PartID + "-" + User + "!";

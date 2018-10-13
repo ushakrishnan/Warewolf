@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System.ComponentModel;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.DataList.Contract.Binary_Objects
 {
@@ -20,13 +20,14 @@ namespace Dev2.DataList.Contract.Binary_Objects
     {
         #region Fields
 
-        private string _field;
-        private string _recordset;
-        private string _displayValue;
-        private bool _isRecordset;
-        private string _recordsetIndex;
-        private string _value;
-        private enRecordsetIndexType _recordsetIndexType;
+        string _field;
+        string _recordset;
+        string _displayValue;
+        bool _canHaveMutipleRows;
+        string _index;
+        string _value;
+        enRecordsetIndexType _recordsetIndexType;
+        bool _isObject;
 
         #endregion Fields
 
@@ -60,16 +61,16 @@ namespace Dev2.DataList.Contract.Binary_Objects
             }
         }
 
-        public string RecordsetIndex
+        public string Index
         {
             get
             {
-                return _recordsetIndex;
+                return _index;
             }
             set
             {
-                _recordsetIndex = value;
-                OnNotifyPropertyChange("RecordsetIndex");
+                _index = value;
+                OnNotifyPropertyChange("Index");
             }
         }
 
@@ -86,16 +87,29 @@ namespace Dev2.DataList.Contract.Binary_Objects
             }
         }
 
-        public bool IsRecordset
+        public bool CanHaveMutipleRows
         {
             get
             {
-                return _isRecordset;
+                return _canHaveMutipleRows;
             }
             set
             {
-                _isRecordset = value;
-                OnNotifyPropertyChange("IsRecordset");
+                _canHaveMutipleRows = value;
+                OnNotifyPropertyChange("CanHaveMutipleRows");
+            }
+        }
+        public string ParentName { get; set; }
+        public bool IsObject
+        {
+            get
+            {
+                return _isObject;
+            }
+            set
+            {
+                _isObject = value;
+                OnNotifyPropertyChange("IsObject");
             }
         }
 
@@ -144,10 +158,7 @@ namespace Dev2.DataList.Contract.Binary_Objects
 
         protected void OnNotifyPropertyChange(string propertyName)
         {
-            if(PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
 

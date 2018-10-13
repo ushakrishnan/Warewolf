@@ -1,16 +1,16 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 using System;
 using System.Globalization;
-using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 
 namespace Dev2.Common.DateAndTime.TO
 {
@@ -66,12 +66,15 @@ namespace Dev2.Common.DateAndTime.TO
                     Hours += 12;
                 }
             }
-            else if (AmPm == DateTimeAmPm.am)
+            else
             {
-                Is24H = true;
-                if (Hours >= 12)
+                if (AmPm == DateTimeAmPm.am)
                 {
-                    Hours -= 12;
+                    Is24H = true;
+                    if (Hours >= 12)
+                    {
+                        Hours -= 12;
+                    }
                 }
             }
         }
@@ -89,7 +92,7 @@ namespace Dev2.Common.DateAndTime.TO
             {
                 if (DaysOfYear != 0)
                 {
-                    DateTime tmpDate = new DateTime(Years, 1, 1).AddDays(DaysOfYear - 1);
+                    var tmpDate = new DateTime(Years, 1, 1).AddDays(DaysOfYear - 1);
                     Months = tmpDate.Month;
 
                     if (Days == 0)
@@ -99,7 +102,7 @@ namespace Dev2.Common.DateAndTime.TO
                 }
                 else if (Weeks != 0)
                 {
-                    DateTime tmpDate = CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(Years, 1, 1), Weeks);
+                    var tmpDate = CultureInfo.CurrentCulture.Calendar.AddWeeks(new DateTime(Years, 1, 1), Weeks);
                     Months = tmpDate.Month;
 
                     if (Days == 0)
@@ -120,7 +123,7 @@ namespace Dev2.Common.DateAndTime.TO
                 if (DaysOfWeek != 0)
                 {
                     var tmpDate = new DateTime(Years, Months, Days);
-                    Days = tmpDate.AddDays(DaysOfWeek - DateTimeParser.GetDayOfWeekInt(tmpDate.DayOfWeek)).Day;
+                    Days = tmpDate.AddDays(DaysOfWeek - DateTimeParserHelper.GetDayOfWeekInt(tmpDate.DayOfWeek)).Day;
                 }
             }
 

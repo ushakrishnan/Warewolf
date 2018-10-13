@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,15 +26,9 @@ namespace Dev2.Runtime.WebServer.Security
             _items = items;
         }
 
-        public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-        {
-            return _items.GetEnumerator();
-        }
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _items.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public IEnumerable<string> GetValues(string key)
         {
@@ -53,10 +46,7 @@ namespace Dev2.Runtime.WebServer.Security
             return values;
         }
 
-        public string Get(string key)
-        {
-            return this[key];
-        }
+        public string Get(string key) => this[key];
 
         public string this[string key]
         {

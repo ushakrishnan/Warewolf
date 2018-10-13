@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +15,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Xml.Linq;
 using Dev2.Common;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.Security
 {
@@ -40,11 +40,16 @@ namespace Dev2.Runtime.Security
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
             }
         }
 
-        public HostSecureConfig(NameValueCollection settings, bool shouldProtectConfig = true)
+        public HostSecureConfig(NameValueCollection settings)
+            : this(settings, true)
+        {
+        }
+
+        public HostSecureConfig(NameValueCollection settings, bool shouldProtectConfig)
         {
             Initialize(settings, shouldProtectConfig);
         }
@@ -80,8 +85,7 @@ namespace Dev2.Runtime.Security
             }
 
             SystemKey = CreateKey(settings["SystemKey"]);
-            Guid serverID;
-            if(Guid.TryParse(settings["ServerID"], out serverID) && serverID != Guid.Empty)
+            if (Guid.TryParse(settings["ServerID"], out Guid serverID) && serverID != Guid.Empty)
             {
                 ServerID = serverID;
                 ServerKey = CreateKey(settings["ServerKey"]);
@@ -104,7 +108,7 @@ namespace Dev2.Runtime.Security
 
                 SaveConfig(newSettings);
 
-                if(shouldProtectConfig)
+                if (shouldProtectConfig)
                 {
                     ProtectConfig();
                 }
@@ -115,13 +119,13 @@ namespace Dev2.Runtime.Security
 
         #region EnsureSecureConfigFileExists
 
-        private void EnsureSecureConfigFileExists()
+        void EnsureSecureConfigFileExists()
         {
             ConfigurationManager.RefreshSection(SectionName);
             // We need to check both the live and development paths ;)
-            if(!File.Exists(FileName))
+            if (!File.Exists(FileName))
             {
-                Dev2Logger.Log.Info("File not found: " + FileName);
+                Dev2Logger.Info(string.Format(ErrorResource.FileNotFound, FileName), GlobalConstants.WarewolfInfo);
                 var newSettings = new NameValueCollection();
                 newSettings["ServerID"] = "";
                 newSettings["ServerKey"] = "";
@@ -166,22 +170,18 @@ namespace Dev2.Runtime.Security
             {
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 var section = config.GetSection(SectionName);
-                if(section != null)
+                if (section != null && !section.SectionInformation.IsProtected && !section.ElementInformation.IsLocked)
                 {
-                    if(!section.SectionInformation.IsProtected)
-                    {
-                        if(!section.ElementInformation.IsLocked)
-                        {
-                            section.SectionInformation.ProtectSection("RsaProtectedConfigurationProvider");
-                            section.SectionInformation.ForceSave = true;
-                            config.Save(ConfigurationSaveMode.Full);
-                        }
-                    }
+                    section.SectionInformation.ProtectSection("RsaProtectedConfigurationProvider");
+                    section.SectionInformation.ForceSave = true;
+                    config.Save(ConfigurationSaveMode.Full);
                 }
+
+
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error(e);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
                 throw;
             }
         }
@@ -215,9 +215,8 @@ namespace Dev2.Runtime.Security
         /// <param name="serverKey">The server key.</param>
         /// <param name="systemKey">The system key.</param>
         /// <returns>a <see cref="NameValueCollection"/> configuration.</returns>
-        public static NameValueCollection CreateSettings(string serverID, string serverKey, string systemKey)
-        {
-            return new NameValueCollection
+
+        public static NameValueCollection CreateSettings(string serverID, string serverKey, string systemKey) => new NameValueCollection
             {
                 {
                     "ServerID", serverID
@@ -229,7 +228,6 @@ namespace Dev2.Runtime.Security
                     "SystemKey", systemKey
                 }
             };
-        }
 
         #endregion
 

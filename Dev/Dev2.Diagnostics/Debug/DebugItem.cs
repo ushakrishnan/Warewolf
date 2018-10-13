@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,16 +14,13 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml;
-using System.Xml.Schema;
-using System.Xml.Serialization;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Utils;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Diagnostics
-// ReSharper restore CheckNamespace
+
 {
     [Serializable]
     public class DebugItem : IDebugItem
@@ -36,8 +32,8 @@ namespace Dev2.Diagnostics
             + new string(Path.GetInvalidPathChars());
 
         readonly string _tempPath;
-        private readonly Guid _itemId;
-        private readonly StringBuilder _stringBuilder;
+        readonly Guid _itemId;
+        readonly StringBuilder _stringBuilder;
         string _fileName;
         bool _isMoreLinkCreated;
 
@@ -45,12 +41,13 @@ namespace Dev2.Diagnostics
 
         #region public properties
 
-        public const int MaxItemDispatchCount = 10;
-        public const int MaxCharDispatchCount = 150;
-        public const int ActCharDispatchCount = 100;
+        public static readonly int MaxItemDispatchCount = 10;
+        public static readonly int MaxCharDispatchCount = 150;
+        public static readonly int ActCharDispatchCount = 100;
 
-        public static List<DebugItem> EmptyList = new List<DebugItem>();
         public List<IDebugItemResult> ResultsList { get; set; }
+        public static List<DebugItem> EmptyList { get => emptyList; set => emptyList = value; }
+        static List<DebugItem> emptyList = new List<DebugItem>();
 
         #endregion properties
 
@@ -83,54 +80,49 @@ namespace Dev2.Diagnostics
 
         #region Contains
 
-        public bool Contains(string filterText)
-        {
-            return ResultsList.Any(r => r.Value.ContainsSafe(filterText) || r.GroupName.ContainsSafe(filterText));
-        }
+        public bool Contains(string filterText) => ResultsList.Any(r => r.Value.ContainsSafe(filterText) || r.GroupName.ContainsSafe(filterText));
 
         #endregion
 
         #region Public Methods
 
-        public void Add(IDebugItemResult itemToAdd, bool isDeserialize = false)
+        public void Add(IDebugItemResult itemToAdd) => Add(itemToAdd, false);
+        public void Add(IDebugItemResult itemToAdd, bool isDeserialize)
         {
-            if(!string.IsNullOrWhiteSpace(itemToAdd.GroupName) && itemToAdd.GroupIndex > MaxItemDispatchCount)
+
+            if (!string.IsNullOrWhiteSpace(itemToAdd.GroupName) && itemToAdd.GroupIndex > MaxItemDispatchCount && !isDeserialize)
             {
-
-                if(!isDeserialize)
+                _fileName = string.Format("{0}.txt", _itemId);
+                if (itemToAdd.GroupIndex == MaxItemDispatchCount + 1 && !_isMoreLinkCreated)
                 {
-                    _fileName = string.Format("{0}.txt", _itemId);
-                    if(itemToAdd.GroupIndex == MaxItemDispatchCount + 1 && !_isMoreLinkCreated)
-                    {
-                        ClearFile(_fileName);
-                        _stringBuilder.AppendLine(itemToAdd.GetMoreLinkItem());
-                        ResultsList.Add(new DebugItemResult { MoreLink = SaveFile(_stringBuilder.ToString(), _fileName), GroupName = itemToAdd.GroupName, GroupIndex = itemToAdd.GroupIndex });
-                        _stringBuilder.Clear();
-                        _isMoreLinkCreated = true;
-                        return;
-                    }
-
+                    ClearFile(_fileName);
                     _stringBuilder.AppendLine(itemToAdd.GetMoreLinkItem());
-                    if(itemToAdd.Type == DebugItemResultType.Value ||
-                        itemToAdd.Type == DebugItemResultType.Variable)
-                    {
-                        SaveFile(_stringBuilder.ToString(), _fileName);
-                        _stringBuilder.Clear();
-                    }
-
-
-                    if(_stringBuilder.Length > 10000)
-                    {
-                        SaveFile(_stringBuilder.ToString(), _fileName);
-                        _stringBuilder.Clear();
-                    }
-
+                    ResultsList.Add(new DebugItemResult { MoreLink = SaveFile(_stringBuilder.ToString(), _fileName), GroupName = itemToAdd.GroupName, GroupIndex = itemToAdd.GroupIndex });
+                    _stringBuilder.Clear();
+                    _isMoreLinkCreated = true;
                     return;
                 }
 
+                _stringBuilder.AppendLine(itemToAdd.GetMoreLinkItem());
+                if (itemToAdd.Type == DebugItemResultType.Value ||
+                    itemToAdd.Type == DebugItemResultType.Variable)
+                {
+                    SaveFile(_stringBuilder.ToString(), _fileName);
+                    _stringBuilder.Clear();
+                }
+
+
+                if (_stringBuilder.Length > 10000)
+                {
+                    SaveFile(_stringBuilder.ToString(), _fileName);
+                    _stringBuilder.Clear();
+                }
+
+                return;
             }
 
-            if(itemToAdd.Type == DebugItemResultType.Value ||
+
+            if (itemToAdd.Type == DebugItemResultType.Value ||
                 itemToAdd.Type == DebugItemResultType.Variable)
             {
                 TryCache(itemToAdd);
@@ -151,10 +143,7 @@ namespace Dev2.Diagnostics
             }
         }
 
-        public IList<IDebugItemResult> FetchResultsList()
-        {
-            return ResultsList;
-        }
+        public IList<IDebugItemResult> FetchResultsList() => ResultsList;
 
         #region TryCache
 
@@ -188,7 +177,7 @@ namespace Dev2.Diagnostics
 
             var path = Path.Combine(_tempPath, fileName);
             File.AppendAllText(path, contents);
-            string linkUri = string.Format(EnvironmentVariables.WebServerUri + "/Services/{0}?DebugItemFilePath={1}", "FetchDebugItemFileService", path);
+            var linkUri = string.Format(EnvironmentVariables.WebServerUri + "/Services/{0}?DebugItemFilePath={1}", "FetchDebugItemFileService", path);
 
             return linkUri;
         }
@@ -223,51 +212,6 @@ namespace Dev2.Diagnostics
         #endregion
 
         #endregion
-
-        #region IXmlSerializable
-
-        public XmlSchema GetSchema()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void ReadXml(XmlReader reader)
-        {
-            reader.MoveToContent();
-
-            if(reader.ReadToDescendant("DebugItemResults"))
-            {
-                ResultsList = new List<IDebugItemResult>();
-                reader.ReadStartElement();
-                while(reader.MoveToContent() == XmlNodeType.Element && reader.LocalName == "DebugItemResult")
-                {
-                    var item = new DebugItemResult();
-                    item.ReadXml(reader);
-                    ResultsList.Add(item);
-                }
-
-                if(reader.NodeType == XmlNodeType.EndElement && reader.Name == "DebugItemResults")
-                {
-                    reader.ReadEndElement();
-                }
-            }
-
-            reader.Read();
-        }
-
-        public void WriteXml(XmlWriter writer)
-        {
-            writer.WriteStartElement("DebugItemResults");
-            writer.WriteAttributeString("Count", ResultsList.Count.ToString(CultureInfo.InvariantCulture));
-
-            var resultSer = new XmlSerializer(typeof(DebugItemResult));
-            foreach(var other in ResultsList)
-            {
-                resultSer.Serialize(writer, other);
-            }
-            writer.WriteEndElement();
-        }
-
-        #endregion
+        
     }
 }

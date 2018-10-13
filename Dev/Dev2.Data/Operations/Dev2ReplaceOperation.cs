@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +9,16 @@
 */
 
 using System.Text.RegularExpressions;
+using Dev2.Common.Interfaces.Data.TO;
 using Dev2.Data.Interfaces;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 
 namespace Dev2.Data.Operations
 {
     public class Dev2ReplaceOperation : IDev2ReplaceOperation
     {
-        private const RegexOptions NoneCompiled = RegexOptions.None | RegexOptions.Compiled;
-        private const RegexOptions IgnoreCaseCompiled = RegexOptions.IgnoreCase | RegexOptions.Compiled;
+        const RegexOptions NoneCompiled = RegexOptions.None | RegexOptions.Compiled;
+        const RegexOptions IgnoreCaseCompiled = RegexOptions.IgnoreCase | RegexOptions.Compiled;
 
         #region Ctor
 
@@ -42,18 +42,18 @@ namespace Dev2.Data.Operations
         /// <param name="errors">The errors.</param>
         /// <param name="replaceCount">The replace count.</param>
         /// <returns></returns>
-        public string Replace(string stringToSearch, string findString, string replacementString, bool caseMatch, out ErrorResultTO errors, ref int replaceCount)
+        public string Replace(string stringToSearch, string findString, string replacementString, bool caseMatch, out IErrorResultTO errors, ref int replaceCount)
         {
 
             var oldString = stringToSearch;
-            ErrorResultTO allErrors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
             errors = new ErrorResultTO();
             allErrors.MergeErrors(errors);
 
             var regexOptions = caseMatch ? NoneCompiled : IgnoreCaseCompiled;
 
-            Regex regex = new Regex(Regex.Escape(findString), regexOptions);
-            string tmpVal = oldString;
+            var regex = new Regex(Regex.Escape(findString), regexOptions);
+            var tmpVal = oldString;
             replaceCount += regex.Matches(tmpVal).Count;
             var replaceValue = regex.Replace(tmpVal, replacementString);
             errors = allErrors;

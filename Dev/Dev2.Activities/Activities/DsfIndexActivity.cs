@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,27 +13,32 @@ using System.Activities;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Dev2;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
 using Dev2.Data.Interfaces;
 using Dev2.Data.Operations;
-using Dev2.Data.Util;
-using Dev2.DataList.Contract;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Dev2.Validation;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
-// ReSharper disable CheckNamespace
+
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-// ReSharper restore CheckNamespace
+
 {
-    public class DsfIndexActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("Data-FindIndex", "Find Index", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Data", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Data_Find_Index")]
+    public class DsfIndexActivity : DsfActivityAbstract<string>, IEquatable<DsfIndexActivity>
     {
 
         #region Properties
@@ -107,19 +111,13 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #endregion Ctor
 
-        // ReSharper disable RedundantOverridenMember
-        protected override void CacheMetadata(NativeActivityMetadata metadata)
-        {
-            base.CacheMetadata(metadata);
-        }
-        // ReSharper restore RedundantOverridenMember
+        public override List<string> GetOutputs() => new List<string> { Result };
 
-        /// <summary>
-        /// The execute method that is called when the activity is executed at run time and will hold all the logic of the activity
-        /// </summary>       
+        protected override void CacheMetadata(NativeActivityMetadata metadata) => base.CacheMetadata(metadata);
+
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
 
             ExecuteTool(dataObject, 0);
         }
@@ -127,112 +125,17 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
             IDev2IndexFinder indexFinder = new Dev2IndexFinder();
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var errors = new ErrorResultTO();
             InitializeDebug(dataObject);
 
             try
             {
-                var outerIteratorCollection = new WarewolfListIterator();
-                var innerIteratorCollection = new WarewolfListIterator();
-
-                allErrors.MergeErrors(errors);
-
-                #region Iterate and Find Index
-
-                if(dataObject.IsDebugMode())
-                {
-                    AddDebugInputItem(new DebugEvalResult(InField, "In Field", dataObject.Environment, update));
-                    AddDebugInputItem(new DebugItemStaticDataParams(Index, "Index"));
-                    AddDebugInputItem(new DebugEvalResult(Characters, "Characters", dataObject.Environment, update));
-                    AddDebugInputItem(new DebugItemStaticDataParams(Direction, "Direction"));
-                }
-
-                var itrChar = new WarewolfIterator(dataObject.Environment.Eval(Characters, update));
-                outerIteratorCollection.AddVariableToIterateOn(itrChar);
-
-                var completeResultList = new List<string>();
-                if (String.IsNullOrEmpty(InField))
-                    allErrors.AddError("'In Field' is blank");
-                else if (String.IsNullOrEmpty(Characters))
-                    allErrors.AddError("'Characters' is blank");
-                else
-                {
-
-
-                    while (outerIteratorCollection.HasMoreData())
-                    {
-                        allErrors.MergeErrors(errors);
-                        errors.ClearErrors();
-                        var itrInField = new WarewolfIterator(dataObject.Environment.Eval(InField, update));
-                        innerIteratorCollection.AddVariableToIterateOn(itrInField);
-
-                        string chars = outerIteratorCollection.FetchNextValue(itrChar);
-                        while (innerIteratorCollection.HasMoreData())
-                        {
-                            if (!string.IsNullOrEmpty(InField) && !string.IsNullOrEmpty(Characters))
-                            {
-                                var val = innerIteratorCollection.FetchNextValue(itrInField);
-                                if (val != null)
-                                {
-                                    IEnumerable<int> returedData = indexFinder.FindIndex(val, Index, chars, Direction, MatchCase, StartIndex);
-                                    completeResultList.AddRange(returedData.Select(value => value.ToString(CultureInfo.InvariantCulture)).ToList());
-                                    //2013.06.03: Ashley Lewis for bug 9498 - handle multiple regions in result
-                                }
-                            }
-                        }
-                    }
-                    var rule = new IsSingleValueRule(() => Result);
-                    var single = rule.Check();
-                    if (single != null)
-                    {
-                        allErrors.AddError(single.Message);
-                    }
-                    else
-                    {
-                        if (DataListUtil.IsValueRecordset(Result))
-                        {
-                            var rsType = DataListUtil.GetRecordsetIndexType(Result);
-                            if (rsType == enRecordsetIndexType.Numeric)
-                            {
-                                dataObject.Environment.Assign(Result, string.Join(",", completeResultList), update);
-                                allErrors.MergeErrors(errors);
-                            }
-                            else
-                            {
-                                var idx = 1;
-                                foreach (var res in completeResultList)
-                                {
-                                    if (rsType == enRecordsetIndexType.Blank)
-                                    {
-                                        dataObject.Environment.Assign(Result, res, update);
-                                    }
-                                    if (rsType == enRecordsetIndexType.Star)
-                                    {
-                                        var expression = DataListUtil.CreateRecordsetDisplayValue(DataListUtil.ExtractRecordsetNameFromValue(Result), DataListUtil.ExtractFieldNameFromValue(Result), idx.ToString());
-                                        dataObject.Environment.Assign(DataListUtil.AddBracketsToValueIfNotExist(expression), res, update);
-                                        idx++;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            dataObject.Environment.Assign(Result, string.Join(",", completeResultList), update);
-                        }
-                        allErrors.MergeErrors(errors);
-                        if (!allErrors.HasErrors() && dataObject.IsDebugMode())
-                        {
-                            AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
-                        }
-                    }
-                }
-
-                #endregion
+                TryExecute(dataObject, update, indexFinder, allErrors, errors);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Dev2Logger.Log.Error("DSFFindActivity", e);
+                Dev2Logger.Error("DSFFindActivity", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -240,7 +143,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 #region Handle Errors
 
                 var hasErrors = allErrors.HasErrors();
-                if(hasErrors)
+                if (hasErrors)
                 {
                     DisplayAndWriteError("DsfIndexActivity", allErrors);
                     var errorString = allErrors.MakeDisplayReady();
@@ -249,14 +152,93 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
                 #endregion
 
-                if(dataObject.IsDebugMode())
+                if (dataObject.IsDebugMode())
                 {
-                    if(hasErrors)
+                    if (hasErrors)
                     {
                         AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
                     }
                     DispatchDebugState(dataObject, StateType.Before, update);
                     DispatchDebugState(dataObject, StateType.After, update);
+                }
+            }
+        }
+
+        void TryExecute(IDSFDataObject dataObject, int update, IDev2IndexFinder indexFinder, ErrorResultTO allErrors, ErrorResultTO errors)
+        {
+            var outerIteratorCollection = new WarewolfListIterator();
+            var innerIteratorCollection = new WarewolfListIterator();
+
+            allErrors.MergeErrors(errors);
+
+            #region Iterate and Find Index
+
+            if (dataObject.IsDebugMode())
+            {
+                AddDebugInputItem(new DebugEvalResult(InField, "In Field", dataObject.Environment, update));
+                AddDebugInputItem(new DebugItemStaticDataParams(Index, "Index"));
+                AddDebugInputItem(new DebugEvalResult(Characters, "Characters", dataObject.Environment, update));
+                AddDebugInputItem(new DebugItemStaticDataParams(Direction, "Direction"));
+            }
+
+            var itrChar = new WarewolfIterator(dataObject.Environment.Eval(Characters, update));
+            outerIteratorCollection.AddVariableToIterateOn(itrChar);
+
+            var completeResultList = new List<string>();
+            if (String.IsNullOrEmpty(InField))
+            {
+                allErrors.AddError(string.Format(ErrorResource.IsBlank, "'In Field'"));
+            }
+            else if (String.IsNullOrEmpty(Characters))
+            {
+                allErrors.AddError(string.Format(ErrorResource.IsBlank, "'Characters'"));
+            }
+            else
+            {
+                while (outerIteratorCollection.HasMoreData())
+                {
+                    allErrors.MergeErrors(errors);
+                    errors.ClearErrors();
+                    var itrInField = new WarewolfIterator(dataObject.Environment.Eval(InField, update));
+                    innerIteratorCollection.AddVariableToIterateOn(itrInField);
+
+                    var chars = outerIteratorCollection.FetchNextValue(itrChar);
+                    while (innerIteratorCollection.HasMoreData())
+                    {
+                        CheckForErrors(dataObject, update, indexFinder, allErrors, errors, innerIteratorCollection, completeResultList, itrInField, chars);
+                        completeResultList = new List<string>();
+                    }
+                }
+                if (!allErrors.HasErrors() && dataObject.IsDebugMode())
+                {
+                    AddDebugOutputItem(new DebugEvalResult(Result, "", dataObject.Environment, update));
+                }
+
+            }
+
+            #endregion
+        }
+
+        private void CheckForErrors(IDSFDataObject dataObject, int update, IDev2IndexFinder indexFinder, ErrorResultTO allErrors, ErrorResultTO errors, WarewolfListIterator innerIteratorCollection, List<string> completeResultList, WarewolfIterator itrInField, string chars)
+        {
+            if (!string.IsNullOrEmpty(InField) && !string.IsNullOrEmpty(Characters))
+            {
+                var val = innerIteratorCollection.FetchNextValue(itrInField);
+                if (val != null)
+                {
+                    var returedData = indexFinder.FindIndex(val, Index, chars, Direction, MatchCase, StartIndex);
+                    completeResultList.AddRange(returedData.Select(value => value.ToString(CultureInfo.InvariantCulture)).ToList());
+                    var rule = new IsSingleValueRule(() => Result);
+                    var single = rule.Check();
+                    if (single != null)
+                    {
+                        allErrors.AddError(single.Message);
+                    }
+                    else
+                    {
+                        dataObject.Environment.Assign(Result, string.Join(",", completeResultList), update);
+                        allErrors.MergeErrors(errors);
+                    }
                 }
             }
         }
@@ -269,18 +251,18 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Get Debug Inputs/Outputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
-            foreach(DebugItem debugInput in _debugInputs)
+            foreach (DebugItem debugInput in _debugInputs)
             {
                 debugInput.FlushStringBuilder();
             }
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
-            foreach(IDebugItem debugOutput in _debugOutputs)
+            foreach (IDebugItem debugOutput in _debugOutputs)
             {
                 debugOutput.FlushStringBuilder();
             }
@@ -293,17 +275,17 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            if (updates != null)
             {
-                foreach(Tuple<string, string> t in updates)
+                foreach (Tuple<string, string> t in updates)
                 {
 
-                    if(t.Item1 == InField)
+                    if (t.Item1 == InField)
                     {
                         InField = t.Item2;
                     }
 
-                    if(t.Item1 == Characters)
+                    if (t.Item1 == Characters)
                     {
                         Characters = t.Item2;
                     }
@@ -313,31 +295,118 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if (itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
         #endregion
 
-        #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(InField, Characters);
+
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
+
+        public override IEnumerable<StateVariable> GetState()
         {
-            return GetForEachItems(InField, Characters);
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name = "StartIndex",
+                    Type = StateVariable.StateType.Input,
+                    Value = StartIndex
+                },
+                new StateVariable
+                {
+                    Name ="MatchCase",
+                    Type = StateVariable.StateType.Input,
+                    Value = MatchCase.ToString()
+                },
+                new StateVariable
+                {
+                    Name ="Direction",
+                    Type = StateVariable.StateType.Input,
+                    Value = Direction
+                },
+                new StateVariable
+                {
+                    Name ="Characters",
+                    Type = StateVariable.StateType.Input,
+                    Value = Characters
+                },
+                new StateVariable
+                {
+                    Name ="Index",
+                    Type = StateVariable.StateType.Input,
+                    Value = Index
+                },
+                new StateVariable
+                {
+                    Name ="InField",
+                    Type = StateVariable.StateType.Input,
+                    Value = InField
+                },
+                new StateVariable
+                {
+                    Name = "Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = Result
+                },
+            };
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public bool Equals(DsfIndexActivity other)
         {
-            return GetForEachItems(Result);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && string.Equals(InField, other.InField) && string.Equals(Index, other.Index) && string.Equals(Characters, other.Characters) && string.Equals(Direction, other.Direction) && string.Equals(Result, other.Result) && MatchCase == other.MatchCase && string.Equals(StartIndex, other.StartIndex);
         }
 
-        #endregion
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
 
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfIndexActivity)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (InField != null ? InField.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Index != null ? Index.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Characters != null ? Characters.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Direction != null ? Direction.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ MatchCase.GetHashCode();
+                hashCode = (hashCode * 397) ^ (StartIndex != null ? StartIndex.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

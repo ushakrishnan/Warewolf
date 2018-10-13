@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,12 +9,13 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Data;
 using Dev2.DynamicServices;
 using Dev2.Runtime.Hosting;
 
@@ -28,26 +28,38 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         // BUG 9500 - 2013.05.31 - TWR : added
         public string Namespace { get; set; }
-
+        public string SerializedResult { get; set; }
+        public ServiceConstructor Constructor { get; set; }
+        public List<IDev2MethodInfo> MethodsToRun { get; set; }
         #region CTOR
 
         public PluginService()
         {
             ResourceID = Guid.Empty;
-            ResourceType = ResourceType.PluginService;
+            ResourceType = "PluginService";
             Source = new PluginSource();
             Recordsets = new RecordsetList();
+            MethodsToRun = new List<IDev2MethodInfo>();
+            Constructor = new ServiceConstructor();
             Method = new ServiceMethod();
         }
 
         public PluginService(XElement xml)
             : base(xml)
         {
-            ResourceType = ResourceType.PluginService;
+            ResourceType = "PluginService";
             var action = xml.Descendants("Action").FirstOrDefault();
             if(action == null)
             {
-                return;
+                
+                if (xml.HasAttributes && xml.Attribute("Type").Value == "Plugin")
+                {
+                    action = xml;
+                }
+                else
+                {
+                    return;
+                }
             }
 
             // BUG 9500 - 2013.05.31 - TWR : added
@@ -58,15 +70,17 @@ namespace Dev2.Runtime.ServiceModel.Data
             if(string.IsNullOrEmpty(Namespace))
             {
                 var mySource = action.AttributeSafe("SourceName");
-
-                // Now look up the old source and fetch namespace ;)
-                var services = ResourceCatalog.Instance.GetDynamicObjects<Source>(GlobalConstants.ServerWorkspaceID, mySource);
-
-                var tmp = services.FirstOrDefault();
-
-                if(tmp != null)
+                if (!string.IsNullOrEmpty(mySource))
                 {
-                    Namespace = tmp.AssemblyName;
+                    // Now look up the old source and fetch namespace ;)
+                    var services = ResourceCatalog.Instance.GetDynamicObjects<Source>(GlobalConstants.ServerWorkspaceID, mySource);
+
+                    var tmp = services.FirstOrDefault();
+
+                    if (tmp != null)
+                    {
+                        Namespace = tmp.AssemblyName;
+                    }
                 }
             }
 
@@ -89,15 +103,5 @@ namespace Dev2.Runtime.ServiceModel.Data
         }
 
         #endregion
-
-        public static PluginService Create()
-        {
-            var result = new PluginService
-            {
-                ResourceID = Guid.Empty,
-                Source = { ResourceID = Guid.Empty },
-            };
-            return result;
-        }
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,8 +10,10 @@
 
 using System;
 using System.Collections.Generic;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Services.Security;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 
 namespace Dev2.Infrastructure.Tests.Services.Security
 {
@@ -51,11 +52,11 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 new WindowsGroupPermission { ResourceName = "Permission2" },
                 new WindowsGroupPermission { ResourceName = "Permission3" },
             };
-            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResult = perms1 };
+            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResults = perms1 };
             securityServiceBase.Read();
             Assert.AreEqual(perms1.Count, securityServiceBase.Permissions.Count);
 
-            securityServiceBase.ReadPermissionsResult = perms2;
+            securityServiceBase.ReadPermissionsResults = perms2;
 
             //------------Execute Test---------------------------
             securityServiceBase.Read();
@@ -85,7 +86,7 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 new WindowsGroupPermission { ResourceName = "Permission2" },
                 new WindowsGroupPermission { ResourceName = "Permission3" },
             };
-            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResult = perms1 };
+            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResults = perms1 };
             securityServiceBase.Read();
             securityServiceBase.PermissionsModified += (sender, args) =>
             {
@@ -95,7 +96,7 @@ namespace Dev2.Infrastructure.Tests.Services.Security
             //----------------Assert Preconditions--------------------------
             Assert.AreEqual(perms1.Count, securityServiceBase.Permissions.Count);
             Assert.IsNull(changedPermissions);
-            securityServiceBase.ReadPermissionsResult = perms2;
+            securityServiceBase.ReadPermissionsResults = perms2;
 
             //------------Execute Test---------------------------
             securityServiceBase.Read();
@@ -124,7 +125,7 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 new WindowsGroupPermission { ResourceName = "Permission2" },
                 new WindowsGroupPermission { ResourceName = "Permission3" },
             };
-            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResult = perms1 };
+            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResults = perms1 };
             securityServiceBase.Read();
             securityServiceBase.PermissionsModified += (sender, args) =>
             {
@@ -134,7 +135,7 @@ namespace Dev2.Infrastructure.Tests.Services.Security
             //----------------Assert Preconditions--------------------------
             Assert.AreEqual(perms1.Count, securityServiceBase.Permissions.Count);
             Assert.IsNull(changedPermissions);
-            securityServiceBase.ReadPermissionsResult = perms2;
+            securityServiceBase.ReadPermissionsResults = perms2;
 
             //------------Execute Test---------------------------
             securityServiceBase.Read();
@@ -155,11 +156,11 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 new WindowsGroupPermission(),
                 new WindowsGroupPermission()
             };
-            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResult = perms1 };
+            var securityServiceBase = new TestSecurityServiceBase { ReadPermissionsResults = perms1 };
             securityServiceBase.Read();
             Assert.AreEqual(perms1.Count, securityServiceBase.Permissions.Count);
 
-            securityServiceBase.ReadPermissionsResult = null;
+            securityServiceBase.ReadPermissionsResults = null;
 
             //------------Execute Test---------------------------
             securityServiceBase.Read();
@@ -174,7 +175,7 @@ namespace Dev2.Infrastructure.Tests.Services.Security
         public void SecurityServiceBase_Read_ChangeEvent_Fired()
         {
             //------------Setup for test--------------------------
-            bool changedEventWasFired = false;
+            var changedEventWasFired = false;
             var securityServiceBase = new TestSecurityServiceBase();
             securityServiceBase.PermissionsChanged += (sender, args) => changedEventWasFired = true;
 
@@ -198,17 +199,15 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 new WindowsGroupPermission { ResourceID = resourceID, Permissions = AuthorizationContext.View.ToPermissions() }
             };
 
-            var securityService = new TestSecurityServiceBase { ReadPermissionsResult = permissions };
+            var securityService = new TestSecurityServiceBase { ReadPermissionsResults = permissions };
             securityService.Read();
-
-            var comparer = new WindowsGroupPermissionEqualityComparer();
 
             //------------Execute Test---------------------------
             securityService.Remove(toBeRemovedID);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(1, securityService.Permissions.Count);
-            Assert.IsTrue(comparer.Equals(permissions[0], securityService.Permissions[0]));
+            Assert.IsTrue(WindowsGroupPermissionEquals(permissions[0], securityService.Permissions[0]));
         }
 
         [TestMethod]
@@ -226,17 +225,17 @@ namespace Dev2.Infrastructure.Tests.Services.Security
                 new WindowsGroupPermission { ResourceID = resourceID, Permissions = AuthorizationContext.Execute.ToPermissions() }
             };
 
-            var securityService = new TestSecurityServiceBase { ReadPermissionsResult = permissions };
+            var securityService = new TestSecurityServiceBase { ReadPermissionsResults = permissions };
             securityService.Read();
-
-            var comparer = new WindowsGroupPermissionEqualityComparer();
 
             //------------Execute Test---------------------------
             securityService.Remove(toBeRemovedID);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(1, securityService.Permissions.Count);
-            Assert.IsTrue(comparer.Equals(permissions[0], securityService.Permissions[0]));
+            Assert.IsTrue(WindowsGroupPermissionEquals(permissions[0], securityService.Permissions[0]));
         }
+
+        public static bool WindowsGroupPermissionEquals(WindowsGroupPermission x, WindowsGroupPermission y) => x.Permissions.Equals(y.Permissions) && x.ResourceID.Equals(y.ResourceID) && ((x.WindowsGroup == null) || x.WindowsGroup.Equals(y.WindowsGroup));
     }
 }

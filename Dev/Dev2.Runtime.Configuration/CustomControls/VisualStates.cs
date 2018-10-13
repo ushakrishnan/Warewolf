@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,13 +18,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
 
-// ReSharper disable CheckNamespace
+
 namespace System.Windows.Controls
 {
     /// <summary>
     /// Names and helpers for visual states in the controls.
     /// </summary>
-    internal static class VisualStates
+    static class VisualStates
     {
         #region GroupCommon
         /// <summary>
@@ -406,20 +405,20 @@ namespace System.Windows.Controls
         /// <returns>Returns null or the VisualStateGroup object.</returns>
         public static VisualStateGroup TryGetVisualStateGroup(DependencyObject dependencyObject, string groupName)
         {
-            FrameworkElement root = GetImplementationRoot(dependencyObject);
-            if(root == null)
+            var root = GetImplementationRoot(dependencyObject);
+            if (root == null)
             {
                 return null;
             }
 
-// ReSharper disable ReplaceWithSingleCallToFirstOrDefault
-// ReSharper disable AssignNullToNotNullAttribute
+
+
             return VisualStateManager.GetVisualStateGroups(root)
-// ReSharper restore AssignNullToNotNullAttribute
+
                 .OfType<VisualStateGroup>()
                 .Where(group => string.CompareOrdinal(groupName, group.Name) == 0)
                 .FirstOrDefault();
-// ReSharper restore ReplaceWithSingleCallToFirstOrDefault
+
         }
     }
 }

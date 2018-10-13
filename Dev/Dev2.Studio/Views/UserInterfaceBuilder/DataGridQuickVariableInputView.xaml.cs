@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,7 +11,7 @@
 using System;
 using System.Windows.Controls;
 
-// ReSharper disable once CheckNamespace
+
 namespace Dev2.Studio.Views.UserInterfaceBuilder
 {
     /// <summary>
@@ -21,7 +20,7 @@ namespace Dev2.Studio.Views.UserInterfaceBuilder
     public partial class DataGridQuickVariableInputView : IDisposable
     {
         // Track whether Dispose has been called.
-        private bool _disposed;
+        bool _disposed;
 
         public DataGridQuickVariableInputView()
         {
@@ -90,8 +89,8 @@ namespace Dev2.Studio.Views.UserInterfaceBuilder
         {
             if(SplitTypeCbx.SelectedValue != null)
             {
-                string val = SplitTypeCbx.SelectedValue.ToString();
-                if(val == "Index" || val == "Chars")
+                var val = SplitTypeCbx.SelectedValue.ToString();
+                if (val == "Index" || val == "Chars")
                 {
                     SplitTokenTxt.IsEnabled = true;
                 }
@@ -106,10 +105,9 @@ namespace Dev2.Studio.Views.UserInterfaceBuilder
 
         void TextBoxBase_OnTextChanged(object sender, TextChangedEventArgs e)
         {
-            TextBox tb = sender as TextBox;
-            if(tb != null)
+            if (sender is TextBox tb)
             {
-                if(string.IsNullOrWhiteSpace(TxtVariableList.Text))
+                if (string.IsNullOrWhiteSpace(TxtVariableList.Text))
                 {
                     QuickVariableInputAddBtn.IsEnabled = false;
                     QuickVariableInputPreviewBtn.IsEnabled = false;

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,25 +12,20 @@ using System;
 using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Security.Permissions;
 using System.Windows;
 using Castle.DynamicProxy.Generators;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Sequence;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Data;
-using Dev2.Core.Tests.Environments;
-using Dev2.Models;
-using Dev2.Studio.Core;
+using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Core.Activities.Utils;
-using Dev2.Studio.Core.Interfaces;
-using Dev2.Studio.Core.Models;
+using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities.Designers.Tests.Sequence
 {
     [TestClass]
@@ -67,10 +61,29 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var modelItem = ModelItemUtils.CreateModelItem(sequenceActivity);
             //------------Execute Test---------------------------
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(modelItem);
+            sequenceDesignerViewModel.Validate();
             //------------Assert Results-------------------------
             Assert.IsNotNull(sequenceDesignerViewModel);
             Assert.IsInstanceOfType(sequenceDesignerViewModel, typeof(ActivityDesignerViewModel));
             Assert.AreEqual("Created Sequence", sequenceDesignerViewModel.ModelItem.GetProperty("DisplayName"));
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("SequenceDesignerViewModel_Handle")]
+        public void SequenceDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
+        {
+            //------------Setup for test--------------------------      
+            var mockMainViewModel = new Mock<IShellViewModel>();
+            var mockHelpViewModel = new Mock<IHelpWindowViewModel>();
+            mockHelpViewModel.Setup(model => model.UpdateHelpText(It.IsAny<string>())).Verifiable();
+            mockMainViewModel.Setup(model => model.HelpViewModel).Returns(mockHelpViewModel.Object);
+            CustomContainer.Register(mockMainViewModel.Object);
+            var viewModel = new SequenceDesignerViewModel(CreateModelItem());
+            //------------Execute Test---------------------------
+            viewModel.UpdateHelpDescriptor("help");
+            //------------Assert Results-------------------------
+            mockHelpViewModel.Verify(model => model.UpdateHelpText(It.IsAny<string>()), Times.Once());
         }
 
         [TestMethod]
@@ -85,8 +98,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             //------------Assert Results-------------------------
             Assert.IsNotNull(sequenceDesignerViewModel);
             Assert.IsTrue(sequenceDesignerViewModel.HasLargeView);
-            Assert.AreEqual(1, sequenceDesignerViewModel.TitleBarToggles.Count);
-            StringAssert.Contains(sequenceDesignerViewModel.TitleBarToggles[0].ExpandToolTip, "Help");
+            Assert.AreEqual(0, sequenceDesignerViewModel.TitleBarToggles.Count);
         }
 
         [TestMethod]
@@ -196,7 +208,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dsfFindRecordsMultipleCriteriaActivity = new DsfFindRecordsMultipleCriteriaActivity();
             dsfSequenceActivity.Activities.Add(dsfFindRecordsMultipleCriteriaActivity);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            ModelItem modelItem = ModelItemUtils.CreateModelItem(new DsfGatherSystemInformationActivity());
+            var modelItem = ModelItemUtils.CreateModelItem(new DsfGatherSystemInformationActivity());
             //------------Execute Test---------------------------
             sequenceDesignerViewModel.SmallViewItem = modelItem;
             //------------Assert Results-------------------------
@@ -215,7 +227,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dsfFindRecordsMultipleCriteriaActivity = new DsfFindRecordsMultipleCriteriaActivity();
             dsfSequenceActivity.Activities.Add(dsfFindRecordsMultipleCriteriaActivity);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            ModelItem modelItem = ModelItemUtils.CreateModelItem(new System.Activities.Statements.Sequence());
+            var modelItem = ModelItemUtils.CreateModelItem(new System.Activities.Statements.Sequence());
             //------------Execute Test---------------------------
             sequenceDesignerViewModel.SmallViewItem = modelItem;
             //------------Assert Results-------------------------
@@ -234,7 +246,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dsfFindRecordsMultipleCriteriaActivity = new DsfFindRecordsMultipleCriteriaActivity();
             dsfSequenceActivity.Activities.Add(dsfFindRecordsMultipleCriteriaActivity);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            ModelItem modelItem = ModelItemUtils.CreateModelItem(new DsfActivity());
+            var modelItem = ModelItemUtils.CreateModelItem(new DsfActivity());
             //------------Execute Test---------------------------
             sequenceDesignerViewModel.SmallViewItem = modelItem;
             //------------Assert Results-------------------------
@@ -253,30 +265,11 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dsfFindRecordsMultipleCriteriaActivity = new DsfFindRecordsMultipleCriteriaActivity();
             dsfSequenceActivity.Activities.Add(dsfFindRecordsMultipleCriteriaActivity);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            ModelItem modelItem = ModelItemUtils.CreateModelItem(new DsfPluginActivity());
+            var modelItem = ModelItemUtils.CreateModelItem(new DsfPluginActivity());
             //------------Execute Test---------------------------
             sequenceDesignerViewModel.SmallViewItem = modelItem;
             //------------Assert Results-------------------------
-            Assert.AreEqual(2, dsfSequenceActivity.Activities.Count);
-        }
-
-        [TestMethod]
-        [Owner("Hagashen Naidu")]
-        [TestCategory("SequenceDesignerViewModel_SetSmallViewItem")]
-        public void SequenceDesignerViewModel_SetSmallViewItem_WhenModelItemDsfWebserviceActivity_ActivityNotAdded()
-        {
-            //------------Setup for test--------------------------
-            var dsfSequenceActivity = new DsfSequenceActivity();
-            var dsfMultiAssignActivity = new DsfMultiAssignActivity();
-            dsfSequenceActivity.Activities.Add(dsfMultiAssignActivity);
-            var dsfFindRecordsMultipleCriteriaActivity = new DsfFindRecordsMultipleCriteriaActivity();
-            dsfSequenceActivity.Activities.Add(dsfFindRecordsMultipleCriteriaActivity);
-            var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            ModelItem modelItem = ModelItemUtils.CreateModelItem(new DsfWebserviceActivity());
-            //------------Execute Test---------------------------
-            sequenceDesignerViewModel.SmallViewItem = modelItem;
-            //------------Assert Results-------------------------
-            Assert.AreEqual(2, dsfSequenceActivity.Activities.Count);
+            Assert.AreEqual(3, dsfSequenceActivity.Activities.Count);
         }
 
         [TestMethod]
@@ -291,11 +284,11 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dsfFindRecordsMultipleCriteriaActivity = new DsfFindRecordsMultipleCriteriaActivity();
             dsfSequenceActivity.Activities.Add(dsfFindRecordsMultipleCriteriaActivity);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            ModelItem modelItem = ModelItemUtils.CreateModelItem(new DsfDatabaseActivity());
+            var modelItem = ModelItemUtils.CreateModelItem(new DsfDatabaseActivity());
             //------------Execute Test---------------------------
             sequenceDesignerViewModel.SmallViewItem = modelItem;
             //------------Assert Results-------------------------
-            Assert.AreEqual(2, dsfSequenceActivity.Activities.Count);
+            Assert.AreEqual(3, dsfSequenceActivity.Activities.Count);
         }
 
         [TestMethod]
@@ -313,7 +306,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dataObjectMock = new Mock<IDataObject>();
             dataObjectMock.Setup(o => o.GetFormats()).Returns(new string[] { });
             //------------Execute Test---------------------------
-            bool doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
+            var doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
             //------------Assert Results-------------------------
             Assert.IsFalse(doDrop);
             Assert.AreEqual(2, dsfSequenceActivity.Activities.Count);
@@ -335,7 +328,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             dataObjectMock.Setup(o => o.GetFormats()).Returns(new[] { "Something Else" });
             dataObjectMock.Setup(o => o.GetData("Something Else")).Returns(ModelItemUtils.CreateModelItem(new DsfGatherSystemInformationActivity()));
             //------------Execute Test---------------------------
-            bool doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
+            var doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
             //------------Assert Results-------------------------
             Assert.IsFalse(doDrop);
             Assert.AreEqual(2, dsfSequenceActivity.Activities.Count);
@@ -357,7 +350,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             dataObjectMock.Setup(o => o.GetFormats()).Returns(new[] { "ModelItemsFormat" });
             dataObjectMock.Setup(o => o.GetData("ModelItemsFormat")).Returns(new List<ModelItem> { ModelItemUtils.CreateModelItem(new DsfGatherSystemInformationActivity()), ModelItemUtils.CreateModelItem(new DsfGatherSystemInformationActivity()) });
             //------------Execute Test---------------------------
-            bool doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
+            var doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
             //------------Assert Results-------------------------
             Assert.IsTrue(doDrop);
             Assert.AreEqual(4, dsfSequenceActivity.Activities.Count);
@@ -379,7 +372,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             dataObjectMock.Setup(o => o.GetFormats()).Returns(new[] { "ModelItemsFormat" });
             dataObjectMock.Setup(o => o.GetData("ModelItemsFormat")).Returns(new List<ModelItem> { ModelItemUtils.CreateModelItem(new DsfGatherSystemInformationActivity()) });
             //------------Execute Test---------------------------
-            bool doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
+            var doDrop = sequenceDesignerViewModel.DoDrop(dataObjectMock.Object);
             //------------Assert Results-------------------------
             Assert.IsTrue(doDrop);
             Assert.AreEqual(3, dsfSequenceActivity.Activities.Count);
@@ -396,7 +389,7 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             dsfSequenceActivity.Activities.Add(dsfMultiAssignActivity);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
             //------------Execute Test---------------------------
-            var modelItemForServiceTypes = sequenceDesignerViewModel.SetModelItemForServiceTypes(null);
+            var modelItemForServiceTypes = sequenceDesignerViewModel.TrySetModelItemForServiceTypes(null);
             //------------Assert Results-------------------------
             Assert.IsFalse(modelItemForServiceTypes);
         }
@@ -414,9 +407,9 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
             var dataObject = new DataObject("Some Wrong Format", new object());
             //------------Execute Test---------------------------
-            sequenceDesignerViewModel.SetModelItemForServiceTypes(dataObject);
+            sequenceDesignerViewModel.TrySetModelItemForServiceTypes(dataObject);
             //------------Assert Results-------------------------
-            bool dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
+            var dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
             Assert.IsFalse(dataPresent);
         }
 
@@ -429,12 +422,52 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var dsfSequenceActivity = new DsfSequenceActivity();
             var dsfMultiAssignActivity = new DsfMultiAssignActivity();
             dsfSequenceActivity.Activities.Add(dsfMultiAssignActivity);
+            var resource = new Mock<IContextualResourceModel>();
+            resource.Setup(r => r.ServerResourceType).Returns("");
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            var dataObject = new DataObject(GlobalConstants.ExplorerItemModelFormat, new TestData());
+            var mockServerRepo = new Mock<IServerRepository>();
+            var serverMock = new Mock<IServer>();
+            var resourceRepoMock = new Mock<IResourceRepository>();
+            resourceRepoMock.Setup(rr => rr.LoadContextualResourceModel(It.IsAny<Guid>())).Returns(resource.Object);
+            serverMock.Setup(s => s.ResourceRepository).Returns(resourceRepoMock.Object);
+            mockServerRepo.Setup(sr => sr.FindSingle(It.IsAny<System.Linq.Expressions.Expression<Func<IServer, bool>>>())).Returns(serverMock.Object);
+            sequenceDesignerViewModel.ServerRepository = mockServerRepo.Object;
+            var dataObject = new DataObject(GlobalConstants.UpgradedExplorerItemModelFormat, new TestDataWithContext());
             //------------Execute Test---------------------------
-            sequenceDesignerViewModel.SetModelItemForServiceTypes(dataObject);
+            sequenceDesignerViewModel.TrySetModelItemForServiceTypes(dataObject);
             //------------Assert Results-------------------------
-            bool dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
+            var dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
+            Assert.IsFalse(dataPresent);
+        }
+
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("SequenceDesignerViewModel_SetModelItemForServiceTypes")]
+        public void SequenceDesignerViewModel_SetModelItemForServiceTypes_HasExplorerItemInDataObject_Adds()
+        {
+            //------------Setup for test--------------------------
+            var dsfSequenceActivity = new DsfSequenceActivity();
+            var dsfMultiAssignActivity = new DsfMultiAssignActivity();
+            dsfSequenceActivity.Activities.Add(dsfMultiAssignActivity);
+            var resource = new Mock<IContextualResourceModel>();
+            resource.Setup(r => r.ServerResourceType).Returns("");
+            var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
+            var mockServerRepo = new Mock<IServerRepository>();
+            var serverMock = new Mock<IServer>();
+            var resourceRepoMock = new Mock<IResourceRepository>();
+            resourceRepoMock.Setup(rr => rr.LoadContextualResourceModel(It.IsAny<Guid>())).Returns(resource.Object);
+            serverMock.Setup(s => s.ResourceRepository).Returns(resourceRepoMock.Object);
+            mockServerRepo.Setup(sr => sr.FindSingle(It.IsAny<System.Linq.Expressions.Expression<Func<IServer, bool>>>())).Returns(serverMock.Object);
+            sequenceDesignerViewModel.ServerRepository = mockServerRepo.Object;
+            var mockExpViewModel = new Mock<IExplorerItemViewModel>();
+            mockExpViewModel.Setup(ex => ex.Server).Returns(serverMock.Object);
+            mockExpViewModel.Setup(ex => ex.ResourceId).Returns(resource.Object.ID);
+            var dataObject = new DataObject(GlobalConstants.UpgradedExplorerItemModelFormat, mockExpViewModel.Object);
+            //------------Execute Test---------------------------
+            sequenceDesignerViewModel.TrySetModelItemForServiceTypes(dataObject);
+            //------------Assert Results-------------------------
+            var dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
             Assert.IsFalse(dataPresent);
         }
 
@@ -450,53 +483,28 @@ namespace Dev2.Activities.Designers.Tests.Sequence
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
             var dataObject = new DataObject(GlobalConstants.ExplorerItemModelFormat, new TestDataWithContext());
             //------------Execute Test---------------------------
-            sequenceDesignerViewModel.SetModelItemForServiceTypes(dataObject);
+            sequenceDesignerViewModel.TrySetModelItemForServiceTypes(dataObject);
             //------------Assert Results-------------------------
-            bool dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
+            var dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
             Assert.IsFalse(dataPresent);
         }
-
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("SequenceDesignerViewModel_SetModelItemForServiceTypes")]
-        public void SequenceDesignerViewModel_SetModelItemForServiceTypes_DataHaveDataContextResourceModel_NothingAddedToDataObject()
+        public void SequenceDesignerViewModel_SetModelItemForServiceTypes_DataHaveDataContextNotResourceModel_NothingAddedToUpgradedExplorerItemModelFormatDataObject()
         {
             //------------Setup for test--------------------------
             var dsfSequenceActivity = new DsfSequenceActivity();
             var dsfMultiAssignActivity = new DsfMultiAssignActivity();
             dsfSequenceActivity.Activities.Add(dsfMultiAssignActivity);
-            SetupEnvironmentRepo(Guid.Empty);
             var sequenceDesignerViewModel = new SequenceDesignerViewModel(CreateModelItem(dsfSequenceActivity));
-            var dataObject = new DataObject(GlobalConstants.ExplorerItemModelFormat, new ExplorerItemModel { DisplayName = "MyDBService", ResourceType = ResourceType.DbService, EnvironmentId = Guid.Empty });
+            var dataObject = new DataObject(GlobalConstants.ExplorerItemModelFormat, new TestDataWithContext());
             //------------Execute Test---------------------------
-            bool added = sequenceDesignerViewModel.SetModelItemForServiceTypes(dataObject);
+            sequenceDesignerViewModel.TrySetModelItemForServiceTypes(dataObject);
             //------------Assert Results-------------------------
-            Assert.IsTrue(added);
-            Assert.AreEqual(2, dsfSequenceActivity.Activities.Count);
-
+            var dataPresent = dataObject.GetDataPresent(DragDropHelper.ModelItemDataFormat);
+            Assert.IsFalse(dataPresent);
         }
-
-        static void SetupEnvironmentRepo(Guid environmentId)
-        {
-            var mockResourceRepository = new Mock<IResourceRepository>();
-            Mock<IEnvironmentModel> mockEnvironment = EnviromentRepositoryTest.CreateMockEnvironment(mockResourceRepository.Object, "localhost");
-            mockEnvironment.Setup(model => model.ID).Returns(environmentId);
-            Mock<IResourceRepository> mockResRepo = new Mock<IResourceRepository>();
-            mockResRepo.Setup(d => d.FindSingle(It.IsAny<Expression<Func<IResourceModel, bool>>>(), false, false)).Returns(new TestDataWithContexResourceModel().DataContext);
-            mockEnvironment.Setup(c => c.ResourceRepository).Returns(mockResRepo.Object);
-            GetEnvironmentRepository(mockEnvironment);
-        }
-
-        private static void GetEnvironmentRepository(Mock<IEnvironmentModel> mockEnvironment)
-        {
-
-            var repo = new TestLoadEnvironmentRespository(mockEnvironment.Object) { IsLoaded = true };
-            // ReSharper disable ObjectCreationAsStatement
-            new EnvironmentRepository(repo);
-            // ReSharper restore ObjectCreationAsStatement
-            repo.ActiveEnvironment = mockEnvironment.Object;
-        }
-
         static ModelItem CreateModelItem()
         {
             var sequenceActivity = new DsfSequenceActivity { DisplayName = "Created Sequence" };
@@ -508,28 +516,6 @@ namespace Dev2.Activities.Designers.Tests.Sequence
         {
             var modelItem = ModelItemUtils.CreateModelItem(sequenceActivity);
             return modelItem;
-        }
-    }
-
-
-    public class TestDataWithContexResourceModel
-    {
-        public ResourceModel DataContext
-        {
-            get
-            {
-                var mockEnvironmentModel = new Mock<IEnvironmentModel>();
-                mockEnvironmentModel.Setup(model => model.ID).Returns(Guid.NewGuid());
-                mockEnvironmentModel.Setup(model => model.Name).Returns("testEnv");
-                var resourceModel = new ResourceModel(mockEnvironmentModel.Object)
-                    {
-                        ResourceType = Studio.Core.AppResources.Enums.ResourceType.Service,
-                        ServerResourceType = "DbService",
-                        ResourceName = "MyDBService",
-                        IconPath = "IconPath"
-                    };
-                return resourceModel;
-            }
         }
     }
 

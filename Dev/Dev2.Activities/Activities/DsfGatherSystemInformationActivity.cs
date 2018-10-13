@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,13 +19,20 @@ using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.Data.Enums;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
 using Dev2.DataList.Contract;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-using Warewolf.Storage;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
+using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
+using Dev2.Comparer;
+using Dev2.Common.State;
+using Dev2.Utilities;
 
 namespace Dev2.Activities
 {
@@ -56,6 +62,9 @@ namespace Dev2.Activities
             }
         }
 
+
+        public override List<string> GetOutputs() => SystemInformationCollection.Select(to => to.Result).ToList();
+
         #region Overrides of DsfNativeActivity<string>
 
         public DsfGatherSystemInformationActivity()
@@ -64,19 +73,25 @@ namespace Dev2.Activities
             SystemInformationCollection = new List<GatherSystemInformationTO>();
         }
 
-        // ReSharper disable RedundantOverridenMember
-        protected override void CacheMetadata(NativeActivityMetadata metadata)
+        public override IEnumerable<StateVariable> GetState()
         {
-            base.CacheMetadata(metadata);
-        }
-        // ReSharper restore RedundantOverridenMember
-
-        private void CleanArgs()
-        {
-            int count = 0;
-            while(count < SystemInformationCollection.Count)
+            return new[]
             {
-                if(string.IsNullOrWhiteSpace(SystemInformationCollection[count].Result))
+                new StateVariable
+                {
+                    Name="SystemInformationCollection",
+                    Type=StateVariable.StateType.InputOutput,
+                    Value= ActivityHelper.GetSerializedStateValueFromCollection(SystemInformationCollection)
+                }
+            };
+        }
+
+        void CleanArgs()
+        {
+            var count = 0;
+            while (count < SystemInformationCollection.Count)
+            {
+                if (string.IsNullOrWhiteSpace(SystemInformationCollection[count].Result))
                 {
                     SystemInformationCollection.RemoveAt(count);
                 }
@@ -90,119 +105,129 @@ namespace Dev2.Activities
         /// When overridden runs the activity's execution logic
         /// </summary>
         /// <param name="context">The context to be used.</param>
-        // ReSharper disable MethodTooLong
+
         protected override void OnExecute(NativeActivityContext context)
-            // ReSharper restore MethodTooLong
+            
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
+            var allErrors = new ErrorResultTO();
 
-
-            ErrorResultTO allErrors = new ErrorResultTO();
-
-            if(dataObject.ExecutingUser != null)
+            if (dataObject.ExecutingUser != null)
             {
                 _currentIdentity = dataObject.ExecutingUser.Identity;
             }
-            var indexCounter = 0;
             InitializeDebug(dataObject);
             try
             {
-                CleanArgs();
+                TryExecute(dataObject, update, allErrors);
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error("DSFGatherSystemInformationTool", e, GlobalConstants.WarewolfError);
+                allErrors.AddError(e.Message);
+            }
+            finally
+            {
+                HandleErrors(dataObject, update, allErrors);
+            }
+        }
 
-                foreach(GatherSystemInformationTO item in SystemInformationCollection)
+        void HandleErrors(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            var hasErrors = allErrors.HasErrors();
+            if (hasErrors)
+            {
+                DisplayAndWriteError("DsfExecuteCommandLineActivity", allErrors);
+                foreach (var error in allErrors.FetchErrors())
                 {
-                    try
-                    {
-                        indexCounter++;
-
-                        if(dataObject.IsDebugMode())
-                        {
-                            var inputToAdd = new DebugItem();
-                            AddDebugItem(new DebugItemStaticDataParams("", indexCounter.ToString(CultureInfo.InvariantCulture)), inputToAdd);
-                            AddDebugItem(new DebugItemStaticDataParams("", dataObject.Environment.EvalToExpression(item.Result,update), "", "="), inputToAdd);
-                            AddDebugItem(new DebugItemStaticDataParams(item.EnTypeOfSystemInformation.GetDescription(), ""), inputToAdd);
-                            _debugInputs.Add(inputToAdd);
-                        }
-
-                        var hasErrors = allErrors.HasErrors();
-                        if(!hasErrors)
-                        {
-                            string val = GetCorrectSystemInformation(item.EnTypeOfSystemInformation);
-                            string expression = item.Result;
-
-                            var regions = DataListCleaningUtils.SplitIntoRegions(expression);
-                            if(regions.Count > 1)
-                            {
-                                allErrors.AddError("Multiple variables in result field.");
-                            }
-                            else
-                            {
-                                foreach(var region in regions)
-                                {
-                                    dataObject.Environment.AssignWithFrame(new AssignValue(region, val), update);
-                                }
-                            }
-                        }
-                    }
-                    catch(Exception err)
-                    {
-                        dataObject.Environment.Assign(item.Result, null, update);
-                        allErrors.AddError(err.Message);
-                    }
+                    dataObject.Environment.AddError(error);
                 }
-                dataObject.Environment.CommitAssign();
-                if(dataObject.IsDebugMode() && !allErrors.HasErrors())
+            }
+            if (dataObject.IsDebugMode())
+            {
+                if (hasErrors)
                 {
-                    int innerCount = 1;
-                    foreach(GatherSystemInformationTO item in SystemInformationCollection)
+                    var innerCount = 1;
+                    foreach (GatherSystemInformationTO item in SystemInformationCollection)
                     {
                         var itemToAdd = new DebugItem();
-                        AddDebugItem(new DebugItemStaticDataParams("", "", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
+                        AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
                         AddDebugItem(new DebugEvalResult(item.Result, "", dataObject.Environment, update), itemToAdd);
                         _debugOutputs.Add(itemToAdd);
                         innerCount++;
                     }
                 }
+
+                DispatchDebugState(dataObject, StateType.Before, update);
+                DispatchDebugState(dataObject, StateType.After, update);
             }
-            catch(Exception e)
+        }
+
+        void TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            var indexCounter = 0;
+            CleanArgs();
+
+            foreach (GatherSystemInformationTO item in SystemInformationCollection)
             {
-                Dev2Logger.Log.Error("DSFGatherSystemInformationTool", e);
-                allErrors.AddError(e.Message);
-            }
-            finally
-            {
-                // Handle Errors
-                var hasErrors = allErrors.HasErrors();
-                if(hasErrors)
+                try
                 {
-                    DisplayAndWriteError("DsfExecuteCommandLineActivity", allErrors);
-                    foreach(var error in allErrors.FetchErrors())
+                    if (dataObject.IsDebugMode())
                     {
-                        dataObject.Environment.AddError(error);
-                    }
-                }
-                if(dataObject.IsDebugMode())
-                {
-                    if(hasErrors)
-                    {
-                        int innerCount = 1;
-                        foreach(GatherSystemInformationTO item in SystemInformationCollection)
-                        {
-                            var itemToAdd = new DebugItem();
-                            AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
-                            AddDebugItem(new DebugEvalResult(item.Result, "", dataObject.Environment, update), itemToAdd);
-                            _debugOutputs.Add(itemToAdd);
-                            innerCount++;
-                        }
+                        var inputToAdd = new DebugItem();
+                        AddDebugItem(new DebugItemStaticDataParams("", (++indexCounter).ToString(CultureInfo.InvariantCulture)), inputToAdd);
+                        AddDebugItem(new DebugItemStaticDataParams("", dataObject.Environment.EvalToExpression(item.Result, update), "", "="), inputToAdd);
+                        AddDebugItem(new DebugItemStaticDataParams(item.EnTypeOfSystemInformation.GetDescription(), ""), inputToAdd);
+                        _debugInputs.Add(inputToAdd);
                     }
 
-                    DispatchDebugState(dataObject, StateType.Before, update);
-                    DispatchDebugState(dataObject, StateType.After, update);
+                    var hasErrors = allErrors.HasErrors();
+                    if (!hasErrors)
+                    {
+                        ExecuteForTO(dataObject, update, allErrors, item);
+                    }
+                }
+                catch (Exception err)
+                {
+                    dataObject.Environment.Assign(item.Result, null, update);
+                    allErrors.AddError(err.Message);
+                }
+            }
+            dataObject.Environment.CommitAssign();
+            if (dataObject.IsDebugMode() && !allErrors.HasErrors())
+            {
+                var innerCount = 1;
+                foreach (GatherSystemInformationTO item in SystemInformationCollection)
+                {
+                    var itemToAdd = new DebugItem();
+                    AddDebugItem(new DebugItemStaticDataParams("", "", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
+                    AddDebugItem(new DebugEvalResult(item.Result, "", dataObject.Environment, update), itemToAdd);
+                    _debugOutputs.Add(itemToAdd);
+                    innerCount++;
+                }
+            }
+        }
+
+        void ExecuteForTO(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, GatherSystemInformationTO item)
+        {
+            var val = GetCorrectSystemInformation(item.EnTypeOfSystemInformation);
+            var expression = item.Result;
+
+            var regions = DataListCleaningUtils.SplitIntoRegions(expression);
+            if (regions.Count > 1)
+            {
+                allErrors.AddError(ErrorResource.MultipleVariablesInResultField);
+            }
+            else
+            {
+                foreach (var region in regions)
+                {
+                    dataObject.Environment.AssignWithFrame(new AssignValue(region, val), update);
                 }
             }
         }
@@ -211,8 +236,12 @@ namespace Dev2.Activities
         {
             switch(enTypeOfSystemInformation)
             {
+                case enTypeOfSystemInformationToGather.ComputerName:
+                    return GetSystemInformation.GetComputerName();
                 case enTypeOfSystemInformationToGather.OperatingSystem:
                     return GetSystemInformation.GetOperatingSystemInformation();
+                case enTypeOfSystemInformationToGather.OperatingSystemVersion:
+                    return GetSystemInformation.GetOperatingSystemVersionInformation();
                 case enTypeOfSystemInformationToGather.ServicePack:
                     return GetSystemInformation.GetServicePackInformation();
                 case enTypeOfSystemInformationToGather.OSBitValue:
@@ -225,6 +254,10 @@ namespace Dev2.Activities
                     return GetSystemInformation.GetDiskSpaceAvailableInformation();
                 case enTypeOfSystemInformationToGather.DiskTotal:
                     return GetSystemInformation.GetDiskSpaceTotalInformation();
+                case enTypeOfSystemInformationToGather.VirtualMemoryAvailable:
+                    return GetSystemInformation.GetVirtualMemoryAvailableInformation();
+                case enTypeOfSystemInformationToGather.VirtualMemoryTotal:
+                    return GetSystemInformation.GetVirtualMemoryTotalInformation();
                 case enTypeOfSystemInformationToGather.PhysicalMemoryAvailable:
                     return GetSystemInformation.GetPhysicalMemoryAvailableInformation();
                 case enTypeOfSystemInformationToGather.PhysicalMemoryTotal:
@@ -243,8 +276,24 @@ namespace Dev2.Activities
                     return GetSystemInformation.GetUserNameInformation();
                 case enTypeOfSystemInformationToGather.Domain:
                     return GetSystemInformation.GetDomainInformation();
-                case enTypeOfSystemInformationToGather.NumberOfWarewolfAgents:
-                    return GetSystemInformation.GetNumberOfWareWolfAgentsInformation();
+                case enTypeOfSystemInformationToGather.NumberOfServerNICS:
+                    return GetSystemInformation.GetNumberOfNICS();
+                case enTypeOfSystemInformationToGather.MacAddress:
+                    return GetSystemInformation.GetMACAdresses();
+                case enTypeOfSystemInformationToGather.GateWayAddress:
+                    return GetSystemInformation.GetDefaultGateway();
+                case enTypeOfSystemInformationToGather.DNSAddress:
+                    return GetSystemInformation.GetDNSServer();
+                case enTypeOfSystemInformationToGather.IPv4Address:
+                    return GetSystemInformation.GetIPv4Adresses();
+                case enTypeOfSystemInformationToGather.IPv6Address:
+                    return GetSystemInformation.GetIPv6Adresses();
+                case enTypeOfSystemInformationToGather.WarewolfMemory:
+                    return GetSystemInformation.GetWarewolfServerMemory();
+                case enTypeOfSystemInformationToGather.WarewolfCPU:
+                    return GetSystemInformation.GetWarewolfCPU();
+                case enTypeOfSystemInformationToGather.WarewolfServerVersion:
+                    return GetSystemInformation.GetWareWolfVersion();
                 default:
                     throw new ArgumentOutOfRangeException("enTypeOfSystemInformation");
             }
@@ -262,10 +311,7 @@ namespace Dev2.Activities
             return GetForEachItems(enumerable.ToArray());
         }
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.DataGridActivity;
-        }
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -274,7 +320,7 @@ namespace Dev2.Activities
                 foreach(Tuple<string, string> t in updates)
                 {
                     // locate all updates for this tuple
-                    Tuple<string, string> t1 = t;
+                    var t1 = t;
                     var items = SystemInformationCollection.Where(c => !string.IsNullOrEmpty(c.Result) && c.Result.Equals(t1.Item1));
 
                     // issues updates
@@ -293,7 +339,7 @@ namespace Dev2.Activities
                 foreach(Tuple<string, string> t in updates)
                 {
                     // locate all updates for this tuple
-                    Tuple<string, string> t1 = t;
+                    var t1 = t;
                     var items = SystemInformationCollection.Where(c => !string.IsNullOrEmpty(c.Result) && c.Result.Equals(t1.Item1));
 
                     // issues updates
@@ -307,12 +353,9 @@ namespace Dev2.Activities
 
         #region Overrides of DsfNativeActivity<string>
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
-        {
-            return _debugInputs;
-        }
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update) => _debugInputs;
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -325,25 +368,21 @@ namespace Dev2.Activities
 
         #region Private Methods
 
-        private void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
+        void InsertToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties["SystemInformationCollection"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                ModelItemCollection mic = modelProperty.Collection;
+                var mic = modelProperty.Collection;
 
-                if(mic != null)
+                if (mic != null)
                 {
-                    List<GatherSystemInformationTO> listOfValidRows = SystemInformationCollection.Where(c => !c.CanRemove()).ToList();
-                    if(listOfValidRows.Count > 0)
+                    var listOfValidRows = SystemInformationCollection.Where(c => !c.CanRemove()).ToList();
+                    if (listOfValidRows.Count > 0)
                     {
-                        GatherSystemInformationTO gatherSystemInformationTo = SystemInformationCollection.Last(c => !c.CanRemove());
-                        int startIndex = SystemInformationCollection.IndexOf(gatherSystemInformationTo) + 1;
-                        foreach(string s in listToAdd)
-                        {
-                            mic.Insert(startIndex, new GatherSystemInformationTO(SystemInformationCollection[startIndex - 1].EnTypeOfSystemInformation, s, startIndex + 1));
-                            startIndex++;
-                        }
+                        var gatherSystemInformationTo = SystemInformationCollection.Last(c => !c.CanRemove());
+                        var startIndex = SystemInformationCollection.IndexOf(gatherSystemInformationTo) + 1;
+                        startIndex = InsertAllItems(listToAdd, mic, startIndex);
                         CleanUpCollection(mic, modelItem, startIndex);
                     }
                     else
@@ -354,19 +393,30 @@ namespace Dev2.Activities
             }
         }
 
-        private void AddToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
+        private int InsertAllItems(IEnumerable<string> listToAdd, ModelItemCollection mic, int startIndex)
+        {
+            foreach (string s in listToAdd)
+            {
+                mic.Insert(startIndex, new GatherSystemInformationTO(SystemInformationCollection[startIndex - 1].EnTypeOfSystemInformation, s, startIndex + 1));
+                startIndex++;
+            }
+
+            return startIndex;
+        }
+
+        void AddToCollection(IEnumerable<string> listToAdd, ModelItem modelItem)
         {
             var modelProperty = modelItem.Properties["SystemInformationCollection"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                ModelItemCollection mic = modelProperty.Collection;
+                var mic = modelProperty.Collection;
 
-                if(mic != null)
+                if (mic != null)
                 {
-                    int startIndex = 0;
+                    var startIndex = 0;
                     const enTypeOfSystemInformationToGather EnTypeOfSystemInformation = enTypeOfSystemInformationToGather.FullDateTime;
                     mic.Clear();
-                    foreach(string s in listToAdd)
+                    foreach (string s in listToAdd)
                     {
                         mic.Add(new GatherSystemInformationTO(EnTypeOfSystemInformation, s, startIndex + 1));
                         startIndex++;
@@ -376,27 +426,27 @@ namespace Dev2.Activities
             }
         }
 
-        private void CleanUpCollection(ModelItemCollection mic, ModelItem modelItem, int startIndex)
+        void CleanUpCollection(ModelItemCollection mic, ModelItem modelItem, int startIndex)
         {
-            if(startIndex < mic.Count)
+            if (startIndex < mic.Count)
             {
                 mic.RemoveAt(startIndex);
             }
             mic.Add(new GatherSystemInformationTO(enTypeOfSystemInformationToGather.FullDateTime, string.Empty, startIndex + 1));
             var modelProperty = modelItem.Properties["DisplayName"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
                 modelProperty.SetValue(CreateDisplayName(modelItem, startIndex + 1));
             }
         }
 
-        private string CreateDisplayName(ModelItem modelItem, int count)
+        string CreateDisplayName(ModelItem modelItem, int count)
         {
             var modelProperty = modelItem.Properties["DisplayName"];
-            if(modelProperty != null)
+            if (modelProperty != null)
             {
-                string currentName = modelProperty.ComputedValue as string;
-                if(currentName != null && currentName.Contains("(") && currentName.Contains(")"))
+                var currentName = modelProperty.ComputedValue as string;
+                if (currentName != null && currentName.Contains("(") && currentName.Contains(")"))
                 {
                     currentName = currentName.Remove(currentName.Contains(" (") ? currentName.IndexOf(" (", StringComparison.Ordinal) : currentName.IndexOf("(", StringComparison.Ordinal));
                 }
@@ -413,10 +463,7 @@ namespace Dev2.Activities
 
         #region Implementation of ICollectionActivity
 
-        public int GetCollectionCount()
-        {
-            return SystemInformationCollection.Count(caseConvertTo => !caseConvertTo.CanRemove());
-        }
+        public int GetCollectionCount() => SystemInformationCollection.Count(caseConvertTo => !caseConvertTo.CanRemove());
 
         public void AddListToCollection(IList<string> listToAdd, bool overwrite, ModelItem modelItem)
         {
@@ -431,6 +478,52 @@ namespace Dev2.Activities
         }
 
         #endregion
+
+        public bool Equals(DsfGatherSystemInformationActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                && CommonEqualityOps.CollectionEquals(SystemInformationCollection, other.SystemInformationCollection, new GatherSystemInformationTOComparer());
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfGatherSystemInformationActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SystemInformationCollection != null ? SystemInformationCollection.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 
 

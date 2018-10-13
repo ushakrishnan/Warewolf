@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,15 +9,13 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Dev2.CustomControls.Progress;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Core.Tests.Dialogs
 {
     [TestClass]
-    [ExcludeFromCodeCoverage]
-    // ReSharper disable InconsistentNaming
+    
     public class ProgressDialogViewModelTests
     {
         [TestMethod]
@@ -27,9 +24,9 @@ namespace Dev2.Core.Tests.Dialogs
         [TestCategory("ProgressDialogViewModel_CTOR")]
         public void ProgressDialogViewModel_CTOR_CancelActionIsNull_Exception()
         {
-// ReSharper disable ObjectCreationAsStatement
+
             new ProgressDialogViewModel(null, () => {}, () => {});
-// ReSharper restore ObjectCreationAsStatement
+
         }
 
         [TestMethod]
@@ -38,9 +35,9 @@ namespace Dev2.Core.Tests.Dialogs
         [TestCategory("ProgressDialogViewModel_CTOR")]
         public void ProgressDialogViewModel_CTOR_ShowDialogActionIsNull_Exception()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new ProgressDialogViewModel(() => { },null, () => { });
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         [TestMethod]
@@ -49,9 +46,9 @@ namespace Dev2.Core.Tests.Dialogs
         [TestCategory("ProgressDialogViewModel_CTOR")]
         public void ProgressDialogViewModel_CTOR_ClosegActionIsNull_Exception()
         {
-            // ReSharper disable ObjectCreationAsStatement
+            
             new ProgressDialogViewModel(() => { }, () => { }, null);
-            // ReSharper restore ObjectCreationAsStatement
+            
         }
 
         [TestMethod]
@@ -60,7 +57,7 @@ namespace Dev2.Core.Tests.Dialogs
         public void ProgressDialogViewModel_CancelCommand_CancelCommandExecuted_CallsCancelAction()
         {
             //------------Setup for test--------------------------
-            bool cancelActionCalled = false;
+            var cancelActionCalled = false;
             var vm = new ProgressDialogViewModel(() => { cancelActionCalled = true; }, () => { }, () => { });
             //------------Execute Test---------------------------
             vm.CancelCommand.Execute(null);
@@ -95,23 +92,7 @@ namespace Dev2.Core.Tests.Dialogs
             //------------Assert Results-------------------------
             Assert.IsTrue(showActionCalled);
         }
-        
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("ProgressDialogViewModel_StartCancel")]
-        public void ProgressDialogViewModel_StartCancel_Exected_SetsSubLabelAndCancelButtonEnabled()
-        {
-            //------------Setup for test--------------------------
-            var vm = new ProgressDialogViewModel(() => { }, () => { }, () => { });
-            vm.SubLabel = "Downloading ...";
-            vm.IsCancelButtonEnabled = true;
-            //------------Execute Test---------------------------
-            vm.StartCancel();
-            //------------Assert Results-------------------------
-            Assert.AreEqual("Please wait while the process is being cancelled...", vm.SubLabel);
-            Assert.IsFalse(vm.IsCancelButtonEnabled);
-        }
-
+           
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("ProgressDialogViewModel_StatusChanged")]

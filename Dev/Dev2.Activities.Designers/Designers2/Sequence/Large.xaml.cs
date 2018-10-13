@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,84 +26,58 @@ namespace Dev2.Activities.Designers2.Sequence
             InitializeComponent();
             Loaded += (sender, args) => SetProperties();
             ActivitiesPresenter.PreviewDrop += DoDrop;
-            ActivitiesPresenter.PreviewDragOver += DropPointOnDragEnter;
             _dropEnabledActivityDesignerUtils = new DropEnabledActivityDesignerUtils();
         }
 
-        SequenceDesignerViewModel ViewModel
-        {
-            get
-            {
-                return DataContext as SequenceDesignerViewModel;
-            }
-        }
+        SequenceDesignerViewModel ViewModel => DataContext as SequenceDesignerViewModel;
 
         void DoDrop(object sender, DragEventArgs e)
         {
-            DropPointOnDragEnter(sender, e);
-            if(ViewModel.SetModelItemForServiceTypes(e.Data))
-            {
-                e.Handled = true;
-            }
-        }
-
-
-
-        void DropPointOnDragEnter(object sender, DragEventArgs e)
-        {
-            if(_dropEnabledActivityDesignerUtils != null)
+            if (_dropEnabledActivityDesignerUtils != null)
             {
                 var dropEnabled = _dropEnabledActivityDesignerUtils.LimitDragDropOptions(e.Data);
-                if(!dropEnabled)
+                if (!dropEnabled)
                 {
                     e.Effects = DragDropEffects.None;
                     e.Handled = true;
                 }
             }
+            if (ViewModel.TrySetModelItemForServiceTypes(e.Data))
+            {
+                e.Handled = true;
+            }
         }
 
         void SetProperties()
         {
-            var viewModel = (SequenceDesignerViewModel)DataContext;
-            if(viewModel != null)
-            {
-                viewModel.ThumbVisibility = Visibility.Collapsed;
-            }
         }
 
-        #region Overrides of ActivityDesignerTemplate
+        protected override IInputElement GetInitialFocusElement() => ActivitiesPresenter;
 
-        protected override IInputElement GetInitialFocusElement()
+        void CopyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            return ActivitiesPresenter;
         }
 
-        #endregion
-
-        private void CopyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
-        {            
-        }
-
-        private void CopyCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        void CopyCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = false;
         }
 
-        private void CopyCommandPreviewExecuted(object sender, ExecutedRoutedEventArgs e)
+        void CopyCommandPreviewExecuted(object sender, ExecutedRoutedEventArgs e)
         {
         }
 
-        private void CopyCommandPreviewCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        void CopyCommandPreviewCanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
             e.CanExecute = false;
         }
 
-        private void SapvCopyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
+        void SapvCopyCommandExecuted(object sender, ExecutedRoutedEventArgs e)
         {
         }
 
-        private void SapvCopyCommandPreviewExecuted(object sender, ExecutedRoutedEventArgs e)
-        {            
+        void SapvCopyCommandPreviewExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
         }
     }
 }

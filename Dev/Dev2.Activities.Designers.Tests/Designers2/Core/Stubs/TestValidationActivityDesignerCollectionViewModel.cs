@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,7 +26,7 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
             InitializeItems(mi.FieldsCollection);
         }
 
-        public override string CollectionName { get { return "FieldsCollection"; } }
+        public override string CollectionName => "FieldsCollection";
 
         public int ValidateThisHitCount { get; private set; }
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
@@ -43,5 +42,13 @@ namespace Dev2.Activities.Designers.Tests.Designers2.Core.Stubs
             yield return new ActionableErrorInfo();
         }
 
+        #region Overrides of ActivityDesignerViewModel
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            UpdateHelpDescriptor(helpText);
+        }
+
+        #endregion
     }
 }

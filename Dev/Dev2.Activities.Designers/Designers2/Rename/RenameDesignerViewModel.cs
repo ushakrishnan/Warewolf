@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +10,7 @@
 
 using System.Activities.Presentation.Model;
 using Dev2.Activities.Designers2.Core;
+using Dev2.Studio.Interfaces;
 
 namespace Dev2.Activities.Designers2.Rename
 {
@@ -20,7 +20,7 @@ namespace Dev2.Activities.Designers2.Rename
             : base(modelItem, "File or Folder", "New Name")
         {
             AddTitleBarLargeToggle();
-            AddTitleBarHelpToggle();
+            HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_File_Rename;
         }
 
         public override void Validate()
@@ -29,6 +29,12 @@ namespace Dev2.Activities.Designers2.Rename
             ValidateUserNameAndPassword();
             ValidateDestinationUsernameAndPassword();
             ValidateInputAndOutputPaths();
+        }
+
+        public override void UpdateHelpDescriptor(string helpText)
+        {
+            var mainViewModel = CustomContainer.Get<IShellViewModel>();
+            mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
     }
 }

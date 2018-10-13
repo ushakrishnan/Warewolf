@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,13 +26,13 @@ namespace Dev2.Data.Tests.DecisionsTests
         {
             //------------Setup for test--------------------------
             var notStartsWith = new NotStartsWith();
-            string[] cols = new string[2];
+            var cols = new string[2];
             cols[0] = "TestData";
             cols[1] = "Test";
             
             //------------Execute Test---------------------------
 
-            bool result = notStartsWith.Invoke(cols);
+            var result = notStartsWith.Invoke(cols);
 
             //------------Assert Results-------------------------
             Assert.IsFalse(result);
@@ -46,16 +45,28 @@ namespace Dev2.Data.Tests.DecisionsTests
         {
             //------------Setup for test--------------------------
             var notStartsWith = new NotStartsWith();
-            string[] cols = new string[2];
+            var cols = new string[2];
             cols[0] = "TestData";
             cols[1] = "No";
-
             //------------Execute Test---------------------------
 
-            bool result = notStartsWith.Invoke(cols);
+            var result = notStartsWith.Invoke(cols);
 
             //------------Assert Results-------------------------
             Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        [Owner("Sanele Mthmembu")]
+        [TestCategory("NotStartsWith_HandlesType")]
+        public void NotStartsWith_HandlesType_ReturnsNotStartWithType()
+        {
+            var startsWith = enDecisionType.NotStartsWith;
+            //------------Setup for test--------------------------
+            var notStartsWith = new NotStartsWith();
+            //------------Execute Test---------------------------
+            //------------Assert Results-------------------------
+            Assert.AreEqual(startsWith, notStartsWith.HandlesType());
         }
     }
 }

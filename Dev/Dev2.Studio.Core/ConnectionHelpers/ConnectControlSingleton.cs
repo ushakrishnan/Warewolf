@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,51 +11,31 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Dev2.AppResources.Repositories;
 using Dev2.Network;
-using Dev2.Studio.Core;
 using Dev2.Studio.Core.InterfaceImplementors;
-using Dev2.Studio.Core.Interfaces;
 using Dev2.Studio.Core.Models;
-using Dev2.Threading;
+using Dev2.Studio.Interfaces;
+
 
 namespace Dev2.ConnectionHelpers
 {
     public class ConnectControlSingleton : IConnectControlSingleton
     {
-        readonly IStudioResourceRepository _studioResourceRepository;
-        readonly IAsyncWorker _asyncWorker;
         readonly IEnvironmentModelProvider _serverProvider;
         static IConnectControlSingleton _instance;
-        readonly IEnvironmentRepository _environmentRepository;
+        readonly IServerRepository _serverRepository;
         public const string NewServerText = "New Remote Server...";
         public event EventHandler<ConnectionStatusChangedEventArg> ConnectedStatusChanged;
         public event EventHandler<ConnectedServerChangedEvent> ConnectedServerChanged;
+        public event EventHandler<ConnectedServerChangedEvent> AfterReload;
+        public static IConnectControlSingleton Instance => _instance ?? (_instance = new ConnectControlSingleton(ServerProvider.Instance, CustomContainer.Get<IServerRepository>()));
 
-        public static IConnectControlSingleton Instance
+        public ConnectControlSingleton(IEnvironmentModelProvider serverProvider, IServerRepository serverRepository)
         {
-            get
-            {
-                return _instance ?? (_instance = new ConnectControlSingleton(StudioResourceRepository.Instance,
-                                                 new AsyncWorker(),
-                                                 ServerProvider.Instance,
-                                                 EnvironmentRepository.Instance));
-            }
-        }
-
-        internal ConnectControlSingleton(IStudioResourceRepository studioResourceRepository,
-                                         IAsyncWorker asyncWorker,
-                                         IEnvironmentModelProvider serverProvider,
-                                         IEnvironmentRepository environmentRepository)
-        {
-            VerifyArgument.IsNotNull("studioResourceRepository", studioResourceRepository);
-            VerifyArgument.IsNotNull("asyncWorker", asyncWorker);
             VerifyArgument.IsNotNull("serverProvider", serverProvider);
-            VerifyArgument.IsNotNull("environmentRepository", environmentRepository);
-            _studioResourceRepository = studioResourceRepository;
-            _asyncWorker = asyncWorker;
+            VerifyArgument.IsNotNull("environmentRepository", serverRepository);
             _serverProvider = serverProvider;
-            _environmentRepository = environmentRepository;
+            _serverRepository = serverRepository;
             Servers = new ObservableCollection<IConnectControlEnvironment>();
             LoadServers();
         }
@@ -65,34 +44,56 @@ namespace Dev2.ConnectionHelpers
 
         public void Remove(Guid environmentId)
         {
-            var index = Servers.IndexOf(Servers.FirstOrDefault(s => s.EnvironmentModel.ID == environmentId));
+            var index = Servers.IndexOf(Servers.FirstOrDefault(s => s.Server.EnvironmentID == environmentId));
 
-            if(index != -1)
+            if (index != -1)
             {
                 var selectedServer = Servers[index];
-                if(selectedServer.IsConnected)
+                if (selectedServer.IsConnected)
                 {
-                    Disconnect(selectedServer.EnvironmentModel);
+                    Disconnect(selectedServer.Server);
                 }
 
-                _studioResourceRepository.RemoveEnvironment(environmentId);
 
-                if(ConnectedServerChanged != null)
+                if (ConnectedServerChanged != null)
                 {
-                    var localhost = Servers.FirstOrDefault(s => s.EnvironmentModel.IsLocalHost);
-                    Guid localhostId = localhost == null ? Guid.Empty : localhost.EnvironmentModel.ID;
+                    var localhost = Servers.FirstOrDefault(s => s.Server.IsLocalHost);
+                    var localhostId = localhost?.Server.EnvironmentID ?? Guid.Empty;
                     ConnectedServerChanged(this, new ConnectedServerChangedEvent(localhostId));
+                }
+            }
+        }
+
+
+        public void EditConnection(int selectedIndex, Action<int> openWizard)
+        {
+            if (selectedIndex != -1 && selectedIndex <= Servers.Count)
+            {
+                var selectedServer = Servers[selectedIndex];
+                var environmentModel = selectedServer.Server;
+                if (environmentModel?.Connection != null)
+                {
+                    var serverUri = environmentModel.Connection.AppServerUri;
+                    var auth = environmentModel.Connection.AuthenticationType;
+                    openWizard?.Invoke(selectedIndex);
+                    var updatedServer = _serverRepository.All().FirstOrDefault(e => e.EnvironmentID == environmentModel.EnvironmentID);
+                    if (updatedServer != null && (!serverUri.Equals(updatedServer.Connection.AppServerUri) || auth != updatedServer.Connection.AuthenticationType))
+                    {
+                        ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environmentModel.EnvironmentID, false));
+
+                        selectedServer.Server = updatedServer;
+                    }
                 }
             }
         }
 
         public void Refresh(Guid environmentId)
         {
-            var selectedEnvironment = Servers.FirstOrDefault(s => s.EnvironmentModel.ID == environmentId);
-            if(selectedEnvironment != null)
+            var selectedEnvironment = Servers.FirstOrDefault(s => s.Server.EnvironmentID == environmentId);
+            if (selectedEnvironment != null)
             {
                 var index = Servers.IndexOf(selectedEnvironment);
-                if(index != -1)
+                if (index != -1)
                 {
                     Connect(selectedEnvironment);
                 }
@@ -101,13 +102,13 @@ namespace Dev2.ConnectionHelpers
 
         public void ToggleConnection(int selectedIndex)
         {
-            if(selectedIndex != -1 && selectedIndex <= Servers.Count)
+            if (selectedIndex != -1 && selectedIndex <= Servers.Count)
             {
                 var selectedServer = Servers[selectedIndex];
-                if(selectedServer != null)
+                if (selectedServer != null)
                 {
-                    var environment = selectedServer.EnvironmentModel;
-                    if(selectedServer.IsConnected)
+                    var environment = selectedServer.Server;
+                    if (selectedServer.IsConnected)
                     {
                         Disconnect(environment);
                     }
@@ -121,10 +122,10 @@ namespace Dev2.ConnectionHelpers
 
         public void ToggleConnection(Guid environmentId)
         {
-            var connectControlEnvironment = Servers.FirstOrDefault(s => s.EnvironmentModel.ID == environmentId);
+            var connectControlEnvironment = Servers.FirstOrDefault(s => s.Server.EnvironmentID == environmentId);
             var index = Servers.IndexOf(connectControlEnvironment);
 
-            if(index != -1)
+            if (index != -1)
             {
                 ToggleConnection(index);
             }
@@ -132,102 +133,53 @@ namespace Dev2.ConnectionHelpers
 
         public void SetConnectionState(Guid environmentId, ConnectionEnumerations.ConnectedState connectedState)
         {
-            if(ConnectedStatusChanged != null)
-            {
-                ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(connectedState, environmentId, false));
-            }
+            ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(connectedState, environmentId, false));
         }
 
-        public void EditConnection(int selectedIndex, Action<int> openWizard)
+        void Disconnect(IServer environment)
         {
-            if(selectedIndex != -1 && selectedIndex <= Servers.Count)
+            ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environment.EnvironmentID, false));
+            ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Disconnected, environment.EnvironmentID, true));
+        }
+
+        void Connect(IConnectControlEnvironment selectedServer)
+        {
+            var environmentId = selectedServer.Server.EnvironmentID;
+            ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environmentId, false));
+        }
+
+        ConnectControlEnvironment CreateNewRemoteServerEnvironment() => new ConnectControlEnvironment
+        {
+            Server = new Server(Guid.NewGuid(), new ServerProxy(new Uri("http://localhost:3142"))) { Name = NewServerText }
+        };
+
+        public void ReloadServer()
+        {
+            Servers.Clear();
+            Servers.Add(CreateNewRemoteServerEnvironment());
+
+            var servers = _serverProvider.ReloadServers();
+            foreach (var server in servers)
             {
-                var selectedServer = Servers[selectedIndex];
-                var environmentModel = selectedServer.EnvironmentModel;
-                if(environmentModel != null && environmentModel.Connection != null)
+                Servers.Add(new ConnectControlEnvironment
                 {
-                    var serverUri = environmentModel.Connection.AppServerUri;
-                    var auth = environmentModel.Connection.AuthenticationType;
-                    openWizard(selectedIndex);
-                    var updatedServer = _environmentRepository.All().FirstOrDefault(e => e.ID == environmentModel.ID);
-                    if (updatedServer != null && (!serverUri.Equals(updatedServer.Connection.AppServerUri) || auth != updatedServer.Connection.AuthenticationType))
-                    {
-                        if(ConnectedStatusChanged != null)
-                        {
-                            ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environmentModel.ID, false));
-                        }
-
-                        if(selectedServer.IsConnected)
-                        {
-                            _studioResourceRepository.Disconnect(environmentModel.ID);
-                        }
-                        selectedServer.EnvironmentModel = updatedServer;
-                        _studioResourceRepository.Load(environmentModel.ID, _asyncWorker, ResourcesLoadedHandler);
-                    }
-                }
+                    Server = server,
+                    IsConnected = server.IsConnected,
+                    AllowEdit = !server.IsLocalHost
+                });
             }
+            AfterReload?.Invoke(this, new ConnectedServerChangedEvent(Guid.Empty));
         }
-
-        public void ResourcesLoadedHandler(Guid environmentId)
-        {
-            if(ConnectedStatusChanged == null)
-            {
-                return;
-            }
-
-            var server = _serverProvider.Load().FirstOrDefault(s => s.ID == environmentId);
-
-            if(server != null && server.IsConnected)
-            {
-                ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Connected, environmentId, true));
-            }
-            else
-            {
-                ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Disconnected, environmentId, true));
-            }
-        }
-
-        private void Disconnect(IEnvironmentModel environment)
-        {
-            if(ConnectedStatusChanged != null)
-            {
-                ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environment.ID, false));
-            }
-            _studioResourceRepository.Disconnect(environment.ID);
-            if(ConnectedStatusChanged != null)
-            {
-                ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Disconnected, environment.ID, true));
-            }
-        }
-
-        private void Connect(IConnectControlEnvironment selectedServer)
-        {
-            var environmentId = selectedServer.EnvironmentModel.ID;
-            if(ConnectedStatusChanged != null)
-            {
-                ConnectedStatusChanged(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environmentId, false));
-            }
-            _studioResourceRepository.Load(environmentId, _asyncWorker, ResourcesLoadedHandler);
-        }
-
-        ConnectControlEnvironment CreateNewRemoteServerEnvironment()
-        {
-            return new ConnectControlEnvironment
-            {
-                EnvironmentModel = new EnvironmentModel(Guid.NewGuid(), new ServerProxy(new Uri("http://localhost:3142"))) { Name = NewServerText }
-            };
-        }
-
         void LoadServers()
         {
             Servers.Clear();
             Servers.Add(CreateNewRemoteServerEnvironment());
             var servers = _serverProvider.Load();
-            foreach(var server in servers)
+            foreach (var server in servers)
             {
                 Servers.Add(new ConnectControlEnvironment
                 {
-                    EnvironmentModel = server,
+                    Server = server,
                     IsConnected = server.IsConnected,
                     AllowEdit = !server.IsLocalHost
                 });

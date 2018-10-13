@@ -1,48 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
-using Vestris.ResourceLib;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    public class GetServerVersion : IEsbManagementEndpoint
+    public class GetServerVersion : DefaultEsbManagementEndpoint
     {
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
-            return serialiser.SerializeToBuilder(GetVersion().ToString());
+            var serialiser = new Dev2JsonSerializer();
+            return serialiser.SerializeToBuilder(GetVersion());
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            var getServerVersion = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-
-            var getServerVersionService = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-            getServerVersionService.Actions.Add(getServerVersion);
-
-            return getServerVersionService;
-        }
-
-        public string HandlesType()
-        {
-            return "GetServerVersion";
-        }
-
-
-        static Version GetVersion()
+        public static string GetVersion()
         {
             var asm = Assembly.GetExecutingAssembly();
-            var versionResource = new VersionResource();
             var fileName = asm.Location;
-            versionResource.LoadFrom(fileName);
-            Version v = new Version(versionResource.FileVersion);
-            return v;
+            var versionResource = FileVersionInfo.GetVersionInfo(fileName);
+            return versionResource.FileVersion;
         }
+
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public override string HandlesType() => "GetServerVersion";
     }
 }

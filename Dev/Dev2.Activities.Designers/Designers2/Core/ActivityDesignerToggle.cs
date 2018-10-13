@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,14 +12,17 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using FontAwesome.WPF;
 
 namespace Dev2.Activities.Designers2.Core
 {
     public class ActivityDesignerToggle : DependencyObject
     {
-        public static ActivityDesignerToggle Create(string collapseImageSourceUri, string collapseToolTip, string expandImageSourceUri, string expandToolTip, string automationID, DependencyObject target, DependencyProperty dp, bool autoReset = false)
+        public static ActivityDesignerToggle Create(string collapseImageSourceUri, string collapseToolTip, string expandImageSourceUri, string expandToolTip, string automationID, DependencyObject target, DependencyProperty dp) => Create(collapseImageSourceUri, collapseToolTip, expandImageSourceUri, expandToolTip, automationID, target, dp, false);
+        public static ActivityDesignerToggle Create(string collapseImageSourceUri, string collapseToolTip, string expandImageSourceUri, string expandToolTip, string automationID, DependencyObject target, DependencyProperty dp, bool autoReset)
         {
             var toggle = new ActivityDesignerToggle
             {
@@ -46,7 +48,9 @@ namespace Dev2.Activities.Designers2.Core
             return toggle;
         }
 
-        public static ActivityDesignerToggle Create(string collapseImageSourceUri, string collapseToolTip, string expandImageSourceUri, string expandToolTip, string automationID, bool autoReset = false)
+        public static ActivityDesignerToggle Create(string collapseImageSourceUri, string collapseToolTip, string expandImageSourceUri, string expandToolTip, string automationID) => Create(collapseImageSourceUri, collapseToolTip, expandImageSourceUri, expandToolTip, automationID, false);
+
+        public static ActivityDesignerToggle Create(string collapseImageSourceUri, string collapseToolTip, string expandImageSourceUri, string expandToolTip, string automationID, bool autoReset)
         {
             var toggle = new ActivityDesignerToggle
             {
@@ -138,7 +142,36 @@ namespace Dev2.Activities.Designers2.Core
 
         static Image CreateImage(string sourceUri)
         {
-            return new Image { Source = new BitmapImage(new Uri(sourceUri)) };
+            var image = new Image
+            {
+                Height = 14,
+                Width = 14
+            };
+
+            if (Application.Current != null)
+            {
+                Brush brush = Application.Current.TryFindResource("WareWolfButtonBrush") as SolidColorBrush;
+
+                switch (sourceUri)
+                {
+                    case "Question":
+                        image.Source = ImageAwesome.CreateImageSource(FontAwesomeIcon.Question, brush);
+                        break;
+                    case "ServiceQuickVariableInput":
+                        image.Source = ImageAwesome.CreateImageSource(FontAwesomeIcon.ListAlt, brush);
+                        break;
+                    case "ServicePropertyEdit":
+                        image.Source = ImageAwesome.CreateImageSource(FontAwesomeIcon.Pencil, brush);
+                        break;
+                    case "ServiceHelp":
+                        image.Source = ImageAwesome.CreateImageSource(FontAwesomeIcon.Gears, brush);
+                        break;
+                    default:
+                        image.Source = new BitmapImage(new Uri(sourceUri));
+                        break;
+                }
+            }
+            return image;
         }
     }
 }

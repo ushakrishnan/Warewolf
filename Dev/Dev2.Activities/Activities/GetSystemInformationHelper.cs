@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,18 +9,21 @@
 */
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Management;
+using System.Net;
 using System.Security.Principal;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.DateAndTime;
-using Microsoft.VisualBasic.Devices;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
+using Dev2.Runtime.ESB.Management.Services;
 
-// ReSharper disable InconsistentNaming
+
 namespace Dev2.Activities
 {
     public interface IGetSystemInformation
@@ -31,12 +33,15 @@ namespace Dev2.Activities
         //Number of Warewolf Agents
 
         string GetOperatingSystemInformation();
+        string GetOperatingSystemVersionInformation();
         string GetServicePackInformation();
         string GetOSBitValueInformation();
         string GetFullDateTimeInformation();
         string GetDateTimeFormatInformation();
         string GetDiskSpaceAvailableInformation();
         string GetDiskSpaceTotalInformation();
+        string GetVirtualMemoryAvailableInformation();
+        string GetVirtualMemoryTotalInformation();
         string GetPhysicalMemoryAvailableInformation();
         string GetPhysicalMemoryTotalInformation();
         string GetCPUAvailableInformation();
@@ -46,18 +51,30 @@ namespace Dev2.Activities
         string GetUserRolesInformation(IIdentity currentIdentity);
         string GetDomainInformation();
         string GetUserNameInformation();
-        string GetNumberOfWareWolfAgentsInformation();
+        string GetNumberOfNICS();
+        string GetMACAdresses();
+        string GetDefaultGateway();
+        string GetDNSServer();
+        string GetIPv4Adresses();
+        string GetIPv6Adresses();
+        string GetComputerName();
+        string GetWarewolfServerMemory();
+        string GetWarewolfCPU();
+        string GetWareWolfVersion();
     }
 
-    [ExcludeFromCodeCoverage]
     public class GetSystemInformationHelper : IGetSystemInformation
     {
         #region Implementation of IGetSystemInformation
 
-        public string GetOperatingSystemInformation()
+        public string GetOperatingSystemInformation() => GetOperatingSystemProperty("Caption");
+
+        public string GetOperatingSystemVersionInformation() => GetOperatingSystemProperty("Version");
+
+        string GetOperatingSystemProperty(string property)
         {
             var name = (from x in new ManagementObjectSearcher("SELECT * FROM Win32_OperatingSystem").Get().OfType<ManagementObject>()
-                        select x.GetPropertyValue("Caption")).First();
+                        select x.GetPropertyValue(property)).First();
             var stringBuilder = new StringBuilder();
             stringBuilder.AppendFormat("{0}", name);
             return stringBuilder.ToString();
@@ -80,23 +97,19 @@ namespace Dev2.Activities
             return stringBuilder.ToString();
         }
 
-        public string GetFullDateTimeInformation()
-        {
-            return DateTime.Now.ToString(GlobalConstants.GlobalDefaultNowFormat);
-        }
+        public virtual string GetFullDateTimeInformation() => DateTime.Now.ToString(GlobalConstants.PreviousGlobalDefaultNowFormat);
 
-        public string GetDateTimeFormatInformation()
+        public virtual string GetDateTimeFormatInformation()
         {
-            var dateTimeParser = new DateTimeParser();
-            string error;
-            var translatedDateTimeFormat = dateTimeParser.TranslateDotNetToDev2Format(CultureInfo.CurrentUICulture.DateTimeFormat.FullDateTimePattern, out error);
+            var dateTimeParser = new Dev2DateTimeParser();
+            var translatedDateTimeFormat = dateTimeParser.TranslateDotNetToDev2Format(CultureInfo.CurrentUICulture.DateTimeFormat.FullDateTimePattern, out string error);
             return translatedDateTimeFormat;
         }
 
         public string GetDiskSpaceAvailableInformation()
         {
             var stringBuilder = new StringBuilder();
-            foreach(DriveInfo driveInfo1 in DriveInfo.GetDrives())
+            foreach (DriveInfo driveInfo1 in DriveInfo.GetDrives())
             {
                 try
                 {
@@ -104,9 +117,9 @@ namespace Dev2.Activities
                       " {1},",
                       driveInfo1.Name, ConvertToGB(driveInfo1.AvailableFreeSpace));
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Dev2Logger.Log.Error(ex);
+                    Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 }
             }
             return stringBuilder.ToString().TrimEnd(',');
@@ -115,16 +128,16 @@ namespace Dev2.Activities
         public string GetDiskSpaceTotalInformation()
         {
             var stringBuilder = new StringBuilder();
-            foreach(DriveInfo driveInfo1 in DriveInfo.GetDrives())
+            foreach (DriveInfo driveInfo1 in DriveInfo.GetDrives())
             {
                 try
                 {
                     stringBuilder.AppendFormat("{0}" + " {1},",
                         driveInfo1.Name, ConvertToGB(driveInfo1.TotalSize));
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Dev2Logger.Log.Error(ex);
+                    Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                 }
             }
             return stringBuilder.ToString().TrimEnd(',');
@@ -132,23 +145,59 @@ namespace Dev2.Activities
 
         public string GetPhysicalMemoryAvailableInformation()
         {
-            var computerInfo = new ComputerInfo();
             var stringBuilder = new StringBuilder();
-            var availablePhysicalMemory = ConvertToMB(computerInfo.AvailablePhysicalMemory);
-            stringBuilder.Append(availablePhysicalMemory.ToString(CultureInfo.InvariantCulture));
+            var winQuery = new ObjectQuery("SELECT * FROM Win32_OperatingSystem");
+            var searcher = new ManagementObjectSearcher(winQuery);
+            foreach (var o in searcher.Get())
+            {
+                var item = (ManagementObject)o;
+                var availablePhysicalMemory = (uint.Parse(item["FreePhysicalMemory"].ToString()) / 1024).ToString();
+                stringBuilder.Append(availablePhysicalMemory.ToString(CultureInfo.InvariantCulture));
+            }
             return stringBuilder.ToString();
         }
-
 
         public string GetPhysicalMemoryTotalInformation()
         {
-            var computerInfo = new ComputerInfo();
             var stringBuilder = new StringBuilder();
-            var totalPhysicalMemory = ConvertToMB(computerInfo.TotalPhysicalMemory);
-            stringBuilder.Append(totalPhysicalMemory.ToString(CultureInfo.InvariantCulture));
+            var winQuery = new ObjectQuery("SELECT * FROM Win32_OperatingSystem");
+            var searcher = new ManagementObjectSearcher(winQuery);
+            foreach (var o in searcher.Get())
+            {
+                var item = (ManagementObject)o;
+                var totalPhysicalMemory = (uint.Parse(item["TotalVisibleMemorySize"].ToString()) / 1024).ToString();
+                stringBuilder.Append(totalPhysicalMemory.ToString(CultureInfo.InvariantCulture));
+            }
             return stringBuilder.ToString();
         }
 
+        public string GetVirtualMemoryAvailableInformation()
+        {
+            var stringBuilder = new StringBuilder();
+            var winQuery = new ObjectQuery("SELECT * FROM Win32_OperatingSystem");
+            var searcher = new ManagementObjectSearcher(winQuery);
+            foreach (var o in searcher.Get())
+            {
+                var item = (ManagementObject)o;
+                var totalVirtualMemory = (uint.Parse(item["FreeVirtualMemory"].ToString()) / 1024).ToString();
+                stringBuilder.Append(totalVirtualMemory.ToString(CultureInfo.InvariantCulture));
+            }
+            return stringBuilder.ToString();
+        }
+
+        public string GetVirtualMemoryTotalInformation()
+        {
+            var stringBuilder = new StringBuilder();
+            var winQuery = new ObjectQuery("SELECT * FROM Win32_OperatingSystem");
+            var searcher = new ManagementObjectSearcher(winQuery);
+            foreach (var o in searcher.Get())
+            {
+                var item = (ManagementObject)o;
+                var availableVirtualMemory = (uint.Parse(item["TotalVirtualMemorySize"].ToString()) / 1024).ToString();
+                stringBuilder.Append(availableVirtualMemory.ToString(CultureInfo.InvariantCulture));
+            }
+            return stringBuilder.ToString();
+        }
 
         ulong ConvertToMB(ulong valueToConvert)
         {
@@ -168,7 +217,7 @@ namespace Dev2.Activities
             var winQuery = new ObjectQuery("SELECT LoadPercentage FROM Win32_Processor");
             var searcher = new ManagementObjectSearcher(winQuery);
 
-            foreach(var o in searcher.Get())
+            foreach (var o in searcher.Get())
             {
                 var item = (ManagementObject)o;
                 stringBuilder.Append(100 - Convert.ToInt32(item["LoadPercentage"]) + "%");
@@ -181,7 +230,7 @@ namespace Dev2.Activities
             var stringBuilder = new StringBuilder();
             var winQuery = new ObjectQuery("SELECT MaxClockSpeed,NumberOfLogicalProcessors FROM Win32_Processor");
             var searcher = new ManagementObjectSearcher(winQuery);
-            foreach(var o in searcher.Get())
+            foreach (var o in searcher.Get())
             {
                 var item = (ManagementObject)o;
                 var maxClockSpeed = Convert.ToInt32(item["MaxClockSpeed"]);
@@ -205,58 +254,116 @@ namespace Dev2.Activities
             return stringBuilder.ToString();
         }
 
-        public string GetUserRolesInformation(IIdentity currentIdentity = null)
+        public string GetUserRolesInformation() => GetUserRolesInformation(null);
+        public string GetUserRolesInformation(IIdentity currentIdentity)
         {
             var stringBuilder = new StringBuilder();
-            WindowsIdentity identity = currentIdentity as WindowsIdentity ?? WindowsIdentity.GetCurrent();
-            if(identity != null)
+            var identity = currentIdentity as WindowsIdentity ?? WindowsIdentity.GetCurrent();
+
+            if (identity.Groups != null)
             {
-                if(identity.Groups != null)
+                foreach (var sid in identity.Groups)
                 {
-                    foreach(var sid in identity.Groups)
-                    {
-                        try
-                        {
-                            var translatedGroup = sid.Translate(typeof(NTAccount));
-                            var name = translatedGroup.Value;
-                            stringBuilder.AppendFormat(name + ",");
-                        }
-                        catch(Exception)
-                        {
-                            var winQuery = new ObjectQuery("SELECT * FROM Win32_Group WHERE SID='" + sid.Value + "'");
-                            var searcher = new ManagementObjectSearcher(winQuery);
-                            foreach(var o in searcher.Get())
-                            {
-                                var item = (ManagementObject)o;
-                                var name = Convert.ToString(item["Name"]);
-                                stringBuilder.AppendFormat(name + ",");
-                            }
-                        }
-                    }
+                    stringBuilder = TryAppendGroup(stringBuilder, sid);
                 }
             }
             return stringBuilder.ToString().TrimEnd(',');
         }
 
-        public string GetUserNameInformation()
+        static StringBuilder TryAppendGroup(StringBuilder stringBuilder, IdentityReference sid)
         {
-            return Environment.UserName;
+            try
+            {
+                var translatedGroup = sid.Translate(typeof(NTAccount));
+                var name = translatedGroup.Value;
+                stringBuilder.AppendFormat(name + ",");
+            }
+            catch (Exception)
+            {
+                var winQuery = new ObjectQuery("SELECT * FROM Win32_Group WHERE SID='" + sid.Value + "'");
+                var searcher = new ManagementObjectSearcher(winQuery);
+                foreach (var o in searcher.Get())
+                {
+                    var item = (ManagementObject)o;
+                    var name = Convert.ToString(item["Name"]);
+                    stringBuilder.AppendFormat(name + ",");
+                }
+            }
+            return stringBuilder;
         }
 
-        public string GetDomainInformation()
+        public string GetUserNameInformation() => Environment.UserName;
+
+        public string GetDomainInformation() => Environment.UserDomainName;
+
+        public string GetComputerName() => Environment.MachineName;
+
+        public string GetWareWolfVersion() => GetServerVersion.GetVersion();
+
+        public string GetWarewolfServerMemory()
         {
-            return Environment.UserDomainName;
+            using (var proc = Process.GetCurrentProcess())
+            {
+                var privateBytes = (ulong)proc.PrivateMemorySize64;
+                return ConvertToMB(privateBytes).ToString(CultureInfo.InvariantCulture);
+            }
         }
 
-        public string GetNumberOfWareWolfAgentsInformation()
+        public string GetWarewolfCPU()
         {
-            //Note this is for future functionality
+            using (var proc = Process.GetCurrentProcess())
+            {
+                var stringBuilder = new StringBuilder();
+                var winQuery = new ObjectQuery($"SELECT PercentProcessorTime FROM Win32_PerfFormattedData_PerfProc_Process Where Name LIKE '%{proc.ProcessName}%'");
+                var searcher = new ManagementObjectSearcher(winQuery);
+                foreach (var o in searcher.Get())
+                {
+                    var item = (ManagementObject)o;
+                    var maxClockSpeed = Convert.ToInt32(item["PercentProcessorTime"]);
+                    stringBuilder.Append(maxClockSpeed + " %");
+                }
+                return stringBuilder.ToString();
+            }
+        }
+
+        public string GetNumberOfNICS()
+        {
             var stringBuilder = new StringBuilder();
-            var winQuery = new ObjectQuery("SELECT Name FROM Win32_Process Where Name LIKE '%chrome%'");
-            var searcher = new ManagementObjectSearcher(winQuery);
-            var managementObjectCollection = searcher.Get();
-            stringBuilder.Append(managementObjectCollection.Count.ToString(CultureInfo.InvariantCulture));
+            var nics = NetworkInterface.GetAllNetworkInterfaces();
+            stringBuilder.Append(nics.Length.ToString(CultureInfo.InvariantCulture));
             return stringBuilder.ToString();
+        }
+
+        public string GetMACAdresses()
+        {
+            var nics = NetworkInterface.GetAllNetworkInterfaces();
+            var macs = nics.Select(nic => nic.GetPhysicalAddress().ToString()).Where(n => !string.IsNullOrEmpty(n)).ToList();
+            return string.Join(",", macs);
+        }
+
+        public string GetIPv4Adresses() => GetIPAddress(AddressFamily.InterNetwork);
+
+        public string GetIPv6Adresses() => GetIPAddress(AddressFamily.InterNetworkV6);
+
+        string GetIPAddress(AddressFamily ipv)
+        {
+            var hosts = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
+            var ips = (from host in hosts where host.AddressFamily == ipv select host.ToString()).ToList();
+            return string.Join(",", ips);
+        }
+
+        public string GetDefaultGateway()
+        {
+            var nics = NetworkInterface.GetAllNetworkInterfaces();
+            var gateway = (from nic in nics from gateWayIp in nic.GetIPProperties().GatewayAddresses select gateWayIp.Address.ToString()).ToList();
+            return string.Join(",", gateway);
+        }
+
+        public string GetDNSServer()
+        {
+            var nics = NetworkInterface.GetAllNetworkInterfaces();
+            var dns = (from nic in nics from dnsIp in nic.GetIPProperties().DnsAddresses select dnsIp.MapToIPv4().ToString()).ToList();
+            return string.Join(",", dns);
         }
 
         #endregion

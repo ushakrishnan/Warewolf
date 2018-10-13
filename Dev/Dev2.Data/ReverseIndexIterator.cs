@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2014 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,8 +16,8 @@ namespace Dev2.Data.Binary_Objects
     [Serializable]
     public class ReverseIndexIterator : IIndexIterator
     {
-        private int _curValue;
-        private IndexList _indexList;
+        int _curValue;
+        IndexList _indexList;
 
         public IndexList IndexList
         {
@@ -33,12 +32,9 @@ namespace Dev2.Data.Binary_Objects
             }
         }
 
-        public int Count
-        {
-            get { return IndexList.Count(); }
-        }
+        public int Count => IndexList.Count();
 
-        public bool IsEmpty { get { return _curValue - Count == 0; } }
+        public bool IsEmpty => _curValue - Count == 0;
 
         public ReverseIndexIterator(HashSet<int> gaps, int maxValue)
         {
@@ -48,8 +44,8 @@ namespace Dev2.Data.Binary_Objects
 
         public bool HasMore()
         {
-            int canidate = _curValue;
-            while(IndexList.Gaps.Contains(canidate))
+            var canidate = _curValue;
+            while (IndexList.Gaps.Contains(canidate))
             {
                 canidate--;
             }
@@ -60,54 +56,21 @@ namespace Dev2.Data.Binary_Objects
         public int FetchNextIndex()
         {
 
-            int canidate = _curValue;
+            var canidate = _curValue;
             // assign a new curValue
 
-            while(IndexList.Gaps.Contains(canidate))
+            while (IndexList.Gaps.Contains(canidate))
             {
                 canidate--;
             }
 
-            int result = canidate;
+            var result = canidate;
 
             _curValue = canidate - 1; // save next value ;)
 
             return result;
         }
 
-        public int MaxIndex()
-        {
-            return IndexList.GetMaxIndex();
-        }
-
-        public int MinIndex()
-        {
-            return IndexList.GetMinIndex();
-        }
-
-        public void AddGap(int idx)
-        {
-            IndexList.Gaps.Add(idx);
-        }
-
-        public void RemoveGap(int idx)
-        {
-            IndexList.Gaps.Remove(idx);
-        }
-
-        public HashSet<int> FetchGaps()
-        {
-            return IndexList.Gaps;
-        }
-
-        public IIndexIterator Clone()
-        {
-            HashSet<int> gaps = new HashSet<int>();
-            foreach(int g in IndexList.Gaps)
-            {
-                gaps.Add(g);
-            }
-            return new IndexIterator(gaps, IndexList.MaxValue);
-        }
+        public int MaxIndex() => IndexList.GetMaxIndex();
     }
 }

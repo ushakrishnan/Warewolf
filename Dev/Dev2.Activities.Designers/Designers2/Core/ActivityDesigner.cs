@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -12,122 +11,241 @@
 using System;
 using System.Activities.Presentation;
 using System.Activities.Presentation.View;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Windows.Media.Imaging;
+using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using Dev2.Activities.Designers2.Core.Adorners;
 using Dev2.Activities.Designers2.Core.Errors;
-using Dev2.Activities.Designers2.Core.Help;
 using Dev2.Activities.Designers2.Sequence;
-using Dev2.Studio.Core.Activities.Services;
+using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
+using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
+using Dev2.Studio.Core;
+using Dev2.Studio.Interfaces;
 using Dev2.Utilities;
+using FontAwesome.WPF;
 
 namespace Dev2.Activities.Designers2.Core
 {
     [ActivityDesignerOptions(AllowDrillIn = false, AlwaysCollapseChildren = true)]
-    public class ActivityDesigner<TViewModel> : ActivityDesigner, IDisposable
+    public class ActivityDesigner<TViewModel> : ActivityDesigner, IUpdatesHelp, IErrorsSource
         where TViewModel : ActivityDesignerViewModel
     {
         bool _isInitialFocusDone;
-        readonly AdornerControl _helpAdorner;
         readonly AdornerControl _errorsAdorner;
-        IDesignerManagementService _designerManagementService;
-        bool _isDisposed;
-        DependencyPropertyDescriptor _zIndexProperty;
-        // ReSharper disable InconsistentNaming
+
         protected TViewModel _dataContext;
-        // ReSharper restore InconsistentNaming
+
         bool _isSetFocusActionSet;
         MenuItem _showCollapseLargeView;
 
         public ActivityDesigner()
         {
-            //This line is bad it causes the overall designer to not get focus when clicking on it
-            //Please be very careful about putting this line in.
-            //FocusManager.SetIsFocusScope(this , true);
-            _helpAdorner = new HelpAdorner(this);
             _errorsAdorner = new ErrorsAdorner(this);
-
             Loaded += OnRoutedEventHandler;
-            Unloaded += ActivityDesignerUnloaded;
             AllowDrop = true;
+            PreviewKeyDown += OnPreviewKeyDown;
         }
 
-        public TViewModel ViewModel { get { return DataContext as TViewModel; } }
+        static void OnPreviewKeyDown(object sender, KeyEventArgs keyEventArgs)
+        {
+            if (keyEventArgs.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control && keyEventArgs.OriginalSource.GetType() != typeof(TextBox))
+            {
+                keyEventArgs.Handled = true;
+            }
 
-        public ActivityDesignerTemplate ContentDesignerTemplate { get { return (ActivityDesignerTemplate)Content; } }
+            var isComboBoxOrComboBoxItem = (keyEventArgs.OriginalSource.GetType() == typeof(ComboBox) || keyEventArgs.OriginalSource.GetType() == typeof(ComboBoxItem));
+            var keyIsUndoOrDelete = ((keyEventArgs.Key == Key.Z && Keyboard.Modifiers == ModifierKeys.Control) || keyEventArgs.Key == Key.Delete);
+            if (isComboBoxOrComboBoxItem && keyIsUndoOrDelete)
+            {
+                keyEventArgs.Handled = true;
+            }
+        }
 
-        //DONT TAKE OUT... This has been done so that the drill down doesnt happen when you double click.
+        #region Overrides of WorkflowViewElement
+
+        /// <summary>
+        /// Invoked when the context menu is loaded. Implement this method in a derived class to handle this event.
+        /// </summary>
+        /// <param name="menu">The <see cref="T:System.Windows.Controls.ContextMenu"/> that is loaded.</param>
+        protected override void OnContextMenuLoaded(ContextMenu menu)
+        {
+            var indexOfOpenItem = -1;
+            foreach (var menuItem in menu.Items.Cast<object>().OfType<MenuItem>().Where(menuItem => (string)menuItem.Header == "_Open"))
+            {
+                indexOfOpenItem = menu.Items.IndexOf(menuItem);
+                break;
+            }
+            if (indexOfOpenItem != -1)
+            {
+                menu.Items.RemoveAt(indexOfOpenItem);
+            }
+            base.OnContextMenuLoaded(menu);
+        }
+
+        #endregion
+
+        public TViewModel ViewModel => DataContext as TViewModel;
+
+        public ActivityDesignerTemplate ContentDesignerTemplate => (ActivityDesignerTemplate)Content;
+
+        //don't TAKE OUT... This is used to block the test view workflow
+        public bool IsServiceTestView
+        {
+            get
+            {
+                if (IsServiceTestContentEnabled())
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        bool IsServiceTestContentEnabled()
+        {
+            var parentContentPane = FindDependencyParent.FindParent<DesignerView>(this);
+            var dataContext = parentContentPane?.DataContext;
+            if (dataContext != null)
+            {
+                UpdateServiceTest(dataContext);
+
+                return true;
+            }
+            return false;
+        }
+
+        void UpdateContentEnabled()
+        {
+            var parentContentPane = FindDependencyParent.FindParent<DesignerView>(this);
+            var dataContext = parentContentPane?.DataContext;
+            if (dataContext != null)
+            {
+                UpdateServiceTest(dataContext);
+
+                if (dataContext.GetType().Name == "MergeWorkflowViewModel")
+                {
+                    ViewModel.IsMerge = true;
+                }
+            }
+        }
+
+        private void UpdateServiceTest(object dataContext)
+        {
+            if (dataContext.GetType().Name == "ServiceTestViewModel" && ContentDesignerTemplate != null)
+            {
+                if (ContentDesignerTemplate.Parent.GetType().Name != "ForeachDesigner" &&
+                    ContentDesignerTemplate.Parent.GetType().Name != "SequenceDesigner" &&
+                    ContentDesignerTemplate.Parent.GetType().Name != "SelectAndApplyDesigner")
+                {
+                    ContentDesignerTemplate.IsEnabled = false;
+                }
+                ContentDesignerTemplate.RightButtons.Clear();
+                ContentDesignerTemplate.LeftButtons.Clear();
+            }
+        }
+
         protected override void OnPreviewMouseDoubleClick(MouseButtonEventArgs e)
         {
             ToggleView(e);
-            if(!(e.OriginalSource is IScrollInfo))
+            if (!(e.OriginalSource is IScrollInfo))
             {
                 e.Handled = true;
             }
             base.OnPreviewMouseDoubleClick(e);
         }
 
+        #region Overrides of UIElement
+
+        /// <summary>
+        /// Invoked when an unhandled <see cref="E:System.Windows.Input.Keyboard.KeyDown"/> attached event reaches an element in its route that is derived from this class. Implement this method to add class handling for this event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.Windows.Input.KeyEventArgs"/> that contains the event data.</param>
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.Key == Key.Return)
+            {
+                e.Handled = true;
+            }
+        }
+
+        protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            if (ViewModel != null && e.OriginalSource.GetType() == typeof(Border))
+            {
+                UpdateHelpDescriptor(ViewModel.HelpText);
+            }
+        }
+
+        #endregion
+
         void ToggleView(MouseButtonEventArgs eventArgs)
         {
             var originalSource = eventArgs.OriginalSource;
-            var fe = originalSource as FrameworkElement;
-            if(fe != null && (fe.TemplatedParent is ToggleButton || fe.TemplatedParent is ActivityDesignerButton))
+            if (originalSource is FrameworkElement fe && (fe.TemplatedParent is ToggleButton || fe.TemplatedParent is ActivityDesignerButton))
             {
                 return;
             }
 
-            if(originalSource is Panel || originalSource is Shape || originalSource is Decorator ||
+            if (originalSource is Panel || originalSource is Shape || originalSource is Decorator ||
                originalSource is ScrollViewer)
             {
-                if(eventArgs.Source is Large)
+                if (eventArgs.Source is Large)
                 {
                     return;
                 }
-                ShowCollapseLargeView();
-                eventArgs.Handled = true;
+                if (ViewModel != null && ViewModel.IsSelected)
+                {
+                    ShowCollapseLargeView();
+                    eventArgs.Handled = true;
+                }
             }
+            UpdateContentEnabled();
         }
 
         void ShowCollapseLargeView()
         {
-            if(ViewModel != null && ViewModel.HasLargeView)
+            if (ViewModel != null && ViewModel.HasLargeView)
             {
-                if(ViewModel.ShowSmall)
+                if (ViewModel.ShowSmall)
                 {
                     ViewModel.Expand();
                 }
-                else if(ViewModel.ShowLarge)
+                else
                 {
-                    ViewModel.Collapse();
+                    if (ViewModel.ShowLarge)
+                    {
+                        ViewModel.Collapse();
+                    }
                 }
             }
         }
 
         protected override void OnMouseEnter(MouseEventArgs e)
         {
-            if(!_isSetFocusActionSet)
+            if (!_isSetFocusActionSet && DataContext is ActivityDesignerViewModel vm)
             {
-                var vm = DataContext as ActivityDesignerViewModel;
-                if(vm != null)
-                {
-                    vm.SetIntialFocusAction(SetInitialiFocus);
-                    _isSetFocusActionSet = true;
-                    return;
-                }
+                vm.SetIntialFocusAction(SetInitialiFocus);
+                _isSetFocusActionSet = true;
+                return;
             }
+
             base.OnMouseEnter(e);
         }
 
-        private void SetInitialiFocus()
+        void SetInitialiFocus()
         {
-            if(!_isInitialFocusDone)
+            if (!_isInitialFocusDone)
             {
                 ContentDesignerTemplate.SetInitialFocus();
                 _isInitialFocusDone = true;
@@ -141,10 +259,17 @@ namespace Dev2.Activities.Designers2.Core
             BuildInitialContextMenu();
             ApplyBindings(_dataContext);
             ApplyEventHandlers(_dataContext);
+            UpdateContentEnabled();
         }
 
         protected virtual TViewModel CreateViewModel()
         {
+            if (ServerRepository.Instance.ActiveServer == null)
+            {
+                var shellViewModel = CustomContainer.Get<IShellViewModel>();
+                ServerRepository.Instance.ActiveServer = shellViewModel?.ActiveServer;
+            }
+
             return (TViewModel)Activator.CreateInstance(typeof(TViewModel), ModelItem);
         }
 
@@ -153,12 +278,6 @@ namespace Dev2.Activities.Designers2.Core
             BindingOperations.SetBinding(viewModel, ActivityDesignerViewModel.IsMouseOverProperty, new Binding(IsMouseOverProperty.Name)
             {
                 Source = this,
-                Mode = BindingMode.OneWay
-            });
-
-            BindingOperations.SetBinding(_helpAdorner, AdornerControl.IsAdornerVisibleProperty, new Binding(ActivityDesignerViewModel.ShowHelpProperty.Name)
-            {
-                Source = viewModel,
                 Mode = BindingMode.OneWay
             });
 
@@ -171,176 +290,27 @@ namespace Dev2.Activities.Designers2.Core
 
         void ApplyEventHandlers(TViewModel viewModel)
         {
-            _zIndexProperty = DependencyPropertyDescriptor.FromProperty(ActivityDesignerViewModel.ZIndexPositionProperty, typeof(TViewModel));
+            var _zIndexProperty = DependencyPropertyDescriptor.FromProperty(ActivityDesignerViewModel.ZIndexPositionProperty, typeof(TViewModel));
             _zIndexProperty.AddValueChanged(viewModel, OnZIndexPositionChanged);
-
-            if (Context != null)
-            {
-                Context.Items.Subscribe<Selection>(OnSelectionChanged);
-                Context.Services.Subscribe<IDesignerManagementService>(OnDesignerManagementServiceChanged);
-            }
+            Context?.Items.Subscribe<Selection>(OnSelectionChanged);
         }
 
         void OnZIndexPositionChanged(object sender, EventArgs args)
         {
             var viewModel = (TViewModel)sender;
-
             var element = Parent as FrameworkElement;
-            if(element != null)
-            {
-                element.SetZIndex(viewModel.ZIndexPosition);
-            }
+            element?.SetZIndex(viewModel.ZIndexPosition);
         }
 
-        void OnSelectionChanged(Selection item)
-        {
-            ViewModel.IsSelected = item.PrimarySelection == ModelItem;
-        }
+        void OnSelectionChanged(Selection item) => ViewModel.IsSelected = item.SelectedObjects.Any(modelItem => modelItem == ModelItem);
 
-        void OnDesignerManagementServiceChanged(IDesignerManagementService designerManagementService)
-        {
-            if(_designerManagementService != null)
-            {
-                _designerManagementService.CollapseAllRequested -= OnDesignerManagementServiceCollapseAllRequested;
-                _designerManagementService.ExpandAllRequested -= OnDesignerManagementServiceExpandAllRequested;
-                _designerManagementService.RestoreAllRequested -= OnDesignerManagementServiceRestoreAllRequested;
-                _designerManagementService = null;
-            }
-
-            if(designerManagementService != null)
-            {
-                _designerManagementService = designerManagementService;
-
-                _designerManagementService.CollapseAllRequested += OnDesignerManagementServiceCollapseAllRequested;
-                _designerManagementService.ExpandAllRequested += OnDesignerManagementServiceExpandAllRequested;
-                _designerManagementService.RestoreAllRequested += OnDesignerManagementServiceRestoreAllRequested;
-            }
-        }
-
-
-
-        protected void OnDesignerManagementServiceRestoreAllRequested(object sender, EventArgs e)
-        {
-            ViewModel.Restore();
-        }
-
-        protected void OnDesignerManagementServiceExpandAllRequested(object sender, EventArgs e)
-        {
-            ViewModel.Expand();
-        }
-
-        protected void OnDesignerManagementServiceCollapseAllRequested(object sender, EventArgs e)
-        {
-            ViewModel.Collapse();
-        }
-
-        protected override void OnPreviewDragEnter(DragEventArgs e)
-        {
-            ActivityHelper.HandleDragEnter(e);
-        }
+        protected override void OnPreviewDragEnter(DragEventArgs e) => ActivityHelper.HandleDragEnter(e);
 
         #region IDisposable Members
 
+        public void UpdateHelpDescriptor(string helpText) => ViewModel?.UpdateHelpDescriptor(helpText);
 
-        ~ActivityDesigner()
-        {
-            // Do not re-create Dispose clean-up code here.
-            // Calling Dispose(false) is optimal in terms of
-            // readability and maintainability.
-            Dispose(false);
-        }
-
-        /// <summary>
-        /// Child classes can override this method to perform 
-        /// clean-up logic, such as removing event handlers.
-        /// </summary>
-        protected virtual void OnDispose()
-        {
-            if(_designerManagementService != null)
-            {
-                _designerManagementService.CollapseAllRequested -= OnDesignerManagementServiceCollapseAllRequested;
-                _designerManagementService.ExpandAllRequested -= OnDesignerManagementServiceExpandAllRequested;
-                _designerManagementService.RestoreAllRequested -= OnDesignerManagementServiceRestoreAllRequested;
-            }
-            if(_showCollapseLargeView != null)
-            {
-                _showCollapseLargeView.Click -= ShowCollapseFromContextMenu;
-            }
-            if(Context != null)
-            {
-                Context.Items.Unsubscribe<Selection>(OnSelectionChanged);
-                Context.Services.Unsubscribe<IDesignerManagementService>(OnDesignerManagementServiceChanged);
-            }
-
-            if(_zIndexProperty != null)
-            {
-                _zIndexProperty.RemoveValueChanged(_dataContext, OnZIndexPositionChanged);
-            }
-            if(ViewModel != null)
-            {
-                ViewModel.Dispose();
-            }
-
-            Loaded -= OnRoutedEventHandler;
-
-            Unloaded -= ActivityDesignerUnloaded;
-            CEventHelper.RemoveAllEventHandlers(this);
-            CEventHelper.RemoveAllEventHandlers(this);
-           GC.SuppressFinalize(this);
-        }
-
-        void OnRoutedEventHandler(object sender, RoutedEventArgs args)
-        {
-            OnLoaded();
-        }
-
-        void ActivityDesignerUnloaded(object sender, RoutedEventArgs e)
-        {
-            OnUnloaded();
-            Dispose();
-        }
-
-        protected virtual void OnUnloaded()
-        {
-  
-        }
-
-        // Do not make this method virtual.
-        // A derived class should not be able to override this method.
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        // Dispose(bool disposing) executes in two distinct scenarios.
-        // If disposing equals true, the method has been called directly
-        // or indirectly by a user's code. Managed and unmanaged resources
-        // can be disposed.
-        // If disposing equals false, the method has been called by the
-        // runtime from inside the finalizer and you should not reference
-        // other objects. Only unmanaged resources can be disposed.
-        void Dispose(bool disposing)
-        {
-            // Check to see if Dispose has already been called.
-            if(!_isDisposed)
-            {
-                // If disposing equals true, dispose all managed
-                // and unmanaged resources.
-                if(disposing)
-                {
-                    // Dispose managed resources.
-                    OnDispose();
-                    if(_dataContext != null)
-                    {
-                        _dataContext.Dispose();
-                    }
-                }
-
-                // Call the appropriate methods to clean up
-                // unmanaged resources here.
-                _isDisposed = true;
-            }
-        }
+        void OnRoutedEventHandler(object sender, RoutedEventArgs args) => Application.Current?.Dispatcher?.InvokeAsync(OnLoaded, DispatcherPriority.Background);
 
         #endregion
 
@@ -348,14 +318,13 @@ namespace Dev2.Activities.Designers2.Core
         {
             ContextMenu = new ContextMenu();
 
-            if(ViewModel != null && ViewModel.HasLargeView)
+            if (ViewModel != null && ViewModel.HasLargeView)
             {
                 _showCollapseLargeView = new MenuItem { Header = "Show Large View" };
                 _showCollapseLargeView.Click += ShowCollapseFromContextMenu;
                 _showCollapseLargeView.SetValue(AutomationProperties.AutomationIdProperty, "UI_ShowLargeViewMenuItem_AutoID");
                 ContextMenu.Items.Add(_showCollapseLargeView);
             }
-
         }
 
         void ShowCollapseFromContextMenu(object sender, RoutedEventArgs e)
@@ -363,26 +332,51 @@ namespace Dev2.Activities.Designers2.Core
             ShowCollapseLargeView();
         }
 
-
         protected override void OnContextMenuOpening(ContextMenuEventArgs e)
         {
-            base.OnContextMenuOpening(e);
-
-            if(ViewModel != null && ViewModel.HasLargeView)
+            var parentContentPane = FindDependencyParent.FindParent<DesignerView>(this);
+            var dataContext = parentContentPane?.DataContext;
+            if (dataContext != null)
             {
-                if(ViewModel.ShowLarge)
+                if (dataContext.GetType().Name == "ServiceTestViewModel" || dataContext.GetType().Name == "MergeWorkflowViewModel")
                 {
-                    var icon = new Image { Source = new BitmapImage(new Uri("pack://application:,,,/Dev2.Activities.Designers;component/Images/ServiceCollapseMapping-32.png")), Height = 16, Width = 16 };
-                    _showCollapseLargeView.Header = "Collapse Large View";
-                    _showCollapseLargeView.Icon = icon;
+                    e.Handled = true;
                 }
-                else if(ViewModel.ShowSmall)
+                else
                 {
-                    var icon = new Image { Source = new BitmapImage(new Uri("pack://application:,,,/Dev2.Activities.Designers;component/Images/ServiceExpandMapping-32.png")), Height = 16, Width = 16 };
-                    _showCollapseLargeView.Header = "Show Large View";
-                    _showCollapseLargeView.Icon = icon;
+                    base.OnContextMenuOpening(e);
+
+                    if (ViewModel != null && ViewModel.HasLargeView && !ViewModel.ShowSmall && ViewModel.ShowSmall)
+                    {
+                        var imageSource = ImageAwesome.CreateImageSource(FontAwesomeIcon.Expand, Brushes.Black);
+                        var icon = new Image
+                        {
+                            Source = imageSource,
+                            Height = 14,
+                            Width = 14
+                        };
+                        _showCollapseLargeView.Header = "Show Large View";
+                        _showCollapseLargeView.Icon = icon;
+                    }
+
                 }
             }
         }
+
+        #region Implementation of IErrorsSource
+
+        public List<IActionableErrorInfo> Errors
+        {
+            get
+            {
+                return ViewModel.Errors;
+            }
+            set
+            {
+                ViewModel.Errors = value;
+            }
+        }
+
+        #endregion
     }
 }

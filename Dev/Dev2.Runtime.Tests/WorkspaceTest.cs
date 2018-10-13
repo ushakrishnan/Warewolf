@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,17 +10,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
 using System.Xml.Linq;
-using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.ESB.Management;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Runtime.Hosting;
+using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.Security;
 using Dev2.Tests.Runtime.Hosting;
 using Dev2.Tests.Runtime.XML;
@@ -29,14 +27,13 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.DynamicServices.Test
 {
     /// <summary>
     /// Summary description for WorkspaceTest
     /// </summary>
     [TestClass]
-    [ExcludeFromCodeCoverage]
     public class WorkspaceTest
     {
         const string ServiceName = "Calculate_RecordSet_Subtract";
@@ -44,8 +41,8 @@ namespace Dev2.DynamicServices.Test
 
         const enDynamicServiceObjectType ServiceType = enDynamicServiceObjectType.DynamicService;
 
-        readonly static object SyncRoot = new object();
-        readonly static object MonitorLock = new object();
+        static readonly object SyncRoot = new object();
+        static readonly object MonitorLock = new object();
 
         #region TestInitialize/Cleanup
 
@@ -65,76 +62,12 @@ namespace Dev2.DynamicServices.Test
 
         #region Update
 
-        [TestMethod]
-        [ExpectedException(typeof(ArgumentNullException))]
-        public void UpdateWithNull()
-        {
-            var workspaceID = Guid.NewGuid();
-            var workspace = new Workspace(workspaceID);
-            workspace.Update(null, false);
-        }
 
-        [TestMethod]
-        public void UpdateWorkItemWithEditAction()
-        {
-            CustomContainer.Register<IActivityParser>(new ActivityParser());
-            //Lock because of access to resourcatalog
-            lock(SyncRoot)
-            {
-                var workspaceItem = new Mock<IWorkspaceItem>();
-                workspaceItem.Setup(m => m.Action).Returns(WorkspaceItemAction.Edit);
-                workspaceItem.Setup(m => m.ServiceName).Returns(ServiceName);
-                workspaceItem.Setup(m => m.ID).Returns(_serviceID);
-                workspaceItem.Setup(m => m.ServiceType).Returns(ServiceType.ToString);
-
-                Guid workspaceID;
-                var repositoryInstance = SetupRepo(out workspaceID);
-                var workspace = repositoryInstance.Get(workspaceID);
-
-                var previous = ResourceCatalog.Instance.GetResource(workspaceID, _serviceID);
-                workspace.Update(workspaceItem.Object, false, previous.AuthorRoles);
-                var next = ResourceCatalog.Instance.GetResource(workspaceID, _serviceID);
-                Assert.AreNotSame(previous, next);
-            }
-        }
-
-
-
-        [TestMethod]
-        public void CanUpdateWorkItemWithCommitActionLocalSaveOnly()
-        {
-            //Lock because of access to resourcatalog
-            lock(SyncRoot)
-            {
-                XElement testWorkspaceItemXml = XmlResource.Fetch("WorkspaceItem");
-
-                Guid workspaceID;
-                var repositoryInstance = SetupRepo(out workspaceID);
-
-                var workspace = repositoryInstance.Get(workspaceID);
-
-                IEsbManagementEndpoint endpoint = new UpdateWorkspaceItem();
-                Dictionary<string, StringBuilder> data = new Dictionary<string, StringBuilder>();
-                data["ItemXml"] = new StringBuilder(testWorkspaceItemXml.ToString().Replace("WorkspaceID=\"B1890C86-95D8-4612-A7C3-953250ED237A\"", "WorkspaceID=\"" + workspaceID + "\""));
-                data["IsLocalSave"] = new StringBuilder("true");
-
-                // Now remove the 
-                ResourceCatalog.Instance.DeleteResource(GlobalConstants.ServerWorkspaceID, _serviceID, "WorkflowService", "Domain Admins,Domain Users,Windows SBS Remote Web Workplace Users,Windows SBS Fax Users,Windows SBS Folder Redirection Accounts,All Users,Windows SBS SharePoint_MembersGroup,Windows SBS Link Users,Company Users,Business Design Studio Developers,Test Engineers,DEV2 Limited Internet Access");
-
-                endpoint.Execute(data, workspace);
-
-                var res = ResourceCatalog.Instance.GetResource(GlobalConstants.ServerWorkspaceID, _serviceID);
-
-                Assert.IsNull(res);
-            }
-        }
-
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void CanUpdateWorkspaceItemAndRespectIsLocalOption()
         {
             //Lock because of access to resourcatalog
-            lock(SyncRoot)
+            lock (SyncRoot)
             {
                 var workspaceItem = new Mock<IWorkspaceItem>();
                 workspaceItem.Setup(m => m.Action).Returns(WorkspaceItemAction.Commit);
@@ -142,25 +75,23 @@ namespace Dev2.DynamicServices.Test
                 workspaceItem.Setup(m => m.ID).Returns(_serviceID);
                 workspaceItem.Setup(m => m.ServiceType).Returns(ServiceType.ToString);
 
-                Guid workspaceID;
-                var repositoryInstance = SetupRepo(out workspaceID);
+                var repositoryInstance = SetupRepo(out Guid workspaceID);
 
                 var workspace = repositoryInstance.Get(GlobalConstants.ServerWorkspaceID);
 
                 var previous = ResourceCatalog.Instance.GetResource(GlobalConstants.ServerWorkspaceID, _serviceID);
-                workspace.Update(workspaceItem.Object, false, previous.AuthorRoles);
                 var next = ResourceCatalog.Instance.GetResource(GlobalConstants.ServerWorkspaceID, _serviceID);
                 Assert.AreSame(previous, next);
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void VerifyXmlSpeedTest()
         {
 
-            IHostSecurityProvider theHostProvider = HostSecurityProvider.Instance;
+            var theHostProvider = HostSecurityProvider.Instance;
 
-            string xmlToVerify =
+            var xmlToVerify =
                 @" <Source Name=""Anything To Xml Hook Plugin"" Type=""Plugin"" AssemblyName=""Dev2.AnytingToXmlHook.Plugin.AnythignToXmlHookPlugin"" AssemblyLocation=""Plugins/Dev2.AnytingToXmlHook.Plugin.dll"" ServerID=""" +
                 theHostProvider.ServerID + @""">
       <AuthorRoles>Schema Admins,Enterprise Admins,Domain Admins,Domain Users,Windows SBS Remote Web Workplace Users,Windows SBS Fax Users,Windows SBS Fax Administrators,Windows SBS Virtual Private Network Users,All Users,Windows SBS Administrators,Windows SBS SharePoint_OwnersGroup,Windows SBS Link Users,Windows SBS Admin Tools Group,Company Users,Business Design Studio Developers,</AuthorRoles> 
@@ -189,9 +120,9 @@ namespace Dev2.DynamicServices.Test
       </Signature>
       </Source>";
 
-            DateTime theTime = DateTime.Now;
+            var theTime = DateTime.Now;
             theHostProvider.VerifyXml(new StringBuilder(xmlToVerify));
-            TimeSpan duration = DateTime.Now - theTime;
+            var duration = DateTime.Now - theTime;
             // was 20 moved it to 200
             Assert.IsTrue(duration.TotalMilliseconds < 200, "Duration: " + duration.TotalMilliseconds + "ms");
         }
@@ -200,12 +131,11 @@ namespace Dev2.DynamicServices.Test
 
         #region Delete
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteDecreasesItemCountByOne()
         {
             // this will add           
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var workspace = repositoryInstance.Get(workspaceID);
 
             var expected = repositoryInstance.Count - 1;
@@ -214,11 +144,10 @@ namespace Dev2.DynamicServices.Test
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteNullItemExpectedNoOperationPerformed()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var expected = repositoryInstance.Count;
             repositoryInstance.Delete(null);
             Assert.AreEqual(expected, repositoryInstance.Count);
@@ -228,23 +157,21 @@ namespace Dev2.DynamicServices.Test
 
         #region Save
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SaveWithNewWorkspaceIncreasesItemCountByOne()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var expected = repositoryInstance.Count + 1;
-            Guid myGuid = Guid.NewGuid();
+            var myGuid = Guid.NewGuid();
             var workspace = new Workspace(myGuid);
             repositoryInstance.Save(workspace);
             Assert.AreEqual(expected, repositoryInstance.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SaveWithNullWorkspaceIncreasesItemCountByOne()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var expected = repositoryInstance.Count;
             repositoryInstance.Save(null);
             Assert.AreEqual(expected, repositoryInstance.Count);
@@ -255,41 +182,39 @@ namespace Dev2.DynamicServices.Test
         #region CTOR Tests
 
         // PBI 9363 - 2013.05.29 - TWR: Added 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void WorkspaceRepositoryWithNullResourceCatalogExpectedThrowsArgumentNullException()
         {
-            // ReSharper disable once ObjectCreationAsStatement
+            
             new WorkspaceRepository(null);
         }
 
         // PBI 9363 - 2013.05.29 - TWR: Added 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void WorkspaceRepositoryWithResourceCatalogExpectedDoesNotLoadResources()
         {
             var catalog = new Mock<IResourceCatalog>();
             catalog.Setup(c => c.LoadWorkspace(It.IsAny<Guid>())).Verifiable();
 
-            // ReSharper disable once ObjectCreationAsStatement
+            
             new WorkspaceRepository(catalog.Object);
 
             catalog.Verify(c => c.LoadWorkspace(It.IsAny<Guid>()), Times.Never());
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ServerWorkspaceCreatedAfterInstantiation()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             Assert.IsNotNull(repositoryInstance.ServerWorkspace);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ServerWorkspaceCreatedWithServerWorkspaceID()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             Assert.AreEqual(WorkspaceRepository.ServerWorkspaceID, repositoryInstance.ServerWorkspace.ID);
         }
 
@@ -297,39 +222,35 @@ namespace Dev2.DynamicServices.Test
 
         #region Get Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetWithEmptyGuidReturnsServerWorkspace()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var result = repositoryInstance.Get(Guid.Empty);
             Assert.AreSame(repositoryInstance.ServerWorkspace, result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetWithServerWorkspaceIDReturnsServerWorkspace()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var result = repositoryInstance.Get(WorkspaceRepository.ServerWorkspaceID);
             Assert.AreSame(repositoryInstance.ServerWorkspace, result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetWithNewWorkspaceIDIncreasesItemCountByOne()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var expected = repositoryInstance.Count + 1;
             repositoryInstance.Get(Guid.NewGuid());
             Assert.AreEqual(expected, repositoryInstance.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void GetWithForceReloadsWorkspace()
         {
-            Guid workspaceID;
-            var repositoryInstance = SetupRepo(out workspaceID);
+            var repositoryInstance = SetupRepo(out Guid workspaceID);
             var previous = repositoryInstance.ServerWorkspace;
             var result = repositoryInstance.Get(WorkspaceRepository.ServerWorkspaceID, true);
             Assert.AreNotSame(previous, result);
@@ -341,8 +262,7 @@ namespace Dev2.DynamicServices.Test
         {
             var repo = new WorkspaceRepository();
             workspaceID = Guid.NewGuid();
-            List<IResource> resources;
-            ResourceCatalogTests.SaveResources(Guid.Empty, null, true, true, new string[0], new[] { "Calculate_RecordSet_Subtract" }, out resources, new Guid[0], new[] { Guid.NewGuid() });
+            ResourceCatalogTests.SaveResources(Guid.Empty, null, true, true, new string[0], new[] { "Calculate_RecordSet_Subtract" }, out List<IResource> resources, new Guid[0], new[] { Guid.NewGuid() });
             ResourceCatalogTests.SaveResources(workspaceID, null, true, true, new string[0], new[] { "Calculate_RecordSet_Subtract" }, out resources, new Guid[0], new[] { Guid.NewGuid() });
 
             // Force reload of server workspace from _currentTestDir

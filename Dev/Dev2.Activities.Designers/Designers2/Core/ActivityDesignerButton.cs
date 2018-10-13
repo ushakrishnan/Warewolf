@@ -1,8 +1,7 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -63,38 +62,35 @@ namespace Dev2.Activities.Designers2.Core
         public static readonly DependencyProperty PostCommandProperty =
             DependencyProperty.Register("PostCommand", typeof(ICommand), typeof(ActivityDesignerButton), new PropertyMetadata(default(ICommand)));
 
-
-
         void CommandAction(object o)
         {
-            if(IsValidatedBefore)
+            var canValidate = IsValidatedBefore;
+            if (DataContext is ActivityDesignerViewModel activityDesignerViewModel)
+            {
+                canValidate &= !activityDesignerViewModel.IsMerge;
+            }
+
+            if (canValidate)
             {
                 DoValidate();
             }
 
-            if(IsValid)
+            if (IsValid)
             {
-                if(CustomCommand != null)
-                {
-                    CustomCommand.Execute(null);
-                }
+                CustomCommand?.Execute(null);
 
-                if(IsClosedAfter)
+                if (IsClosedAfter)
                 {
                     DoClose();
                 }
             }
 
-            if(PostCommand != null)
-            {
-                PostCommand.Execute(null);
-            }
+            PostCommand?.Execute(null);
         }
 
         void DoValidate()
         {
-            var validator = DataContext as IValidator;
-            if(validator != null)
+            if (DataContext is IValidator validator)
             {
                 validator.Validate();
                 IsValid = validator.IsValid;
@@ -103,12 +99,10 @@ namespace Dev2.Activities.Designers2.Core
 
         void DoClose()
         {
-            var closable = DataContext as IClosable;
-            if(closable != null)
+            if (DataContext is IClosable closable)
             {
                 closable.IsClosed = true;
             }
         }
-
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,11 +13,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
@@ -29,11 +28,10 @@ namespace Dev2.Runtime.ESB.Management.Services
             string filePath = null;
             string directory = null;
 
-            ExecuteMessage msg = new ExecuteMessage { HasError = false };
+            var msg = new ExecuteMessage { HasError = false };
 
-            StringBuilder tmp;
-            values.TryGetValue("FilePath", out tmp);
-            if(tmp != null)
+            values.TryGetValue("ResourcePath", out StringBuilder tmp);
+            if (tmp != null)
             {
                 filePath = tmp.ToString();
             }
@@ -42,24 +40,23 @@ namespace Dev2.Runtime.ESB.Management.Services
             {
                 directory = tmp.ToString();
             }
-
-            if(String.IsNullOrWhiteSpace(filePath))
+            if (string.IsNullOrWhiteSpace(filePath))
             {
                 msg.HasError = true;
-                msg.SetMessage(FormatMessage("Can't delete a file if no filename is passed.", filePath, directory));
-                Dev2Logger.Log.Info(msg.Message.ToString());
+                msg.SetMessage(FormatMessage(ErrorResource.CannotDeleteFileWithoutFilename, filePath, directory));
+                Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
             }
-            else if(String.IsNullOrWhiteSpace(directory))
+            else if(string.IsNullOrWhiteSpace(directory))
             {
                 msg.HasError = true;
-                msg.SetMessage(FormatMessage("Can't delete a file if no directory is passed.", filePath, directory));
-                Dev2Logger.Log.Info(msg.Message.ToString());
+                msg.SetMessage(FormatMessage(ErrorResource.CannotDeleteFileWithoughtDirectory, filePath, directory));
+                Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
             }
             else if(!Directory.Exists(directory))
             {
                 msg.HasError = true;
-                msg.SetMessage(FormatMessage("No such directory exists on the server.", filePath, directory));
-                Dev2Logger.Log.Info(msg.Message.ToString());
+                msg.SetMessage(FormatMessage(string.Format(ErrorResource.DirectoryDoesNotExist,directory), filePath, directory));
+                Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
             }
             else
             {
@@ -68,8 +65,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                 if(!File.Exists(path))
                 {
                     msg.HasError = true;
-                    msg.SetMessage(FormatMessage("No such file exists on the server.", filePath, directory));
-                    Dev2Logger.Log.Info(msg.Message.ToString());
+                    msg.SetMessage(FormatMessage(ErrorResource.FileDoesNotExist, filePath, directory));
+                    Dev2Logger.Info(msg.Message.ToString(), GlobalConstants.WarewolfInfo);
                 }
                 else
                 {
@@ -82,34 +79,23 @@ namespace Dev2.Runtime.ESB.Management.Services
                     {
                         msg.HasError = true;
                         msg.SetMessage(FormatMessage(ex.Message, filePath, directory));
-                        Dev2Logger.Log.Error(ex);
+                        Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                     }
                 }
             }
 
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             return serializer.SerializeToBuilder(msg);
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService findDirectoryService = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><Directory ColumnIODirection=\"Input\"/><FilePath ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
+        static string FormatMessage(string message, string filePath, string directory) => $"DeleteLog: Error deleting '{filePath}' from '{directory}'...{message}";
 
-            ServiceAction findDirectoryServiceAction = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs) => Guid.Empty;
 
-            findDirectoryService.Actions.Add(findDirectoryServiceAction);
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Administrator;
 
-            return findDirectoryService;
-        }
+        public DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Directory ColumnIODirection=\"Input\"/><ResourcePath ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-        public string HandlesType()
-        {
-            return "DeleteLogService";
-        }
-
-        static string FormatMessage(string message, string filePath, string directory)
-        {
-            return string.Format("DeleteLog: Error deleting '{0}' from '{1}'...{2}", filePath, directory, message);
-        }
+        public string HandlesType() => "DeleteLogService";
     }
 }

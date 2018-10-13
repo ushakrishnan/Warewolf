@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,15 +16,23 @@ using System.Linq;
 using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
-using Dev2.DataList.Contract;
+using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
+using Dev2.Data.TO;
 using Dev2.Diagnostics;
+using Dev2.Interfaces;
 using Dev2.Util;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using Warewolf.Core;
+using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    public class DsfUniqueActivity : DsfActivityAbstract<string>
+
+    [ToolDescriptorInfo("RecordSet-UniqueRecords", "Unique Records", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Recordset", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Recordset_Unique_Records")]
+    public class DsfUniqueActivity : DsfActivityAbstract<string>,IEquatable<DsfUniqueActivity>
     {
 
         /// <summary>
@@ -52,13 +59,36 @@ namespace Dev2.Activities
         {
             InFields = string.Empty;
             ResultFields = string.Empty;
+            Result = string.Empty;
         }
 
         #endregion
-
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = nameof(InFields),
+                    Value = InFields,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(ResultFields),
+                    Value = ResultFields,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(Result),
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }              
+            };
+        }
         #region Overrides of DsfNativeActivity<string>
 
-        // ReSharper disable RedundantOverridenMember
+
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
@@ -71,16 +101,23 @@ namespace Dev2.Activities
         /// <param name="context">The context to be used.</param>
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
 
             ExecuteTool(dataObject, 0);
         }
+
+
+        public override List<string> GetOutputs() => Result.Split(',').ToList();
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
 
             var allErrors = new ErrorResultTO();
             InitializeDebug(dataObject);
+            if (Result == null)
+            {
+                Result = string.Empty;
+            }
             var toresultfields = Result.Split(',');
             var fromFields = InFields.Split(',');
             var fromResultFieldresultfields = ResultFields.Split(',');
@@ -90,30 +127,21 @@ namespace Dev2.Activities
                 PreExecution(dataObject, fromFields, update);
                 if(String.IsNullOrEmpty(InFields))
                 {
-                    throw new Exception("Invalid In fields");
+                    throw new Exception(string.Format(ErrorResource.Invalid, "In fields"));
                 }
                 if(String.IsNullOrEmpty(ResultFields))
                 {
-                    throw new Exception("Invalid from fields");
-                }
-                if(toresultfields.Any(a => !ExecutionEnvironment.IsValidRecordSetIndex(a)))
+                    throw new Exception(string.Format(ErrorResource.Invalid, "from fields"));
+                }                
+                if(toresultfields.Any(ExecutionEnvironment.IsScalar))
                 {
-                    throw new Exception("invalid result");
+                    throw new Exception(string.Format(ErrorResource.ScalarsNotAllowed, "'Result'"));
                 }
-                if(fromFields.Any(a => !ExecutionEnvironment.IsValidRecordSetIndex(a)))
-                {
-                    throw new Exception("invalid from");
-                }
-                if(fromResultFieldresultfields.Any(a => !ExecutionEnvironment.IsValidRecordSetIndex(a)))
-                {
-                    throw new Exception("invalid selected fields");
-                }
-
                 dataObject.Environment.AssignUnique(fromFields, fromResultFieldresultfields, toresultfields, update);
             }
             catch(Exception e)
             {
-                Dev2Logger.Log.Error("DSFUnique", e);
+                Dev2Logger.Error("DSFUnique", e, GlobalConstants.WarewolfError);
                 allErrors.AddError(e.Message);
             }
             finally
@@ -142,28 +170,35 @@ namespace Dev2.Activities
         {
             if(dataObject.IsDebugMode())
             {
-                int i = 1;
-                foreach(var field in toresultfields)
+                var i = 1;
+                foreach (var field in toresultfields)
                 {
-                    
                     if(!string.IsNullOrEmpty(field))
                     {
-                        try
-                        {
-                            var res = new DebugEvalResult(dataObject.Environment.ToStar(field), "", dataObject.Environment, update);
-
-                            if (!hasErrors)
-                            AddDebugOutputItem(new DebugItemStaticDataParams("","",i.ToString(CultureInfo.InvariantCulture)));
-                            AddDebugOutputItem(res);
-                        }
-                        catch(Exception)
-                        {
-                            AddDebugOutputItem(new DebugItemStaticDataParams("", field, ""));
-                            throw;
-                        }
+                        TryAddDebugOutputItem(dataObject, hasErrors, update, i, field);
+                        i++;
                     }
-                    i++;
                 }
+            }
+        }
+
+        void TryAddDebugOutputItem(IDSFDataObject dataObject, bool hasErrors, int update, int i, string field)
+        {
+            try
+            {
+                var res = new DebugEvalResult(dataObject.Environment.ToStar(field), "", dataObject.Environment, update);
+
+                if (!hasErrors)
+                {
+                    AddDebugOutputItem(new DebugItemStaticDataParams("", "", i.ToString(CultureInfo.InvariantCulture)));
+                }
+
+                AddDebugOutputItem(res);
+            }
+            catch (Exception)
+            {
+                AddDebugOutputItem(new DebugItemStaticDataParams("", field, ""));
+                throw;
             }
         }
 
@@ -172,49 +207,32 @@ namespace Dev2.Activities
             if(dataObject.IsDebugMode())
             {
                 AddDebugInputItem(new DebugItemStaticDataParams("", "In Field(s)"));
-                foreach(var field in fromFields)
-                {
-                    // TODO : if EvaluateforDebug
-                    if(!string.IsNullOrEmpty(field))
-                    {
-                        try
-                        {
-                            AddDebugInputItem(new DebugEvalResult( field, "", dataObject.Environment, update));
-                        }
-                        catch(Exception)
-                        {
-                            AddDebugInputItem(new DebugItemStaticDataParams("", field, ""));
-                        }
-                    }
-                }
-                AddDebugInputItem(new DebugItemStaticDataParams("",ResultFields, "Return Fields"));
+                AddEachDebugInputFromField(dataObject, fromFields, update);
+                AddDebugInputItem(new DebugItemStaticDataParams("", ResultFields, "Return Fields"));
             }
 
         }
 
-        //static void UpdateStarNotationColumns(DebugItem itemToAdd)
-        //{
-        //    var groups = itemToAdd.ResultsList.Where(a => DataListUtil.IsValueRecordset(a.Variable) && String.IsNullOrEmpty(a.GroupName)).GroupBy(a => DataListUtil.ExtractRecordsetNameFromValue(a.Variable) + DataListUtil.ExtractFieldNameFromValue(a.Variable));
-
-        //    var maxId = itemToAdd.ResultsList.Count > 0 ? itemToAdd.ResultsList.Max(a => a.GroupIndex) : 0;
-        //    foreach(var g in groups)
-        //    {
-
-        //        foreach(var res in g)
-        //        {
-        //            maxId++;
-        //            res.GroupIndex = maxId;
-        //            res.GroupName = "[[" + DataListUtil.ExtractRecordsetNameFromValue(res.Variable) + "()." + DataListUtil.ExtractFieldNameFromValue(res.Variable) + "]]";
-        //        }
-        //    }
-        //}
-
-
-
-        public override enFindMissingType GetFindMissingType()
+        private void AddEachDebugInputFromField(IDSFDataObject dataObject, IEnumerable<string> fromFields, int update)
         {
-            return enFindMissingType.StaticActivity;
+            foreach (var field in fromFields)
+            {
+                // TODO : if EvaluateforDebug
+                if (!string.IsNullOrEmpty(field))
+                {
+                    try
+                    {
+                        AddDebugInputItem(new DebugEvalResult(field, "", dataObject.Environment, update));
+                    }
+                    catch (Exception)
+                    {
+                        AddDebugInputItem(new DebugItemStaticDataParams("", field, ""));
+                    }
+                }
+            }
         }
+
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.StaticActivity;
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -237,18 +255,15 @@ namespace Dev2.Activities
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
-            if(updates != null)
+            var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
+            if(itemUpdate != null)
             {
-                var itemUpdate = updates.FirstOrDefault(tuple => tuple.Item1 == Result);
-                if(itemUpdate != null)
-                {
-                    Result = itemUpdate.Item2;
-                }
+                Result = itemUpdate.Item2;
             }
         }
 
         #region Overrides of DsfNativeActivity<string>
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugInput in _debugInputs)
             {
@@ -257,7 +272,7 @@ namespace Dev2.Activities
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -276,18 +291,61 @@ namespace Dev2.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(InFields, ResultFields);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(InFields, ResultFields);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(Result);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
         #endregion
 
 
+        public bool Equals(DsfUniqueActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(InFields, other.InFields) 
+                && string.Equals(ResultFields, other.ResultFields) 
+                && string.Equals(Result, other.Result);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfUniqueActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (InFields != null ? InFields.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ResultFields != null ? ResultFields.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Runtime.ESB.Management.Services;
 using Dev2.Workspaces;
@@ -24,7 +24,34 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class PingTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetResourceID_ShouldReturnEmptyGuid()
+        {
+            //------------Setup for test--------------------------
+            var ping = new Ping();
+
+            //------------Execute Test---------------------------
+            var resId = ping.GetResourceID(new Dictionary<string, StringBuilder>());
+            //------------Assert Results-------------------------
+            Assert.AreEqual(Guid.Empty, resId);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("GetResourceID")]
+        public void GetAuthorizationContextForService_ShouldReturnContext()
+        {
+            //------------Setup for test--------------------------
+            var ping = new Ping();
+
+            //------------Execute Test---------------------------
+            var resId = ping.GetAuthorizationContextForService();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(AuthorizationContext.Any, resId);
+        }
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("Ping_Constructor")]
         public void Ping_Constructor_InitializesProperties()
@@ -38,7 +65,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsNotNull(ping.Now);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [Description("HandlesType() MUST return Ping otherwise Server connection tests will fail with a Serviec Not Found exception.")]
         [TestCategory("Ping_HandlesType")]
@@ -54,7 +81,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("Ping", handlesType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("Ping_Execute")]
         public void Ping_Execute_Returns_Pong()
@@ -74,7 +101,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(expected, msg.Message.ToString());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("Ping_CreateServiceEntry")]
         public void Ping_CreateServiceEntry_Correct()

@@ -1,7 +1,7 @@
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -13,449 +13,847 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Text;
-using System.Xml.Linq;
 using Dev2.Common;
-using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Core.Graph;
-using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces.DB;
 using Dev2.Data.Util;
-using Dev2.DataList.Contract;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Sql;
 using MySql.Data.MySqlClient;
-using Warewolf.Storage;
+using Oracle.ManagedDataAccess.Client;
+using System.Data.Odbc;
+using System.Data.SQLite;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
+using Dev2.Interfaces;
+using Npgsql;
+using Warewolf.Resource.Errors;
+using Warewolf.Storage.Interfaces;
+using System.Diagnostics;
+using System.Transactions;
+using System.Xml;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
+using TSQL;
+using System.Linq;
 
 namespace Dev2.Services.Execution
 {
-    public class DatabaseServiceExecution : ServiceExecutionAbstract<DbService, DbSource>
+    public class DatabaseServiceExecution : ServiceExecutionAbstract<DbService, DbSource>, IDisposable
     {
-        private SqlServer _sqlServer;
-
-        #region Constuctors
-
         public DatabaseServiceExecution(IDSFDataObject dataObj)
-            : base(dataObj, true, false)
+            : base(dataObj, true)
         {
         }
 
-        SqlServer SqlServer
-        {
-            get { return _sqlServer; }
-        }
+        public string ProcedureName { private get; set; }
+        public string SqlQuery { private get; set; }
+        public int ConnectionTimeout { private get; set; }
+        public int? CommandTimeout { private get; set; }
 
-        #endregion
-
-        #region SqlServer
-
-        private void SetupSqlServer(ErrorResultTO errors)
-        {
-            try
-            {
-                _sqlServer = new SqlServer();
-                bool connected = SqlServer.Connect(Source.ConnectionString, CommandType.StoredProcedure,
-                    String.IsNullOrEmpty(Service.Method.ExecuteAction)
-                        ? Service.Method.Name
-                        : Service.Method.ExecuteAction);
-                if (!connected)
-                {
-                    Dev2Logger.Log.Error(string.Format("Failed to connect with the following connection string: '{0}'",
-                        Source.ConnectionString));
-                }
-            }
-            catch (SqlException sex)
-            {
-                // 2013.06.24 - TWR - added errors logging
-                var errorMessages = new StringBuilder();
-                for (int i = 0; i < sex.Errors.Count; i++)
-                {
-                    errorMessages.Append("Index #" + i + Environment.NewLine +
-                                         "Message: " + sex.Errors[i].Message + Environment.NewLine +
-                                         "LineNumber: " + sex.Errors[i].LineNumber + Environment.NewLine +
-                                         "Source: " + sex.Errors[i].Source + Environment.NewLine +
-                                         "Procedure: " + sex.Errors[i].Procedure + Environment.NewLine);
-                }
-                errors.AddError(errorMessages.ToString());
-                Dev2Logger.Log.Error(errorMessages.ToString());
-            }
-            catch (Exception ex)
-            {
-                // 2013.06.24 - TWR - added errors logging
-                errors.AddError(string.Format("{0}{1}{2}", ex.Message, Environment.NewLine, ex.StackTrace));
-                Dev2Logger.Log.Error(ex);
-            }
-        }
-
-        private MySqlServer SetupMySqlServer(ErrorResultTO errors)
+        MySqlServer SetupMySqlServer(ErrorResultTO errors)
         {
             var server = new MySqlServer();
+            if (CommandTimeout != null)
+            {
+                server.CommandTimeout = CommandTimeout.Value;
+            }
             try
             {
-               
-                bool connected = server.Connect(Source.ConnectionString, CommandType.StoredProcedure,
-                    String.IsNullOrEmpty(Service.Method.ExecuteAction)
-                        ? Service.Method.Name
-                        : Service.Method.ExecuteAction);
+                var connected = server.Connect(Source.ConnectionString, CommandType.StoredProcedure, ProcedureName);
                 if (!connected)
                 {
-                    Dev2Logger.Log.Error(string.Format("Failed to connect with the following connection string: '{0}'",
-                        Source.ConnectionString));
+                    Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
                 }
                 return server;
             }
             catch (MySqlException sex)
             {
-                // 2013.06.24 - TWR - added errors logging
                 var errorMessages = new StringBuilder();
                 errorMessages.Append(sex.Message);
                 errors.AddError(errorMessages.ToString());
-                Dev2Logger.Log.Error(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
             }
             catch (Exception ex)
             {
-                // 2013.06.24 - TWR - added errors logging
-                errors.AddError(string.Format("{0}{1}{2}", ex.Message, Environment.NewLine, ex.StackTrace));
-                Dev2Logger.Log.Error(ex);
+                errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
             return server;
         }
 
-
-        private void DestroySqlServer()
-        {
-            if (SqlServer == null)
-            {
-                return;
-            }
-            SqlServer.Dispose();
-            _sqlServer = null;
-        }
-
-        #endregion
-
-        #region Execute
+        public bool SourceIsNull() => Source == null;
 
         public override void BeforeExecution(ErrorResultTO errors)
         {
-            if (Source != null && Source.ServerType == enSourceType.SqlDatabase)
-            {
-                SetupSqlServer(errors);
-            }
+
         }
 
         public override void AfterExecution(ErrorResultTO errors)
         {
-            if (Source != null && Source.ServerType == enSourceType.SqlDatabase)
-            {
-                DestroySqlServer();
-            }
+
         }
 
-        // ReSharper disable once OptionalParameterHierarchyMismatch
-        protected override object ExecuteService(List<MethodParameter> methodParameters,int update, out ErrorResultTO errors, IOutputFormatter formater = null)
+        protected override object ExecuteService(int update, out ErrorResultTO errors, IOutputFormatter formater)
         {
             errors = new ErrorResultTO();
             var invokeErrors = new ErrorResultTO();
-            
-            switch(Source.ServerType)
+
+            switch (Source.ServerType)
             {
                 case enSourceType.SqlDatabase:
-                {
-                    SqlExecution(invokeErrors, update);
+                    {
+                        try
+                        {
+                            MssqlSqlExecution(ConnectionTimeout, CommandTimeout, invokeErrors, update);
+                            _errorResult.MergeErrors(invokeErrors);
+                            return Guid.NewGuid();
+                        }
+                        catch (Exception e)
+                        {
+                            Dev2Logger.Error(e.StackTrace, DataObj.ExecutionID.ToString());
+                            return Guid.NewGuid();
+                        }
 
-                    ErrorResult.MergeErrors(invokeErrors);
-
-                    return Guid.NewGuid();
-                }
+                    }
                 case enSourceType.MySqlDatabase:
-                {
+                    {
+                        object result = MySqlExecution(invokeErrors, update);
+                        _errorResult.MergeErrors(invokeErrors);
+                        return result;
+                    }
 
-                    object result = MySqlExecution(invokeErrors, update);
+                case enSourceType.Oracle:
+                    {
+                        object result = OracleExecution(invokeErrors, update);
+                        _errorResult.MergeErrors(invokeErrors);
+                        return result;
+                    }
 
-                    ErrorResult.MergeErrors(invokeErrors);
-
-                    return result;
-                }
-                    
+                case enSourceType.ODBC:
+                    {
+                        object result = OdbcExecution(invokeErrors, update);
+                        _errorResult.MergeErrors(invokeErrors);
+                        return result;
+                    }
+                case enSourceType.PostgreSQL:
+                    {
+                        object result = PostgreSqlExecution(invokeErrors, update);
+                        _errorResult.MergeErrors(invokeErrors);
+                        return result;
+                    }
+                case enSourceType.SQLiteDatabase:
+                    {
+                        object result = SqliteExecution(invokeErrors, update);
+                        _errorResult.MergeErrors(invokeErrors);
+                        return result;
+                    }
+                default:
+                    return null;
             }
-            return null;
         }
 
         void TranslateDataTableToEnvironment(DataTable executeService, IExecutionEnvironment environment, int update)
         {
-            if (executeService != null && InstanceOutputDefintions != null)
+            var started = true;
+            if (executeService != null && Outputs != null && Outputs.Count != 0 && executeService.Rows != null)
             {
-                var defs = DataListFactory.CreateOutputParser().Parse(InstanceOutputDefintions);
-                HashSet<string> processedRecNames = new HashSet<string>();
-                IDictionary<int, string> colMapping = BuildColumnNameToIndexMap(executeService.Columns, defs);
-                foreach (var def in defs)
+                try
                 {
-                    var expression = def.Value;
-                    var rs = def.RawValue;
-                    var rsName = DataListUtil.ExtractRecordsetNameFromValue(expression);
-                    var rsType = DataListUtil.GetRecordsetIndexType(expression);
-                    var rowIndex = DataListUtil.ExtractIndexRegionFromRecordset(expression);
-                    var rsNameUse = def.RecordSetName;
-                    environment.AssignDataShape(def.RawValue);
-                    
-                    if (DataListUtil.IsValueRecordset(rs))
+                    var rowIdx = 1;
+                    MapDataRowsToEnvironment(executeService, environment, update, ref started, ref rowIdx);
+                }
+                catch (Exception e)
+                {
+                    Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                }
+            }
+        }
+        void MapDataRowsToEnvironment(DataTable executeService, IExecutionEnvironment environment, int update, ref bool started, ref int rowIdx)
+        {
+            foreach (DataRow row in executeService.Rows)
+            {
+                ProcessDataRow(executeService, environment, update, ref started, ref rowIdx, row);
+            }
+        }
+        void ProcessDataRow(DataTable executeService, IExecutionEnvironment environment, int update, ref bool started, ref int rowIdx, DataRow row)
+        {
+            foreach (var serviceOutputMapping in Outputs)
+            {
+                if (!string.IsNullOrEmpty(serviceOutputMapping?.MappedTo))
+                {
+                    ProcessOutputMapping(executeService, environment, update, ref started, ref rowIdx, row, serviceOutputMapping);
+                }
+            }
+            rowIdx++;
+        }
+        void TranslateDataSetToEnvironment(DataSet executeService, IExecutionEnvironment environment, int update)
+        {
+            var started = true;
+            foreach (DataTable table in executeService.Tables)
+            {
+                if (executeService != null && Outputs != null && Outputs.Count != 0 && table.Rows != null)
+                {
+                    try
                     {
-                        if (string.IsNullOrEmpty(rsName))
-                        {
-                            rsName = rsNameUse;
-                        }
-                        if (string.IsNullOrEmpty(rsName))
-                        {
-                            rsName = def.Name;
-                        }
+                        var rowIdx = 1;
+                        MapDataRowsToEnvironment(table, environment, update, ref started, ref rowIdx);
+                    }
+                    catch (Exception e)
+                    {
+                        Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                    }
+                }
+            }
+        }
+        static void ProcessOutputMapping(DataTable executeService, IExecutionEnvironment environment, int update, ref bool started, ref int rowIdx, DataRow row, IServiceOutputMapping serviceOutputMapping)
+        {
+            var rsType = DataListUtil.GetRecordsetIndexType(serviceOutputMapping.MappedTo);
+            var rowIndex = DataListUtil.ExtractIndexRegionFromRecordset(serviceOutputMapping.MappedTo);
+            var rs = serviceOutputMapping.RecordSetName;
 
-                        if (processedRecNames.Contains(rsName))
+            if (!string.IsNullOrEmpty(rs) && environment.HasRecordSet(rs))
+            {
+                if (started)
+                {
+                    rowIdx = environment.GetLength(rs) + 1;
+                    started = false;
+                }
+            }
+            else
+            {
+                try
+                {
+                    environment.AssignDataShape(serviceOutputMapping.MappedTo);
+                }
+                catch (Exception e)
+                {
+                    Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                }
+            }
+            GetRowIndex(ref started, ref rowIdx, rsType, rowIndex);
+            if (!executeService.Columns.Contains(serviceOutputMapping.MappedFrom) && !executeService.Columns.Contains("ReadForXml"))
+            {
+                return;
+
+            }
+            var value = GetColumnValue(executeService, row, serviceOutputMapping);
+            if (update != 0)
+            {
+                rowIdx = update;
+            }
+            var displayExpression = DataListUtil.ReplaceRecordsetBlankWithIndex(DataListUtil.AddBracketsToValueIfNotExist(serviceOutputMapping.MappedTo), rowIdx);
+            if (rsType == enRecordsetIndexType.Star)
+            {
+                displayExpression = DataListUtil.ReplaceStarWithFixedIndex(displayExpression, rowIdx);
+            }
+            environment.Assign(displayExpression, value.ToString(), update);
+        }
+
+        static object GetColumnValue(DataTable executeService, DataRow row, IServiceOutputMapping serviceOutputMapping) => executeService.Columns.Contains("ReadForXml") ? row["ReadForXml"] : row[serviceOutputMapping.MappedFrom];
+
+        static void GetRowIndex(ref bool started, ref int rowIdx, enRecordsetIndexType rsType, string rowIndex)
+        {
+            if (rsType == enRecordsetIndexType.Star && started)
+            {
+                rowIdx = 1;
+                started = false;
+            }
+            if (rsType == enRecordsetIndexType.Numeric)
+            {
+                rowIdx = int.Parse(rowIndex);
+            }
+        }
+
+
+        static string MssqlGetSqlForProcedure(SqlConnection connection, string procedureName)
+        {
+            var command = connection.CreateCommand();
+            command.CommandType = CommandType.Text;
+            command.CommandText = string.Format("sp_helptext '{0}'", procedureName);
+            using (var reader = command.ExecuteReader(CommandBehavior.SchemaOnly & CommandBehavior.KeyInfo))
+            {
+                var sb = new StringBuilder();
+                while (reader.Read())
+                {
+                    object value = reader.GetValue(0);
+                    if (value != null)
+                    {
+                        sb.Append(value);
+                    }
+                }
+                if (sb.Length == 0)
+                {
+                    throw new WarewolfDbException(string.Format("There is no text for object '{0}'.", procedureName));
+                }
+                return sb.ToString();
+            }
+        }
+
+        private bool MssqlIsStoredProcForXmlResult(SqlConnection connection, string procedureName)
+        {
+            bool result = false;
+            var procSqlScript = MssqlGetSqlForProcedure(connection, procedureName);
+            var statements = TSQLStatementReader.ParseStatements(procSqlScript);
+            foreach (var statement in statements)
+            {
+                var tokens = statement.Tokens;
+                var cnt = tokens.Count;
+
+                if (cnt < 3)
+                {
+                    continue;
+                }
+
+                var i = 0;
+                for (; i < tokens.Count; i++)
+                {
+                    if (tokens[i].Type == TSQL.Tokens.TSQLTokenType.Keyword && tokens[i].Text.ToUpper() == "FOR")
+                    {
+                        i++;
+                        result = (i < tokens.Count && tokens[i].Type == TSQL.Tokens.TSQLTokenType.Identifier && tokens[i].Text == "XML");
+                    }
+                }
+            }
+            return result;
+        }
+
+        void MssqlSqlExecution(int connectionTimeout, int? commandTimeout, ErrorResultTO errors, int update)
+        {
+            DataObj.StateNotifier?.LogAdditionalDetail(new
+                {
+                    this.Source,
+                    this.ProcedureName,
+                    this.SqlQuery,
+                    this.ConnectionTimeout,
+                    this.CommandTimeout,
+                },
+                nameof(MssqlSqlExecution)
+            );
+
+            var connectionBuilder = new ConnectionBuilder();
+            var connection = new SqlConnection(connectionBuilder.ConnectionString(Source.GetConnectionStringWithTimeout(connectionTimeout)));
+            var startTime = Stopwatch.StartNew();
+            try
+            {
+                connection.Open();
+                if (MssqlIsStoredProcForXmlResult(connection, ProcedureName))
+                {
+                    MssqlReadDataForXml(update, startTime, connection, commandTimeout);
+                }
+                else
+                {
+                    MssqlReadData(update, startTime, connection, commandTimeout);
+                }
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error("SQL Error:", ex, GlobalConstants.WarewolfError);
+                Dev2Logger.Error("SQL Error:", ex.StackTrace);
+                errors.AddError($"SQL Error: {ex.Message}");
+            }
+            finally
+            {
+                connection.Dispose();
+            }
+        }
+
+        private void MssqlReadData(int update, Stopwatch startTime, SqlConnection connection, int? commandTimeout)
+        {
+            using (SqlTransaction dbTransaction = connection.BeginTransaction())
+            {
+                using (var cmd = MssqlCreateCommand(connection, commandTimeout, GetSqlParameters()))
+                {
+                    cmd.Transaction = dbTransaction;
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        var table = new DataTable();
+                        table.Load(reader);
+                        reader.Close();
+                        dbTransaction.Commit();
+                        Dev2Logger.Info("Time taken to process proc " + ProcedureName + ":" + startTime.Elapsed.Milliseconds + " Milliseconds", DataObj.ExecutionID.ToString());
+                        var startTime1 = Stopwatch.StartNew();
+                        TranslateDataTableToEnvironment(table, DataObj.Environment, update);
+                        Dev2Logger.Info("Time taken to TranslateDataTableToEnvironment " + ProcedureName + ":" + startTime1.Elapsed.Milliseconds + " Milliseconds", DataObj.ExecutionID.ToString());
+                    }
+                }
+            }
+        }
+
+        bool MssqlReadDataForXml(int update, Stopwatch startTime, SqlConnection connection, int? commandTimeout)
+        {
+            var xmlResults = false;
+            var dbTransaction = connection.BeginTransaction();
+            try
+            {
+                using (var cmd = MssqlCreateCommand(connection, commandTimeout, GetSqlParameters()))
+                {
+                    cmd.Transaction = dbTransaction;
+                    using (var reader = cmd.ExecuteXmlReader())
+                    {
+                        var hasXmlElement = reader.Read();
+                        var table = new DataTable("x");
+                        table.Columns.Add("ReadForXml");
+                        while (hasXmlElement)
                         {
-                            continue;
-                        }
-
-                        processedRecNames.Add(rsName);
-                        
-
-                        // now convert to binary datalist ;)
-                        int rowIdx = 1;
-                        
-                            if (environment.HasRecordSet(rs))
+                            var outerXml = reader.ReadOuterXml();
+                            if (outerXml == string.Empty)
                             {
-                                rowIdx = environment.GetLength(rs);
+                                break;
                             }
-                        
-                        if (rsType == enRecordsetIndexType.Star)
-                        {
-                            rowIdx = 1;
+                            table.LoadDataRow(new object[] { outerXml }, true);
+                            xmlResults = true;
                         }
-                        if (rsType == enRecordsetIndexType.Numeric)
-                        {
-                            rowIdx = int.Parse(rowIndex);
-                        }
+                        Dev2Logger.Info("Time taken to process proc " + ProcedureName + ":" + startTime.Elapsed.Milliseconds + " Milliseconds", DataObj.ExecutionID.ToString());
+                        var startTime1 = Stopwatch.StartNew();
+                        TranslateDataTableToEnvironment(table, DataObj.Environment, update);
+                        Dev2Logger.Info("Time taken to TranslateDataTableToEnvironment " + ProcedureName + ":" + startTime1.Elapsed.Milliseconds + " Milliseconds", DataObj.ExecutionID.ToString());
+                        dbTransaction.Commit();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    // Attempt to roll back the transaction.
+                    dbTransaction.Rollback();
+                }
+                catch (Exception exRollback)
+                {
+                    //Ignore the rollback exception
+                    Dev2Logger.Error("Error Rolling Back Transaction", exRollback, GlobalConstants.WarewolfError);
+                }
+                if (!e.Message.Equals(ErrorResource.NotXmlResults))
+                {
+                    throw;
+                }
+                return xmlResults;
+            }
+            finally
+            {
+                dbTransaction.Dispose();
+            }
 
-                        if (executeService.Rows != null)
-                        {
-                            foreach (DataRow row in executeService.Rows)
-                            {
-                                // build up the row
-                                int idx = 0;
+            return xmlResults;
+        }
 
-                                foreach (var item in row.ItemArray)
-                                {
-                                    string colName;
-
-                                    if (colMapping.TryGetValue(idx, out colName))
-                                    {
-                                        if(update != 0)
-                                        {
-                                            rowIdx = update;
-                                        }
-                                        var displayExpression = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(DataListUtil.ExtractRecordsetNameFromValue(def.Value), colName, rowIdx.ToString()));
-                                        environment.Assign(displayExpression, item.ToString(),update);
-                                    }
-
-                                    idx++;
-                                }
-
-                                rowIdx++;
-                            }
-                        }
+        SqlCommand MssqlCreateCommand(SqlConnection connection, int? commandTimeout, List<SqlParameter> parameters)
+        {
+            var cmd = connection.CreateCommand();
+            foreach (var item in parameters)
+            {
+                cmd.Parameters.Add(item);
+            }
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandText = ProcedureName;
+            if (commandTimeout != null)
+            {
+                if (commandTimeout <= 0)
+                {
+                    if (commandTimeout == 0)
+                    {
+                        Dev2Logger.Warn("mssql command timeout is set to wait indefinitely", GlobalConstants.WarewolfWarn);
                     }
                     else
                     {
-                        // handle a scalar coming out ;)
-                        if (executeService.Rows != null && executeService.Rows.Count> 0)
-                        {
-                            var row = executeService.Rows[executeService.Rows.Count-1].ItemArray;
-                            // Look up the correct index from the columns ;)
-
-                            int pos = 0;
-                            var cols = executeService.Columns;
-                            int idx = -1;
-
-                            while (pos < cols.Count && idx == -1)
-                            {
-                                if (colMapping.ContainsKey(pos) && colMapping[pos] == expression)
-                                {
-                                    idx = pos;
-                                }
-                                pos++;
-                            }
-                            environment.Assign(DataListUtil.AddBracketsToValueIfNotExist(expression), row[idx].ToString(), 0);
-                        }
+                        Dev2Logger.Warn("mssql command timeout is set below 0", GlobalConstants.WarewolfWarn);
                     }
                 }
+                cmd.CommandTimeout = commandTimeout.Value;
             }
+            return cmd;
         }
 
-        /// <summary>
-        /// Builds the column name to index map.
-        /// </summary>
-        /// <param name="dtCols">The dt cols.</param>
-        /// <param name="defs">Defs to use</param>
-        /// <returns></returns>
-        // ReSharper disable ParameterTypeCanBeEnumerable.Local
-        private IDictionary<int, string> BuildColumnNameToIndexMap(DataColumnCollection dtCols, IList<IDev2Definition> defs)
-        // ReSharper restore ParameterTypeCanBeEnumerable.Local
-        {
-            Dictionary<int, string> result = new Dictionary<int, string>();
-            if (result.Count == 0 && defs != null)
-            {
-                // use positional adjustment
-                foreach (var def in defs)
-                {
-                    var idx = dtCols.IndexOf(def.Name);
-                    if (idx != -1)
-                    {
-                        if (def.IsRecordSet && DataListUtil.IsValueRecordsetWithFields(def.RawValue) || DataListUtil.IsValueRecordsetWithFields(def.RawValue))
-                        {
-                            result.Add(idx, DataListUtil.ExtractFieldNameFromValue(def.RawValue));
-                        }
-                        else
-                        {
-                            result.Add(idx, def.Value);
-                        }
-
-                    }
-                }
-            }
-
-            return result;
-        }
-        private void SqlExecution(ErrorResultTO errors,int update)
+        bool MySqlExecution(ErrorResultTO errors, int update)
         {
             try
             {
-                if (SqlServer != null)
+                var parameters = GetMySqlParameters(Inputs);
+                using (var server = SetupMySqlServer(errors))
                 {
-                    List<SqlParameter> parameters = GetSqlParameters(Service.Method.Parameters);
-
                     if (parameters != null)
                     {
-                        // ReSharper disable CoVariantArrayConversion
-                        using (DataTable dataSet = SqlServer.FetchDataTable(parameters.ToArray()))
-                            // ReSharper restore CoVariantArrayConversion
+                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
                         {
-                            ApplyColumnMappings(dataSet);
-                            TranslateDataTableToEnvironment(dataSet, DataObj.Environment,update);
+                            TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
+                            return true;
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Dev2Logger.Log.Error("Sql Error:",ex);
-                errors.AddError(string.Format("{0}{1}","Sql Error: ", ex.Message));
-            }
-        }
-
-        private bool MySqlExecution(ErrorResultTO errors, int update)
-        {
-            try
-            {
-                 
-                    List<MySqlParameter> parameters = GetMySqlParameters(Service.Method.Parameters);
-
-                    using (
-                    MySqlServer server = SetupMySqlServer(errors))
+                errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                DataObj.StateNotifier?.LogAdditionalDetail(new
                     {
-
-                        if (parameters != null)
-                        {
-                            // ReSharper disable CoVariantArrayConversion
-                            using (DataTable dataSet = server.FetchDataTable(parameters.ToArray(),server.GetProcedureOutParams(Service.Method.Name,Source.DatabaseName)))
-                            // ReSharper restore CoVariantArrayConversion
-                            {
-                                ApplyColumnMappings(dataSet);
-                                TranslateDataTableToEnvironment(dataSet, DataObj.Environment,update);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            
-            catch (Exception ex)
-            {
-                errors.AddError(string.Format("{0}{1}{2}", ex.Message, Environment.NewLine, ex.StackTrace));
+                        Exception = ex,
+                    },
+                    nameof(MySqlExecution)
+                );
             }
             return false;
         }
 
-        #endregion
-
-        #region GetSqlParameters
-
-        private static List<SqlParameter> GetSqlParameters(IList<MethodParameter> methodParameters)
+        List<SqlParameter> GetSqlParameters()
         {
             var sqlParameters = new List<SqlParameter>();
 
-            if (methodParameters.Count > 0)
+            if (Inputs.Count > 0)
             {
-#pragma warning disable 219
-                // ReSharper disable once NotAccessedVariable
-                int pos = 0;
-#pragma warning restore 219
-                foreach (MethodParameter parameter in methodParameters)
+                foreach (var parameter in Inputs)
                 {
-                    if (parameter.EmptyToNull &&
+                    sqlParameters.Add(parameter.EmptyIsNull &&
                         (parameter.Value == null ||
-                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0))
-                    {
-                        sqlParameters.Add(new SqlParameter(string.Format("@{0}", parameter.Name), DBNull.Value));
-                    }
-                    else
-                    {
-                        sqlParameters.Add(new SqlParameter(string.Format("@{0}", parameter.Name), parameter.Value));
-                    }
-                    pos++;
+                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0) ? new SqlParameter($"@{parameter.Name}", DBNull.Value) : new SqlParameter($"@{parameter.Name}", parameter.Value));
                 }
             }
             return sqlParameters;
         }
-        private static List<MySqlParameter> GetMySqlParameters(IList<MethodParameter> methodParameters)
+
+        static List<MySqlParameter> GetMySqlParameters(ICollection<IServiceInput> methodParameters)
         {
             var sqlParameters = new List<MySqlParameter>();
 
             if (methodParameters.Count > 0)
             {
-                foreach (MethodParameter parameter in methodParameters)
+                foreach (var parameter in methodParameters)
                 {
-                    if (parameter.EmptyToNull &&
+                    var parameterName = parameter.Name.Replace("`", "");
+                    sqlParameters.Add(parameter.EmptyIsNull &&
+                        (parameter.Value == null ||
+                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0) ? new MySqlParameter($"@{parameterName}", DBNull.Value) : new MySqlParameter($"@{parameterName}", parameter.Value));
+                }
+            }
+            return sqlParameters;
+        }
+
+        OracleServer SetupOracleServer(ErrorResultTO errors)
+        {
+            var server = new OracleServer();
+            if (CommandTimeout != null)
+            {
+                server.CommandTimeout = CommandTimeout.Value;
+            }
+            try
+            {
+                var connected = server.Connect(Source.ConnectionString, CommandType.StoredProcedure, ProcedureName);
+                if (!connected)
+                {
+                    Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
+                }
+                return server;
+            }
+            catch (OracleException oex)
+            {
+                var errorMessages = new StringBuilder();
+                errorMessages.Append(oex.Message);
+                errors.AddError(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
+            }
+            catch (Exception ex)
+            {
+                errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
+            }
+            return server;
+        }
+
+        bool OracleExecution(ErrorResultTO errors, int update)
+        {
+            try
+            {
+
+                var parameters = GetOracleParameters(Inputs);
+                using (var server = SetupOracleServer(errors))
+                {
+
+                    if (parameters != null)
+                    {
+
+                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName, Source.DatabaseName)))
+
+                        {
+                            TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error("Oracle Error:", ex, GlobalConstants.WarewolfError);
+                Dev2Logger.Error("Oracle Error:", ex.StackTrace);
+                errors.AddError($"Oracle Error: {ex.Message}");
+            }
+            return false;
+        }
+
+        static List<OracleParameter> GetOracleParameters(ICollection<IServiceInput> methodParameters)
+        {
+            var sqlParameters = new List<OracleParameter>();
+
+            if (methodParameters.Count > 0)
+            {
+                foreach (var parameter in methodParameters)
+                {
+                    var dbDataParameter = new OracleParameter($"@{parameter.Name}", parameter.Value);
+                    if (parameter.EmptyIsNull &&
                         (parameter.Value == null ||
                          string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0))
                     {
-                        sqlParameters.Add(new MySqlParameter(string.Format("@{0}", parameter.Name), DBNull.Value));
+                        dbDataParameter.Value = DBNull.Value;
                     }
-                    else
+                    sqlParameters.Add(dbDataParameter);
+
+                }
+            }
+            return sqlParameters;
+        }
+
+        ODBCServer SetupOdbcServer(ErrorResultTO errors)
+        {
+            var server = new ODBCServer();
+            if (CommandTimeout != null)
+            {
+                server.CommandTimeout = CommandTimeout.Value;
+            }
+            try
+            {
+                var connected = server.Connect(Source.ConnectionString, CommandType.StoredProcedure, ProcedureName);
+                if (!connected)
+                {
+                    Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
+                }
+                return server;
+            }
+            catch (OdbcException oex)
+            {
+                var errorMessages = new StringBuilder();
+                errorMessages.Append(oex.Message);
+                errors.AddError(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
+            }
+            catch (Exception ex)
+            {
+                errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
+            }
+            return server;
+        }
+
+        bool OdbcExecution(ErrorResultTO errors, int update)
+        {
+            try
+            {
+
+                var parameters = GetOdbcParameters(Inputs);
+                using (var server = SetupOdbcServer(errors))
+                {
+
+                    if (parameters != null)
                     {
-                        sqlParameters.Add(new MySqlParameter(string.Format("@{0}", parameter.Name), parameter.Value));
+
+                        var xmlData = server.FetchXmlData();
+                        if (xmlData.Rows[0]["ReadForXml"].ToString() != "Error")
+                        {
+                            TranslateDataTableToEnvironment(xmlData, DataObj.Environment, update);
+                            return true;
+                        }
+                        else
+                        {
+                            using (var dataSet = server.FetchDataTable())
+                            {
+                                TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error("ODBC Error:", ex, GlobalConstants.WarewolfError);
+                Dev2Logger.Error("ODBC Error:", ex.StackTrace);
+                errors.AddError($"ODBC Error: {ex.Message}");
+            }
+            return false;
+        }
+        public string OdbcMethod(string command) => ODBCParameterIterators(0, command);
+
+        static List<OdbcParameter> GetOdbcParameters(ICollection<IServiceInput> methodParameters)
+        {
+            var sqlParameters = new List<OdbcParameter>();
+
+            if (methodParameters.Count > 0)
+            {
+                foreach (var parameter in methodParameters)
+                {
+                    sqlParameters.Add(parameter.EmptyIsNull &&
+                        (parameter.Value == null ||
+                         string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) == 0) ? new OdbcParameter($"@{parameter.Name}", DBNull.Value) : new OdbcParameter($"@{parameter.Name}", parameter.Value));
+                }
+            }
+            return sqlParameters;
+        }
+
+        PostgreServer SetupPostgreServer(ErrorResultTO errors)
+        {
+            var server = new PostgreServer();
+            if (CommandTimeout != null)
+            {
+                server.CommandTimeout = CommandTimeout.Value;
+            }
+            try
+            {
+                var connected = server.Connect(Source.ConnectionString, CommandType.StoredProcedure, ProcedureName);
+                if (!connected)
+                {
+                    Dev2Logger.Error(string.Format(ErrorResource.FailedToConnectWithConnectionString,
+                        Source.ConnectionString), GlobalConstants.WarewolfError);
+                }
+                return server;
+            }
+            catch (NpgsqlException ex)
+            {
+                var errorMessages = new StringBuilder();
+                errorMessages.Append(ex.Message);
+                errors.AddError(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
+            }
+            catch (Exception ex)
+            {
+                errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
+            }
+            return server;
+        }
+
+        bool PostgreSqlExecution(ErrorResultTO errors, int update)
+        {
+            try
+            {
+                var parameters = GetPostgreSqlParameters(Inputs);
+                using (var server = SetupPostgreServer(errors))
+                {
+
+                    if (parameters != null)
+                    {
+
+                        using (var dataSet = server.FetchDataTable(parameters.ToArray(), server.GetProcedureOutParams(ProcedureName)))
+
+                        {
+                            TranslateDataTableToEnvironment(dataSet, DataObj.Environment, update);
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error("PostgreSql Error:", ex, GlobalConstants.WarewolfError);
+                Dev2Logger.Error("PostgreSql Error:", ex.StackTrace);
+                errors.AddError($"PostgreSql Error: {ex.Message}");
+            }
+            return false;
+        }
+
+        static List<NpgsqlParameter> GetPostgreSqlParameters(ICollection<IServiceInput> methodParameters)
+        {
+            var sqlParameters = new List<NpgsqlParameter>();
+
+            if (methodParameters.Count > 0)
+            {
+                foreach (var parameter in methodParameters)
+                {
+                    if (!string.IsNullOrEmpty(parameter.Name))
+                    {
+                        sqlParameters.Add(parameter.EmptyIsNull &&
+                            (parameter.Value == null ||
+                             string.Compare(parameter.Value, string.Empty, StringComparison.InvariantCultureIgnoreCase) ==
+                             0) ? new NpgsqlParameter($"@{parameter.Name}", DBNull.Value) : new NpgsqlParameter($"@{parameter.Name}", parameter.Value));
                     }
                 }
             }
             return sqlParameters;
         }
 
-        #endregion
-
-        private void ApplyColumnMappings(DataTable dataTable)
+        public void Dispose()
         {
-            if (string.IsNullOrEmpty(Service.OutputSpecification))
-            {
-                return;
-            }
+        }
 
-            XElement outputs = XElement.Parse(Service.OutputSpecification);
-            foreach (XElement output in outputs.Elements("Output"))
+        SqliteServer SetupSqlite(ErrorResultTO errors)
+        {
+            var server = new SqliteServer();
+            if (CommandTimeout != null)
             {
-                string originalName = output.AttributeSafe("OriginalName", true);
-                string mappedName = output.AttributeSafe("Name", true);
-                if (originalName != null && mappedName != null)
+                server.CommandTimeout = CommandTimeout.Value;
+            }
+            try
+            {
+                server.Connect(Source.ConnectionString);
+                return server;
+            }
+            catch (SQLiteException ex)
+            {
+                var errorMessages = new StringBuilder();
+                errorMessages.Append(ex.Message);
+                errors.AddError(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
+            }
+            catch (Exception ex)
+            {
+                errors.AddError($"{ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
+            }
+            return server;
+        }
+
+        bool SqliteExecution(ErrorResultTO errors, int update)
+        {
+            var startTime = Stopwatch.StartNew();
+            try
+            {
+                using (var server = SetupSqlite(errors))
                 {
-                    DataColumn dc = dataTable.Columns[originalName];
-                    dc.ColumnName = mappedName;
+                    var cmd = server.CreateCommand();
+                    cmd.CommandText = SqlQuery;
+                    cmd.ExecuteScalar();
+                    using (var dataSet = server.FetchDataSet(cmd))
+                    {
+                        Dev2Logger.Info("Time taken to create DB " + SqlQuery + ":" + startTime.Elapsed.Milliseconds + " Milliseconds", DataObj.ExecutionID.ToString());
+                        var startTime1 = Stopwatch.StartNew();
+                        long size = 0;
+                        using (Stream s = new MemoryStream())
+                        {
+                            var formatter = new BinaryFormatter();
+                            formatter.Serialize(s, dataSet);
+                            size = s.Length;
+                        }
+                        TranslateDataSetToEnvironment(dataSet, DataObj.Environment, update);
+                        Dev2Logger.Info("Time taken to TranslateDataSetToEnvironment ( Size: " + size + " ) :" + startTime1.Elapsed.Milliseconds + " Milliseconds", DataObj.ExecutionID.ToString());
+                        return true;
+                    }
                 }
             }
+            catch (SQLiteException ex)
+            {
+                var errorMessages = new StringBuilder();
+                errorMessages.Append(ex.Message);
+                errors.AddError(errorMessages.ToString());
+                Dev2Logger.Error(errorMessages.ToString(), GlobalConstants.WarewolfError);
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error("SQLite Error:", ex, GlobalConstants.WarewolfError);
+                Dev2Logger.Error("SQLite Error:", ex.StackTrace);
+                errors.AddError($"SQLite Error: {ex.Message}");
+            }
+            return false;
         }
     }
 }

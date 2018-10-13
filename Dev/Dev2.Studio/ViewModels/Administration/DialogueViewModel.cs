@@ -1,7 +1,6 @@
-
 /*
-*  Warewolf - The Easy Service Bus
-*  Copyright 2015 by Warewolf Ltd <alpha@warewolf.io>
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +18,7 @@ using Dev2.Common.Interfaces.Studio;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.AppResources;
 
-// ReSharper disable CheckNamespace
+
 namespace Dev2.Studio.ViewModels.Administration
 {
 
@@ -28,64 +27,37 @@ namespace Dev2.Studio.ViewModels.Administration
 
         #region Members
 
-        public ClosedOperationEventHandler OnOkClick;
-        private ICommand _okClicked;
-        private ICommand _hyperLink;
-        private ImageSource _imageSource;
-        private string _description;
-        private string _title;
-        private string _descriptionTitleText;
+        readonly ClosedOperationEventHandler OnOkClick;
+        ICommand _okClicked;
+        ICommand _hyperLink;
+        ImageSource _imageSource;
+        string _description;
+        string _title;
+        string _descriptionTitleText;
 
         #endregion Members
 
         #region Properties
 
-        public String Title
-        {
-            get { return _title; }
-        }
+        public String Title => _title;
 
-        public ImageSource ImageSource
-        {
-            get { return _imageSource; }
-        }
+        public ImageSource ImageSource => _imageSource;
 
 
-        public string DescriptionTitleText
-        {
-            get { return _descriptionTitleText; }
-        }
+        public string DescriptionTitleText => _descriptionTitleText;
 
-        public String DescriptionText
-        {
-            get { return _description; }
-        }
+        public String DescriptionText => _description;
 
         public string Hyperlink { get; private set; }
         public string HyperlinkText { get; private set; }
         public Visibility HyperlinkVisibility { get; private set; }
 
-        public ICommand HyperLinkCommand
-        {
-            get
-            {
-                return _hyperLink ?? (_hyperLink = new RelayCommand(p => Hyperlink_OnMouseDown()));
-            }
-        }
+        public ICommand HyperLinkCommand => _hyperLink ?? (_hyperLink = new RelayCommand(p => Hyperlink_OnMouseDown()));
 
-        public ICommand OkCommand
-        {
-            get
-            {
-                return _okClicked ?? (_okClicked = new RelayCommand(p =>
-                    {
-                        if(OnOkClick != null)
-                        {
-                            OnOkClick(this, null);
-                        }
-                    }, p => true));
-            }
-        }
+        public ICommand OkCommand => _okClicked ?? (_okClicked = new RelayCommand(p =>
+                                                   {
+                                                       OnOkClick?.Invoke(this, null);
+                                                   }, p => true));
 
         #endregion Properties
 
@@ -99,7 +71,9 @@ namespace Dev2.Studio.ViewModels.Administration
             Process.Start(new Uri(Hyperlink).AbsoluteUri);
         }
 
-        public void SetupDialogue(string title, string description, string imageSourceuri, string descriptionTitleText, string hyperlink = null, string linkText = null)
+        public void SetupDialogue(string title, string description, string imageSourceuri, string descriptionTitleText) => SetupDialogue(title, description, imageSourceuri, descriptionTitleText, null, null);
+
+        public void SetupDialogue(string title, string description, string imageSourceuri, string descriptionTitleText, string hyperlink, string linkText)
         {
             SetTitle(title);
             SetDescription(description);
@@ -112,28 +86,27 @@ namespace Dev2.Studio.ViewModels.Administration
 
         #region Private Methods
 
-        private void SetTitle(string title)
+        void SetTitle(string title)
         {
             _title = string.IsNullOrEmpty(title) ? string.Empty : title;
         }
 
-        private void SetDescription(string description)
+        void SetDescription(string description)
         {
             _description = string.IsNullOrEmpty(description) ? string.Empty : description;
         }
 
-        private void SetImage(string imageSource)
+        void SetImage(string imageSource)
         {
-            if(string.IsNullOrEmpty(imageSource))
+            if (string.IsNullOrEmpty(imageSource))
             {
                 _imageSource = null;
             }
             else
             {
-                Uri imageUri;
-                bool validUri = Uri.TryCreate(imageSource, UriKind.RelativeOrAbsolute, out imageUri);
+                var validUri = Uri.TryCreate(imageSource, UriKind.RelativeOrAbsolute, out Uri imageUri);
 
-                if(validUri)
+                if (validUri)
                 {
 
                     // Once initialized, the image must be released so that it is usable by other resources
@@ -154,14 +127,14 @@ namespace Dev2.Studio.ViewModels.Administration
 
 
 
-        private void SetDescriptionTitleText(string text)
+        void SetDescriptionTitleText(string text)
         {
             _descriptionTitleText = string.IsNullOrEmpty(text) ? string.Empty : text;
         }
 
-        private void SetHyperlink(string link, string text)
+        void SetHyperlink(string link, string text)
         {
-            if(!string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(text))
+            if (!string.IsNullOrEmpty(text))
             {
                 Hyperlink = link;
                 HyperlinkText = text;
@@ -172,15 +145,6 @@ namespace Dev2.Studio.ViewModels.Administration
         }
 
         #endregion Private Methods
-
-        #region Events
-
-        //event ClosedOperationEventHandler IDialogueViewModel.OnOkClick {
-        //    add { this.OnOkClick += value; }
-        //    remove { this.OnOkClick -= value; }
-        //}
-
-        #endregion Events
 
         #region IDisposable Implementaton
 
