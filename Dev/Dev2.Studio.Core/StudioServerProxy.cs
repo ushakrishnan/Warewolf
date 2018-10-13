@@ -44,7 +44,7 @@ namespace Dev2.Studio.Core
 
         public async Task<IExplorerItem> LoadExplorer(bool reloadCatalogue)
         {
-            var explorerItems = await QueryManagerProxy.Load(reloadCatalogue);
+            var explorerItems = await QueryManagerProxy.Load(reloadCatalogue).ConfigureAwait(true);
             return explorerItems;
         }
         public Task<List<string>> LoadExplorerDuplicates()
@@ -79,7 +79,7 @@ namespace Dev2.Studio.Core
 
         public async Task<bool> Move(IExplorerItemViewModel explorerItemViewModel, IExplorerTreeItem destination)
         {
-            var res = await UpdateManagerProxy.MoveItem(explorerItemViewModel.ResourceId, destination.ResourcePath, explorerItemViewModel.ResourcePath);
+            var res = await UpdateManagerProxy.MoveItem(explorerItemViewModel.ResourceId, destination.ResourcePath, explorerItemViewModel.ResourcePath).ConfigureAwait(true);
             if (res.Status == ExecStatus.Success)
             {
                 return true;
@@ -87,17 +87,17 @@ namespace Dev2.Studio.Core
             return false;
         }
 
-        public IDeletedFileMetadata Delete(IExplorerItemViewModel explorerItemViewModel)
+        public IDeletedFileMetadata TryDelete(IExplorerItemViewModel explorerItemViewModel)
         {
 
             var explorerDeleteProvider = new ExplorerDeleteProvider(this);
-            var deletedFileMetadata = explorerDeleteProvider.Delete(explorerItemViewModel);
+            var deletedFileMetadata = explorerDeleteProvider.TryDelete(explorerItemViewModel);
             return deletedFileMetadata;
         }
 
         public IDeletedFileMetadata HasDependencies(IExplorerItemViewModel explorerItemViewModel, IDependencyGraphGenerator graphGenerator, IExecuteMessage dep)
         {
-            IGraph graph = graphGenerator.BuildGraph(dep.Message, "", 1000, 1000, 1);
+            var graph = graphGenerator.BuildGraph(dep.Message, "", 1000, 1000, 1);
             _popupController = CustomContainer.Get<IPopupController>();
             if (graph.Nodes.Count > 1)
             {
@@ -133,32 +133,20 @@ namespace Dev2.Studio.Core
             };
         }
 
-        private IDeletedFileMetadata BuildMetadata(Guid resourceId, bool isDeleted, bool showDependecnies, bool applyToAll, bool deleteAnyway)
+        IDeletedFileMetadata BuildMetadata(Guid resourceId, bool isDeleted, bool showDependecnies, bool applyToAll, bool deleteAnyway) => new DeletedFileMetadata
         {
-            return new DeletedFileMetadata
-            {
-                IsDeleted = isDeleted,
-                ResourceId = resourceId,
-                ShowDependencies = showDependecnies,
-                ApplyToAll = applyToAll,
-                DeleteAnyway = deleteAnyway
-            };
-        }
-        
-        public StringBuilder GetVersion(IVersionInfo versionInfo, Guid resourceId)
-        {
-            return VersionManager.GetVersion(versionInfo, resourceId);
-        }
+            IsDeleted = isDeleted,
+            ResourceId = resourceId,
+            ShowDependencies = showDependecnies,
+            ApplyToAll = applyToAll,
+            DeleteAnyway = deleteAnyway
+        };
 
-        public ICollection<IVersionInfo> GetVersions(Guid id)
-        {
-            return new List<IVersionInfo>(VersionManager.GetVersions(id).Select(a => a.VersionInfo));
-        }
+        public StringBuilder GetVersion(IVersionInfo versionInfo, Guid resourceId) => VersionManager.GetVersion(versionInfo, resourceId);
 
-        public IRollbackResult Rollback(Guid resourceId, string version)
-        {
-            return VersionManager.RollbackTo(resourceId, version);
-        }
+        public ICollection<IVersionInfo> GetVersions(Guid id) => new List<IVersionInfo>(VersionManager.GetVersions(id).Select(a => a.VersionInfo));
+
+        public IRollbackResult Rollback(Guid resourceId, string version) => VersionManager.RollbackTo(resourceId, version);
 
         public void CreateFolder(string parentPath, string name, Guid id)
         {

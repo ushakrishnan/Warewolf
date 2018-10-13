@@ -8,15 +8,15 @@ namespace Dev2.Settings.Perfcounters
 {
     public class PerformanceCountersByResource : BindableBase,IPerformanceCountersByResource
     {
-        private bool _isDeleted;
-        private Guid _resourceId;
-        private string _counterName;
-        private bool _requestPerSecond;
-        private bool _totalErrors;
-        private bool _averageExecutionTime;
-        private bool _concurrentRequests;
-        private ICommand _removeRow;
-        private bool _isNew;
+        bool _isDeleted;
+        Guid _resourceId;
+        string _counterName;
+        bool _requestPerSecond;
+        bool _totalErrors;
+        bool _averageExecutionTime;
+        bool _concurrentRequests;
+        ICommand _removeRow;
+        bool _isNew;
 
         public Guid ResourceId
         {
@@ -106,18 +106,12 @@ namespace Dev2.Settings.Perfcounters
             }
         }
 
-        public ICommand RemoveRow
-        {
-            get
-            {
-                return _removeRow ??
+        public ICommand RemoveRow => _removeRow ??
                        (_removeRow =
                        new RelayCommand(o =>
                        {
                            IsDeleted = !IsDeleted;
                        }, o => CanRemove));
-            }
-        }
 
         public bool CanRemove => !string.IsNullOrEmpty(CounterName);
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,10 +32,10 @@ namespace Dev2.Studio.Dock
     {
         #region Member Variables
 
-        private ICollectionView _currentView;
-        private readonly Dictionary<object, DependencyObject> _generatedElements;
-        private bool _isInitializing;
-        private readonly ItemBindingCollection _itemBindings;
+        ICollectionView _currentView;
+        readonly Dictionary<object, DependencyObject> _generatedElements;
+        bool _isInitializing;
+        readonly ItemBindingCollection _itemBindings;
 
         #endregion //Member Variables
 
@@ -59,10 +59,7 @@ namespace Dev2.Studio.Dock
         /// Creates an instance of the class
         /// </summary>
         /// <returns></returns>
-        protected override Freezable CreateInstanceCore()
-        {
-            return (ContainerFactoryBase)Activator.CreateInstance(GetType());
-        }
+        protected override Freezable CreateInstanceCore() => (ContainerFactoryBase)Activator.CreateInstance(GetType());
         #endregion //CreateInstanceCore
 
         #region FreezeCore
@@ -71,10 +68,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="isChecking">True if the ability to freeze is being checked or false when the object is being attempted to be made frozen</param>
         /// <returns>Returns false since this object cannot be frozen.</returns>
-        protected override bool FreezeCore(bool isChecking)
-        {
-            return false;
-        }
+        protected override bool FreezeCore(bool isChecking) => false;
         #endregion //FreezeCore
 
         #endregion //Base class overrides
@@ -101,22 +95,22 @@ namespace Dev2.Studio.Dock
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource",
             typeof(IEnumerable), typeof(ContainerFactoryBase), new FrameworkPropertyMetadata(null, OnItemsSourceChanged));
 
-        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ContainerFactoryBase ef = (ContainerFactoryBase)d;
+            var ef = (ContainerFactoryBase)d;
             ef.OnItemsSourceChanged((IEnumerable)e.NewValue);
         }
 
-        private void OnItemsSourceChanged(IEnumerable newItems)
+        void OnItemsSourceChanged(IEnumerable newItems)
         {
-            if(_currentView != null)
+            if (_currentView != null)
             {
                 _currentView.CollectionChanged -= OnCollectionChanged;
                 _currentView = null;
                 ClearItems();
             }
 
-            if(null != newItems)
+            if (null != newItems)
             {
                 _currentView = CollectionViewSource.GetDefaultView(newItems);
                 Debug.Assert(_currentView != null);
@@ -161,14 +155,14 @@ namespace Dev2.Studio.Dock
 
         #region ItemForContainer
 
-        private static readonly DependencyPropertyKey ItemForContainerPropertyKey =
+        static readonly DependencyPropertyKey ItemForContainerPropertyKey =
             DependencyProperty.RegisterAttachedReadOnly("ItemForContainer", typeof(object), typeof(ContainerFactoryBase),
                 new FrameworkPropertyMetadata(null));
 
         /// <summary>
         /// ItemForContainer Attached Dependency Property
         /// </summary>
-        private static readonly DependencyProperty ItemForContainerProperty = ItemForContainerPropertyKey.DependencyProperty;
+        static readonly DependencyProperty ItemForContainerProperty = ItemForContainerPropertyKey.DependencyProperty;
 
         #endregion //ItemForContainer
 
@@ -186,10 +180,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="container">The container to evaluate</param>
         /// <returns>The item associated with the specified container.</returns>
-        public static object GetItemForContainer(DependencyObject container)
-        {
-            return container.GetValue(ItemForContainerProperty);
-        }
+        public static object GetItemForContainer(DependencyObject container) => container.GetValue(ItemForContainerProperty);
         #endregion //GetItemForContainer
 
         #endregion //Public Methods
@@ -254,10 +245,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="container">The container whose underlying item is being requested</param>
         /// <returns>The underlying item</returns>
-        protected object GetItemFromContainer(DependencyObject container)
-        {
-            return container.GetValue(ItemForContainerProperty);
-        }
+        protected object GetItemFromContainer(DependencyObject container) => container.GetValue(ItemForContainerProperty);
         #endregion //GetItemFromContainer
 
         #region IsContainerInUse
@@ -268,10 +256,10 @@ namespace Dev2.Studio.Dock
         /// <returns>This will return false if the container has not yet been added, has been removed or is in the process of being removed.</returns>
         protected bool IsContainerInUse(DependencyObject container)
         {
-            object item = container.ReadLocalValue(ItemForContainerProperty);
+            var item = container.ReadLocalValue(ItemForContainerProperty);
 
             // if there is no item associated with the container then it cannot be in use
-            if(item == DependencyProperty.UnsetValue)
+            if (item == DependencyProperty.UnsetValue)
             {
                 return false;
             }
@@ -295,10 +283,7 @@ namespace Dev2.Studio.Dock
         /// </summary>
         /// <param name="item">The item to evaluate</param>
         /// <returns>Returns true to indicate that a container is needed</returns>
-        protected virtual bool IsItemItsOwnContainer(object item)
-        {
-            return true;
-        }
+        protected virtual bool IsItemItsOwnContainer(object item) => true;
         #endregion //IsItemItsOwnContainer
 
         #region OnItemInserted
@@ -344,9 +329,9 @@ namespace Dev2.Studio.Dock
         {
             for(int i = 0, count = _itemBindings.Count; i < count; i++)
             {
-                ItemBinding itemBinding = _itemBindings[i];
+                var itemBinding = _itemBindings[i];
 
-                if(itemBinding.CanApply(container, item))
+                if (itemBinding.CanApply(container, item))
                 {
                     BindingOperations.SetBinding(container, itemBinding.TargetProperty, itemBinding.Binding);
                 }
@@ -384,14 +369,14 @@ namespace Dev2.Studio.Dock
         #region Private methods
 
         #region AttachContainerToItem
-        private void AttachContainerToItem(DependencyObject container, object item)
+        void AttachContainerToItem(DependencyObject container, object item)
         {
             // store a reference to the item on the container
             container.SetValue(ItemForContainerPropertyKey, item);
             container.SetValue(ContentControl.ContentProperty, item);
 
-            
-            if(item != container)
+
+            if (item != container)
             {
                 container.SetValue(FrameworkElement.DataContextProperty, item);
             }
@@ -399,13 +384,13 @@ namespace Dev2.Studio.Dock
         #endregion //AttachContainerToItem
 
         #region ClearItems
-        private void ClearItems()
+        void ClearItems()
         {
-            DependencyObject[] elements = new DependencyObject[_generatedElements.Count];
+            var elements = new DependencyObject[_generatedElements.Count];
             _generatedElements.Values.CopyTo(elements, 0);
             _generatedElements.Clear();
 
-            foreach(DependencyObject container in elements)
+            foreach (DependencyObject container in elements)
             {
                 OnItemRemovedImpl(container, container.GetValue(ItemForContainerProperty));
             }
@@ -413,7 +398,7 @@ namespace Dev2.Studio.Dock
         #endregion //ClearItems
 
         #region InsertItem
-        private void InsertItem(int index, object newItem)
+        void InsertItem(int index, object newItem)
         {
             Debug.Assert(!_generatedElements.ContainsKey(newItem));
 
@@ -437,9 +422,9 @@ namespace Dev2.Studio.Dock
         #endregion //InsertItem
 
         #region IsItemItsOwnContainerImpl
-        private bool IsItemItsOwnContainerImpl(object item)
+        bool IsItemItsOwnContainerImpl(object item)
         {
-            if(!(item is DependencyObject))
+            if (!(item is DependencyObject))
             {
                 return false;
             }
@@ -450,7 +435,7 @@ namespace Dev2.Studio.Dock
         #endregion //IsItemItsOwnContainerImpl
 
         #region MoveItem
-        private void MoveItem(object item, int oldIndex, int newIndex)
+        void MoveItem(object item, int oldIndex, int newIndex)
         {
 
             if (_generatedElements.TryGetValue(item, out DependencyObject container))
@@ -461,14 +446,14 @@ namespace Dev2.Studio.Dock
         #endregion //MoveItem
 
         #region OnItemBindingsChanged
-        private void OnItemBindingsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void OnItemBindingsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             Reset();
         }
         #endregion //OnItemBindingsChanged
 
         #region OnItemRemovedImpl
-        private void OnItemRemovedImpl(DependencyObject container, object oldItem)
+        void OnItemRemovedImpl(DependencyObject container, object oldItem)
         {
             OnItemRemoved(container, oldItem);
 
@@ -479,9 +464,9 @@ namespace Dev2.Studio.Dock
         #endregion //OnItemRemovedImpl
 
         #region OnCollectionChanged
-        private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if(_isInitializing)
+            if (_isInitializing)
             {
                 return;
             }
@@ -537,36 +522,36 @@ namespace Dev2.Studio.Dock
         #endregion //OnCollectionChanged
 
         #region ReinitializeElements
-        private void ReinitializeElements()
+        void ReinitializeElements()
         {
-            if(_currentView == null || _currentView.IsEmpty)
+            if (_currentView == null || _currentView.IsEmpty)
             {
                 ClearItems();
             }
             else
             {
-                if(IsInitializing)
+                if (IsInitializing)
                 {
                     return;
                 }
 
-                HashSet<object> oldItems = new HashSet<object>(_generatedElements.Keys);
+                var oldItems = new HashSet<object>(_generatedElements.Keys);
 
-                foreach(object item in _currentView)
+                foreach (object item in _currentView)
                 {
                     oldItems.Remove(item);
                 }
 
-                foreach(object oldItem in oldItems)
+                foreach (object oldItem in oldItems)
                 {
-                    DependencyObject container = _generatedElements[oldItem];
+                    var container = _generatedElements[oldItem];
                     _generatedElements.Remove(oldItem);
 
                     OnItemRemovedImpl(container, oldItem);
                 }
 
-                int index = 0;
-                foreach(object item in _currentView)
+                var index = 0;
+                foreach (object item in _currentView)
                 {
 
                     if (!_generatedElements.TryGetValue(item, out DependencyObject container))
@@ -646,16 +631,12 @@ namespace Dev2.Studio.Dock
         #region Base class overrides
 
         #region ApplyItemContainerStyle
-        /// <summary>
-        /// Used to apply a style to the container for an item
-        /// </summary>
-        /// <param name="container">The container associated with the item</param>
-        /// <param name="item">The item from the source collection</param>
+
         protected override void ApplyItemContainerStyle(DependencyObject container, object item)
         {
-            Style style = ContainerStyle;
+            var style = ContainerStyle;
 
-            if(null == style && ContainerStyleSelector != null)
+            if (null == style && ContainerStyleSelector != null)
             {
                 style = ContainerStyleSelector.SelectStyle(item, container);
             }
@@ -665,11 +646,14 @@ namespace Dev2.Studio.Dock
                 container.SetValue(AppliedStyleProperty, KnownBoxes.FalseBox);
                 container.SetValue(FrameworkElement.StyleProperty, style);
             }
-            else if(true.Equals(container.GetValue(AppliedStyleProperty)))
+            else
             {
-                // if we don't get a style now but we applied one previously clear it
-                container.ClearValue(AppliedStyleProperty);
-                container.ClearValue(FrameworkElement.StyleProperty);
+                if (true.Equals(container.GetValue(AppliedStyleProperty)))
+                {
+                    // if we don't get a style now but we applied one previously clear it
+                    container.ClearValue(AppliedStyleProperty);
+                    container.ClearValue(FrameworkElement.StyleProperty);
+                }
             }
         }
         #endregion //ApplyItemContainerStyle
@@ -679,10 +663,7 @@ namespace Dev2.Studio.Dock
         /// Invoked when an element needs to be generated for a given item.
         /// </summary>
         /// <returns>The element to represent the item</returns>
-        protected override ContentControl GetContainerForItem(object item)
-        {
-            return (ContentControl)Activator.CreateInstance(ContainerType);
-        }
+        protected override ContentControl GetContainerForItem(object item) => (ContentControl)Activator.CreateInstance(ContainerType);
         #endregion //GetContainerForItem
 
         #endregion //Base class overrides
@@ -699,9 +680,9 @@ namespace Dev2.Studio.Dock
         public static readonly DependencyProperty ContainerStyleProperty = DependencyProperty.Register("ContainerStyle",
             typeof(Style), typeof(ContainerFactory), new FrameworkPropertyMetadata(null, OnContainerStyleChanged));
 
-        private static void OnContainerStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnContainerStyleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ContainerFactory ef = (ContainerFactory)d;
+            var ef = (ContainerFactory)d;
             ef.RefreshContainerStyles();
         }
 
@@ -763,18 +744,18 @@ namespace Dev2.Studio.Dock
         public static readonly DependencyProperty ContainerTypeProperty = DependencyProperty.Register("ContainerType",
             typeof(Type), typeof(ContainerFactory), new FrameworkPropertyMetadata(null, OnContainerTypeChanged, CoerceContainerType), ValidateContainerType);
 
-        private static void OnContainerTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnContainerTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ContainerFactory ef = (ContainerFactory)d;
+            var ef = (ContainerFactory)d;
             ef.Reset();
         }
 
-        private static object CoerceContainerType(DependencyObject d, object newValue)
+        static object CoerceContainerType(DependencyObject d, object newValue)
         {
-            ContainerFactory ef = (ContainerFactory)d;
-            Type newType = (Type)newValue;
+            var ef = (ContainerFactory)d;
+            var newType = (Type)newValue;
 
-            if(null != newType)
+            if (null != newType)
             {
                 ef.ValidateContainerType(newType);
             }
@@ -782,11 +763,11 @@ namespace Dev2.Studio.Dock
             return newValue;
         }
 
-        private static bool ValidateContainerType(object newValue)
+        static bool ValidateContainerType(object newValue)
         {
-            Type type = newValue as Type;
+            var type = newValue as Type;
 
-            if(type == null)
+            if (type == null)
             {
                 return true;
             }
@@ -834,7 +815,7 @@ namespace Dev2.Studio.Dock
         /// <summary>
         /// ItemForContainer Attached Dependency Property
         /// </summary>
-        private static readonly DependencyProperty AppliedStyleProperty =
+        static readonly DependencyProperty AppliedStyleProperty =
             DependencyProperty.RegisterAttached("AppliedStyle", typeof(bool), typeof(ContainerFactory),
                 new FrameworkPropertyMetadata(KnownBoxes.FalseBox));
 
@@ -847,9 +828,9 @@ namespace Dev2.Studio.Dock
         #region Methods
 
         #region RefreshContainerStyles
-        private void RefreshContainerStyles()
+        void RefreshContainerStyles()
         {
-            foreach(DependencyObject container in GetElements())
+            foreach (DependencyObject container in GetElements())
             {
                 ApplyItemContainerStyle(container, GetItemFromContainer(container));
             }

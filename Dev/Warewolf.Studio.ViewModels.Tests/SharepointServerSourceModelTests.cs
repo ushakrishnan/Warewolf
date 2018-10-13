@@ -10,12 +10,12 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private Mock<IStudioUpdateManager> _updateRepositoryMock;
-       
-        private string _serverName;
+        Mock<IStudioUpdateManager> _updateRepositoryMock;
 
-        private SharepointServerSourceModel _target;
-        private Mock<IQueryManager> _queryManager;
+        string _serverName;
+
+        SharepointServerSourceModel _target;
+        Mock<IQueryManager> _queryManager;
 
         #endregion Fields
 
@@ -34,7 +34,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestTestConnection()
         {
             //arrange
@@ -47,7 +47,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _updateRepositoryMock.Verify(it => it.TestConnection(resourceMock.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSave()
         {
             //arrange
@@ -64,7 +64,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestServerName()
         {
             //arrange

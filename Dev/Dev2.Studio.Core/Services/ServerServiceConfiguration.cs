@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,10 +32,7 @@ namespace Dev2.Services
             PopupController = popupController;
         }
 
-        public bool IsServiceRunning()
-        {
-            return ServiceManager.IsRunning();
-        }
+        public bool IsServiceRunning() => ServiceManager.IsRunning();
 
         public bool PromptUserToStartService()
         {
@@ -71,14 +68,12 @@ namespace Dev2.Services
                 throw new Exception(ErrorResource.NullServiceManager);
             }
 
-            if(!ServiceManager.IsRunning())
+            if (!ServiceManager.IsRunning() && !ServiceManager.Start())
             {
-                if(!ServiceManager.Start())
-                {
-                    PopupController.Show("A time out occurred while trying to start the Warewolf server service. Please try again.", "Timeout", MessageBoxButton.OK, MessageBoxImage.Error, null, false, true, false, false, false, false);
-                    return false;
-                }
+                PopupController.Show("A time out occurred while trying to start the Warewolf server service. Please try again.", "Timeout", MessageBoxButton.OK, MessageBoxImage.Error, null, false, true, false, false, false, false);
+                return false;
             }
+
 
             return true;
         }

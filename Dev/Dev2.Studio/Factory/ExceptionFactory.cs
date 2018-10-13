@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -88,11 +88,11 @@ namespace Dev2.Studio.Factory
                 builder.AppendLine("StackTrace:");
                 builder.AppendLine(exception.StackTrace);
                 
-                string fullStackTrace = Environment.NewLine + Environment.NewLine + "Additional Trace Info" + Environment.NewLine + Environment.NewLine;
-                StackTrace theStackTrace = new StackTrace();
+                var fullStackTrace = Environment.NewLine + Environment.NewLine + "Additional Trace Info" + Environment.NewLine + Environment.NewLine;
+                var theStackTrace = new StackTrace();
                 for (int j = theStackTrace.FrameCount - 1; j >= 0; j--)
                 {
-                    string module = theStackTrace.GetFrame(j).GetMethod().Module.ToString();
+                    var module = theStackTrace.GetFrame(j).GetMethod().Module.ToString();
                     if (module != "WindowsBase.dll" && module != "CommonLanguageRuntimeLibrary")
                     {
                         fullStackTrace += "--> " + theStackTrace.GetFrame(j).GetMethod().Name + " (" + theStackTrace.GetFrame(j).GetMethod().Module + ")";
@@ -100,33 +100,20 @@ namespace Dev2.Studio.Factory
                 }
                 builder.Append(fullStackTrace);
             }
-
-
             return builder;
         }
 
-        public static Func<string, string> GetUniqueOutputPath = extension => FileHelper.GetUniqueOutputPath(extension);
+        public static Func<string, string> GetUniqueOutputPath { get => getUniqueOutputPath; set => getUniqueOutputPath = value; }
+        static Func<string, string> getUniqueOutputPath = extension => FileHelper.GetUniqueOutputPath(extension);
 
-        /// <summary>
-        /// Creates the exception view model.
-        /// </summary>
-        /// <param name="e">The exception for this viewmodel.</param>
-        /// <param name="server">The environment model.</param>
-        /// <param name="isCritical">The severity of the error.</param>
-        /// <returns></returns>
-        /// <date>2013/01/16</date>
-        /// <author>
-        /// Jurie.smit
-        /// </author>
         public static async Task<IExceptionViewModel> CreateViewModel(Exception e, IServer server) => await CreateViewModel(e, server, ErrorSeverity.Default);
         public static async Task<IExceptionViewModel> CreateViewModel(Exception e, IServer server, ErrorSeverity isCritical)
         {
-            // PBI 9598 - 2013.06.10 - TWR : added environmentModel parameter
             var vm = new ExceptionViewModel(new AsyncWorker())
             {
                 OutputText = CreateStringValue(e, null, true).ToString(),
                 StackTrace = e.StackTrace,
-                OutputPath = GetUniqueOutputPath(".txt"),
+                OutputPath = GetUniqueOutputPath?.Invoke(".txt"),
                 DisplayName = isCritical == ErrorSeverity.Critical ? StringResources.CritErrorTitle : StringResources.ErrorTitle
             };
             vm.GetStudioLogFile();

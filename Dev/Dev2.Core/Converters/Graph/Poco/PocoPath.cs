@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,8 +20,8 @@ namespace Unlimited.Framework.Converters.Graph.Poco
     {
         #region Class Members
 
-        private const string _seperatorSymbol = ".";
-        private const string _enumerableSymbol = "()";
+        const string _seperatorSymbol = ".";
+        const string _enumerableSymbol = "()";
 
         #endregion Class Members
 
@@ -54,10 +54,7 @@ namespace Unlimited.Framework.Converters.Graph.Poco
 
         #region Methods
 
-        public override IEnumerable<IPathSegment> GetSegements()
-        {
-            return ActualPath.Split(SeperatorSymbol.ToCharArray()).Select(CreatePathSegment).ToList();
-        }
+        public override IEnumerable<IPathSegment> GetSegements() => ActualPath.Split(SeperatorSymbol.ToCharArray()).Select(CreatePathSegment).ToList();
 
         public override IPathSegment CreatePathSegment(string pathSegmentString)
         {
@@ -66,10 +63,7 @@ namespace Unlimited.Framework.Converters.Graph.Poco
             return pathSegment;
         }
 
-        public IPathSegment CreatePathSegment(string name, bool isEnumerable)
-        {
-            return new PocoPathSegment(name, isEnumerable);
-        }
+        public IPathSegment CreatePathSegment(string name, bool isEnumerable) => new PocoPathSegment(name, isEnumerable);
 
         #endregion Methods
 

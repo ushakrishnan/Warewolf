@@ -10,10 +10,10 @@ using Dev2.Studio.Interfaces.DataList;
 
 namespace Dev2.Studio.Core.Models.DataList
 {
-    public class RecordSetItemModel : DataListItemModel, IRecordSetItemModel
+    public class RecordSetItemModel : DataListItemModel, IRecordSetItemModel, IEquatable<RecordSetItemModel>
     {
-        private ObservableCollection<IRecordSetFieldItemModel> _children;
-        private string _searchText;
+        ObservableCollection<IRecordSetFieldItemModel> _children;
+        string _searchText;
 
         public RecordSetItemModel(string displayname)
             : this(displayname, enDev2ColumnArgumentDirection.None, "", null, null, false, "", true, true, false, true)
@@ -45,14 +45,12 @@ namespace Dev2.Studio.Core.Models.DataList
         {
             get
             {
-                if (!string.IsNullOrEmpty(_searchText))
+                if (!string.IsNullOrEmpty(_searchText) && _children != null)
                 {
-                    if (_children != null)
-                    {
-                        var itemModels = _children.Where(model => model.IsVisible).ToObservableCollection();
-                        return itemModels;
-                    }
+                    var itemModels = _children.Where(model => model.IsVisible).ToObservableCollection();
+                    return itemModels;
                 }
+
                 return _children ?? (_children = new ObservableCollection<IRecordSetFieldItemModel>());
             }
             set
@@ -123,11 +121,11 @@ namespace Dev2.Studio.Core.Models.DataList
             }
         }
 
-        private void SetChildInputValues(bool value)
+        void SetChildInputValues(bool value)
         {
-            if(Children != null)
+            if (Children != null)
             {
-                foreach(var dataListItemModel in Children)
+                foreach (var dataListItemModel in Children)
                 {
                     var child = dataListItemModel;
                     if (!string.IsNullOrEmpty(child.DisplayName))
@@ -138,7 +136,7 @@ namespace Dev2.Studio.Core.Models.DataList
             }
         }
 
-        private void SetChildOutputValues(bool value)
+        void SetChildOutputValues(bool value)
         {
             if (Children != null)
             {
@@ -157,7 +155,7 @@ namespace Dev2.Studio.Core.Models.DataList
 
         public override string ValidateName(string name)
         {
-            Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
+            var parser = new Dev2DataLanguageParser();
             if (!string.IsNullOrEmpty(name))
             {
                 name = DataListUtil.RemoveRecordsetBracketsFromValue(name);
@@ -171,17 +169,22 @@ namespace Dev2.Studio.Core.Models.DataList
                     }
                     else
                     {
-                        if(!string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateValue, StringComparison.InvariantCulture) &&
-                            !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateVariable, StringComparison.InvariantCulture) &&
-                            !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateRecordset, StringComparison.InvariantCulture) &&
-                            !string.Equals(ErrorMessage, StringResources.ErrorMessageEmptyRecordSet, StringComparison.InvariantCulture))
-                        {
-                            RemoveError();
-                        }
+                        ConditionallyRemoveError();
                     }
                 }
             }
             return name;
+        }
+
+        void ConditionallyRemoveError()
+        {
+            if (!string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateValue, StringComparison.InvariantCulture) &&
+                                        !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateVariable, StringComparison.InvariantCulture) &&
+                                        !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateRecordset, StringComparison.InvariantCulture) &&
+                                        !string.Equals(ErrorMessage, StringResources.ErrorMessageEmptyRecordSet, StringComparison.InvariantCulture))
+            {
+                base.RemoveError();
+            }
         }
 
         #endregion
@@ -194,11 +197,55 @@ namespace Dev2.Studio.Core.Models.DataList
         /// <returns>
         /// A <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
         /// </returns>
-        public override string ToString()
-        {
-            return DisplayName;
-        }
+        public override string ToString() => DisplayName;
 
         #endregion
+
+        public bool Equals(RecordSetItemModel other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && Equals(Input, other.Input) && Equals(Output, other.Output)
+                && Equals(_children, other._children);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((RecordSetItemModel) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_children != null ? _children.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_searchText != null ? _searchText.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

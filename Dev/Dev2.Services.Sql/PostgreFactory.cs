@@ -22,20 +22,24 @@ namespace Dev2.Services.Sql
             return new NpgsqlConnection(connectionString);
         }
 
-        public IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText)
+        public IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText, int? commandTimeout)
         {
-            return new NpgsqlCommand(commandText, connection as NpgsqlConnection)
+            var command = new NpgsqlCommand(commandText, connection as NpgsqlConnection)
             {
                 CommandType = commandType,
-                CommandTimeout = (int)GlobalConstants.TransactionTimeout.TotalSeconds
             };
+            if (commandTimeout != null)
+            {
+                command.CommandTimeout = commandTimeout.Value;
+            }
+            return command;
         }
 
         public DataTable GetSchema(IDbConnection connection, string collectionName)
         {
             if (!(connection is NpgsqlConnection))
             {
-                throw new Exception(string.Format(ErrorResource.InvalidSqlConnection , "Postgre"));
+                throw new Exception(string.Format(ErrorResource.InvalidSqlConnection, "Postgre"));
             }
 
             return ((NpgsqlConnection)connection).GetSchema(collectionName);
@@ -43,7 +47,7 @@ namespace Dev2.Services.Sql
 
         public DataTable CreateTable(IDataAdapter reader, LoadOption overwriteChanges)
         {
-            DataSet ds = new DataSet(); //conn is opened by dataadapter
+            var ds = new DataSet(); //conn is opened by dataadapter
             reader.Fill(ds);
             return ds.Tables[0];
         }
@@ -55,15 +59,37 @@ namespace Dev2.Services.Sql
                 throw new Exception(string.Format(ErrorResource.InvalidCommand, "PostgreCommand"));
             }
 
-            using (var dataset = new DataSet())
+            var dataset = new DataSet();
+            using (var adapter = new NpgsqlDataAdapter(command as NpgsqlCommand))
             {
-                using (var adapter = new NpgsqlDataAdapter(command as NpgsqlCommand))
-                {
-                    adapter.Fill(dataset);
-                }
-
-                return dataset;
+                adapter.Fill(dataset);
             }
+
+            return dataset;
+        }
+
+        public int ExecuteNonQuery(IDbCommand command)
+        {
+            if (!(command is NpgsqlCommand SqlCommand))
+            {
+                throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
+            }
+
+            int retValue = 0;
+            retValue = command.ExecuteNonQuery();
+            return retValue;
+        }
+
+        public int ExecuteScalar(IDbCommand command)
+        {
+            if (!(command is NpgsqlCommand))
+            {
+                throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
+            }
+
+            int retValue = 0;
+            retValue = Convert.ToInt32(command.ExecuteScalar());
+            return retValue;
         }
     }
 }

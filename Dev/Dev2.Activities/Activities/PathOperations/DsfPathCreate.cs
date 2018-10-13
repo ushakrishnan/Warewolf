@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Linq;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
 using Dev2.Data.Interfaces;
 using Dev2.Data.TO;
@@ -25,86 +26,71 @@ using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Storage;
 
-
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
-
 {
-
-    /// <summary>
-    /// PBI : 1172
-    /// Status : New
-    /// Purpose : To create an activity to create files on FTP, FTPS and file system
-    /// </summary>
-    [ToolDescriptorInfo("FileFolder-Create", "Create", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Create")]
-    public class DsfPathCreate : DsfAbstractFileActivity, IPathOutput, IPathOverwrite
+    [ToolDescriptorInfo("FileFolder-Create", "Create", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Create")]
+    public class DsfPathCreate : DsfAbstractFileActivity, IPathOutput, IPathOverwrite,IEquatable<DsfPathCreate>
     {
-
         public DsfPathCreate()
             : base("Create")
         {
             OutputPath = string.Empty;
         }
-
-        protected override IList<OutputTO> ExecuteConcreteAction(IDSFDataObject dataObject, out ErrorResultTO allErrors, int update)
+        protected override bool AssignEmptyOutputsToRecordSet => true;
+        protected override IList<OutputTO> TryExecuteConcreteAction(IDSFDataObject context, out ErrorResultTO error, int update)
         {
-
             IList<OutputTO> outputs = new List<OutputTO>();
 
-            allErrors = new ErrorResultTO();
+            error = new ErrorResultTO();
             var colItr = new WarewolfListIterator();
 
             //get all the possible paths for all the string variables
             
-            var outputItr = new WarewolfIterator(dataObject.Environment.Eval(OutputPath, update));
+            var outputItr = new WarewolfIterator(context.Environment.Eval(OutputPath, update));
             colItr.AddVariableToIterateOn(outputItr);
 
-            var unameItr = new WarewolfIterator(dataObject.Environment.Eval(Username, update));
-            colItr.AddVariableToIterateOn(unameItr);
-
-            var passItr = new WarewolfIterator(dataObject.Environment.Eval(DecryptedPassword,update));
+            var passItr = new WarewolfIterator(context.Environment.Eval(DecryptedPassword,update));
             colItr.AddVariableToIterateOn(passItr);
 
-            var privateKeyItr = new WarewolfIterator(dataObject.Environment.Eval(PrivateKeyFile, update));
+            var privateKeyItr = new WarewolfIterator(context.Environment.Eval(PrivateKeyFile, update));
             colItr.AddVariableToIterateOn(privateKeyItr);
 
-            if(dataObject.IsDebugMode())
+            if(context.IsDebugMode())
             {
-                AddDebugInputItem(new DebugEvalResult(OutputPath, "File or Folder", dataObject.Environment, update));
+                AddDebugInputItem(new DebugEvalResult(OutputPath, "File or Folder", context.Environment, update));
                 AddDebugInputItem(new DebugItemStaticDataParams(Overwrite.ToString(), "Overwrite"));
-                AddDebugInputItemUserNamePassword(dataObject.Environment, update);
+                AddDebugInputItemUserNamePassword(context.Environment, update);
                 if (!string.IsNullOrEmpty(PrivateKeyFile))
                 {
-                    AddDebugInputItem(PrivateKeyFile, "Destination Private Key File", dataObject.Environment, update);
+                    AddDebugInputItem(PrivateKeyFile, "Destination Private Key File", context.Environment, update);
                 }
             }
 
             while(colItr.HasMoreData())
             {
-                IActivityOperationsBroker broker = ActivityIOFactory.CreateOperationsBroker();
-                Dev2CRUDOperationTO opTo = new Dev2CRUDOperationTO(Overwrite);
+                var broker = ActivityIOFactory.CreateOperationsBroker();
+                var opTo = new Dev2CRUDOperationTO(Overwrite);
 
                 try
                 {
-                    IActivityIOPath dst = ActivityIOFactory.CreatePathFromString(colItr.FetchNextValue(outputItr),
-                                                                                colItr.FetchNextValue(unameItr),
+                    var dst = ActivityIOFactory.CreatePathFromString(colItr.FetchNextValue(outputItr),
+                                                                                Username,
                                                                                 colItr.FetchNextValue(passItr),
                                                                                 true, colItr.FetchNextValue(privateKeyItr));
-                    IActivityIOOperationsEndPoint dstEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(dst);
-                    string result = broker.Create(dstEndPoint, opTo, true);
+                    var dstEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(dst);
+                    var result = broker.Create(dstEndPoint, opTo, true);
                     outputs.Add(DataListFactory.CreateOutputTO(Result, result));
                 }
                 catch(Exception e)
                 {
                     outputs.Add(DataListFactory.CreateOutputTO(Result, "Failure"));
-                    allErrors.AddError(e.Message);
+                    error.AddError(e.Message);
                     break;
                 }
             }
 
             return outputs;
         }
-
-        #region Properties
 
         /// <summary>
         /// Gets or sets the output path.
@@ -127,7 +113,41 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             set;
         }
 
-        #endregion Properties
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "OutputPath",
+                    Value = OutputPath,
+                    Type = StateVariable.StateType.Output
+                },
+                new StateVariable
+                {
+                    Name = "Overwrite",
+                    Value = Overwrite.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "Username",
+                    Value = Username,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = "PrivateKeyFile",
+                    Value = PrivateKeyFile,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
@@ -146,18 +166,54 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        #region GetForEachInputs/Outputs
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(OutputPath);
 
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
+
+        public bool Equals(DsfPathCreate other)
         {
-            return GetForEachItems(OutputPath);
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && string.Equals(OutputPath, other.OutputPath) && Overwrite == other.Overwrite;
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
+        public override bool Equals(object obj)
         {
-            return GetForEachItems(Result);
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfPathCreate) obj);
         }
 
-        #endregion
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (OutputPath != null ? OutputPath.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ Overwrite.GetHashCode();
+                return hashCode;
+            }
+        }
     }
 }

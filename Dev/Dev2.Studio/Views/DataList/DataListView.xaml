@@ -5,7 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
              xmlns:behaviors="clr-namespace:Dev2.Studio.AppResources.Behaviors"
-             xmlns:aprop="clr-namespace:Dev2.Studio.AppResources.AttachedProperties"
              xmlns:customControls="clr-namespace:Warewolf.Studio.CustomControls;assembly=Warewolf.Studio.CustomControls"
              xmlns:fa="http://schemas.fontawesome.io/icons/"
              xmlns:core="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
@@ -27,9 +26,6 @@
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
-    <i:Interaction.Behaviors>
-        <behaviors:UserControlFocusNextAndPreviousBehaviour />
-    </i:Interaction.Behaviors>
     <Grid x:Name="MainGrid"
           LostKeyboardFocus="UIElement_OnLostKeyboardFocus" 
           Margin="{StaticResource ElementBorder}">
@@ -50,6 +46,7 @@
                                           x:Name="SearchTextBox" 
                                           Style="{StaticResource SearchTextboxStyle}"
                                           ClearSearchCommand="{Binding Path=ClearSearchTextCommand}"
+										  LostKeyboardFocus="SearchTextBox_LostKeyboardFocus"
                                           ClearSearchToolTip="{x:Static languages:Tooltips.ClearVariableListFilterTooltip}"
                                           LabelText="Search for Variables"
                                           HorizontalAlignment="Stretch" 
@@ -84,7 +81,7 @@
         </Grid>
 
         <Grid Grid.Row="1" Focusable="False">
-            <TreeView ItemsSource="{Binding Path=BaseCollection,Mode=TwoWay, IsAsync=True}"
+            <TreeView ItemsSource="{Binding Path=BaseCollection,Mode=OneWay, IsAsync=True}"
                       HorizontalAlignment="Stretch"
                       Margin="{StaticResource ElementBorderTop}"
                       x:Name="ScalarExplorer"
@@ -100,10 +97,19 @@
                       VirtualizingStackPanel.ScrollUnit="Pixel"  
                       VirtualizingStackPanel.CacheLength="20,20"
                       VirtualizingStackPanel.CacheLengthUnit="Item">
+                <TreeView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource VariableTreeViewItemStyle}" TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsVisible}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TreeView.ItemContainerStyle>
                 <TreeView.Resources>
                     <HierarchicalDataTemplate DataType="{x:Type dataList3:ScalarItemModel}">
-                        <Grid HorizontalAlignment="Stretch" 
-                              Visibility="{Binding IsVisible,Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid HorizontalAlignment="Stretch" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="38" SharedSizeGroup="B" />
@@ -123,7 +129,6 @@
                                                                 IsTabStop="True"
                                                                 MaxWidth="{Binding ElementName=varsScrolBar,Path=ActualWidth}"
                                                                 DeleteCommand="{Binding DataContext.DeleteCommand,ElementName=DataListViewControl}"
-                                                                aprop:FocusAttachedProperty.IsFocused="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 ToolTip="{x:Static languages:Tooltips.DataListVariableInputTooltip}"
                                                                 Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.IsEditable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -163,7 +168,10 @@
                                       Checked="Inputcbx_OnChecked"
                                       Unchecked="Inputcbx_OnChecked"
                                       ToolTip="{x:Static languages:Tooltips.DataListInputCheckBoxTooltip}"
-                                      AutomationProperties.AutomationId="UI_IsInputCheckbox_AutoID" >
+                                      AutomationProperties.AutomationId="UI_IsInputCheckbox_AutoID"
+                                      Command="{Binding DataContext.InputVariableCheckboxCommand,ElementName=DataListViewControl}"
+                                      CommandParameter="{Binding Input}"
+                                      >
                                 <i:Interaction.Behaviors>
                                     <core:HelpSetter Text="{x:Static languages:HelpText.DataListInputCheckBoxHelp}"
                                                      DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=dataList:DataListView}}" />
@@ -180,7 +188,11 @@
                                       Checked="Outputcbx_OnChecked"
                                       Unchecked="Outputcbx_OnChecked"
                                       ToolTip="{x:Static languages:Tooltips.DataListOutputCheckBoxTooltip}"
-                                      AutomationProperties.AutomationId="UI_IsOutputCheckbox_AutoID" >
+                                      AutomationProperties.AutomationId="UI_IsOutputCheckbox_AutoID"
+                                      Command="{Binding DataContext.OutputVariableCheckboxCommand,ElementName=DataListViewControl}"
+                                      CommandParameter="{Binding Output}"
+                                      
+                                      >
                                 <i:Interaction.Behaviors>
                                     <core:HelpSetter Text="{x:Static languages:HelpText.DataListOutputCheckBoxHelp}"
                                                      DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=dataList:DataListView}}" />
@@ -189,8 +201,7 @@
                         </Grid>
                     </HierarchicalDataTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type dataList3:RecordSetItemModel}" ItemsSource="{Binding Path=Children, IsAsync=True}">
-                        <Grid HorizontalAlignment="Stretch" 
-                              Visibility="{Binding IsVisible,Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid HorizontalAlignment="Stretch" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="38" SharedSizeGroup="B" />
@@ -210,7 +221,6 @@
                                                                 IsTabStop="True"
                                                                 MaxWidth="{Binding ElementName=varsScrolBar,Path=ActualWidth}"
                                                                 DeleteCommand="{Binding DataContext.DeleteCommand,ElementName=DataListViewControl}"
-                                                                aprop:FocusAttachedProperty.IsFocused="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 ToolTip="{x:Static languages:Tooltips.DataListVariableInputTooltip}"
                                                                 Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.IsEditable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -276,8 +286,7 @@
                         </Grid>
                     </HierarchicalDataTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type dataList3:RecordSetFieldItemModel}">
-                        <Grid HorizontalAlignment="Stretch" 
-                              Visibility="{Binding IsVisible,Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid HorizontalAlignment="Stretch" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="38" SharedSizeGroup="B" />
@@ -297,7 +306,6 @@
                                                                 IsTabStop="True"
                                                                 MaxWidth="{Binding ElementName=varsScrolBar,Path=ActualWidth}"
                                                                 DeleteCommand="{Binding DataContext.DeleteCommand,ElementName=DataListViewControl}"
-                                                                aprop:FocusAttachedProperty.IsFocused="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.IsSelected,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 ToolTip="{x:Static languages:Tooltips.DataListVariableInputTooltip}"
                                                                 Text="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 IsEnabled="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=DataContext.IsEditable, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -363,8 +371,7 @@
                         </Grid>
                     </HierarchicalDataTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type dataList3:ComplexObjectItemModel}" ItemsSource="{Binding Path=Children, IsAsync=True}">
-                        <Grid HorizontalAlignment="Stretch" 
-                              Visibility="{Binding IsVisible,Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid HorizontalAlignment="Stretch" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="38" SharedSizeGroup="B" />

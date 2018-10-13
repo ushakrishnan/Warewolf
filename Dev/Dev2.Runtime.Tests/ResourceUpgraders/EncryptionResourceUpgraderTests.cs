@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,13 +25,13 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
 
         public EncryptionResourceUpgraderTests()
         {
-            _connectionString = @"Data Source=RSAKLFSVRDEV,1433;Initial Catalog=Dev2TestingDB;User ID=testuser;Password=test007;";
+            _connectionString = @"Data Source=TEST-MSSQL,1433;Initial Catalog=Dev2TestingDB;User ID=testuser;Password=test007;";
             _beforeContainingSource = @"<first><second><third><Source ID=""ebba47dc-e5d4-4303-a203-09e2e9761d16"" Version=""1.0"" Name=""testingDBSrc"" ResourceType=""DbSource"" IsValid=""false"" ServerType=""SqlDatabase"" Type=""SqlDatabase"" ConnectionString=""" + _connectionString + @""" ServerID=""51a58300-7e9d-4927-a57b-e5d700b11b55"" ServerVersion=""0.4.2.2""></third></second></first>";
             _beforeWithoutSource = @"<first><second><third><xSource ID=""ebba47dc-e5d4-4303-a203-09e2e9761d16"" Version=""1.0"" Name=""testingDBSrc"" ResourceType=""DbSource"" IsValid=""false"" ServerType=""SqlDatabase"" Type=""SqlDatabase"" ConnectionString=""" + _connectionString + @""" ServerID=""51a58300-7e9d-4927-a57b-e5d700b11b55"" ServerVersion=""0.4.2.2""></third></second></first>";
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
         
@@ -40,7 +40,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
             _matchAndReplaceWhereAppropriate(_beforeContainingSource, _beforeWithoutSource, _connectionString);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
         public void EncryptionResourceUpgrader_Upgrade_HasMatchin_DsfFileWrite()
@@ -58,7 +58,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
 
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
-            string output = upgrader.EncryptPasswordsAndConnectionStrings(matchingString);
+            var output = upgrader.EncryptPasswordsAndConnectionStrings(matchingString);
             output.Should().NotBeNullOrEmpty();
             output.Should().NotBe(matchingString);
             output.Should().NotContain(pieceToReplace);
@@ -71,7 +71,7 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
 
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
         
@@ -79,23 +79,23 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
         {
             //------------Setup for test--------------------------
             var upgrader = new EncryptionResourceUpgrader();
-            Regex cs = new Regex(@"ConnectionString=""([^""]+)""");
+            var cs = new Regex(@"ConnectionString=""([^""]+)""");
 
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
-            string output = upgrader.EncryptSourceConnectionStrings(_beforeContainingSource);
+            var output = upgrader.EncryptSourceConnectionStrings(_beforeContainingSource);
             output.Should().NotBeNullOrEmpty();
             output.Should().NotBe(_beforeContainingSource);
             output.Should().NotContain(_connectionString);
-            Match m = cs.Match(output);
+            var m = cs.Match(output);
             m.Success.Should().BeTrue();
             m.Groups.Count.Should().BeGreaterOrEqualTo(1);
             m.Groups[1].Success.Should().BeTrue();
-            string x = m.Groups[1].Value;
+            var x = m.Groups[1].Value;
             DpapiWrapper.Decrypt(x).Should().Be(_connectionString);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Kerneels Roos")]
         [TestCategory("EncryptionResourceUpgrader_Upgrade")]
         
@@ -103,15 +103,15 @@ namespace Dev2.Tests.Runtime.ResourceUpgraders
         {
             //------------Setup for test--------------------------
             var upgrader = new EncryptionResourceUpgrader();
-            Regex cs = new Regex(@"ConnectionString=""([^""]+)""");
+            var cs = new Regex(@"ConnectionString=""([^""]+)""");
 
             //------------Execute Test---------------------------
             //------------Assert Results-------------------------
-            string output = upgrader.EncryptSourceConnectionStrings(_beforeContainingSource);
+            var output = upgrader.EncryptSourceConnectionStrings(_beforeContainingSource);
             output.Should().NotBeNullOrEmpty();
             output.Should().NotBe(_beforeContainingSource);
             output.Should().NotContain(_connectionString);
-            string output2 = upgrader.EncryptSourceConnectionStrings(output);
+            var output2 = upgrader.EncryptSourceConnectionStrings(output);
             output.Should().NotBeNullOrEmpty();
             output2.Should().Be(output);
         }

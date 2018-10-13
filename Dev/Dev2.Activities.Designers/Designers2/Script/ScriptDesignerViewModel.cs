@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -93,9 +93,12 @@ namespace Dev2.Activities.Designers2.Script
 
         public static readonly DependencyProperty ScriptTypeTextProperty =
             DependencyProperty.Register("ScriptTypeDefaultText", typeof(string), typeof(ScriptDesignerViewModel), new PropertyMetadata(null));
-
-        // DO NOT bind to these properties - these are here for convenience only!!!
-        enScriptType ScriptType { set { SetProperty(value); } get { return GetProperty<enScriptType>(); } }
+        
+        enScriptType ScriptType
+        {
+            set => SetProperty(value);
+            get => GetProperty<enScriptType>();
+        }
 
         public override void Validate()
         {

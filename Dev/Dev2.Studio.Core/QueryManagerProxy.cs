@@ -8,7 +8,6 @@ using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Explorer;
-using Dev2.Common.Interfaces.Infrastructure;
 using Dev2.Common.Interfaces.Infrastructure.Communication;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Common.Interfaces.Studio.Controller;
@@ -19,24 +18,19 @@ using Dev2.Controller;
 using Dev2.Explorer;
 using Dev2.Studio.Interfaces;
 using Warewolf.Resource.Errors;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Dev2.Studio.Core
 {
     public class QueryManagerProxy : ProxyBase, IQueryManager
     {
-
         public QueryManagerProxy(ICommunicationControllerFactory communicationControllerFactory, IEnvironmentConnection connection) : base(communicationControllerFactory, connection)
         {
 
         }
 
         #region Implementation of IQueryManager
-
-        /// <summary>
-        /// Gets the dependencies of a resource. a dependency referes to a nested resource
-        /// </summary>
-        /// <param name="resourceId">the resource</param>
-        /// <returns>a list of tree dependencies</returns>
+        
         public IExecuteMessage FetchDependencies(Guid resourceId)
         {
             if (!Connection.IsConnected)
@@ -58,12 +52,7 @@ namespace Dev2.Studio.Core
 
             return payload;
         }
-
-        /// <summary>
-        /// Get the list of items that use this resource a nested resource
-        /// </summary>
-        /// <param name="resourceId"></param>
-        /// <returns></returns>
+        
         public IExecuteMessage FetchDependants(Guid resourceId)
         {
             if (!Connection.IsConnected)
@@ -74,12 +63,7 @@ namespace Dev2.Studio.Core
 
             return FetchDependantsFromServerService(resourceId, true);
         }
-
-        /// <summary>
-        /// Fetch a heavy weight reource
-        /// </summary>
-        /// <param name="resourceId"></param>
-        /// <returns></returns>
+        
         public StringBuilder FetchResourceXaml(Guid resourceId)
         {
             if (!Connection.IsConnected)
@@ -110,7 +94,7 @@ namespace Dev2.Studio.Core
 
             if (Connection.IsLocalHost)
             {
-                var result = await comsController.ExecuteCompressedCommandAsync<IExplorerItem>(Connection, GlobalConstants.ServerWorkspaceID);
+                var result = await comsController.ExecuteCompressedCommandAsync<IExplorerItem>(Connection, GlobalConstants.ServerWorkspaceID).ConfigureAwait(true);
                 return result;
             }
             else
@@ -126,7 +110,7 @@ namespace Dev2.Studio.Core
                                               MessageBoxImage.Warning, "", false, false, true, false, false, false);
                     }
                 },TaskScheduler.FromCurrentSynchronizationContext());
-                var result = await fetchExplorerTask;
+                var result = await fetchExplorerTask.ConfigureAwait(true);
                 return result;
             }                        
         }
@@ -195,29 +179,6 @@ namespace Dev2.Studio.Core
             }
             var serializer = new Dev2JsonSerializer();
             return serializer.Deserialize<IList<IDbSource>>(result.Message.ToString());
-        }
-
-        public async Task<List<IFileResource>> FetchResourceFileTree()
-        {
-            var comsController = CommunicationControllerFactory.CreateController("FileResourceBuilder");
-
-            var workspaceId = Connection.WorkspaceID;
-            var result = await comsController.ExecuteCommandAsync<ExecuteMessage>(Connection, workspaceId);
-            if (result == null || result.HasError)
-            {
-                if (!Connection.IsConnected)
-                {
-                    ShowServerDisconnectedPopup();
-                    return new List<IFileResource>();
-                }
-                if (result != null)
-                {
-                    throw new WarewolfSupportServiceException(result.Message.ToString(), null);
-                }
-                throw new WarewolfSupportServiceException(ErrorResource.ServiceDoesNotExist, null);
-            }
-            var serializer = new Dev2JsonSerializer();
-            return serializer.Deserialize<List<IFileResource>>(result.Message.ToString());
         }
 
         public IList<IExchangeSource> FetchExchangeSources()
@@ -427,12 +388,11 @@ namespace Dev2.Studio.Core
             return fileListings;
         }
 
-
-        public IList<IFileListing> FetchFiles(IFileListing root)
+        public IList<IFileListing> FetchFiles(IFileListing file)
         {
             var serializer = new Dev2JsonSerializer();
             var comsController = CommunicationControllerFactory.CreateController("GetFiles");
-            comsController.AddPayloadArgument("fileListing", serializer.Serialize(root));
+            comsController.AddPayloadArgument("fileListing", serializer.Serialize(file));
             var workspaceId = Connection.WorkspaceID;
             var result = comsController.ExecuteCommand<ExecuteMessage>(Connection, workspaceId);
             if (result.HasError)
@@ -447,12 +407,7 @@ namespace Dev2.Studio.Core
             var fileListings = serializer.Deserialize<List<IFileListing>>(result.Message.ToString());
             return fileListings;
         }
-
-        /// <summary>
-        /// Get the list of dependencies for the deploy screen
-        /// </summary>
-        /// <param name="values"></param>
-        /// <returns></returns>
+        
         public IList<Guid> FetchDependenciesOnList(IEnumerable<Guid> values)
         {
             if (!Connection.IsConnected)
@@ -466,8 +421,7 @@ namespace Dev2.Studio.Core
             {
                 return new List<Guid>();
             }
-
-
+            
             var serializer = new Dev2JsonSerializer();
             var comsController = CommunicationControllerFactory.CreateController("GetDependanciesOnListService");
             comsController.AddPayloadArgument("ResourceIds", serializer.SerializeToBuilder(enumerable.Select(a => a.ToString()).ToList()));
@@ -485,19 +439,6 @@ namespace Dev2.Studio.Core
             }
 
             return result;
-        }
-
-        public List<IWindowsGroupPermission> FetchPermissions()
-        {
-            if (!Connection.IsConnected)
-            {
-                ShowServerDisconnectedPopup();
-                return new List<IWindowsGroupPermission>();
-            }
-
-            var comsController = CommunicationControllerFactory.CreateController("FetchServerPermissions");
-            var result = comsController.ExecuteCommand<PermissionsModifiedMemo>(Connection, GlobalConstants.ServerWorkspaceID);
-            return result.ModifiedPermissions.Cast<IWindowsGroupPermission>().ToList();
         }
 
         public IList<IPluginSource> FetchPluginSources()
@@ -546,6 +487,7 @@ namespace Dev2.Studio.Core
             return serializer.Deserialize<List<IComPluginSource>>(result.Message.ToString());
         }
 
+        [ExcludeFromCodeCoverage]
         public IList<IPluginAction> PluginActions(IPluginSource source, INamespaceItem ns)
         {
             var serializer = new Dev2JsonSerializer();
@@ -555,20 +497,21 @@ namespace Dev2.Studio.Core
             return pluginActions;
         }
 
-        private IList<IPluginAction> GetPluginActions(IPluginSource source, INamespaceItem ns, ICommunicationController comsController, Dev2JsonSerializer serializer)
+        [ExcludeFromCodeCoverage]
+        IList<IPluginAction> GetPluginActions(IPluginSource source, INamespaceItem ns, ICommunicationController comsController, Dev2JsonSerializer serializer)
         {
             comsController.AddPayloadArgument(nameof(source), serializer.SerializeToBuilder(source));
             comsController.AddPayloadArgument("namespace", serializer.SerializeToBuilder(ns));
             var workspaceId = Connection.WorkspaceID;
             var result = comsController.ExecuteCommand<ExecuteMessage>(Connection, workspaceId);
-            if(result == null || result.HasError)
+            if (result == null || result.HasError)
             {
-                if(!Connection.IsConnected)
+                if (!Connection.IsConnected)
                 {
                     ShowServerDisconnectedPopup();
                     return new List<IPluginAction>();
                 }
-                if(result != null)
+                if (result != null)
                 {
                     throw new WarewolfSupportServiceException(result.Message.ToString(), null);
                 }
@@ -578,6 +521,7 @@ namespace Dev2.Studio.Core
             return serializer.Deserialize<List<IPluginAction>>(result.Message.ToString());
         }
 
+        [ExcludeFromCodeCoverage]
         public IList<IPluginAction> PluginActionsWithReturns(IPluginSource source, INamespaceItem ns)
         {
             var serializer = new Dev2JsonSerializer();
@@ -586,6 +530,7 @@ namespace Dev2.Studio.Core
             return pluginActions;
         }
 
+        [ExcludeFromCodeCoverage]
         public IList<IPluginConstructor> PluginConstructors(IPluginSource source, INamespaceItem ns)
         {
             var serializer = new Dev2JsonSerializer();
@@ -610,22 +555,21 @@ namespace Dev2.Studio.Core
             }
             var pluginConstructors = serializer.Deserialize<List<IPluginConstructor>>(result.Message.ToString());
 
-            if (DataListSingleton.ActiveDataList != null)
+            if (DataListSingleton.ActiveDataList != null && DataListSingleton.ActiveDataList.ComplexObjectCollection != null)
             {
-                if (DataListSingleton.ActiveDataList.ComplexObjectCollection != null)
+                var objectCollection = DataListSingleton.ActiveDataList.ComplexObjectCollection;
+                pluginConstructors.AddRange(objectCollection.Select(objectItemModel => new PluginConstructor
                 {
-                    var objectCollection = DataListSingleton.ActiveDataList.ComplexObjectCollection;
-                    pluginConstructors.AddRange(objectCollection.Select(objectItemModel => new PluginConstructor
-                    {
-                        ConstructorName = objectItemModel.Name,
-                        IsExistingObject = true
-                    }));
-                }
+                    ConstructorName = objectItemModel.Name,
+                    IsExistingObject = true
+                }));
             }
+
 
             return pluginConstructors;
         }
 
+        [ExcludeFromCodeCoverage]
         public IList<IPluginAction> PluginActions(IComPluginSource source, INamespaceItem ns)
         {
             var serializer = new Dev2JsonSerializer();
@@ -700,11 +644,11 @@ namespace Dev2.Studio.Core
             return serializer.Deserialize<List<IWcfServerSource>>(result.Message.ToString());
         }
 
-        public IList<IWcfAction> WcfActions(IWcfServerSource wcfSource)
+        public IList<IWcfAction> WcfActions(IWcfServerSource source)
         {
             var serializer = new Dev2JsonSerializer();
             var comsController = CommunicationControllerFactory.CreateController("FetchWcfAction");
-            comsController.AddPayloadArgument("WcfSource", serializer.SerializeToBuilder(wcfSource));
+            comsController.AddPayloadArgument("WcfSource", serializer.SerializeToBuilder(source));
             var workspaceId = Connection.WorkspaceID;
             var payload = comsController.ExecuteCommand<ExecuteMessage>(Connection, workspaceId);
             if (payload == null || payload.HasError)

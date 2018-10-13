@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,35 +32,13 @@ namespace Dev2.Controller
     {
         string ServiceName { get; set; }
         EsbExecuteRequest ServicePayload { get; }
-
-        /// <summary>
-        /// Adds the payload argument.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="value">The value.</param>
+        
         void AddPayloadArgument(string key, string value);
-
-        /// <summary>
-        /// Adds the payload argument.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="value">The value.</param>
+        
         void AddPayloadArgument(string key, StringBuilder value);
-
-        /// <summary>
-        /// Executes the command.
-        /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <returns></returns>
+        
         T ExecuteCommand<T>(IEnvironmentConnection connection, Guid workspaceId) where T : class;
-
-        /// <summary>
-        /// Executes the command async.
-        /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <returns></returns>
+        
         Task<T> ExecuteCommandAsync<T>(IEnvironmentConnection connection, Guid workspaceId) where T : class;
 
         Task<T> ExecuteCompressedCommandAsync<T>(IEnvironmentConnection connection, Guid workspaceId) where T : class;
@@ -78,22 +56,12 @@ namespace Dev2.Controller
         public string ServiceName { get; set; }
 
         public EsbExecuteRequest ServicePayload { get; private set; }
-
-        /// <summary>
-        /// Adds the payload argument.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="value">The value.</param>
+        
         public void AddPayloadArgument(string key, string value)
         {
             AddPayloadArgument(key, new StringBuilder(value));
         }
-
-        /// <summary>
-        /// Adds the payload argument.
-        /// </summary>
-        /// <param name="key">The key.</param>
-        /// <param name="value">The value.</param>
+        
         public void AddPayloadArgument(string key, StringBuilder value)
         {
             if (ServicePayload == null)
@@ -104,7 +72,7 @@ namespace Dev2.Controller
             ServicePayload.AddArgument(key, value);
         }
 
-        private static string ContainsAuthorizationError(string authorizationError, out bool containsAuthorization)
+        static string ContainsAuthorizationError(string authorizationError, out bool containsAuthorization)
         {
             var authorizationErrors = new List<string>
             {
@@ -122,24 +90,16 @@ namespace Dev2.Controller
                 return "";
             }
             containsAuthorization = authorizationErrors.Any(err => err.ToUpper().Contains(authorizationError.ToUpper()));
-
             return authorizationError;
         }
 
-        private static void ShowAuthorizationErrorPopup(string ex)
+        static void ShowAuthorizationErrorPopup(string ex)
         {
             var popupController = CustomContainer.Get<IPopupController>();
             popupController?.Show(ex, ErrorResource.ServiceNotAuthorizedExceptionHeader, MessageBoxButton.OK,
                 MessageBoxImage.Error, "", false, false, true, false, false, false);
         }
-
-
-        /// <summary>
-        /// Executes the command.
-        /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <returns></returns>
+        
         public T ExecuteCommand<T>(IEnvironmentConnection connection, Guid workspaceId) where T : class
         {
             var serializer = new Dev2JsonSerializer();
@@ -156,8 +116,8 @@ namespace Dev2.Controller
                 }
 
                 ServicePayload.ServiceName = ServiceName;
-                StringBuilder toSend = serializer.SerializeToBuilder(ServicePayload);
-                StringBuilder payload = connection.ExecuteCommand(toSend, workspaceId);
+                var toSend = serializer.SerializeToBuilder(ServicePayload);
+                var payload = connection.ExecuteCommand(toSend, workspaceId);
                 ValidatePayload(connection, payload, popupController);
                 var executeCommand = serializer.Deserialize<T>(payload);
                 if (executeCommand == null)
@@ -181,7 +141,7 @@ namespace Dev2.Controller
         }
 
 
-        private static T CheckAuthorization<T>(ExecuteMessage message) where T : class
+        static T CheckAuthorization<T>(ExecuteMessage message) where T : class
         {
             if (message != null)
             {
@@ -215,19 +175,19 @@ namespace Dev2.Controller
             return default(T);
         }
 
-        private static void ValidatePayload(IEnvironmentConnection connection, StringBuilder payload, IPopupController popupController)
+        static void ValidatePayload(IEnvironmentConnection connection, StringBuilder payload, IPopupController popupController)
         {
-            if (payload == null || payload.Length == 0)
+            if ((payload == null || payload.Length == 0) && connection.HubConnection != null && popupController != null && connection.HubConnection.State == ConnectionStateWrapped.Disconnected && Application.Current != null)
             {
-                if (connection.HubConnection != null && popupController != null && connection.HubConnection.State == ConnectionStateWrapped.Disconnected)
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     popupController.Show(ErrorResource.ServerconnectionDropped + Environment.NewLine + ErrorResource.EnsureConnectionToServerWorking
-                        , ErrorResource.ServerDroppedErrorHeading, MessageBoxButton.OK, MessageBoxImage.Information, "", false, false, true, false, false, false);
-                }
+                    , ErrorResource.ServerDroppedErrorHeading, MessageBoxButton.OK, MessageBoxImage.Information, "", false, false, true, false, false, false);
+                });
             }
         }
 
-        private static void IsConnectionValid(IEnvironmentConnection connection, IPopupController popupController)
+        static void IsConnectionValid(IEnvironmentConnection connection, IPopupController popupController)
         {
             if (connection != null)
             {
@@ -247,17 +207,8 @@ namespace Dev2.Controller
             }
         }
 
-        public void FetchResourceAffectedMessages(IEnvironmentConnection connection, Guid resourceId)
-        {
-            connection.FetchResourcesAffectedMemo(resourceId);
-        }
+        public void FetchResourceAffectedMessages(IEnvironmentConnection connection, Guid resourceId) => connection.FetchResourcesAffectedMemo(resourceId);
 
-        /// <summary>
-        /// Executes the command.
-        /// </summary>
-        /// <param name="connection">The connection.</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <returns></returns>
         public async Task<T> ExecuteCommandAsync<T>(IEnvironmentConnection connection, Guid workspaceId) where T : class
         {
             // build the service request payload ;)
@@ -265,64 +216,58 @@ namespace Dev2.Controller
 
             if (connection == null || !connection.IsConnected)
             {
-                if (connection != null)
+                if (connection != null && !connection.IsConnecting)
                 {
-                    if (!connection.IsConnecting)
-                    {
-                        var popupController = CustomContainer.Get<IPopupController>();
-                        popupController?.Show(string.Format(ErrorResource.ServerDisconnected, connection.DisplayName) + Environment.NewLine +
-                                              ErrorResource.ServerReconnectForActions, ErrorResource.ServerDisconnectedHeader, MessageBoxButton.OK,
-                                              MessageBoxImage.Information, "", false, false, true, false, false, false);
-                    }
+                    var popupController = CustomContainer.Get<IPopupController>();
+                    popupController?.Show(string.Format(ErrorResource.ServerDisconnected, connection.DisplayName) + Environment.NewLine +
+                                            ErrorResource.ServerReconnectForActions, ErrorResource.ServerDisconnectedHeader, MessageBoxButton.OK,
+                                            MessageBoxImage.Information, "", false, false, true, false, false, false);
                 }
+                return default(T);
             }
-            else
+            try
             {
-                try
+                if (ServicePayload == null)
                 {
-                    if (ServicePayload == null)
-                    {
-                        ServicePayload = new EsbExecuteRequest();
-                    }
-
-                    ServicePayload.ServiceName = ServiceName;
-                    StringBuilder toSend = serializer.SerializeToBuilder(ServicePayload);
-                    var payload = await connection.ExecuteCommandAsync(toSend, workspaceId);
-                    var executeCommand = serializer.Deserialize<T>(payload);
-                    if (executeCommand == null)
-                    {
-                        var execMessage = serializer.Deserialize<ExecuteMessage>(payload);
-                        if (execMessage != null)
-                        {
-                            return CheckAuthorization<T>(execMessage);
-                        }
-                    }
-                    else
-                    {
-                        if (typeof(T) == typeof(ExecuteMessage))
-                        {
-                            return CheckAuthorization<T>(executeCommand as ExecuteMessage);
-                        }
-                        return executeCommand;
-                    }
-
+                    ServicePayload = new EsbExecuteRequest();
                 }
-                catch (ServiceNotAuthorizedException ex)
+
+                ServicePayload.ServiceName = ServiceName;
+                var toSend = serializer.SerializeToBuilder(ServicePayload);
+                var payload = await connection.ExecuteCommandAsync(toSend, workspaceId).ConfigureAwait(true);
+                var executeCommand = serializer.Deserialize<T>(payload);
+                if (executeCommand == null)
+                {
+                    var execMessage = serializer.Deserialize<ExecuteMessage>(payload);
+                    if (execMessage != null)
+                    {
+                        return CheckAuthorization<T>(execMessage);
+                    }
+                }
+                else
+                {
+                    if (typeof(T) == typeof(ExecuteMessage))
+                    {
+                        return CheckAuthorization<T>(executeCommand as ExecuteMessage);
+                    }
+                    return executeCommand;
+                }
+
+            }
+            catch (ServiceNotAuthorizedException ex)
+            {
+                ShowAuthorizationErrorPopup(ex.Message);
+                return default(T);
+            }
+            catch (AggregateException ex)
+            {
+                var aggregateException = ex.Flatten();
+                var baseException = aggregateException.GetBaseException();
+                var isAuthorizationError = baseException is ServiceNotAuthorizedException;
+                if (isAuthorizationError)
                 {
                     ShowAuthorizationErrorPopup(ex.Message);
                     return default(T);
-                }
-                catch (AggregateException ex)
-                {
-                    var aggregateException = ex.Flatten();
-                    var baseException = aggregateException.GetBaseException();
-                    var isAuthorizationError = baseException is ServiceNotAuthorizedException;
-                    if (isAuthorizationError)
-                    {
-                        ShowAuthorizationErrorPopup(ex.Message);
-                        return default(T);
-                    }
-
                 }
             }
             return default(T);
@@ -335,29 +280,25 @@ namespace Dev2.Controller
 
             if (connection == null || !connection.IsConnected)
             {
-                if (connection != null)
+                if (connection != null && !connection.IsConnecting)
                 {
-                    if (!connection.IsConnecting)
-                    {
-                        var popupController = CustomContainer.Get<IPopupController>();
-                        popupController?.Show(string.Format(ErrorResource.ServerDisconnected, connection.DisplayName) + Environment.NewLine +
-                                              ErrorResource.ServerReconnectForActions, ErrorResource.ServerDisconnectedHeader, MessageBoxButton.OK,
-                                              MessageBoxImage.Information, "", false, false, true, false, false, false);
-                    }
+                    var popupController = CustomContainer.Get<IPopupController>();
+                    popupController?.Show(string.Format(ErrorResource.ServerDisconnected, connection.DisplayName) + Environment.NewLine +
+                                          ErrorResource.ServerReconnectForActions, ErrorResource.ServerDisconnectedHeader, MessageBoxButton.OK,
+                                          MessageBoxImage.Information, "", false, false, true, false, false, false);
                 }
+
             }
             else
             {
-
-                // now bundle it up into a nice string builder ;)
                 if (ServicePayload == null)
                 {
                     ServicePayload = new EsbExecuteRequest();
                 }
 
                 ServicePayload.ServiceName = ServiceName;
-                StringBuilder toSend = serializer.SerializeToBuilder(ServicePayload);
-                var payload = await connection.ExecuteCommandAsync(toSend, workspaceId);
+                var toSend = serializer.SerializeToBuilder(ServicePayload);
+                var payload = await connection.ExecuteCommandAsync(toSend, workspaceId).ConfigureAwait(true);
 
                 try
                 {
@@ -378,7 +319,6 @@ namespace Dev2.Controller
 
         public T ExecuteCompressedCommand<T>(IEnvironmentConnection connection, Guid workspaceId) where T : class
         {
-            // build the service request payload ;)
             var serializer = new Dev2JsonSerializer();
 
             if (connection == null)
@@ -399,7 +339,7 @@ namespace Dev2.Controller
                 }
 
                 ServicePayload.ServiceName = ServiceName;
-                StringBuilder toSend = serializer.SerializeToBuilder(ServicePayload);
+                var toSend = serializer.SerializeToBuilder(ServicePayload);
                 var payload = connection.ExecuteCommand(toSend, workspaceId);
                 try
                 {

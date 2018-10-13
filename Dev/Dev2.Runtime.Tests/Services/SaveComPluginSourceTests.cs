@@ -19,7 +19,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class SaveComPluginSourceTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -33,7 +33,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -47,7 +47,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Contribute, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("SaveComPluginSource_HandlesType")]
         public void SaveComPluginSource_HandlesType_ExpectName()
@@ -62,7 +62,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("SaveComPluginSource", saveComPluginSource.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("SaveComPluginSource_HandlesType")]
         public void SaveComPluginSource_CreateServiceEntry_ExpectActions()
@@ -78,7 +78,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsNotNull(dynamicService.Actions);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("SaveComPluginSource_Execute")]
         public void SaveComPluginSource_Execute_NullValues_ErrorResult()
@@ -87,13 +87,13 @@ namespace Dev2.Tests.Runtime.Services
             var saveComPluginSource = new SaveComPluginSource();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = saveComPluginSource.Execute(null, null);
+            var jsonResult = saveComPluginSource.Execute(null, null);
             var result = serializer.Deserialize<ExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("SaveComPluginSource_Execute")]
         public void SaveComPluginSource_Execute_ResourceIDNotPresent_ErrorResult()
@@ -103,13 +103,13 @@ namespace Dev2.Tests.Runtime.Services
             var saveComPluginSource = new SaveComPluginSource();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = saveComPluginSource.Execute(values, null);
+            var jsonResult = saveComPluginSource.Execute(values, null);
             var result = serializer.Deserialize<ExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenResourceDefination_ShouldSaveNewSourceReturnResourceDefinationMsg()
         {
@@ -136,7 +136,7 @@ namespace Dev2.Tests.Runtime.Services
             var saveComPluginSource = new SaveComPluginSource(catalog.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            StringBuilder jsonResult = saveComPluginSource.Execute(values, null);
+            var jsonResult = saveComPluginSource.Execute(values, null);
             var result = serializer.Deserialize<ExecuteMessage>(jsonResult);
             //---------------Test Result -----------------------
             Assert.IsFalse(result.HasError);
@@ -144,7 +144,7 @@ namespace Dev2.Tests.Runtime.Services
             catalog.Verify(resourceCatalog => resourceCatalog.SaveResource(It.IsAny<Guid>(), It.IsAny<IResource>(), It.IsAny<string>()));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenResourceDefination_GivenExising_ShouldReturnResourceDefinationMsg()
         {
@@ -173,13 +173,39 @@ namespace Dev2.Tests.Runtime.Services
             var saveComPluginSource = new SaveComPluginSource(catalog.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            StringBuilder jsonResult = saveComPluginSource.Execute(values, null);
+            var jsonResult = saveComPluginSource.Execute(values, null);
             var result = serializer.Deserialize<ExecuteMessage>(jsonResult);
             //---------------Test Result -----------------------
             Assert.IsFalse(result.HasError);
             catalog.Verify(resourceCatalog => resourceCatalog.GetResource(It.IsAny<Guid>(), source.ResourceName));
             catalog.Verify(resourceCatalog => resourceCatalog.SaveResource(It.IsAny<Guid>(), comPluginSource, It.IsAny<string>()));
         }
-       
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void DllListing_GetHashCode_CorrectlyHashedObject()
+        {
+            var dllListing = new DllListing
+            {
+                Name = "Development",
+                ClsId = "DevClsid"
+            };
+            Assert.AreEqual(-1908201757, dllListing.GetHashCode(), "Cannot get correct hash code for this object.");
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void DllListing_EqualsOperator_WithEqualObjects_AreEqual()
+        {
+            var firstDllListing = new DllListing { Name = "bravo" };
+            var secondDllListing = new DllListing { Name = "bravo" };
+            Assert.IsTrue(firstDllListing == secondDllListing, "Equals operator doesnt work.");
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        public void DllListing_NotEqualsOperator_WithNotEqualObjects_AreNotEqual()
+        {
+            var firstDllListing = new DllListing { Name = "bravo" };
+            var secondDllListing = new DllListing { Name = "charlie" };
+            Assert.IsTrue(firstDllListing != secondDllListing, "Not equals operator doesnt work.");
+        }
     }
 }

@@ -3,13 +3,14 @@ using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Warewolf.UI.Tests.WorkflowTab.Tools.Data.DataToolsUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
+using Warewolf.UI.Tests.DialogsUIMapClasses;
 
 namespace Warewolf.UI.Tests
 {
     [CodedUITest]
     public class VariablesTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
         public void Sort_Variable_List_Aphalbetivally()
         {
@@ -29,7 +30,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("Surname", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem4.ScrollViewerPane.NameTextbox.Text);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
         public void Sort_RecordsetFields_List_Aphalbetivally()
         {
@@ -56,7 +57,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("Surname", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.RecordsetTreeItem.TreeItem1.Field4.ScrollViewerPane.NameTextbox.Text);
         }
         
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
         public void Row1_Variable_Textbox_in_Debug_Input()
         {
@@ -68,7 +69,7 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(UIMap.MainStudioWindow.DebugInputDialog.TabItemsTabList.InputDataTab.InputsTable.Row1.Variable.Text.Exists, "Row 1 variable textbox does not exist.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
         public void VariableList_DeleteAColumnOffARecorset_DeleteAllButtonIsEnbaled_UITest()
         {
@@ -82,7 +83,7 @@ namespace Warewolf.UI.Tests
             Assert.IsFalse(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem2.TryGetClickablePoint(out newPoint));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
         public void Fileter_Then_Clear_VariableList_Returns_All_Variables()
         {
@@ -113,7 +114,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("negnumbers", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem4.ScrollViewerPane.NameTextbox.Text);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
         public void Fileter_Then_Clear_VariableList_Returns_All_Variables_CaseInsensitiveUpper()
         {
@@ -145,9 +146,9 @@ namespace Warewolf.UI.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Variables")]
-        public void Fileter_Then_Clear_VariableList_Returns_All_Variables_CaseInsensitiveLower()
+        public void Filter_Then_Clear_VariableList_Returns_All_Variables_CaseInsensitiveLower()
         {
             WorkflowTabUIMap.Add_Variables("nums,result,delim,negnumbers");
             Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem1.Exists);
@@ -174,6 +175,18 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("delim", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem3.ScrollViewerPane.NameTextbox.Text);
             Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem4.Exists);
             Assert.AreEqual("negnumbers", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem4.ScrollViewerPane.NameTextbox.Text);
+        }
+
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Variables")]
+        public void Show_JSON_Edit_Dialog()
+        {
+            DataToolsUIMap.Enter_Object_value();
+            Mouse.DoubleClick(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.ObjectTreeItem.ObjTreeItem.ScrollViewerPane.NameTextBox.ViewObjectsButton, new Point(10,10));
+            Assert.AreEqual("Object", DialogsUIMap.EditObjectDialog.TitleText.DisplayText, "Edit Object Dialog Title is Wrong");
+            Assert.IsTrue(DialogsUIMap.EditObjectDialog.ResponseTextbox.Exists, "Edit Object Textbox Does Not Exist on the Edit Object Dialog");
+            Assert.IsTrue(DialogsUIMap.EditObjectDialog.CloseButton.Exists, "Close Button does not exist on Edit Object Dialog");
         }
 
         #region Additional test attributes
@@ -231,6 +244,21 @@ namespace Warewolf.UI.Tests
         }
 
         private DataToolsUIMap _DataToolsUIMap;
+
+        DialogsUIMap DialogsUIMap
+        {
+            get
+            {
+                if (_DialogsUIMap == null)
+                {
+                    _DialogsUIMap = new DialogsUIMap();
+                }
+
+                return _DialogsUIMap;
+            }
+        }
+
+        private DialogsUIMap _DialogsUIMap;
 
         #endregion
     }

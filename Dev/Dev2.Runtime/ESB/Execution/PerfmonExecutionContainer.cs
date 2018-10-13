@@ -8,13 +8,13 @@ namespace Dev2.Runtime.ESB.Execution
 {
     public class  PerfmonExecutionContainer:IEsbExecutionContainer
     {
-        private readonly IEsbExecutionContainer _container;
-        private readonly IPerformanceCounter _recPerSecondCounter;
-        private readonly IPerformanceCounter _currentConnections;
-        private readonly IPerformanceCounter _avgTime;
-        private readonly Stopwatch _stopwatch;
-        private readonly IPerformanceCounter _totalErrors;
-        private readonly IWarewolfPerformanceCounterLocater _locater;
+        readonly IEsbExecutionContainer _container;
+        readonly IPerformanceCounter _recPerSecondCounter;
+        readonly IPerformanceCounter _currentConnections;
+        readonly IPerformanceCounter _avgTime;
+        readonly Stopwatch _stopwatch;
+        readonly IPerformanceCounter _totalErrors;
+        readonly IWarewolfPerformanceCounterLocater _locater;
 
         public  PerfmonExecutionContainer(IEsbExecutionContainer container)
         {
@@ -38,7 +38,7 @@ namespace Dev2.Runtime.ESB.Execution
             var concurrentInstanceCounter = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.ConcurrentRequests);
             var avgExecutionsInstance = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.AverageExecutionTime);
             var reqPerSecond = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.RequestsPerSecond);
-            ErrorResultTO outErrors = new ErrorResultTO();
+            var outErrors = new ErrorResultTO();
             try
             {
                 _recPerSecondCounter.Increment();
@@ -67,10 +67,7 @@ namespace Dev2.Runtime.ESB.Execution
             
         }
 
-        public IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity)
-        {
-            return Container.Execute(inputs,activity);
-        }
+        public IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity) => Container.Execute(inputs, activity);
 
         public string InstanceOutputDefinition
         {
@@ -95,10 +92,7 @@ namespace Dev2.Runtime.ESB.Execution
             }
         }
 
-        public IDSFDataObject GetDataObject()
-        {
-            return _container.GetDataObject();
-        }
+        public IDSFDataObject GetDataObject() => _container.GetDataObject();
 
         public IEsbExecutionContainer Container => _container;
 

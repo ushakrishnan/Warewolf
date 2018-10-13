@@ -18,14 +18,14 @@ namespace Warewolf.Studio.Views
             InitializeComponent();
         }
 
-        private void EnterServerName(string serverName)
+        void EnterServerName(string serverName)
         {
             ServerTextBox.Text = serverName;
         }
 
         public Visibility GetDatabaseDropDownVisibility()
         {
-            BindingExpression be = DatabaseComboxContainer.GetBindingExpression(VisibilityProperty);
+            var be = DatabaseComboxContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return DatabaseComboxContainer.Visibility;
         }
@@ -87,14 +87,14 @@ namespace Warewolf.Studio.Views
 
         public Visibility GetUsernameVisibility()
         {
-            BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
+            var be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
         public Visibility GetPasswordVisibility()
         {
-            BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
+            var be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
@@ -109,7 +109,14 @@ namespace Warewolf.Studio.Views
             var viewModel = DataContext as DatabaseSourceViewModelBase;
             viewModel?.OkCommand.Execute(null);
         }
-
+        public void EnterTimeout(int connectionTimeout)
+        {
+            if (DataContext is DatabaseSourceViewModelBase viewModel)
+            {
+                viewModel.ConnectionTimeout = connectionTimeout;
+            }
+            ConnectionTimeoutTextBox.Text = connectionTimeout.ToString();
+        }
         public void EnterUserName(string userName)
         {
             if (DataContext is DatabaseSourceViewModelBase viewModel)
@@ -128,14 +135,9 @@ namespace Warewolf.Studio.Views
             PasswordTextBox.Password = password;
         }
 
-        public string GetErrorMessage()
-        {
-            return ((DatabaseSourceViewModelBase)DataContext).TestMessage;
-        }
+        public string GetErrorMessage() => ((DatabaseSourceViewModelBase)DataContext).TestMessage;
 
-
-
-        private void XamComboEditor_Loaded(object sender, RoutedEventArgs e)
+        void XamComboEditor_Loaded(object sender, RoutedEventArgs e)
         {
         }
 
@@ -144,35 +146,23 @@ namespace Warewolf.Studio.Views
            
         }
 
-        public IEnumerable<string> GetServerOptions()
-        {
-
-            return new List<string>();
-        }
+        public IEnumerable<string> GetServerOptions() => new List<string>();
 
         public void Test()
         {
             TestConnectionButton.Command.Execute(null);
         }
 
-        public string GetUsername()
-        {
-            return UserNameTextBox.Text;
-        }
+        public string GetUsername() => UserNameTextBox.Text;
 
-        public object GetPassword()
-        {
-            return PasswordTextBox.Password;
-        }
+        public object GetPassword() => PasswordTextBox.Password;
 
-        public string GetHeader()
-        {
-            return ((DatabaseSourceViewModelBase)DataContext).HeaderText;
-        }
-        public string GetTabHeader()
-        {
-            return ((DatabaseSourceViewModelBase)DataContext).Header;
-        }
+        public object GetConnectionTimeout() => ConnectionTimeoutTextBox.Text;
+
+        public string GetHeader() => ((DatabaseSourceViewModelBase)DataContext).HeaderText;
+
+        public string GetTabHeader() => ((DatabaseSourceViewModelBase)DataContext).Header;
+
         public void CancelTest()
         {
             CancelTestButton.Command.Execute(null);
@@ -193,10 +183,7 @@ namespace Warewolf.Studio.Views
     {
         #region Implementation of IValueConverter
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return value == null ? Visibility.Visible : Visibility.Collapsed;
-        }
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value == null ? Visibility.Visible : Visibility.Collapsed;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {

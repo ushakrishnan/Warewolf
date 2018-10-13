@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,35 +21,21 @@ namespace Dev2.Data.Decisions.Operations
     public class IsBetween : IDecisionOperation
     {
 
-        public Enum HandlesType()
-        {
-            return enDecisionType.IsBetween;
-        }
+        public Enum HandlesType() => enDecisionType.IsBetween;
 
         public bool Invoke(string[] cols)
         {
             
-            double[] dVal = new double[3];
-            DateTime[] dtVal = new DateTime[3];
+            var dVal = new double[3];
+            var dtVal = new DateTime[3];
 
-            int pos = 0;
-            bool isDateTimeCompare = false;
-            foreach(string c in cols)
+            var pos = 0;
+            var isDateTimeCompare = false;
+            foreach (string c in cols)
             {
                 if(!double.TryParse(c, out dVal[pos]))
                 {
-                    try
-                    {
-                        if (DateTime.TryParse(c, out DateTime dt))
-                        {
-                            dtVal[pos] = dt;
-                            isDateTimeCompare = true;
-                        }
-                    }
-                    catch(Exception ex)
-                    {
-                        Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
-                    }
+                    isDateTimeCompare = TryParseAsDatetimeCompare(dtVal, pos, isDateTimeCompare, c);
                 }
 
                 pos++;
@@ -80,6 +66,24 @@ namespace Dev2.Data.Decisions.Operations
                 throw new InvalidDataException(ErrorResource.IsBetweenDataTypeMismatch);
             }            
             return left >= 0 && right <= 0 || left <= 0 && right >= 0;
+        }
+
+        private static bool TryParseAsDatetimeCompare(DateTime[] dtVal, int pos, bool isDateTimeCompare, string c)
+        {
+            try
+            {
+                if (DateTime.TryParse(c, out DateTime dt))
+                {
+                    dtVal[pos] = dt;
+                    isDateTimeCompare = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
+            }
+
+            return isDateTimeCompare;
         }
     }
 }

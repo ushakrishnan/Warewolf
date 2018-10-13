@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,12 +9,11 @@
 */
 
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
-using System;
 using System.Text;
 
 namespace Dev2.Common
 {
-    internal class Dev2IndexOp : IDev2SplitOp
+    class Dev2IndexOp : IDev2SplitOp
     {
         internal Dev2IndexOp(int index)
         {
@@ -23,27 +22,17 @@ namespace Dev2.Common
 
         public int ToIndex { get; private set; }
 
-        public bool IsFinalOp()
-        {
-            return false;
-        }
+        public bool IsFinalOp() => false;
 
-        public bool CanUseEnumerator(bool isReversed)
-        {
-            return false;
-        }
-
-        public string ExecuteOperation(char[] candidate, int startIdx, bool isReversed)
+        public string ExecuteOperation(ref StringBuilder sourceString, int startIdx, int len, bool isReversed)
         {
             var result = new StringBuilder();
 
-            int start = startIdx;
-            int end = startIdx + ToIndex;
-
-            // Avoid boundry over-run
-            if (end > candidate.Length)
+            var start = startIdx;
+            var end = startIdx + ToIndex;
+            if (end > sourceString.Length)
             {
-                end = candidate.Length;
+                end = sourceString.Length;
             }
 
             if (isReversed)
@@ -59,20 +48,12 @@ namespace Dev2.Common
 
             for (int i = start; i < end; i++)
             {
-                result.Append(candidate[i]);
+                result.Append(sourceString[i]);
             }
 
             return result.ToString();
         }
 
-        public string ExecuteOperation(CharEnumerator candidate, int startIdx, int len, bool isReversed)
-        {
-            throw new NotImplementedException();
-        }
-
-        public int OpLength()
-        {
-            return 0;
-        }
+        public int OpLength() => 0;
     }
 }

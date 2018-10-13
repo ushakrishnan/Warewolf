@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using Dev2.Common;
+using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers;
 using Dev2.TaskScheduler.Wrappers;
@@ -21,13 +22,13 @@ namespace Dev2.Scheduler
 {
     public class ServerSchedulerFactory : IServerSchedulerFactory
     {
-        private readonly IDev2TaskService _service;
-        private readonly ITaskServiceConvertorFactory _factory;
-        private readonly string _agentPath = string.Format("{0}\\{1}", Environment.CurrentDirectory, GlobalConstants.SchedulerAgentPath);
-        private readonly string _debugOutputPath = string.Format("{0}\\{1}", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), GlobalConstants.SchedulerDebugPath);
-  
-        private readonly IDirectoryHelper _dir;
-        private readonly Func<IScheduledResource, string> _pathResolve;
+        readonly IDev2TaskService _service;
+        readonly ITaskServiceConvertorFactory _factory;
+        readonly string _agentPath = string.Format("{0}\\{1}", Environment.CurrentDirectory, GlobalConstants.SchedulerAgentPath);
+        readonly string _debugOutputPath = string.Format("{0}\\{1}", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), GlobalConstants.SchedulerDebugPath);
+
+        readonly IDirectoryHelper _dir;
+        readonly Func<IScheduledResource, string> _pathResolve;
 
         public ServerSchedulerFactory(IDev2TaskService service, ITaskServiceConvertorFactory factory, IDirectoryHelper directory, Func<IScheduledResource, string> pathResolve)
         {
@@ -46,11 +47,11 @@ namespace Dev2.Scheduler
             CreateDir();
         }
 
-        private void CreateDir()
+        void CreateDir()
         {
             _dir.CreateIfNotExists(_debugOutputPath);
         }
-
+       
         public ServerSchedulerFactory(Func<IScheduledResource, string> pathResolve)
         {
             _pathResolve = pathResolve;
@@ -64,11 +65,7 @@ namespace Dev2.Scheduler
 
         public ITaskServiceConvertorFactory ConvertorFactory => _factory;
 
-        public IScheduledResourceModel CreateModel(string schedulerFolderId, ISecurityWrapper securityWrapper)
-        {
-
-            return new ScheduledResourceModel(TaskService, schedulerFolderId, _agentPath, ConvertorFactory, _debugOutputPath, securityWrapper,_pathResolve);
-        }
+        public IScheduledResourceModel CreateModel(string schedulerFolderId, ISecurityWrapper securityWrapper) => new ScheduledResourceModel(TaskService, schedulerFolderId, _agentPath, ConvertorFactory, _debugOutputPath, securityWrapper, _pathResolve);
 
         public IScheduleTrigger CreateTrigger(Trigger trigger)
         {
@@ -106,10 +103,7 @@ namespace Dev2.Scheduler
 
 
         public IScheduledResource CreateResource(string name, SchedulerStatus status, Trigger trigger,
-                                                 string workflowName,string resourceId)
-        {
-            return new ScheduledResource(name, status, DateTime.MinValue, CreateTrigger(trigger), workflowName,resourceId);
-        }
+                                                 string workflowName, string resourceId) => new ScheduledResource(name, status, DateTime.MinValue, CreateTrigger(trigger), workflowName, resourceId);
 
         public void Dispose()
         {

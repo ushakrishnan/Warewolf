@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,7 +11,9 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
+using System.Linq;
 using ActivityUnitTests;
+using Dev2.Common.State;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -62,8 +64,8 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "[[recset().Id]]"
                           , "Forward"
                           );
-            IDSFDataObject result = ExecuteProcess();
-            List<string> expected = new List<string> { "1"
+            var result = ExecuteProcess();
+            var expected = new List<string> { "1"
                                                      , "1"
                                                      , "2"
                                                      , "3"
@@ -73,7 +75,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                                                      , "8"
                                                      , "9"
                                                      , "10" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -97,8 +99,8 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "[[recset().Name]]"
                           , "Forward"
                           );
-            IDSFDataObject result = ExecuteProcess();
-            List<string> expected = new List<string> { "A"
+            var result = ExecuteProcess();
+            var expected = new List<string> { "A"
                                                      , "A"
                                                      , "A"
                                                      , "B"
@@ -108,7 +110,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                                                      , "L"
                                                      , "Y"
                                                      , "Z" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Name", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Name", out string error);
 
             // remove test datalist ;)
 
@@ -124,10 +126,10 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , ""
                           , "Forward"
                           );
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
-            List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
+            var expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -149,9 +151,9 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "Backwards"
                           );
 
-            IDSFDataObject result = ExecuteProcess();
-            List<string> expected = new List<string> { "10", "9", "8", "7", "6", "4", "3", "2", "1", "1" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
+            var result = ExecuteProcess();
+            var expected = new List<string> { "10", "9", "8", "7", "6", "4", "3", "2", "1", "1" };
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -167,9 +169,9 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , ""
                           , "Backwards"
                           );
-            IDSFDataObject result = ExecuteProcess();
-            List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
+            var result = ExecuteProcess();
+            var expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -189,10 +191,10 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , ""
                           , "Forward"
                           );
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
-            List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
+            var expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -209,10 +211,10 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "Forward"
                           );
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
-            List<string> expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
+            var expected = new List<string> { "1", "4", "3", "10", "8", "6", "2", "7", "9", "1" };
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset", "Id", out string error);
 
             // remove test datalist ;)
 
@@ -229,7 +231,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             };
 
             TestData = ActivityStrings.SortDataList;
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             var res = result.Environment.HasErrors();
 
@@ -391,7 +393,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "Forward"
                           
                           );
-            IDSFDataObject result = ExecuteProcess(isDebug:true);
+            var result = ExecuteProcess(isDebug:true);
 
 
 
@@ -419,14 +421,59 @@ namespace Dev2.Tests.Activities.ActivityTests
                           , "Forward"
 
                           );
-            IDSFDataObject result = ExecuteProcess(isDebug: true);
+            var result = ExecuteProcess(isDebug: true);
             // remove test datalist ;)
             var debugOut = act.GetDebugOutputs(null, 0);
             Assert.AreEqual(0, debugOut.Count);
         }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfSortRecordsActivity_GetState")]
+        public void DsfSortRecordsActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfSortRecordsActivity { SortField = "[[recset()]]", SelectedSort = "Forward" };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(2, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "SortField",
+                    Type = StateVariable.StateType.InputOutput,
+                    Value = "[[recset()]]"
+                },               
+                new StateVariable
+                {
+                    Name="SelectedSort",
+                    Type = StateVariable.StateType.Input,
+                    Value = "Forward"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string sortField, string selectedSort)
+        void SetupArguments(string currentDL, string testData, string sortField, string selectedSort)
         {
             TestStartNode = new FlowStep
             {
@@ -436,7 +483,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             CurrentDl = currentDL;
             TestData = testData;
         }
-        private DsfSortRecordsActivity SetupArgumentsReturnObj(string currentDL, string testData, string sortField, string selectedSort)
+        DsfSortRecordsActivity SetupArgumentsReturnObj(string currentDL, string testData, string sortField, string selectedSort)
         {
             var act = new DsfSortRecordsActivity { SortField = sortField, SelectedSort = selectedSort };
             TestStartNode = new FlowStep
@@ -446,7 +493,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             CurrentDl = currentDL;
             TestData = testData;
-            return  act;
+            return act;
         }
         #endregion Private Test Methods
     }

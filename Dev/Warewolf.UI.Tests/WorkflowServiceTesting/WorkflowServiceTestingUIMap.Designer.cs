@@ -285,6 +285,23 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                 return this.mWorkSurfaceContext;
             }
         }
+        
+        public WpfCustom OUTPUT
+        {
+            get
+            {
+                if ((this.mOUTPUT == null))
+                {
+                    this.mOUTPUT = new WpfCustom(this);
+                    #region Search Criteria
+                    this.mOUTPUT.SearchProperties[WpfControl.PropertyNames.ClassName] = "Uia.ContentPane";
+                    this.mOUTPUT.SearchProperties[WpfControl.PropertyNames.AutomationId] = "OutputPane";
+                    this.mOUTPUT.WindowTitles.Add("Warewolf (DEV2\\PIETER.TERBLANCHE)");
+                    #endregion
+                }
+                return this.mOUTPUT;
+            }
+        }
         #endregion
         
         #region Fields
@@ -293,6 +310,8 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         private WpfButton mCloseButton;
         
         private WorkSurfaceContext mWorkSurfaceContext;
+        
+        private WpfCustom mOUTPUT;
         #endregion
     }
     
@@ -392,7 +411,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                 {
                     this.mDuplicateButton = new WpfButton(this);
                     #region Search Criteria
-                    this.mDuplicateButton.SearchProperties[WpfButton.PropertyNames.HelpText] = "Duplicate this test";
+                    this.mDuplicateButton.SearchProperties.Add(new PropertyExpression(WpfButton.PropertyNames.HelpText, "duplicat", PropertyExpressionOperator.Contains));
                     this.mDuplicateButton.WindowTitles.Add("Warewolf");
                     #endregion
                 }
@@ -2008,7 +2027,63 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                 base(searchLimitContainer)
         {
             #region Search Criteria
-            this.SearchProperties[WpfTable.PropertyNames.AutomationId] = "UI_TestInputsDev2DataGrid_AutoID";
+            this.SearchProperties[WpfTable.PropertyNames.AutomationId] = "TestInputs";
+            this.WindowTitles.Add("Warewolf");
+            #endregion
+        }
+        
+        #region Properties
+        public WpfRow Row1
+        {
+            get
+            {
+                if ((this.mRow1 == null))
+                {
+                    this.mRow1 = new WpfRow(this);
+                    #region Search Criteria
+                    this.mRow1.SearchProperties[WpfRow.PropertyNames.Instance] = "1";
+                    this.mRow1.SearchConfigurations.Add(SearchConfiguration.AlwaysSearch);
+                    this.mRow1.WindowTitles.Add("Warewolf");
+                    #endregion
+                }
+                return this.mRow1;
+            }
+        }
+        
+        public WpfRow Row2
+        {
+            get
+            {
+                if ((this.mRow2 == null))
+                {
+                    this.mRow2 = new WpfRow(this);
+                    #region Search Criteria
+                    this.mRow2.SearchProperties[WpfRow.PropertyNames.Instance] = "2";
+                    this.mRow2.SearchConfigurations.Add(SearchConfiguration.AlwaysSearch);
+                    this.mRow2.WindowTitles.Add("Warewolf");
+                    #endregion
+                }
+                return this.mRow2;
+            }
+        }
+        #endregion
+        
+        #region Fields
+        private WpfRow mRow1;
+        
+        private WpfRow mRow2;
+        #endregion
+    }
+    
+    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
+    public class TestOutputsTable : WpfTable
+    {
+        
+        public TestOutputsTable(UITestControl searchLimitContainer) : 
+                base(searchLimitContainer)
+        {
+            #region Search Criteria
+            this.SearchProperties[WpfTable.PropertyNames.AutomationId] = "UI_TestOutputsDev2DataGrid_AutoID";
             this.WindowTitles.Add("Warewolf");
             #endregion
         }
@@ -2103,140 +2178,6 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
     {
         
         public IntellisenseComboBox(UITestControl searchLimitContainer) : 
-                base(searchLimitContainer)
-        {
-            #region Search Criteria
-            this.SearchProperties[WpfComboBox.PropertyNames.AutomationId] = "UI_TestInputsValue_AutoID";
-            this.WindowTitles.Add("Warewolf");
-            #endregion
-        }
-        
-        #region Properties
-        public WpfEdit Textbox
-        {
-            get
-            {
-                if ((this.mTextbox == null))
-                {
-                    this.mTextbox = new WpfEdit(this);
-                    #region Search Criteria
-                    this.mTextbox.SearchProperties[WpfEdit.PropertyNames.Instance] = "1";
-                    this.mTextbox.WindowTitles.Add("Warewolf");
-                    #endregion
-                }
-                return this.mTextbox;
-            }
-        }
-        #endregion
-        
-        #region Fields
-        private WpfEdit mTextbox;
-        #endregion
-    }
-    
-    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class TestOutputsTable : WpfTable
-    {
-        
-        public TestOutputsTable(UITestControl searchLimitContainer) : 
-                base(searchLimitContainer)
-        {
-            #region Search Criteria
-            this.SearchProperties[WpfTable.PropertyNames.AutomationId] = "UI_TestOutputsDev2DataGrid_AutoID";
-            this.WindowTitles.Add("Warewolf");
-            #endregion
-        }
-        
-        #region Properties
-        public Row11 Row1
-        {
-            get
-            {
-                if ((this.mRow1 == null))
-                {
-                    this.mRow1 = new Row11(this);
-                }
-                return this.mRow1;
-            }
-        }
-        #endregion
-        
-        #region Fields
-        private Row11 mRow1;
-        #endregion
-    }
-    
-    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row11 : WpfRow
-    {
-        
-        public Row11(UITestControl searchLimitContainer) : 
-                base(searchLimitContainer)
-        {
-            #region Search Criteria
-            this.SearchProperties[WpfRow.PropertyNames.Instance] = "1";
-            this.SearchConfigurations.Add(SearchConfiguration.AlwaysSearch);
-            this.WindowTitles.Add("Warewolf");
-            #endregion
-        }
-        
-        #region Properties
-        public Cell1 Cell
-        {
-            get
-            {
-                if ((this.mCell == null))
-                {
-                    this.mCell = new Cell1(this);
-                }
-                return this.mCell;
-            }
-        }
-        #endregion
-        
-        #region Fields
-        private Cell1 mCell;
-        #endregion
-    }
-    
-    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Cell1 : WpfCell
-    {
-        
-        public Cell1(UITestControl searchLimitContainer) : 
-                base(searchLimitContainer)
-        {
-            #region Search Criteria
-            this.SearchProperties[WpfCell.PropertyNames.ColumnHeader] = "Value";
-            this.SearchProperties[WpfCell.PropertyNames.AutomationId] = "UI_DataGridCell_AutoID";
-            this.WindowTitles.Add("Warewolf");
-            #endregion
-        }
-        
-        #region Properties
-        public IntellisenseComboBox1 IntellisenseComboBox
-        {
-            get
-            {
-                if ((this.mIntellisenseComboBox == null))
-                {
-                    this.mIntellisenseComboBox = new IntellisenseComboBox1(this);
-                }
-                return this.mIntellisenseComboBox;
-            }
-        }
-        #endregion
-        
-        #region Fields
-        private IntellisenseComboBox1 mIntellisenseComboBox;
-        #endregion
-    }
-    
-    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class IntellisenseComboBox1 : WpfComboBox
-    {
-        
-        public IntellisenseComboBox1(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -2436,13 +2377,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row12 Row1
+        public Row11 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row12(this);
+                    this.mRow1 = new Row11(this);
                 }
                 return this.mRow1;
             }
@@ -2462,17 +2403,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row12 mRow1;
+        private Row11 mRow1;
         
         private ColumnHeadersPrHeader mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row12 : WpfRow
+    public class Row11 : WpfRow
     {
         
-        public Row12(UITestControl searchLimitContainer) : 
+        public Row11(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -3132,13 +3073,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row13 Row1
+        public Row12 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row13(this);
+                    this.mRow1 = new Row12(this);
                 }
                 return this.mRow1;
             }
@@ -3158,17 +3099,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row13 mRow1;
+        private Row12 mRow1;
         
         private ColumnHeadersPrHeader1 mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row13 : WpfRow
+    public class Row12 : WpfRow
     {
         
-        public Row13(UITestControl searchLimitContainer) : 
+        public Row12(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -3807,13 +3748,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row14 Row1
+        public Row13 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row14(this);
+                    this.mRow1 = new Row13(this);
                 }
                 return this.mRow1;
             }
@@ -3833,17 +3774,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row14 mRow1;
+        private Row13 mRow1;
         
         private ColumnHeadersPrHeader2 mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row14 : WpfRow
+    public class Row13 : WpfRow
     {
         
-        public Row14(UITestControl searchLimitContainer) : 
+        public Row13(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -3902,13 +3843,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             }
         }
         
-        public Cell2 Cell
+        public Cell1 Cell
         {
             get
             {
                 if ((this.mCell == null))
                 {
-                    this.mCell = new Cell2(this);
+                    this.mCell = new Cell1(this);
                 }
                 return this.mCell;
             }
@@ -3924,7 +3865,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         
         private AssertValueCell mAssertValueCell;
         
-        private Cell2 mCell;
+        private Cell1 mCell;
         #endregion
     }
     
@@ -4086,10 +4027,10 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Cell2 : WpfCustom
+    public class Cell1 : WpfCustom
     {
         
-        public Cell2(UITestControl searchLimitContainer) : 
+        public Cell1(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -4615,13 +4556,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row15 Row1
+        public Row14 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row15(this);
+                    this.mRow1 = new Row14(this);
                 }
                 return this.mRow1;
             }
@@ -4641,17 +4582,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row15 mRow1;
+        private Row14 mRow1;
         
         private ColumnHeadersPrHeader3 mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row15 : WpfRow
+    public class Row14 : WpfRow
     {
         
-        public Row15(UITestControl searchLimitContainer) : 
+        public Row14(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -5513,13 +5454,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row16 Row1
+        public Row15 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row16(this);
+                    this.mRow1 = new Row15(this);
                 }
                 return this.mRow1;
             }
@@ -5539,17 +5480,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row16 mRow1;
+        private Row15 mRow1;
         
         private ColumnHeadersPrHeader4 mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row16 : WpfRow
+    public class Row15 : WpfRow
     {
         
-        public Row16(UITestControl searchLimitContainer) : 
+        public Row15(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -6466,13 +6407,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row17 Row1
+        public Row16 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row17(this);
+                    this.mRow1 = new Row16(this);
                 }
                 return this.mRow1;
             }
@@ -6492,17 +6433,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row17 mRow1;
+        private Row16 mRow1;
         
         private ColumnHeadersPrHeader5 mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row17 : WpfRow
+    public class Row16 : WpfRow
     {
         
-        public Row17(UITestControl searchLimitContainer) : 
+        public Row16(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -7113,13 +7054,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row18 Row1
+        public Row17 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row18(this);
+                    this.mRow1 = new Row17(this);
                 }
                 return this.mRow1;
             }
@@ -7139,17 +7080,17 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row18 mRow1;
+        private Row17 mRow1;
         
         private ColumnHeadersPrHeader6 mColumnHeadersPrHeader;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row18 : WpfRow
+    public class Row17 : WpfRow
     {
         
-        public Row18(UITestControl searchLimitContainer) : 
+        public Row17(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -7814,13 +7755,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row19 Row1
+        public Row18 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row19(this);
+                    this.mRow1 = new Row18(this);
                 }
                 return this.mRow1;
             }
@@ -7828,15 +7769,15 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row19 mRow1;
+        private Row18 mRow1;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row19 : WpfRow
+    public class Row18 : WpfRow
     {
         
-        public Row19(UITestControl searchLimitContainer) : 
+        public Row18(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -8262,13 +8203,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Cell3 Cell
+        public Cell2 Cell
         {
             get
             {
                 if ((this.mCell == null))
                 {
-                    this.mCell = new Cell3(this);
+                    this.mCell = new Cell2(this);
                 }
                 return this.mCell;
             }
@@ -8300,7 +8241,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Cell3 mCell;
+        private Cell2 mCell;
         
         private Cell11 mCell1;
         
@@ -8309,10 +8250,10 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Cell3 : WpfCustom
+    public class Cell2 : WpfCustom
     {
         
-        public Cell3(UITestControl searchLimitContainer) : 
+        public Cell2(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -8742,13 +8683,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Cell4 Cell
+        public Cell3 Cell
         {
             get
             {
                 if ((this.mCell == null))
                 {
-                    this.mCell = new Cell4(this);
+                    this.mCell = new Cell3(this);
                 }
                 return this.mCell;
             }
@@ -8780,7 +8721,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Cell4 mCell;
+        private Cell3 mCell;
         
         private Cell12 mCell1;
         
@@ -8789,10 +8730,10 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Cell4 : WpfCell
+    public class Cell3 : WpfCell
     {
         
-        public Cell4(UITestControl searchLimitContainer) : 
+        public Cell3(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -9008,13 +8949,13 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         }
         
         #region Properties
-        public Row110 Row1
+        public Row19 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row110(this);
+                    this.mRow1 = new Row19(this);
                 }
                 return this.mRow1;
             }
@@ -9022,15 +8963,15 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row110 mRow1;
+        private Row19 mRow1;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row110 : WpfRow
+    public class Row19 : WpfRow
     {
         
-        public Row110(UITestControl searchLimitContainer) : 
+        public Row19(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
@@ -9620,7 +9561,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             #region Search Criteria
             this.SearchProperties[WpfControl.PropertyNames.ClassName] = "Uia.Small";
             this.SearchProperties[WpfControl.PropertyNames.AutomationId] = "SmallViewContent";
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -9652,18 +9593,18 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         {
             #region Search Criteria
             this.SearchProperties[WpfTable.PropertyNames.AutomationId] = "SmallDataGrid";
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
         #region Properties
-        public Row111 Row1
+        public Row110 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row111(this);
+                    this.mRow1 = new Row110(this);
                 }
                 return this.mRow1;
             }
@@ -9671,21 +9612,21 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row111 mRow1;
+        private Row110 mRow1;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row111 : WpfRow
+    public class Row110 : WpfRow
     {
         
-        public Row111(UITestControl searchLimitContainer) : 
+        public Row110(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
             this.SearchProperties[WpfRow.PropertyNames.AutomationId] = "UI_ActivityGridRow_0_AutoID";
             this.SearchConfigurations.Add(SearchConfiguration.AlwaysSearch);
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -9719,7 +9660,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             this.SearchProperties[WpfCell.PropertyNames.ColumnHeader] = null;
             this.SearchProperties[WpfCell.PropertyNames.ColumnIndex] = "2";
             this.SearchProperties[WpfCell.PropertyNames.AutomationId] = "UI_CellColumn2";
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -9733,7 +9674,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                     this.mTextbox = new WpfText(this);
                     #region Search Criteria
                     this.mTextbox.SearchProperties[WpfText.PropertyNames.Name] = "→";
-                    this.mTextbox.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+                    this.mTextbox.WindowTitles.Add("Warewolf");
                     #endregion
                 }
                 return this.mTextbox;
@@ -9808,7 +9749,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             #region Search Criteria
             this.SearchProperties[WpfControl.PropertyNames.ClassName] = "Uia.Small";
             this.SearchProperties[WpfControl.PropertyNames.AutomationId] = "SmallViewContent";
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -9840,18 +9781,18 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         {
             #region Search Criteria
             this.SearchProperties[WpfTable.PropertyNames.AutomationId] = "SmallDataGrid";
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
         #region Properties
-        public Row112 Row1
+        public Row111 Row1
         {
             get
             {
                 if ((this.mRow1 == null))
                 {
-                    this.mRow1 = new Row112(this);
+                    this.mRow1 = new Row111(this);
                 }
                 return this.mRow1;
             }
@@ -9859,21 +9800,21 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         #endregion
         
         #region Fields
-        private Row112 mRow1;
+        private Row111 mRow1;
         #endregion
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class Row112 : WpfRow
+    public class Row111 : WpfRow
     {
         
-        public Row112(UITestControl searchLimitContainer) : 
+        public Row111(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
             this.SearchProperties[WpfRow.PropertyNames.AutomationId] = "UI_ActivityGridRow_0_AutoID";
             this.SearchConfigurations.Add(SearchConfiguration.AlwaysSearch);
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -9907,7 +9848,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             this.SearchProperties[WpfCell.PropertyNames.ColumnHeader] = null;
             this.SearchProperties[WpfCell.PropertyNames.ColumnIndex] = "2";
             this.SearchProperties[WpfCell.PropertyNames.AutomationId] = "UI_CellColumn2";
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -9921,7 +9862,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                     this.mTextbox = new WpfText(this);
                     #region Search Criteria
                     this.mTextbox.SearchProperties[WpfText.PropertyNames.Name] = "→";
-                    this.mTextbox.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+                    this.mTextbox.WindowTitles.Add("Warewolf");
                     #endregion
                 }
                 return this.mTextbox;
@@ -11205,9 +11146,9 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                 base(searchLimitContainer)
         {
             #region Search Criteria
-            this.SearchProperties[WpfExpander.PropertyNames.AutomationId] = "UI_ServiceTestTestStepExpander_Assign a value to Name if blank (1)_AutoID";
+            this.SearchProperties.Add(new PropertyExpression(WpfExpander.PropertyNames.AutomationId, "UI_ServiceTestTestStepExpander", PropertyExpressionOperator.Contains));
             this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -11240,7 +11181,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             #region Search Criteria
             this.SearchProperties[WpfButton.PropertyNames.AutomationId] = "HeaderSite";
             this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -11273,7 +11214,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             #region Search Criteria
             this.SearchProperties[WpfText.PropertyNames.Instance] = "3";
             this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
-            this.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -11288,7 +11229,7 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                     #region Search Criteria
                     this.mIcon.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
                     this.mIcon.SearchConfigurations.Add(SearchConfiguration.NextSibling);
-                    this.mIcon.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+                    this.mIcon.WindowTitles.Add("Warewolf");
                     #endregion
                 }
                 return this.mIcon;

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,7 @@ namespace Dev2.Activities.Designers.Tests.DateTimeTests
         [TestCategory("DateTimeActivityViewModel_SelectedTimeModifierTypeSelectedItem")]
         [Description("DateTime ViewModel clears the TimeModifierAmountDisplay property of the model item if the SelectedTimeModifierType property of the view model is set to a blank string")]
         [Owner("Ashley Lewis")]
-        
+
         public void DateTimeActivityViewModel_SelectedTimeModifierTypeChange_SelectedTimeModifierTypeSetToABlankString_TimeModifierAmountDisplayCleared()
 
         {
@@ -58,7 +58,7 @@ namespace Dev2.Activities.Designers.Tests.DateTimeTests
         [TestCategory("DateTimeActivityViewModel_SelectedTimeModifierTypeSelectedItem")]
         [Description("DateTime ViewModel does not clear the TimeModifierAmountDisplay property of the model item if the SelectedTimeModifierType property of the view model is set to some string")]
         [Owner("Ashley Lewis")]
-        
+
         public void DateTimeActivityViewModel_SelectedTimeModifierTypeChange_SelectedTimeModifierTypeSetToABlankString_TimeModifierAmountDisplayNotCleared()
 
         {

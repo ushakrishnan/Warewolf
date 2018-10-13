@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -94,20 +94,11 @@ namespace Warewolf.Core
             }
         }
 
-        public  string GetIdentifier()
-        {
-            return SourceId + Name;
-            
-        }
-        public static bool operator ==(DbAction left, DbAction right)
-        {
-            return Equals(left, right);
-        }
+        public string GetIdentifier() => SourceId + Name;
 
-        public static bool operator !=(DbAction left, DbAction right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator ==(DbAction left, DbAction right) => Equals(left, right);
+
+        public static bool operator !=(DbAction left, DbAction right) => !Equals(left, right);
 
         #endregion
 
@@ -119,10 +110,7 @@ namespace Warewolf.Core
         /// <returns>
         /// A string that represents the current object.
         /// </returns>
-        public override string ToString()
-        {
-            return Name;
-        }
+        public override string ToString() => Name;
 
         #endregion
     }

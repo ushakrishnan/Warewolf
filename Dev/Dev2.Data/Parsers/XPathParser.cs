@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,27 +23,8 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Data.Parsers
 {
-    /// <summary>
-    /// XPath Parser
-    /// </summary>
     public class XPathParser
     {
-        /// <summary>
-        /// Executes the X path.
-        /// </summary>
-        /// <param name="xmlData">The XML data.</param>
-        /// <param name="xPath">The x path.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">
-        /// xmlData
-        /// or
-        /// xPath
-        /// </exception>
-        /// <exception cref="System.Exception">
-        /// Input XML is not valid.
-        /// or
-        /// The XPath expression provided is not valid.
-        /// </exception>
         public IEnumerable<string> ExecuteXPath(string xmlData, string xPath)
         {
             if (string.IsNullOrEmpty(xmlData))
@@ -66,29 +47,16 @@ namespace Dev2.Data.Parsers
                     throw new Exception("Input XML is not valid.");
                 }
                 List<string> stringList;
-                XmlDocument document = new XmlDocument();
+                var document = new XmlDocument();
                 document.LoadXml(useXmlData);
                 var namespaces = new List<KeyValuePair<string, string>>();
                 if (document.DocumentElement != null)
                 {
-                    var xmlAttributeCollection = document.DocumentElement.Attributes;
-
-                    foreach (XmlAttribute attrib in xmlAttributeCollection)
-                    {
-                        if (attrib?.NodeType == XmlNodeType.Attribute)
-                        {
-                            if (attrib.Name.Contains("xmlns:"))
-                            {
-                                var nsAttrib = attrib.Name.Split(':');
-                                var ns = nsAttrib[1];
-                                namespaces.Add(new KeyValuePair<string, string>(ns, attrib.Value));
-                            }
-                        }
-                    }
+                    namespaces = AddAttributesAsNamespaces(document, namespaces);
                 }
                 using (TextReader stringReader = new StringReader(useXmlData))
                 {
-                    Processor processor = new Processor(false);
+                    var processor = new Processor(false);
                     var compiler = processor.NewXPathCompiler();
                     compiler.XPathLanguageVersion = "3.0";
                     foreach (var keyValuePair in namespaces)
@@ -121,9 +89,24 @@ namespace Dev2.Data.Parsers
             }
         }
 
-        private static List<string> BuildListFromXPathResult(IEnumerator list)
+        static List<KeyValuePair<string, string>> AddAttributesAsNamespaces(XmlDocument document, List<KeyValuePair<string, string>> namespaces)
         {
-            List<string> stringList = new List<string>();
+            var xmlAttributeCollection = document.DocumentElement.Attributes;
+            foreach (XmlAttribute attrib in xmlAttributeCollection)
+            {
+                if (attrib?.NodeType == XmlNodeType.Attribute && attrib.Name.Contains("xmlns:"))
+                {
+                    var nsAttrib = attrib.Name.Split(':');
+                    var ns = nsAttrib[1];
+                    namespaces.Add(new KeyValuePair<string, string>(ns, attrib.Value));
+                }
+            }
+            return namespaces;
+        }
+
+        static List<string> BuildListFromXPathResult(IEnumerator list)
+        {
+            var stringList = new List<string>();
             while (list.MoveNext())
             {
                 var current = list.Current;

@@ -46,20 +46,21 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        public override void FromModel(IDbSource service)
+        public override void FromModel(IDbSource source)
         {
-            ResourceName = service.Name;
-            ServerName = ComputerNames.FirstOrDefault(name => string.Equals(service.ServerName, name.Name, StringComparison.CurrentCultureIgnoreCase));
+            ResourceName = source.Name;
+            ServerName = ComputerNames.FirstOrDefault(name => string.Equals(source.ServerName, name.Name, StringComparison.CurrentCultureIgnoreCase));
             if (ServerName != null)
             {
-                EmptyServerName = ServerName.Name ?? service.ServerName;
+                EmptyServerName = ServerName.Name ?? source.ServerName;
             }
-            AuthenticationType = service.AuthenticationType;
-            UserName = service.UserName;
-            Password = service.Password;
-            Path = service.Path;
+            AuthenticationType = source.AuthenticationType;
+            UserName = source.UserName;
+            Password = source.Password;
+            ConnectionTimeout = source.ConnectionTimeout;
+            Path = source.Path;
             TestConnection();
-            DatabaseName = service.DbName;
+            DatabaseName = source.DbName;
         }
 
         public override void UpdateHelpDescriptor(string helpText)
@@ -72,8 +73,37 @@ namespace Warewolf.Studio.ViewModels
 
         #region Overrides of DatabaseSourceViewModelBase
 
-        protected override IDbSource ToNewDbSource()
+        protected override IDbSource ToNewDbSource() => new DbSourceDefinition
         {
+            AuthenticationType = AuthenticationType,
+            ServerName = GetServerName(),
+            Password = Password,
+            UserName = UserName,
+            ConnectionTimeout = ConnectionTimeout,
+            Type = enSourceType.MySqlDatabase,
+            Name = ResourceName,
+            DbName = DatabaseName,
+            Id = DbSource?.Id ?? Guid.NewGuid()
+        };
+
+        protected override IDbSource ToDbSource()
+        {
+            if (DbSource == null)
+            {
+                return new DbSourceDefinition
+                {
+                    AuthenticationType = AuthenticationType,
+                    ServerName = GetServerName(),
+                    Password = Password,
+                    UserName = UserName,
+                    Type = enSourceType.MySqlDatabase,
+                    ConnectionTimeout = ConnectionTimeout,
+                    Path = Path,
+                    Name = ResourceName,
+                    DbName = DatabaseName,
+                    Id = DbSource?.Id ?? SelectedGuid
+                };
+            }
             return new DbSourceDefinition
             {
                 AuthenticationType = AuthenticationType,
@@ -81,32 +111,7 @@ namespace Warewolf.Studio.ViewModels
                 Password = Password,
                 UserName = UserName,
                 Type = enSourceType.MySqlDatabase,
-                Name = ResourceName,
-                DbName = DatabaseName,
-                Id = DbSource?.Id ?? Guid.NewGuid()
-            };
-        }
-
-        protected override IDbSource ToDbSource()
-        {
-            return DbSource == null ? new DbSourceDefinition
-            {
-                AuthenticationType = AuthenticationType,
-                ServerName = GetServerName(),
-                Password = Password,
-                UserName = UserName,
-                Type = enSourceType.MySqlDatabase,
-                Path = Path,
-                Name = ResourceName,
-                DbName = DatabaseName,
-                Id = DbSource?.Id ?? SelectedGuid
-            } : new DbSourceDefinition
-            {
-                AuthenticationType = AuthenticationType,
-                ServerName = GetServerName(),
-                Password = Password,
-                UserName = UserName,
-                Type = enSourceType.MySqlDatabase,
+                ConnectionTimeout = ConnectionTimeout,
                 Path = Path,
                 Name = ResourceName,
                 DbName = DatabaseName,
@@ -114,21 +119,19 @@ namespace Warewolf.Studio.ViewModels
             };
         }
 
-        protected override IDbSource ToSourceDefinition()
+        protected override IDbSource ToSourceDefinition() => new DbSourceDefinition
         {
-            return new DbSourceDefinition
-            {
-                AuthenticationType = DbSource.AuthenticationType,
-                DbName = DbSource.DbName,
-                Id = DbSource.Id,
-                Name = DbSource.Name,
-                Password = DbSource.Password,
-                Path = DbSource.Path,
-                ServerName = DbSource.ServerName,
-                UserName = DbSource.UserName,
-                Type = enSourceType.MySqlDatabase
-            };
-        }
+            AuthenticationType = DbSource.AuthenticationType,
+            DbName = DbSource.DbName,
+            Id = DbSource.Id,
+            Name = DbSource.Name,
+            Password = DbSource.Password,
+            ConnectionTimeout = DbSource.ConnectionTimeout,
+            Path = DbSource.Path,
+            ServerName = DbSource.ServerName,
+            UserName = DbSource.UserName,
+            Type = enSourceType.MySqlDatabase
+        };
 
         public override IDbSource ToModel()
         {
@@ -144,6 +147,7 @@ namespace Warewolf.Studio.ViewModels
                 ServerName = GetServerName(),
                 Password = Password,
                 UserName = UserName,
+                ConnectionTimeout = ConnectionTimeout,
                 Type = enSourceType.MySqlDatabase,
                 Name = ResourceName,
                 DbName = DatabaseName,

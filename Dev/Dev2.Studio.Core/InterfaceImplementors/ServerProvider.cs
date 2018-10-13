@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -60,10 +60,7 @@ namespace Dev2.Studio.Core.InterfaceImplementors
 
         #region Load
 
-        public List<IServer> Load()
-        {
-            return Load(CustomContainer.Get<IServerRepository>());
-        }
+        public List<IServer> Load() => Load(CustomContainer.Get<IServerRepository>());
 
         public List<IServer> Load(IServerRepository serverRepository)
         {
@@ -80,10 +77,7 @@ namespace Dev2.Studio.Core.InterfaceImplementors
             return environments.ToList();
         }
 
-        public List<IServer> ReloadServers()
-        {
-            return ReloadServers(CustomContainer.Get<IServerRepository>());
-        }
+        public List<IServer> ReloadServers() => ReloadServers(CustomContainer.Get<IServerRepository>());
 
         public List<IServer> ReloadServers(IServerRepository serverRepository)
         {

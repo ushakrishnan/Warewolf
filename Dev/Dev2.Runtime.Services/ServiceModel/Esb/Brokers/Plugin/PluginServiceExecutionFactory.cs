@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,16 +33,9 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
             return invokePlugin;
         }
 
-        public static PluginExecutionDto ExecuteConstructor(Isolated<PluginRuntimeHandler> appDomain,PluginExecutionDto dto)
-        {
-            return appDomain.Value.ExecuteConstructor(dto);
-        }
+        public static PluginExecutionDto ExecuteConstructor(Isolated<PluginRuntimeHandler> appDomain, PluginExecutionDto dto) => appDomain.Value.ExecuteConstructor(dto);
 
-        public static Isolated<PluginRuntimeHandler> CreateAppDomain()
-        {
-            return CreateInvokeAppDomain();
-            
-        }
+        public static Isolated<PluginRuntimeHandler> CreateAppDomain() => CreateInvokeAppDomain();
 
 
         /// <summary>

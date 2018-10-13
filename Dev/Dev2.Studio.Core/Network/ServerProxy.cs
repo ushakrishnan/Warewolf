@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -60,18 +60,6 @@ namespace Dev2.Network
             SetupPassthroughEvents();
         }
 
-        #region Implementation of IDisposable
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-            _wrappedConnection.Dispose();
-        }
-
-        #endregion
-
         #region Implementation of IEnvironmentConnection
 
         public IEventPublisher ServerEvents => _wrappedConnection.ServerEvents;
@@ -113,15 +101,10 @@ namespace Dev2.Network
             }
         }
 
-        public StringBuilder ExecuteCommand(StringBuilder xmlRequest, Guid workspaceId)
-        {
-            return _wrappedConnection.ExecuteCommand(xmlRequest,workspaceId);
-        }
+        public StringBuilder ExecuteCommand(StringBuilder xmlRequest, Guid workspaceId) => _wrappedConnection.ExecuteCommand(xmlRequest, workspaceId);
 
-        public async Task<StringBuilder> ExecuteCommandAsync(StringBuilder xmlRequest, Guid workspaceId)
-        {
-            return await _wrappedConnection.ExecuteCommandAsync(xmlRequest, workspaceId);
-        }
+        public async Task<StringBuilder> ExecuteCommandAsync(StringBuilder xmlRequest, Guid workspaceId) => await _wrappedConnection.ExecuteCommandAsync(xmlRequest, workspaceId).ConfigureAwait(true);
+
         public IHubProxyWrapper EsbProxy => _wrappedConnection.EsbProxy;
 
         public bool IsConnected => _wrappedConnection.IsConnected;
@@ -168,7 +151,7 @@ namespace Dev2.Network
         {
             try
             {
-                return await _wrappedConnection.ConnectAsync(_wrappedConnection.ID);
+                return await _wrappedConnection.ConnectAsync(_wrappedConnection.ID).ConfigureAwait(true);
             }
              catch( FallbackException)
             {
@@ -277,14 +260,8 @@ namespace Dev2.Network
             return isEqual;
         }
 
-        public override bool Equals(object obj)
-        {
-            return Equals(obj as IEnvironmentConnection);
-        }
+        public override bool Equals(object obj) => Equals(obj as IEnvironmentConnection);
 
-        public override int GetHashCode()
-        {
-            return ID.GetHashCode();
-        }
+        public override int GetHashCode() => ID.GetHashCode();
     }
 }

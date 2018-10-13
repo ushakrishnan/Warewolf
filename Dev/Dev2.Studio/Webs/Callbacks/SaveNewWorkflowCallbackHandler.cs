@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ namespace Dev2.Webs.Callbacks
     {
         #region Fields
 
-        private readonly IContextualResourceModel _resourceModel;
+        readonly IContextualResourceModel _resourceModel;
         public bool AddToTabManager { private set; get; }
 
         #endregion
@@ -36,24 +36,26 @@ namespace Dev2.Webs.Callbacks
 
         #region Overrides of WebsiteCallbackHandler
 
-        protected override void Save(IServer server, dynamic jsonObj)
+        protected override void Save(IServer server, dynamic jsonArgs)
         {
             try
             {
-                string resName = jsonObj.resourceName;
-                string resCat = HelperUtils.SanitizePath((string)jsonObj.resourcePath, resName);
-                if(_resourceModel != null)
+                string resName = jsonArgs.resourceName;
+                bool loadingFromServer = jsonArgs.resourceLoadingFromServer;
+                string originalPath = jsonArgs.OriginalPath;
+                var resCat = HelperUtils.SanitizePath((string)jsonArgs.resourcePath, resName);
+                if (_resourceModel != null)
                 {
-                    EventPublisher.Publish(new SaveUnsavedWorkflowMessage(_resourceModel, resName, resCat, AddToTabManager));
+                    EventPublisher.Publish(new SaveUnsavedWorkflowMessage(_resourceModel, resName, resCat, AddToTabManager, loadingFromServer, originalPath));
                 }
 
                 Close();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Exception e1 = new Exception("There was a problem saving. Please try again.", e);
+                var e1 = new Exception("There was a problem saving. Please try again.", e);
 
-                Dev2Logger.Info(e.Message + Environment.NewLine + " Stacktrace : " + e.StackTrace + Environment.NewLine + " jsonObj: " + jsonObj.ToString(), "Warewolf Info");
+                Dev2Logger.Info(e.Message + Environment.NewLine + " Stacktrace : " + e.StackTrace + Environment.NewLine + " jsonObj: " + jsonArgs.ToString(), "Warewolf Info");
 
                 throw e1;
             }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,7 +27,7 @@ namespace Dev2.Runtime.Hosting
     {
         public static ServiceMetaData ExtractMetaData(XElement xe, ref DynamicServiceObjectBase obj)
         {
-            ServiceMetaData result = new ServiceMetaData();
+            var result = new ServiceMetaData();
 
             var tmp = ExtractValue(xe, "Category");
             obj.Category = tmp;
@@ -74,7 +74,7 @@ namespace Dev2.Runtime.Hosting
 
         public static Guid SetID(ref XElement xe)
         {
-            Guid id = new Guid();
+            var id = new Guid();
 
             var tmpId = xe.AttributeSafe("ID");
 
@@ -102,12 +102,12 @@ namespace Dev2.Runtime.Hosting
             {
                 throw new ArgumentException("serviceData");
             }
-            List<DynamicServiceObjectBase> result = new List<DynamicServiceObjectBase>();
+            var result = new List<DynamicServiceObjectBase>();
             var xe = serviceData.ToXElement();
 
             if(IsSource(serviceData))
             {
-                Source src = new Source();
+                var src = new Source();
                 var tmp = src as DynamicServiceObjectBase;
                 ServiceMetaData.ExtractMetaData(xe, ref tmp);
 
@@ -116,12 +116,6 @@ namespace Dev2.Runtime.Hosting
                 src.Type = !Enum.TryParse(typeOf, out enSourceType sourceType) ? enSourceType.Unknown : sourceType;
 
                 src.ConnectionString = xe.AttributeSafe("ConnectionString");
-                var tmpUri = xe.AttributeSafe("Uri");
-                if(!string.IsNullOrEmpty(tmpUri))
-                {
-                    src.WebServiceUri = new Uri(tmpUri);
-                }
-
                 src.AssemblyName = xe.AttributeSafe("AssemblyName");
                 src.AssemblyLocation = xe.AttributeSafe("AssemblyLocation");
 
@@ -135,7 +129,7 @@ namespace Dev2.Runtime.Hosting
             }
             else
             {
-                DynamicService ds = new DynamicService();
+                var ds = new DynamicService();
                 var tmp = ds as DynamicServiceObjectBase;
                 ServiceMetaData.ExtractMetaData(xe, ref tmp);
 
@@ -143,115 +137,125 @@ namespace Dev2.Runtime.Hosting
                 ds.ResourceDefinition = serviceData;
 
                 var actions = xe.Element("Actions");
-                XElement action = actions != null ? actions.Element("Action") : xe.Element("Action");
+                var action = actions != null ? actions.Element("Action") : xe.Element("Action");
 
-                if(action != null)
+                if (action != null)
                 {
-                    ServiceAction sa = new ServiceAction { Name = action.AttributeSafe("Name"), ResourceDefinition = serviceData };
-
-                    // Set service action ;)
-                    var typeOf = action.AttributeSafe("Type");
-                    if (Enum.TryParse(typeOf, out enActionType actionType))
-                    {
-                        sa.ActionType = actionType;
-                    }
-
-                    var element = action.Element("Outputs");
-                    if(element != null)
-                    {
-                        sa.OutputSpecification = element.Value;
-                    }
-
-                    // set name and id ;)
-                    sa.ServiceName = ds.Name;
-                    var id = ServiceMetaData.SetID(ref xe);
-                    ds.ID = id;
-
-                    if(IsWorkflow(serviceData))
-                    {
-                        // Convert to StringBuilder
-                        var xElement = action.Element("XamlDefinition");
-                        if(xElement != null)
-                        {
-                            var def = xElement.ToStringBuilder();
-                            def = def.Replace("<XamlDefinition>", "").Replace("</XamlDefinition>", "");
-                            sa.XamlDefinition = def.Unescape();
-                        }
-
-                        var dataList = xe.Element("DataList");
-                        if(dataList != null)
-                        {
-                            ds.DataListSpecification = dataList.ToStringBuilder();
-                        }
-                    }
-                    else
-                    {
-                        if(sa.ActionType == enActionType.InvokeStoredProc)
-                        {
-                            Int32.TryParse(action.AttributeSafe("CommandTimeout"), out int timeout);
-                            sa.CommandTimeout = timeout;
-                        }
-
-                        var xElement = action.Element("OutputDescription");
-                        if(xElement != null)
-                        {
-                            sa.OutputDescription = xElement.Value;
-                        }
-
-                        // process inputs and outputs ;)
-                        var inputs = action.Element("Inputs");
-
-                        if(inputs != null)
-                        {
-                            var inputCollection = inputs.Elements("Input");
-
-                            foreach(var inputItem in inputCollection)
-                            {
-                                bool.TryParse(inputItem.AttributeSafe("EmptyToNull"), out bool emptyToNull);
-
-                                ServiceActionInput sai = new ServiceActionInput
-                                {
-                                    Name = inputItem.AttributeSafe("Name"),
-                                    Source = inputItem.AttributeSafe("Source"),
-                                    DefaultValue = inputItem.AttributeSafe("DefaultValue"),
-                                    EmptyToNull = emptyToNull,
-                                    NativeType = inputItem.AttributeSafe("NativeType")
-                                };
-
-                                if(string.IsNullOrEmpty(sai.NativeType))
-                                {
-                                    sai.NativeType = "object";
-                                }
-
-                                // handle validators ;)
-                                var validators = inputItem.Elements("Validator");
-                                foreach(var validator in validators)
-                                {
-                                    Validator v = new Validator();
-
-                                    v.ValidatorType = !Enum.TryParse(validator.AttributeSafe("Type"), out enValidationType validatorType) ? enValidationType.Required : validatorType;
-
-                                    sai.Validators.Add(v);
-                                }
-
-                                sa.ServiceActionInputs.Add(sai);
-                            }
-                        }
-                    }
-
-                    // add the action
-                    ds.Actions.Add(sa);
-                    result.Add(ds);
+                    xe = AddServiceAction(serviceData, result, xe, ds, action);
                 }
 
             }
             return result;
         }
 
-        bool IsSource(StringBuilder serviceData)
+        private XElement AddServiceAction(StringBuilder serviceData, List<DynamicServiceObjectBase> result, XElement xe, DynamicService ds, XElement action)
         {
-            return serviceData.IndexOf("<Source ", 0, false) == 0;
+            var sa = new ServiceAction { Name = action.AttributeSafe("Name"), ResourceDefinition = serviceData };
+
+            // Set service action ;)
+            var typeOf = action.AttributeSafe("Type");
+            if (Enum.TryParse(typeOf, out enActionType actionType))
+            {
+                sa.ActionType = actionType;
+            }
+
+            var element = action.Element("Outputs");
+            if (element != null)
+            {
+                sa.OutputSpecification = element.Value;
+            }
+
+            // set name and id ;)
+            sa.ServiceName = ds.Name;
+            var id = ServiceMetaData.SetID(ref xe);
+            ds.ID = id;
+
+            if (IsWorkflow(serviceData))
+            {
+                // Convert to StringBuilder
+                var xElement = action.Element("XamlDefinition");
+                if (xElement != null)
+                {
+                    var def = xElement.ToStringBuilder();
+                    def = def.Replace("<XamlDefinition>", "").Replace("</XamlDefinition>", "");
+                    sa.XamlDefinition = def.Unescape();
+                }
+
+                var dataList = xe.Element("DataList");
+                if (dataList != null)
+                {
+                    ds.DataListSpecification = dataList.ToStringBuilder();
+                }
+            }
+            else
+            {
+                sa = AddServiceAction(sa, action);
+            }
+
+            // add the action
+            ds.Actions.Add(sa);
+            result.Add(ds);
+            return xe;
         }
+
+        static ServiceAction AddServiceAction(ServiceAction sa, XElement action)
+        {
+            if (sa.ActionType == enActionType.InvokeStoredProc)
+            {
+                Int32.TryParse(action.AttributeSafe("CommandTimeout"), out int timeout);
+                sa.CommandTimeout = timeout;
+            }
+
+            var xElement = action.Element("OutputDescription");
+            if (xElement != null)
+            {
+                sa.OutputDescription = xElement.Value;
+            }
+
+            // process inputs and outputs ;)
+            var inputs = action.Element("Inputs");
+
+            if (inputs != null)
+            {
+                var inputCollection = inputs.Elements("Input");
+
+                foreach (var inputItem in inputCollection)
+                {
+                    bool.TryParse(inputItem.AttributeSafe("EmptyToNull"), out bool emptyToNull);
+
+                    var sai = new ServiceActionInput
+                    {
+                        Name = inputItem.AttributeSafe("Name"),
+                        Source = inputItem.AttributeSafe("Source"),
+                        DefaultValue = inputItem.AttributeSafe("DefaultValue"),
+                        EmptyToNull = emptyToNull,
+                        NativeType = inputItem.AttributeSafe("NativeType")
+                    };
+
+                    if (string.IsNullOrEmpty(sai.NativeType))
+                    {
+                        sai.NativeType = "object";
+                    }
+
+                    // handle validators ;)
+                    var validators = inputItem.Elements("Validator");
+                    foreach (var validator in validators)
+                    {
+                        var v = new Validator
+                        {
+                            ValidatorType = !Enum.TryParse(validator.AttributeSafe("Type"), out enValidationType validatorType) ? enValidationType.Required : validatorType
+                        };
+
+                        sai.Validators.Add(v);
+                    }
+
+                    sa.ServiceActionInputs.Add(sai);
+                }
+            }
+            return sa;
+        }
+
+        bool IsSource(StringBuilder serviceData) => serviceData.IndexOf("<Source ", 0, false) == 0;
 
         bool IsWorkflow(StringBuilder serviceData)
         {

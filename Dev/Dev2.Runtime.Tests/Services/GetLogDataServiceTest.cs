@@ -16,7 +16,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class GetLogDataServiceTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -30,7 +30,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -44,7 +44,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Administrator, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetLogDataService_ServerLogFilePath")]
         public void GetLogDataService_ServerLogFilePath_NotSet_ShouldReturnStandardValue()
@@ -58,7 +58,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(EnvironmentVariables.ServerLogFile, logFilePath);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetLogDataService_ServerLogFilePath")]
         public void GetLogDataService_ServerLogFilePath_WhenSet_ShouldReturnSetValue()
@@ -72,7 +72,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetLogDataService_Execute")]
         public void GetLogDataService_Execute_WithLogData_ShouldReturnLogDataObject()
@@ -98,7 +98,7 @@ namespace Dev2.Tests.Runtime.Services
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         [TestCategory("GetLogDataService_Execute")]
         public void GetLogDataService_Execute_WithLogDataContainingURl_ShouldReturnLogDataObjectWithUrl()
@@ -117,8 +117,24 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("http://pieter:3142/secure/hello world.xml?<datalist><name></name></datalist>", value);
 
         }
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Candice Daniel")]
+        [TestCategory("GetLogDataService_Execute")]
+        [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormatWithErrors.txt", "TextFiles")]
+        public void GetLogDataService_Execute_WithLogDataContainingURL_shouldReturnLogDataObjectWithUrlERROR()
+        {
+            //------------Setup for test--------------------------
+            const string logFilePath = @"TextFiles\LogFileWithFlatResultsNEwFormatWithErrors.txt";
+            var getLogDataService = new GetLogDataService { ServerLogFilePath = logFilePath };
+            //------------Execute Test---------------------------
+            var logEntriesJson = getLogDataService.Execute(new Dictionary<string, StringBuilder>(), null);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(logEntriesJson);
+            var logEntriesObject = JsonConvert.DeserializeObject<List<LogEntry>>(logEntriesJson.ToString());
+            Assert.IsNotNull(logEntriesObject);
+            Assert.AreEqual("ERROR", logEntriesObject[0].Status);
+        }
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         [TestCategory("GetLogDataService_Execute")]
         [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormat.txt", "TextFiles")]
@@ -135,8 +151,8 @@ namespace Dev2.Tests.Runtime.Services
             //------------Execute Test---------------------------
 
             var stringBuilders = new Dictionary<string, StringBuilder>();
-            var longDateString = DateTime.ParseExact("2017-05-25 08:14:22,519", GlobalConstants.LogFileDateFormat,  System.Globalization.CultureInfo.InvariantCulture);
-            stringBuilders.Add("StartDateTime",longDateString.ToString(GlobalConstants.LogFileDateFormat).ToStringBuilder());
+            var longDateString = DateTime.ParseExact("2017-05-25 08:14:22,519", GlobalConstants.LogFileDateFormat, System.Globalization.CultureInfo.InvariantCulture);
+            stringBuilders.Add("StartDateTime", longDateString.ToString(GlobalConstants.LogFileDateFormat).ToStringBuilder());
             logEntriesJson = getLogDataService.Execute(stringBuilders, null);
             //------------Assert Results-------------------------
             logEntriesObject = JsonConvert.DeserializeObject<List<LogEntry>>(logEntriesJson.ToString());
@@ -144,7 +160,7 @@ namespace Dev2.Tests.Runtime.Services
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetLogDataService_Execute")]
         [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormat.txt", "TextFiles")]
@@ -161,7 +177,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Execute Test---------------------------
 
             var stringBuilders = new Dictionary<string, StringBuilder>();
-            var longDateString = DateTime.ParseExact("2017-05-25 08:14:12,420", GlobalConstants.LogFileDateFormat,  System.Globalization.CultureInfo.InvariantCulture);
+            var longDateString = DateTime.ParseExact("2017-05-25 08:14:12,420", GlobalConstants.LogFileDateFormat, System.Globalization.CultureInfo.InvariantCulture);
             stringBuilders.Add("CompletedDateTime", longDateString.ToString(GlobalConstants.LogFileDateFormat).ToStringBuilder());
             logEntriesJson = getLogDataService.Execute(stringBuilders, null);
             //------------Assert Results-------------------------
@@ -170,7 +186,7 @@ namespace Dev2.Tests.Runtime.Services
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         [TestCategory("GetLogDataService_Execute")]
         [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormat.txt", "TextFiles")]
@@ -186,7 +202,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(1, logEntriesObject.Count);
             //------------Execute Test---------------------------
 
-            var stringBuilders = new Dictionary<string, StringBuilder> {{"Status", "Failed".ToStringBuilder()}};
+            var stringBuilders = new Dictionary<string, StringBuilder> { { "Status", "Failed".ToStringBuilder() } };
             logEntriesJson = getLogDataService.Execute(stringBuilders, null);
             //------------Assert Results-------------------------
             logEntriesObject = JsonConvert.DeserializeObject<List<LogEntry>>(logEntriesJson.ToString());
@@ -194,7 +210,7 @@ namespace Dev2.Tests.Runtime.Services
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetLogDataService_Execute")]
         [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormat.txt", "TextFiles")]
@@ -210,14 +226,14 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(1, logEntriesObject.Count);
             //------------Execute Test---------------------------
 
-            var stringBuilders = new Dictionary<string, StringBuilder> {{ "User", "DEV2\\pieter.terblanche".ToStringBuilder()}};
+            var stringBuilders = new Dictionary<string, StringBuilder> { { "User", "DEV2\\pieter.terblanche".ToStringBuilder() } };
             logEntriesJson = getLogDataService.Execute(stringBuilders, null);
             //------------Assert Results-------------------------
             logEntriesObject = JsonConvert.DeserializeObject<List<LogEntry>>(logEntriesJson.ToString());
             Assert.AreEqual(1, logEntriesObject.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetLogDataService_Execute")]
         [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormat.txt", "TextFiles")]
@@ -233,14 +249,14 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(1, logEntriesObject.Count);
             //------------Execute Test---------------------------
 
-            var stringBuilders = new Dictionary<string, StringBuilder> {{ "ExecutionId", "06385e0f-ac27-4cf0-af55-7642c3c08ba3".ToStringBuilder()}};
+            var stringBuilders = new Dictionary<string, StringBuilder> { { "ExecutionId", "06385e0f-ac27-4cf0-af55-7642c3c08ba3".ToStringBuilder() } };
             logEntriesJson = getLogDataService.Execute(stringBuilders, null);
             //------------Assert Results-------------------------
             logEntriesObject = JsonConvert.DeserializeObject<List<LogEntry>>(logEntriesJson.ToString());
             Assert.AreEqual(1, logEntriesObject.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetLogDataService_Execute")]
         [DeploymentItem(@"TextFiles\LogFileWithFlatResultsNEwFormat.txt", "TextFiles")]
@@ -256,7 +272,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(1, logEntriesObject.Count);
             //------------Execute Test---------------------------
 
-            var stringBuilders = new Dictionary<string, StringBuilder> {{ "User", "BadUser".ToStringBuilder()}};
+            var stringBuilders = new Dictionary<string, StringBuilder> { { "User", "BadUser".ToStringBuilder() } };
             logEntriesJson = getLogDataService.Execute(stringBuilders, null);
             //------------Assert Results-------------------------
             logEntriesObject = JsonConvert.DeserializeObject<List<LogEntry>>(logEntriesJson.ToString());
@@ -264,7 +280,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetLogDataService_HandlesType")]
         public void GetLogDataService_HandlesType_ExpectName()
@@ -280,7 +296,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetLogDataService_HandlesType")]
         public void GetLogDataService_CreateServiceEntry_ExpectProperlyFormedDynamicService()

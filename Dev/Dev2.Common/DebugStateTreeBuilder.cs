@@ -5,7 +5,7 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 
 namespace Dev2.Common
 {
-    public class DebugStateTreeBuilder
+    public static class DebugStateTreeBuilder
     {
 
         public static IEnumerable<IDebugState> BuildTree(IEnumerable<IDebugState> source)
@@ -31,7 +31,7 @@ namespace Dev2.Common
 
         }
 
-        private static void AddChildren(IDebugState node, IDictionary<Guid, List<IDebugState>> source)
+        static void AddChildren(IDebugState node, IDictionary<Guid, List<IDebugState>> source)
         {
             if (source.ContainsKey(node.ID)
                 && (!node.IsAdded || (node.ActualType?.Contains("DsfForEachActivity") ?? false))

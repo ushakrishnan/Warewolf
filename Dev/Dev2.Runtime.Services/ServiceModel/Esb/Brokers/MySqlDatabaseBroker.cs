@@ -11,9 +11,6 @@ using Unlimited.Framework.Converters.Graph;
 
 namespace Dev2.Runtime.ServiceModel.Esb.Brokers
 {
-    /// <summary>
-    /// A Microsoft SQL specific database broker implementation
-    /// </summary>
     public class MySqlDatabaseBroker : AbstractDatabaseBroker<MySqlServer>
     {
         protected override string NormalizeXmlPayload(string payload)
@@ -41,9 +38,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
             {
                 res = "<FromXMLPayloads>" + res + "</FromXMLPayloads>";
             }
-            else if (foundXMLFrags == 0)
+            else
             {
-                res = payload;
+                if (foundXMLFrags == 0)
+                {
+                    res = payload;
+                }
             }
 
             return base.NormalizeXmlPayload(res);
@@ -64,49 +64,35 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
         {
             VerifyArgument.IsNotNull("dbSource", dbSource);
 
-            // Check the cache for a value ;)
             ServiceMethodList cacheResult;
-            if (!dbSource.ReloadActions)
+            if (!dbSource.ReloadActions && GetCachedResult(dbSource, out cacheResult))
             {
-                if (GetCachedResult(dbSource, out cacheResult))
-                {
-                    return cacheResult;
-                }
+                return cacheResult;
             }
-            // else reload actions ;)
+
 
             var serviceMethods = new ServiceMethodList();
-
-            //
-            // Function to handle procedures returned by the data broker
-            //
+            
             Func<IDbCommand, IList<IDbDataParameter>, IList<IDbDataParameter>, string, string, bool> procedureFunc = (command, parameters, outparameters, helpText, executeAction) =>
             {
                 var serviceMethod = CreateServiceMethod(command, parameters, outparameters, helpText, executeAction);
                 serviceMethods.Add(serviceMethod);
                 return true;
             };
-
-            //
-            // Function to handle functions returned by the data broker
-            //
+            
             Func<IDbCommand, IList<IDbDataParameter>, IList<IDbDataParameter>, string, string, bool> functionFunc = (command, parameters, outparameters, helpText, executeAction) =>
             {
                 var serviceMethod = CreateServiceMethod(command, parameters, outparameters, helpText, executeAction);
                 serviceMethods.Add(serviceMethod);
                 return true;
             };
-
-            //
-            // Get stored procedures and functions for this database source
-            //
+            
             using (var server = CreateDbServer(dbSource))
             {
                 server.Connect(dbSource.ConnectionString);
                 server.FetchStoredProcedures(procedureFunc, functionFunc, false, dbSource.DatabaseName);
             }
-
-            // Add to cache ;)
+            
             TheCache.AddOrUpdate(dbSource.ConnectionString, serviceMethods, (s, list) => serviceMethods);
 
             return GetCachedResult(dbSource, out cacheResult) ? cacheResult : serviceMethods;
@@ -114,17 +100,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
 
         #region Overrides of AbstractDatabaseBroker<MySqlServer>
 
-        protected override MySqlServer CreateDbServer(DbSource dbSource)
+        protected override MySqlServer CreateDbServer(DbSource dbSource) => new MySqlServer();
+
+        static ServiceMethod CreateServiceMethod(IDbCommand command, IEnumerable<IDataParameter> parameters, IEnumerable<IDataParameter> outParameters, string sourceCode, string executeAction) => new ServiceMethod(command.CommandText, sourceCode, parameters.Select(MethodParameterFromDataParameter), null, null, executeAction)
         {
-            return new MySqlServer();
-        }
-        private static ServiceMethod CreateServiceMethod(IDbCommand command, IEnumerable<IDataParameter> parameters, IEnumerable<IDataParameter> outParameters, string sourceCode, string executeAction)
-        {
-            return new ServiceMethod(command.CommandText, sourceCode, parameters.Select(MethodParameterFromDataParameter), null, null, executeAction)
-            {
-                OutParameters = outParameters.Select(MethodParameterFromDataParameter).ToList()
-            };
-        }
+            OutParameters = outParameters.Select(MethodParameterFromDataParameter).ToList()
+        };
         #endregion
 
         #endregion

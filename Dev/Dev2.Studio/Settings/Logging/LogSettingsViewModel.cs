@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -12,6 +13,7 @@ using System.Windows.Input;
 using Dev2.Common;
 using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.CustomControls.Progress;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -27,32 +29,29 @@ namespace Dev2.Settings.Logging
     {
         public IServer CurrentEnvironment
         {
-            private get
-            {
-                return _currentEnvironment;
-            }
+            private get => _currentEnvironment;
             set
             {
                 _currentEnvironment = value;
-                
+
                 OnPropertyChanged("CanEditStudioLogSettings");
-                
+
                 OnPropertyChanged("CanEditLogSettings");
             }
         }
-        private string _serverLogMaxSize;
-        private string _studioLogMaxSize;
-        private string _selectedLoggingType;
-        private LogLevel _serverEventLogLevel;
-        private LogLevel _studioEventLogLevel;
-        private ProgressDialogViewModel _progressDialogViewModel;
-        private string _serverLogFile;
-        private IServer _currentEnvironment;
-        private LogLevel _serverFileLogLevel;
-        private LogLevel _studioFileLogLevel;
-        private LogSettingsViewModel _item;
+        string _serverLogMaxSize;
+        string _studioLogMaxSize;
+        string _selectedLoggingType;
+        LogLevel _serverEventLogLevel;
+        LogLevel _studioEventLogLevel;
+        ProgressDialogViewModel _progressDialogViewModel;
+        string _serverLogFile;
+        IServer _currentEnvironment;
+        readonly LogLevel _serverFileLogLevel;
+        LogLevel _studioFileLogLevel;
+        LogSettingsViewModel _item;
+        string _auditFilePath;
 
-        
         public LogSettingsViewModel()
         {
 
@@ -86,30 +85,35 @@ namespace Dev2.Settings.Logging
                 _studioEventLogLevel = studioEventLogLevel;
             }
             _studioLogMaxSize = Dev2Logger.GetLogMaxSize().ToString(CultureInfo.InvariantCulture);
+            var serverSettingsData = CurrentEnvironment.ResourceRepository.GetServerSettings(CurrentEnvironment);
+
+            AuditFilePath = serverSettingsData.AuditFilePath;
+            IsDirty = false;
         }
 
         [ExcludeFromCodeCoverage]
         void OpenServerLogFile(object o)
         {
-            WebClient client = new WebClient { Credentials = CurrentEnvironment.Connection.HubConnection.Credentials };
-            var dialog = new ProgressDialog();
-            _progressDialogViewModel = new ProgressDialogViewModel(() => { dialog.Close(); }, delegate
+            using (WebClient client = new WebClient { Credentials = CurrentEnvironment.Connection.HubConnection.Credentials })
             {
-                dialog.Show();
-            }, delegate
-            {
-                dialog.Close();
-            });
-            _progressDialogViewModel.StatusChanged("Server Log File", 0, 0);
-            _progressDialogViewModel.SubLabel = "Preparing to download Warewolf Server log file.";
-            dialog.DataContext = _progressDialogViewModel;
-            _progressDialogViewModel.Show();
-            client.DownloadProgressChanged += DownloadProgressChanged;
-            client.DownloadFileCompleted += DownloadFileCompleted;
-            var managementServiceUri = WebServer.GetInternalServiceUri("getlogfile", CurrentEnvironment.Connection);
-            _serverLogFile = Path.Combine(GlobalConstants.TempLocation, CurrentEnvironment.Connection.DisplayName + " Server Log.txt");
-            client.DownloadFileAsync(managementServiceUri, _serverLogFile);
-
+                var dialog = new ProgressDialog();
+                _progressDialogViewModel = new ProgressDialogViewModel(() => { dialog.Close(); }, delegate
+                {
+                    dialog.Show();
+                }, delegate
+                {
+                    dialog.Close();
+                });
+                _progressDialogViewModel.StatusChanged("Server Log File", 0, 0);
+                _progressDialogViewModel.SubLabel = "Preparing to download Warewolf Server log file.";
+                dialog.DataContext = _progressDialogViewModel;
+                _progressDialogViewModel.Show();
+                client.DownloadProgressChanged += DownloadProgressChanged;
+                client.DownloadFileCompleted += DownloadFileCompleted;
+                var managementServiceUri = WebServer.GetInternalServiceUri("getlogfile", CurrentEnvironment.Connection);
+                _serverLogFile = Path.Combine(GlobalConstants.TempLocation, CurrentEnvironment.Connection.DisplayName + " Server Log.txt");
+                client.DownloadFileAsync(managementServiceUri, _serverLogFile);
+            }
         }
 
         [ExcludeFromCodeCoverage]
@@ -145,27 +149,35 @@ namespace Dev2.Settings.Logging
 
         public bool CanEditStudioLogSettings => CurrentEnvironment.IsLocalHost;
 
-        [ExcludeFromCodeCoverage]
         public virtual void Save(LoggingSettingsTo logSettings)
         {
-            //logSettings.FileLoggerLogLevel = ServerFileLogLevel.ToString();
             logSettings.EventLogLoggerLogLevel = ServerEventLogLevel.ToString();
             logSettings.FileLoggerLogSize = int.Parse(ServerLogMaxSize);
             var settingsConfigFile = HelperUtils.GetStudioLogSettingsConfigFile();
+
+            try
+            {
+                var data = new ServerSettingsData { AuditFilePath = AuditFilePath };
+                CurrentEnvironment.ResourceRepository.SaveServerSettings(CurrentEnvironment, data);
+            }
+            catch (Exception ex)
+            {
+                CustomContainer.Get<IPopupController>().Show("The file was not moved. Error: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error, "", false, true, false, false, false, false);
+                HasAuditFilePathMoved = false;
+                return;
+            }
+
             Dev2Logger.WriteLogSettings(StudioLogMaxSize, StudioFileLogLevel.ToString(), StudioEventLogLevel.ToString(), settingsConfigFile, "Warewolf Studio");
-
             SetItem(this);
-        }
 
-        protected override void CloseHelp()
-        {
-            //Implement if help is done for the log settings.
+            HasAuditFilePathMoved = true;
         }
+        public bool HasAuditFilePathMoved { get; set; }
 
         [JsonIgnore]
         public LogSettingsViewModel Item
         {
-            private get { return _item; }
+            private get => _item;
             set
             {
                 _item = value;
@@ -182,7 +194,7 @@ namespace Dev2.Settings.Logging
         {
             var resolver = new ShouldSerializeContractResolver();
             var ser = JsonConvert.SerializeObject(model, new JsonSerializerSettings { ContractResolver = resolver });
-            LogSettingsViewModel clone = JsonConvert.DeserializeObject<LogSettingsViewModel>(ser);
+            var clone = JsonConvert.DeserializeObject<LogSettingsViewModel>(ser);
             return clone;
         }
 
@@ -190,10 +202,7 @@ namespace Dev2.Settings.Logging
         public ICommand GetStudioLogFileCommand { get; }
         public LogLevel ServerEventLogLevel
         {
-            get
-            {
-                return _serverEventLogLevel;
-            }
+            get => _serverEventLogLevel;
             set
             {
                 _serverEventLogLevel = value;
@@ -203,10 +212,7 @@ namespace Dev2.Settings.Logging
         }
         public LogLevel StudioEventLogLevel
         {
-            get
-            {
-                return _studioEventLogLevel;
-            }
+            get => _studioEventLogLevel;
             set
             {
                 _studioEventLogLevel = value;
@@ -216,10 +222,7 @@ namespace Dev2.Settings.Logging
         }
         public LogLevel StudioFileLogLevel
         {
-            get
-            {
-                return _studioFileLogLevel;
-            }
+            get => _studioFileLogLevel;
             set
             {
                 _studioFileLogLevel = value;
@@ -232,10 +235,7 @@ namespace Dev2.Settings.Logging
 
         public string SelectedLoggingType
         {
-            get
-            {
-                return EnumHelper<LogLevel>.GetEnumDescription(ServerEventLogLevel.ToString());
-            }
+            get => EnumHelper<LogLevel>.GetEnumDescription(ServerEventLogLevel.ToString());
             set
             {
                 if (string.IsNullOrEmpty(value) && string.IsNullOrEmpty(ServerEventLogLevel.ToString()))
@@ -253,7 +253,7 @@ namespace Dev2.Settings.Logging
 
         public string ServerLogMaxSize
         {
-            get { return _serverLogMaxSize; }
+            get => _serverLogMaxSize;
             set
             {
                 if (string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_serverLogMaxSize))
@@ -269,13 +269,12 @@ namespace Dev2.Settings.Logging
                         OnPropertyChanged();
                     }
                 }
-
             }
         }
 
         public string StudioLogMaxSize
         {
-            get { return _studioLogMaxSize; }
+            get => _studioLogMaxSize;
             set
             {
                 if (string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_studioLogMaxSize))
@@ -291,20 +290,26 @@ namespace Dev2.Settings.Logging
                         OnPropertyChanged();
                     }
                 }
-
             }
         }
 
-        #region Implementation of IUpdatesHelp
+        public string AuditFilePath
+        {
+            get => _auditFilePath;
+            set
+            {
+                IsDirty = !Equals(Item);
+                _auditFilePath = value;
+                OnPropertyChanged();
+            }
+        }
 
         public void UpdateHelpDescriptor(string helpText)
         {
             HelpText = helpText;
         }
 
-        #endregion
-
-        private bool Equals(LogSettingsViewModel other)
+        bool Equals(LogSettingsViewModel other)
         {
             if (ReferenceEquals(null, other))
             {
@@ -314,16 +319,22 @@ namespace Dev2.Settings.Logging
             return EqualsSeq(other);
         }
 
-        private bool EqualsSeq(LogSettingsViewModel other)
+        bool EqualsSeq(LogSettingsViewModel other)
         {
-            var equalsSeq = string.Equals(_serverEventLogLevel.ToString(), other._serverEventLogLevel.ToString()) &&
-                            string.Equals(_studioEventLogLevel.ToString(), other._studioEventLogLevel.ToString()) &&
-                            string.Equals(_serverFileLogLevel.ToString(), other._serverFileLogLevel.ToString()) &&
-                            string.Equals(_studioFileLogLevel.ToString(), other._studioFileLogLevel.ToString()) &&
-                            Equals(_selectedLoggingType, other._selectedLoggingType) &&
-                            int.Parse(_serverLogMaxSize) == int.Parse(other._serverLogMaxSize) &&
-                            int.Parse(_studioLogMaxSize) == int.Parse(other._studioLogMaxSize);
+            var equalsSeq = string.Equals(_serverEventLogLevel.ToString(), other._serverEventLogLevel.ToString());
+            equalsSeq &= string.Equals(_studioEventLogLevel.ToString(), other._studioEventLogLevel.ToString());
+            equalsSeq &= string.Equals(_serverFileLogLevel.ToString(), other._serverFileLogLevel.ToString());
+            equalsSeq &= string.Equals(_studioFileLogLevel.ToString(), other._studioFileLogLevel.ToString());
+            equalsSeq &= Equals(_selectedLoggingType, other._selectedLoggingType);
+            equalsSeq &= int.Parse(_serverLogMaxSize) == int.Parse(other._serverLogMaxSize);
+            equalsSeq &= int.Parse(_studioLogMaxSize) == int.Parse(other._studioLogMaxSize);
+            equalsSeq &= Equals(_auditFilePath, other._auditFilePath);
             return equalsSeq;
+        }
+
+        protected override void CloseHelp()
+        {
+            //Implement if help is done for the log settings.
         }
     }
 }

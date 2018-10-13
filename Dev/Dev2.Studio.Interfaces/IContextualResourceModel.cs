@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Text;
 using Microsoft.Practices.Prism.Mvvm;
 
 
@@ -22,10 +23,13 @@ namespace Dev2.Studio.Interfaces
         IServer Environment { get; }
         Guid ServerID { get; set; }
         bool IsNewWorkflow { get; set; }
+        bool IsNotWarewolfPath { get; set; } 
+
         event Action<IContextualResourceModel> OnResourceSaved;
         event Action OnDataListChanged;
         IView GetView(Func<IView> view);
 
-        void ClearErrors();        
+        void ClearErrors();
+        StringBuilder GetWorkflowXaml();
     }
 }

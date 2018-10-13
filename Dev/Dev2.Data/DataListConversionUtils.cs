@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,12 +21,9 @@ namespace Dev2.Data
 {
     public class DataListConversionUtils
     {
-        public OptomizedObservableCollection<IDataListItem> CreateListToBindTo(IDataListModel dataList)
-        {
-            return GetInputs(dataList);
-        }
+        public OptomizedObservableCollection<IDataListItem> CreateListToBindTo(IDataListModel dataList) => GetInputs(dataList);
 
-        private OptomizedObservableCollection<IDataListItem> Get(IDataListModel dataList, enDev2ColumnArgumentDirection directionToGet)
+        OptomizedObservableCollection<IDataListItem> Get(IDataListModel dataList, enDev2ColumnArgumentDirection directionToGet)
         {
             var result = new OptomizedObservableCollection<IDataListItem>();
 
@@ -61,15 +58,9 @@ namespace Dev2.Data
             return result;
         }
 
-        public OptomizedObservableCollection<IDataListItem> GetInputs(IDataListModel dataList)
-        {
-            return Get(dataList, enDev2ColumnArgumentDirection.Input);
-        }
+        public OptomizedObservableCollection<IDataListItem> GetInputs(IDataListModel dataList) => Get(dataList, enDev2ColumnArgumentDirection.Input);
 
-        public OptomizedObservableCollection<IDataListItem> GetOutputs(IDataListModel dataList)
-        {
-            return Get(dataList, enDev2ColumnArgumentDirection.Output);
-        }
+        public OptomizedObservableCollection<IDataListItem> GetOutputs(IDataListModel dataList) => Get(dataList, enDev2ColumnArgumentDirection.Output);
 
         IList<IDataListItem> ConvertToIDataListItem(IScalar scalar)
         {

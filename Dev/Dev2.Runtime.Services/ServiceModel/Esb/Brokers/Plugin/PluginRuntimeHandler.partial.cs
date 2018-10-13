@@ -31,9 +31,9 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
     /// </summary>
     public partial class PluginRuntimeHandler
     {
-        private readonly IAssemblyLoader _assemblyLoader;
+        readonly IAssemblyLoader _assemblyLoader;
 
-        
+
         public PluginRuntimeHandler(IAssemblyLoader assemblyLoader)
         {
             _assemblyLoader = assemblyLoader;
@@ -60,7 +60,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
             {
                 return null;
             }
-            var methodToRun = ExecutePlugin(setupInfo, loadedAssembly, out object pluginResult);
+            var methodToRun = TryExecutePlugin(setupInfo, loadedAssembly, out object pluginResult);
             AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomain_AssemblyResolve;
             var formater = setupInfo.OutputFormatter;
             if (formater != null)
@@ -74,18 +74,18 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
 
 
 
-        public IOutputDescription Test(PluginInvokeArgs setupInfo, out string jsonResult)
+        public IOutputDescription Test(PluginInvokeArgs setupInfo, out string serializedResult)
         {
             try
             {
-                jsonResult = null;
+                serializedResult = null;
                 _assemblyLocation = setupInfo.AssemblyLocation;
                 AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
                 if (!_assemblyLoader.TryLoadAssembly(setupInfo.AssemblyLocation, setupInfo.AssemblyName, out Assembly loadedAssembly))
                 {
                     return null;
                 }
-                var methodToRun = ExecutePlugin(setupInfo, loadedAssembly, out object pluginResult);
+                var methodToRun = TryExecutePlugin(setupInfo, loadedAssembly, out object pluginResult);
 
                 AppDomain.CurrentDomain.AssemblyResolve -= CurrentDomain_AssemblyResolve;
                 // do formating here to avoid object serialization issues ;)
@@ -94,7 +94,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
 
                 if (pluginResult != null)
                 {
-                    jsonResult = JsonConvert.SerializeObject(pluginResult);
+                    serializedResult = JsonConvert.SerializeObject(pluginResult);
                     pluginResult = AdjustPluginResult(pluginResult, methodToRun);
                     var tmpData = dataBrowser.Map(pluginResult);
                     dataSourceShape.Paths.AddRange(tmpData);
@@ -108,12 +108,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
             catch (Exception e)
             {
                 Dev2Logger.Error("IOutputDescription Test(PluginInvokeArgs setupInfo)", e, GlobalConstants.WarewolfError);
-                jsonResult = null;
+                serializedResult = null;
                 return null;
             }
         }
 
-        private MethodBase ExecutePlugin(PluginInvokeArgs setupInfo, Assembly loadedAssembly, out object pluginResult)
+        MethodBase TryExecutePlugin(PluginInvokeArgs setupInfo, Assembly loadedAssembly, out object pluginResult)
         {
             var typeList = BuildTypeList(setupInfo.Parameters, loadedAssembly);
             var type = loadedAssembly.GetType(setupInfo.Fullname);
@@ -124,11 +124,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
                 {
                     try
                     {
-                        var anonymousType = JsonConvert.DeserializeObject(methodParameter.Value, Type.GetType(methodParameter.TypeName));
-                        if (anonymousType != null)
-                        {
-                            valuedTypeList.Add(anonymousType);
-                        }
+                        ExecutePlugin(valuedTypeList, methodParameter);
                     }
                     catch (Exception)
                     {
@@ -142,7 +138,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
             {
                 methodToRun = type.GetMethod(setupInfo.Method);
             }
-            object instance = Activator.CreateInstance(type);
+            var instance = Activator.CreateInstance(type);
             if (methodToRun == null)
             {
                 var constructor = type.GetConstructor(typeList.ToArray());
@@ -165,10 +161,18 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
             return null;
         }
 
+        private static void ExecutePlugin(List<object> valuedTypeList, MethodParameter methodParameter)
+        {
+            var anonymousType = JsonConvert.DeserializeObject(methodParameter.Value, Type.GetType(methodParameter.TypeName));
+            if (anonymousType != null)
+            {
+                valuedTypeList.Add(anonymousType);
+            }
+        }
 
         Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
         {
-            string[] tokens = args.Name.Split(",".ToCharArray());
+            var tokens = args.Name.Split(",".ToCharArray());
             Dev2Logger.Debug("Resolving : " + args.Name, GlobalConstants.WarewolfDebug);
             var directoryName = Path.GetDirectoryName(_assemblyLocation);
             var path = Path.Combine(new[] { directoryName, tokens[0] + ".dll" });
@@ -185,7 +189,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         {
             try
             {
-                List<string> namespaces = new List<string>();
+                var namespaces = new List<string>();
                 if (_assemblyLoader.TryLoadAssembly(assemblyLocation, assemblyName, out Assembly loadedAssembly))
                 {
                     // ensure we flush out the rubbish that GAC brings ;)
@@ -212,7 +216,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         /// <param name="assemblyLocation">The assembly location.</param>
         /// <param name="assemblyName">Name of the assembly.</param>
         /// <returns></returns>
-        private IEnumerable<KeyValuePair<string, string>> ListNamespacesWIthReturnTypes(string assemblyLocation, string assemblyName)
+        IEnumerable<KeyValuePair<string, string>> ListNamespacesWIthReturnTypes(string assemblyLocation, string assemblyName)
         {
             try
             {
@@ -313,9 +317,9 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         /// <param name="pluginResult">The plugin result.</param>
         /// <param name="methodToRun">The method automatic run.</param>
         /// <returns></returns>
-        private object AdjustPluginResult(object pluginResult, MethodBase methodToRun)
+        object AdjustPluginResult(object pluginResult, MethodBase methodToRun)
         {
-            object result = pluginResult;
+            var result = pluginResult;
             // When it returns a primitive or string and it is not XML or JSON, make it so ;)
 
             if ((methodToRun is MethodInfo method && (method.ReturnType.IsPrimitive || method.ReturnType.FullName == "System.String")) && !DataListUtil.IsXml(pluginResult.ToString()) && !DataListUtil.IsJson(pluginResult.ToString()))
@@ -333,7 +337,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         /// <param name="assemblyLocation">The assembly location.</param>
         /// <param name="assemblyName">Name of the assembly.</param>
         /// <returns></returns>
-        private IEnumerable<NamespaceItem> ReadNamespaces(string assemblyLocation, string assemblyName)
+        IEnumerable<NamespaceItem> ReadNamespaces(string assemblyLocation, string assemblyName)
         {
             try
             {
@@ -349,7 +353,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
 
                 return result;
             }
-            
+
             catch (BadImageFormatException)
             {
                 throw;
@@ -362,7 +366,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         /// <param name="assemblyLocation">The assembly location.</param>
         /// <param name="assemblyName">Name of the assembly.</param>
         /// <returns></returns>
-        private IEnumerable<NamespaceItem> ReadNamespacesWithJsonObjects(string assemblyLocation, string assemblyName)
+        IEnumerable<NamespaceItem> ReadNamespacesWithJsonObjects(string assemblyLocation, string assemblyName)
         {
             try
             {
@@ -370,7 +374,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
                 var list = ListNamespacesWIthReturnTypes(assemblyLocation, assemblyName);
 
 
-                
+
                 foreach (var keyVale in list)
                 {
                     result.Add(new NamespaceItem
@@ -384,7 +388,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
 
                 return result;
             }
-            
+
             catch (BadImageFormatException)
             {
                 throw;
@@ -397,10 +401,10 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.Plugin
         /// <param name="parameters">The parameters.</param>
         /// <param name="assembly"></param>
         /// <returns></returns>
-        private List<Type> BuildTypeList(IEnumerable<IMethodParameter> parameters, Assembly assembly)
+        List<Type> BuildTypeList(IEnumerable<IMethodParameter> parameters, Assembly assembly)
         {
             var typeList = new List<Type>();
-            
+
             if (parameters != null)
             {
                 foreach (var methodParameter in parameters)

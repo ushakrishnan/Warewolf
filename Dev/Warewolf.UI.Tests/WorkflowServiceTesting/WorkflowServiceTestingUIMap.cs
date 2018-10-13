@@ -53,14 +53,6 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
                     "r typing that in.");
         }
 
-        [When(@"I Enter Text Into Workflow Tests Row1 Value Textbox As CodedUITest")]
-        public void Enter_Text_Into_Workflow_Tests_Row1_Value_Textbox_As_CodedUITest()
-        {
-            Keyboard.SendKeys(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.WorkSurfaceContext.ServiceTestView.TestInputsTable.Row1.Cell.IntellisenseComboBox.Textbox, "User", ModifierKeys.None);
-            Assert.AreEqual("User", MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.WorkSurfaceContext.ServiceTestView.TestInputsTable.Row1.Cell.IntellisenseComboBox.Textbox.Text, "Workflow tests row 1 value textbox text does not equal User after typing that in." +
-                    "");
-        }
-
         [When(@"I Select User From RunTestAs")]
         public void Select_User_From_RunTestAs()
         {
@@ -178,11 +170,6 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
         public void Click_MockRadioButton_On_AssignValue_TestStep()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.WorkSurfaceContext.ServiceTestView.StepTestDataTreeTree.AsssignNameTreeItem.AssignAssert.SmallDataGridTable.ColumnHeadersPrHeader.MockOrAssert.MockRadioButton, new Point(5, 5));
-        }
-
-        public void Try_Click_Create_New_Tests()
-        {
-            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.WorkSurfaceContext.ServiceTestView.TestsListboxList.CreateTest.CreateTestButton, new Point(158, 10));
         }
 
         public void Click_Delete_On_AssignValue_TestStep()
@@ -662,6 +649,15 @@ namespace Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapCl
             var selectedTestDeleteButton = GetSelectedTestDeleteButton(currentTest, testInstance);
             Mouse.Click(selectedTestDeleteButton);
             Assert.IsTrue(DialogsUIMap.MessageBoxWindow.Exists, "Delete Confirmation MessageBox did not Open");
+        }
+        
+        [When(@"I Delete The First Test")]
+        public void Delete_The_First_Test()
+        {
+            Toggle_Workflow_Testing_Tab_First_Test_Enabled();
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.WorkSurfaceContext.ServiceTestView.TestsListboxList.Test1.DeleteButton);
+            Assert.IsTrue(DialogsUIMap.MessageBoxWindow.Exists, "Delete Confirmation MessageBox did not Open");
+            Mouse.Click(DialogsUIMap.MessageBoxWindow.YesButton, new Point(32, 5));
         }
 
         [Given(@"I Click Close Tests Tab")]

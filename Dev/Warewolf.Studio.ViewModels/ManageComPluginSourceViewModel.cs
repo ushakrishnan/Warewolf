@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,8 +23,6 @@ using Dev2.Studio.Interfaces;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Studio.Core;
 
-
-
 namespace Warewolf.Studio.ViewModels
 {
     public class ManageComPluginSourceViewModel : SourceBaseImpl<IComPluginSource>, IManageComPluginSourceViewModel
@@ -35,15 +33,15 @@ namespace Warewolf.Studio.ViewModels
         string _resourceName;
         readonly string _warewolfserverName;
         string _headerText;
-        private bool _isDisposed;
+        bool _isDisposed;
         ObservableCollection<IDllListingModel> _dllListings;
         bool _isLoading;
         string _searchTerm;
         string _assemblyName;
         Task<IRequestServiceNameViewModel> _requestServiceNameViewModel;
-        private bool _is32Bit;
-        private string _clsId;
-        private AsyncObservableCollection<IDllListingModel> _originalDllListings;
+        bool _is32Bit;
+        string _clsId;
+        AsyncObservableCollection<IDllListingModel> _originalDllListings;
 
         /// <exception cref="Exception">A delegate callback throws an exception.</exception>
         public ManageComPluginSourceViewModel(IManageComPluginSourceModel updateManager, Microsoft.Practices.Prism.PubSubEvents.IEventAggregator aggregator, IAsyncWorker asyncWorker)
@@ -62,13 +60,11 @@ namespace Warewolf.Studio.ViewModels
             RefreshCommand = new DelegateCommand(() => PerformLoadAll());
 
             _warewolfserverName = updateManager.ServerName;
-            if (Application.Current != null)
+            if (Application.Current != null && Application.Current.Dispatcher != null)
             {
-                if (Application.Current.Dispatcher != null)
-                {
-                    DispatcherAction = Application.Current.Dispatcher.Invoke;
-                }
+                DispatcherAction = Application.Current.Dispatcher.Invoke;
             }
+
         }
 
         public IAsyncWorker AsyncWorker { get; set; }
@@ -191,7 +187,7 @@ namespace Warewolf.Studio.ViewModels
             {
                 IsLoading = true;
                 var comPluginSource = updateManager.FetchSource(pluginSource.Id);
-                List<DllListingModel> names = updateManager.GetComDllListings(null)?.Select(input => new DllListingModel(updateManager, input)).ToList();
+                var names = updateManager.GetComDllListings(null)?.Select(input => new DllListingModel(updateManager, input)).ToList();
                 return new Tuple<IComPluginSource, List<DllListingModel>>(comPluginSource, names);
             }, tuple =>
             {
@@ -226,9 +222,9 @@ namespace Warewolf.Studio.ViewModels
 
         }
 
-        public override void FromModel(IComPluginSource pluginSource)
+        public override void FromModel(IComPluginSource source)
         {
-            var selectedDll = pluginSource.SelectedDll;
+            var selectedDll = source.SelectedDll;
             if (selectedDll != null)
             {
                 var dllListingModel = DllListings?.FirstOrDefault(model => model.Name == selectedDll.Name);
@@ -240,10 +236,10 @@ namespace Warewolf.Studio.ViewModels
                 }
             }
 
-            Name = pluginSource.ResourceName;
-            Path = pluginSource.ResourcePath;
-            Is32Bit = pluginSource.Is32Bit;
-            ClsId = pluginSource.ClsId;
+            Name = source.ResourceName;
+            Path = source.ResourcePath;
+            Is32Bit = source.Is32Bit;
+            ClsId = source.ClsId;
 
         }
 
@@ -318,10 +314,7 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        public override bool CanSave()
-        {
-            return _selectedDll != null && !string.IsNullOrEmpty(AssemblyName) && !string.IsNullOrEmpty(ClsId) && HasChanged;
-        }
+        public override bool CanSave() => _selectedDll != null && !string.IsNullOrEmpty(AssemblyName) && !string.IsNullOrEmpty(ClsId) && HasChanged;
 
         public override void UpdateHelpDescriptor(string helpText)
         {
@@ -376,20 +369,20 @@ namespace Warewolf.Studio.ViewModels
         {
             if (_pluginSource == null)
             {
-                var res = RequestServiceNameViewModel.ShowSaveDialog();
+                var res = GetRequestServiceNameViewModel().ShowSaveDialog();
 
                 if (res == MessageBoxResult.OK)
                 {
-                    ResourceName = RequestServiceNameViewModel.ResourceName.Name;
+                    ResourceName = GetRequestServiceNameViewModel().ResourceName.Name;
                     var src = ToModel();
                     src.Id = SelectedGuid;
-                    src.ResourcePath = RequestServiceNameViewModel.ResourceName.Path ?? RequestServiceNameViewModel.ResourceName.Name;
+                    src.ResourcePath = GetRequestServiceNameViewModel().ResourceName.Path ?? GetRequestServiceNameViewModel().ResourceName.Name;
                     src.ClsId = SelectedDll.ClsId;
                     src.Is32Bit = SelectedDll.Is32Bit;
                     Save(src);
-                    if (RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                    if (GetRequestServiceNameViewModel().SingleEnvironmentExplorerViewModel != null)
                     {
-                        AfterSave(RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
+                        AfterSave(GetRequestServiceNameViewModel().SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                     }
 
                     Path = src.ResourcePath;
@@ -460,26 +453,28 @@ namespace Warewolf.Studio.ViewModels
             return _pluginSource;
         }
 
-        public IRequestServiceNameViewModel RequestServiceNameViewModel
+        public IRequestServiceNameViewModel GetRequestServiceNameViewModel()
         {
-            get
+            if (_requestServiceNameViewModel != null)
             {
-                if (_requestServiceNameViewModel != null)
+                _requestServiceNameViewModel.Wait();
+                if (_requestServiceNameViewModel.Exception == null)
                 {
-                    _requestServiceNameViewModel.Wait();
-                    if (_requestServiceNameViewModel.Exception == null)
-                    {
-                        return _requestServiceNameViewModel.Result;
-                    }
-
-                    else
-                    {
-                        throw _requestServiceNameViewModel.Exception;
-                    }
+                    return _requestServiceNameViewModel.Result;
                 }
-                return null;
+
+                else
+                {
+                    throw _requestServiceNameViewModel.Exception;
+                }
             }
-            set { _requestServiceNameViewModel = new Task<IRequestServiceNameViewModel>(() => value); _requestServiceNameViewModel.Start(); }
+            return null;
+        }
+
+        public void SetRequestServiceNameViewModel(IRequestServiceNameViewModel value)
+        {
+            _requestServiceNameViewModel = new Task<IRequestServiceNameViewModel>(() => value);
+            _requestServiceNameViewModel.Start();
         }
 
         public ICommand OkCommand { get; set; }
@@ -497,11 +492,11 @@ namespace Warewolf.Studio.ViewModels
 
         protected override void OnDispose()
         {
-            RequestServiceNameViewModel?.Dispose();
-            Dispose(true);
+            GetRequestServiceNameViewModel()?.Dispose();
+            DisposeManageComPluginSourceViewModel(true);
         }
         
-        void Dispose(bool disposing)
+        void DisposeManageComPluginSourceViewModel(bool disposing)
         {
             if (!_isDisposed && !disposing)
             {

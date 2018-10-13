@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,61 +13,59 @@ using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Linq;
 using ActivityUnitTests;
-using Dev2.Interfaces;
+using Dev2.Common.State;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
-
 namespace Dev2.Tests.Activities.ActivityTests
 {
-    /// <summary>
-    /// Summary description for CountRecordsTest
-    /// </summary>
     [TestClass]
     public class CountRecordsTestNullHandler : BaseActivityUnitTest
     {
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext { get; set; }
+        [TestMethod]
+        public void CountOutputToBlank_Expected_BlankResultVariableError()
+        {
+            SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", string.Empty);
+
+            var result = ExecuteProcess();
+            const string expected = @"5";
+            GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
+
+            Assert.AreEqual(1, result.Environment.Errors.Count);
+            Assert.AreEqual("<InnerError>Blank result variable</InnerError>", result.Environment.Errors.FirstOrDefault());
+        }
 
         #region Store To Scalar Tests
 
         [TestMethod]
         public void CountOutputToScalar_Expected_ScalarValueCorrectlySetToRecordSetCount()
         {
-
             SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[TestCountvar]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"5";
             GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
 
             // remove test datalist ;)
 
             Assert.AreEqual(expected, actual);
-
         }
 
         //Bug 7853
         [TestMethod]
         public void CountOutputToScalar_With_EmptyRecSet_Expected_ScalarValueCorrectlySetTo0()
         {
-
             SetupArguments("<root><ADL><TestCountvar/></ADL></root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[TestCountvar]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "";
             GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
 
             // remove test datalist ;)
 
             Assert.AreEqual(expected, actual);
-
         } 
         
-
         #endregion Store To Scalar Tests
 
         #region Store To RecordSet Tests
@@ -76,11 +74,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void CountOutputToRecset()
         {
             SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[recset1().field1]]");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "5";
             GetRecordSetFieldValueFromDataList(result.Environment, "recset1", "field1", out IList<string> actual, out string error);
-            string actualSet = actual.First(c =>  !string.IsNullOrEmpty(c));
+            var actualSet = actual.First(c =>  !string.IsNullOrEmpty(c));
 
             // remove test datalist ;)
 
@@ -89,10 +87,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         }
 
         #endregion Store To RecordSet Tests
-
-
         
-
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("DsfCountRecordsetActivity_UpdateForEachInputs")]
@@ -215,6 +210,58 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[res]]", dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfCountRecordsetNullHandlerActivity_GetState")]
+        public void DsfCountRecordsetNullHandlerActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            const string recordsetName = "[[Customers()]]";
+            //------------Setup for test--------------------------
+            var act = new DsfCountRecordsetNullHandlerActivity { RecordsetName = recordsetName, TreatNullAsZero=true, CountNumber = "[[res]]" };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(3, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "RecordsetName",
+                    Type = StateVariable.StateType.Input,
+                    Value = recordsetName
+                },
+                 new StateVariable
+                {
+                    Name = "TreatNullAsZero",
+                    Type = StateVariable.StateType.Input,
+                    Value = "True"
+                },
+                new StateVariable
+                {
+                    Name="CountNumber",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[res]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
+
         #region |Valid Recordset Name|
 
         [TestMethod]
@@ -225,7 +272,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Setup for test--------------------------
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "", "[[res]]");
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -241,7 +288,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Setup for test--------------------------
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1().field1]]", "[[res]]");
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -257,7 +304,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Setup for test--------------------------
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1()]][[recset1()]]", "[[res]]");
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -273,7 +320,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Setup for test--------------------------
             SetupArguments(ActivityStrings.DeleteRecordsDataListWithData, ActivityStrings.DeleteRecordsDataListShape, "[[recset1]]", "[[res]]");
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //------------Assert Results-------------------------
             const string Expected = @"";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -304,7 +351,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //---------------Test Result -----------------------
             const string Expected = "0";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -320,7 +367,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //---------------Test Result -----------------------
             const string Expected = "";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -331,13 +378,13 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string recordSetName, string countNumber, bool treaNullAsZero = false)
+        void SetupArguments(string currentDL, string testData, string recordSetName, string countNumber, bool treaNullAsZero = false)
         {
             TestStartNode = new FlowStep
             {
                 Action = new DsfCountRecordsetNullHandlerActivity { RecordsetName = recordSetName, CountNumber = countNumber, TreatNullAsZero = treaNullAsZero }
-                
-                
+
+
             };
 
             CurrentDl = testData;

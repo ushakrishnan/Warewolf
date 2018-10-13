@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -53,10 +53,10 @@ namespace Dev2.Settings
 
         SecurityViewModel _securityViewModel;
         LogSettingsViewModel _logSettingsViewModel;
-        private IServer _currentEnvironment;
-        private Func<IServer, IServer> _toEnvironmentModel;
-        private PerfcounterViewModel _perfmonViewModel;
-        private string _displayName;
+        IServer _currentEnvironment;
+        Func<IServer, IServer> _toEnvironmentModel;
+        PerfcounterViewModel _perfmonViewModel;
+        string _displayName;
 
         // ReSharper disable once MemberCanBeProtected.Global
         public SettingsViewModel()
@@ -80,7 +80,7 @@ namespace Dev2.Settings
             SaveCommand = new RelayCommand(o => SaveSettings(), o => IsDirty);
 
             ToEnvironmentModel = toEnvironmentModel??( a=>a.ToEnvironmentModel());
-            CurrentEnvironment= ToEnvironmentModel(server);
+            CurrentEnvironment= ToEnvironmentModel?.Invoke(server);
             LoadSettings();
             // ReSharper disable once VirtualMemberCallInContructor
             DisplayName = StringResources.SettingsTitle + " - " + Server.DisplayName;
@@ -105,7 +105,7 @@ namespace Dev2.Settings
             }
         }
 
-        private void SetDisplayName()
+        void SetDisplayName()
         {
             if (IsDirty)
             {
@@ -549,9 +549,7 @@ namespace Dev2.Settings
             {
                 if(CurrentEnvironment.AuthorizationService.IsAuthorized(AuthorizationContext.Administrator, null))
                 {
-                    Tracker.TrackEvent(TrackerEventGroup.Settings, TrackerEventName.SaveClicked);
                     // Need to reset sub view models so that selecting something in them fires our OnIsDirtyPropertyChanged()
-
                     ClearErrors();
                     if (!ValidateDuplicateResourcePermissions())
                     {
@@ -561,18 +559,22 @@ namespace Dev2.Settings
                     {
                         return false;
                     }
+                    if (!ValidateResourcePermissions())
+                    {
+                        return false;
+                    }
 
                     SecurityViewModel.Save(Settings.Security);
-                    if (LogSettingsViewModel.IsDirty)
+                    if (!SaveLogSettingsChanges())
                     {
-                        LogSettingsViewModel.Save(Settings.Logging);
+                        return false;
                     }
                     if (PerfmonViewModel.IsDirty)
                     {
                         PerfmonViewModel.Save(Settings.PerfCounters);
                     }
                     var isWritten = WriteSettings();
-                    if(isWritten)
+                    if (isWritten)
                     {
                         ResetIsDirtyForChildren();
                         IsSaved = true;
@@ -586,33 +588,61 @@ namespace Dev2.Settings
                     }
                     return IsSaved;
                 }
-
                 ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsPermissionsErrorMsg);
+                _popupController.ShowSaveSettingsPermissionsErrorMsg();
                 return false;
             }
             ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsNotReachableErrorMsg);
+            _popupController.ShowSaveSettingsNotReachableErrorMsg();
             return false;
         }
 
-        private bool ValidateDuplicateServerPermissions()
+        private bool SaveLogSettingsChanges()
+        {
+            if (LogSettingsViewModel.IsDirty)
+            {
+                LogSettingsViewModel.Save(Settings.Logging);
+                if (!LogSettingsViewModel.HasAuditFilePathMoved)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool ValidateDuplicateServerPermissions()
         {
             if (SecurityViewModel.HasDuplicateServerPermissions())
             {
                 IsSaved = false;
                 IsDirty = true;
                 ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateServerPermissions);
+                _popupController.ShowHasDuplicateServerPermissions();
                 return false;
             }
             return true;
         }
 
-        private bool ValidateDuplicateResourcePermissions()
+        bool ValidateResourcePermissions()
+        {
+            if (SecurityViewModel.HasInvalidResourcePermission())
+            {
+                IsSaved = false;
+                IsDirty = true;
+                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsInvalidPermissionEntry);
+                _popupController.ShowInvalidResourcePermission();
+                return false;
+            }
+            return true;
+        }
+        bool ValidateDuplicateResourcePermissions()
         {
             if (SecurityViewModel.HasDuplicateResourcePermissions())
             {
                 IsSaved = false;
                 IsDirty = true;
                 ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateResourcePermissions);
+                _popupController.ShowHasDuplicateResourcePermissions();
                 return false;
             }
             return true;

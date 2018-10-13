@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,14 +25,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
     [Serializable]
     public class JsonNavigator : NavigatorBase, INavigator
     {
-        #region Constructor
-
-        public JsonNavigator(object data)
-        {
-            Data = JToken.Parse(data.ToString());
-        }
-
-        #endregion Constructor
+        public JsonNavigator(object data) => Data = JToken.Parse(data.ToString());
 
         #region Methods
 
@@ -53,12 +46,6 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
 
             var currentData = Data as JToken;
 
-            if (currentData == null)
-            {
-                throw new Exception(string.Format(ErrorResource.DataTypeMismatch,
-                    typeof (JToken), Data.GetType()));
-            }
-
             if (path.ActualPath == JsonPath.SeperatorSymbol)
             {
                 //nothing to do here yet
@@ -66,9 +53,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             else if (path.ActualPath == JsonPath.EnumerableSymbol + JsonPath.SeperatorSymbol)
             {
                 var enumerableData = currentData as IEnumerable;
-
-
-                IEnumerator enumerator = enumerableData.GetEnumerator();
+                var enumerator = enumerableData.GetEnumerator();
                 enumerator.Reset();
                 while (enumerator.MoveNext())
                 {
@@ -77,40 +62,25 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             }
             else
             {
-                List<IPathSegment> pathSegments = jsonPath.GetSegements().ToList();
-                int segmentIndex = 0;
+                var pathSegments = jsonPath.GetSegements().ToList();
+                var segmentIndex = 0;
 
                 while (currentData != null && segmentIndex < pathSegments.Count)
                 {
                     if (pathSegments[segmentIndex].IsEnumarable)
                     {
-                        IEnumerable enumerableData = GetEnumerableValueForPathSegment(pathSegments[segmentIndex],
-                            currentData);
-
-                        if (enumerableData == null)
-                        {
-                            currentData = null;
-                        }
-                        else
-                        {
-                            IEnumerator enumerator = enumerableData.GetEnumerator();
-                            enumerator.Reset();
-                            while (enumerator.MoveNext())
-                            {
-                                currentData = enumerator.Current as JToken;
-                            }
-                        }
+                        currentData = GetEnumuratedValueForPathSegment(currentData, pathSegments, segmentIndex);
                     }
                     else
                     {
-                        currentData = GetScalarValueForPathSegement(pathSegments[segmentIndex], currentData);
+                        currentData = GetScalarValueForPathSegment(pathSegments[segmentIndex], currentData);
                     }
 
                     segmentIndex++;
                 }
             }
 
-            string returnVal = "";
+            var returnVal = "";
 
             if (currentData != null)
             {
@@ -118,6 +88,24 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             }
 
             return returnVal;
+        }
+
+        private JToken GetEnumuratedValueForPathSegment(JToken currentData, List<IPathSegment> pathSegments, int segmentIndex)
+        {
+            var enumerableData = GetEnumerableValueForPathSegment(pathSegments[segmentIndex],
+                                        currentData);
+
+            if (enumerableData != null)
+            {
+                var enumerator = enumerableData.GetEnumerator();
+                enumerator.Reset();
+                while (enumerator.MoveNext())
+                {
+                    currentData = enumerator.Current as JToken;
+                }
+            }
+
+            return currentData;
         }
 
         public IEnumerable<object> SelectEnumerable(IPath path)
@@ -148,7 +136,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
 
                 if (enumerableData != null)
                 {
-                    IEnumerator enumerator = enumerableData.GetEnumerator();
+                    var enumerator = enumerableData.GetEnumerator();
                     enumerator.Reset();
                     while (enumerator.MoveNext())
                     {
@@ -189,7 +177,7 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
 
                 if (Data is IEnumerable enumerableData)
                 {
-                    IEnumerator enumerator = enumerableData.GetEnumerator();
+                    var enumerator = enumerableData.GetEnumerator();
                     enumerator.Reset();
                     while (enumerator.MoveNext())
                     {
@@ -213,55 +201,29 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
 
         #region Private Methods
 
-        private IEnumerable<object> SelectEnumberable(IList<IPathSegment> pathSegments, JToken data)
+        IEnumerable<object> SelectEnumberable(IList<IPathSegment> pathSegments, JToken data)
         {
             var returnData = new List<object>();
-            JToken currentData = data;
+            var currentData = data;
 
             for (int i = 0; i < pathSegments.Count; i++)
             {
-                IPathSegment pathSegment = pathSegments[i];
-                bool lastSegment = i == pathSegments.Count - 1;
+                var pathSegment = pathSegments[i];
+                var lastSegment = i == pathSegments.Count - 1;
 
                 if (pathSegment.IsEnumarable)
                 {
-                    IEnumerable enumerableData = GetEnumerableValueForPathSegment(pathSegment, currentData);
+                    var enumerableData = GetEnumerableValueForPathSegment(pathSegment, currentData);
 
                     if (enumerableData != null)
                     {
-                        IEnumerator enumerator = enumerableData.GetEnumerator();
-                        enumerator.Reset();
-
-                        var testToken = enumerableData as JToken;
-
-                        if (testToken.IsEnumerableOfPrimitives())
-                        {
-                            while (enumerator.MoveNext())
-                            {
-                                var currentToken = enumerator.Current as JToken;
-                                if (currentData != null)
-                                {
-                                    if (currentToken != null)
-                                    {
-                                        returnData.Add(currentToken.ToString());
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            while (enumerator.MoveNext())
-                            {
-                                returnData.AddRange(SelectEnumberable(pathSegments.Skip(i + 1).ToList(),
-                                    enumerator.Current as JToken));
-                            }
-                        }
+                        GetEnumerableValueForSegment(pathSegments, returnData, currentData, i, enumerableData);
                     }
 
                     return returnData;
                 }
 
-                currentData = GetScalarValueForPathSegement(pathSegment, currentData);
+                currentData = GetScalarValueForPathSegment(pathSegment, currentData);
 
                 if (currentData != null && lastSegment)
                 {
@@ -270,6 +232,35 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             }
 
             return returnData;
+        }
+
+        void GetEnumerableValueForSegment(IList<IPathSegment> pathSegments, List<object> returnData, JToken currentData, int i, IEnumerable enumerableData)
+        {
+            var enumerator = enumerableData.GetEnumerator();
+            enumerator.Reset();
+
+            var testToken = enumerableData as JToken;
+
+            if (testToken.IsEnumerableOfPrimitives())
+            {
+                while (enumerator.MoveNext())
+                {
+                    var currentToken = enumerator.Current as JToken;
+                    if (currentData != null && currentToken != null)
+                    {
+                        returnData.Add(currentToken.ToString());
+                    }
+
+                }
+            }
+            else
+            {
+                while (enumerator.MoveNext())
+                {
+                    returnData.AddRange(SelectEnumberable(pathSegments.Skip(i + 1).ToList(),
+                        enumerator.Current as JToken));
+                }
+            }
         }
 
         protected override IndexedPathSegmentTreeNode<string> CreatePathSegmentIndexedPathSegmentTreeNode(
@@ -286,54 +277,11 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             {
                 if (pathSegment.IsEnumarable)
                 {
-                    var data = parentNode.CurrentValue as JToken;
-                    newIndexedValueTreeNode.EnumerableValue = GetEnumerableValueForPathSegment(pathSegment, data);
-
-                    if (newIndexedValueTreeNode.EnumerableValue == null)
-                    {
-                        newIndexedValueTreeNode.CurrentValue = string.Empty;
-                        newIndexedValueTreeNode.EnumerationComplete = true;
-                    }
-                    else
-                    {
-                        bool isPrimitiveArray = false;
-                        if (data is JObject jObject)
-                        {
-                            JProperty property = jObject.Property(pathSegment.ActualSegment);
-                            isPrimitiveArray = property.IsEnumerableOfPrimitives();
-                        }
-
-                        newIndexedValueTreeNode.Enumerator = newIndexedValueTreeNode.EnumerableValue.GetEnumerator();
-                        newIndexedValueTreeNode.Enumerator.Reset();
-
-                        if (isPrimitiveArray)
-                        {
-                            var valueBuilder = new StringBuilder();
-                            while (newIndexedValueTreeNode.Enumerator.MoveNext())
-                            {
-                                valueBuilder.Append(newIndexedValueTreeNode.Enumerator.Current);
-                                valueBuilder.Append(",");
-                            }
-                            newIndexedValueTreeNode.EnumerationComplete = true;
-                            newIndexedValueTreeNode.CurrentValue = valueBuilder.ToString().TrimEnd(',');
-                        }
-                        else
-                        {
-                            if (!newIndexedValueTreeNode.Enumerator.MoveNext())
-                            {
-                                newIndexedValueTreeNode.CurrentValue = string.Empty;
-                                newIndexedValueTreeNode.EnumerationComplete = true;
-                            }
-                            else
-                            {
-                                newIndexedValueTreeNode.CurrentValue = newIndexedValueTreeNode.Enumerator.Current;
-                            }
-                        }
-                    }
+                    GetEnumerableValueForPathSegment(pathSegment, parentNode, newIndexedValueTreeNode);
                 }
                 else
                 {
-                    newIndexedValueTreeNode.CurrentValue = GetScalarValueForPathSegement(pathSegment,
+                    newIndexedValueTreeNode.CurrentValue = GetScalarValueForPathSegment(pathSegment,
                         parentNode.CurrentValue as JToken);
 
                     if (newIndexedValueTreeNode.CurrentValue == null)
@@ -347,12 +295,60 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             return newIndexedValueTreeNode;
         }
 
-        private JToken GetScalarValueForPathSegement(IPathSegment pathSegment, IEnumerable<JToken> data)
+        private void GetEnumerableValueForPathSegment(IPathSegment pathSegment, IndexedPathSegmentTreeNode<string> parentNode, IndexedPathSegmentTreeNode<string> newIndexedValueTreeNode)
+        {
+            var data = parentNode.CurrentValue as JToken;
+            newIndexedValueTreeNode.EnumerableValue = GetEnumerableValueForPathSegment(pathSegment, data);
+
+            if (newIndexedValueTreeNode.EnumerableValue == null)
+            {
+                newIndexedValueTreeNode.CurrentValue = string.Empty;
+                newIndexedValueTreeNode.EnumerationComplete = true;
+            }
+            else
+            {
+                var isPrimitiveArray = false;
+                if (data is JObject jObject)
+                {
+                    var property = jObject.Property(pathSegment.ActualSegment);
+                    isPrimitiveArray = property.IsEnumerableOfPrimitives();
+                }
+
+                newIndexedValueTreeNode.Enumerator = newIndexedValueTreeNode.EnumerableValue.GetEnumerator();
+                newIndexedValueTreeNode.Enumerator.Reset();
+
+                if (isPrimitiveArray)
+                {
+                    var valueBuilder = new StringBuilder();
+                    while (newIndexedValueTreeNode.Enumerator.MoveNext())
+                    {
+                        valueBuilder.Append(newIndexedValueTreeNode.Enumerator.Current);
+                        valueBuilder.Append(",");
+                    }
+                    newIndexedValueTreeNode.EnumerationComplete = true;
+                    newIndexedValueTreeNode.CurrentValue = valueBuilder.ToString().TrimEnd(',');
+                }
+                else
+                {
+                    if (!newIndexedValueTreeNode.Enumerator.MoveNext())
+                    {
+                        newIndexedValueTreeNode.CurrentValue = string.Empty;
+                        newIndexedValueTreeNode.EnumerationComplete = true;
+                    }
+                    else
+                    {
+                        newIndexedValueTreeNode.CurrentValue = newIndexedValueTreeNode.Enumerator.Current;
+                    }
+                }
+            }
+        }
+
+        JToken GetScalarValueForPathSegment(IPathSegment pathSegment, IEnumerable<JToken> data)
         {
             var jObject = data as JObject;
 
             JToken returnVal = null;
-            JProperty property = jObject?.Property(pathSegment.ActualSegment);
+            var property = jObject?.Property(pathSegment.ActualSegment);
 
             if (property != null)
             {
@@ -362,12 +358,12 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
             return returnVal;
         }
 
-        private IEnumerable GetEnumerableValueForPathSegment(IPathSegment pathSegment, IEnumerable<JToken> data)
+        IEnumerable GetEnumerableValueForPathSegment(IPathSegment pathSegment, IEnumerable<JToken> data)
         {
             var jObject = data as JObject;
 
             IEnumerable returnVal = null;
-            JProperty property = jObject?.Property(pathSegment.ActualSegment);
+            var property = jObject?.Property(pathSegment.ActualSegment);
 
             if (property != null && property.IsEnumerable())
             {
@@ -388,9 +384,9 @@ namespace Unlimited.Framework.Converters.Graph.String.Json
         {
             foreach (IPath path in paths)
             {
-                List<IPathSegment> indexedPathSegment = indexedPathSegments[path];
-                List<string> complexKey = indexedPathSegment.Select(p => p.ActualSegment).ToList();
-                IndexedPathSegmentTreeNode<string> IndexedPathSegmentTreeNode = rootIndexedValueTreeNode[complexKey];
+                var indexedPathSegment = indexedPathSegments[path];
+                var complexKey = indexedPathSegment.Select(p => p.ActualSegment).ToList();
+                var IndexedPathSegmentTreeNode = rootIndexedValueTreeNode[complexKey];
                 results[path].Add(IndexedPathSegmentTreeNode.CurrentValue.ToString());
             }
         }

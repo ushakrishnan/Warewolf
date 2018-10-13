@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DeleteScheduledResourceTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -42,7 +42,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -59,7 +59,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteResourceTest_ServiceName()
         {
             SchedulerTestBaseStaticMethods.SaveScheduledResourceTest_ServiceName("DeleteScheduledResourceService", new DeleteScheduledResource());
@@ -67,7 +67,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteResourcesReturnsDynamicService()
         {
             SchedulerTestBaseStaticMethods.GetScheduledResourcesReturnsDynamicService(new DeleteScheduledResource());
@@ -75,7 +75,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ScheduledResource_DeleteValid()
         {
             var output = RunOutput(true);
@@ -84,7 +84,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_Delete")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ScheduledResource_DeleteInValid()
         {
             var output = RunOutput(false);
@@ -92,7 +92,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No Resource Selected", output.Message.ToString());
         }
 
-        private ExecuteMessage RunOutput(bool expectCorrectInput)
+        ExecuteMessage RunOutput(bool expectCorrectInput)
         {
             var esbMethod = new DeleteScheduledResource();
             var factory = new Mock<IServerSchedulerFactory>();
@@ -106,12 +106,12 @@ namespace Dev2.Tests.Runtime.Services
             var security = new Mock<ISecurityWrapper>();
             esbMethod.SecurityWrapper = security.Object;
 
-            Dictionary<string, StringBuilder> inp = new Dictionary<string, StringBuilder>();
+            var inp = new Dictionary<string, StringBuilder>();
             factory.Setup(
                 a =>
                 a.CreateModel(GlobalConstants.SchedulerFolderId, It.IsAny<ISecurityWrapper>())).Returns(model.Object);
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
-            if(expectCorrectInput)
+            var serialiser = new Dev2JsonSerializer();
+            if (expectCorrectInput)
             {
 
                 model.Setup(a => a.DeleteSchedule(It.IsAny<ScheduledResource>())).Verifiable();
@@ -121,7 +121,7 @@ namespace Dev2.Tests.Runtime.Services
             esbMethod.SchedulerFactory = factory.Object;
 
             var output = esbMethod.Execute(inp, ws.Object);
-            if(expectCorrectInput)
+            if (expectCorrectInput)
             {
                 model.Verify(a => a.DeleteSchedule(It.IsAny<ScheduledResource>()));
             }

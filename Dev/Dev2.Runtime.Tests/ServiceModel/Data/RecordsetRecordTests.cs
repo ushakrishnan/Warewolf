@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,14 +27,14 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
     {
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ConstructorWithNoParametersExpectedCreatesEmpty()
         {
             var record = new RecordsetRecord();
             Assert.AreEqual(0, record.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void ConstructorWithNullExpectedThrowsArgumentNullException()
         {
@@ -43,7 +43,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ConstructorWithRecordsetCellsExpectedAddsRecordsetCells()
         {
             var cells = new[]
@@ -61,7 +61,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region AddRange
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void AddRangeWithNullExpectedThrowsArgumentNullException()
         {
@@ -69,7 +69,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             record.AddRange(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void AddRangeWithRecordsetCellsExpectedAddsRecordsetCells()
         {
             var record = new RecordsetRecord();
@@ -87,7 +87,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Add
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void AddWithNullExpectedThrowsArgumentNullException()
         {
@@ -95,7 +95,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             record.Add(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void AddWithRecordsetCellExpectedAddsRecordsetCell()
         {
             var record = new RecordsetRecord();
@@ -110,7 +110,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Clear
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ClearWithCellsExpectedRemovesCells()
         {
             var record = new RecordsetRecord(new[]
@@ -127,7 +127,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region JsonSerialization
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void JsonSerializationExpectedDoesNotImplementIEnumerable()
         {
             var record = new RecordsetRecord();
@@ -135,7 +135,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.IsNull(enumerable);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void JsonSerializationExpectedIncludesLabel()
         {
             var record = new RecordsetRecord

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,16 +29,13 @@ namespace Dev2.Studio.Core
             {
                 return String.Empty;
             }
-            string displayName = resourceModel.ResourceName;
-            if (resourceModel.Environment != null && !resourceModel.Environment.IsLocalHost)
+            var displayName = resourceModel.ResourceName;
+            if (resourceModel.Environment != null && !resourceModel.Environment.IsLocalHost && !resourceModel.Environment.Name.Contains("localhost"))
             {
-                if (!resourceModel.Environment.Name.Contains("localhost"))
-                {
-                    displayName += " - " + resourceModel.Environment.Name.Replace("(Connected)", "");
-                }
-                
+                displayName += " - " + resourceModel.Environment.Name.Replace("(Connected)", "");
             }
-            if(!resourceModel.IsWorkflowSaved)
+
+            if (!resourceModel.IsWorkflowSaved)
             {
                 displayName += " *";
             }

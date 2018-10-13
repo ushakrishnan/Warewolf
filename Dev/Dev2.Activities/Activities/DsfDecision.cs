@@ -1,9 +1,20 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Dev2.Activities.Debug;
+using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Data.Decisions.Operations;
@@ -16,30 +27,75 @@ using Newtonsoft.Json;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
-using Dev2.Common;
+using System.Activities.Statements;
+using Dev2.Common.State;
+using Dev2.Communication;
+using Dev2.Utilities;
 
 namespace Dev2.Activities
 {
-    public class DsfDecision : DsfActivityAbstract<string>
+    public class DsfDecision : DsfActivityAbstract<string>, IEquatable<DsfDecision>, IAdapterActivity
     {
-        
         public IEnumerable<IDev2Activity> TrueArm { get; set; }
 
         public IEnumerable<IDev2Activity> FalseArm { get; set; }
         public Dev2DecisionStack Conditions { get; set; }
-        
+
         readonly DsfFlowDecisionActivity _inner;
-        #region Overrides of DsfNativeActivity<string>
+
         public DsfDecision(DsfFlowDecisionActivity inner) : this()
         {
             _inner = inner;
             UniqueID = _inner.UniqueID;
         }
+        public override string GetDisplayName() => Conditions.DisplayText;
+
+        public override IEnumerable<IDev2Activity> GetNextNodes()
+        {
+            var nextNodes = new List<IDev2Activity>();
+            if (TrueArm != null)
+            {
+                nextNodes.Add(TrueArm?.FirstOrDefault());
+            }
+            if (FalseArm != null)
+            {
+                nextNodes.Add(FalseArm?.FirstOrDefault());
+            }
+            return nextNodes;
+        }
+
+        public override List<(string Description, string Key, string SourceUniqueId, string DestinationUniqueId)> ArmConnectors()
+        {
+            var armConnectors = new List<(string Description, string Key, string SourceUniqueId, string DestinationUniqueId)>();
+            if (TrueArm != null)
+            {
+                foreach (var next in TrueArm)
+                {
+                    armConnectors.Add(($"{GetDisplayName()}: TRUE -> {next.GetDisplayName()}", "True", UniqueID, next.UniqueID));
+                }
+            }
+            else
+            {
+                armConnectors.Add(($"{GetDisplayName()}: TRUE -> ", "True", UniqueID, Guid.Empty.ToString()));
+            }
+            if (FalseArm != null)
+            {
+                foreach (var next in FalseArm)
+                {
+                    armConnectors.Add(($"{GetDisplayName()}: FALSE -> {next.GetDisplayName()}", "False", UniqueID, next.UniqueID));
+                }
+            }
+            else
+            {
+                armConnectors.Add(($"{GetDisplayName()}: FALSE -> ", "False", UniqueID, Guid.Empty.ToString()));
+            }
+            return armConnectors;
+        }
 
         public DsfDecision()
         : base("Decision") { }
         /// <summary>
-        /// When overridden runs the activity's execution logic 
+        /// When overridden runs the activity's execution logic
         /// </summary>
         /// <param name="context">The context to be used.</param>
         protected override void OnExecute(NativeActivityContext context)
@@ -54,17 +110,49 @@ namespace Dev2.Activities
         {
         }
 
-        public override IList<DsfForEachItem> GetForEachInputs()
+        public override IList<DsfForEachItem> GetForEachInputs() => null;
+
+        public override IList<DsfForEachItem> GetForEachOutputs() => null;
+
+        public override IEnumerable<StateVariable> GetState()
         {
-            return null;
+            var serializer = new Dev2JsonSerializer();
+            return new[] {
+                new StateVariable
+                {
+                    Name = "Conditions",
+                    Value = serializer.Serialize(Conditions),
+                    Type = StateVariable.StateType.Input
+                },
+                 new StateVariable
+                {
+                    Name = "And",
+                    Value = And.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                 new StateVariable
+                {
+                    Name = "Result",
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                },
+                new StateVariable
+                {
+                    Name="TrueArm",
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(TrueArm?.ToList()),
+                    Type = StateVariable.StateType.Output
+                }
+                ,
+                new StateVariable
+                {
+                    Name="FalseArm",
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(FalseArm?.ToList()),
+                    Type = StateVariable.StateType.Output
+                }
+            };
         }
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return null;
-        }
-
-        private Dev2Decision ParseDecision(IExecutionEnvironment env, Dev2Decision decision, bool errorIfNull)
+        Dev2Decision ParseDecision(IExecutionEnvironment env, Dev2Decision decision, bool errorIfNull)
         {
             var col1 = env.EvalAsList(decision.Col1, 0, errorIfNull);
             var col2 = env.EvalAsList(decision.Col2 ?? "", 0, errorIfNull);
@@ -72,8 +160,7 @@ namespace Dev2.Activities
             return new Dev2Decision { Cols1 = col1, Cols2 = col2, Cols3 = col3, EvaluationFn = decision.EvaluationFn };
         }
 
-        #region Overrides of DsfNativeActivity<string>
-        private IDev2Activity ExecuteDecision(IDSFDataObject dataObject)
+        IDev2Activity ExecuteDecision(IDSFDataObject dataObject)
         {
             InitializeDebug(dataObject);
 
@@ -112,7 +199,7 @@ namespace Dev2.Activities
                     {
                         ret.Add(factory.FetchDecisionFunction(a.EvaluationFn).Invoke(new[] { iter.FetchNextValue(c1), iter.FetchNextValue(c2), iter.FetchNextValue(c3) }));
                     }
-                    catch(Exception)
+                    catch (Exception)
                     {
                         if (errorIfNull)
                         {
@@ -130,7 +217,7 @@ namespace Dev2.Activities
             {
                 if (And)
                 {
-                    if(results.Any(b => !b))
+                    if (results.Any(b => !b))
                     {
                         resultval = false;
                     }
@@ -141,7 +228,7 @@ namespace Dev2.Activities
                 }
             }
 
-            Result = GetResultString(resultval.ToString(),Conditions);
+            Result = GetResultString(resultval.ToString(), Conditions);
             if (dataObject.IsDebugMode())
             {
                 _debugOutputs = GetDebugOutputs(resultval.ToString());
@@ -166,11 +253,13 @@ namespace Dev2.Activities
             return null;
         }
 
-        #endregion
+        public override FlowNode GetFlowNode() => new FlowDecision(_inner);
+
+        public IFlowNodeActivity GetInnerNode() => _inner;
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-            ErrorResultTO allErrors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
             try
             {
                 var activity = ExecuteDecision(dataObject);
@@ -192,32 +281,24 @@ namespace Dev2.Activities
                 }
                 if (dataObject.IsDebugMode())
                 {
-
                     DispatchDebugState(dataObject, StateType.After, update);
                     _debugOutputs = new List<DebugItem>();
                 }
-            }            
+            }
         }
 
-        #region Overrides of DsfNativeActivity<string>
-
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
-        {
-            return _debugInputs;
-        }
-
-        #endregion
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update) => _debugInputs;
 
         List<DebugItem> CreateDebugInputs(IExecutionEnvironment env)
         {
-            List<IDebugItem> result = new List<IDebugItem>();
+            var result = new List<IDebugItem>();
 
             var allErrors = new ErrorResultTO();
 
             try
             {
-                Dev2DecisionStack dds = Conditions;
-                string userModel = dds.GenerateUserFriendlyModel(env, dds.Mode, out ErrorResultTO error);
+                var dds = Conditions;
+                var userModel = dds.GenerateUserFriendlyModel(env, dds.Mode, out ErrorResultTO error);
                 allErrors.MergeErrors(error);
 
                 foreach (Dev2Decision dev2Decision in dds.TheStack)
@@ -267,14 +348,7 @@ namespace Dev2.Activities
             return val;
         }
 
-        #region Overrides of DsfNativeActivity<string>
-
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
-        {
-            return _debugOutputs;
-        }
-
-        #endregion
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update) => _debugOutputs;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new string Result { get; set; }
@@ -282,20 +356,18 @@ namespace Dev2.Activities
         List<DebugItem> GetDebugOutputs(string theResult)
         {
             var result = new List<DebugItem>();
-            string resultString = theResult;
-            DebugItem itemToAdd = new DebugItem();
+            var resultString = theResult;
+            var itemToAdd = new DebugItem();
             var dds = Conditions;
 
             try
             {
                 resultString = GetResultString(theResult, dds);
-                
+
                 itemToAdd.AddRange(new DebugItemStaticDataParams(resultString, "").GetDebugItemResult());
                 result.Add(itemToAdd);
             }
-            
             catch (Exception)
-            
             {
                 itemToAdd.AddRange(new DebugItemStaticDataParams(resultString, "").GetDebugItemResult());
                 result.Add(itemToAdd);
@@ -305,7 +377,7 @@ namespace Dev2.Activities
             return result;
         }
 
-        private static string GetResultString(string theResult,  Dev2DecisionStack dds)
+        static string GetResultString(string theResult, Dev2DecisionStack dds)
         {
             var resultString = theResult;
             if (theResult == "True")
@@ -353,8 +425,7 @@ namespace Dev2.Activities
 
                 itemResults.ForEach(a =>
                 {
-                    var found = result.SelectMany(r => r.FetchResultsList())
-                                      .SingleOrDefault(r => r.Variable.Equals(a.Variable));
+                    var found = result.SelectMany(r => r.FetchResultsList()).SingleOrDefault(r => r.Variable.Equals(a.Variable));
                     if (found != null)
                     {
                         allReadyAdded.Add(a);
@@ -373,24 +444,78 @@ namespace Dev2.Activities
                 }
             }
         }
-        #endregion
 
-        public override List<string> GetOutputs()
-        {
-            return new List<string>();
-        }
+        public override List<string> GetOutputs() => new List<string>();
 
         public bool And { get; set; }
-    }
 
+        public bool Equals(DsfDecision other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+            var areConditionsEqual = CommonEqualityOps.AreObjectsEqual(Conditions, other.Conditions);
+            if (!areConditionsEqual)
+            {
+                return false;
+            }
+            return string.Equals(DisplayName, other.DisplayName)
+                && string.Equals(Result, other.Result)
+                && And == other.And
+                && Equals(UniqueID, other.UniqueID);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfDecision)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Conditions != null ? Conditions.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ And.GetHashCode();
+                return hashCode;
+            }
+        }
+    }
 
     public class TestMockDecisionStep : DsfActivityAbstract<string>
     {
-        private readonly DsfDecision _dsfDecision;
+        readonly DsfDecision _dsfDecision;
 
-        
-        public TestMockDecisionStep():base("Mock Decision")
-        {            
+        public TestMockDecisionStep() : base("Mock Decision")
+        {
+        }
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            //This Activity is only used as part of the Warewolf Test Exection Framework and is not used in normal exeuction.
+            return new StateVariable[0];
         }
 
         public TestMockDecisionStep(DsfDecision dsfDecision)
@@ -401,8 +526,6 @@ namespace Dev2.Activities
         }
 
         public string NameOfArmToReturn { get; set; }
-
-        #region Overrides of DsfNativeActivity<string>
 
         protected override void OnExecute(NativeActivityContext context)
         {
@@ -416,15 +539,9 @@ namespace Dev2.Activities
         {
         }
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return null;
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => null;
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return null;
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => null;
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
@@ -434,7 +551,7 @@ namespace Dev2.Activities
             {
                 DispatchDebugState(dataObject, StateType.Before, 0, null, null, true);
             }
-            bool hasResult = false;
+            var hasResult = false;
             if (NameOfArmToReturn == falseArmText)
             {
                 NextNodes = _dsfDecision.FalseArm;
@@ -469,11 +586,20 @@ namespace Dev2.Activities
             }
         }
 
-        public override List<string> GetOutputs()
-        {
-            return new List<string>();
-        }
+        public override List<string> GetOutputs() => new List<string>();
 
-        #endregion
+
+        public bool Equals(TestMockDecisionStep other)
+        {
+            return ReferenceEquals(this, other);
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is TestMockDecisionStep instance)
+            {
+                return Equals(instance);
+            }
+            return false;
+        }
     }
 }

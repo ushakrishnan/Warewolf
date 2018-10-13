@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,27 +36,27 @@ namespace Warewolf.Studio.ViewModels
     {
         public IAsyncWorker AsyncWorker { get; set; }
         ISharepointServerSource _sharePointServiceSource;
-        private readonly IServer _environment;
-        private readonly ISharePointSourceModel _updateManager;
-        private string _serverName;
-        private bool _isWindows;
-        private bool _isUser;
-        private string _userName;
-        private string _password;
-        private string _testResult;
-        private IContextualResourceModel _resource;
-        private AuthenticationType _authenticationType;
-        private CancellationTokenSource _token;
-        private bool _testComplete;
-        private bool _isLoading;
-        private bool _testPassed;
-        private string _resourceName;
-        private bool _testing;
-        private string _headerText;
-        private string _testMessage;
-        private bool _testFailed;
-        private string _path;
-        private bool _isDisposed;
+        readonly IServer _environment;
+        readonly ISharePointSourceModel _updateManager;
+        string _serverName;
+        bool _isWindows;
+        bool _isUser;
+        string _userName;
+        string _password;
+        string _testResult;
+        IContextualResourceModel _resource;
+        AuthenticationType _authenticationType;
+        CancellationTokenSource _token;
+        bool _testComplete;
+        bool _isLoading;
+        bool _testPassed;
+        string _resourceName;
+        bool _testing;
+        string _headerText;
+        string _testMessage;
+        bool _testFailed;
+        string _path;
+        bool _isDisposed;
         readonly Task<IRequestServiceNameViewModel> _requestServiceNameViewModel;
 
         public SharepointServerSourceViewModel(ISharePointSourceModel updateManager, IEventAggregator aggregator, IAsyncWorker asyncWorker, IServer environment)
@@ -124,32 +124,24 @@ namespace Warewolf.Studio.ViewModels
             Header = (_sharePointServiceSource == null ? ResourceName : _sharePointServiceSource.Name).Trim();
         }
 
-        public override bool CanSave()
-        {
-            return TestPassed;
-        }
+        public override bool CanSave() => TestPassed;
 
-        bool CanCancelTest()
-        {
-            return Testing;
-        }
+        bool CanCancelTest() => Testing;
 
         void CancelTest()
         {
-            if (_token != null)
+            if (_token != null && !_token.IsCancellationRequested && _token.Token.CanBeCanceled)
             {
-                if (!_token.IsCancellationRequested && _token.Token.CanBeCanceled)
+                _token.Cancel();
+                Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    _token.Cancel();
-                    Dispatcher.CurrentDispatcher.Invoke(() =>
-                    {
-                        Testing = false;
-                        TestFailed = true;
-                        TestPassed = false;
-                        TestMessage = "Test Cancelled";
-                    });
-                }
+                    Testing = false;
+                    TestFailed = true;
+                    TestPassed = false;
+                    TestMessage = "Test Cancelled";
+                });
             }
+
         }
 
         public bool CanTest()
@@ -176,26 +168,20 @@ namespace Warewolf.Studio.ViewModels
             mainViewModel?.HelpViewModel.UpdateHelpText(helpText);
         }
 
-        public override void FromModel(ISharepointServerSource sharepointServerSource)
+        public override void FromModel(ISharepointServerSource source)
         {
-            ResourceName = sharepointServerSource.Name;
-            AuthenticationType = sharepointServerSource.AuthenticationType;
-            UserName = sharepointServerSource.UserName;
-            ServerName = sharepointServerSource.Server;
-            Password = sharepointServerSource.Password;
-            IsSharepointOnline = sharepointServerSource.IsSharepointOnline;
+            ResourceName = source.Name;
+            AuthenticationType = source.AuthenticationType;
+            UserName = source.UserName;
+            ServerName = source.Server;
+            Password = source.Password;
+            IsSharepointOnline = source.IsSharepointOnline;
         }
 
         public override string Name
         {
-            get
-            {
-                return ResourceName;
-            }
-            set
-            {
-                ResourceName = value;
-            }
+            get => ResourceName;
+            set => ResourceName = value;
         }
 
         public string ResourceName
@@ -217,17 +203,17 @@ namespace Warewolf.Studio.ViewModels
         {
             if (_sharePointServiceSource == null)
             {
-                var res = RequestServiceNameViewModel.ShowSaveDialog();
+                var res = GetRequestServiceNameViewModel().ShowSaveDialog();
 
                 if (res == MessageBoxResult.OK)
                 {
-                    ResourceName = RequestServiceNameViewModel.ResourceName.Name;
+                    ResourceName = GetRequestServiceNameViewModel().ResourceName.Name;
                     var src = ToSource();
-                    src.Path = RequestServiceNameViewModel.ResourceName.Path ?? RequestServiceNameViewModel.ResourceName.Name;
+                    src.Path = GetRequestServiceNameViewModel().ResourceName.Path ?? GetRequestServiceNameViewModel().ResourceName.Name;
                     Save(src);
-                    if (RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+                    if (GetRequestServiceNameViewModel().SingleEnvironmentExplorerViewModel != null)
                     {
-                        AfterSave(RequestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
+                        AfterSave(GetRequestServiceNameViewModel().SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                     }
 
                     Item = src;
@@ -286,18 +272,15 @@ namespace Warewolf.Studio.ViewModels
             IsSharepointOnline = sharepointServerSource.IsSharepointOnline;
         }
 
-        ISharepointServerSource ToNewSource()
+        ISharepointServerSource ToNewSource() => new SharePointServiceSourceDefinition
         {
-            return new SharePointServiceSourceDefinition
-            {
-                AuthenticationType = AuthenticationType,
-                Server = ServerName,
-                Password = Password,
-                UserName = UserName,
-                Name = ResourceName,
-                Id = _sharePointServiceSource?.Id ?? Guid.NewGuid()
-            };
-        }
+            AuthenticationType = AuthenticationType,
+            Server = ServerName,
+            Password = Password,
+            UserName = UserName,
+            Name = ResourceName,
+            Id = _sharePointServiceSource?.Id ?? Guid.NewGuid()
+        };
 
         ISharepointServerSource ToSource()
         {
@@ -346,20 +329,17 @@ namespace Warewolf.Studio.ViewModels
             };
         }
 
-        IRequestServiceNameViewModel RequestServiceNameViewModel
+        private IRequestServiceNameViewModel GetRequestServiceNameViewModel()
         {
-            get
+            _requestServiceNameViewModel.Wait();
+            if (_requestServiceNameViewModel.Exception == null)
             {
-                _requestServiceNameViewModel.Wait();
-                if (_requestServiceNameViewModel.Exception == null)
-                {
-                    return _requestServiceNameViewModel.Result;
-                }
-                
-                else
-                {
-                    throw _requestServiceNameViewModel.Exception;
-                }
+                return _requestServiceNameViewModel.Result;
+            }
+
+            else
+            {
+                throw _requestServiceNameViewModel.Exception;
             }
         }
 

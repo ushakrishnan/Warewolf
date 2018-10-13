@@ -10,32 +10,25 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.Practices.Prism.Commands;
 
-
-
-
-
 namespace Warewolf.Studio.ViewModels
 {
-    [ExcludeFromCodeCoverage] //Excluded as this is purely for visual effect
     public class DummyServiceTest : IServiceTestModel, INewServiceResource
     {
-#pragma warning disable 649
-        private readonly bool _isNewTest;
-        private ICommand _newCommand;
-#pragma warning restore 649
+        bool _isNewTest;
+        ICommand _newCommand;
 
         public DummyServiceTest(Action<bool> createNewAction)
         {
             NameForDisplay = "'";
             NeverRunString = "Never run";
             _isNewTest = true;
-            _newCommand = new DelegateCommand(() => createNewAction(false));
+            _newCommand = new DelegateCommand(() => createNewAction?.Invoke(false));
             TestSteps = new ObservableCollection<IServiceTestStep>();
         }
 
         #region Implementation of INewServiceResource
 
-        
+
         public ICommand CreateTestCommand
         {
             get
@@ -63,17 +56,10 @@ namespace Warewolf.Studio.ViewModels
         public bool NoErrorExpected { get; set; }
         public bool ErrorExpected { get; set; }
         public string ErrorContainsText { get; set; }
-
         public bool IsNewTest
         {
-            get
-            {
-                return _isNewTest;
-            }
-            set
-            {
-
-            }
+            get => _isNewTest;
+            set => _isNewTest = value;
         }
         public bool NewTest { get; set; }
         public bool IsTestRunning { get; set; }
@@ -81,23 +67,8 @@ namespace Warewolf.Studio.ViewModels
         public bool LastRunDateVisibility { get; set; }
         public bool NeverRunStringVisibility { get; set; }
         public IList<IDebugState> DebugForTest { get; set; }
-
         public string DuplicateTestTooltip { get; set; }
-
         public ObservableCollection<IServiceTestStep> TestSteps { get; set; }
-        public IServiceTestStep SelectedTestStep { get; set; }
-
-        public void SetItem(IServiceTestModel model)
-        {
-
-        }
-
-        public IServiceTestStep AddTestStep(string activityUniqueId, string activityDisplayName, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs)=>AddTestStep(activityUniqueId, activityDisplayName, activityTypeName, serviceTestOutputs, StepType.Mock);
-        public IServiceTestStep AddTestStep(string activityUniqueId, string activityDisplayName, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs, StepType stepType)
-        {
-            return null;
-        }
-
         public bool IsTestSelected { get; set; }
         public bool IsTestLoading { get; set; }
         public bool TestPassed { get; set; }
@@ -115,28 +86,21 @@ namespace Warewolf.Studio.ViewModels
         #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
+        public IServiceTestStep AddDebugItemTestStep(IDebugState debugItemContent, ObservableCollection<IServiceTestOutput> serviceTestOutputs) => AddTestStep(debugItemContent.ID.ToString(), debugItemContent.DisplayName, debugItemContent.ActualType, serviceTestOutputs, StepType.Mock);
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
         #region Implementation of ICloneable
-
-        /// <summary>
-        /// Creates a new object that is a copy of the current instance.
-        /// </summary>
-        /// <returns>
-        /// A new object that is a copy of this instance.
-        /// </returns>
-        public IServiceTestModel Clone()
-        {
-            return this;
-        }
+        
+        public IServiceTestModel Clone() => this;
+        public void SetItem(IServiceTestModel model) => throw new NotImplementedException();
+        public void ResetOldTestName() => throw new NotImplementedException();
+        public IServiceTestStep AddTestStep(string activityUniqueId, string activityDisplayName, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs) => throw new NotImplementedException();
+        public IServiceTestStep AddTestStep(string activityUniqueId, string activityDisplayName, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs, StepType stepType) => throw new NotImplementedException();
 
         #endregion
     }
 
-    internal interface INewServiceResource
+    interface INewServiceResource
     {
         ICommand CreateTestCommand { get; set; }
     }

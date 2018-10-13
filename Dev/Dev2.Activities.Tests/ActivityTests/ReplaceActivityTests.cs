@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,12 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
+using System.Linq;
 using ActivityUnitTests;
 using Dev2.Common;
+using Dev2.Common.State;
 using Dev2.Interfaces;
+using Dev2.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -44,7 +47,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceSpecialCharsDataListWithData, ActivityStrings.ReplaceSpecialCharsDataListShape, "[[SpecialChar]]", @"\*+?|{[()^$# ", "It Worked", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"1";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
 
@@ -68,7 +71,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[recset1(*).field1]],[[Customers(*).FirstName]]", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"2";
 
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -94,7 +97,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[recset1(*).field1]], [[Customers(*).FirstName]]", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"2";
 
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -120,7 +123,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[CompanyName]]", "Dev2", "TheUnlimted", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"1";
 
 
@@ -145,7 +148,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[CompanyName]]", "dev2", "TheUnlimted", "[[res]]", true);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"0";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             if (string.IsNullOrEmpty(error))
@@ -167,7 +170,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[recset1(*).field1]],[[Customers(*).FirstName]]", "Barney", "Wallis", "[[res]]", true);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"1";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             if (string.IsNullOrEmpty(error))
@@ -193,7 +196,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[recset1(1).field1]],[[Customers(2).FirstName]]", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"1";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             if (string.IsNullOrEmpty(error))
@@ -219,7 +222,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(@"<DataList><Thing>testlol\</Thing><Res></Res></DataList>", @"<DataList><Thing></Thing><Res></Res></DataList>", @"[[Thing]]", @"lol\", @"Wallis", "[[Res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"1";
             GetScalarValueFromEnvironment(result.Environment, "Res", out string actual, out string error);
 
@@ -244,7 +247,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData.Replace("f2r2", "barney"), ActivityStrings.ReplaceDataListShape, "[[recset1(*)]]", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"2";
 
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -274,7 +277,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "rawstringdata", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Please insert only variables into Fields To Search";
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
             // remove test datalist ;)
@@ -293,7 +296,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[recset1(-1).field1]]", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Recordset index [ -1 ] is not greater than zero";
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
@@ -314,7 +317,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.ReplaceDataListShape, ActivityStrings.ReplaceDataListWithData, "[[recset1(0).field1]]", "Barney", "Wallis", "[[res]]", false);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"Recordset index [ 0 ] is not greater than zero";
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
             // remove test datalist ;)
@@ -496,11 +499,90 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(Result, dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("DsfReplaceActivity_Replace_Recordset_Fields")]
+        public void DsfReplaceActivity_TestingIsSingleValueRule()
+        {
+            SetupArguments(ActivityStrings.ReplaceDataListWithData, ActivityStrings.ReplaceDataListShape, "[[CompanyName]]", "Dev2", "TheUnlimted", "[[rec]],[[bob]]", false);
+
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
+
+            Assert.AreEqual(2, result.Environment.Errors.Count);
+            Assert.AreEqual("The result field only allows a single result\r\nScalar value { rec } is NULL", result.Environment.FetchErrors());
+        }
+
+
+        [TestMethod]
+        [TestCategory("DsfReplaceActivity_UpdateForEachOutputs")]
+        public void DsfReplaceActivity_GetState_Returns_Inputs_And_Outputs()
+        {
+            //------------Setup for test--------------------------
+            const string FieldsToSearch = "[[Numeric(1).num]]";
+            const string Find = "Up";
+            const string Result = "[[res]]";
+            const string ReplaceWith = "2";
+            var act = new DsfReplaceActivity { FieldsToSearch = FieldsToSearch, Find = Find, ReplaceWith = ReplaceWith, Result = Result };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(5, stateItems.Count());
+            var expectedResults = new[]
+            {
+                 new StateVariable
+                {
+                    Name ="FieldsToSearch",
+                    Type = StateVariable.StateType.Input,
+                    Value = act.FieldsToSearch
+                },
+                new StateVariable
+                {
+                    Name ="Find",
+                    Type = StateVariable.StateType.Input,
+                    Value = act.Find
+                },
+                new StateVariable
+                {
+                    Name ="ReplaceWith",
+                    Type = StateVariable.StateType.Input,
+                    Value = act.ReplaceWith
+                },
+                new StateVariable
+                {
+                    Name ="CaseMatch",
+                    Type = StateVariable.StateType.Input,
+                    Value = act.CaseMatch.ToString()
+                },
+                new StateVariable
+                {
+                    Name ="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = act.Result
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
 
 
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string fieldsToSearch, string find, string replaceWith, string result, bool caseMatch)
+        void SetupArguments(string currentDL, string testData, string fieldsToSearch, string find, string replaceWith, string result, bool caseMatch)
         {
             TestStartNode = new FlowStep
             {

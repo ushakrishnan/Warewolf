@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -67,17 +67,11 @@ namespace Dev2.Activities
     {
         #region Implementation of IGetSystemInformation
 
-        public string GetOperatingSystemInformation()
-        {
-            return GetOperatingSystemProperty("Caption");
-        }
+        public string GetOperatingSystemInformation() => GetOperatingSystemProperty("Caption");
 
-        public string GetOperatingSystemVersionInformation()
-        {
-            return GetOperatingSystemProperty("Version");
-        }
+        public string GetOperatingSystemVersionInformation() => GetOperatingSystemProperty("Version");
 
-        private string GetOperatingSystemProperty(string property)
+        string GetOperatingSystemProperty(string property)
         {
             var name = (from x in new ManagementObjectSearcher("SELECT * FROM Win32_OperatingSystem").Get().OfType<ManagementObject>()
                         select x.GetPropertyValue(property)).First();
@@ -103,14 +97,11 @@ namespace Dev2.Activities
             return stringBuilder.ToString();
         }
 
-        public string GetFullDateTimeInformation()
-        {
-            return DateTime.Now.ToString(GlobalConstants.GlobalDefaultNowFormat);
-        }
+        public virtual string GetFullDateTimeInformation() => DateTime.Now.ToString(GlobalConstants.PreviousGlobalDefaultNowFormat);
 
-        public string GetDateTimeFormatInformation()
+        public virtual string GetDateTimeFormatInformation()
         {
-            var dateTimeParser = new DateTimeParser();
+            var dateTimeParser = new Dev2DateTimeParser();
             var translatedDateTimeFormat = dateTimeParser.TranslateDotNetToDev2Format(CultureInfo.CurrentUICulture.DateTimeFormat.FullDateTimePattern, out string error);
             return translatedDateTimeFormat;
         }
@@ -193,7 +184,7 @@ namespace Dev2.Activities
             }
             return stringBuilder.ToString();
         }
-        
+
         public string GetVirtualMemoryTotalInformation()
         {
             var stringBuilder = new StringBuilder();
@@ -263,57 +254,51 @@ namespace Dev2.Activities
             return stringBuilder.ToString();
         }
 
-        public string GetUserRolesInformation(IIdentity currentIdentity = null)
+        public string GetUserRolesInformation() => GetUserRolesInformation(null);
+        public string GetUserRolesInformation(IIdentity currentIdentity)
         {
             var stringBuilder = new StringBuilder();
-            WindowsIdentity identity = currentIdentity as WindowsIdentity ?? WindowsIdentity.GetCurrent();
+            var identity = currentIdentity as WindowsIdentity ?? WindowsIdentity.GetCurrent();
 
             if (identity.Groups != null)
             {
                 foreach (var sid in identity.Groups)
                 {
-                    try
-                    {
-                        var translatedGroup = sid.Translate(typeof(NTAccount));
-                        var name = translatedGroup.Value;
-                        stringBuilder.AppendFormat(name + ",");
-                    }
-                    catch (Exception)
-                    {
-                        var winQuery = new ObjectQuery("SELECT * FROM Win32_Group WHERE SID='" + sid.Value + "'");
-                        var searcher = new ManagementObjectSearcher(winQuery);
-                        foreach (var o in searcher.Get())
-                        {
-                            var item = (ManagementObject)o;
-                            var name = Convert.ToString(item["Name"]);
-                            stringBuilder.AppendFormat(name + ",");
-                        }
-                    }
+                    stringBuilder = TryAppendGroup(stringBuilder, sid);
                 }
             }
             return stringBuilder.ToString().TrimEnd(',');
         }
 
-        public string GetUserNameInformation()
+        static StringBuilder TryAppendGroup(StringBuilder stringBuilder, IdentityReference sid)
         {
-            return Environment.UserName;
+            try
+            {
+                var translatedGroup = sid.Translate(typeof(NTAccount));
+                var name = translatedGroup.Value;
+                stringBuilder.AppendFormat(name + ",");
+            }
+            catch (Exception)
+            {
+                var winQuery = new ObjectQuery("SELECT * FROM Win32_Group WHERE SID='" + sid.Value + "'");
+                var searcher = new ManagementObjectSearcher(winQuery);
+                foreach (var o in searcher.Get())
+                {
+                    var item = (ManagementObject)o;
+                    var name = Convert.ToString(item["Name"]);
+                    stringBuilder.AppendFormat(name + ",");
+                }
+            }
+            return stringBuilder;
         }
 
-        public string GetDomainInformation()
-        {
-            return Environment.UserDomainName;
-        }
+        public string GetUserNameInformation() => Environment.UserName;
 
-        public string GetComputerName()
-        {
-            return Environment.MachineName;
-        }
+        public string GetDomainInformation() => Environment.UserDomainName;
 
+        public string GetComputerName() => Environment.MachineName;
 
-        public string GetWareWolfVersion()
-        {
-            return GetServerVersion.GetVersion();
-        }
+        public string GetWareWolfVersion() => GetServerVersion.GetVersion();
 
         public string GetWarewolfServerMemory()
         {
@@ -356,17 +341,11 @@ namespace Dev2.Activities
             return string.Join(",", macs);
         }
 
-        public string GetIPv4Adresses()
-        {
-            return GetIPAddress(AddressFamily.InterNetwork);
-        }
+        public string GetIPv4Adresses() => GetIPAddress(AddressFamily.InterNetwork);
 
-        public string GetIPv6Adresses()
-        {
-            return GetIPAddress(AddressFamily.InterNetworkV6);
-        }
+        public string GetIPv6Adresses() => GetIPAddress(AddressFamily.InterNetworkV6);
 
-        private string GetIPAddress(AddressFamily ipv)
+        string GetIPAddress(AddressFamily ipv)
         {
             var hosts = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
             var ips = (from host in hosts where host.AddressFamily == ipv select host.ToString()).ToList();

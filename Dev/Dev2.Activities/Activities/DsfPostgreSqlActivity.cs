@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Toolbox;
@@ -11,29 +12,29 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Postgre", "PostgreSQL", ToolType.Native, "8999E59B-38A3-43BB-A92F-6090C5C3EA80", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Database", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Database_PostgreSQL")]
-    public class DsfPostgreSqlActivity : DsfActivity
+    [ToolDescriptorInfo("Postgre", "PostgreSQL", ToolType.Native, "8999E59B-38A3-43BB-A92F-6090C5C3EA80", "Dev2.Activities", "1.0.0.0", "Legacy", "Database", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Database_PostgreSQL")]
+    public class DsfPostgreSqlActivity : DsfActivity,IEquatable<DsfPostgreSqlActivity>
     {
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IServiceExecution ServiceExecution { get; protected set; }
         public string ProcedureName { get; set; }
-   
+        public int? CommandTimeout { get; set; }
         public DsfPostgreSqlActivity()
         {
             Type = "PostgreSQL Database Connector";
             DisplayName = "PostgreSQL Database";
         }
 
-        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO errors, int update)
+        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
         {
             var execErrors = new ErrorResultTO();
 
-            errors = new ErrorResultTO();
-            errors.MergeErrors(execErrors);
+            tmpErrors = new ErrorResultTO();
+            tmpErrors.MergeErrors(execErrors);
 
             if (string.IsNullOrEmpty(ProcedureName))
             {
-                errors.AddError(ErrorResource.NoActionsInSelectedDB);
+                tmpErrors.AddError(ErrorResource.NoActionsInSelectedDB);
                 return;
             }
 
@@ -52,15 +53,21 @@ namespace Dev2.Activities
             {
                 dataObject.Environment.Errors.Add(error);
             }
-            errors.MergeErrors(execErrors);
+            tmpErrors.MergeErrors(execErrors);
         }
 
         protected override void BeforeExecutionStart(IDSFDataObject dataObject, ErrorResultTO tmpErrors)
         {
             base.BeforeExecutionStart(dataObject, tmpErrors);
-            ServiceExecution = new DatabaseServiceExecution(dataObject);
-            var databaseServiceExecution = (DatabaseServiceExecution) ServiceExecution;
-            databaseServiceExecution.ProcedureName = ProcedureName;
+            var databaseServiceExecution = new DatabaseServiceExecution(dataObject)
+            {
+                ProcedureName = ProcedureName,
+            };
+            if (CommandTimeout != null)
+            {
+                databaseServiceExecution.CommandTimeout = CommandTimeout.Value;
+            }
+            ServiceExecution = databaseServiceExecution;
             ServiceExecution.GetSource(SourceId);
             ServiceExecution.BeforeExecution(tmpErrors);
         }
@@ -71,9 +78,57 @@ namespace Dev2.Activities
             ServiceExecution.AfterExecution(tmpErrors);
         }
 
-        public override enFindMissingType GetFindMissingType()
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
+
+        public bool Equals(DsfPostgreSqlActivity other)
         {
-            return enFindMissingType.DataGridActivity;
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                && string.Equals(SourceId.ToString(), other.SourceId.ToString())
+                && string.Equals(ProcedureName, other.ProcedureName);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfPostgreSqlActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SourceId.GetHashCode());
+                if (ProcedureName != null)
+                {
+                    hashCode = (hashCode * 397) ^ (ProcedureName.GetHashCode());
+                }
+                return hashCode;
+            }
         }
     }
 }

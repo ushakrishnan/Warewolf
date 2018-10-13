@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -37,20 +37,11 @@ namespace Warewolf.Studio.ViewModels
 
         #region Implementation of IManageServerSourceModel
 
-        public IList<string> GetComputerNames()
-        {
-            return _queryProxy.GetComputerNames();
-        }
+        public IList<string> GetComputerNames() => _queryProxy.GetComputerNames();
 
-        public void TestConnection(IServerSource resource)
-        {
-            _updateRepository.TestConnection(resource);
-        }
+        public void TestConnection(IServerSource resource) => _updateRepository.TestConnection(resource);
 
-        public void Save(IServerSource resource)
-        {
-            _updateRepository.Save(resource);
-        }
+        public void Save(IServerSource toDbSource) => _updateRepository.Save(toDbSource);
 
         public string ServerName { get; set; }
 

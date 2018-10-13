@@ -24,7 +24,7 @@ namespace Dev2.Tests.Runtime.WF
     [TestClass]
     public class WfApplicationUtilsTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void OnCreation_ShouldConstruct()
         {
@@ -38,7 +38,7 @@ namespace Dev2.Tests.Runtime.WF
             Assert.IsNotNull(newWfApplicationUtils, "Cannot create new WfApplicationUtils object.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetDebugValues_GivenGiven2Values_ShouldReturnTwoDebugValueItems()
         {
@@ -58,7 +58,7 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(2, debugItems.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetDebugValues_GivenDuplicateDefs_ShouldReturnDistinctValues()
         {
@@ -78,7 +78,7 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(1, debugItems.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetDebugValues_GivenDefinations_ShouldAddBracketsToValues()
         {
@@ -99,7 +99,7 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(1, count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetDebugValues_GivenRecSetDefinations_ShouldAddRecNotationToValues()
         {
@@ -120,7 +120,7 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(1, count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void FindServiceShape_GivenNoResource_ShouldEmptyShape()
         {
@@ -138,7 +138,7 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual("<DataList></DataList>", shape);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void FindServiceShape_GivenResource_ShouldReturnShape()
         {
@@ -161,7 +161,7 @@ namespace Dev2.Tests.Runtime.WF
         }
 
         //DispatchDebugState(IDSFDataObject dataObject, StateType stateType, bool hasErrors, string existingErrors, out ErrorResultTO errors, DateTime? workflowStartTime = null, bool interrogateInputs = false, bool interrogateOutputs = false, bool durationVisible=true)
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void DispatchDebugState_GivenValidParams_ShouldNotThrowException()
         {
@@ -186,7 +186,7 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Test Result -----------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void DispatchDebugState_GivenValidParamsAndIsDebugMode_ShouldWriteUsingDebugDispactcher()
         {
@@ -202,7 +202,7 @@ namespace Dev2.Tests.Runtime.WF
             var mockObj = new Mock<IDSFDataObject>();
             mockObj.Setup(o => o.Environment).Returns(envMock.Object);
             mockObj.Setup(o => o.IsDebugMode()).Returns(true);
-            PrivateObject privateObject = new PrivateObject(wfApplicationUtils);
+            var privateObject = new PrivateObject(wfApplicationUtils);
             privateObject.SetField("_getDebugDispatcher", mock.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -224,9 +224,9 @@ namespace Dev2.Tests.Runtime.WF
 
             }
             //---------------Test Result -----------------------
-        } 
-        
-        [TestMethod]
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void DispatchDebugState_GivenValidParamsAndIntergoateInputs_ShouldWriteUsingDebugDispactcher()
         {
@@ -241,7 +241,7 @@ namespace Dev2.Tests.Runtime.WF
             var mockObj = new Mock<IDSFDataObject>();
             mockObj.Setup(o => o.Environment).Returns(envMock.Object);
             mockObj.Setup(o => o.IsDebugMode()).Returns(true);
-            PrivateObject privateObject = new PrivateObject(wfApplicationUtils);
+            var privateObject = new PrivateObject(wfApplicationUtils);
             privateObject.SetField("_getDebugDispatcher", mock.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -258,7 +258,7 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Test Result -----------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void DispatchDebugState_GivenValidParamsAndIntergoateOutputs_ShouldWriteUsingDebugDispactcher_GetResourceForDatalist()
         {
@@ -268,11 +268,11 @@ namespace Dev2.Tests.Runtime.WF
             {
                 DataList = new StringBuilder()
             });
-      
+
             IResource dropBoxSource = new DropBoxSource() { AppKey = "Key", AccessToken = "token" };
             dropBoxSource.DataList = new StringBuilder("<DataList></DataList>");
             catLog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(dropBoxSource);
-          
+
             var wfApplicationUtils = new WfApplicationUtils();
             var envMock = new Mock<IExecutionEnvironment>();
             var debugDispatcher = new Mock<IDebugDispatcher>();
@@ -283,7 +283,7 @@ namespace Dev2.Tests.Runtime.WF
             var mockObj = new Mock<IDSFDataObject>();
             mockObj.Setup(o => o.Environment).Returns(envMock.Object);
             mockObj.Setup(o => o.IsDebugMode()).Returns(true);
-            PrivateObject privateObject = new PrivateObject(wfApplicationUtils);
+            var privateObject = new PrivateObject(wfApplicationUtils);
             privateObject.SetField("_getDebugDispatcher", mock.Object);
             privateObject.SetField("_lazyCat", catLog.Object);
             //---------------Assert Precondition----------------

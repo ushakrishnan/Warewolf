@@ -11,7 +11,7 @@ namespace Warewolf.UI.Tests.Workflow
     [CodedUITest]
     public class Default_LayoutTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Default Layout")]
         public void Studio_Default_Layout_UITest()
         {
@@ -31,13 +31,17 @@ namespace Warewolf.UI.Tests.Workflow
                 Console.WriteLine("Actual Layout file: " + fileName);
                 File.Delete(layOutFile);
             }
+            Playback.Wait(2000);
             ExecuteCommand(fileName);
+            Playback.Wait(2000);
+            UIMap.SetPlaybackSettings();
+            UIMap.AssertStudioIsRunning();
             UIMap.WaitForControlVisible(UIMap.MainStudioWindow.DockManager);
             var dockWidthAfter = UIMap.MainStudioWindow.DockManager.Width;
             Assert.IsTrue(dockWidthBefore > dockWidthAfter, "Then Menu Bar did not Open/Close");
             Assert.IsTrue(UIMap.MainStudioWindow.SideMenuBar.LockunlockthemenuButton.UnlockMenuText.Exists, "Side Menu Bar is Open.");
         }
-        
+
         static void ExecuteCommand(string fileName)
         {
             try

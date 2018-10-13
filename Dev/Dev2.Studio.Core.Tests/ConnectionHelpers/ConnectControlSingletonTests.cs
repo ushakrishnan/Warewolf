@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,8 +22,6 @@ using Moq;
 namespace Dev2.Core.Tests.ConnectionHelpers
 {
     [TestClass]
-    
-    
     public class ConnectControlSingletonTests
     {
 
@@ -56,7 +54,7 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>();
+            var environmentModels = new List<IServer>();
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             //------------Execute Test---------------------------
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
@@ -74,9 +72,9 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             //------------Execute Test---------------------------
@@ -94,18 +92,18 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = false;
 
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
 
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
                 {
@@ -129,9 +127,9 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
@@ -157,18 +155,18 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = true;
 
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Connected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Connected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
 
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
@@ -192,18 +190,18 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = false;
 
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
             var selectedId = selectedServer.Server.EnvironmentID;
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
@@ -227,18 +225,18 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = true;
 
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Connected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Connected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
             var selectedId = selectedServer.Server.EnvironmentID;
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
@@ -263,8 +261,8 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(true).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(true).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             var environmentRepository = new Mock<IServerRepository>();
             environmentRepository.Setup(e => e.All()).Returns(environmentModels);
@@ -291,22 +289,22 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             var server2 = Guid.NewGuid();
             var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             var environmentRepository = new Mock<IServerRepository>();
             var environments = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false, new Uri("http://azureprivatecloud/machine1:3142")).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false, new Uri("http://azureprivatecloud/machine2:3142")).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false, new Uri("http://azureprivatecloud/machine1:3142")).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false, new Uri("http://azureprivatecloud/machine2:3142")).Object, new Mock<IResourceRepository>().Object, false)
                 };
             environmentRepository.Setup(e => e.All()).Returns(environments);
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedIndex = -1;
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
                 actualConnectedState = arg.ConnectedStatus;
@@ -336,22 +334,22 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             var server2 = Guid.NewGuid();
             var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             var environmentRepository = new Mock<IServerRepository>();
             var environments = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Anonymous).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Anonymous).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false)
                 };
             environmentRepository.Setup(e => e.All()).Returns(environments);
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedIndex = -1;
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
                 actualConnectedState = arg.ConnectedStatus;
@@ -381,14 +379,14 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             var server2 = Guid.NewGuid();
             var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false,new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false,new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false,new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false,new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false)
                 };
             var environmentRepository = new Mock<IServerRepository>();
             var environments = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false, new Uri("http://localhost:3142/dsf"),AuthenticationType.Public).Object, new Mock<IResourceRepository>().Object, false)
                 };
             environmentRepository.Setup(e => e.All()).Returns(environments);
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
@@ -413,14 +411,14 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             var server2 = Guid.NewGuid();
             var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(true).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(true).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             var environmentRepository = new Mock<IServerRepository>();
             var environments = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, server1, CreateConnection(false, new Uri("http://azureprivatecloud/machine1:3142")).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, server2, CreateConnection(false, new Uri("http://azureprivatecloud/machine2:3142")).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, server1, CommonSetupHelper.CreateConnection(false, new Uri("http://azureprivatecloud/machine1:3142")).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, server2, CommonSetupHelper.CreateConnection(false, new Uri("http://azureprivatecloud/machine2:3142")).Object, new Mock<IResourceRepository>().Object, false)
                 };
             environmentRepository.Setup(e => e.All()).Returns(environments);
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
@@ -445,8 +443,8 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             var environmentRepository = new Mock<IServerRepository>();
             var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(true).Object, new Mock<IResourceRepository>().Object, false),
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(true).Object, new Mock<IResourceRepository>().Object, false),
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
@@ -472,18 +470,18 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = false;
 
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
             var selectedId = selectedServer.Server.EnvironmentID;
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
@@ -507,18 +505,18 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = true;
 
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Connected;
-            bool actualDoCallback = false;
-            Guid environmentId = Guid.Empty;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Connected;
+            var actualDoCallback = false;
+            var environmentId = Guid.Empty;
             var selectedId = selectedServer.Server.EnvironmentID;
             connectControlSingleton.ConnectedStatusChanged += (sender, arg) =>
             {
@@ -542,16 +540,16 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = false;
 
-            Guid environmentId = Guid.Empty;
+            var environmentId = Guid.Empty;
             var selectedId = selectedServer.Server.EnvironmentID;
             var eventRaised = false;
             connectControlSingleton.ConnectedServerChanged += (sender, arg) =>
@@ -574,16 +572,16 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
             var environmentRepository = new Mock<IServerRepository>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             var selectedServer = connectControlSingleton.Servers[1];
             selectedServer.IsConnected = true;
 
-            Guid environmentId = Guid.NewGuid();
+            var environmentId = Guid.NewGuid();
             var eventRaised = false;
             var selectedId = selectedServer.Server.EnvironmentID;
             connectControlSingleton.ConnectedServerChanged += (sender, arg) =>
@@ -605,16 +603,16 @@ namespace Dev2.Core.Tests.ConnectionHelpers
         public void ConnectControlSingleton_SetConnectionState_WhenThereIsASubscriber_RaisesAnEvent()
         {
             var serverProvider = new Mock<IEnvironmentModelProvider>();
-            List<IServer> environmentModels = new List<IServer>
+            var environmentModels = new List<IServer>
                 {
-                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
+                    new TestServer(new Mock<IEventAggregator>().Object, Guid.NewGuid(), CommonSetupHelper.CreateConnection(false).Object, new Mock<IResourceRepository>().Object, false)
                 };
             serverProvider.Setup(s => s.Load()).Returns(environmentModels);
             var environmentRepository = new Mock<IServerRepository>();
             var expectedServerId = Guid.NewGuid();
             var actualId = Guid.Empty;
             const ConnectionEnumerations.ConnectedState expectedConnectedState = ConnectionEnumerations.ConnectedState.Busy;
-            ConnectionEnumerations.ConnectedState actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
+            var actualConnectedState = ConnectionEnumerations.ConnectedState.Disconnected;
             IConnectControlSingleton connectControlSingleton = new ConnectControlSingleton(serverProvider.Object, environmentRepository.Object);
             connectControlSingleton.ConnectedStatusChanged += (s, a) =>
             {
@@ -626,29 +624,6 @@ namespace Dev2.Core.Tests.ConnectionHelpers
             //------------Assert Results-------------------------
             Assert.AreEqual(expectedServerId, actualId);
             Assert.AreEqual(expectedConnectedState, actualConnectedState);
-        }
-        
-        static Mock<IEnvironmentConnection> CreateConnection(bool isConnected)
-        {
-            var conn = new Mock<IEnvironmentConnection>();
-            conn.Setup(c => c.ServerEvents).Returns(new Mock<IEventPublisher>().Object);
-            conn.Setup(connection => connection.WebServerUri).Returns(new Uri("http://localhost:3142"));
-            conn.Setup(connection => connection.AppServerUri).Returns(new Uri("http://localhost:3142/dsf"));
-            conn.Setup(c => c.IsConnected).Returns(isConnected);
-            conn.Setup(connection => connection.DisplayName).Returns("localhost");
-            return conn;
-        }
-
-        static Mock<IEnvironmentConnection> CreateConnection(bool isConnected, Uri uri,AuthenticationType auth = AuthenticationType.Windows)
-        {
-            var conn = new Mock<IEnvironmentConnection>();
-            conn.Setup(c => c.ServerEvents).Returns(new Mock<IEventPublisher>().Object);
-            conn.Setup(connection => connection.WebServerUri).Returns(uri);
-            conn.Setup(connection => connection.AppServerUri).Returns(uri);
-            conn.Setup(c => c.IsConnected).Returns(isConnected);
-            conn.Setup(connection => connection.DisplayName).Returns("localhost");
-            conn.Setup(a => a.AuthenticationType).Returns(auth);
-            return conn;
         }
     }
 }

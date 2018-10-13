@@ -54,32 +54,18 @@ namespace Dev2.Common.Interfaces
             }
             return Equals((NameValue)obj);
         }
-
-        /// <summary>
-        /// Serves as a hash function for a particular type. 
-        /// </summary>
-        /// <returns>
-        /// A hash code for the current <see cref="T:System.Object"/>.
-        /// </returns>
+        
         public override int GetHashCode()
         {
             unchecked
-            {
-                
-                return ((_name?.GetHashCode() ?? 0) * 397) ^ (_value?.GetHashCode() ?? 0);
-                
+            {                
+                return ((_name?.GetHashCode() ?? 0) * 397) ^ (_value?.GetHashCode() ?? 0);                
             }
         }
 
-        public static bool operator ==(NameValue left, NameValue right)
-        {
-            return Equals(left, right);
-        }
+        public static bool operator ==(NameValue left, NameValue right) => Equals(left, right);
 
-        public static bool operator !=(NameValue left, NameValue right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator !=(NameValue left, NameValue right) => !Equals(left, right);
 
         #endregion
 
@@ -116,6 +102,7 @@ namespace Dev2.Common.Interfaces
             set
             {
                 _name = value;
+                OnPropertyChanged();
             }
         }
    
@@ -128,6 +115,7 @@ namespace Dev2.Common.Interfaces
             set
             {
                 _value = value;
+                OnPropertyChanged();
             }
         }
 
@@ -139,10 +127,7 @@ namespace Dev2.Common.Interfaces
         /// <returns>
         /// A string that represents the current object.
         /// </returns>
-        public override string ToString()
-        {
-            return Name;
-        }
+        public override string ToString() => Name;
 
         #endregion
 
@@ -202,6 +187,7 @@ namespace Dev2.Common.Interfaces
                 }
                 _name = value;
                 _update?.Invoke(_name);
+                OnPropertyChanged();
             }
         }
 
@@ -221,6 +207,7 @@ namespace Dev2.Common.Interfaces
                 }
                 _value = value;
                 _update?.Invoke(_value);
+                OnPropertyChanged();
             }
         }
         public ICommand RemoveRowCommand { get; set; }

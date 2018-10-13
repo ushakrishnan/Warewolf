@@ -18,18 +18,14 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
 {
     public sealed class DatabaseInputRegion : IDatabaseInputRegion
     {
-        private readonly IActionInputDatatalistMapper _datatalistMapper;
-        private readonly ModelItem _modelItem;
-        private readonly IActionToolRegion<IDbAction> _action;
+        readonly IActionInputDatatalistMapper _datatalistMapper;
+        readonly ModelItem _modelItem;
+        readonly IActionToolRegion<IDbAction> _action;
         bool _isEnabled;
-        
-        private ICollection<IServiceInput> _inputs;
-        private bool _isInputsEmptyRows;
+        ICollection<IServiceInput> _inputs;
+        bool _isInputsEmptyRows;
 
-        public DatabaseInputRegion()
-        {
-            ToolRegionName = "DatabaseInputRegion";
-        }
+        public DatabaseInputRegion() => ToolRegionName = "DatabaseInputRegion";
 
         public DatabaseInputRegion(ModelItem modelItem, IActionToolRegion<IDbAction> action)
             : this(new ActionInputDatatalistMapper())
@@ -38,7 +34,7 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
             _modelItem = modelItem;
             _action = action;
             _action.SomethingChanged += SourceOnSomethingChanged;
-            var inputsFromModel = _modelItem.GetProperty<ICollection<IServiceInput>>("Inputs");
+            var inputsFromModel = _modelItem.GetProperty<ICollection<IServiceInput>>(nameof(Inputs));
             var serviceInputs = inputsFromModel ?? new List<IServiceInput>();
             var inputs = new ObservableCollection<IServiceInput>();
             inputs.CollectionChanged += InputsCollectionChanged;
@@ -52,13 +48,21 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
             IsEnabled = _action?.SelectedAction != null;
         }
 
-        private void InputsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void InputsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             AddItemPropertyChangeEvent(e);
             RemoveItemPropertyChangeEvent(e);
         }
 
-        private void AddItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        public void ResetInputs(ICollection<IServiceInput> inputs)
+        {
+            var newInputs = new ObservableCollection<IServiceInput>();
+            newInputs.CollectionChanged += InputsCollectionChanged;
+            newInputs.AddRange(inputs);
+            Inputs = newInputs;
+        }
+
+        void AddItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
         {
             if (args.NewItems == null)
             {
@@ -74,12 +78,9 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
             }
         }
 
-        private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            _modelItem.SetProperty("Inputs", Inputs);
-        }
+        void ItemPropertyChanged(object sender, PropertyChangedEventArgs e) => _modelItem.SetProperty(nameof(Inputs), _inputs.ToList());
 
-        private void RemoveItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
+        void RemoveItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
         {
             if (args.OldItems == null)
             {
@@ -94,22 +95,17 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
                 }
             }
         }
-                
-        public DatabaseInputRegion(IActionInputDatatalistMapper datatalistMapper)
-        {
-            _datatalistMapper = datatalistMapper;
-        }
 
-        private void SourceOnSomethingChanged(object sender, IToolRegion args)
+        public DatabaseInputRegion(IActionInputDatatalistMapper datatalistMapper) => _datatalistMapper = datatalistMapper;
+
+        void SourceOnSomethingChanged(object sender, IToolRegion args)
         {
             try
             {
                 Errors.Clear();
-                
                 UpdateOnActionSelection();
-                
-                OnPropertyChanged(@"Inputs");
-                OnPropertyChanged(@"IsEnabled");
+                OnPropertyChanged(nameof(Inputs));
+                OnPropertyChanged(nameof(IsEnabled));
             }
             catch (Exception e)
             {
@@ -121,55 +117,49 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
             }
         }
 
-        private void CallErrorsEventHandler()
-        {
-            ErrorsHandler?.Invoke(this, new List<string>(Errors));
-        }
+        void CallErrorsEventHandler() => ErrorsHandler?.Invoke(this, new List<string>(Errors));
 
-        private void UpdateOnActionSelection()
+        void UpdateOnActionSelection()
         {
-            IsEnabled = false;
+            IsEnabled = _action?.SelectedAction != null;
+            var inputCopy = Inputs.ToArray().Clone() as ICollection<IServiceInput>;
+            Inputs = new List<IServiceInput>();
             if (_action?.SelectedAction != null)
             {
                 var selectedActionInputs = _action.SelectedAction.Inputs;
                 var selectedAction = ((DbAction)_action.SelectedAction).Name;
-                var isTheSameActionWithPrevious = Inputs.All(input => input.ActionName?.Equals(selectedAction) ?? false);
-                if (Inputs.Any() && isTheSameActionWithPrevious)
+                var isTheSameActionWithPrevious = inputCopy.All(input => input.ActionName?.Equals(selectedAction) ?? false);
+                if (inputCopy.Any() && isTheSameActionWithPrevious)
                 {
-                    InputsFromSameAction(selectedActionInputs);
+
+                    var newInputs = InputsFromSameAction(selectedActionInputs);
+                    var removedInputs = inputCopy.Except(selectedActionInputs, new ServiceInputNameComparer()).ToList();
+                    var union = inputCopy.Union(newInputs, new ServiceInputNameComparer()).ToList();
+                    union.RemoveAll(a => removedInputs.Any(k => a.Equals(k)));
+                    ResetInputs(union);
                 }
                 else
                 {
-                    Inputs = selectedActionInputs;
+                    ResetInputs(selectedActionInputs);
                     _datatalistMapper.MapInputsToDatalist(Inputs);
                     IsInputsEmptyRows = Inputs.Count < 1;
                     IsEnabled = true;
                 }
-
             }
-            OnPropertyChanged("Inputs");
+            OnPropertyChanged(nameof(Inputs));
         }
 
-        private void InputsFromSameAction(IList<IServiceInput> selectedActionInputs)
+        ICollection<IServiceInput> InputsFromSameAction(IList<IServiceInput> selectedActionInputs)
         {
-            if (!Inputs.SequenceEqual(selectedActionInputs, new ServiceInputNameValueComparer()))
-            {
-                var newInputs = selectedActionInputs.Except(Inputs, new ServiceInputNameComparer());
-                var serviceInputs = newInputs as IServiceInput[] ?? newInputs.ToArray();
-                _datatalistMapper.MapInputsToDatalist(serviceInputs);
-                foreach (var serviceInput in serviceInputs)
-                {
-                    Inputs.Add(serviceInput);
-                }
-            }
+            var newInputs = selectedActionInputs.Except(Inputs, new ServiceInputNameComparer());
+            var serviceInputs = newInputs as IServiceInput[] ?? newInputs.ToArray();
+            _datatalistMapper.MapInputsToDatalist(serviceInputs);
+            return serviceInputs;
         }
 
         public bool IsInputsEmptyRows
         {
-            get
-            {
-                return _isInputsEmptyRows;
-            }
+            get => _isInputsEmptyRows;
             set
             {
                 _isInputsEmptyRows = value;
@@ -182,13 +172,20 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
         public string ToolRegionName { get; set; }
         public bool IsEnabled
         {
-            get
-            {
-                return _isEnabled;
-            }
+            get => _isEnabled;
             set
             {
                 _isEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int? CommandTimeout
+        {
+            get => _modelItem.GetProperty<int?>("CommandTimeout");
+            set
+            {
+                _modelItem.SetProperty<int?>("CommandTimeout", value);
                 OnPropertyChanged();
             }
         }
@@ -202,7 +199,7 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
             {
                 Inputs = inputs2,
                 IsEnabled = IsEnabled
-            };
+            } as IToolRegion;
         }
 
         public void RestoreRegion(IToolRegion toRestore)
@@ -212,11 +209,9 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
                 Inputs.Clear();
                 if (region.Inputs != null)
                 {
-                    var inp = region.Inputs.ToList();
-
-                    Inputs = inp;
+                    Inputs = region.Inputs.ToList();
                 }
-                OnPropertyChanged("Inputs");
+                OnPropertyChanged(nameof(Inputs));
                 IsInputsEmptyRows = Inputs == null || Inputs.Count == 0;
             }
         }
@@ -234,17 +229,14 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
                 IList<string> errors = new List<string>();
                 return errors;
             }
-            set
-            {
-                ErrorsHandler.Invoke(this, new List<string>(value));
-            }
+            set => ErrorsHandler.Invoke(this, new List<string>(value));
         }
 
         #endregion
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
             handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -254,22 +246,19 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
 
         public ICollection<IServiceInput> Inputs
         {
-            get
-            {
-                return _inputs;
-            }
+            get => _inputs;
             set
             {
                 if (value != null)
                 {
                     _inputs = value;
-                    _modelItem.SetProperty("Inputs", value.ToList());
+                    _modelItem.SetProperty(nameof(Inputs), value.ToList());
                     OnPropertyChanged();
                 }
                 else
                 {
                     _inputs.Clear();
-                    _modelItem.SetProperty("Inputs", _inputs.ToList());
+                    _modelItem.SetProperty(nameof(Inputs), _inputs.ToList());
                     OnPropertyChanged();
                 }
 

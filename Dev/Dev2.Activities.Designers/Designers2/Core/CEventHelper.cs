@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,7 +16,6 @@ using System.Reflection;
 
 namespace Dev2.Activities.Designers2.Core
 {
-   
     public static class CEventHelper
     {
         static readonly Dictionary<Type, List<FieldInfo>> DicEventFieldInfos = new Dictionary<Type, List<FieldInfo>>();
@@ -30,7 +29,7 @@ namespace Dev2.Activities.Designers2.Core
                 return DicEventFieldInfos[t];
             }
 
-            List<FieldInfo> lst = new List<FieldInfo>();
+            var lst = new List<FieldInfo>();
             BuildEventFields(t, lst);
             DicEventFieldInfos.Add(t, lst);
             return lst;
@@ -51,10 +50,10 @@ namespace Dev2.Activities.Designers2.Core
                          select dt.GetField(ei.Name, AllBindings)
                          into fi where fi != null select fi);
         }
-        
-        public static void RemoveAllEventHandlers(object obj) { RemoveEventHandler(obj, ""); }
-        
-        public static void RemoveEventHandler(object obj, string eventName)
+
+        public static void RemoveAllEventHandlers(object obj) => TryRemoveEventHandler(obj, "");
+
+        public static void TryRemoveEventHandler(object obj, string eventName)
         {
             try
             {
@@ -62,38 +61,52 @@ namespace Dev2.Activities.Designers2.Core
                 {
                     return;
                 }
-
-                Type t = obj.GetType();
-                IEnumerable<FieldInfo> eventFields = GetTypeEventFields(t);
-
-                foreach(var fi in eventFields.Where(fi => eventName == "" || String.Compare(eventName, fi.Name, StringComparison.OrdinalIgnoreCase) == 0))
-                {
-                    // After hours and hours of research and trial and error, it turns out that
-                    // STATIC Events have to be treated differently from INSTANCE Events...
-                    if (!fi.IsStatic)
-                    {
-                        // INSTANCE EVENT
-                        var ei = t.GetEvent(fi.Name, AllBindings);
-                        if (ei != null)
-                        {
-                            object val = fi.GetValue(obj);
-                            if (val is Delegate mdel)
-                            {
-                                foreach (Delegate del in mdel.GetInvocationList())
-                                {
-                                    ei.RemoveEventHandler(obj, del);
-                                }
-                            }
-                        }
-                    }
-                }
-            }                
+                RemoveEventHandler(obj, eventName);
+            }
             catch (Exception e)
             {
                 Dev2Logger.Warn(e.Message, "Warewolf Warn");
             }
         }
 
-        //--------------------------------------------------------------------------------
+        static void RemoveEventHandler(object obj, string eventName)
+        {
+            var t = obj.GetType();
+            var eventFields = GetTypeEventFields(t);
+
+            foreach (var fi in eventFields.Where(fi => eventName == "" || String.Compare(eventName, fi.Name, StringComparison.OrdinalIgnoreCase) == 0))
+            {
+                RemoveEventField(obj, t, fi);
+            }
+        }
+
+        static void RemoveEventField(object obj, Type t, FieldInfo fi)
+        {
+            if (!fi.IsStatic)
+            {
+                RemoveNonStaticEventField(obj, t, fi);
+            }
+        }
+
+        static void RemoveNonStaticEventField(object obj, Type t, FieldInfo fi)
+        {
+            var ei = t.GetEvent(fi.Name, AllBindings);
+            if (ei != null)
+            {
+                var val = fi.GetValue(obj);
+                if (val is Delegate mdel)
+                {
+                    RemoveAllDelegates(obj, ei, mdel);
+                }
+            }
+        }
+
+        static void RemoveAllDelegates(object obj, EventInfo ei, Delegate mdel)
+        {
+            foreach (Delegate del in mdel.GetInvocationList())
+            {
+                ei.RemoveEventHandler(obj, del);
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -74,7 +74,7 @@ namespace Dev2.Dialogs
         {
             environmentViewModel.Connect();
 
-            await environmentViewModel.LoadDialog("");
+            await environmentViewModel.LoadDialogAsync("");
             switch (_activityType)
             {
                 case enDsfActivityType.Workflow:
@@ -130,7 +130,7 @@ namespace Dev2.Dialogs
             dropWindow.ShowDialog();
             if(dropViewModel.DialogResult == ViewModelDialogResults.Okay)
             {
-                DsfActivityDropViewModel model = dropViewModel;
+                var model = dropViewModel;
                 SelectedResource = model.SelectedExplorerItemModel;
                 return true;
             }
@@ -138,10 +138,7 @@ namespace Dev2.Dialogs
             return false;
         }
 
-        protected virtual IDialog CreateDialog(DsfActivityDropViewModel dataContext)
-        {
-            return new DsfActivityDropWindow { DataContext = dataContext };
-        }
+        protected virtual IDialog CreateDialog(DsfActivityDropViewModel dataContext) => new DsfActivityDropWindow { DataContext = dataContext };
 
         public static enDsfActivityType DetermineDropActivityType(string typeName)
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Data;
 using Dev2.Data.Interfaces.Enums;
@@ -13,11 +14,11 @@ namespace Dev2.Studio.Core.Models.DataList
 {
     public class ComplexObjectItemModel : DataListItemModel, IComplexObjectItemModel
     {
-        private ObservableCollection<IComplexObjectItemModel> _children;
-        private IComplexObjectItemModel _parent;
-        private bool _isParentObject;
-        private bool _isArray;
-        private string _searchText;
+        ObservableCollection<IComplexObjectItemModel> _children;
+        IComplexObjectItemModel _parent;
+        bool _isParentObject;
+        bool _isArray;
+        string _searchText;
 
         public ComplexObjectItemModel(string displayname)
             : this(displayname, null, enDev2ColumnArgumentDirection.None, "", null, false, "", true, true, false, true)
@@ -34,18 +35,17 @@ namespace Dev2.Studio.Core.Models.DataList
         {
         }
 
-        public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, OptomizedObservableCollection<IComplexObjectItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected, bool isExpanded) 
+        //public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, OptomizedObservableCollection<IComplexObjectItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected, bool isExpanded) 
+        public ComplexObjectItemModel(string displayname, IComplexObjectItemModel parent, enDev2ColumnArgumentDirection dev2ColumnArgumentDirection, string description, OptomizedObservableCollection<IComplexObjectItemModel> children, bool hasError, string errorMessage, bool isEditable, bool isVisible, bool isSelected, bool isExpanded)
             : base(displayname, dev2ColumnArgumentDirection, description, hasError, errorMessage, isEditable, isVisible, isSelected, isExpanded)
         {
             Children = children;
             Parent = parent;
-            if (parent == null)
+            if (parent == null && !Name.StartsWith("@", StringComparison.CurrentCulture))
             {
-                if (!Name.StartsWith("@"))
-                {
-                    Name = "@" + DisplayName;
-                }
+                Name = "@" + DisplayName;
             }
+
         }
 
         public override bool Input
@@ -77,13 +77,11 @@ namespace Dev2.Studio.Core.Models.DataList
         {
             get
             {
-                if (!string.IsNullOrEmpty(_searchText))
+                if (!string.IsNullOrEmpty(_searchText) && _children != null)
                 {
-                    if (_children != null)
-                    {
-                        return _children.Where(model => model.IsVisible).ToObservableCollection();
-                    }
+                    return _children.Where(model => model.IsVisible).ToObservableCollection();
                 }
+
                 return _children ?? (_children = new ObservableCollection<IComplexObjectItemModel>());
             }
             set
@@ -96,7 +94,7 @@ namespace Dev2.Studio.Core.Models.DataList
         {
             get
             {
-                return _isArray || DisplayName.EndsWith("()");
+                return _isArray || DisplayName.EndsWith("()", StringComparison.CurrentCulture);
             }
             set
             {
@@ -141,7 +139,7 @@ namespace Dev2.Studio.Core.Models.DataList
                 {
                     AppendObjectOpenChar(jsonString);
                 }
-                jsonString.Append("\"" + DisplayName.TrimEnd('(',')') + "\"");
+                jsonString.Append("\"" + DisplayName.TrimEnd('(', ')') + "\"");
                 jsonString.Append(":");
                 if (Children.Count > 0)
                 {
@@ -170,7 +168,9 @@ namespace Dev2.Studio.Core.Models.DataList
                         itemModel.Filter(searchText);
                     }
                 }
-                IsVisible = _children != null && _children.Any(model => model.IsVisible) ? true : !string.IsNullOrEmpty(DisplayName) && DisplayName.ToLower().Contains(searchText.ToLower());
+                var anyChildrenVisible = _children != null && _children.Any(model => model.IsVisible);
+                var displayNameContainsSearchString = !string.IsNullOrEmpty(DisplayName) && DisplayName.ToLower().Contains(searchText.ToLower());
+                IsVisible = anyChildrenVisible || displayNameContainsSearchString;
             }
             else
             {
@@ -187,43 +187,43 @@ namespace Dev2.Studio.Core.Models.DataList
             NotifyOfPropertyChange(() => Children);
         }
 
-        private void AppendCloseArrayChar(StringBuilder jsonString)
+        void AppendCloseArrayChar(StringBuilder jsonString)
         {
-            if(IsArray)
+            if (IsArray)
             {
                 jsonString.Append("]");
             }
         }
 
-        private static void AppendObjectCloseChar(StringBuilder jsonString)
+        static void AppendObjectCloseChar(StringBuilder jsonString)
         {
             jsonString.Append("}");
         }
 
-        private void AppendOpenArrayChar(StringBuilder jsonString)
+        void AppendOpenArrayChar(StringBuilder jsonString)
         {
-            if(IsArray)
+            if (IsArray)
             {
                 jsonString.Append("[");
             }
         }
 
-        private static void AppendObjectOpenChar(StringBuilder jsonString)
+        static void AppendObjectOpenChar(StringBuilder jsonString)
         {
             jsonString.Append("{");
         }
 
-        private void BuildJsonForChildren(StringBuilder jsonString)
+        void BuildJsonForChildren(StringBuilder jsonString)
         {
-            for(int index = 0; index < Children.Count; index++)
+            for (int index = 0; index < Children.Count; index++)
             {
                 var complexObjectItemModel = Children[index];
                 jsonString.Append(complexObjectItemModel.GetJson());
-                if(complexObjectItemModel.Children.Count == 0)
+                if (complexObjectItemModel.Children.Count == 0)
                 {
                     jsonString.Append("\"\"");
                 }
-                if(index != Children.Count - 1)
+                if (index != Children.Count - 1)
                 {
                     jsonString.Append(",");
                 }
@@ -234,30 +234,16 @@ namespace Dev2.Studio.Core.Models.DataList
 
         public override string ValidateName(string name)
         {
-            var nameToCheck  = name.Replace("@", "");
-            var isArray = name.EndsWith("()");
-            Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
+            var nameToCheck = name.Replace("@", "");
+            var isArray = name.EndsWith("()", StringComparison.CurrentCulture);
+            var parser = new Dev2DataLanguageParser();
             if (!string.IsNullOrEmpty(nameToCheck))
             {
                 nameToCheck = DataListUtil.RemoveRecordsetBracketsFromValue(nameToCheck);
 
                 if (!string.IsNullOrEmpty(nameToCheck))
                 {
-                    var intellisenseResult = parser.ValidateName(nameToCheck, "Complex Object");
-                    if (intellisenseResult != null)
-                    {
-                        SetError(intellisenseResult.Message);
-                    }
-                    else
-                    {
-                        if (!string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateValue, StringComparison.InvariantCulture) &&
-                            !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateVariable, StringComparison.InvariantCulture) &&
-                            !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateRecordset, StringComparison.InvariantCulture) &&
-                            !string.Equals(ErrorMessage, StringResources.ErrorMessageEmptyRecordSet, StringComparison.InvariantCulture))
-                        {
-                            RemoveError();
-                        }
-                    }
+                    ValidateName(nameToCheck, parser);
                 }
             }
             if (isArray)
@@ -267,21 +253,65 @@ namespace Dev2.Studio.Core.Models.DataList
             return nameToCheck;
         }
 
+        private void ValidateName(string name, Dev2DataLanguageParser parser)
+        {
+            var intellisenseResult = parser.ValidateName(name, "Complex Object");
+            if (intellisenseResult != null)
+            {
+                SetError(intellisenseResult.Message);
+            }
+            else
+            {
+                if (!string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateValue, StringComparison.InvariantCulture) &&
+                    !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateVariable, StringComparison.InvariantCulture) &&
+                    !string.Equals(ErrorMessage, StringResources.ErrorMessageDuplicateRecordset, StringComparison.InvariantCulture) &&
+                    !string.Equals(ErrorMessage, StringResources.ErrorMessageEmptyRecordSet, StringComparison.InvariantCulture))
+                {
+                    RemoveError();
+                }
+            }
+        }
+
         #endregion
 
         #region Overrides of DataListItemModel
 
-        /// <summary>
-        /// Returns a <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="T:System.String"/> that represents the current <see cref="T:System.Object"/>.
-        /// </returns>
-        public override string ToString()
-        {
-            return DisplayName;
-        }
+        public override string ToString() => DisplayName;
 
         #endregion
+
+        public bool Equals(IComplexObjectItemModel other)
+        {
+            var equals = Equals(IsArray, other.IsArray);
+            equals &= Equals(HasError, other.HasError);
+            equals &= Equals(Input, other.Input);
+            equals &= Equals(Output, other.Output);
+            equals &= string.Equals(Name, other.Name);
+           
+            var collectionEquals = CommonEqualityOps.CollectionEquals(Children, other.Children, new ComplexObjectItemModelComparer());
+            return base.Equals(other) && equals && collectionEquals;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((IComplexObjectItemModel)obj);
+        }
+
+        public override int GetHashCode() => 1;
     }
 }

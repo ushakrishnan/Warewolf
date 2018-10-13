@@ -15,7 +15,7 @@ namespace Dev2.PerformanceCounters.Management
     public class PerformanceCounterPersistence : IPerformanceCounterPersistence
     {
 
-        private readonly IFile _file;
+        readonly IFile _file;
 
         #region Implementation of IPerformanceCounterPersistence
 
@@ -36,17 +36,15 @@ namespace Dev2.PerformanceCounters.Management
             Save(counters, path);
         }
 
-        public void Save(IList<IResourcePerformanceCounter> counters)
+        public void Save(IList<IResourcePerformanceCounter> resourceCounters)
         {
             var path = EnvironmentVariables.ServerResourcePerfmonSettingsFile;
-            Save(counters.Cast<IPerformanceCounter>().ToList(), path);
+            Save(resourceCounters.Cast<IPerformanceCounter>().ToList(), path);
         }
 
-        public IList<IPerformanceCounter> LoadOrCreate()
-        {
-            return LoadOrCreate(EnvironmentVariables.ServerPerfmonSettingsFile);
-        }
-             [ExcludeFromCodeCoverage]
+        public IList<IPerformanceCounter> LoadOrCreate() => LoadOrCreate(EnvironmentVariables.ServerPerfmonSettingsFile);
+
+        [ExcludeFromCodeCoverage]
         public IList<IResourcePerformanceCounter> LoadOrCreateResourcesCounters(IList<IResourcePerformanceCounter> resourcePerformanceCounters)
         {
             return LoadOrCreateResourceCounters(EnvironmentVariables.ServerResourcePerfmonSettingsFile);
@@ -91,7 +89,7 @@ namespace Dev2.PerformanceCounters.Management
 
         }
 
-        private IList<IPerformanceCounter> CreateDefaultPerfCounters()
+        IList<IPerformanceCounter> CreateDefaultPerfCounters()
         {
             var toSerialise = DefaultCounters;
             Save(toSerialise);

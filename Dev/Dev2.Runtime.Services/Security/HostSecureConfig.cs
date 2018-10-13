@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -119,11 +119,11 @@ namespace Dev2.Runtime.Security
 
         #region EnsureSecureConfigFileExists
 
-        private void EnsureSecureConfigFileExists()
+        void EnsureSecureConfigFileExists()
         {
             ConfigurationManager.RefreshSection(SectionName);
             // We need to check both the live and development paths ;)
-            if(!File.Exists(FileName))
+            if (!File.Exists(FileName))
             {
                 Dev2Logger.Info(string.Format(ErrorResource.FileNotFound, FileName), GlobalConstants.WarewolfInfo);
                 var newSettings = new NameValueCollection();
@@ -170,18 +170,14 @@ namespace Dev2.Runtime.Security
             {
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 var section = config.GetSection(SectionName);
-                if(section != null)
+                if (section != null && !section.SectionInformation.IsProtected && !section.ElementInformation.IsLocked)
                 {
-                    if(!section.SectionInformation.IsProtected)
-                    {
-                        if(!section.ElementInformation.IsLocked)
-                        {
-                            section.SectionInformation.ProtectSection("RsaProtectedConfigurationProvider");
-                            section.SectionInformation.ForceSave = true;
-                            config.Save(ConfigurationSaveMode.Full);
-                        }
-                    }
+                    section.SectionInformation.ProtectSection("RsaProtectedConfigurationProvider");
+                    section.SectionInformation.ForceSave = true;
+                    config.Save(ConfigurationSaveMode.Full);
                 }
+
+
             }
             catch(Exception e)
             {
@@ -219,10 +215,8 @@ namespace Dev2.Runtime.Security
         /// <param name="serverKey">The server key.</param>
         /// <param name="systemKey">The system key.</param>
         /// <returns>a <see cref="NameValueCollection"/> configuration.</returns>
-    
-        public static NameValueCollection CreateSettings(string serverID, string serverKey, string systemKey)
-        {
-            return new NameValueCollection
+
+        public static NameValueCollection CreateSettings(string serverID, string serverKey, string systemKey) => new NameValueCollection
             {
                 {
                     "ServerID", serverID
@@ -234,7 +228,6 @@ namespace Dev2.Runtime.Security
                     "SystemKey", systemKey
                 }
             };
-        }
 
         #endregion
 

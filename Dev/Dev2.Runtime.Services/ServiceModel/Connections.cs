@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,8 +27,8 @@ namespace Dev2.Runtime.ServiceModel
     public class Connections : ExceptionManager, IConnections
     {
 
-        private readonly Func<List<string>> _fetchComputers;
-        private readonly IHubFactory _hubFactory;
+        readonly Func<List<string>> _fetchComputers;
+        readonly IHubFactory _hubFactory;
 
         public Connections()
             : this(() => GetComputerNames.ComputerNames, new HubFactory())
@@ -41,14 +41,7 @@ namespace Dev2.Runtime.ServiceModel
             _hubFactory = hubFactory;
         }
 
-        // POST: Service/Connections/Search
-
-        public List<string> GetNames()
-        {
-            return _fetchComputers.Invoke();
-        }
-
-        // POST: Service/Connections/Test
+        public List<string> GetNames() => _fetchComputers.Invoke();
 
         public ValidationResult CanConnectToServer(Dev2.Data.ServiceModel.Connection connection)
         {
@@ -60,19 +53,18 @@ namespace Dev2.Runtime.ServiceModel
             try
             {
                 // Validate URI, ports, etc...
+#pragma warning disable S1848 // Objects should not be created to be dropped immediately without being used
                 new Uri(connection.Address);
-
+#pragma warning restore S1848 // Objects should not be created to be dropped immediately without being used
 
                 var connectResult = ConnectToServer(connection);
-                if (!string.IsNullOrEmpty(connectResult))
+                if (!string.IsNullOrEmpty(connectResult) && connectResult.Contains("FatalError"))
                 {
-                    if (connectResult.Contains("FatalError"))
-                    {
-                        var error = XElement.Parse(connectResult);
-                        result.IsValid = false;
-                        result.ErrorMessage = string.Join(" - ", error.Nodes().Cast<XElement>().Select(n => n.Value));
-                    }
+                    var error = XElement.Parse(connectResult);
+                    result.IsValid = false;
+                    result.ErrorMessage = string.Join(" - ", error.Nodes().Cast<XElement>().Select(n => n.Value));
                 }
+
             }
             catch (Exception ex)
             {
@@ -99,7 +91,7 @@ namespace Dev2.Runtime.ServiceModel
             return result;
         }
 
-        private string GetLastExeptionMessage(Exception ex)
+        string GetLastExeptionMessage(Exception ex)
         {
             if (ex.InnerException == null)
             {
@@ -114,35 +106,7 @@ namespace Dev2.Runtime.ServiceModel
         {
             // we need to grab the principle and impersonate to properly execute in context of the requesting user ;)
             var proxy = CreateHubProxy(connection);
-            CheckServerVersion(proxy);
             return "Success";
-        }
-
-        private static void CheckServerVersion(IHubProxy proxy)
-        {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-            var esbExecuteRequest = new EsbExecuteRequest { ServiceName = "GetServerVersion" };
-            Envelope envelope = new Envelope
-            {
-                Content = serializer.Serialize(esbExecuteRequest),
-                Type = typeof(Envelope)
-            };
-            var messageId = Guid.NewGuid();
-            proxy.Invoke<Receipt>("ExecuteCommand", envelope, true, Guid.Empty, Guid.Empty, messageId).Wait();
-            Task<string> fragmentInvoke = proxy.Invoke<string>("FetchExecutePayloadFragment", new FutureReceipt { PartID = 0, RequestID = messageId });
-            var serverVersion = fragmentInvoke.Result;
-            if (!string.IsNullOrEmpty(serverVersion))
-            {
-                Version.TryParse(serverVersion, out Version sourceVersionNumber);
-                Version.TryParse("0.0.0.6", out Version destVersionNumber);
-                if (sourceVersionNumber != null && destVersionNumber != null)
-                {
-                    if (sourceVersionNumber < destVersionNumber)
-                    {
-                        throw new VersionConflictException(sourceVersionNumber, destVersionNumber);
-                    }
-                }
-            }
         }
     }
 }

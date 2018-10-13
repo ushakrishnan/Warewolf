@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -45,13 +45,11 @@ namespace Dev2.CustomControls.Converters
             foreach (object value in values)
             {
                 var tmpval = value as bool?;
-                if (tmpval != null)
+                if (tmpval != null && !tmpval.GetValueOrDefault())
                 {
-                    if (!tmpval.GetValueOrDefault())
-                    {
-                        return false;
-                    }
+                    return false;
                 }
+
             }
             return true;
         }
@@ -69,10 +67,7 @@ namespace Dev2.CustomControls.Converters
         /// </param>
         /// <param name="parameter">The converter parameter to use.</param>
         /// <param name="culture">The culture to use in the converter.</param>
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            return new object[] {};
-        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => new object[] { };
 
         #endregion
     }

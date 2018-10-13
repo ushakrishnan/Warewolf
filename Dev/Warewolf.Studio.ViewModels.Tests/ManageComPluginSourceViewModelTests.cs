@@ -22,35 +22,35 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private Mock<IManageComPluginSourceModel> _updateManagerMock;
-        private Mock<IEventAggregator> _aggregatorMock;
-        private Mock<IAsyncWorker> _asyncWorkerMock;
-        private Mock<IComPluginSource> _pluginSourceMock;
-        private Mock<IRequestServiceNameViewModel> _requestServiceNameViewModelMock;
-        private Task<IRequestServiceNameViewModel> _requestServiceNameViewModelTask;
-        private Mock<IFileListing> _selectedDllMock;
-        private Action<Action> _dispatcherAction;
-        private string _pluginSourceName;
-        private string _warewolfServerName;
-        private string _selectedDllFullName;
+        Mock<IManageComPluginSourceModel> _updateManagerMock;
+        Mock<IEventAggregator> _aggregatorMock;
+        Mock<IAsyncWorker> _asyncWorkerMock;
+        Mock<IComPluginSource> _pluginSourceMock;
+        Mock<IRequestServiceNameViewModel> _requestServiceNameViewModelMock;
+        Task<IRequestServiceNameViewModel> _requestServiceNameViewModelTask;
+        Mock<IFileListing> _selectedDllMock;
+        Action<Action> _dispatcherAction;
+        string _pluginSourceName;
+        string _warewolfServerName;
+        string _selectedDllFullName;
 
-        private List<string> _changedProperties;
-        private ManageComPluginSourceViewModel _target;
+        List<string> _changedProperties;
+        ManageComPluginSourceViewModel _target;
 
-        private List<string> _changedPropertiesParameterless;
-        private ManageComPluginSourceViewModel _targetParameterless;
+        List<string> _changedPropertiesParameterless;
+        ManageComPluginSourceViewModel _targetParameterless;
 
-        private List<string> _changedPropertiesPluginSource;
-        private ManageComPluginSourceViewModel _targetPluginSource;
+        List<string> _changedPropertiesPluginSource;
+        ManageComPluginSourceViewModel _targetPluginSource;
 
-        private List<string> _changedPropertiesRequestServiceNameViewModel;
-        private ManageComPluginSourceViewModel _targetRequestServiceNameViewModel;
+        List<string> _changedPropertiesRequestServiceNameViewModel;
+        ManageComPluginSourceViewModel _targetRequestServiceNameViewModel;
 
-        private List<string> _changedPropertiesPluginSourceAction;
-        private ManageComPluginSourceViewModel _targetPluginSourceAction;
+        List<string> _changedPropertiesPluginSourceAction;
+        ManageComPluginSourceViewModel _targetPluginSourceAction;
 
-        private List<string> _changedPropertiesRequestServiceNameViewModelAction;
-        private ManageComPluginSourceViewModel _targetRequestServiceNameViewModelAction;
+        List<string> _changedPropertiesRequestServiceNameViewModelAction;
+        ManageComPluginSourceViewModel _targetRequestServiceNameViewModelAction;
 
         #endregion Fields
 
@@ -69,7 +69,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _warewolfServerName = "warewolfServerName";
             _selectedDllFullName = "selectedDllFullName";
             _selectedDllMock = new Mock<IFileListing>();
-            _dispatcherAction = action => action();
+            _dispatcherAction = action => action?.Invoke();
             _updateManagerMock.SetupGet(it => it.ServerName).Returns(_warewolfServerName);
             _pluginSourceMock.SetupGet(it => it.ResourceName).Returns(_pluginSourceName);
             _pluginSourceMock.SetupGet(it => it.SelectedDll).Returns(_selectedDllMock.Object);
@@ -82,12 +82,12 @@ namespace Warewolf.Studio.ViewModels.Tests
                     {
                         try
                         {
-                            start();
-                            finish();
+                            start?.Invoke();
+                            finish?.Invoke();
                         }
                         catch (Exception e)
                         {
-                            exception(e);
+                            exception?.Invoke(e);
                         }
                     });
             _updateManagerMock.Setup(model => model.FetchSource(It.IsAny<Guid>()))
@@ -99,27 +99,27 @@ namespace Warewolf.Studio.ViewModels.Tests
                            .Callback<Func<Tuple<IComPluginSource, List<DllListingModel>>>, Action<Tuple<IComPluginSource, List<DllListingModel>>>>((func, action) =>
                            {
                                var dbSource = func.Invoke();
-                               action(dbSource);
+                               action?.Invoke(dbSource);
                            });
             _changedPropertiesParameterless = new List<string>();
-            _targetParameterless = new ManageComPluginSourceViewModel {DispatcherAction = action => action()};
+            _targetParameterless = new ManageComPluginSourceViewModel {DispatcherAction = action => action?.Invoke() };
             _targetParameterless.PropertyChanged += (sender, args) => { _changedPropertiesParameterless.Add(args.PropertyName); };
 
             _changedProperties = new List<string>();
             _target = new ManageComPluginSourceViewModel(_updateManagerMock.Object, _aggregatorMock.Object,
-                _asyncWorkerMock.Object) {DispatcherAction = action => action()};
+                _asyncWorkerMock.Object) {DispatcherAction = action => action?.Invoke() };
             _target.PropertyChanged += (sender, args) => { _changedProperties.Add(args.PropertyName); };
 
             _changedPropertiesPluginSource = new List<string>();
             _targetPluginSource = new ManageComPluginSourceViewModel(_updateManagerMock.Object, _aggregatorMock.Object,
-                _pluginSourceMock.Object, _asyncWorkerMock.Object) {DispatcherAction = action => action()};
+                _pluginSourceMock.Object, _asyncWorkerMock.Object) {DispatcherAction = action => action?.Invoke() };
             _targetPluginSource.PropertyChanged += (sender, args) => { _changedPropertiesPluginSource.Add(args.PropertyName); };
 
             _changedPropertiesRequestServiceNameViewModel = new List<string>();
             _targetRequestServiceNameViewModel = new ManageComPluginSourceViewModel(_updateManagerMock.Object,
                 _requestServiceNameViewModelTask, _aggregatorMock.Object, _asyncWorkerMock.Object)
             {
-                DispatcherAction = action => action()
+                DispatcherAction = action => action?.Invoke()
             };
             _targetRequestServiceNameViewModel.PropertyChanged += (sender, args) => { _changedPropertiesRequestServiceNameViewModel.Add(args.PropertyName); };
 
@@ -138,7 +138,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test construction
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestManagePluginSourceViewModelAsyncWorkerNull()
         {
@@ -146,7 +146,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageComPluginSourceViewModel(_updateManagerMock.Object, _aggregatorMock.Object, null);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestManagePluginSourceViewModelUpdateManagerNull()
         {
@@ -154,7 +154,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageComPluginSourceViewModel(null, _aggregatorMock.Object, _asyncWorkerMock.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestManagePluginSourceViewModelAggregatorNull()
         {
@@ -162,7 +162,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageComPluginSourceViewModel(_updateManagerMock.Object, null, _asyncWorkerMock.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestManagePluginSourceViewModelRequestServiceNameViewModelNull()
         {
@@ -170,7 +170,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageComPluginSourceViewModel(_updateManagerMock.Object, null, _aggregatorMock.Object, _asyncWorkerMock.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestManagePluginSourceViewModePluginSourceNull()
         {
@@ -182,7 +182,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test commands
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandCanExecuteAssemblyNameIsEmpty()
         {
             //arrange
@@ -197,7 +197,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandCanExecuteSelectedDllIsNull()
         {
             //arrange
@@ -210,7 +210,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandCanExecuteAssemblyNameIsNotGacDll()
         {
 
@@ -229,7 +229,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandExecutePluginSourceNullPathNull()
         {
             //arrange
@@ -255,7 +255,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_targetRequestServiceNameViewModel.Header, _targetRequestServiceNameViewModel.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandExecutePluginSourceNull()
         {
             //arrange
@@ -282,7 +282,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_targetRequestServiceNameViewModel.Header, _targetRequestServiceNameViewModel.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandExecute()
         {
             //arrange
@@ -304,7 +304,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedPropertiesPluginSource.Contains("Header"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCancelCommandCanExecute()
         {
             //act
@@ -314,7 +314,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCancelPluginSourceCommandExecute()
         {
             //arrange
@@ -329,7 +329,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(closeActionInvoked);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestClearSearchTextCommandCanExecute()
         {
             //act
@@ -339,7 +339,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestClearSearchTextCommandExecute()
         {
             //arrange
@@ -352,7 +352,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(string.IsNullOrEmpty(_target.SearchTerm));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommandCanExecute()
         {
             //act
@@ -362,7 +362,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommandExecute()
         {
             //arrange    
@@ -388,7 +388,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestToModel()
         {
             //arrange
@@ -407,7 +407,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreSame(selectedDllMock.Object, result.SelectedDll);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestToModelSource()
         {
             //arrange
@@ -421,7 +421,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_pluginSourceMock.Object.ResourceName, result.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestFromModelFileSystem()
         {
             //arrange
@@ -452,7 +452,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreSame(dllListingMock.Object, _targetPluginSource.SelectedDll);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSavePluginSourceNullPathNull()
         {
             //arrange
@@ -478,7 +478,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_targetRequestServiceNameViewModel.Header, _targetRequestServiceNameViewModel.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSavePluginSourceNull()
         {
             //arrange
@@ -510,7 +510,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(correctGuid);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSave()
         {
             //arrange
@@ -533,7 +533,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedPropertiesPluginSource.Contains("Header"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveAssemblyNameIsEmpty()
         {
             //arrange
@@ -548,7 +548,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveSelectedDllIsNull()
         {
             //arrange
@@ -561,7 +561,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveAssemblyNameIsNotGacDll()
         {
             //arrange
@@ -578,7 +578,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveDll()
         {
             //arrange
@@ -596,7 +596,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeploySourceExplorerViewModel_Ctor_valid")]
         public void TestDispose()
@@ -604,13 +604,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             var vm = new ManageComPluginSourceViewModel();
             var ns = new Mock<IRequestServiceNameViewModel>();
 
-            vm.RequestServiceNameViewModel = ns.Object;
+            vm.SetRequestServiceNameViewModel(ns.Object);
 
             vm.Dispose();
             ns.Verify(a => a.Dispose());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestUpdateHelpDescriptor()
         {
             //arrange
@@ -631,41 +631,41 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRequestServiceNameViewModel()
         {
             //arrange
             var expectedValueMock = new Mock<IRequestServiceNameViewModel>();
 
             //act
-            _target.RequestServiceNameViewModel = expectedValueMock.Object;
-            var value = _target.RequestServiceNameViewModel;
+            _target.SetRequestServiceNameViewModel(expectedValueMock.Object);
+            var value = _target.GetRequestServiceNameViewModel();
 
             //asert
             Assert.AreSame(expectedValueMock.Object, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRequestServiceNameViewModelNull()
         {
             //act
-            var value = _targetPluginSource.RequestServiceNameViewModel;
+            var value = _targetPluginSource.GetRequestServiceNameViewModel();
 
             //asert
             Assert.IsNull(value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRequestServiceNameViewModelNotNull()
         {
             //act
-            var value = _targetRequestServiceNameViewModel.RequestServiceNameViewModel;
+            var value = _targetRequestServiceNameViewModel.GetRequestServiceNameViewModel();
 
             //asert
             Assert.AreSame(_requestServiceNameViewModelMock.Object, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestHeaderText()
         {
             //arrange
@@ -682,7 +682,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("Header"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestResourceName()
         {
             //arrange
@@ -700,7 +700,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedValue, _target.HeaderText);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestResourceNameLocalhost()
         {
             //arrange
@@ -708,7 +708,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _updateManagerMock.SetupGet(it => it.ServerName).Returns(_warewolfServerName);
             _changedProperties = new List<string>();
             _target = new ManageComPluginSourceViewModel(_updateManagerMock.Object, _aggregatorMock.Object, _asyncWorkerMock.Object);
-            _target.DispatcherAction = action => action();
+            _target.DispatcherAction = action => action?.Invoke();
             _target.PropertyChanged += (sender, args) => { _changedProperties.Add(args.PropertyName); };
             var expectedValue = "someResourceName";
             _changedProperties.Clear();
@@ -724,7 +724,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedValue, _target.HeaderText);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestResourceNameSource()
         {
             //arrange
@@ -746,7 +746,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedHeaderText, _targetPluginSource.HeaderText);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestResourceNameLocalhostSource()
         {
             //arrange
@@ -754,7 +754,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _updateManagerMock.SetupGet(it => it.ServerName).Returns(_warewolfServerName);
             _changedPropertiesPluginSource = new List<string>();
             _targetPluginSource = new ManageComPluginSourceViewModel(_updateManagerMock.Object, _aggregatorMock.Object, _pluginSourceMock.Object, _asyncWorkerMock.Object);
-            _targetPluginSource.DispatcherAction = action => action();
+            _targetPluginSource.DispatcherAction = action => action?.Invoke();
             _targetPluginSource.PropertyChanged += (sender, args) => { _changedPropertiesPluginSource.Add(args.PropertyName); };
             var expectedValue = "someResourceName";
             var pluginSourceName = "pluginSourceName";
@@ -774,7 +774,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedHeaderText, _targetPluginSource.HeaderText);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestAssemblyName()
         {
             //arrange
@@ -794,7 +794,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("AssemblyName"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectedDll()
         {
             //arrange
@@ -812,7 +812,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("SelectedDll"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestName()
         {
             //arrange
@@ -828,7 +828,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedValue, _target.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestDllListings()
         {
             //arrange
@@ -844,7 +844,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("DllListings"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsLoading()
         {
             //arrange
@@ -860,7 +860,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("IsLoading"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSearchTerm()
         {
             //arrange
@@ -876,7 +876,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.DllListings = new ObservableCollection<IDllListingModel> { listingMock.Object,listingMock1.Object,listingMock2.Object };
             _changedProperties.Clear();
 
-            PrivateObject p = new PrivateObject(_target);
+            var p = new PrivateObject(_target);
             p.SetField("_originalDllListings", originalList);
             //act
             _target.SearchTerm = expectedValue;

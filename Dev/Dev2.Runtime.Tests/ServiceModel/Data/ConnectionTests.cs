@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,7 +23,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
     public class ConnectionTests
     {
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Connections_GetTestConnectionAddress")]
         public void Connection_GetTestConnectionAddress_WhenDsfPresent_ExpectSameAddress()
@@ -45,7 +45,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Connections_GetTestConnectionAddress")]
         public void Connection_GetTestConnectionAddress_WhenOnlySlashPresent_ExpectDsfAdded()
@@ -68,7 +68,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             StringAssert.Contains(result, expected);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("Connections_GetTestConnectionAddress")]
         public void Connection_GetTestConnectionAddress_WhenNoSlashPresent_ExpectSlashAndDsfAdded()
@@ -94,21 +94,21 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToString Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToString_FullySetupObject_Expected_JSONSerializedObjectReturnedAsString()
         {
-            Connection testConnection = SetupDefaultConnection();
-            string actualConnectionToString = testConnection.ToString();
-            string expected = JsonConvert.SerializeObject(testConnection);
+            var testConnection = SetupDefaultConnection();
+            var actualConnectionToString = testConnection.ToString();
+            var expected = JsonConvert.SerializeObject(testConnection);
             Assert.AreEqual(expected, actualConnectionToString);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToString_EmptyObject_Expected_()
         {
-            Connection testConnection = new Connection();
-            string actualSerializedConnection = testConnection.ToString();
-            string expected = JsonConvert.SerializeObject(testConnection);
+            var testConnection = new Connection();
+            var actualSerializedConnection = testConnection.ToString();
+            var expected = JsonConvert.SerializeObject(testConnection);
             Assert.AreEqual(expected, actualSerializedConnection);
         }
 
@@ -116,16 +116,16 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToXml Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToXml_AllPropertiesSetup_Expected_XElementContainingAllObjectInformation()
         {
 
-            Connection testConnection = SetupDefaultConnection();
-            XElement expectedXml = testConnection.ToXml();
+            var testConnection = SetupDefaultConnection();
+            var expectedXml = testConnection.ToXml();
 
-            IEnumerable<XAttribute> attrib = expectedXml.Attributes();
-            IEnumerator<XAttribute> attribEnum = attrib.GetEnumerator();
-            while(attribEnum.MoveNext())
+            var attrib = expectedXml.Attributes();
+            var attribEnum = attrib.GetEnumerator();
+            while (attribEnum.MoveNext())
             {
                 if(attribEnum.Current.Name == "Name")
                 {
@@ -135,15 +135,15 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToXml_EmptyObject_Expected_XElementContainingNoInformationRegardingSource()
         {
-            Connection testConnection = new Connection();
-            XElement expectedXml = testConnection.ToXml();
+            var testConnection = new Connection();
+            var expectedXml = testConnection.ToXml();
 
-            IEnumerable<XAttribute> attrib = expectedXml.Attributes();
-            IEnumerator<XAttribute> attribEnum = attrib.GetEnumerator();
-            while(attribEnum.MoveNext())
+            var attrib = expectedXml.Attributes();
+            var attribEnum = attrib.GetEnumerator();
+            while (attribEnum.MoveNext())
             {
                 if(attribEnum.Current.Name == "Name")
                 {
@@ -157,9 +157,9 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Private Test Methods
 
-        private Connection SetupDefaultConnection()
+        Connection SetupDefaultConnection()
         {
-            Connection testConnection = new Connection { Address = "http://someAddressIMadeUpToTest:7654/Server", AuthenticationType = AuthenticationType.Windows, Password = "secret", ResourceID = Guid.NewGuid(), ResourceName = "TestResourceIMadeUp", ResourceType = "Server", UserName = @"Domain\User", WebServerPort = 8080 };
+            var testConnection = new Connection { Address = "http://someAddressIMadeUpToTest:7654/Server", AuthenticationType = AuthenticationType.Windows, Password = "secret", ResourceID = Guid.NewGuid(), ResourceName = "TestResourceIMadeUp", ResourceType = "Server", UserName = @"Domain\User", WebServerPort = 8080 };
 
             return testConnection;
         }

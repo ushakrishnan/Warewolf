@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,9 +24,9 @@ namespace Dev2.Studio.Views.DependencyVisualization
     {
         readonly IEventAggregator _eventPublisher;
 
-        private bool _isMoveInEffect;
-        private NetworkNodeNodeControl _currentElement;
-        private Point _currentPosition;
+        bool _isMoveInEffect;
+        NetworkNodeNodeControl _currentElement;
+        Point _currentPosition;
 
         public DependencyVisualiserView()
             : this(EventPublishers.Aggregator)
@@ -54,7 +54,7 @@ namespace Dev2.Studio.Views.DependencyVisualization
             };
         }
 
-        private void ElementMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        void ElementMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var element = (NetworkNodeNodeControl)sender;
             _currentElement = element;
@@ -63,34 +63,37 @@ namespace Dev2.Studio.Views.DependencyVisualization
             _currentPosition = e.GetPosition(element.Parent as UIElement);
         }
 
-        private void ElementMouseMove(object sender, MouseEventArgs e)
+        void ElementMouseMove(object sender, MouseEventArgs e)
         {
             var element = (NetworkNodeNodeControl)sender;
             if (_currentElement == null || !Equals(element, _currentElement))
             {
                 _isMoveInEffect = false;
             }
-            else if (_isMoveInEffect)
+            else
             {
-                if (e.GetPosition(Nodes).X > Nodes.ActualWidth || e.GetPosition(Nodes).Y > Nodes.ActualHeight || e.GetPosition(Nodes).Y < 0.0)
+                if (_isMoveInEffect)
                 {
-                    element.ReleaseMouseCapture();
-                    _isMoveInEffect = false;
-                }
-                else
-                {
-                    var currentPosition = e.GetPosition(element.Parent as UIElement);
+                    if (e.GetPosition(Nodes).X > Nodes.ActualWidth || e.GetPosition(Nodes).Y > Nodes.ActualHeight || e.GetPosition(Nodes).Y < 0.0)
+                    {
+                        element.ReleaseMouseCapture();
+                        _isMoveInEffect = false;
+                    }
+                    else
+                    {
+                        var currentPosition = e.GetPosition(element.Parent as UIElement);
 
-                    element.Node.Location = new Point(
-                        element.Node.Location.X + (currentPosition.X - _currentPosition.X) / Nodes.ZoomLevel,
-                        element.Node.Location.Y + (currentPosition.Y - _currentPosition.Y) / Nodes.ZoomLevel);
+                        element.Node.Location = new Point(
+                            element.Node.Location.X + (currentPosition.X - _currentPosition.X) / Nodes.ZoomLevel,
+                            element.Node.Location.Y + (currentPosition.Y - _currentPosition.Y) / Nodes.ZoomLevel);
 
-                    _currentPosition = currentPosition;
+                        _currentPosition = currentPosition;
+                    }
                 }
             }
         }
 
-        private void ElementMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        void ElementMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var element = (NetworkNodeNodeControl)sender;
             element.ReleaseMouseCapture();

@@ -14,117 +14,149 @@ namespace Dev2.Studio.Core.DataList
     {
         #region Implementation of ISuggestionProvider
 
-        private readonly char[] _tokenisers = "!#$%^&-=_+{}|:\"?><`~<>?:'{}| [](".ToCharArray();
-        private ITrie<string> PatriciaTrie { get; set; }
-        private ObservableCollection<string> _variableList;
+        readonly char[] _tokenisers = "!#$%^&-=_+{}|:\"?><`~<>?:'{}| [](".ToCharArray();
+        ITrie<string> PatriciaTrie { get; set; }
+        ObservableCollection<string> _variableList;
 
         public ObservableCollection<string> VariableList
         {
-            get
-            {
-                return _variableList;
-            }
+            get => _variableList;
             set
             {
                 _variableList = value;
                 PatriciaTrie = new SuffixTrie<string>(1);
+                AddScalars();
+                AddRecsets();
+                AddFields();
+                AddJsonObjects();
+                AddMutations();
+            }
+        }
 
-                PatriciaTrieScalars = new SuffixTrie<string>(1);
-                var vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsScalarExpression);
-                foreach (var var in vars)
+        void AddMutations()
+        {
+            var vars = _variableList.Select(ParseExpression).OrderBy(a => a);
+            foreach (var var in vars)
+            {
+                if (var is LanguageAST.LanguageExpression.RecordSetExpression recordSetExpression)
                 {
-                    if (var is LanguageAST.LanguageExpression.ScalarExpression currentVar)
-                    {
-                        string key = DataListUtil.AddBracketsToValueIfNotExist(currentVar.Item);
-                        foreach (var permutation in PermuteCapitalizations(key))
-                        {
-                            PatriciaTrieScalars.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(currentVar.Item));
-                        }
-                    }
+                    AddIndexAsStarMutation(recordSetExpression);
                 }
-                PatriciaTrieRecsets = new SuffixTrie<string>(1);
-                vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsRecordSetNameExpression);
-                foreach (var var in vars)
+                else
                 {
-                    if (var is LanguageAST.LanguageExpression.RecordSetNameExpression currentVar)
-                    {
-                        var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.MakeValueIntoHighLevelRecordset(currentVar.Item.Name, Equals(currentVar.Item.Index, LanguageAST.Index.Star)));
-                        foreach (var permutation in PermuteCapitalizations(name))
-                        {
-                            PatriciaTrieRecsets.Add(permutation, name);
-                        }
-                    }
+                    AddPermutations(var);
                 }
-                PatriciaTrieRecsetsFields = new SuffixTrie<string>(1);
-                vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsRecordSetExpression || a.IsRecordSetNameExpression);
-                foreach (var var in vars)
+            }
+        }
+
+        void AddPermutations(LanguageAST.LanguageExpression var)
+        {
+            if (var is LanguageAST.LanguageExpression.RecordSetNameExpression recordSetNameExpression)
+            {
+                var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.MakeValueIntoHighLevelRecordset(recordSetNameExpression.Item.Name, Equals(recordSetNameExpression.Item.Index, LanguageAST.Index.Star)));
+                foreach (var permutation in PermuteCapitalizations(name))
                 {
-                    if (var is LanguageAST.LanguageExpression.RecordSetExpression currentVar)
-                    {
-                        var index = "";
-                        if (currentVar.Item.Index.IsStar)
-                        {
-                            index = "*";
-                        }
-                        var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(currentVar.Item.Name, currentVar.Item.Column, index));
-                        foreach (var permutation in PermuteCapitalizations(name))
-                        {
-                            PatriciaTrieRecsetsFields.Add(permutation, name);
-                        }
-                    }
+                    PatriciaTrie.Add(permutation, name);
                 }
-                PatriciaTrieJsonObjects = new SuffixTrie<string>(1);
-                vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsJsonIdentifierExpression);
-                foreach (var var in vars)
+            }
+            else
+            {
+                if (var is LanguageAST.LanguageExpression.ScalarExpression scalarExpression)
                 {
-                    if (var is LanguageAST.LanguageExpression.JsonIdentifierExpression jsonIdentifierExpression)
+                    var key = DataListUtil.AddBracketsToValueIfNotExist(scalarExpression.Item);
+                    foreach (var permutation in PermuteCapitalizations(key))
                     {
-                        AddJsonVariables(jsonIdentifierExpression.Item, null);
-                    }
-                }
-                vars = _variableList.Select(ParseExpression).OrderBy(a => a);
-                foreach (var var in vars)
-                {
-                    if (var is LanguageAST.LanguageExpression.RecordSetExpression recordSetExpression)
-                    {
-                        var index = "";
-                        if (recordSetExpression.Item.Index.IsStar)
-                        {
-                            index = "*";
-                        }
-                        var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(recordSetExpression.Item.Name, recordSetExpression.Item.Column, index));
-                        foreach (var permutation in PermuteCapitalizations(name))
-                        {
-                            PatriciaTrie.Add(permutation, name);
-                        }
-                    }
-                    else
-                    {
-                        if (var is LanguageAST.LanguageExpression.RecordSetNameExpression recordSetNameExpression)
-                        {
-                            var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.MakeValueIntoHighLevelRecordset(recordSetNameExpression.Item.Name, Equals(recordSetNameExpression.Item.Index, LanguageAST.Index.Star)));
-                            foreach (var permutation in PermuteCapitalizations(name))
-                            {
-                                PatriciaTrie.Add(permutation, name);
-                            }
-                        }
-                        else
-                        {
-                            if (var is LanguageAST.LanguageExpression.ScalarExpression scalarExpression)
-                            {
-                                string key = DataListUtil.AddBracketsToValueIfNotExist(scalarExpression.Item);
-                                foreach (var permutation in PermuteCapitalizations(key))
-                                {
-                                    PatriciaTrie.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(scalarExpression.Item));
-                                }
-                            }
-                        }
+                        PatriciaTrie.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(scalarExpression.Item));
                     }
                 }
             }
         }
 
-        private static LanguageAST.LanguageExpression ParseExpression(string a)
+        void AddIndexAsStarMutation(LanguageAST.LanguageExpression.RecordSetExpression recordSetExpression)
+        {
+            var index = "";
+            if (recordSetExpression.Item.Index.IsStar)
+            {
+                index = "*";
+            }
+            var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(recordSetExpression.Item.Name, recordSetExpression.Item.Column, index));
+            foreach (var permutation in PermuteCapitalizations(name))
+            {
+                PatriciaTrie.Add(permutation, name);
+            }
+        }
+
+        void AddJsonObjects()
+        {
+            PatriciaTrieJsonObjects = new SuffixTrie<string>(1);
+            var vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsJsonIdentifierExpression);
+            foreach (var var in vars)
+            {
+                if (var is LanguageAST.LanguageExpression.JsonIdentifierExpression jsonIdentifierExpression)
+                {
+                    AddJsonVariables(jsonIdentifierExpression.Item, null);
+                }
+            }
+        }
+
+        void AddFields()
+        {
+            PatriciaTrieRecsetsFields = new SuffixTrie<string>(1);
+            var vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsRecordSetExpression || a.IsRecordSetNameExpression);
+            foreach (var var in vars)
+            {
+                if (var is LanguageAST.LanguageExpression.RecordSetExpression currentVar)
+                {
+                    var index = "";
+                    if (currentVar.Item.Index.IsStar)
+                    {
+                        index = "*";
+                    }
+                    var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.CreateRecordsetDisplayValue(currentVar.Item.Name, currentVar.Item.Column, index));
+                    foreach (var permutation in PermuteCapitalizations(name))
+                    {
+                        PatriciaTrieRecsetsFields.Add(permutation, name);
+                    }
+                }
+            }
+        }
+
+        void AddRecsets()
+        {
+            IEnumerable<LanguageAST.LanguageExpression> vars;
+            PatriciaTrieRecsets = new SuffixTrie<string>(1);
+            vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsRecordSetNameExpression);
+            foreach (var var in vars)
+            {
+                if (var is LanguageAST.LanguageExpression.RecordSetNameExpression currentVar)
+                {
+                    var name = DataListUtil.AddBracketsToValueIfNotExist(DataListUtil.MakeValueIntoHighLevelRecordset(currentVar.Item.Name, Equals(currentVar.Item.Index, LanguageAST.Index.Star)));
+                    foreach (var permutation in PermuteCapitalizations(name))
+                    {
+                        PatriciaTrieRecsets.Add(permutation, name);
+                    }
+                }
+            }
+        }
+
+        void AddScalars()
+        {
+            PatriciaTrieScalars = new SuffixTrie<string>(1);
+            var vars = _variableList.Select(ParseExpression).OrderBy(a => a).Where(a => a.IsScalarExpression);
+            foreach (var var in vars)
+            {
+                if (var is LanguageAST.LanguageExpression.ScalarExpression currentVar)
+                {
+                    var key = DataListUtil.AddBracketsToValueIfNotExist(currentVar.Item);
+                    foreach (var permutation in PermuteCapitalizations(key))
+                    {
+                        PatriciaTrieScalars.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(currentVar.Item));
+                    }
+                }
+            }
+        }
+
+        static LanguageAST.LanguageExpression ParseExpression(string a)
         {
             try
             {
@@ -138,7 +170,7 @@ namespace Dev2.Studio.Core.DataList
             return LanguageAST.LanguageExpression.NewWarewolfAtomExpression(DataStorage.WarewolfAtom.Nothing);
         }
 
-        private LanguageAST.JsonIdentifierExpression AddJsonVariables(LanguageAST.JsonIdentifierExpression currentVar, string parentName)
+        LanguageAST.JsonIdentifierExpression AddJsonVariables(LanguageAST.JsonIdentifierExpression currentVar, string parentName)
         {
             if (currentVar != null)
             {
@@ -151,7 +183,7 @@ namespace Dev2.Studio.Core.DataList
                     {
                         objectName = "@" + objectName;
                     }
-                    string key = DataListUtil.AddBracketsToValueIfNotExist(objectName);
+                    var key = DataListUtil.AddBracketsToValueIfNotExist(objectName);
                     foreach (var permutation in PermuteCapitalizations(key))
                     {
                         PatriciaTrieJsonObjects.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(objectName));
@@ -167,7 +199,7 @@ namespace Dev2.Studio.Core.DataList
                     {
                         objectName = "@" + objectName;
                     }
-                    string key = DataListUtil.AddBracketsToValueIfNotExist(objectName);
+                    var key = DataListUtil.AddBracketsToValueIfNotExist(objectName);
                     foreach (var permutation in PermuteCapitalizations(key))
                     {
                         PatriciaTrieJsonObjects.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(objectName));
@@ -182,7 +214,7 @@ namespace Dev2.Studio.Core.DataList
                     {
                         objectName = "@" + objectName;
                     }
-                    string key = DataListUtil.AddBracketsToValueIfNotExist(objectName);
+                    var key = DataListUtil.AddBracketsToValueIfNotExist(objectName);
                     foreach (var permutation in PermuteCapitalizations(key))
                     {
                         PatriciaTrieJsonObjects.Add(permutation, DataListUtil.AddBracketsToValueIfNotExist(objectName));
@@ -194,10 +226,10 @@ namespace Dev2.Studio.Core.DataList
             return null;
         }
 
-        private SuffixTrie<string> PatriciaTrieRecsetsFields { get; set; }
-        private SuffixTrie<string> PatriciaTrieRecsets { get; set; }
-        private SuffixTrie<string> PatriciaTrieScalars { get; set; }
-        private SuffixTrie<string> PatriciaTrieJsonObjects { get; set; }
+        SuffixTrie<string> PatriciaTrieRecsetsFields { get; set; }
+        SuffixTrie<string> PatriciaTrieRecsets { get; set; }
+        SuffixTrie<string> PatriciaTrieScalars { get; set; }
+        SuffixTrie<string> PatriciaTrieJsonObjects { get; set; }
         public int Level { get; set; }
 
         public Dev2TrieSugggestionProvider()
@@ -207,9 +239,9 @@ namespace Dev2.Studio.Core.DataList
         }
 
        
-        public IEnumerable<string> GetSuggestions(string orignalText, int caretIndex, bool tokenise, enIntellisensePartType type)
+        public IEnumerable<string> GetSuggestions(string orignalText, int caretPosition, bool tokenise, enIntellisensePartType type)
         {
-            if (caretIndex < 0)
+            if (caretPosition < 0)
             {
                 return new List<string>();
             }
@@ -217,13 +249,13 @@ namespace Dev2.Studio.Core.DataList
             string filter;
             if (tokenise)
             {
-                if (caretIndex > orignalText.Length)
+                if (caretPosition > orignalText.Length)
                 {
-                    caretIndex = orignalText.Length;
+                    caretPosition = orignalText.Length;
                 }
 
-                string texttrimmedRight = orignalText.Substring(0, caretIndex);
-                int start = texttrimmedRight.LastIndexOf(texttrimmedRight.Split(_tokenisers).Last(), StringComparison.Ordinal);
+                var texttrimmedRight = orignalText.Substring(0, caretPosition);
+                var start = texttrimmedRight.LastIndexOf(texttrimmedRight.Split(_tokenisers).Last(), StringComparison.Ordinal);
                 filter = texttrimmedRight.Substring(start);
             }
             else
@@ -234,7 +266,7 @@ namespace Dev2.Studio.Core.DataList
             switch (type)
             {
                 case enIntellisensePartType.RecordsetsOnly:
-                    if (orignalText.Contains("(") && orignalText.IndexOf("(", StringComparison.Ordinal) < caretIndex)
+                    if (orignalText.Contains("(") && orignalText.IndexOf("(", StringComparison.Ordinal) < caretPosition)
                     {
                         trie = PatriciaTrie;
                     }
@@ -254,7 +286,7 @@ namespace Dev2.Studio.Core.DataList
                     break;
 
                 case enIntellisensePartType.RecordsetFields:
-                    if (orignalText.Contains("(") && orignalText.IndexOf("(", StringComparison.Ordinal) < caretIndex)
+                    if (orignalText.Contains("(") && orignalText.IndexOf("(", StringComparison.Ordinal) < caretPosition)
                     {
                         trie = PatriciaTrie;
                     }
@@ -264,7 +296,7 @@ namespace Dev2.Studio.Core.DataList
                     }
 
                     break;
-                case enIntellisensePartType.All:
+                case enIntellisensePartType.None:
                     break;
                 default:
                     break;
@@ -286,7 +318,7 @@ namespace Dev2.Studio.Core.DataList
             return trie.Retrieve(filter);
         }
 
-        private List<string> PermuteCapitalizations(string key)
+        List<string> PermuteCapitalizations(string key)
         {
             var suffixes = new List<string>();
             suffixes.Add(key);
@@ -297,15 +329,12 @@ namespace Dev2.Studio.Core.DataList
             return suffixes;
         }
 
-        string TitleCase(string input)
-        {
-            return input?[0].ToString().ToUpper() + input?.Substring(1).ToLower();
-        }
+        string TitleCase(string input) => input?[0].ToString().ToUpper() + input?.Substring(1).ToLower();
 
         string ReverseCase(string input)
         {
             var array = input?.Select(c => char.IsLetter(c) ? (char.IsUpper(c) ? char.ToLower(c) : char.ToUpper(c)) : c).ToArray();
-            string reversedCase = new string(array);
+            var reversedCase = new string(array);
             return reversedCase;
         }
 

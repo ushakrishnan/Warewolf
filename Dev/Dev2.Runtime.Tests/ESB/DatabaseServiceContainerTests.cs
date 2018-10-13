@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,6 @@ using Moq;
 
 namespace Dev2.Tests.Runtime.ESB
 {
-    // BUG 9710 - 2013.06.20 - TWR - Created
     [TestClass]
     public class DatabaseServiceContainerTests
     {
@@ -32,17 +31,19 @@ namespace Dev2.Tests.Runtime.ESB
         #endregion
 
         #region Execute
-        [TestMethod]
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("MSSql")]
         public void DatabaseServiceContainer_UnitTest_ExecuteWhereHasDatabaseServiceExecution_Guid()
         {
             //------------Setup for test--------------------------
             var mockServiceExecution = new Mock<IServiceExecution>();
             ErrorResultTO errors;
-            Guid expected = Guid.NewGuid();
+            var expected = Guid.NewGuid();
             mockServiceExecution.Setup(execution => execution.Execute(out errors, 0)).Returns(expected);
-            DatabaseServiceContainer databaseServiceContainer = new DatabaseServiceContainer(mockServiceExecution.Object);
+            var databaseServiceContainer = new DatabaseServiceContainer(mockServiceExecution.Object);
             //------------Execute Test---------------------------
-            Guid actual = databaseServiceContainer.Execute(out errors, 0);
+            var actual = databaseServiceContainer.Execute(out errors, 0);
             //------------Assert Results-------------------------
             Assert.AreEqual(expected, actual, "Execute should return the Guid from the service execution");
         }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +24,8 @@ namespace Dev2.Tests.Activities.Mocks
         public IDev2ZipOperationTO Dev2ZipOperationTO { get; set; }
         public IDev2UnZipOperationTO Dev2UnZipOperationTO   { get; set; }
 
-        public string Get(IActivityIOOperationsEndPoint path, bool deferredRead = false)
+        public string Get(IActivityIOOperationsEndPoint path) => Get(path, false);
+        public string Get(IActivityIOOperationsEndPoint path, bool deferredRead)
         {
             Source = path;
             DeferredRead = deferredRead;

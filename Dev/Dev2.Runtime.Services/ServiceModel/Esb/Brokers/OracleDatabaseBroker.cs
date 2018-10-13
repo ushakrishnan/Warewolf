@@ -42,9 +42,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
             {
                 res = "<FromXMLPayloads>" + res + "</FromXMLPayloads>";
             }
-            else if (foundXMLFrags == 0)
+            else
             {
-                res = payload;
+                if (foundXMLFrags == 0)
+                {
+                    res = payload;
+                }
             }
 
             return base.NormalizeXmlPayload(res);
@@ -104,17 +107,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
 
         #region Overrides of AbstractDatabaseBroker<MySqlServer>
 
-        protected override OracleServer CreateDbServer(DbSource dbSource)
+        protected override OracleServer CreateDbServer(DbSource dbSource) => new OracleServer();
+
+        static ServiceMethod CreateServiceMethod(IDbCommand command, IEnumerable<IDataParameter> parameters, IEnumerable<IDataParameter> outParameters, string sourceCode, string executeAction) => new ServiceMethod(command.CommandText, sourceCode, parameters.Select(MethodParameterFromDataParameter), null, null, executeAction)
         {
-            return new OracleServer();
-        }
-        private static ServiceMethod CreateServiceMethod(IDbCommand command, IEnumerable<IDataParameter> parameters, IEnumerable<IDataParameter> outParameters, string sourceCode, string executeAction)
-        {
-            return new ServiceMethod(command.CommandText, sourceCode, parameters.Select(MethodParameterFromDataParameter), null, null, executeAction)
-            {
-                OutParameters = outParameters.Select(MethodParameterFromDataParameter).ToList()
-            };
-        }
+            OutParameters = outParameters.Select(MethodParameterFromDataParameter).ToList()
+        };
         #endregion
 
         #endregion
@@ -134,9 +132,9 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
                     //
                     // Execute command and normalize XML
                     //
-                    IDbCommand command = CommandFromServiceMethod(server, dbService.Method);
+                    var command = CommandFromServiceMethod(server, dbService.Method);
 
-                    
+
 
                     var databaseName = (dbService.Source as DbSource).DatabaseName;
                     var fullProcedureName = dbService.Method.ExecuteAction.Substring(dbService.Method.ExecuteAction.IndexOf(".", StringComparison.Ordinal) + 1);
@@ -154,9 +152,10 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
                         throw new Exception("Mixing single return values and Ref Cursors are not currently supported.");
                     }
                     var dbDataParameters = server.GetProcedureInputParameters(command, databaseName, fullProcedureName);
-                    IDbCommand cmd = command.Connection.CreateCommand();
+                    var cmd = command.Connection.CreateCommand();
                     cmd.CommandType = CommandType.StoredProcedure;
                     cmd.CommandText = databaseName +"."+ fullProcedureName;
+                    cmd.CommandTimeout = command.CommandTimeout;
                     var parameters = dbService.Method.Parameters;
                     foreach (var dbDataParameter in dbDataParameters)
                     {

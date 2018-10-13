@@ -15,10 +15,6 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Adds a resource
-    /// </summary>
-
     public class FetchTests : IEsbManagementEndpoint
     {
 
@@ -26,27 +22,22 @@ namespace Dev2.Runtime.ESB.Management.Services
         public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
         {
             requestArgs.TryGetValue("resourceID", out StringBuilder tmp);
-            if (tmp != null)
+            if (tmp != null && Guid.TryParse(tmp.ToString(), out Guid resourceId))
             {
-                if (Guid.TryParse(tmp.ToString(), out Guid resourceId))
-                {
-                    return resourceId;
-                }
+                return resourceId;
             }
+
 
             return Guid.Empty;
         }
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Contribute;
-        }
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Contribute;
 
-        private ITestCatalog _testCatalog;
+        ITestCatalog _testCatalog;
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             try
             {
                 Dev2Logger.Info("Fetch Tests Service", GlobalConstants.WarewolfInfo);
@@ -61,7 +52,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     throw new InvalidDataContractException("resourceID is not a valid GUID.");
                 }
                 var tests = TestCatalog.Fetch(resourceId);
-                CompressedExecuteMessage message = new CompressedExecuteMessage();
+                var message = new CompressedExecuteMessage();
                 message.SetMessage(serializer.Serialize(tests));
                 message.HasError = false;
                 
@@ -89,16 +80,13 @@ namespace Dev2.Runtime.ESB.Management.Services
 
         public DynamicService CreateServiceEntry()
         {
-            DynamicService newDs = new DynamicService { Name = HandlesType() };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
+            var newDs = new DynamicService { Name = HandlesType() };
+            var sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
             newDs.Actions.Add(sa);
 
             return newDs;
         }
 
-        public string HandlesType()
-        {
-            return "FetchTests";
-        }
+        public string HandlesType() => "FetchTests";
     }
 }

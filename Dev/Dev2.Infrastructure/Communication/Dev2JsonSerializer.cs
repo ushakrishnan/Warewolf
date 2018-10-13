@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -40,29 +40,27 @@ namespace Dev2.Communication
             ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
                 PreserveReferencesHandling = PreserveReferencesHandling.Objects,
             };
-        public string Serialize<T>(T message)
+        public string Serialize<T>(T obj) => this.Serialize<T>(obj, Formatting);
+        public string Serialize<T>(T obj, Formatting formatting) => JsonConvert.SerializeObject(obj, formatting, _serializerSettings);
+
+        public T Deserialize<T>(string obj)
         {
-            return JsonConvert.SerializeObject(message, Formatting, _serializerSettings);
+            VerifyArgument.IsNotNull("message", obj);
+            return JsonConvert.DeserializeObject<T>(obj, _deSerializerSettings);
         }
 
-        public T Deserialize<T>([NotNull] string message)
+        public object Deserialize(string obj, Type type)
         {
-            VerifyArgument.IsNotNull("message", message);
-            return JsonConvert.DeserializeObject<T>(message, _deSerializerSettings);
-        }
-
-        public object Deserialize(string message, Type type)
-        {
-            VerifyArgument.IsNotNull("message", message);
+            VerifyArgument.IsNotNull("message", obj);
             VerifyArgument.IsNotNull("type", type);
-            return JsonConvert.DeserializeObject(message, type, _deSerializerSettings);
+            return JsonConvert.DeserializeObject(obj, type, _deSerializerSettings);
         }
 
         public StringBuilder SerializeToBuilder(object obj)
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
 
-            using(StringWriter sw = new StringWriter(result))
+            using (StringWriter sw = new StringWriter(result))
             {
                 var jsonSerializer = new JsonSerializer
                 {
@@ -87,14 +85,14 @@ namespace Dev2.Communication
         {
             if(message != null && message.Length > 0)
             {
-                JsonSerializer serializer = new JsonSerializer
+                var serializer = new JsonSerializer
                 {
                     TypeNameHandling = _deSerializerSettings.TypeNameHandling,
                     TypeNameAssemblyFormatHandling = _serializerSettings.TypeNameAssemblyFormatHandling,
                     ReferenceLoopHandling = _serializerSettings.ReferenceLoopHandling,
                     PreserveReferencesHandling = _serializerSettings.PreserveReferencesHandling
                 };
-                using(MemoryStream ms = new MemoryStream(message.Length))
+                using (MemoryStream ms = new MemoryStream(message.Length))
                 {
                     // now load the stream ;)
 

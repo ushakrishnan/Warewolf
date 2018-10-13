@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Linq;
 using ActivityUnitTests;
+using Dev2.Common.State;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -40,7 +41,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[TestCountvar]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = @"5";
             GetScalarValueFromEnvironment(result.Environment, "TestCountvar", out string actual, out string error);
 
@@ -58,11 +59,11 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void RecordsetLengthOutputToRecset()
         {
             SetupArguments("<root>" + ActivityStrings.CountRecordsDataListShape + "</root>", "<root><recset1><field1/></recset1><TestCountvar/></root>", "[[recset1()]]", "[[recset1().field1]]");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "5";
             GetRecordSetFieldValueFromDataList(result.Environment, "recset1", "field1", out IList<string> actual, out string error);
-            string actualSet = actual.First(c => !string.IsNullOrEmpty(c));
+            var actualSet = actual.First(c => !string.IsNullOrEmpty(c));
 
             // remove test datalist ;)
 
@@ -97,7 +98,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //---------------Test Result -----------------------
             const string Expected = "0";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -113,7 +114,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //---------------Test Result -----------------------
             const string Expected = "";
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
@@ -244,9 +245,60 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[res]]", dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfRecordsetNullhandlerLengthActivity_GetState")]
+        public void DsfRecordsetNullhandlerLengthActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfRecordsetNullhandlerLengthActivity { RecordsetName = "[[recset()]]",TreatNullAsZero=false, RecordsLength = "[[len]]" };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(3, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "RecordsetName",
+                    Type = StateVariable.StateType.Input,
+                    Value = "[[recset()]]"
+                },
+                 new StateVariable
+                {
+                    Name = "TreatNullAsZero",
+                    Type = StateVariable.StateType.Input,
+                    Value = "False"
+                },
+                new StateVariable
+                {
+                    Name="RecordsLength",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[len]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
+
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string recordSetName, string RecordsLength, bool treatNullasZero = false)
+        void SetupArguments(string currentDL, string testData, string recordSetName, string RecordsLength, bool treatNullasZero = false)
         {
             TestStartNode = new FlowStep
             {

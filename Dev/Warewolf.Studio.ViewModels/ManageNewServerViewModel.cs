@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -126,7 +126,7 @@ namespace Warewolf.Studio.ViewModels
             }
 
             Protocol = source.Address.Contains("https") ? Protocols[0] : Protocols[1];
-            int portIndex = GetSpecifiedIndexOf(source.Address, ':', 2);
+            var portIndex = GetSpecifiedIndexOf(source.Address, ':', 2);
             var ports = source.Address.Substring(portIndex + 1).Split('/');
             if (ports.Any())
             {
@@ -138,9 +138,10 @@ namespace Warewolf.Studio.ViewModels
             Header = ResourceName;
         }
 
-        private static int GetSpecifiedIndexOf(string str, char ch, int index)
+        static int GetSpecifiedIndexOf(string str, char ch, int index)
         {
-            int i = 0, o = 1;
+            var i = 0;
+            var o = 1;
             while ((i = str.IndexOf(ch, i)) != -1)
             {
                 if (o == index)
@@ -219,10 +220,7 @@ namespace Warewolf.Studio.ViewModels
             ViewModelUtils.RaiseCanExecuteChanged(OkCommand);
         }
 
-        public override bool CanSave()
-        {
-            return TestPassed;
-        }
+        public override bool CanSave() => TestPassed;
 
         void GetLoadComputerNamesTask(Action additionalUiAction)
         {
@@ -257,10 +255,7 @@ namespace Warewolf.Studio.ViewModels
                         var src = ToSource();
                         src.ResourcePath = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
                         Save(src);
-                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
-                        {
-                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ID);
-                        }
+                        AfterSave(requestServiceNameViewModel, src);
 
                         Item = src;
                         _serverSource = src;
@@ -279,6 +274,14 @@ namespace Warewolf.Studio.ViewModels
                 Item = src;
                 _serverSource = src;
                 SetupHeaderTextFromExisting();
+            }
+        }
+
+        void AfterSave(IRequestServiceNameViewModel requestServiceNameViewModel, IServerSource src)
+        {
+            if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null)
+            {
+                AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.ID);
             }
         }
 
@@ -310,18 +313,15 @@ namespace Warewolf.Studio.ViewModels
             };
         }
 
-        IServerSource ToNewSource()
+        IServerSource ToNewSource() => new ServerSource
         {
-            return new ServerSource
-            {
-                AuthenticationType = AuthenticationType,
-                Address = GetAddressName(),
-                Password = Password,
-                UserName = UserName,
-                Name = ResourceName,
-                ID = _serverSource?.ID ?? Guid.NewGuid()
-            };
-        }
+            AuthenticationType = AuthenticationType,
+            Address = GetAddressName(),
+            Password = Password,
+            UserName = UserName,
+            Name = ResourceName,
+            ID = _serverSource?.ID ?? Guid.NewGuid()
+        };
 
         IServerSource ToSource()
         {
@@ -366,25 +366,20 @@ namespace Warewolf.Studio.ViewModels
             return true;
         }
 
-        bool CanCancelTest()
-        {
-            return Testing;
-        }
+        bool CanCancelTest() => Testing;
 
         void CancelTest()
         {
-            if (_token != null)
+            if (_token != null && !_token.IsCancellationRequested && _token.Token.CanBeCanceled)
             {
-                if (!_token.IsCancellationRequested && _token.Token.CanBeCanceled)
+                _token.Cancel();
+                Dispatcher.CurrentDispatcher.Invoke(() =>
                 {
-                    _token.Cancel();
-                    Dispatcher.CurrentDispatcher.Invoke(() =>
-                    {
-                        FailedTesting();
-                        TestMessage = "Test Cancelled";
-                    });
-                }
+                    FailedTesting();
+                    TestMessage = "Test Cancelled";
+                });
             }
+
         }
 
         void TestConnection()
@@ -543,7 +538,7 @@ namespace Warewolf.Studio.ViewModels
 
         #endregion
 
-        private string GetAddressName()
+        string GetAddressName()
         {
             string addressName = null;
             if (!string.IsNullOrEmpty(ServerName?.Name))
@@ -553,10 +548,7 @@ namespace Warewolf.Studio.ViewModels
             return addressName;
         }
 
-        string GetAddressName(string protocol, string serverName, string port)
-        {
-            return protocol + "://" + serverName + ":" + port;
-        }
+        string GetAddressName(string protocol, string serverName, string port) => protocol + "://" + serverName + ":" + port;
 
         public string ResourceName
         {
@@ -632,9 +624,12 @@ namespace Warewolf.Studio.ViewModels
                     {
                         SelectedPort = "3143";
                     }
-                    else if (Protocol == "http" && SelectedPort == "3143")
+                    else
                     {
-                        SelectedPort = "3142";
+                        if (Protocol == "http" && SelectedPort == "3143")
+                        {
+                            SelectedPort = "3142";
+                        }
                     }
 
                 }
@@ -674,10 +669,7 @@ namespace Warewolf.Studio.ViewModels
         /// <returns>
         /// A string that represents the current object.
         /// </returns>
-        public override string ToString()
-        {
-            return _headerText;
-        }
+        public override string ToString() => _headerText;
 
         void CheckVersionConflict()
         {

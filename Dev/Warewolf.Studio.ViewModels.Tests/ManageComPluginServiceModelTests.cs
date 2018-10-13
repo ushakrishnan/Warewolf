@@ -14,15 +14,15 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private ManageComPluginServiceModel _target;
+        ManageComPluginServiceModel _target;
 
-        private Guid _localhostServerEnvironmentId;
-        private Mock<IShellViewModel> _shellViewModelMock;
-        private Mock<IServer> _localhostServerMock;
-        private Mock<IWindowsGroupPermission> _windowsGroupPermissionMock;
+        Guid _localhostServerEnvironmentId;
+        Mock<IShellViewModel> _shellViewModelMock;
+        Mock<IServer> _localhostServerMock;
+        Mock<IWindowsGroupPermission> _windowsGroupPermissionMock;
 
-        private Mock<IStudioUpdateManager> _mockStudioUpdateManager;
-        private Mock<IQueryManager> _mockQueryManager;
+        Mock<IStudioUpdateManager> _mockStudioUpdateManager;
+        Mock<IQueryManager> _mockQueryManager;
 
         #endregion Fields
 
@@ -52,7 +52,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #endregion Test initialize
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRetrieveSources()
         {
             var expectedResult = new ObservableCollection<IComPluginSource>();
@@ -64,7 +64,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _mockQueryManager.Verify(it => it.FetchComPluginSources());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestGetActions()
         {
             var expectedResult = new ObservableCollection<IPluginAction>();
@@ -78,7 +78,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _mockQueryManager.Verify(it => it.PluginActions(mockComPluginSource.Object, mockNamespace.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestGetNameSpaces()
         {
             var expectedResult = new ObservableCollection<INamespaceItem>();
@@ -91,7 +91,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _mockQueryManager.Verify(it => it.FetchNamespaces(mockComPluginSource.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCreateNewSource()
         {
             try
@@ -104,7 +104,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             }
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEditComPluginSource()
         {
             var mockPluginSource = new Mock<IComPluginSource>();
@@ -115,7 +115,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.EditSource(mockPluginSource.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestService()
         {
             var mockPluginInputValues = new Mock<IComPluginService>();

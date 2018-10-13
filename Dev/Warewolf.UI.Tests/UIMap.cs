@@ -1,4 +1,9 @@
-﻿using Keyboard = Microsoft.VisualStudio.TestTools.UITesting.Keyboard;
+﻿using System.CodeDom.Compiler;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.TestTools.UITesting.HtmlControls;
+using Microsoft.VisualStudio.TestTools.UITesting.WpfControls;
+using Keyboard = Microsoft.VisualStudio.TestTools.UITesting.Keyboard;
 using System.Windows.Input;
 using MouseButtons = System.Windows.Forms.MouseButtons;
 using System;
@@ -42,7 +47,6 @@ namespace Warewolf.UI.Tests
             Playback.PlaybackSettings.WaitForReadyTimeout = 60000;
             Mouse.MouseMoveSpeed = 2500;
             Mouse.MouseDragSpeed = 2500;
-
             Playback.PlaybackError -= OnPlaybackError;
             Playback.PlaybackError += OnPlaybackError;
         }
@@ -50,8 +54,6 @@ namespace Warewolf.UI.Tests
         private static void OnPlaybackError(object sender, PlaybackErrorEventArgs e)
         {
             var errorType = e.Error.GetType().ToString();
-            string messageText;
-            object exceptionSource;
             switch (errorType)
             {
                 case "Microsoft.VisualStudio.TestTools.UITest.Extension.UITestControlNotAvailableException":
@@ -67,11 +69,12 @@ namespace Warewolf.UI.Tests
         }
 
         [Given("The Warewolf Studio is running")]
+        [Then("The Warewolf Studio is running")]
         public void AssertStudioIsRunning()
         {
-            Try_Click_No_On_Script_Error_Messagebox();
             Assert.IsTrue(MainStudioWindow.Exists, "Warewolf studio is not running. You are expected to run \"Dev\\Run Tests.ps1\" as an administrator and wait for it to complete before running any coded UI tests");
             Keyboard.SendKeys(MainStudioWindow, "^%{F4}");
+
         }
 
         public void TryPin_Unpinned_Pane_To_Default_Position()
@@ -213,19 +216,10 @@ namespace Warewolf.UI.Tests
             Click_Close_Workflow_Tab_Button();
         }
 
-        [Given("I Click Save Ribbon Button Without Expecting a Dialog")]
-        [When("I Click Save Ribbon Button Without Expecting a Dialog")]
-        [Given("I Click Save Ribbon Button Without Expecting a Dialog")]
-        [Then("I Click Save Ribbon Button Without Expecting a Dialog")]
-        public void Click_Save_Ribbon_Button_Without_Expecting_A_Dialog()
-        {
-            Click_Save_Ribbon_Button_With_No_Save_Dialog(2000);
-        }
-
         [Given(@"I Click Save Ribbon Button With No Save Dialog")]
         [When(@"I Click Save Ribbon Button With No Save Dialog")]
         [Then(@"I Click Save Ribbon Button With No Save Dialog")]
-        public void Click_Save_Ribbon_Button_With_No_Save_Dialog(int WaitForSave = 2000)
+        public void Click_Save_Ribbon_Button_With_No_Save_Dialog()
         {
             Assert.IsTrue(MainStudioWindow.SideMenuBar.SaveButton.Exists, "Save ribbon button does not exist");
             Mouse.Click(MainStudioWindow.SideMenuBar.SaveButton, new Point(10, 5));
@@ -251,7 +245,7 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(MainStudioWindow.DebugInputDialog.DebugF6Button.Exists, "Debug button in Debug Input window does not exist.");
             Assert.IsTrue(MainStudioWindow.DebugInputDialog.CancelButton.Exists, "Cancel Debug Input Window button does not exist.");
             Assert.IsTrue(MainStudioWindow.DebugInputDialog.RememberDebugInputCheckBox.Exists, "Remember Checkbox does not exist in the Debug Input window.");
-            Assert.IsTrue(MainStudioWindow.DebugInputDialog.ViewInBrowserF7Button.Enabled, "View in Browser button does not exist in Debug Input window.");
+            Assert.IsTrue(MainStudioWindow.DebugInputDialog.ViewInBrowserF7Button.Exists, "View in Browser button does not exist in Debug Input window.");
             Assert.IsTrue(MainStudioWindow.DebugInputDialog.TabItemsTabList.InputDataTab.InputsTable.Exists, "Input Data Window does not exist in Debug Input window.");
             Assert.IsTrue(MainStudioWindow.DebugInputDialog.TabItemsTabList.XMLTab.Exists, "Xml tab does not Exist in the Debug Input window.");
             Assert.IsTrue(MainStudioWindow.DebugInputDialog.TabItemsTabList.JSONTab.Exists, "Assert Json tab does not exist in the debug input window.");
@@ -293,6 +287,15 @@ namespace Warewolf.UI.Tests
         public void Debug_Workflow_With_Ribbon_Button()
         {
             Click_Debug_RibbonButton();
+            Click_DebugInput_Debug_Button();
+            WaitForSpinner(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.StatusBar.Spinner);
+        }
+
+        [When(@"I Debug with input of ""(.*)""")]
+        public void Debug_Workflow_With_Input(string input)
+        {
+            Click_Debug_RibbonButton();
+            Enter_Text_Into_Debug_Input_Row1_Value_Textbox(input);
             Click_DebugInput_Debug_Button();
             WaitForSpinner(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.StatusBar.Spinner);
         }
@@ -339,12 +342,25 @@ namespace Warewolf.UI.Tests
         public void Pin_Unpinned_Pane_To_Default_Position()
         {
             Mouse.StartDragging(MainStudioWindow.UnpinnedTab, new Point(5, 5));
-            Mouse.StopDragging(MainStudioWindow.UnpinnedTab);
+            Mouse.StopDragging(MainStudioWindow.UnpinnedTab, 700, 500);
         }
+
         public void Unpin_Tab_With_Drag(UITestControl Tab)
         {
             Mouse.StartDragging(Tab);
-            Mouse.StopDragging(0, 21);
+            Mouse.StopDragging(0, 50);
+            Playback.Wait(1000);
+        }
+        public void Unpin_Pane_With_Context_Menu(UITestControl Tab)
+        {
+            Mouse.StartDragging(Tab);
+            Mouse.StopDragging(0, 50);
+        }
+
+        public void Unpin_Tab2_With_Drag(UITestControl Tab)
+        {
+            Mouse.StartDragging(Tab);
+            Mouse.StopDragging(0, 100);
             Playback.Wait(2000);
         }
 
@@ -503,7 +519,6 @@ namespace Warewolf.UI.Tests
         [Then(@"I Click DebugInput ViewInBrowser Button")]
         public void Click_DebugInput_ViewInBrowser_Button()
         {
-            Assert.IsTrue(MainStudioWindow.DebugInputDialog.ViewInBrowserF7Button.Enabled, "ViewInBrowserF7Button is not enabled after clicking RunDebug from Menu.");
             Mouse.Click(MainStudioWindow.DebugInputDialog.ViewInBrowserF7Button, new Point(82, 14));
         }
 
@@ -537,6 +552,13 @@ namespace Warewolf.UI.Tests
         public void Click_Save_RibbonButton()
         {
             Mouse.Click(MainStudioWindow.SideMenuBar.SaveButton);
+        }
+
+        [When(@"I Click Save Ribbon Button And Wait For Save")]
+        public void Click_Save_RibbonButton_And_Wait()
+        {
+            Mouse.Click(MainStudioWindow.SideMenuBar.SaveButton);
+            MainStudioWindow.SideMenuBar.SaveButton.WaitForControlCondition((control) => { return !control.Enabled; }, 60000);
         }
 
         [Given(@"I Click Deploy Ribbon Button")]
@@ -853,6 +875,11 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.UIHelloWorldText.Exists, "Hello World workflow tab does not exist.");
         }
 
+        public void Context_Menu_Set_As_Start_Node()
+        {
+            Mouse.Click(MainStudioWindow.DesignSurfaceContextMenu.SetasStartNode);
+        }
+
         [When(@"I Expand Debug Output Recordset")]
         public void Expand_Debug_Output_Recordset()
         {
@@ -862,8 +889,9 @@ namespace Warewolf.UI.Tests
         [Then(@"The GetCountries Recordset Is Visible in Debug Output")]
         public void ThenTheDebugOutputShowsGetCountriesRecordset()
         {
-            Assert.AreEqual("[[dbo_GetCountries(204).CountryID]]", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.RecordsetGroup.RecordsetName.DisplayText, "Wrong recordset name in debug output for new DB connector.");
-            Assert.AreEqual("155", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.RecordsetGroup.RecordsetValue.DisplayText, "Wrong recordset value in debug output for new DB connector.");
+            Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.RecordsetGroup.RecordsetName.DisplayText.StartsWith("[[dbo_GetCountries(") &&
+                WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.RecordsetGroup.RecordsetName.DisplayText.EndsWith(").CountryID]]"), "DB connector debug output recordset is not dbo_GetCountries with CountryID field.");
+            Assert.IsTrue(!String.IsNullOrEmpty(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.RecordsetGroup.RecordsetValue.DisplayText), "No recordset value in debug output for new DB connector.");
         }
 
         public void Open_Deploy_Using_Shortcut()
@@ -937,14 +965,6 @@ namespace Warewolf.UI.Tests
                 File.Delete(filePath2);
                 Directory.Delete(folderName);
                 Assert.IsFalse(Directory.Exists(folderName));
-            }
-        }
-
-        public void Try_Click_No_On_Script_Error_Messagebox()
-        {
-            if (ControlExistsNow(ScriptErrorMessagebox))
-            {
-                Mouse.Click(ScriptErrorMessagebox.ScriptErrorBody.NOButton, new Point(25, 15));
             }
         }
 

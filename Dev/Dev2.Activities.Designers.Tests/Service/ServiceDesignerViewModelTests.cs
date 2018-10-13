@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,7 +30,6 @@ using Dev2.Data.Interfaces.Enums;
 using Dev2.DataList.Contract;
 using Dev2.Providers.Errors;
 using Dev2.Providers.Events;
-using Dev2.Simulation;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Activities.Utils;
 using Dev2.Studio.Core.Factories;
@@ -44,7 +43,6 @@ using Dev2.Studio.ViewModels.DataList;
 using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Moq.Language.Flow;
 using Moq.Protected;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -125,7 +123,8 @@ namespace Dev2.Activities.Designers.Tests.Service
             Assert.IsNotNull(viewModel.RootModel);
             Assert.IsNull(viewModel.ResourceModel);
             Assert.IsNotNull(viewModel.ImageSource);
-
+            Assert.AreEqual(1, viewModel.ValidationMemoManager.DesignValidationErrors.Count);
+            Assert.AreEqual("Source was not found. This service will not execute.", viewModel.ValidationMemoManager.DesignValidationErrors[0].Message);
             Assert.AreEqual(1, viewModel.TitleBarToggles.Count);
         }
 
@@ -336,6 +335,7 @@ namespace Dev2.Activities.Designers.Tests.Service
         }
 
         [TestMethod]
+        [TestCategory("ServiceDesignerViewModel_Constructor")]
         public void ServiceDesignerViewModel_Constructor_ModelItemHasProperties_PropertiesPopulated()
         {
             var friendlySourceName = CreateModelProperty("FriendlySourceName", "Hello");
@@ -347,7 +347,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             Assert.IsTrue(vm.Properties.Count == 3);
         }
-
+       
         #endregion
 
         [TestMethod]
@@ -385,7 +385,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -403,7 +403,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 DisplayName = helloWorld
             };
@@ -431,7 +430,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -449,7 +448,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
@@ -479,7 +477,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -497,14 +495,13 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
             };
             var modelItem = CreateModelItem(activity);
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
-            PrivateType privateType = new PrivateType(typeof(ServiceDesignerViewModel));
+            var privateType = new PrivateType(typeof(ServiceDesignerViewModel));
             //---------------Precondition------------------------
             Assert.IsNotNull(viewModel);
             //------------Execute Test---------------------------
@@ -527,7 +524,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -545,14 +542,13 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
             };
             var modelItem = CreateModelItem(activity);
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
-            PrivateType privateType = new PrivateType(typeof(ServiceDesignerViewModel));
+            var privateType = new PrivateType(typeof(ServiceDesignerViewModel));
             //---------------Precondition------------------------
             Assert.IsNotNull(viewModel);
             //------------Execute Test---------------------------
@@ -575,7 +571,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -593,14 +589,13 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
             };
             var modelItem = CreateModelItem(activity);
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
-            PrivateType privateType = new PrivateType(typeof(ServiceDesignerViewModel));
+            var privateType = new PrivateType(typeof(ServiceDesignerViewModel));
             //---------------Precondition------------------------
             Assert.IsNotNull(viewModel);
             //------------Execute Test---------------------------
@@ -623,7 +618,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -641,14 +636,13 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
             };
             var modelItem = CreateModelItem(activity);
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
-            PrivateType privateType = new PrivateType(typeof(ServiceDesignerViewModel));
+            var privateType = new PrivateType(typeof(ServiceDesignerViewModel));
             var mock = new Mock<IComplexObjectItemModel>();
             mock.Setup(model => model.GetJson()).Returns("");
             //---------------Precondition------------------------
@@ -670,7 +664,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -688,7 +682,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
@@ -697,7 +690,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object,
                 new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker())
             { IsWorstErrorReadOnly = false };
-            PrivateObject privateType = new PrivateObject(viewModel);
+            var privateType = new PrivateObject(viewModel);
             var mock = new Mock<IComplexObjectItemModel>();
             mock.Setup(model => model.GetJson()).Returns("");
             //---------------Precondition------------------------
@@ -721,7 +714,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -739,7 +732,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
@@ -768,7 +760,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -786,7 +778,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
@@ -797,10 +788,6 @@ namespace Dev2.Activities.Designers.Tests.Service
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-            using (viewModel)
-            {
-
-            }
             //---------------Test Result -----------------------
             Assert.IsTrue(true);
         }
@@ -818,7 +805,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -836,7 +823,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
@@ -866,7 +852,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -886,7 +872,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 ServiceName = helloWorld,
                 DisplayName = "DsfActivity"
@@ -922,7 +907,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -940,7 +925,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 DisplayName = string.Empty,
                 ServiceName = helloWorld
@@ -967,7 +951,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -986,7 +970,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 EnvironmentID = new InArgument<Guid>(Guid.Empty)
                 ,
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 Type = new InArgument<string>(resourceType),
                 DisplayName = string.Empty,
                 FriendlySourceName = "Other Server"
@@ -1032,7 +1015,6 @@ namespace Dev2.Activities.Designers.Tests.Service
 
         {
             var eventAggregator = new Mock<IEventAggregator>();
-            //eventAggregator.Setup(e => e.Publish(It.IsAny<EditActivityMessage>())).Verifiable();
 
             var instanceID = Guid.NewGuid();
             var error1 = new ErrorInfo { InstanceID = instanceID, ErrorType = ErrorType.Critical, FixType = FixType.ReloadMapping, FixData = "xxxxx" };
@@ -1485,7 +1467,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1494,7 +1476,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveServer).Returns(resourceModel.Object.Environment);
 
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString() };
 
             var modelItem = CreateModelItem(activity);
 
@@ -1557,7 +1539,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1572,7 +1554,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -1633,7 +1614,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1648,7 +1629,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -1705,7 +1685,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1720,7 +1700,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>",
                 FriendlySourceName = "www.youtube.com"
@@ -1737,7 +1716,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             environment.Setup(a => a.ResourceRepository).Returns(resRepo.Object);
             //------------Execute Test---------------------------
-            bool wasSet = false;
+            var wasSet = false;
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             viewModel.PropertyChanged += (sender, args) =>
             {
@@ -1788,7 +1767,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1803,7 +1782,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>",
                 FriendlySourceName = "www.Dev2.com"
@@ -1873,7 +1851,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resources.Object);
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1887,7 +1865,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -1958,7 +1935,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resources.Object);
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -1972,7 +1949,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -2058,7 +2034,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resources.Object);
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -2072,7 +2048,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -2159,7 +2134,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resources.Object);
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -2173,7 +2148,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -2258,7 +2232,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resources.Object);
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -2272,7 +2246,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.NewGuid().ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs></Inputs>",
                 OutputMapping = "<Outputs></Outputs>"
             };
@@ -2344,7 +2317,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(a => a.ResourceRepository).Returns(resources.Object);
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(resourceID);
@@ -2359,7 +2332,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 ResourceID = new InArgument<Guid>(resourceID),
                 EnvironmentID = new InArgument<Guid>(Guid.Empty),
                 UniqueID = Guid.Empty.ToString(),
-                SimulationMode = SimulationMode.OnDemand,
                 InputMapping = "<Inputs><Input Name=\"n1\" Source=\"[[n1]]\" /></Inputs>",
                 OutputMapping = "<Outputs><Output Name=\"n1\" MapsTo=\"[[n1]]\" Value=\"[[n1]]\" /></Outputs>"
             };
@@ -2430,7 +2402,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -2439,7 +2411,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveServer).Returns(resourceModel.Object.Environment);
 
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString() };
 
             var modelItem = CreateModelItem(activity);
 
@@ -2464,19 +2436,19 @@ namespace Dev2.Activities.Designers.Tests.Service
             var resourceID = Guid.NewGuid();
 
             var resourceModel = CreateResourceModel(Guid.Empty, false, null);
-            ISetup<IContextualResourceModel, string> setupResourceModel = resourceModel.Setup(model => model.DataList);
+            var setupResourceModel = resourceModel.Setup(model => model.DataList);
             setupResourceModel.Returns("<DataList><n1/></DataList>");
 
 
             var rootModel = CreateResourceModel(Guid.Empty);
 
             var envRepository = new Mock<IServerRepository>();
-            ISetup<IServerRepository, IServer> setupFindSingle = envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>()));
+            var setupFindSingle = envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>()));
             setupFindSingle.Returns((IServer)null);
-            ISetup<IServerRepository, IServer> setupActiveEnvironment = envRepository.Setup(r => r.ActiveServer);
+            var setupActiveEnvironment = envRepository.Setup(r => r.ActiveServer);
             setupActiveEnvironment.Returns(resourceModel.Object.Environment);
 
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(rootModel.Object.Environment.EnvironmentID), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(rootModel.Object.Environment.EnvironmentID), UniqueID = Guid.NewGuid().ToString() };
 
             var modelItem = CreateModelItem(activity);
 
@@ -2500,7 +2472,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -2509,7 +2481,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveServer).Returns(resourceModel.Object.Environment);
 
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString() };
 
             var modelItem = CreateModelItem(activity);
             //------------Execute Test---------------------------
@@ -2531,7 +2503,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -2540,7 +2512,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IServer, bool>>>())).Returns(resourceModel.Object.Environment);
             envRepository.Setup(r => r.ActiveServer).Returns(resourceModel.Object.Environment);
 
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString() };
 
             var modelItem = CreateModelItem(activity);
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object) { RunWorkflowAsync = true };
@@ -2563,7 +2535,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -2573,7 +2545,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.ActiveServer).Returns(resourceModel.Object.Environment);
 
             var resourceType = resourceModel.Object.ServerResourceType;
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand, Type = new InArgument<string>(resourceType) };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), Type = new InArgument<string>(resourceType) };
 
             var modelItem = CreateModelItem(activity);
             //------------Execute Test---------------------------
@@ -2595,7 +2567,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
 
             var rootModel = CreateResourceModel(Guid.Empty);
@@ -2605,7 +2577,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             envRepository.Setup(r => r.ActiveServer).Returns(resourceModel.Object.Environment);
 
             var resourceType = resourceModel.Object.ResourceType.ToString();
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand, Type = new InArgument<string>(resourceType) };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), Type = new InArgument<string>(resourceType) };
 
             var modelItem = CreateModelItem(activity);
             //------------Execute Test---------------------------
@@ -2620,7 +2592,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
         #region CreateModelItem
 
-        private static Mock<ModelItem> CreateModelItem(Guid uniqueID, Guid serviceID, Guid environmentID, params ModelProperty[] modelProperties)
+        static Mock<ModelItem> CreateModelItem(Guid uniqueID, Guid serviceID, Guid environmentID, params ModelProperty[] modelProperties)
         {
             const int OffSet = 4;
             var startIndex = 0;
@@ -2675,7 +2647,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
         static Mock<IContextualResourceModel> CreateResourceModel(Guid resourceID, bool resourceRepositoryReturnsNull, Mock<IContextualResourceModel> contextualResourceModel, params IErrorInfo[] resourceErrors)
         {
-            Mock<IContextualResourceModel> resourceModel = CreateResourceModel(resourceID, out Mock<IResourceRepository> resourceRepository, resourceErrors);
+            var resourceModel = CreateResourceModel(resourceID, out Mock<IResourceRepository> resourceRepository, resourceErrors);
             resourceRepository.Setup(r => r.FindSingle(It.IsAny<Expression<Func<IResourceModel, bool>>>(), true, false)).Returns(resourceRepositoryReturnsNull ? null : resourceModel.Object);
             if (resourceRepositoryReturnsNull)
             {
@@ -2754,7 +2726,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
             var modelItem = CreateModelItem(instanceID, resourceModel.Object.ID, resourceModel.Object.Environment.EnvironmentID, null);
 
@@ -2764,7 +2736,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             return new ServiceDesignerViewModel(modelItem.Object, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
         }
 
-        static ServiceDesignerViewModel CreateServiceDesignerViewModel(Guid instanceID, params IErrorInfo[] resourceErrors)
+        public static ServiceDesignerViewModel CreateServiceDesignerViewModel(Guid instanceID, params IErrorInfo[] resourceErrors)
         {
             return CreateServiceDesignerViewModel(instanceID, null, resourceErrors);
         }
@@ -2789,7 +2761,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
             var modelItem = CreateModelItem(instanceID, resourceModel.Object.ID, resourceModel.Object.Environment.EnvironmentID, modelProperties);
 
@@ -2805,7 +2777,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             resourceModel.Setup(model => model.DataList).Returns("<DataList><n1/></DataList>");
             var dataListViewModel = new DataListViewModel();
             dataListViewModel.InitializeDataListViewModel(resourceModel.Object);
-            dataListViewModel.ScalarCollection.Add(new ScalarItemModel("n1"));
+            dataListViewModel.Add(new ScalarItemModel("n1"));
             DataListSingleton.SetDataList(dataListViewModel);
             var modelItem = CreateModelItem(instanceID, resourceModel.Object.ID, resourceModel.Object.Environment.EnvironmentID, modelProperties);
 
@@ -2818,7 +2790,7 @@ namespace Dev2.Activities.Designers.Tests.Service
 
         static Mock<IResourceRepository> SetupForSourceCheck(out Guid instanceID, out Mock<IServer> environment, out Mock<IContextualResourceModel> resourceModel, out Guid sourceID, bool mangleXaml = false)
         {
-            Mock<IResourceRepository> mockRepo = new Mock<IResourceRepository>();
+            var mockRepo = new Mock<IResourceRepository>();
             instanceID = Guid.NewGuid();
             var connection = new Mock<IEnvironmentConnection>();
             connection.Setup(conn => conn.ServerEvents).Returns(new EventPublisher());
@@ -2830,7 +2802,7 @@ namespace Dev2.Activities.Designers.Tests.Service
             environment.Setup(e => e.IsConnected).Returns(true);
 
             const string src = @"1afe38e9-a6f5-403d-9e52-06dd7ae11198";
-            string xaml = string.Format(@"<Action Name=""foobar"" Type=""InvokeWebService"" SourceID=""{0}"" SourceName=""dummy"" SourceMethod="""" RequestUrl="""" RequestMethod=""Post"" JsonPath=""""></Action>", src);
+            var xaml = string.Format(@"<Action Name=""foobar"" Type=""InvokeWebService"" SourceID=""{0}"" SourceName=""dummy"" SourceMethod="""" RequestUrl="""" RequestMethod=""Post"" JsonPath=""""></Action>", src);
 
             if (mangleXaml)
             {
@@ -2870,7 +2842,7 @@ namespace Dev2.Activities.Designers.Tests.Service
                 rootModel.Setup(m => m.GetErrors(It.IsAny<Guid>())).Returns(new List<IErrorInfo>());
             }
             rootModel.Setup(r => r.UserPermissions).Returns(Permissions.Administrator);
-            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), SimulationMode = SimulationMode.OnDemand, ServiceName = name };
+            var activity = new DsfActivity { ResourceID = new InArgument<Guid>(resourceID), EnvironmentID = new InArgument<Guid>(Guid.Empty), UniqueID = Guid.NewGuid().ToString(), ServiceName = name };
 
             if (type != null)
             {

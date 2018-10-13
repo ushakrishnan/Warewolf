@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,15 +28,14 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage.Interfaces;
-
+using System.Diagnostics.CodeAnalysis;
+using Dev2.Common.State;
 
 namespace Dev2.Activities
 {
-    /// <summary>
-    /// Activity used for executing JavaScript through a tool
-    /// </summary>
-    //[ToolDescriptorInfo("Scripting-JavaScript", "Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_Script")]
-    public class DsfScriptingActivity : DsfActivityAbstract<string>
+    //[ToolDescriptorInfo("Scripting-JavaScript", "Script", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Scripting", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Scripting_Script")]
+    [ExcludeFromCodeCoverage]
+    public class DsfScriptingActivity : DsfActivityAbstract<string>, IEquatable<DsfScriptingActivity>
     {
         #region Properties
 
@@ -74,68 +73,56 @@ namespace Dev2.Activities
         }
 
         #endregion Ctor
-        public override List<string> GetOutputs()
-        {
-            return new List<string> { Result };
-        }
-        #region Overrides of DsfNativeActivity<string>
 
-        /// <summary>
-        /// When overridden runs the activity's execution logic
-        /// </summary>
-        /// <param name="context">The context to be used.</param>
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "Script",
+                    Value = Script,
+                    Type = StateVariable.StateType.Input
+                },
+                 new StateVariable
+                {
+                    Name = "IncludeFile",
+                    Value = IncludeFile,
+                    Type = StateVariable.StateType.Input
+                },
+                 new StateVariable
+                {
+                    Name = "EscapeScript",
+                    Value = EscapeScript.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
+
+        public override List<string> GetOutputs() => new List<string> { Result };
+        #region Overrides of DsfNativeActivity<string>
+        
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
             AddScriptSourcePathsToList();
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
-            allErrors.MergeErrors(errors);
+            var allErrors = new ErrorResultTO();
+            var errors = new ErrorResultTO();
             var env = dataObject.Environment;
             InitializeDebug(dataObject);
             try
             {
-                if (!errors.HasErrors())
-                {
-                    if (dataObject.IsDebugMode())
-                    {
-                        var language = ScriptType.GetDescription();
-                        AddDebugInputItem(new DebugItemStaticDataParams(language, "Language"));
-                        AddDebugInputItem(new DebugEvalResult(Script, "Script", env, update));
-                    }
-
-                    allErrors.MergeErrors(errors);
-
-                    if (allErrors.HasErrors())
-                    {
-                        return;
-                    }
-
-                    var scriptItr = new WarewolfIterator(dataObject.Environment.Eval(Script, update,false, EscapeScript));
-                    while (scriptItr.HasMoreData())
-                    {
-                        var engine = new ScriptingEngineRepo().CreateEngine(ScriptType,_sources);
-                        var value = engine.Execute(scriptItr.GetNextValue());
-
-                        foreach (var region in DataListCleaningUtils.SplitIntoRegions(Result))
-                        {
-                            
-                            env.Assign(region, value, update);
-                            if (dataObject.IsDebugMode() && !allErrors.HasErrors())
-                            {
-                                if (!string.IsNullOrEmpty(region))
-                                {
-                                    AddDebugOutputItem(new DebugEvalResult(region, "", env, update));
-                                }
-                            }
-                        }
-                    }
-                }
+                TryExecute(dataObject, update, allErrors, env);
             }
             catch (Exception e) when (e is NullReferenceException || e is RuntimeBinderException)
             {
@@ -163,14 +150,40 @@ namespace Dev2.Activities
             }
         }
 
-        private void AddScriptSourcePathsToList()
-        {            
+        private void TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, IExecutionEnvironment env)
+        {
+            if (dataObject.IsDebugMode())
+            {
+                var language = ScriptType.GetDescription();
+                AddDebugInputItem(new DebugItemStaticDataParams(language, "Language"));
+                AddDebugInputItem(new DebugEvalResult(Script, "Script", env, update));
+            }
+            var scriptItr = new WarewolfIterator(dataObject.Environment.Eval(Script, update, false, EscapeScript));
+            while (scriptItr.HasMoreData())
+            {
+                var engine = new ScriptingEngineRepo().CreateEngine(ScriptType, _sources);
+                var value = engine.Execute(scriptItr.GetNextValue());
+
+                foreach (var region in DataListCleaningUtils.SplitIntoRegions(Result))
+                {
+
+                    env.Assign(region, value, update);
+                    if (dataObject.IsDebugMode() && !allErrors.HasErrors() && !string.IsNullOrEmpty(region))
+                    {
+                        AddDebugOutputItem(new DebugEvalResult(region, "", env, update));
+                    }
+                }
+            }
+        }
+
+        void AddScriptSourcePathsToList()
+        {
             if (!string.IsNullOrEmpty(IncludeFile))
             {
                 _sources.AddPaths(IncludeFile);
             }
         }
-        
+
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
             foreach (Tuple<string, string> t in updates)
@@ -195,7 +208,7 @@ namespace Dev2.Activities
 
         #region Get Debug Inputs/Outputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugInput in _debugInputs)
             {
@@ -204,7 +217,7 @@ namespace Dev2.Activities
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugOutput in _debugOutputs)
             {
@@ -217,16 +230,65 @@ namespace Dev2.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(Script);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(Script);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(Result);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
         #endregion GetForEachInputs/Outputs
+
+        public bool Equals(DsfScriptingActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                && ScriptType == other.ScriptType
+                && EscapeScript == other.EscapeScript
+                && string.Equals(IncludeFile, other.IncludeFile)
+                && string.Equals(Script, other.Script)
+                && string.Equals(Result, other.Result);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfScriptingActivity)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_sources != null ? _sources.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (int)ScriptType;
+                hashCode = (hashCode * 397) ^ EscapeScript.GetHashCode();
+                hashCode = (hashCode * 397) ^ (IncludeFile != null ? IncludeFile.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Script != null ? Script.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Result != null ? Result.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

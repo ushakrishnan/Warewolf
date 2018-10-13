@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,10 +18,7 @@ namespace Unlimited.Framework.Converters.Graph.Poco
     {
         #region Methods
 
-        public IMapper CreateMapper(object data)
-        {
-            return new PocoMapper();
-        }
+        public IMapper CreateMapper(object data) => new PocoMapper();
 
         public INavigator CreateNavigator(object data, Type pathType)
         {

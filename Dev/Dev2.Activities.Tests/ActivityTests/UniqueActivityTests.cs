@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,9 +14,10 @@ using System.Collections.Generic;
 using System.Linq;
 using ActivityUnitTests;
 using Dev2.Activities;
+using Dev2.Common.State;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using Warewolf.Storage;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -38,7 +39,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             const string DataList = "<ADL><recset1>\r\n\t\t<field1/>\r\n\t</recset1>\r\n\t<recset2>\r\n\t\t<field2/>\r\n\t</recset2>\r\n\t<OutVar1/>\r\n\t<OutVar2/>\r\n\t<OutVar3/>\r\n\t<OutVar4/>\r\n\t<OutVar5/>\r\n</ADL>";
             SetupArguments("<root>" + DataList + "</root>", DataList, "", "[[recset1().field1]]", "[[OutVar1]]");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
             // remove test datalist ;)
@@ -71,15 +72,15 @@ namespace Dev2.Tests.Activities.ActivityTests
                 , DataList
                 , "[[recset1().field2]]"
                 , "[[recset1().field1]]", "[[recset2().id]]");
-            List<string> expected = new List<string> { "1", "2", "5" };
+            var expected = new List<string> { "1", "2", "5" };
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
 
             // remove test datalist ;)
 
-            List<string> actualRet = new List<string>();
+            var actualRet = new List<string>();
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
             CollectionAssert.AreEqual(expected, actualRet, comparer);
@@ -111,7 +112,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                 , "[[recset1().field2]]"
                 , "[[recset1().field1]]", "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
@@ -148,15 +149,15 @@ namespace Dev2.Tests.Activities.ActivityTests
                 , DataList
                 , "[[recset1().field2]]"
                 , "[[recset1().field1]]", "[[recset2().id]]");
-            List<string> expected = new List<string> { "10", "1", "2", "5" };
+            var expected = new List<string> { "10", "1", "2", "5" };
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
 
             // remove test datalist ;)
 
-            List<string> actualRet = new List<string>();
+            var actualRet = new List<string>();
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
             CollectionAssert.AreEqual(expected, actualRet, comparer);
@@ -187,13 +188,13 @@ namespace Dev2.Tests.Activities.ActivityTests
                 , DataList
                 , "[[recset1().field2]]"
                 , "[[recset1().field1]],[[recset1().field3]]", "[[recset2().id]],[[recset2().value]]");
-            List<string> expectedId = new List<string> { "1", "2", "5" };
-            List<string> expectedValue = new List<string> { "Test1", "Test2", "Test5" };
+            var expectedId = new List<string> { "1", "2", "5" };
+            var expectedValue = new List<string> { "Test1", "Test2", "Test5" };
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
-            List<string> actualRet = new List<string>();
+            var actualRet = new List<string>();
 
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
@@ -237,13 +238,13 @@ namespace Dev2.Tests.Activities.ActivityTests
                 , DataList
                 , "[[recset1().field2]]"
                 , "[[recset1().field1]],[[recset1().field3]]", "[[recset2(*).id]],[[recset2(*).value]]");
-            List<string> expectedId = new List<string> { "1", "2", "5" };
-            List<string> expectedValue = new List<string> { "Test1", "Test2", "Test5" };
+            var expectedId = new List<string> { "1", "2", "5" };
+            var expectedValue = new List<string> { "Test1", "Test2", "Test5" };
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
-            List<string> actualRet = new List<string>();
+            var actualRet = new List<string>();
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
             CollectionAssert.AreEqual(expectedId, actualRet, comparer);
@@ -287,13 +288,13 @@ namespace Dev2.Tests.Activities.ActivityTests
                 , DataList
                 , "[[recset1().field2]]"
                 , "[[recset1().field1]],[[recset1().field3]]", "[[recset2().id]],[[recset2(*).value]]");
-            List<string> expectedId = new List<string> { "99", "1", "2", "5" };
-            List<string> expectedValue = new List<string> { "Test1", "Test2", "Test5", "" };
+            var expectedId = new List<string> { "99", "1", "2", "5" };
+            var expectedValue = new List<string> { "Test1", "Test2", "Test5", "" };
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "id", out IList<string> actual, out string error);
-            List<string> actualRet = new List<string>();
+            var actualRet = new List<string>();
             actual.ToList().ForEach(d => actualRet.Add(d));
             var comparer = new ActivityUnitTests.Utils.StringComparer();
             CollectionAssert.AreEqual(expectedId, actualRet, comparer);
@@ -469,10 +470,86 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[res]]", outputs[0]);
         }
 
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("Errors")]
+        public void DsfUniqueActivity_ResultIsEmpty()
+        {
+            const string DataList = "<ADL><recset1>\r\n\t\t<field1/>\r\n\t</recset1>\r\n\t<recset2>\r\n\t\t<field2/>\r\n\t</recset2>\r\n\t<OutVar1/>\r\n\t<OutVar2/>\r\n\t<OutVar3/>\r\n\t<OutVar4/>\r\n\t<OutVar5/>\r\n</ADL>";
+            SetupArguments("<root>" + DataList + "</root>", DataList, "", "[[recset1().field1]]",null);
+            var result = ExecuteProcess();
+            Assert.AreEqual("Invalid In fields", result.Environment.FetchErrors());
+        }
 
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        public void GivenEmptyStringAndName_ExecutionEnvironmentIsValidRecordSetIndex_ShouldReturn()
+        {
+            ExecutionEnvironment _environment;
+            _environment = new ExecutionEnvironment();
+            Assert.IsNotNull(_environment);
+            Assert.IsTrue(ExecutionEnvironment.IsValidRecordSetIndex("[[rec().a]]"));
+        }
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("DsfUniqueActivity_GetState")]
+        public void DsfUniqueActivity_GetState()
+        {
+            //------------Setup for test--------------------------
+            const string InFields = "[[Numeric(1).num]]";
+            const string ResultFields = "Up";
+            const string Result = "[[res]]";
+            var act = new DsfUniqueActivity { InFields = InFields, ResultFields = ResultFields, Result = Result };
+            var tuple1 = new Tuple<string, string>("Test", "Test");
+            var tuple2 = new Tuple<string, string>("Test2", "Test2");
+            //------------Execute Test---------------------------
+            act.UpdateForEachOutputs(new List<Tuple<string, string>> { tuple1, tuple2 });
+            //------------Assert Results-------------------------
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(3, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "InFields",
+                    Type = StateVariable.StateType.Input,
+                    Value = InFields
+                },
+                new StateVariable
+                {
+                    Name = "ResultFields",
+                    Type = StateVariable.StateType.Input,
+                    Value = ResultFields
+                },
+                new StateVariable
+                {
+                    Name = "Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = Result
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string inFields, string resultFields, string result)
+        void SetupArguments(string currentDL, string testData, string inFields, string resultFields, string result)
         {
             var unique = new DsfUniqueActivity { InFields = inFields, ResultFields = resultFields, Result = result };
             TestStartNode = new FlowStep

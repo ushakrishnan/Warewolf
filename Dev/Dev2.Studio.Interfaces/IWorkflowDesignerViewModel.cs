@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,10 +13,11 @@ using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
 using System.Text;
 using System.Windows;
+using Dev2.Common.Interfaces;
 
 namespace Dev2.Studio.Interfaces
 {
-    public interface IWorkflowDesignerViewModel : IDesignerViewModel
+    public interface IWorkflowDesignerViewModel : IDesignerViewModel, IDisposable
     {
         object SelectedModelItem { get; }
         string WorkflowName { get; }
@@ -28,14 +29,27 @@ namespace Dev2.Studio.Interfaces
         ModelItem SelectedItem { get; set; }
         bool WorkspaceSave { get; }
         Action WorkflowChanged { get; set; }
+        bool CanViewWorkflowLink { get; set; }
+        bool CanMerge { get; set; }
 
         void UpdateWorkflowLink(string newLink);
-        void Dispose();
         bool NotifyItemSelected(object primarySelection);
         void BindToModel();
         void AddMissingWithNoPopUpAndFindUnusedDataListItems();
         ModelItem GetModelItem(Guid workSurfaceMappingId, Guid parentID);
 
         string GetWorkflowInputs(string field);
+        void CreateBlankWorkflow();
+        void UpdateWorkflowInputDataViewModel(IContextualResourceModel resourceModel);
+    }
+
+    public interface IMergePreviewWorkflowDesignerViewModel : IWorkflowDesignerViewModel
+    {
+        void RemoveItem(IToolConflictItem model);
+        void AddItem(IToolConflictItem model);
+        void RemoveStartNodeConnection();
+        void LinkStartNode(IToolConflictItem model);
+        void LinkActivities(Guid sourceUniqueId, Guid destinationUniqueId, string key);
+        void DeLinkActivities(Guid sourceUniqueId, Guid destinationUniqueId, string key);
     }
 }

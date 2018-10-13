@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,7 @@ using Dev2.Data.Interfaces.Enums;
 namespace Dev2.Data.Tests.BinaryDataList
 {
     [TestClass]
-    
+
     public class DataListUtilTest
     {
 
@@ -37,7 +37,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         public void IsArray_GivenGivenNotArray_ShouldReturnFalse()
         {
             //---------------Set up test pack-------------------
-            string scalr = "[[a]]";
+            var scalr = "[[a]]";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var isArray = DataListUtil.IsArray(ref scalr);
@@ -50,7 +50,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         public void IsArray_GivenGivenArray_ShouldReturnTrue()
         {
             //---------------Set up test pack-------------------
-            string scalr = "[[a()]]";
+            var scalr = "[[a()]]";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var isArray = DataListUtil.IsArray(ref scalr);
@@ -143,7 +143,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         {//------------Setup for test--------------------------
             const string startingData = "{ \"message\" : \"Howzit, Samantha\"}";
             //------------Execute Test---------------------------
-            bool result = DataListUtil.IsJson(startingData);
+            var result = DataListUtil.IsJson(startingData);
             //------------Assert Results-------------------------
             Assert.IsTrue(result, "Else Valid JSON not detected as such");
         }
@@ -155,7 +155,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         {//------------Setup for test--------------------------
             const string startingData = " { \"message\" : \"Howzit, Samantha\"} ";
             //------------Execute Test---------------------------
-            bool result = DataListUtil.IsJson(startingData);
+            var result = DataListUtil.IsJson(startingData);
             //------------Assert Results-------------------------
             Assert.IsTrue(result, "Else Valid JSON not detected as such");
         }
@@ -167,7 +167,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         {//------------Setup for test--------------------------
             const string startingData = "<\"message\" : \"Howzit, Samantha\">";
             //------------Execute Test---------------------------
-            bool result = DataListUtil.IsJson(startingData);
+            var result = DataListUtil.IsJson(startingData);
             //------------Assert Results-------------------------
             Assert.IsFalse(result, "Invalid JSON not detected as such");
         }
@@ -180,7 +180,7 @@ namespace Dev2.Data.Tests.BinaryDataList
             //------------Setup for test--------------------------
             const string startingData = "A A";
             //------------Execute Test---------------------------
-            string result = DataListUtil.AdjustForEncodingIssues(startingData);
+            var result = DataListUtil.AdjustForEncodingIssues(startingData);
             //------------Assert Results-------------------------
             Assert.AreEqual(startingData, result, "The data has changed when there was no encoding issues.");
         }
@@ -192,12 +192,12 @@ namespace Dev2.Data.Tests.BinaryDataList
         {
             //------------Setup for test--------------------------
             const char c = (char)65279;
-            string startingData = c + "<A></A>";
+            var startingData = c + "<A></A>";
             Assert.IsFalse(startingData.StartsWith("<", StringComparison.OrdinalIgnoreCase));
             //------------Execute Test---------------------------
-            string result = DataListUtil.AdjustForEncodingIssues(startingData);
+            var result = DataListUtil.AdjustForEncodingIssues(startingData);
             //------------Assert Results-------------------------
-            Assert.IsTrue(result.StartsWith("<"));
+            Assert.IsTrue(result.StartsWith("<", StringComparison.Ordinal));
         }
 
         [TestMethod]
@@ -221,7 +221,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         public void DataListUtil_IsSystemTag_WhenDev2SystemPrefix_ExpectSystemTagDetected()
         {
             //------------Setup for test--------------------------
-            const string tag = GlobalConstants.SystemTagNamespaceSearch + "ManagmentServicePayload";
+            var tag = GlobalConstants.SystemTagNamespaceSearch + "ManagmentServicePayload";
 
             //------------Execute Test---------------------------
             var result = DataListUtil.IsSystemTag(tag);
@@ -229,11 +229,6 @@ namespace Dev2.Data.Tests.BinaryDataList
             //------------Assert Results-------------------------
             Assert.IsTrue(result);
         }
-
-
-
-
-
 
         [TestMethod]
         [Owner("Travis")]
@@ -515,9 +510,9 @@ namespace Dev2.Data.Tests.BinaryDataList
             var tokens = new List<string> { "f1", "", "f3", "f4", "" };
 
             var tokenizer = new Mock<IDev2Tokenizer>();
-            
+
             tokenizer.Setup(t => t.HasMoreOps()).Returns(() => tokenNumber < TokenCount);
-            
+
             tokenizer.Setup(t => t.NextToken()).Returns(() => tokens[tokenNumber++]);
 
             var target = new Collection<ObservablePair<string, string>>();
@@ -553,9 +548,9 @@ namespace Dev2.Data.Tests.BinaryDataList
             var tokens = new List<string> { "f1", "", "f2", "f3", "" };
 
             var tokenizer = new Mock<IDev2Tokenizer>();
-            
+
             tokenizer.Setup(t => t.HasMoreOps()).Returns(() => tokenNumber < TokenCount);
-            
+
             tokenizer.Setup(t => t.NextToken()).Returns(() => tokens[tokenNumber++]);
 
             var target = new Collection<ObservablePair<string, string>>();
@@ -642,7 +637,6 @@ namespace Dev2.Data.Tests.BinaryDataList
             //---------------Test Result -----------------------
             Assert.AreEqual("rec(*).name", indexWithStar);
         }
-
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void ReplaceRecordsetIndexWithStar_GivenRecSetWithStar_ShouldReturnSame()
@@ -654,6 +648,30 @@ namespace Dev2.Data.Tests.BinaryDataList
             var indexWithStar = DataListUtil.ReplaceRecordsetIndexWithStar(recName);
             //---------------Test Result -----------------------
             Assert.AreEqual("rec(*).name", indexWithStar);
+        }
+        [TestMethod]
+        public void VariableNameToMapTo_GivenVariable_ShouldReturnVariableName()
+        {
+            //---------------Set up test pack-------------------
+            const string recName = "[[name]]";
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var variableName = DataListUtil.GetVariableNameToMapOutputTo(recName);
+            //---------------Test Result -----------------------
+            Assert.AreEqual("name", variableName);
+        }
+
+
+        [TestMethod]
+        public void FieldNameToMapTo_GivenRecordSet_ShouldReturnFieldName()
+        {
+            //---------------Set up test pack-------------------
+            const string recName = "[[rec(*).name]]";
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var fieldName = DataListUtil.GetVariableNameToMapOutputTo(recName);
+            //---------------Test Result -----------------------
+            Assert.AreEqual("name", fieldName);
         }
 
         [TestMethod]
@@ -675,7 +693,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         public void IsCalcEvaluation_GivenCalcTxtExp_ShouldReturnTrue()
         {
             //---------------Set up test pack-------------------
-            const string exp = GlobalConstants.CalculateTextConvertPrefix + "rec(*).name" + GlobalConstants.CalculateTextConvertSuffix;
+            var exp = GlobalConstants.CalculateTextConvertPrefix + "rec(*).name" + GlobalConstants.CalculateTextConvertSuffix;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
@@ -689,7 +707,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         public void IsCalcEvaluation_GivenCalcAggExp_ShouldReturnTrue()
         {
             //---------------Set up test pack-------------------
-            const string exp = GlobalConstants.AggregateCalculateTextConvertPrefix + "rec(*).name" + GlobalConstants.AggregateCalculateTextConvertSuffix;
+            var exp = GlobalConstants.AggregateCalculateTextConvertPrefix + "rec(*).name" + GlobalConstants.AggregateCalculateTextConvertSuffix;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
@@ -697,12 +715,13 @@ namespace Dev2.Data.Tests.BinaryDataList
             Assert.IsTrue(isCalcEvaluation);
             Assert.AreEqual("rec(*).name", newExp);
         }
+
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void IsCalcEvaluation_GivenStartWithAggCalcAggExp_ShouldReturnFalse()
         {
             //---------------Set up test pack-------------------
-            const string exp = GlobalConstants.AggregateCalculateTextConvertPrefix + "rec(*).name";
+            var exp = GlobalConstants.AggregateCalculateTextConvertPrefix + "rec(*).name";
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
@@ -710,12 +729,13 @@ namespace Dev2.Data.Tests.BinaryDataList
             Assert.IsFalse(isCalcEvaluation);
             Assert.AreEqual(string.Empty, newExp);
         }
+
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void IsCalcEvaluation_GivenEndsWithAggCalcAggExp_ShouldReturnFalse()
         {
             //---------------Set up test pack-------------------
-            const string exp = "rec(*).name" + GlobalConstants.AggregateCalculateTextConvertSuffix;
+            var exp = "rec(*).name" + GlobalConstants.AggregateCalculateTextConvertSuffix;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var isCalcEvaluation = DataListUtil.IsCalcEvaluation(exp, out string newExp);
@@ -741,18 +761,6 @@ namespace Dev2.Data.Tests.BinaryDataList
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void IsFullyEvaluated_GivenINotClosedVariable_ShouldReturnFalse()
-        {
-            //---------------Set up test pack-------------------
-            const string v = "[[a";
-            //---------------Assert Precondition----------------
-            //---------------Execute Test ----------------------
-            var encrypted = DataListUtil.IsFullyEvaluated(v);
-            //---------------Test Result -----------------------
-            Assert.IsFalse(encrypted);
-        }
-        [TestMethod]
-        [Owner("Nkosinathi Sangweni")]
-        public void IsFullyEvaluated_GivenINotOpenedVariable_ShouldReturnFalse()
         {
             //---------------Set up test pack-------------------
             const string v = "[[a";
@@ -1162,7 +1170,7 @@ namespace Dev2.Data.Tests.BinaryDataList
         public void ConvertModelToJson_GivenValidJson_ShouldCreateModel()
         {
             //---------------Set up test pack-------------------
-            Car car = new Car
+            var car = new Car
             {
                 Cars = new List<Car>()
                ,
@@ -1175,8 +1183,8 @@ namespace Dev2.Data.Tests.BinaryDataList
             //---------------Execute Test ----------------------
             var builder = DataListUtil.ConvertModelToJson(car);
             //---------------Test Result -----------------------
-            string expected = cars.RemoveWhiteSpace().ToJson();
-            string actual = builder.ToString().RemoveWhiteSpace().ToJson();
+            var expected = cars.RemoveWhiteSpace().ToJson();
+            var actual = builder.ToString().RemoveWhiteSpace().ToJson();
             Assert.AreEqual(expected, actual);
         }
 

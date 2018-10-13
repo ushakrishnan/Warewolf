@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,7 +9,9 @@
 */
 
 using Dev2.Activities.PathOperations;
+using Dev2.Common.State;
 using Dev2.Data.Interfaces;
+using System.Collections.Generic;
 
 namespace Dev2.Tests.Activities.Mocks
 {
@@ -25,6 +27,7 @@ namespace Dev2.Tests.Activities.Mocks
             ExecuteBrokerCalled = false;
             MoveRemainingIteratorsCalled = false;
         }
+        protected override bool AssignEmptyOutputsToRecordSet => true;
 
         #region Overrides of DsfAbstractMultipleFilesActivity
         public bool ExecuteBrokerCalled { get; set; }
@@ -42,5 +45,10 @@ namespace Dev2.Tests.Activities.Mocks
         }
 
         #endregion
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
+        }
     }
 }

@@ -56,20 +56,11 @@ namespace Warewolf.Studio.Views
             PasswordTextBox.Password = password;
         }
 
-        public string GetPort()
-        {
-            return PortTextBox.Text;
-        }
+        public string GetPort() => PortTextBox.Text;
 
-        public string GetUsername()
-        {
-            return UsernameTextBox.Text;
-        }
+        public string GetUsername() => UsernameTextBox.Text;
 
-        public string GetPassword()
-        {
-            return PasswordTextBox.Password;
-        }
+        public string GetPassword() => PasswordTextBox.Password;
 
         public void SetAuthenticationType(AuthenticationType authenticationType)
         {
@@ -98,7 +89,7 @@ namespace Warewolf.Studio.Views
             {
                 if (ProtocolItems.Items.Count == 0)
                 {
-                    BindingExpression be = ProtocolItems.GetBindingExpression(ItemsControl.ItemsSourceProperty);
+                    var be = ProtocolItems.GetBindingExpression(ItemsControl.ItemsSourceProperty);
                     be?.UpdateTarget();
                     ProtocolItems.DataContext = DataContext;                    
                 }
@@ -131,14 +122,14 @@ namespace Warewolf.Studio.Views
 
         public Visibility GetUsernameVisibility()
         {
-            BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
+            var be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
         public Visibility GetPasswordVisibility()
         {
-            BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
+            var be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
@@ -149,7 +140,7 @@ namespace Warewolf.Studio.Views
 
         public string GetErrorMessage()
         {
-            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
+            var be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
             be?.UpdateTarget();
             return ErrorTextBlock.Text;
         }

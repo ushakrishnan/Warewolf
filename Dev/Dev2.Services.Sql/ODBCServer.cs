@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,21 +12,22 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.Odbc;
+using System.Xml;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Services.Sql;
 using Microsoft.Win32;
-
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Services.Sql
 {
     public class ODBCServer : IDbServer
     {
-        private readonly IDbFactory _factory;
-        private OdbcConnection _connection;
-        private IDbTransaction _transaction;
-        private bool _disposed;
-        private IDbCommand _command;
-        private readonly bool Testing;
+        readonly IDbFactory _factory;
+        OdbcConnection _connection;
+        IDbTransaction _transaction;
+        bool _disposed;
+        IDbCommand _command;
+        readonly bool _testing;
 
         public ODBCServer(IDbFactory dbFactory)
         {
@@ -37,10 +38,11 @@ namespace Dev2.Services.Sql
             _factory = new ODBCFactory();
         }
 
+        public int? CommandTimeout { get; set; }
         public ODBCServer(IDbFactory factory, IDbCommand command, IDbTransaction transaction)
         {
             _factory = factory;
-            Testing = true;
+            _testing = true;
             _command = command;
             _transaction = transaction;
         }
@@ -56,8 +58,8 @@ namespace Dev2.Services.Sql
         public bool ReturnConnection(CommandType commandType, string commandText)
         {
             commandType = SetCommandType(commandText, commandType);
-            _command = _factory.CreateCommand(_connection, commandType, commandText);
-            if (!Testing)
+            _command = _factory.CreateCommand(_connection, commandType, commandText, CommandTimeout);
+            if (!_testing)
             {
                 _connection.Open();
             }
@@ -79,7 +81,7 @@ namespace Dev2.Services.Sql
         {
             get
             {
-                if (Testing)
+                if (_testing)
                 {
                     return true;
                 }
@@ -101,22 +103,50 @@ namespace Dev2.Services.Sql
                 }
             }
         }
-
-        public bool Connect(string connectionString)
+        public DataTable FetchXmlData()
         {
-            if (!Testing)
+            var table = new DataTable();
+            table.Columns.Add("ReadForXml");
+            VerifyConnection();
+            try
+            {
+                if (_command.CommandType == CommandType.StoredProcedure)
+                {
+                    _command.CommandType = CommandType.Text;
+                }
+
+                var reader = _factory.FetchDataSet(_command);
+                var doc = new XmlDocument();
+                doc.LoadXml(reader.GetXml());
+                table.LoadDataRow(new object[] { doc.InnerText }, true);
+                return table;
+
+            }
+            catch (Exception e)
+            {
+                if (!e.Message.Equals(ErrorResource.NotXmlResults))
+                {
+                    throw;
+                }
+                table.LoadDataRow(new object[] { "Error" }, true);
+                return table;
+            }
+            table.LoadDataRow(new object[] { "Error" }, true);
+            return table;
+        }
+        public void Connect(string connectionString)
+        {
+            if (!_testing)
             {
                 _connection = (OdbcConnection)_factory.CreateConnection(connectionString);
                 _connection.Open();
             }
-
-            return true;
         }
 
         public IDbCommand CreateCommand()
         {
             VerifyConnection();
-            if (Testing)
+            if (_testing)
             {
                 return null;
             }
@@ -127,7 +157,7 @@ namespace Dev2.Services.Sql
 
         #region VerifyConnection
 
-        private void VerifyConnection()
+        void VerifyConnection()
         {
             if (!IsConnected)
             {
@@ -161,15 +191,7 @@ namespace Dev2.Services.Sql
                     _transaction?.Dispose();
 
                     _command?.Dispose();
-
-                    if (_connection != null)
-                    {
-                        if (_connection.State != ConnectionState.Closed)
-                        {
-                            _connection.Close();
-                        }
-                        _connection.Dispose();
-                    }
+                    DisposeConnection();
                 }
 
                 // Call the appropriate methods to clean up 
@@ -182,10 +204,19 @@ namespace Dev2.Services.Sql
             }
         }
 
-        public List<string> FetchDatabases()
+        private void DisposeConnection()
         {
-            return GetDSN();
+            if (_connection != null)
+            {
+                if (_connection.State != ConnectionState.Closed)
+                {
+                    _connection.Close();
+                }
+                _connection.Dispose();
+            }
         }
+
+        public List<string> FetchDatabases() => GetDSN();
 
         public DataTable FetchDataTable(IDbCommand command)
         {
@@ -200,8 +231,26 @@ namespace Dev2.Services.Sql
             return ExecuteReader(_command, CommandBehavior.SchemaOnly & CommandBehavior.KeyInfo,
                 reader => _factory.CreateTable(reader, LoadOption.OverwriteChanges));
         }
+		public DataSet FetchDataSet(IDbCommand command)
+		{
+			VerifyArgument.IsNotNull("command", command);
 
-        public static T ExecuteReaader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
+			return _factory.FetchDataSet(command);
+		}
+		public int ExecuteNonQuery(IDbCommand command)
+		{
+			VerifyArgument.IsNotNull("command", command);
+
+			return _factory.ExecuteNonQuery(command);
+		}
+
+		public int ExecuteScalar(IDbCommand command)
+		{
+			VerifyArgument.IsNotNull("command", command);
+
+			return _factory.ExecuteScalar(command);
+		}
+		public static T ExecuteReaader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
         {
             try
             {
@@ -216,7 +265,7 @@ namespace Dev2.Services.Sql
             {
                 if (e.Message.Contains("There is no text for object "))
                 {
-                    DataTable exceptionDataTable = new DataTable("Error");
+                    var exceptionDataTable = new DataTable("Error");
                     exceptionDataTable.Columns.Add("ErrorText");
                     exceptionDataTable.LoadDataRow(new object[] { e.Message }, true);
                     return handler(new OdbcDataAdapter());
@@ -226,7 +275,7 @@ namespace Dev2.Services.Sql
         }
 
 
-        private static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
+        static T ExecuteReader<T>(IDbCommand command, CommandBehavior commandBehavior, Func<IDataAdapter, T> handler)
         {
             if (command.CommandType == CommandType.StoredProcedure)
             {
@@ -269,7 +318,7 @@ namespace Dev2.Services.Sql
 
         public List<string> GetDSN()
         {
-            List<string> list = new List<string>();
+            var list = new List<string>();
             list.AddRange(EnumDsn(Registry.CurrentUser, false));
             list.AddRange(EnumDsn(Registry.LocalMachine, false));
             if (Environment.Is64BitOperatingSystem)
@@ -280,9 +329,9 @@ namespace Dev2.Services.Sql
             return list;
         }
 
-        private IEnumerable<string> EnumDsn(RegistryKey rootKey, bool is64)
+        IEnumerable<string> EnumDsn(RegistryKey rootKey, bool is64)
         {
-            RegistryKey regKey = rootKey.OpenSubKey(@"Software\ODBC\ODBC.INI\ODBC Data Sources");
+            var regKey = rootKey.OpenSubKey(@"Software\ODBC\ODBC.INI\ODBC Data Sources");
             if (is64)
             {
                 regKey = rootKey.OpenSubKey(@"Software\Wow6432Node\ODBC\ODBC.INI\ODBC Data Sources");

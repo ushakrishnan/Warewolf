@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interactivity;
@@ -36,8 +35,8 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         #region Class Memebers
 
-        private ItemCollection dataGridItems;
-        private INotifyCollectionChanged observable;
+        ItemCollection dataGridItems;
+        INotifyCollectionChanged observable;
 
         #endregion Class Memebers
 
@@ -46,17 +45,8 @@ namespace Dev2.Studio.AppResources.Behaviors
         protected override void OnAttached()
         {
             base.OnAttached();
-
             SubscribeToEvents();
-
-
             dataGridItems = AssociatedObject.Items;
-        }
-
-        protected override void OnDetaching()
-        {
-            base.OnDetaching();
-            UnsubscribeFromEvents();
         }
 
         #endregion Override Methods
@@ -74,8 +64,8 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         public List<string> WatermarkText
         {
-            get { return (List<string>) GetValue(WatermarkTextProperty); }
-            set { SetValue(WatermarkTextProperty, value); }
+            get => (List<string>)GetValue(WatermarkTextProperty);
+            set => SetValue(WatermarkTextProperty, value);
         }
 
         #endregion WatermarkText Property
@@ -89,8 +79,8 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         public List<int> WatermarkIndexes
         {
-            get { return (List<int>) GetValue(WatermarkIndexesProperty); }
-            set { SetValue(WatermarkIndexesProperty, value); }
+            get => (List<int>)GetValue(WatermarkIndexesProperty);
+            set => SetValue(WatermarkIndexesProperty, value);
         }
 
         #endregion WatermarkIndexes Property
@@ -106,11 +96,15 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         public string WatermarkPropertyName
         {
-            get { return (string) GetValue(WatermarkPropertyNameProperty); }
-            set { SetValue(WatermarkPropertyNameProperty, value); }
+            get => (string)GetValue(WatermarkPropertyNameProperty);
+            set => SetValue(WatermarkPropertyNameProperty, value);
         }
 
-        public INotifyCollectionChanged Observable { get => observable; set => observable = value; }
+        public INotifyCollectionChanged Observable
+        {
+            get => observable;
+            set => observable = value;
+        }
 
         #endregion WatermarkPropertyNames
 
@@ -118,15 +112,10 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         #region Private Methods
 
-        private void UpdateWatermarks()
+        void UpdateWatermarks()
         {
             if (dataGridItems != null && !string.IsNullOrWhiteSpace(WatermarkPropertyName) && WatermarkText != null)
             {
-                if (WatermarkIndexes == null)
-                {
-                    WatermarkIndexes = new List<int>();
-                }
-
                 for (int i = 0; i < WatermarkText.Count; i++)
                 {
                     if (i == WatermarkIndexes.Count)
@@ -136,39 +125,25 @@ namespace Dev2.Studio.AppResources.Behaviors
                 }
                 for (int i = 0; i < dataGridItems.Count; i++)
                 {
-                    List<object> list = dataGridItems.SourceCollection.Cast<object>().ToList();
-
-                    if (list[i] is ModelItem mi)
-                    {
-                        int watermarkIndex = WatermarkIndexes.IndexOf(i);
-                        WatermarkSential.IsWatermarkBeingApplied = true;
-                        ModelProperty modelProperty = mi.Properties[WatermarkPropertyName];
-                        modelProperty?.SetValue(watermarkIndex != -1 ? WatermarkText[watermarkIndex] : "");
-                    }
-                    else
-                    {
-                        PropertyInfo pi = dataGridItems[i].GetType().GetProperty(WatermarkPropertyName);
-
-                        if (pi != null)
-                        {
-                            if (WatermarkText.Count > i && dataGridItems.Count > i)
-                            {
-                                pi.SetValue(dataGridItems[i], WatermarkText[i], null);
-                            }
-                            else
-                            {
-                                if (i == dataGridItems.Count - 1)
-                                {
-                                    pi.SetValue(dataGridItems[i], "", null);
-                                }
-                            }
-                        }
-                    }
+                    SetWatermarkAt(i);
                 }
             }
         }
 
-        private void SubscribeToEvents()
+        void SetWatermarkAt(int i)
+        {
+            var list = dataGridItems.SourceCollection.Cast<object>().ToList();
+
+            if (list[i] is ModelItem mi)
+            {
+                var watermarkIndex = WatermarkIndexes.IndexOf(i);
+                WatermarkSential.IsWatermarkBeingApplied = true;
+                var modelProperty = mi.Properties[WatermarkPropertyName];
+                modelProperty?.SetValue(watermarkIndex != -1 ? WatermarkText[watermarkIndex] : "");
+            }
+        }
+
+        void SubscribeToEvents()
         {
             observable = AssociatedObject.Items;
             if (observable != null)
@@ -185,7 +160,7 @@ namespace Dev2.Studio.AppResources.Behaviors
             AssociatedObject.Loaded += AssociatedObjectOnLoaded;
         }
 
-        private void UnsubscribeFromEvents()
+        void UnsubscribeFromEvents()
         {
             observable = AssociatedObject.Items;
             if (observable != null)
@@ -205,13 +180,13 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         #region Event Handlers
 
-        private void AssociatedObjectOnLoaded(object sender, RoutedEventArgs routedEventArgs)
+        void AssociatedObjectOnLoaded(object sender, RoutedEventArgs routedEventArgs)
         {
             UnsubscribeFromEvents();
             routedEventArgs.Handled = true;
         }
 
-        private void observable_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void observable_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (e.NewItems != null)
             {
@@ -219,7 +194,7 @@ namespace Dev2.Studio.AppResources.Behaviors
             }
         }
 
-        private void notifyPropertyChangedImplimentor_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        internal void notifyPropertyChangedImplimentor_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "Items" || e.PropertyName == "ItemsSource")
             {

@@ -752,6 +752,22 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
             }
         }
         
+        public WpfText RemoteContainerText
+        {
+            get
+            {
+                if ((this.mRemoteContainerText == null))
+                {
+                    this.mRemoteContainerText = new WpfText(this);
+                    #region Search Criteria
+                    this.mRemoteContainerText.SearchProperties.Add(new PropertyExpression(WpfText.PropertyNames.Name, "Remote Container", PropertyExpressionOperator.Contains));
+                    this.mRemoteContainerText.WindowTitles.Add("Warewolf");
+                    #endregion
+                }
+                return this.mRemoteContainerText;
+            }
+        }
+        
         public WpfText RemoteConnectionIntegrationText
         {
             get
@@ -783,14 +799,34 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
                 return this.mConnectedLocalhostText;
             }
         }
+        
+        public WpfText LocalServerSourceText
+        {
+            get
+            {
+                if ((this.mLocalServerSourceText == null))
+                {
+                    this.mLocalServerSourceText = new WpfText(this);
+                    #region Search Criteria
+                    this.mLocalServerSourceText.SearchProperties[WpfText.PropertyNames.Name] = "Local Server Source (Connected)";
+                    this.mLocalServerSourceText.WindowTitles.Add("Warewolf");
+                    #endregion
+                }
+                return this.mLocalServerSourceText;
+            }
+        }
         #endregion
         
         #region Fields
         private WpfButton mToggleButton;
         
+        private WpfText mRemoteContainerText;
+        
         private WpfText mRemoteConnectionIntegrationText;
         
         private WpfText mConnectedLocalhostText;
+        
+        private WpfText mLocalServerSourceText;
         #endregion
     }
     
@@ -912,6 +948,22 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
             }
         }
         
+        public WpfText RemoteContainerText
+        {
+            get
+            {
+                if ((this.mRemoteContainerText == null))
+                {
+                    this.mRemoteContainerText = new WpfText(this);
+                    #region Search Criteria
+                    this.mRemoteContainerText.SearchProperties.Add(new PropertyExpression(WpfText.PropertyNames.Name, "Remote Container", PropertyExpressionOperator.Contains));
+                    this.mRemoteContainerText.WindowTitles.Add("Warewolf");
+                    #endregion
+                }
+                return this.mRemoteContainerText;
+            }
+        }
+        
         public WpfText RemoteConnectionIntegrationText
         {
             get
@@ -943,6 +995,8 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
         
         #region Fields
         private WpfButton mToggleButton;
+        
+        private WpfText mRemoteContainerText;
         
         private WpfText mRemoteConnectionIntegrationText;
         
@@ -1258,7 +1312,7 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
                     #region Search Criteria
                     this.mSpinner.SearchProperties[WpfControl.PropertyNames.ClassName] = "Uia.CircularProgressBar";
                     this.mSpinner.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
-                    this.mSpinner.WindowTitles.Add("Warewolf (DEV2\\ASHLEY.LEWIS)");
+                    this.mSpinner.WindowTitles.Add("Warewolf");
                     #endregion
                 }
                 return this.mSpinner;
@@ -1284,6 +1338,7 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
         {
             #region Search Criteria
             this.SearchProperties[WpfTreeItem.PropertyNames.Name] = "Warewolf.Studio.ViewModels.ExplorerItemViewModel";
+            this.SearchProperties[WpfTreeItem.PropertyNames.Instance] = "1";
             this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
             this.WindowTitles.Add("Warewolf");
             #endregion

@@ -21,25 +21,21 @@ using Dev2.Studio.Interfaces;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-
-
+using Warewolf.Studio.ViewModels;
 
 namespace Dev2.Core.Tests.Settings
 {
-    /// <summary>
-    /// Summary description for PerfCounterViewModelTests
-    /// </summary>
     [TestClass]
     public class PerfCounterViewModelTests
     {
-        private Mock<IServer> _mockEnvironment;
-        private Mock<IEnvironmentConnection> _mockConnection;
+        Mock<IServer> _mockEnvironment;
+        Mock<IEnvironmentConnection> _mockConnection;
 
         [TestInitialize]
         public void Setup()
         {
 
-            AppSettings.LocalHost = "http://localhost:3142";
+            AppUsageStats.LocalHost = "http://localhost:3142";
             _mockEnvironment = new Mock<IServer>();
             _mockConnection = new Mock<IEnvironmentConnection>();
             _mockConnection.Setup(connection => connection.ID).Returns(Guid.Empty);
@@ -53,6 +49,7 @@ namespace Dev2.Core.Tests.Settings
         [TestCategory("PerfcounterViewModel_Constructor")]
         public void PerfcounterViewModel_ServerCountersCompare_Given_Null_Server_Counters_Returns_False()
         {
+            CommonSetupHelper.RegisterServerRepository();
             var authorizationService = new Mock<IAuthorizationService>();
             var securityService = new Mock<ISecurityService>();
             var permissions = new List<WindowsGroupPermission> { new WindowsGroupPermission() };
@@ -75,6 +72,8 @@ namespace Dev2.Core.Tests.Settings
         [TestCategory("PerfcounterViewModel_Constructor")]
         public void PerfcounterViewModel_Equals_Given_Null_Server_Counters_Returns_False()
         {
+            CommonSetupHelper.RegisterServerRepository();
+            CustomContainer.Register<IExplorerTooltips>(new ExplorerTooltips());
             var perfCounterTo = new Mock<IPerformanceCounterTo>();
             perfCounterTo.Setup(to => to.ResourceCounters).Returns(new List<IResourcePerformanceCounter>());
             perfCounterTo.Setup(to => to.NativeCounters).Returns(new List<IPerformanceCounter>());
@@ -92,6 +91,8 @@ namespace Dev2.Core.Tests.Settings
         [TestCategory("PerfcounterViewModel_Constructor")]
         public void PerfcounterViewModel_Equals_Given_Null_Resource_Counters_Returns_False()
         {
+            CommonSetupHelper.RegisterServerRepository();
+            CustomContainer.Register<IExplorerTooltips>(new ExplorerTooltips());
             var perfCounterTo = new Mock<IPerformanceCounterTo>();
             perfCounterTo.Setup(to => to.ResourceCounters).Returns(new List<IResourcePerformanceCounter>());
             perfCounterTo.Setup(to => to.NativeCounters).Returns(new List<IPerformanceCounter>());
@@ -524,7 +525,7 @@ namespace Dev2.Core.Tests.Settings
             var mockResourcePicker = new Mock<IResourcePickerDialog>();
             mockResourcePicker.Setup(dialog => dialog.ShowDialog(It.IsAny<IServer>())).Returns(true);
             var mockExplorerTreeItem = new Mock<IExplorerTreeItem>();
-            Guid newGuid = Guid.NewGuid();
+            var newGuid = Guid.NewGuid();
             mockExplorerTreeItem.Setup(item => item.ResourceId).Returns(newGuid);
             mockExplorerTreeItem.Setup(item => item.ResourcePath).Returns("Hello World");
             mockExplorerTreeItem.Setup(item => item.ResourceName).Returns("Hello World");
@@ -554,7 +555,7 @@ namespace Dev2.Core.Tests.Settings
             var mockResourcePicker = new Mock<IResourcePickerDialog>();
             mockResourcePicker.Setup(dialog => dialog.ShowDialog(It.IsAny<IServer>())).Returns(false);
             var mockExplorerTreeItem = new Mock<IExplorerTreeItem>();
-            Guid newGuid = Guid.NewGuid();
+            var newGuid = Guid.NewGuid();
             mockExplorerTreeItem.Setup(item => item.ResourceId).Returns(newGuid);
             mockExplorerTreeItem.Setup(item => item.ResourcePath).Returns("Hello World");
             mockExplorerTreeItem.Setup(item => item.ResourceName).Returns("Hello World");

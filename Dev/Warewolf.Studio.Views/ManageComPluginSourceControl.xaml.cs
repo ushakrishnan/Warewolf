@@ -22,7 +22,7 @@ namespace Warewolf.Studio.Views
 
         public string GetHeaderText()
         {
-            BindingExpression be = HeaderTextBlock.GetBindingExpression(TextBlock.TextProperty);
+            var be = HeaderTextBlock.GetBindingExpression(TextBlock.TextProperty);
             be?.UpdateTarget();
             return HeaderTextBlock.Text;
         }
@@ -60,20 +60,18 @@ namespace Warewolf.Studio.Views
             var xamDataTreeNodes = TreeUtils.Descendants(ExplorerTree.Nodes.ToArray());
             return xamDataTreeNodes.FirstOrDefault(node =>
             {
-                if (node.Data is IDllListingModel item)
+                if (node.Data is IDllListingModel item && item.Name.ToLowerInvariant().Contains(itemName.ToLowerInvariant()))
                 {
-                    if (item.Name.ToLowerInvariant().Contains(itemName.ToLowerInvariant()))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
+
                 return false;
             });
         }
 
         public string GetAssemblyName()
         {
-            BindingExpression be = AssemblyNameTextBox.GetBindingExpression(TextBox.TextProperty);
+            var be = AssemblyNameTextBox.GetBindingExpression(TextBox.TextProperty);
             be?.UpdateTarget();
             return AssemblyNameTextBox.Text;
         }
@@ -92,7 +90,7 @@ namespace Warewolf.Studio.Views
         public void SetAssemblyName(string assemblyName)
         {
             AssemblyNameTextBox.Text = assemblyName;
-            BindingExpression be = AssemblyNameTextBox.GetBindingExpression(TextBlock.TextProperty);
+            var be = AssemblyNameTextBox.GetBindingExpression(TextBlock.TextProperty);
             be?.UpdateSource();
         }
 

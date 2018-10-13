@@ -5,10 +5,9 @@ using System.Reflection;
 
 namespace Dev2.Common
 {
-    //http://stackoverflow.com/questions/286294/object-to-object-mapper
-    public class Mapper
+    public static class Mapper
     {
-        private static readonly Dictionary<KeyValuePair<Type, Type>, object> Maps = new Dictionary<KeyValuePair<Type, Type>, object>();
+        static readonly Dictionary<KeyValuePair<Type, Type>, object> Maps = new Dictionary<KeyValuePair<Type, Type>, object>();
 
         public static void AddMap<TFrom, TTo>()
             where TFrom : class

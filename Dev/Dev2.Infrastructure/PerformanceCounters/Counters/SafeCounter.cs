@@ -8,7 +8,7 @@ namespace Dev2.PerformanceCounters.Counters
 {
     public class SafeCounter:IPerformanceCounter
     {
-        private readonly IPerformanceCounter _counter;
+        readonly IPerformanceCounter _counter;
 
         #region Implementation of IPerformanceCounter
 
@@ -68,12 +68,9 @@ namespace Dev2.PerformanceCounters.Counters
         public string Name => _counter.Name;
         public WarewolfPerfCounterType PerfCounterType => _counter.PerfCounterType;
 
-        public IList<CounterCreationData> CreationData()
-        {
-            return _counter.CreationData();
-        }
+        public IList<CounterCreationData> CreationData() => _counter.CreationData();
 
-        public bool IsActive { get { return _counter.IsActive; } set { _counter.IsActive = value; } }
+        public bool IsActive { get => _counter.IsActive; set => _counter.IsActive = value; }
         public IPerformanceCounter InnerCounter => _counter;
 
         public void Setup()
@@ -91,10 +88,8 @@ namespace Dev2.PerformanceCounters.Counters
 
     public static class PerfCounterExtensions
     {
-        public static IPerformanceCounter ToSafe(this IPerformanceCounter counter)
-        {
-            return new SafeCounter(counter);
-        }
+        public static IPerformanceCounter ToSafe(this IPerformanceCounter counter) => new SafeCounter(counter);
+
         public static IPerformanceCounter FromSafe(this IPerformanceCounter counter)
         {
             var x = counter as SafeCounter;

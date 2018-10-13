@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Core;
 using Dev2.Studio.Core;
+using System.ComponentModel;
+using Dev2.Util;
 
 namespace Dev2.Core.Tests.Helpers
 {
@@ -22,6 +24,17 @@ namespace Dev2.Core.Tests.Helpers
     [TestClass]
     public class VersionCheckerTests
     {
+
+        /// <summary>
+        /// This test checks that CollectUsageStats is set to False on develop
+        /// </summary>
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("RevulyticsCollectUsageStats")]
+        public void RevulyticsCollectUsageStatsForStudioIsFalseTest()
+        {
+            Assert.AreEqual(false, AppUsageStats.CollectUsageStats);
+        }
 
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
@@ -38,28 +51,28 @@ namespace Dev2.Core.Tests.Helpers
             Assert.AreEqual(StringResources.Uri_Community_HomePage, startPage);
         }
 
-
-        #region IsLastest Tests
-
-        
-        #endregion
-
-
         [TestMethod, ExpectedException(typeof(ArgumentNullException))]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionChecker_Ctor")]
         public void VersionChecker_Currentr_NullVersionChecker_ExpectException()
         {
-            //------------Setup for test--------------------------
-            
             new VersionChecker(new WarewolfWebClient(new WebClient()), null);
-            
-
-            //------------Execute Test---------------------------
-
-            //------------Assert Results-------------------------
         }
-        
+
+        [TestMethod]
+        [Owner("Ashley Lewis")]
+        [TestCategory("VersionChecker_Ctor")]
+        public void WarewolfWebClient_AddRemove_EventHandlers()
+        {
+            using (var warewolfWebClient =
+                        new WarewolfWebClient(new WebClient()))
+            {
+                warewolfWebClient.DownloadProgressChanged += new Mock<DownloadProgressChangedEventHandler>().Object;
+                warewolfWebClient.DownloadProgressChanged -= new Mock<DownloadProgressChangedEventHandler>().Object;
+                warewolfWebClient.DownloadFileCompleted += new Mock<AsyncCompletedEventHandler>().Object;
+                warewolfWebClient.DownloadFileCompleted -= new Mock<AsyncCompletedEventHandler>().Object;
+            }
+        }
     }
 }
 

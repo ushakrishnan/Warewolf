@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,7 +31,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class GetScheduledResourceHistoryTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -45,7 +45,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -61,7 +61,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         
         public void SaveScheduledResourceTest_ServiceName()
         {
@@ -70,7 +70,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void Services_ScheduledResource_ReturnsDynamicService()
         {
             SchedulerTestBaseStaticMethods.GetScheduledResourcesReturnsDynamicService(new GetScheduledResourceHistory());
@@ -78,7 +78,7 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void Services_ScheduledResourceHistory_GetValid()
         {
             var output = RunOutput(true);
@@ -93,14 +93,14 @@ namespace Dev2.Tests.Runtime.Services
         }
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("Services_ScheduledResource_GetHistory")]
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void Services_ScheduledResource_GetIncorrectResources()
         {
             var output = RunOutput(false);
             Assert.AreEqual(0, output.Count);
         }
 
-        private List<IResourceHistory> RunOutput(bool expectCorrectInput)
+        List<IResourceHistory> RunOutput(bool expectCorrectInput)
         {
             var esbMethod = new GetScheduledResourceHistory();
             var security = new Mock<ISecurityWrapper>();
@@ -119,12 +119,12 @@ namespace Dev2.Tests.Runtime.Services
                                               new Dev2TaskService(new TaskServiceConvertorFactory()),
                                               new TaskServiceConvertorFactory());
             var res = new ScheduledResource("a", SchedulerStatus.Enabled, DateTime.Now, trigger, "dave", Guid.NewGuid().ToString());
-            Dictionary<string, StringBuilder> inp = new Dictionary<string, StringBuilder>();
+            var inp = new Dictionary<string, StringBuilder>();
             factory.Setup(
                 a =>
                 a.CreateModel(GlobalConstants.SchedulerFolderId, It.IsAny<ISecurityWrapper>())).Returns(model.Object);
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
-            if(expectCorrectInput)
+            var serialiser = new Dev2JsonSerializer();
+            if (expectCorrectInput)
             {
 
                 model.Setup(a => a.CreateHistory(It.IsAny<ScheduledResource>())).Returns(history).Verifiable();

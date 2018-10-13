@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +17,7 @@ using System.IO;
 using System.Linq;
 using ActivityUnitTests;
 using Dev2.Activities;
+using Dev2.Common.State;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 
@@ -379,7 +380,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
             // remove test datalist ;)
 
             var actualArray = actual.ToArray();
@@ -414,7 +415,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
 
             // remove test datalist ;)
 
@@ -445,7 +446,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
 
             // remove test datalist ;)
 
@@ -479,7 +480,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset2", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset2", "field1", out string error);
 
             var actualArray = actual.ToArray();
             actual.Clear();
@@ -644,7 +645,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Setup for test--------------------------
             var command1 = "\"" + TestContext.DeploymentDirectory + "\\ConsoleAppToTestExecuteCommandLineActivity.exe\" output";
             const string result = "[[OutVar1]]";
-            DsfExecuteCommandLineActivity act = new DsfExecuteCommandLineActivity { CommandFileName = command1, CommandResult = result };
+            var act = new DsfExecuteCommandLineActivity { CommandFileName = command1, CommandResult = result };
 
             //------------Execute Test---------------------------
             var dsfForEachItems = act.GetForEachOutputs();
@@ -674,11 +675,62 @@ namespace Dev2.Tests.Activities.ActivityTests
             var activity = new DsfExecuteCommandLineActivity();
 
             //------------Execute Test---------------------------
-            ProcessPriorityClass priority = activity.CommandPriority;
+            var priority = activity.CommandPriority;
 
             //------------Assert Results-------------------------
             Assert.AreEqual(ProcessPriorityClass.Normal, priority);
 
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsExecuteCommandLineActivity_GetState")]
+        public void DsExecuteCommandLineActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfExecuteCommandLineActivity { CommandFileName = "cm bob", CommandResult="[[res]]" };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(3, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "Command",
+                    Type = StateVariable.StateType.Input,
+                    Value = "cm bob"
+                },
+                new StateVariable
+                {
+                    Name = "CommandPriority",
+                    Type = StateVariable.StateType.Input,
+                    Value = ProcessPriorityClass.Normal.ToString()
+                },
+                new StateVariable
+                {
+                    Name="CommandResult",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[res]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
     }
 }

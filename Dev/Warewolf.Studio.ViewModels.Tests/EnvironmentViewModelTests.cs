@@ -22,11 +22,12 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private EnvironmentViewModel _target;
+        EnvironmentViewModel _target;
 
-        private Mock<IServer> _serverMock;
-        private Mock<IShellViewModel> _shellViewModelMock;
-        private Mock<IPopupController> _popupControllerMock;
+        Mock<IServer> _serverMock;
+        Mock<IShellViewModel> _shellViewModelMock;
+        Mock<IPopupController> _popupControllerMock;
+        Mock<IExplorerTooltips> _explorerTooltips;
 
         #endregion Fields
 
@@ -43,6 +44,8 @@ namespace Warewolf.Studio.ViewModels.Tests
             CustomContainer.Register(serverRepo.Object);
             var connectControlSingleton = new Mock<IConnectControlSingleton>();
             CustomContainer.Register(connectControlSingleton.Object);
+            _explorerTooltips = new Mock<IExplorerTooltips>();
+            CustomContainer.Register(_explorerTooltips.Object);
             _target = new EnvironmentViewModel(_serverMock.Object, _shellViewModelMock.Object);
         }
 
@@ -51,7 +54,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         #region Test commands
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommandChildrenAllowResourceCheck()
         {
             //arrange
@@ -69,7 +72,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.ShowContextMenu);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommandChildrenNoAllowResourceCheck()
         {
             //arrange
@@ -84,32 +87,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.ShowContextMenu);
         }
 
-        [TestMethod]
-        public void TestTooltips()
+        [TestMethod,Timeout(60000)]
+        public void TestExplorerTooltipsNotNull()
         {
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewServiceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewServerSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewSqlServerSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewMySqlSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewPostgreSqlSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewOracleSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewOdbcSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewWebSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewPluginSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewComPluginSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewEmailSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewExchangeSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewRabbitMqSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewDropboxSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewSharepointSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewWcfSourceTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.NoPermissionsToolTip, _target.NewFolderTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.ViewApisJsonTooltip, _target.ViewApisJsonTooltip);
-            Assert.AreEqual(Resources.Languages.Tooltips.ServerVersionTooltip, _target.ServerVersionTooltip);
-            Assert.AreEqual(Resources.Languages.Core.DeployResourceCheckbox, _target.DeployResourceCheckboxTooltip);
+            Assert.IsNotNull(_target.ExplorerTooltips);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCommands()
         {
             //arrange
@@ -127,7 +111,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var canCreateNewSharepointSourceSourceCommand = _target.NewSharepointSourceSourceCommand.CanExecute(null);
             var canCreateNewDropboxSourceSourceCommand = _target.NewDropboxSourceSourceCommand.CanExecute(null);
             var canCreateNewComPluginSourceCommand = _target.NewComPluginSourceCommand.CanExecute(null);
-            var canCreateNewRabbitMQSourceSourceCommand = _target.NewRabbitMQSourceSourceCommand.CanExecute(null);
+            var canCreateNewRabbitMQSourceSourceCommand = _target.NewRabbitMqSourceSourceCommand.CanExecute(null);
             var canCreateFolderCommand = _target.CreateFolderCommand.CanExecute(null);
             var canDeployCommand = _target.DeployCommand.CanExecute(null);
             var canCreateNewWcfSourceCommand = _target.NewWcfSourceCommand.CanExecute(null);
@@ -157,7 +141,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(canViewApisJsonCommand);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestExpand()
         {
             //arrange
@@ -172,7 +156,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.IsExpanded);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestShowServerVersionCommand()
         {
             //arrange
@@ -189,7 +173,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestShellViewModel()
         {
             //arrange
@@ -200,7 +184,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreSame(_shellViewModelMock.Object, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestChildrenCount()
         {
             //arrange
@@ -259,7 +243,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(true, _target.Children[3].IsSource);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestFindPath()
         {
             //arrange
@@ -304,7 +288,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_target, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestFindPathStartAndEnd()
         {
             //arrange
@@ -349,7 +333,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_target, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestShowContextMenu()
         {
             //arrange
@@ -368,7 +352,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isShowContextMenuChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsFolderChecked()
         {
             //arrange
@@ -385,7 +369,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isResourceChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsVisible()
         {
             //arrange
@@ -404,7 +388,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isIsVisibleChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsSelected()
         {
             //arrange
@@ -425,7 +409,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.CanDrop);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanShowServerVersion()
         {
             //arrange
@@ -444,7 +428,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isCanShowServerVersionChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestAllowResourceCheck()
         {
             //arrange
@@ -463,7 +447,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isAllowResourceCheckChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanCreateWorkflowService()
         {
             //arrange
@@ -482,7 +466,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isCanCreateWorkflowServiceChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanCreateFolder()
         {
             //arrange
@@ -501,7 +485,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isCanCreateFolderChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanCreateFolderTrue()
         {
             //arrange
@@ -522,7 +506,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(actual);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestAreVersionsVisible()
         {
             //arrange
@@ -535,7 +519,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.AreVersionsVisible);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
+        public void TestIsMergeVisible()
+        {
+            //assert
+            Assert.IsFalse(_target.IsMergeVisible);
+        }
+
+        [TestMethod,Timeout(60000)]
         public void TestIsResourceUnchecked()
         {
             //arrange
@@ -548,7 +539,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.IsResourceUnchecked ?? false);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsExpanderVisibleTrue()
         {
             //arrange
@@ -565,7 +556,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(actual);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsExpanderVisibleFalse()
         {
             //arrange
@@ -583,21 +574,21 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestConstructorServerNull()
         {
             new EnvironmentViewModel(null, _shellViewModelMock.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestConstructorShellViewMockNull()
         {
             new EnvironmentViewModel(_serverMock.Object, null);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectItemGuid()
         {
             //arrange
@@ -623,7 +614,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child2.VerifySet(it => it.IsSelected = true);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectItemStr()
         {
             //arrange
@@ -633,7 +624,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child.SetupGet(it => it.ResourcePath).Returns(resourcePath);
             child
                 .Setup(it => it.Apply(It.IsAny<Action<IExplorerItemViewModel>>()))
-                .Callback<Action<IExplorerItemViewModel>>(a => a(child.Object));
+                .Callback<Action<IExplorerItemViewModel>>(a => a?.Invoke(child.Object));
             _target.AddChild(child.Object);
 
             //act
@@ -643,7 +634,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child.VerifySet(it => it.IsExpanded = true);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestDispose()
         {
             //arrange
@@ -657,7 +648,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child.Verify(a => a.Dispose());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void EnvironmentViewModelVerifyNewFolderShowsContextMenu_HasParentPermissions()
         {
             //arrange
@@ -682,7 +673,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.Children[0].CanCreateWorkflowService);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCreateFolder()
         {
             //arrange
@@ -704,7 +695,6 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isChildrenChanged);
             Assert.IsTrue(_target.IsExpanded);
             Assert.AreEqual(_target.AllowResourceCheck, folder.AllowResourceCheck);
-            Assert.AreEqual(_target.IsResourceChecked, folder.IsResourceChecked);
             Assert.AreEqual(_target.CanCreateFolder, folder.CanCreateFolder);
             Assert.AreEqual(_target.CanCreateSource, folder.CanCreateSource);
             Assert.AreEqual(_target.CanShowVersions, folder.CanShowVersions);
@@ -714,7 +704,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_target.ShowContextMenu, folder.ShowContextMenu);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCreateFolderIsDialog()
         {
             //arrange
@@ -746,7 +736,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSetPropertiesForDialogIsDialogFalse()
         {
             //arrange
@@ -764,7 +754,6 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //assert
             Assert.IsFalse(_target.AllowResourceCheck);
-            Assert.IsFalse(_target.IsResourceChecked ?? true);
             Assert.IsTrue(_target.CanCreateSource);
             Assert.IsTrue(_target.CanCreateFolder);
             Assert.IsFalse(_target.CanDelete);
@@ -776,7 +765,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_target.ShowContextMenu);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSetPropertiesForDialogIsDialogTrue()
         {
             //arrange
@@ -787,14 +776,13 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //assert
             Assert.IsFalse(_target.AllowResourceCheck);
-            Assert.IsFalse(_target.IsResourceChecked ?? true);
             Assert.IsFalse(_target.CanCreateSource);
             Assert.IsFalse(_target.CanCreateWorkflowService);
             Assert.IsFalse(_target.ShowContextMenu);
             Assert.IsFalse(_target.CanDeploy);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRemoveChild()
         {
             //arrange
@@ -816,7 +804,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isChildrenChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRemoveItem()
         {
             //arrange
@@ -846,7 +834,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isChildrenChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSetItemCheckedState()
         {
             //arrange
@@ -863,7 +851,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child.VerifySet(it => it.Checked = true);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestFilter()
         {
             //arrange
@@ -885,7 +873,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isChildrenChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestFilterFunc()
         {
             //arrange
@@ -906,7 +894,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(isChildrenChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public async Task TestLoadDialog()
         {
             //arrange
@@ -917,13 +905,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target = new EnvironmentViewModel(_serverMock.Object, _shellViewModelMock.Object);
 
             //act
-            var result = await _target.LoadDialog(selPath);
+            var result = await _target.LoadDialogAsync(selPath);
 
             //assert
             Assert.IsFalse(_target.Children.Any());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public async Task TestLoad()
         {
             //arrange
@@ -974,13 +962,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target = new EnvironmentViewModel(_serverMock.Object, shellViewModel.Object);
 
             //act
-            var result = await _target.Load();
+            var result = await _target.LoadAsync();
 
             //assert
             Assert.IsFalse(_target.Children.Any());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public async Task TestDeletedServerResourceLoad()
         {
             //arrange
@@ -1045,13 +1033,81 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target = new EnvironmentViewModel(_serverMock.Object, shellViewModel.Object);
 
             //act
-            var result = await _target.Load();
+            var result = await _target.LoadAsync();
 
             //assert
             Assert.IsFalse(_target.Children.Any());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
+        public async Task ReloadConnectControl()
+        {
+            //arrange
+
+            var serverID = Guid.NewGuid();
+            var explorerItemMock = new Mock<IExplorerItem>();
+            _serverMock.SetupGet(it => it.IsConnected).Returns(true);
+            _serverMock.SetupGet(it => it.EnvironmentID).Returns(serverID);
+            _serverMock.Setup(it => it.LoadExplorer(false)).Returns(Task.FromResult(explorerItemMock.Object));
+
+            var serverID1 = Guid.NewGuid();
+            var serverMock1 = new Mock<IServer>();
+            serverMock1.SetupGet(it => it.IsConnected).Returns(true);
+            serverMock1.SetupGet(it => it.EnvironmentID).Returns(serverID1);
+            serverMock1.Setup(it => it.LoadExplorer(false)).Returns(Task.FromResult(explorerItemMock.Object));
+
+            var serverID2 = Guid.NewGuid();
+            var serverMock2 = new Mock<IServer>();
+            serverMock2.SetupGet(it => it.IsConnected).Returns(true);
+            serverMock2.SetupGet(it => it.EnvironmentID).Returns(serverID2);
+            serverMock2.Setup(it => it.LoadExplorer(false)).Returns(Task.FromResult(explorerItemMock.Object));
+
+            var localhost = new Mock<IServer>();
+            localhost.Setup(a => a.DisplayName).Returns("Localhost");
+            localhost.SetupGet(server => server.CanDeployTo).Returns(true);
+
+            var shellViewModel = new Mock<IShellViewModel>();
+
+            var env = new Mock<IEnvironmentViewModel>();
+            var exploreItm = new Mock<IExplorerItemViewModel>();
+            exploreItm.SetupGet(model => model.ResourceName).Returns("a");
+            exploreItm.SetupGet(model => model.ResourceType).Returns("Dev2Server");
+            exploreItm.SetupGet(model => model.ResourceId).Returns(serverID);
+            exploreItm.SetupGet(model => model.Children).Returns(new BindableCollection<IExplorerItemViewModel>());
+
+            var exploreItm1 = new Mock<IExplorerItemViewModel>();
+            exploreItm1.SetupGet(model => model.ResourceName).Returns("a");
+            exploreItm1.SetupGet(model => model.ResourceType).Returns("Dev2Server");
+            exploreItm1.SetupGet(model => model.ResourceId).Returns(serverID);
+            exploreItm1.SetupGet(model => model.Children).Returns(new BindableCollection<IExplorerItemViewModel>());
+            env.SetupGet(model => model.Children).Returns(new BindableCollection<IExplorerItemViewModel>()
+            {
+                exploreItm.Object,exploreItm1.Object
+            });
+
+            shellViewModel.SetupGet(model => model.ExplorerViewModel).Returns(new Mock<IExplorerViewModel>().Object);
+            shellViewModel.SetupGet(model => model.ExplorerViewModel.Environments).Returns(new BindableCollection<IEnvironmentViewModel>()
+            {
+                env.Object
+            });
+            var mockConnectControl = new Mock<IConnectControlViewModel>();
+            mockConnectControl.SetupGet(a => a.Servers).Returns(new BindableCollection<IServer>());
+
+            shellViewModel.Setup(model => model.ExplorerViewModel.ConnectControlViewModel).Returns(mockConnectControl.Object);
+            shellViewModel.Setup(x => x.LocalhostServer).Returns(localhost.Object);
+            shellViewModel.Setup(x => x.ActiveServer).Returns(new Mock<IServer>().Object);
+            CustomContainer.Register(shellViewModel.Object);
+
+            _target = new EnvironmentViewModel(_serverMock.Object, shellViewModel.Object);
+
+            //act
+            var result = await _target.LoadAsync();
+
+            //assert
+            Assert.IsFalse(_target.Children.Any());
+        }
+
+        [TestMethod,Timeout(60000)]
         public void TestCreateExplorerItems()
         {
             //arrange
@@ -1084,10 +1140,9 @@ namespace Warewolf.Studio.ViewModels.Tests
             //assert
             Assert.IsFalse(_target.Children.Any());
             parentMock.VerifySet(it => it.Children = It.IsAny<ObservableCollection<IExplorerItemViewModel>>());
-            //  Assert.IsTrue(collection.Any());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCreateExplorerItemsSetsPermissions()
         {
             //arrange
@@ -1124,7 +1179,6 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             child.Verify(model => model.SetPermissions(It.IsAny<Permissions>(), It.IsAny<bool>()));
             parentMock.VerifySet(it => it.Children = It.IsAny<ObservableCollection<IExplorerItemViewModel>>());
-            //  Assert.IsTrue(collection.Any());
         }
 
         #endregion Test methods

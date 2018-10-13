@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,15 +15,12 @@ using Dev2.Interfaces;
 namespace Dev2.Factories
 {
     public class Dev2FindMissingStrategyFactory : SpookyAction<IFindMissingStrategy, Enum>
-    {        
+    {
         /// <summary>
         /// Create a find missing strategy
         /// </summary>
         /// <param name="typeOf"></param>
         /// <returns></returns>
-        public IFindMissingStrategy CreateFindMissingStrategy(enFindMissingType typeOf)
-        {
-            return FindMatch(typeOf);
-        }
+        public IFindMissingStrategy CreateFindMissingStrategy(enFindMissingType typeOf) => FindMatch(typeOf);
     }    
 }

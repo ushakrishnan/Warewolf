@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,10 +24,7 @@ namespace Dev2.FindMissingStrategies
     {
         #region Implementation of ISpookyLoadable<Enum>
 
-        public Enum HandlesType()
-        {
-            return enFindMissingType.Sequence;
-        }
+        public Enum HandlesType() => enFindMissingType.Sequence;
 
         /// <summary>
         /// Gets all the fields for a specific activity
@@ -36,8 +33,8 @@ namespace Dev2.FindMissingStrategies
         /// <returns>Returns all the fields in a list of strings</returns>
         public List<string> GetActivityFields(object activity)
         {
-            List<string> results = new List<string>();
-            Dev2FindMissingStrategyFactory stratFac = new Dev2FindMissingStrategyFactory();
+            var results = new List<string>();
+            var stratFac = new Dev2FindMissingStrategyFactory();
             if (activity is DsfSequenceActivity sequenceActivity)
             {
                 foreach (var innerActivity in sequenceActivity.Activities)
@@ -49,13 +46,13 @@ namespace Dev2.FindMissingStrategies
                 }
             }
 
-            IEnumerable<PropertyInfo> properties = StringAttributeRefectionUtils.ExtractAdornedProperties<FindMissingAttribute>(activity);
-            
-            foreach(PropertyInfo propertyInfo in properties)
+            var properties = StringAttributeRefectionUtils.ExtractAdornedProperties<FindMissingAttribute>(activity);
+
+            foreach (PropertyInfo propertyInfo in properties)
             
             {
-                object property = propertyInfo.GetValue(activity, null);
-                if(property != null)
+                var property = propertyInfo.GetValue(activity, null);
+                if (property != null)
                 {
                     results.Add(property.ToString());
                 }
@@ -66,8 +63,8 @@ namespace Dev2.FindMissingStrategies
 
         static void GetResults(IDev2Activity dsfActivityAbstractString, Dev2FindMissingStrategyFactory stratFac, List<string> results)
         {
-            enFindMissingType findMissingType = dsfActivityAbstractString.GetFindMissingType();
-            IFindMissingStrategy strategy = stratFac.CreateFindMissingStrategy(findMissingType);
+            var findMissingType = dsfActivityAbstractString.GetFindMissingType();
+            var strategy = stratFac.CreateFindMissingStrategy(findMissingType);
             results.AddRange(strategy.GetActivityFields(dsfActivityAbstractString));
         }
 

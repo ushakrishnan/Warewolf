@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,10 +22,7 @@ namespace Dev2.Studio.Core.Factories
     public class InstanceWebActivityFactory : IWebActivityFactory
     {
         public IWebActivity CreateWebActivity(object webActivityWrappingObject, IContextualResourceModel resourceModel,
-                                              string serviceName)
-        {
-            return WebActivityFactory.CreateWebActivity(webActivityWrappingObject, resourceModel, serviceName);
-        }
+                                              string serviceName) => WebActivityFactory.CreateWebActivity(webActivityWrappingObject, resourceModel, serviceName);
     }
 
     public static class WebActivityFactory
@@ -38,7 +35,7 @@ namespace Dev2.Studio.Core.Factories
 
         public static IWebActivity CreateWebActivity(object webActivityWrappingObject, IContextualResourceModel resourceModel, string serviceName)
         {
-            IWebActivity activity = CreateWebActivity();
+            var activity = CreateWebActivity();
             activity.WebActivityObject = webActivityWrappingObject;
             activity.ResourceModel = resourceModel;
             activity.ServiceName = serviceName;

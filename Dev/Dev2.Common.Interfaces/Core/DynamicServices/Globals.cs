@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -124,14 +124,15 @@ namespace Dev2.Common.Interfaces.Core.DynamicServices
         /// <summary>
         ///     A PostgreSQL database
         /// </summary>
-
         PostgreSQL,
-
-
-        /// <summary>
-        ///     A SOAP based Web Service: REST web services are not supported
-        /// </summary>
-        WebService,
+		/// <summary>
+		///     A SQLite database
+		/// </summary>
+		SQLiteDatabase,
+		/// <summary>
+		///     A SOAP based Web Service: REST web services are not supported
+		/// </summary>
+		WebService,
 
         /// <summary>
         ///     A Dynamic Service that exists in the ServiceDefinition File

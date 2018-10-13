@@ -13,27 +13,27 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
     {
         #region ToString Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToStringFullySetupObjectExpectedJsonSerializedObjectReturnedAsString()
         {
-            DropBoxSource testDropBoxSource = SetupDefaultDropBoxSource();
-            string actualDropBoxSourceToString = testDropBoxSource.ToString();
-            string expected = JsonConvert.SerializeObject(testDropBoxSource);
+            var testDropBoxSource = SetupDefaultDropBoxSource();
+            var actualDropBoxSourceToString = testDropBoxSource.ToString();
+            var expected = JsonConvert.SerializeObject(testDropBoxSource);
             Assert.AreEqual(expected, actualDropBoxSourceToString);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToStringEmptyObjectExpected()
         {
             var testDropBoxSource = new DropBoxSource();
-            string actualSerializedDropBoxSource = testDropBoxSource.ToString();
-            string expected = JsonConvert.SerializeObject(testDropBoxSource);
+            var actualSerializedDropBoxSource = testDropBoxSource.ToString();
+            var expected = JsonConvert.SerializeObject(testDropBoxSource);
             Assert.AreEqual(expected, actualSerializedDropBoxSource);
         }
 
         #endregion ToString Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Pieter Terblanche")]
         [TestCategory("DropBoxSource_AppKey")]
         public void DropBoxSource_AppKey_CannotBeEmpty()
@@ -52,7 +52,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToXml Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToXmlAllPropertiesSetupExpectedXElementContainingAllObjectInformation()
         {
             var testDropBoxSource = SetupDefaultDropBoxSource();
@@ -71,14 +71,14 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.IsNull(workflowXamlDefintion);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToXmlEmptyObjectExpectedXElementContainingNoInformationRegardingSource()
         {
             var testDropBoxSource = new DropBoxSource();
-            XElement expectedXml = testDropBoxSource.ToXml();
+            var expectedXml = testDropBoxSource.ToXml();
 
-            IEnumerable<XAttribute> attrib = expectedXml.Attributes();
-            IEnumerator<XAttribute> attribEnum = attrib.GetEnumerator();
+            var attrib = expectedXml.Attributes();
+            var attribEnum = attrib.GetEnumerator();
             while (attribEnum.MoveNext())
             {
                 if (attribEnum.Current.Name == "Name")
@@ -93,7 +93,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region Private Test Methods
 
-        private DropBoxSource SetupDefaultDropBoxSource()
+        DropBoxSource SetupDefaultDropBoxSource()
         {
             var testDropBoxSource = new DropBoxSource
             {

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,7 @@ using Warewolf.Storage.Interfaces;
 
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 {
-    public abstract class DsfActivityAbstract<T> : DsfNativeActivity<T>, IActivityTemplateFactory, INotifyPropertyChanged
+    public abstract class DsfActivityAbstract<T> : DsfNativeActivity<T>, IActivityTemplateFactory, INotifyPropertyChanged, IEquatable<DsfActivityAbstract<T>>
     {
         public string SimulationOutput { get; set; }
 
@@ -62,12 +62,17 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
         }
 
-        protected DsfActivityAbstract(string displayName, bool isAsync = false)
+        protected DsfActivityAbstract(string displayName)
+            : this(displayName, false)
+        {
+        }
+
+        protected DsfActivityAbstract(string displayName, bool isAsync)
             : this(displayName, DebugDispatcher.Instance, isAsync)
         {
         }
 
-        protected DsfActivityAbstract(string displayName, IDebugDispatcher debugDispatcher, bool isAsync = false)
+        protected DsfActivityAbstract(string displayName, IDebugDispatcher debugDispatcher, bool isAsync)
             : base(isAsync, displayName, debugDispatcher)
         {
 
@@ -92,17 +97,14 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         #endregion
 
 
-        public Activity Create(DependencyObject target)
-        {
-            return this;
-        }
-        
+        public Activity Create(DependencyObject target) => this;
+
         public virtual void Resumed(NativeActivityContext context, Bookmark bookmark, object value)
         {
 
-            IDSFDataObject myDO = context.GetExtension<IDSFDataObject>();
-            ErrorResultTO errorResultTO = new ErrorResultTO();
-            Guid executionID = myDO.DataListID;
+            var myDO = context.GetExtension<IDSFDataObject>();
+            var errorResultTO = new ErrorResultTO();
+            var executionID = myDO.DataListID;
 
             if (value != null)
             {
@@ -175,5 +177,35 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         }
 
         #endregion Protected Methods
+
+        public bool Equals(DsfActivityAbstract<T> other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                   && string.Equals(UniqueID, other.UniqueID)
+                   && string.Equals(DisplayName, other.DisplayName);
+
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (UniqueID != null ? UniqueID.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (DisplayName != null ? DisplayName.GetHashCode() : 0);
+             
+                return hashCode;
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,8 +32,8 @@ namespace Dev2.Diagnostics
             + new string(Path.GetInvalidPathChars());
 
         readonly string _tempPath;
-        private readonly Guid _itemId;
-        private readonly StringBuilder _stringBuilder;
+        readonly Guid _itemId;
+        readonly StringBuilder _stringBuilder;
         string _fileName;
         bool _isMoreLinkCreated;
 
@@ -41,12 +41,13 @@ namespace Dev2.Diagnostics
 
         #region public properties
 
-        public const int MaxItemDispatchCount = 10;
-        public const int MaxCharDispatchCount = 150;
-        public const int ActCharDispatchCount = 100;
+        public static readonly int MaxItemDispatchCount = 10;
+        public static readonly int MaxCharDispatchCount = 150;
+        public static readonly int ActCharDispatchCount = 100;
 
-        public static List<DebugItem> EmptyList = new List<DebugItem>();
         public List<IDebugItemResult> ResultsList { get; set; }
+        public static List<DebugItem> EmptyList { get => emptyList; set => emptyList = value; }
+        static List<DebugItem> emptyList = new List<DebugItem>();
 
         #endregion properties
 
@@ -79,10 +80,7 @@ namespace Dev2.Diagnostics
 
         #region Contains
 
-        public bool Contains(string filterText)
-        {
-            return ResultsList.Any(r => r.Value.ContainsSafe(filterText) || r.GroupName.ContainsSafe(filterText));
-        }
+        public bool Contains(string filterText) => ResultsList.Any(r => r.Value.ContainsSafe(filterText) || r.GroupName.ContainsSafe(filterText));
 
         #endregion
 
@@ -91,43 +89,40 @@ namespace Dev2.Diagnostics
         public void Add(IDebugItemResult itemToAdd) => Add(itemToAdd, false);
         public void Add(IDebugItemResult itemToAdd, bool isDeserialize)
         {
-            if(!string.IsNullOrWhiteSpace(itemToAdd.GroupName) && itemToAdd.GroupIndex > MaxItemDispatchCount)
+
+            if (!string.IsNullOrWhiteSpace(itemToAdd.GroupName) && itemToAdd.GroupIndex > MaxItemDispatchCount && !isDeserialize)
             {
-
-                if(!isDeserialize)
+                _fileName = string.Format("{0}.txt", _itemId);
+                if (itemToAdd.GroupIndex == MaxItemDispatchCount + 1 && !_isMoreLinkCreated)
                 {
-                    _fileName = string.Format("{0}.txt", _itemId);
-                    if(itemToAdd.GroupIndex == MaxItemDispatchCount + 1 && !_isMoreLinkCreated)
-                    {
-                        ClearFile(_fileName);
-                        _stringBuilder.AppendLine(itemToAdd.GetMoreLinkItem());
-                        ResultsList.Add(new DebugItemResult { MoreLink = SaveFile(_stringBuilder.ToString(), _fileName), GroupName = itemToAdd.GroupName, GroupIndex = itemToAdd.GroupIndex });
-                        _stringBuilder.Clear();
-                        _isMoreLinkCreated = true;
-                        return;
-                    }
-
+                    ClearFile(_fileName);
                     _stringBuilder.AppendLine(itemToAdd.GetMoreLinkItem());
-                    if(itemToAdd.Type == DebugItemResultType.Value ||
-                        itemToAdd.Type == DebugItemResultType.Variable)
-                    {
-                        SaveFile(_stringBuilder.ToString(), _fileName);
-                        _stringBuilder.Clear();
-                    }
-
-
-                    if(_stringBuilder.Length > 10000)
-                    {
-                        SaveFile(_stringBuilder.ToString(), _fileName);
-                        _stringBuilder.Clear();
-                    }
-
+                    ResultsList.Add(new DebugItemResult { MoreLink = SaveFile(_stringBuilder.ToString(), _fileName), GroupName = itemToAdd.GroupName, GroupIndex = itemToAdd.GroupIndex });
+                    _stringBuilder.Clear();
+                    _isMoreLinkCreated = true;
                     return;
                 }
 
+                _stringBuilder.AppendLine(itemToAdd.GetMoreLinkItem());
+                if (itemToAdd.Type == DebugItemResultType.Value ||
+                    itemToAdd.Type == DebugItemResultType.Variable)
+                {
+                    SaveFile(_stringBuilder.ToString(), _fileName);
+                    _stringBuilder.Clear();
+                }
+
+
+                if (_stringBuilder.Length > 10000)
+                {
+                    SaveFile(_stringBuilder.ToString(), _fileName);
+                    _stringBuilder.Clear();
+                }
+
+                return;
             }
 
-            if(itemToAdd.Type == DebugItemResultType.Value ||
+
+            if (itemToAdd.Type == DebugItemResultType.Value ||
                 itemToAdd.Type == DebugItemResultType.Variable)
             {
                 TryCache(itemToAdd);
@@ -148,10 +143,7 @@ namespace Dev2.Diagnostics
             }
         }
 
-        public IList<IDebugItemResult> FetchResultsList()
-        {
-            return ResultsList;
-        }
+        public IList<IDebugItemResult> FetchResultsList() => ResultsList;
 
         #region TryCache
 
@@ -185,7 +177,7 @@ namespace Dev2.Diagnostics
 
             var path = Path.Combine(_tempPath, fileName);
             File.AppendAllText(path, contents);
-            string linkUri = string.Format(EnvironmentVariables.WebServerUri + "/Services/{0}?DebugItemFilePath={1}", "FetchDebugItemFileService", path);
+            var linkUri = string.Format(EnvironmentVariables.WebServerUri + "/Services/{0}?DebugItemFilePath={1}", "FetchDebugItemFileService", path);
 
             return linkUri;
         }

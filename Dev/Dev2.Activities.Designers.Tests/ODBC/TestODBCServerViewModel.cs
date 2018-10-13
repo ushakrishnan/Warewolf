@@ -451,15 +451,34 @@ namespace Dev2.Activities.Designers.Tests.ODBC
             Assert.AreEqual(0, ODBCServer.ManageServiceInputViewModel.Errors.Count);
         }
 
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("ODBCServer_MethodName")]
+        public void ODBCServer_VerifyCommandTimeout()
+        {
+            //------------Setup for test--------------------------
+            var mod = new ODBCServerModel();
+            var act = new DsfODBCDatabaseActivity();
+
+            //------------Execute Test---------------------------
+            using (var vm = new ODBCDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod))
+            {
+                vm.InputArea.CommandTimeout = 321;
+                //------------Assert Results-------------------------
+                var dbService = vm.ToModel();
+                Assert.AreEqual(321, dbService.CommandTimeout);
+            }
+        }
+
     }
 
     public class ODBCServerModel : IDbServiceModel
     {
 #pragma warning disable 649
-        private IStudioUpdateManager _updateRepository;
+        IStudioUpdateManager _updateRepository;
 #pragma warning restore 649
 #pragma warning disable 169
-        private IQueryManager _queryProxy;
+        IQueryManager _queryProxy;
 #pragma warning restore 169
 
         public ObservableCollection<IDbSource> _sources = new ObservableCollection<IDbSource>

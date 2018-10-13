@@ -1,13 +1,12 @@
 using System;
 using System.Activities;
+using System.Collections.Concurrent;
 using Dev2;
 
 namespace Warewolf.ResourceManagement
 {
     public interface IResourceActivityCache
     {
-        void AddToCache(Guid resourceID, DynamicActivity activity);
-
         IDev2Activity Parse(DynamicActivity activity, Guid resourceIdGuid);
 
         IDev2Activity Parse(DynamicActivity activity, Guid resourceIdGuid, bool failOnError);
@@ -17,5 +16,7 @@ namespace Warewolf.ResourceManagement
         bool HasActivityInCache(Guid resourceIdGuid);
 
         IDev2Activity GetActivity(Guid resourceIdGuid);
+
+        ConcurrentDictionary<Guid, IDev2Activity> Cache { get; }
     }
 }

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
 using Dev2;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Help;
 using Dev2.Studio.Interfaces;
 using Dev2.Threading;
@@ -18,18 +18,18 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private Mock<IManageEmailSourceModel> _updateManagerMock;
-        private Mock<IRequestServiceNameViewModel> _requestServiceNameViewModelMock;
-        private Task<IRequestServiceNameViewModel> _requestServiceNameViewModelTask;
-        private Mock<IEmailServiceSource> _emailSource;
-        private Mock<IEventAggregator> _aggregatorMock;
+        Mock<IManageEmailSourceModel> _updateManagerMock;
+        Mock<IRequestServiceNameViewModel> _requestServiceNameViewModelMock;
+        Task<IRequestServiceNameViewModel> _requestServiceNameViewModelTask;
+        Mock<IEmailServiceSource> _emailSource;
+        Mock<IEventAggregator> _aggregatorMock;
 
-        private string _emailServiceSourceResourceName;
+        string _emailServiceSourceResourceName;
 
-        private List<string> _changedProperties;
-        private ManageEmailSourceViewModel _target;
-        private List<string> _changedPropertiesSource;
-        private ManageEmailSourceViewModel _targetSource;
+        List<string> _changedProperties;
+        ManageEmailSourceViewModel _target;
+        List<string> _changedPropertiesSource;
+        ManageEmailSourceViewModel _targetSource;
 
         #endregion Fields
 
@@ -61,7 +61,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test construction
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestUpdateManagerNull()
         {
@@ -69,7 +69,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageEmailSourceViewModel(null, _requestServiceNameViewModelTask, _aggregatorMock.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestAggregatorNull()
         {
@@ -77,7 +77,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageEmailSourceViewModel(_updateManagerMock.Object, _requestServiceNameViewModelTask, null);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestRequestServiceNameViewModelNull()
         {
@@ -85,7 +85,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageEmailSourceViewModel(_updateManagerMock.Object, null, _aggregatorMock.Object);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void Test_emailServiceSourceMockNull()
         {
@@ -97,7 +97,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test commands
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSendCommandCanExecute()
         {
             //arrange
@@ -113,7 +113,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSendCommandExecute()
         {
             //arrange
@@ -125,7 +125,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.SendCommand.Execute(null);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSendCommandExecute_emailServiceSource()
         {
             //arrange
@@ -139,11 +139,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             _targetSource.SendCommand.Execute(null);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandCanExecute()
         {
             //arrange
-            _target.TestPassed = true;
+            _target.HostName = "host";
 
 
             //act
@@ -153,7 +153,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandExecute()
         {
             //act
@@ -164,7 +164,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
      
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestOkCommandExecuteSource()
         {
             //arrange
@@ -219,7 +219,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestName()
         {
             //arrange
@@ -234,7 +234,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedValue, _target.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRequestServiceNameViewModel()
         {
             //arrange
@@ -249,7 +249,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreSame(expectedValue, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestResourceName()
         {
             //arrange
@@ -265,7 +265,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains(expectedValue));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestHostName()
         {
             //arrange
@@ -285,7 +285,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestUserName()
         {
             //arrange
@@ -306,7 +306,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestPassword()
         {
             //arrange
@@ -326,7 +326,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailFromNotEmail()
         {
             //arrange
@@ -348,7 +348,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailFromEmailEmailToNull()
         {
             //arrange
@@ -371,7 +371,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailFromEmailEmailToNotEmail()
         {
             //arrange
@@ -394,7 +394,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailFromEmailEmailToCorrect()
         {
             //arrange
@@ -417,7 +417,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailToNotEmail()
         {
             //arrange
@@ -439,7 +439,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailToEmailEmailFromNull()
         {
             //arrange
@@ -462,7 +462,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailToEmailEmailFromNotEmail()
         {
             //arrange
@@ -485,7 +485,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailToEmailEmailFromCorrect()
         {
             //arrange
@@ -508,7 +508,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestPort()
         {
             //arrange
@@ -528,7 +528,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestTestPassed()
         {
             //arrange
@@ -544,7 +544,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("TestPassed"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestHeaderText()
         {
             //arrange
@@ -561,7 +561,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("Header"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestTimeout()
         {
             //arrange
@@ -581,7 +581,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEnableSsl()
         {
             //arrange
@@ -601,7 +601,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEnableSslYes()
         {
             //arrange
@@ -621,7 +621,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEnableSslNo()
         {
             //arrange
@@ -641,7 +641,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestTestFailed()
         {
             //arrange
@@ -657,7 +657,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("TestFailed"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEnableSend()
         {
             //arrange
@@ -677,7 +677,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestToModelItemNull()
         {
             //arrange
@@ -725,7 +725,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreNotEqual(Guid.Empty, result.Id);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestToModelItemNotNull_emailServiceSource()
         {
             //arrange
@@ -767,7 +767,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedId, result.Id);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestToModelItemNotNull()
         {
             //arrange
@@ -807,7 +807,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreNotEqual(Guid.Empty, result.Id);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSaveSource()
         {
             //arrange
@@ -858,7 +858,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _updateManagerMock.Verify(it => it.Save(_emailSource.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSave()
         {
             //act
@@ -868,7 +868,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_target.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestUpdateHelpDescriptor()
         {
             //arrange
@@ -885,11 +885,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             helpViewModelMock.Verify(it => it.UpdateHelpText(helpText));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveTrue()
         {
             //arrange
-            _target.TestPassed = true;
+            _target.HostName = "host";
 
             //act
             var result = _target.CanSave();
@@ -898,11 +898,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveFalse()
         {
             //arrange
-            _target.TestPassed = false;
+            _target.HostName = string.Empty;
 
             //act
             var result = _target.CanSave();
@@ -911,7 +911,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestTrue()
         {
             //arrange
@@ -926,7 +926,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestTrueHostNameEmpty()
         {
             //arrange
@@ -941,7 +941,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestTrueHostNameUserNameEmpty()
         {
             //arrange
@@ -956,7 +956,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestTrueHostNameUserNamePasswordEmpty()
         {
             //arrange
@@ -971,7 +971,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestFromModel()
         {
             //arrange
@@ -1011,7 +1011,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedResourceName, _target.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeploySourceExplorerViewModel_Ctor_valid")]
         public void TestDispose()
@@ -1024,6 +1024,68 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             vm.Dispose();
             ns.Verify(a => a.Dispose());
+        }
+
+        [TestMethod,Timeout(60000)]
+        public void EqualsOperator_WithEqualObjects_AreEqual()
+        {
+            var firstEmailServiceSourceDefinition = new EmailServiceSourceDefinition
+            {
+                ResourceName = "Test Email Source",
+                HostName = "smtp.gmail.com",
+                UserName = "warewolf@dev2.co.za",
+                Password = "Dev_tech*",
+                EnableSsl = false,
+                Port = 25,
+                Timeout = 100,
+                EmailFrom = "warewolf@dev2.co.za",
+                EmailTo = "info@dev2.co.za"
+            };
+
+            var secondEmailServiceSourceDefinition = new EmailServiceSourceDefinition
+            {
+                ResourceName = "Test Email Source",
+                HostName = "smtp.gmail.com",
+                UserName = "warewolf@dev2.co.za",
+                Password = "Dev_tech*",
+                EnableSsl = false,
+                Port = 25,
+                Timeout = 100,
+                EmailFrom = "warewolf@dev2.co.za",
+                EmailTo = "info@dev2.co.za"
+            };
+            Assert.IsTrue(firstEmailServiceSourceDefinition == secondEmailServiceSourceDefinition, "Equals operator doesnt work.");
+        }
+
+        [TestMethod,Timeout(60000)]
+        public void NotEqualsOperator_WithNotEqualObjects_AreNotEqual()
+        {
+            var firstEmailServiceSourceDefinition = new EmailServiceSourceDefinition
+            {
+                ResourceName = "Test Email Source",
+                HostName = "smtp.gmail.com",
+                UserName = "warewolf@dev2.co.za",
+                Password = "Dev_tech*",
+                EnableSsl = false,
+                Port = 25,
+                Timeout = 100,
+                EmailFrom = "warewolf@dev2.co.za",
+                EmailTo = "info@dev2.co.za"
+            };
+
+            var secondEmailServiceSourceDefinition = new EmailServiceSourceDefinition
+            {
+                ResourceName = "Different Test Email Source",
+                HostName = "differentsmtp.gmail.com",
+                UserName = "differentwarewolf@dev2.co.za",
+                Password = "differentDev_tech*",
+                EnableSsl = true,
+                Port = 200,
+                Timeout = 99,
+                EmailFrom = "differentwarewolf@dev2.co.za",
+                EmailTo = "differentinfo@dev2.co.za"
+            };
+            Assert.IsTrue(firstEmailServiceSourceDefinition != secondEmailServiceSourceDefinition, "Not equals operator doesnt work.");
         }
 
         #endregion Test methods

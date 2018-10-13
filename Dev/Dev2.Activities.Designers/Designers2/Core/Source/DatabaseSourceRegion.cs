@@ -19,19 +19,19 @@ namespace Dev2.Activities.Designers2.Core.Source
 {
     public class DatabaseSourceRegion : ISourceToolRegion<IDbSource>
     {
-        private IDbSource _selectedSource;
-        private ICollection<IDbSource> _sources;
-        private readonly ModelItem _modelItem;
+        IDbSource _selectedSource;
+        ICollection<IDbSource> _sources;
+        readonly ModelItem _modelItem;
 
-        private Guid _sourceId;
-        private Action _sourceChangedAction;
-        private double _labelWidth;
-        private string _sourcesHelpText;
-        private string _editSourceHelpText;
-        private string _newSourceHelpText;
-        private string _newSourceToolText;
-        private string _editSourceToolText;
-        private string _sourcesToolText;
+        Guid _sourceId;
+        Action _sourceChangedAction;
+        double _labelWidth;
+        string _sourcesHelpText;
+        string _editSourceHelpText;
+        string _newSourceHelpText;
+        string _newSourceToolText;
+        string _editSourceToolText;
+        string _sourcesToolText;
 
         public DatabaseSourceRegion(IDbServiceModel model, ModelItem modelItem,enSourceType type)
         {
@@ -58,7 +58,8 @@ namespace Dev2.Activities.Designers2.Core.Source
                 SelectedSource = Sources.FirstOrDefault(source => source.Id == SourceId);
             }
         }
-        public string NewSourceHelpText
+		
+		public string NewSourceHelpText
         {
             get
             {
@@ -152,10 +153,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             }
         }
 
-        public bool CanEditSource()
-        {
-            return SelectedSource != null;
-        }
+        public bool CanEditSource() => SelectedSource != null;
 
         public ICommand EditSourceCommand { get; set; }
 
@@ -191,13 +189,10 @@ namespace Dev2.Activities.Designers2.Core.Source
         public bool IsEnabled { get; set; }
         public IList<IToolRegion> Dependants { get; set; }
 
-        public IToolRegion CloneRegion()
+        public IToolRegion CloneRegion() => new DatabaseSourceRegion
         {
-            return new DatabaseSourceRegion
-            {
-                SelectedSource = SelectedSource
-            };
-        }
+            SelectedSource = SelectedSource
+        };
 
         public void RestoreRegion(IToolRegion toRestore)
         {
@@ -226,14 +221,14 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 SetSelectedSource(value);
-                SourceChangedAction();
+                SourceChangedAction?.Invoke();
                 OnSomethingChanged(this);
                 var delegateCommand = EditSourceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
                 delegateCommand?.RaiseCanExecuteChanged();
             }
         }
 
-        private void SetSelectedSource(IDbSource value)
+        void SetSelectedSource(IDbSource value)
         {
             if (value != null)
             {

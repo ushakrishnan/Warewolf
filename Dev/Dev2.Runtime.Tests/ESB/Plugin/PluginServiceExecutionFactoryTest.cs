@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,7 +32,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
         public TestContext TestContext { get; set; }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         public void PluginRuntimeHandler_GetNamespaces_WhenValidDll_ExpectNamespaces()
@@ -49,7 +49,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         public void PluginRuntimeHandler_GetNamespacesWithJsonObjects_WhenValidDll_ExpectNamespaces()
@@ -66,7 +66,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -76,7 +76,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             PluginServiceExecutionFactory.GetNamespaces(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginServiceExecutionFactory_GetNamespaces")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -87,7 +87,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_GetMethods")]
         public void PluginRuntimeHandler_GetMethods_WhenValidDll_ExpectValidResults()
@@ -104,7 +104,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginServiceExecutionFactory_GetMethods")]
         public void PluginRuntimeHandler_GetConstructors_WhenValidDll_ExpectValidResults()
@@ -121,7 +121,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginServiceExecutionFactory_GetMethods")]
         public void PluginRuntimeHandler_GetMethodsWithReturns_WhenValidDll_ExpectValidResults()
@@ -138,7 +138,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("PluginServiceExecutionFactory_GetMethods")]
         public void PluginRuntimeHandler_GetMethodsWithReturns_WhenValidDllMethodIsVoid_ExpectValidResultsWithVoidMethod()
@@ -156,7 +156,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("PluginServiceExecutionFactory_InvokePlugin")]
         public void PluginRuntimeHandler_InvokePlugin_WhenValidDll_ExpectValidResults()
@@ -170,7 +170,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
             //------------Execute Test---------------------------
             using (Isolated<PluginRuntimeHandler> isolated = new Isolated<PluginRuntimeHandler>())
             {
-                PluginInvokeArgs args = new PluginInvokeArgs
+                var args = new PluginInvokeArgs
                 {
                     AssemblyLocation = source.AssemblyLocation
                     ,
@@ -210,7 +210,7 @@ namespace Dev2.Tests.Runtime.ESB.Plugin
                 loc = assembly.Location;
             }
 
-            Guid resourceID = Guid.Empty;
+            var resourceID = Guid.Empty;
             if (!invalidResourceID)
             {
                 resourceID = Guid.NewGuid();

@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Tooltips {
@@ -75,6 +75,42 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ActionDeleteSelectedTestDisabledTooltip {
             get {
                 return ResourceManager.GetString("ActionDeleteSelectedTestDisabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set a local variable to be used in the SQL Query..
+        /// </summary>
+        public static string AdvancedRecordsetLocalVariable {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetLocalVariable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The SQL query.
+        /// </summary>
+        public static string AdvancedRecordsetSqlQuery {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetSqlQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Returns the output of the execution if any. Varies depending on what was executed..
+        /// </summary>
+        public static string AdvancedRecordsetSqlQueryExecuteCommand {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetSqlQueryExecuteCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value of the local variable to be used in SQL Query. Scalar variables can be used as a value..
+        /// </summary>
+        public static string AdvancedRecordsetVariable {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetVariable", resourceCulture);
             }
         }
         
@@ -315,6 +351,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Database command timeout.
+        /// </summary>
+        public static string CommandTimeoutTooltip {
+            get {
+                return ResourceManager.GetString("CommandTimeoutTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Comments do not execute and are place holders for future services or tools or simply to leave commentary inside the workflow.
         ///You can connect comments into the process flow and they will simply be skipped during execution. 
         ///However, they will appear in the debug output..
@@ -358,6 +403,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ConnectControlToggleConnectionToolTip {
             get {
                 return ResourceManager.GetString("ConnectControlToggleConnectionToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Database connection timeout.
+        /// </summary>
+        public static string ConnectionTimeoutHelp {
+            get {
+                return ResourceManager.GetString("ConnectionTimeoutHelp", resourceCulture);
             }
         }
         
@@ -715,7 +769,8 @@ namespace Warewolf.Studio.Resources.Languages {
         /// <summary>
         ///   Looks up a localized string similar to Any variable and/or data goes in here.
         ///To find the difference in time between two date times, put the first date time in here. The format needs to be the same for the two.
-        ///Leaving this field blank will give you the system date time..
+        ///The default date time format is shown, if this is not the required format, then it can be changed to the format needed.
+        ///Leaving this field blank will give you the default date time..
         /// </summary>
         public static string DateTimeDifferenceToolTipDatetime1 {
             get {
@@ -726,7 +781,8 @@ namespace Warewolf.Studio.Resources.Languages {
         /// <summary>
         ///   Looks up a localized string similar to Any variable and/or data goes in here.
         ///To find the difference in time between two date times, put the second date time in here. The format needs to be the same for the two.
-        ///Leaving this field blank will give you the system date time..
+        ///The default date time format is shown, if this is not the required format, then it can be changed to the format needed.
+        ///Leaving this field blank will give you the default date time..
         /// </summary>
         public static string DateTimeDifferenceToolTipDatetime2 {
             get {
@@ -777,7 +833,8 @@ namespace Warewolf.Studio.Resources.Languages {
         /// <summary>
         ///   Looks up a localized string similar to Any variable and/or data goes in here.
         ///To format a date time, or to add/subtract from a date time, put it in here.
-        ///Leaving this field blank will give you the system date time..
+        ///The default date time format is shown, if this is not the required format, then it can be changed to the format needed.
+        ///Leaving this field blank will give you the default date time..
         /// </summary>
         public static string DateTimeToolTipDatetime {
             get {
@@ -786,10 +843,8 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Describe the format of the date time you are entering. e.g. 23-July 1978 would be described as dd-MM yyyy.
-        ///Leaving this field blank will assume the system date time format.
-        ///To escape text or non-date information use &apos;around the text you want to escape&apos;. 
-        ///e.g. Time is now 15 hours and 33 minutes. Would have an input format of &apos;Time is now&apos; 24hr &apos;hours and&apos; min &apos;minutes.&apos;.
+        ///   Looks up a localized string similar to Input Date format.
+        ///To exclude use &apos;around escaped text&apos;..
         /// </summary>
         public static string DateTimeToolTipInputformat {
             get {
@@ -798,10 +853,8 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Describe the format you would like the date time to be returned in.
-        ///Leaving this field blank will assume the same as the Input Format.
-        ///To include text or non-date information use &apos;around the text you want to escape&apos;. 
-        ///e.g. Time is now 15 hours and 33 minutes. Would have an output format of &apos;Time is now&apos; 24hr &apos;hours and&apos; min &apos;minutes.&apos;.
+        ///   Looks up a localized string similar to Return Date format.
+        ///To exclude use &apos;around escaped text&apos;..
         /// </summary>
         public static string DateTimeToolTipOutputformat {
             get {
@@ -1219,7 +1272,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Duplicated items will reference each other (checked) or leave the dependancy on the origional item (unchecked).
+        ///   Looks up a localized string similar to Duplicated items will reference each other (checked) or leave the dependancy on the original item (unchecked).
         /// </summary>
         public static string DuplicateCheckBoxTooltip {
             get {
@@ -1502,7 +1555,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Will only return rows where each field specified meets the match criteria if selected..
+        ///   Looks up a localized string similar to Only return rows where each field specified meets a match criteria..
         /// </summary>
         public static string FindToolTipRequireAllFieldsToMatch {
             get {
@@ -1511,7 +1564,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Will only return rows that match all of the criteria if selected..
+        ///   Looks up a localized string similar to Only return rows with a field that matches all of the criteria..
         /// </summary>
         public static string FindToolTipRequireAllMatchesToBeTrue {
             get {
@@ -1642,6 +1695,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string LengthToolTipResult {
             get {
                 return ResourceManager.GetString("LengthToolTipResult", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Audits Folder Path.
+        /// </summary>
+        public static string LoggingViewAuditsFilePathToolTip {
+            get {
+                return ResourceManager.GetString("LoggingViewAuditsFilePathToolTip", resourceCulture);
             }
         }
         
@@ -1948,6 +2010,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ManageDbSourceCancelTestTooltip {
             get {
                 return ResourceManager.GetString("ManageDbSourceCancelTestTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the connection timeout of the database data source.
+        /// </summary>
+        public static string ManageDbSourceConnectionTimeoutTooltip {
+            get {
+                return ResourceManager.GetString("ManageDbSourceConnectionTimeoutTooltip", resourceCulture);
             }
         }
         
@@ -2708,6 +2779,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Search in Warewolf.
+        /// </summary>
+        public static string MenuSearchToolTip {
+            get {
+                return ResourceManager.GetString("MenuSearchToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Configure settings.
         /// </summary>
         public static string MenuSettingsToolTip {
@@ -2722,6 +2802,141 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string MenuWebServiceToolTip {
             get {
                 return ResourceManager.GetString("MenuWebServiceToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Merge the Service.
+        /// </summary>
+        public static string MergeButtonTooltip {
+            get {
+                return ResourceManager.GetString("MergeButtonTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current Tool connection conflict selection not allowed.
+        /// </summary>
+        public static string MergeCurrentArmRBDisabledTooltip {
+            get {
+                return ResourceManager.GetString("MergeCurrentArmRBDisabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Tool connection conflict.
+        /// </summary>
+        public static string MergeCurrentArmRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeCurrentArmRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current Tool conflict selection not allowed.
+        /// </summary>
+        public static string MergeCurrentConflictRBDisabledTooltip {
+            get {
+                return ResourceManager.GetString("MergeCurrentConflictRBDisabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Tool conflict.
+        /// </summary>
+        public static string MergeCurrentConflictRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeCurrentConflictRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Variable conflict.
+        /// </summary>
+        public static string MergeCurrentVariablesRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeCurrentVariablesRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Workflow name conflict.
+        /// </summary>
+        public static string MergeCurrentWorkflowNameRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeCurrentWorkflowNameRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Difference Tool connection conflict selection not allowed.
+        /// </summary>
+        public static string MergeDifferenceArmRBDisabledTooltip {
+            get {
+                return ResourceManager.GetString("MergeDifferenceArmRBDisabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Tool connection conflict.
+        /// </summary>
+        public static string MergeDifferenceArmRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeDifferenceArmRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Difference Tool conflict selection not allowed.
+        /// </summary>
+        public static string MergeDifferenceConflictRBDisabledTooltip {
+            get {
+                return ResourceManager.GetString("MergeDifferenceConflictRBDisabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Tool conflict.
+        /// </summary>
+        public static string MergeDifferenceConflictRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeDifferenceConflictRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Variable conflict.
+        /// </summary>
+        public static string MergeDifferenceVariablesRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeDifferenceVariablesRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Workflow name conflict.
+        /// </summary>
+        public static string MergeDifferenceWorkflowNameRBTooltip {
+            get {
+                return ResourceManager.GetString("MergeDifferenceWorkflowNameRBTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No conflicts found.
+        /// </summary>
+        public static string MergeNoConflictTooltip {
+            get {
+                return ResourceManager.GetString("MergeNoConflictTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the version you want to merge with.
+        /// </summary>
+        public static string MergeSelectionViewLabelTooltip {
+            get {
+                return ResourceManager.GetString("MergeSelectionViewLabelTooltip", resourceCulture);
             }
         }
         
@@ -3638,6 +3853,132 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ScriptingToolTipScript {
             get {
                 return ResourceManager.GetString("ScriptingToolTipScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search All.
+        /// </summary>
+        public static string SearchAllTooltip {
+            get {
+                return ResourceManager.GetString("SearchAllTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Input text to search.
+        /// </summary>
+        public static string SearchInputTooltip {
+            get {
+                return ResourceManager.GetString("SearchInputTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Input Variable.
+        /// </summary>
+        public static string SearchInputVariableTooltip {
+            get {
+                return ResourceManager.GetString("SearchInputVariableTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Match case.
+        /// </summary>
+        public static string SearchMatchCaseTooltip {
+            get {
+                return ResourceManager.GetString("SearchMatchCaseTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Match whole word.
+        /// </summary>
+        public static string SearchMatchWholeWordTooltip {
+            get {
+                return ResourceManager.GetString("SearchMatchWholeWordTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Object.
+        /// </summary>
+        public static string SearchObjectNameTooltip {
+            get {
+                return ResourceManager.GetString("SearchObjectNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Output Variable.
+        /// </summary>
+        public static string SearchOutputVariableTooltip {
+            get {
+                return ResourceManager.GetString("SearchOutputVariableTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Recordset.
+        /// </summary>
+        public static string SearchRecSetNameTooltip {
+            get {
+                return ResourceManager.GetString("SearchRecSetNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Scalar.
+        /// </summary>
+        public static string SearchScalarNameTooltip {
+            get {
+                return ResourceManager.GetString("SearchScalarNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Test Name.
+        /// </summary>
+        public static string SearchTestNameTooltip {
+            get {
+                return ResourceManager.GetString("SearchTestNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Tool Title.
+        /// </summary>
+        public static string SearchToolTitleTooltip {
+            get {
+                return ResourceManager.GetString("SearchToolTitleTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search Workflow Name.
+        /// </summary>
+        public static string SearchWorkflowNameTooltip {
+            get {
+                return ResourceManager.GetString("SearchWorkflowNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select Resource access denied.
+        /// </summary>
+        public static string SecurityResourcePermissionsDisabledTooltip {
+            get {
+                return ResourceManager.GetString("SecurityResourcePermissionsDisabledTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Windows group access denied.
+        /// </summary>
+        public static string SecurityWindowsGroupPermissionsDisabledTooltip {
+            get {
+                return ResourceManager.GetString("SecurityWindowsGroupPermissionsDisabledTooltip", resourceCulture);
             }
         }
         
@@ -4621,6 +4962,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open Start Page.
+        /// </summary>
+        public static string StartPageToolTip {
+            get {
+                return ResourceManager.GetString("StartPageToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Only variables go in here.
         ///Returns the type of system information selected..
         /// </summary>
@@ -5324,7 +5674,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tags: source connector.
+        ///   Looks up a localized string similar to Tags: source connector web delete.
         /// </summary>
         public static string Tool_WebMethod_Delete {
             get {
@@ -5333,7 +5683,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tags: source connector.
+        ///   Looks up a localized string similar to Tags: source connector web get.
         /// </summary>
         public static string Tool_WebMethod_Get {
             get {
@@ -5342,7 +5692,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tags: source connector.
+        ///   Looks up a localized string similar to Tags: source connector web post.
         /// </summary>
         public static string Tool_WebMethod_Post {
             get {
@@ -5351,7 +5701,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tags: source connector.
+        ///   Looks up a localized string similar to Tags: source connector web put.
         /// </summary>
         public static string Tool_WebMethod_Put {
             get {
@@ -5532,6 +5882,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ViewJsonObjectTooltip {
             get {
                 return ResourceManager.GetString("ViewJsonObjectTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select between two resources to merge.
+        /// </summary>
+        public static string ViewMergeTooltip {
+            get {
+                return ResourceManager.GetString("ViewMergeTooltip", resourceCulture);
             }
         }
         

@@ -15,12 +15,12 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private Mock<IStudioUpdateManager> _updateRepositoryMock;
-        private Mock<IQueryManager> _queryProxyMock;
+        Mock<IStudioUpdateManager> _updateRepositoryMock;
+        Mock<IQueryManager> _queryProxyMock;
 
-        private string _serverName;
+        string _serverName;
 
-        private ManageDatabaseSourceModel _target;
+        ManageDatabaseSourceModel _target;
 
         #endregion Fields
 
@@ -39,7 +39,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestServerName()
         {
             //act
@@ -49,7 +49,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_serverName, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestDatabaseSourceServerNameWithBrackets()
         {
             //arrange
@@ -66,7 +66,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestGetComputerNames()
         {
             //arrange
@@ -81,7 +81,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreSame(expectedValue, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestTestDbConnection()
         {
             //arrange
@@ -96,8 +96,22 @@ namespace Warewolf.Studio.ViewModels.Tests
            _updateRepositoryMock.Verify(it=>it.TestDbConnection(dbResourceMock.Object));
             Assert.AreSame(expectedValue, value);
         }
+		[TestMethod,Timeout(60000)]
+		public void TestSqliteConnection()
+		{
+			//arrange
+			var dbResourceMock = new Mock<ISqliteDBSource>();
+			var expectedValue = new List<string>();
+			_updateRepositoryMock.Setup(it => it.TestSqliteConnection(dbResourceMock.Object)).Returns(expectedValue);
 
-        [TestMethod]
+			//act
+			var value = _target.TestSqliteConnection(dbResourceMock.Object);
+
+			//assert
+			_updateRepositoryMock.Verify(it => it.TestSqliteConnection(dbResourceMock.Object));
+			Assert.AreSame(expectedValue, value);
+		}
+		[TestMethod,Timeout(60000)]
         public void TestSave()
         {
             //arrange

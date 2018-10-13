@@ -6,6 +6,7 @@ using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Data;
+using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Communication;
 using Dev2.Data;
 using Dev2.DataList.Contract;
@@ -19,17 +20,20 @@ namespace Dev2.Tests.Runtime.Hosting
     [TestClass]
     public class TestCatalogTests
     {
-
+        public static IDirectoryHelper DirectoryHelperInstance()
+        {
+            return new DirectoryHelper();
+        }
         [TestInitialize]
         public void CleanupTestDirectory()
         {
             if (Directory.Exists(EnvironmentVariables.TestPath))
             {
-                DirectoryHelper.CleanUp(EnvironmentVariables.TestPath);
+                DirectoryHelperInstance().CleanUp(EnvironmentVariables.TestPath);
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Constructor")]
         public void TestCatalog_Constructor_TestPathDoesNotExist_ShouldCreateIt()
@@ -43,7 +47,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsTrue(Directory.Exists(EnvironmentVariables.TestPath));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTests")]
         public void TestCatalog_SaveTests_WhenNullList_ShouldDoNothing()
@@ -57,7 +61,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsFalse(Directory.Exists(EnvironmentVariables.TestPath + "\\" + resourceID));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTests")]
         public void TestCatalog_SaveTests_WhenEmptyList_ShouldDoNothing()
@@ -71,7 +75,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsFalse(Directory.Exists(EnvironmentVariables.TestPath + "\\" + resourceID));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTests")]
         public void TestCatalog_SaveTests_WhenNotEmptyList_ShouldSaveTestsAsFiles()
@@ -104,7 +108,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(test2FilePath, testFiles[1]);
 
             var test1String = File.ReadAllText(test1FilePath);
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var test1 = serializer.Deserialize<IServiceTestModelTO>(test1String);
             Assert.AreEqual("Test 1", test1.TestName);
             Assert.IsTrue(test1.Enabled);
@@ -116,7 +120,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTest")]
         public void TestCatalog_SaveTests_WhenNoResourceIdList_ShouldSaveTestAsFiles()
@@ -141,14 +145,14 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(test1FilePath, testFiles[0]);
           
             var test1String = File.ReadAllText(test1FilePath);
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var test1 = serializer.Deserialize<IServiceTestModelTO>(test1String);
             Assert.AreEqual("Test 1", test1.TestName);
             Assert.IsFalse(test1.Enabled);
             
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTest")]
         public void TestCatalog_SaveTests_WhenResourceIdList_ShouldSaveTestAsAddToList()
@@ -181,7 +185,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(test2FilePath, testFiles[1]);
           
             var test2String = File.ReadAllText(test2FilePath);
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var test1 = serializer.Deserialize<IServiceTestModelTO>(test2String);
             Assert.AreEqual("Test 2", test1.TestName);
             Assert.IsFalse(test1.Enabled);
@@ -193,7 +197,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTest")]
         public void TestCatalog_SaveTests_WhenResourceIdListHasTest_ShouldSaveTestUpdateToList()
@@ -227,7 +231,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(test2FilePath, testFiles[1]);
 
             var test1String = File.ReadAllText(test2FilePath);
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var test2 = serializer.Deserialize<IServiceTestModelTO>(test1String);
             Assert.AreEqual("Test 2", test2.TestName);
             Assert.IsFalse(test2.Enabled);
@@ -256,7 +260,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_DeleteTest")]
         public void TestCatalog_DeleteTest_WhenResourceIdTestName_ShouldDeleteTest()
@@ -289,7 +293,7 @@ namespace Dev2.Tests.Runtime.Hosting
             var modelTO = testCatalog.Tests.Select(pair => pair.Value.Single(to => to.TestName == "Test 2")).Single();
             Assert.IsNotNull(modelTO);
             var test1String = File.ReadAllText(test1FilePath);
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var test1 = serializer.Deserialize<IServiceTestModelTO>(test1String);
             Assert.AreEqual("Test 1", test1.TestName);
             Assert.IsTrue(test1.Enabled);
@@ -307,7 +311,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsNull(modelTO);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_DeleteTest")]
         public void TestCatalog_DeleteAllTests_WhenResourceIdTestName_ShouldDeleteTestFolder()
@@ -340,7 +344,7 @@ namespace Dev2.Tests.Runtime.Hosting
             var modelTO = testCatalog.Tests.Select(pair => pair.Value.Single(to => to.TestName == "Test 2")).Single();
             Assert.IsNotNull(modelTO);
             var test1String = File.ReadAllText(test1FilePath);
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var test1 = serializer.Deserialize<IServiceTestModelTO>(test1String);
             Assert.AreEqual("Test 1", test1.TestName);
             Assert.IsTrue(test1.Enabled);
@@ -359,7 +363,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsFalse(Directory.Exists(path));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Load")]
         public void TestCatalog_Load_WhenTests_ShouldLoadDictionaryWithResourceIdAndTests()
@@ -412,7 +416,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Load")]
         public void TestCatalog_Reload_ShouldLoadDictionaryWithResourceIdAndTests()
@@ -462,7 +466,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(2, res2Tests.Count);
             Assert.AreEqual("Test 21", res2Tests[0].TestName);
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
-            DirectoryHelper.CleanUp(EnvironmentVariables.TestPath);
+            DirectoryHelperInstance().CleanUp(EnvironmentVariables.TestPath);
             Directory.CreateDirectory(EnvironmentVariables.TestPath);
             //------------Execute Test---------------------------
             testCatalog.ReloadAllTests();
@@ -471,7 +475,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenResourceIdValid_ShouldReturnListOfTestsForResourceId()
@@ -520,7 +524,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenPassResult_ShouldReturnListOfTestsForResourceIdWithCorrectPassResult()
@@ -591,7 +595,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(true, res2Tests[1].TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenResourceIdNotLoaded_ShouldReturnListOfTestsForResourceId()
@@ -639,7 +643,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenResourceIdNotValid_ShouldReturnListOfTestsForResourceId()
@@ -686,7 +690,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_FetchTest")]
         public void TestCatalog_FetchTest_WhenResourceIdTestName_ShouldReturnTest()
@@ -716,7 +720,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 2",test.TestName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_FetchTest")]
         public void TestCatalog_FetchTest_WhenResourceIdInvalidTestName_ShouldReturnNull()
@@ -745,7 +749,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsNull(test);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_FetchTest")]
         public void TestCatalog_FetchTest_WhenInvalidResourceIdTestName_ShouldReturnNull()
@@ -776,7 +780,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_UpdateTestsBasedOnIOChange")]
         public void TestCatalog_UpdateTestsBasedOnIOChange_WhenTestsFound_ShouldUpdateBasedOnChange_Scalars()
@@ -879,7 +883,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_UpdateTestsBasedOnIOChange")]
         public void TestCatalog_UpdateTestsBasedOnIOChange_WhenTestsFound_ShouldUpdateBasedOnChange_RecordSets()
@@ -1011,5 +1015,112 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("", updatedTest2.Outputs[0].Value);
         }
 
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("TestCatalog_UpdateTestsBasedOnIOChange")]
+        public void TestCatalog_UpdateTestsBasedOnIOChange_WhenTestsFound_ShouldUpdateStepsToInvalid()
+        {
+            //------------Setup for test--------------------------
+            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition("Gender", "", "", "", false, "", false, "", false) };
+            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("MessageForUser", "", "", "", false, "", false, "", false) };
+            var testCatalog = new TestCatalog();
+            var resourceID = Guid.NewGuid();
+            var serviceTestModelTos = new List<IServiceTestModelTO>
+            {
+                new ServiceTestModelTO
+                {
+                    Enabled = true,
+                    TestName = "Test 1",
+                    TestSteps = new List<IServiceTestStep>
+                    {                     
+                        new ServiceTestStepTO
+                        {
+                            StepOutputs = new System.Collections.ObjectModel.ObservableCollection<IServiceTestOutput>
+                            {
+                                new ServiceTestOutputTO
+                                {
+                                    Variable = "OutputMessage"
+                                },
+                                new ServiceTestOutputTO
+                                {
+                                    Variable = "MessageForUser",
+                                    Value = "This is the message"
+                                }
+                            },
+                            Result  = new TestRunResult
+                            {
+                                RunTestResult = RunResult.TestPassed
+                            }
+                        },
+                        new ServiceTestStepTO
+                        {
+                            Result  = new TestRunResult
+                            {
+                                RunTestResult = RunResult.TestFailed
+                            },
+                            Children = new System.Collections.ObjectModel.ObservableCollection<IServiceTestStep>
+                            {
+                                new ServiceTestStepTO
+                                {
+                                    StepOutputs = new System.Collections.ObjectModel.ObservableCollection<IServiceTestOutput>
+                                    {
+                                        new ServiceTestOutputTO
+                                        {
+                                            Variable = "OutputMessage"
+                                        },
+                                        new ServiceTestOutputTO
+                                        {
+                                            Variable = "MessageForUser",
+                                            Value = "This is the message"
+                                        }
+                                    },
+                                    Result  = new TestRunResult
+                                    {
+                                        RunTestResult = RunResult.TestPassed
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    Inputs = new List<IServiceTestInput>
+                    {
+                        new ServiceTestInputTO
+                        {
+                            Variable = "Name"
+                        },
+                        new ServiceTestInputTO
+                        {
+                            Variable = "Age",
+                            Value = "20"
+                        }
+                    },
+                    Outputs = new List<IServiceTestOutput>
+                    {
+                        new ServiceTestOutputTO
+                        {
+                            Variable = "OutputMessage"
+                        },
+                        new ServiceTestOutputTO
+                        {
+                            Variable = "MessageForUser",
+                            Value = "This is the message"
+                        }
+                    }
+                }
+            };
+            testCatalog.SaveTests(resourceID, serviceTestModelTos);
+            //------------Execute Test---------------------------
+            testCatalog.UpdateTestsBasedOnIOChange(resourceID, inputDefs, outputDefs);
+            //------------Assert Results-------------------------
+            var updatedTests = testCatalog.Fetch(resourceID);
+            var updatedTest1 = updatedTests[0];
+
+            Assert.AreEqual("Test 1", updatedTest1.TestName);
+            Assert.IsTrue(updatedTest1.TestInvalid);
+            Assert.AreEqual(RunResult.TestInvalid, updatedTest1.TestSteps[0].Result.RunTestResult);
+            Assert.AreEqual(RunResult.TestInvalid, updatedTest1.TestSteps[0].StepOutputs[0].Result.RunTestResult);
+            Assert.AreEqual(RunResult.TestInvalid, updatedTest1.TestSteps[1].Result.RunTestResult);
+            Assert.AreEqual(RunResult.TestInvalid, updatedTest1.TestSteps[1].Children[0].StepOutputs[0].Result.RunTestResult);
+        }
     }
 }

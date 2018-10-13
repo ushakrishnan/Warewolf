@@ -337,15 +337,34 @@ namespace Dev2.Activities.Designers.Tests.SqlServer
             Assert.IsTrue(sqlServer.ManageServiceInputViewModel.InputArea.Inputs.Last().Name == "[[a]]");
         }
 
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("SqlServer_MethodName")]
+        public void SQLServer_VerifyCommandTimeout()
+        {
+            //------------Setup for test--------------------------
+            var mod = new SqlServerModel();
+            var act = new DsfSqlServerDatabaseActivity();
+
+            //------------Execute Test---------------------------
+            using (var vm = new SqlServerDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder()))
+            {
+                vm.InputArea.CommandTimeout = 321;
+                //------------Assert Results-------------------------
+                var dbService = vm.ToModel();
+                Assert.AreEqual(321, dbService.CommandTimeout);
+            }
+        }
+
     }
 
     public class SqlServerModel : IDbServiceModel
     {
 #pragma warning disable 649
-        private IStudioUpdateManager _updateRepository;
+        IStudioUpdateManager _updateRepository;
 #pragma warning restore 649
 #pragma warning disable 169
-        private IQueryManager _queryProxy;
+        IQueryManager _queryProxy;
 #pragma warning restore 169
 
         public ObservableCollection<IDbSource> _sources = new ObservableCollection<IDbSource>
@@ -423,12 +442,18 @@ namespace Dev2.Activities.Designers.Tests.SqlServer
             {
                 throw new Exception("bob");
             }
-
+            
             if (HasRecError)
             {
                 return null;
             }
-            DataTable dt = new DataTable();
+            if (ReturnsNoColumns)
+            {
+                var dtEmpty= new DataTable();
+                dtEmpty.TableName = "bob";
+                return dtEmpty;
+            }
+            var dt = new DataTable();
             dt.Columns.Add("a");
             dt.Columns.Add("b");
             dt.Columns.Add("c");
@@ -439,17 +464,17 @@ namespace Dev2.Activities.Designers.Tests.SqlServer
 
         public IStudioUpdateManager UpdateRepository => _updateRepository;
         public bool ThrowsTestError { get; set; }
-
+        public bool ReturnsNoColumns { get; set; }
         #endregion
     }
 
     public class SqlServerModelWithOneColumnReturn : IDbServiceModel
     {
 #pragma warning disable 649
-        private IStudioUpdateManager _updateRepository;
+        IStudioUpdateManager _updateRepository;
 #pragma warning restore 649
 #pragma warning disable 169
-        private IQueryManager _queryProxy;
+        IQueryManager _queryProxy;
 #pragma warning restore 169
 
         public ObservableCollection<IDbSource> _sources = new ObservableCollection<IDbSource>
@@ -532,7 +557,13 @@ namespace Dev2.Activities.Designers.Tests.SqlServer
             {
                 return null;
             }
-            DataTable dt = new DataTable();
+            if (ReturnsNoColumns)
+            {
+                var dtEmpty = new DataTable();
+                dtEmpty.TableName = "bob";
+                return dtEmpty;
+            }
+            var dt = new DataTable();
             dt.Columns.Add("a");
             dt.TableName = "bob";
             return dt;
@@ -541,10 +572,10 @@ namespace Dev2.Activities.Designers.Tests.SqlServer
 
         public IStudioUpdateManager UpdateRepository => _updateRepository;
         public bool ThrowsTestError { get; set; }
-
+        public bool ReturnsNoColumns { get; set; }
         #endregion
     }
-    internal class InputViewForTest : ManageDatabaseServiceInputViewModel
+    class InputViewForTest : ManageDatabaseServiceInputViewModel
     {
         public InputViewForTest(IDatabaseServiceViewModel model, IDbServiceModel serviceModel)
             : base(model, serviceModel)

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,23 +24,10 @@ namespace Dev2.Studio.AppResources.Behaviors
     public class TabGroupPaneBindingBehavior : Behavior<TabGroupPane>
     {
         #region Private Methods
-
-        /// <summary>
-        ///     Gets all tab group panes which are descendents of the DocumentHost
-        /// </summary>
+        
         List<TabGroupPane> GetAllTabGroupPanes()
         {
             _tabGroupPanes = new List<TabGroupPane>();
-
-            if(DocumentHost == null)
-            {
-                if(AssociatedObject != null)
-                {
-                    _tabGroupPanes.Add(AssociatedObject);
-                }
-
-                return _tabGroupPanes;
-            }
             _tabGroupPanes.AddRange(DocumentHost.GetDescendents().OfType<TabGroupPane>());
             return _tabGroupPanes;
         }
@@ -56,34 +43,18 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         public DocumentContentHost DocumentHost
         {
-            get
-            {
-                return (DocumentContentHost) GetValue(DocumentHostProperty);
-            }
-            set
-            {
-                SetValue(DocumentHostProperty, value);
-            }
-        }        
+            get => (DocumentContentHost)GetValue(DocumentHostProperty);
+            set => SetValue(DocumentHostProperty, value);
+        }
 
         static void DocumentHostChangedCallback(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
         {
-            var itemsControlBindingBehavior = dependencyObject as TabGroupPaneBindingBehavior;
-            if (itemsControlBindingBehavior == null)
+            if (!(dependencyObject is TabGroupPaneBindingBehavior itemsControlBindingBehavior))
             {
                 return;
             }
 
-            var oldValue = e.OldValue as DocumentContentHost;
-            var newValue = e.NewValue as DocumentContentHost;
-
-            if (oldValue != null)
-            {
-                oldValue.ActiveDocumentChanged -= itemsControlBindingBehavior.DocumentHostOnActiveDocumentChanged;
-                oldValue.PreviewMouseLeftButtonDown -= itemsControlBindingBehavior.NewValueOnPreviewMouseLeftButtonDown;
-            }
-
-            if (newValue != null)
+            if (e.NewValue is DocumentContentHost newValue)
             {
                 newValue.ActiveDocumentChanged -= itemsControlBindingBehavior.DocumentHostOnActiveDocumentChanged;
                 newValue.ActiveDocumentChanged += itemsControlBindingBehavior.DocumentHostOnActiveDocumentChanged;
@@ -92,31 +63,23 @@ namespace Dev2.Studio.AppResources.Behaviors
             }
         }
 
-        private void NewValueOnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
+        void NewValueOnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
         {
             var host = sender as DocumentContentHost;
             var workSurfaceContextViewModel = host?.ActiveDocument?.DataContext as WorkSurfaceContextViewModel;
-            
-            if (_shellViewModel == null)
+
+            if (_shellViewModel != null && _shellViewModel.ActiveItem != workSurfaceContextViewModel)
             {
-                var mainViewModel = DocumentHost?.DataContext as ShellViewModel;
-                _shellViewModel = mainViewModel;                
-            }
-            if (_shellViewModel != null)
-            {
-                if (_shellViewModel.ActiveItem != workSurfaceContextViewModel)
-                {
-                    _shellViewModel.ActiveItem = workSurfaceContextViewModel;
-                }
+                _shellViewModel.ActiveItem = workSurfaceContextViewModel;
             }
         }
 
         #endregion DocumentHost
 
-        private static List<TabGroupPane> _tabGroupPanes;
-        private ShellViewModel _shellViewModel;
+        static List<TabGroupPane> _tabGroupPanes;
+        ShellViewModel _shellViewModel;
 
-        private void ActiveItemChanged(WorkSurfaceContextViewModel workSurfaceContextViewModel)
+        void ActiveItemChanged(IWorkSurfaceContextViewModel workSurfaceContextViewModel)
         {
             if (_tabGroupPanes == null || _tabGroupPanes.Count <= 0)
             {
@@ -125,7 +88,7 @@ namespace Dev2.Studio.AppResources.Behaviors
 
             SetActivePane(workSurfaceContextViewModel);
         }
-        
+
 
         static void GotFocusHandler(object sender, RoutedEventArgs routedEventArgs)
         {
@@ -144,7 +107,6 @@ namespace Dev2.Studio.AppResources.Behaviors
 
         void DocumentHostOnActiveDocumentChanged(object sender, RoutedPropertyChangedEventArgs<ContentPane> routedPropertyChangedEventArgs)
         {
-
             if (DocumentHost?.DataContext is ShellViewModel mainViewModel)
             {
                 if (_shellViewModel == null)
@@ -164,16 +126,16 @@ namespace Dev2.Studio.AppResources.Behaviors
             }
         }
 
-        private static void SetActivePane(WorkSurfaceContextViewModel newValue)
+        static void SetActivePane(IWorkSurfaceContextViewModel newValue)
         {
             if (_tabGroupPanes != null && _tabGroupPanes.Count > 0)
             {
                 var tabGroupPane = _tabGroupPanes[0];
 
                 foreach (var item in from object item in tabGroupPane.Items
-                    let frameworkElement = item as FrameworkElement
-                    where frameworkElement != null && frameworkElement.DataContext == newValue
-                    select item)
+                                     let frameworkElement = item as FrameworkElement
+                                     where frameworkElement != null && frameworkElement.DataContext == newValue
+                                     select item)
                 {
                     if (tabGroupPane.SelectedItem != item)
                     {

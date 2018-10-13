@@ -22,14 +22,14 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private Mock<IRabbitMQSourceModel> _rabbitMQSourceModel;
-        private Mock<IRequestServiceNameViewModel> _requestServiceNameViewModel;
-        private Task<IRequestServiceNameViewModel> _requestServiceNameViewModelTask;
-        private Mock<IRabbitMQServiceSourceDefinition> _rabbitMQServiceSourceDefinition;
-        private List<string> _changedProperties;
-        private ManageRabbitMQSourceViewModel _manageRabbitMQSourceViewModelWithTask;
-        private ManageRabbitMQSourceViewModel _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition;
-        private Mock<IAsyncWorker> _asyncWorkerMock;
+        Mock<IRabbitMQSourceModel> _rabbitMQSourceModel;
+        Mock<IRequestServiceNameViewModel> _requestServiceNameViewModel;
+        Task<IRequestServiceNameViewModel> _requestServiceNameViewModelTask;
+        Mock<IRabbitMQServiceSourceDefinition> _rabbitMQServiceSourceDefinition;
+        List<string> _changedProperties;
+        ManageRabbitMQSourceViewModel _manageRabbitMQSourceViewModelWithTask;
+        ManageRabbitMQSourceViewModel _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition;
+        Mock<IAsyncWorker> _asyncWorkerMock;
         #endregion Fields
 
         #region Test initialize
@@ -54,7 +54,7 @@ namespace Warewolf.Studio.ViewModels.Tests
                             .Callback<Func<IRabbitMQServiceSourceDefinition>, Action<IRabbitMQServiceSourceDefinition>>((func, action) =>
                             {
                                 var dbSource = func.Invoke();
-                                action(dbSource);
+                                action?.Invoke(dbSource);
                             });
             _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition = new ManageRabbitMQSourceViewModel(_rabbitMQSourceModel.Object, _rabbitMQServiceSourceDefinition.Object, _asyncWorkerMock.Object);
         }
@@ -63,7 +63,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test construction
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -73,7 +73,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageRabbitMQSourceViewModel(null, _requestServiceNameViewModelTask);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -86,7 +86,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageRabbitMQSourceViewModel(_rabbitMQSourceModel.Object, _requestServiceNameViewModelTask);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -98,7 +98,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageRabbitMQSourceViewModel(_rabbitMQSourceModel.Object, rabbitMQServiceSourceDefinition, new SynchronousAsyncWorker());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Constructor")]
         public void TestManageRabbitMQSourceViewModel_Constructor1()
@@ -107,7 +107,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             new ManageRabbitMQSourceViewModel(_rabbitMQSourceModel.Object, _requestServiceNameViewModelTask);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Constructor")]
         public void TestManageRabbitMQSourceViewModel_Constructor2()
@@ -120,7 +120,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test commands
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestPublishCommand_CanExecute()
@@ -140,7 +140,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestPublishCommand_CanNotExecute_Testing()
@@ -160,7 +160,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestPublishCommand_CanNotExecute_NoHost()
@@ -180,7 +180,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestPublishCommand_Execute()
@@ -197,7 +197,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _manageRabbitMQSourceViewModelWithTask.PublishCommand.Execute(null);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestPublishCommand_Execute_Exception()
         {
             //arrange
@@ -212,7 +212,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(_manageRabbitMQSourceViewModelWithTask.TestErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestOkCommand_CanExecute()
@@ -227,7 +227,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestOkCommand_Execute()
@@ -239,20 +239,20 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Commands")]
         public void TestOkCommand_Execute_SaveSource()
         {
             //arrange
-            string expectedResourceName = "ResourceName";
-            string expectedResourcePath = "ResourcePath";
-            string expectedHeader = expectedResourceName + " *";
-            string expectedHostName = "HostName";
-            int expectedPort = 1234;
-            string expectedUserName = "UserName";
-            string expectedPassword = "Password";
-            string expectedVirtualHost = "VirtualHost";
+            var expectedResourceName = "ResourceName";
+            var expectedResourcePath = "ResourcePath";
+            var expectedHeader = expectedResourceName + " *";
+            var expectedHostName = "HostName";
+            var expectedPort = 1234;
+            var expectedUserName = "UserName";
+            var expectedPassword = "Password";
+            var expectedVirtualHost = "VirtualHost";
 
             _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition.HostName = expectedHostName;
             _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition.Port = expectedPort;
@@ -288,13 +288,13 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestName()
         {
             //arrange
-            string expectedValue = "expectedValue";
+            var expectedValue = "expectedValue";
 
             //act
             _manageRabbitMQSourceViewModelWithTask.Name = expectedValue;
@@ -305,7 +305,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(expectedValue, _manageRabbitMQSourceViewModelWithTask.ResourceName);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestRequestServiceNameViewModel()
@@ -322,7 +322,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreSame(expectedValue, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestResourceName()
@@ -340,7 +340,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains(expectedValue));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestHostName()
@@ -361,7 +361,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestPort()
@@ -382,7 +382,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestUserName()
@@ -403,7 +403,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestPassword()
@@ -424,7 +424,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestVirtualHost()
@@ -445,7 +445,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestTestPassed()
@@ -463,7 +463,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("TestPassed"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestHeaderText()
@@ -482,7 +482,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(_changedProperties.Contains("Header"));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Properties")]
         public void TestTestFailed()
@@ -504,17 +504,17 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Methods")]
         public void TestToModelItemNull()
         {
             //arrange
-            string expectedHostName = "HostName";
-            int expectedPort = 1234;
-            string expectedUserName = "UserName";
-            string expectedPassword = "Password";
-            string expectedVirtualHost = "VirtualHost";
+            var expectedHostName = "HostName";
+            var expectedPort = 1234;
+            var expectedUserName = "UserName";
+            var expectedPassword = "Password";
+            var expectedVirtualHost = "VirtualHost";
 
             _manageRabbitMQSourceViewModelWithTask.HostName = expectedHostName;
             _manageRabbitMQSourceViewModelWithTask.Port = expectedPort;
@@ -524,7 +524,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _manageRabbitMQSourceViewModelWithTask.Item = null;
 
             //act
-            IRabbitMQServiceSourceDefinition result = _manageRabbitMQSourceViewModelWithTask.ToModel();
+            var result = _manageRabbitMQSourceViewModelWithTask.ToModel();
 
             //assert
             Assert.IsNotNull(result);
@@ -537,17 +537,17 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreNotEqual(Guid.Empty, result.ResourceID);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Methods")]
         public void TestToModelItemNotNull()
         {
             //arrange
-            string expectedHostName = "HostName";
-            int expectedPort = 1234;
-            string expectedUserName = "UserName";
-            string expectedPassword = "Password";
-            string expectedVirtualHost = "VirtualHost";
+            var expectedHostName = "HostName";
+            var expectedPort = 1234;
+            var expectedUserName = "UserName";
+            var expectedPassword = "Password";
+            var expectedVirtualHost = "VirtualHost";
 
             _manageRabbitMQSourceViewModelWithTask.HostName = expectedHostName;
             _manageRabbitMQSourceViewModelWithTask.Port = expectedPort;
@@ -569,20 +569,20 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(Guid.Empty, result.ResourceID);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Methods")]
         public void TestSaveSource()
         {
             //arrange
-            string expectedResourceName = "ResourceName";
-            string expectedResourcePath = "ResourcePath";
-            string expectedHeader = expectedResourceName + " *";
-            string expectedHostName = "HostName";
-            int expectedPort = 1234;
-            string expectedUserName = "UserName";
-            string expectedPassword = "Password";
-            string expectedVirtualHost = "VirtualHost";
+            var expectedResourceName = "ResourceName";
+            var expectedResourcePath = "ResourcePath";
+            var expectedHeader = expectedResourceName + " *";
+            var expectedHostName = "HostName";
+            var expectedPort = 1234;
+            var expectedUserName = "UserName";
+            var expectedPassword = "Password";
+            var expectedVirtualHost = "VirtualHost";
 
             _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition.HostName = expectedHostName;
             _manageRabbitMQSourceViewModelWithRabbitMQServiceSourceDefinition.Port = expectedPort;
@@ -614,14 +614,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             _rabbitMQSourceModel.Verify(x => x.SaveSource(_rabbitMQServiceSourceDefinition.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Methods")]
         public void TestSaveNewSource()
         {
             //arrange
-            string expectedResourceName = "ResourceName";
-            string expectedResourcePath = "ResourcePath";
+            var expectedResourceName = "ResourceName";
+            var expectedResourcePath = "ResourcePath";
 
             _requestServiceNameViewModel.Setup(x => x.ShowSaveDialog()).Returns(MessageBoxResult.OK);
             _requestServiceNameViewModel.SetupGet(it => it.ResourceName).Returns(new ResourceName(expectedResourcePath, expectedResourceName));
@@ -636,7 +636,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _rabbitMQSourceModel.Verify(x => x.SaveSource(It.IsAny<IRabbitMQServiceSourceDefinition>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Methods")]
         public void TestSave()
@@ -649,15 +649,15 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(_manageRabbitMQSourceViewModelWithTask.TestPassed);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Clint Stedman")]
         [TestCategory("ManageRabbitMQSourceViewModel_Methods")]
         public void TestUpdateHelpDescriptor()
         {
             //arrange
-            string helpText = "helpText";
-            Mock<IShellViewModel> mainViewModelMock = new Mock<IShellViewModel>();
-            Mock<IHelpWindowViewModel> helpViewModelMock = new Mock<IHelpWindowViewModel>();
+            var helpText = "helpText";
+            var mainViewModelMock = new Mock<IShellViewModel>();
+            var helpViewModelMock = new Mock<IHelpWindowViewModel>();
             mainViewModelMock.SetupGet(it => it.HelpViewModel).Returns(helpViewModelMock.Object);
             CustomContainer.Register(mainViewModelMock.Object);
 
@@ -668,7 +668,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             helpViewModelMock.Verify(it => it.UpdateHelpText(helpText));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveTrue()
         {
             //arrange
@@ -681,7 +681,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanSaveFalse()
         {
             //arrange
@@ -694,7 +694,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestTrue()
         {
             //arrange
@@ -709,7 +709,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestFalseHostNameEmpty()
         {
             //arrange
@@ -724,7 +724,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestFalseHostNameUserNameEmpty()
         {
             //arrange
@@ -739,7 +739,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestCanTestFalseHostNameUserNamePasswordEmpty()
         {
             //arrange

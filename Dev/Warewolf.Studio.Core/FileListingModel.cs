@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,19 +21,19 @@ namespace Warewolf.Studio.Core
 {
     public class FileListingModel : BindableBase, IFileListingModel,IEquatable<FileListingModel>
     {
-        private readonly IFileChooserModel _model;
-        private bool _isExpanded;
-        private bool _isVisible;
-        private readonly IFileListing _file;
-        private ObservableCollection<IFileListingModel> _children;
-        private string _filter;
-        private bool _progressVisibility;
-        private int _currentProgress;
+        readonly IFileChooserModel _model;
+        bool _isExpanded;
+        bool _isVisible;
+        readonly IFileListing _file;
+        ObservableCollection<IFileListingModel> _children;
+        string _filter;
+        bool _progressVisibility;
+        int _currentProgress;
         bool _isSelected;
         bool _isExpanderVisible;
         bool _isChecked;
         readonly Action _selectedAction;
-        private bool _useIsSelected;
+        bool _useIsSelected;
 
         public FileListingModel(IFileChooserModel model, IFileListing file, Action selected)
             : this(model, file, selected,false)
@@ -61,7 +61,7 @@ namespace Warewolf.Studio.Core
             }
         }
 
-        private bool UseIsSelected
+        bool UseIsSelected
         {
             get { return _useIsSelected; }
             set
@@ -138,8 +138,6 @@ namespace Warewolf.Studio.Core
             }
         }
 
-        public ICommand ExpandingCommand { get; set; }
-
         public string FullName { get; set; }
 
         ICollection<IFileListing> IFileListing.Children { get; set; }
@@ -212,12 +210,8 @@ namespace Warewolf.Studio.Core
 
         #region Equality members
 
-        public bool Equals(FileListingModel other)
-        {
-            
-            return string.Equals(Name, other.Name) && string.Equals(FullName, other.FullName) &&
+        public bool Equals(FileListingModel other) => string.Equals(Name, other.Name) && string.Equals(FullName, other.FullName) &&
                    IsDirectory == other.IsDirectory;
-        }
 
 
         /// <summary>
@@ -261,15 +255,9 @@ namespace Warewolf.Studio.Core
             }
         }
 
-        public static bool operator ==(FileListingModel left, FileListingModel right)
-        {
-            return Equals(left, right);
-        }
+        public static bool operator ==(FileListingModel left, FileListingModel right) => Equals(left, right);
 
-        public static bool operator !=(FileListingModel left, FileListingModel right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator !=(FileListingModel left, FileListingModel right) => !Equals(left, right);
 
         #endregion
 

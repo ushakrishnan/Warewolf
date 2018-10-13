@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,7 @@ namespace Dev2.Tests.Runtime.Hosting
     public class VersionStrategyTests
     {
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetNextVersion_OldResourceNull_ExpectVersion1()
@@ -40,7 +40,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(output.DateTimeStamp.Date,DateTime.Today);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetNextVersion_OldResourceNull_Expectincremented()
@@ -63,7 +63,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(output.DateTimeStamp.Date, DateTime.Today);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetNextVersion_OldResource_Old_ExpectNewVersion()
@@ -85,7 +85,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(output.DateTimeStamp.Date, DateTime.Today);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetCurrentVersion_OldResource_Old_ExpectNewVersion()
@@ -108,7 +108,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetCurrentVersion_OldResource_AlwaysIncrementsLastVersion()
@@ -129,7 +129,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetCurrentVersion_OldResourceNull_GetVersion1()
@@ -150,7 +150,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VersionStrategy_GetNextVersion")]
         public void VersionStrategy_GetCurrentVersion_OldResource_hasVersion_ExpectExistingVersion()

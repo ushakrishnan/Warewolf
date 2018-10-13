@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,9 @@ using Dev2.Data.Interfaces.Enums;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System.Globalization;
+using Dev2.Common.State;
+using Dev2.Utilities;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -201,15 +204,15 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var dateTimeInformation = activity.GetCorrectSystemInformation(enTypeOfSystemInformationToGather.FullDateTime);
             //------------Assert Results-------------------------
-            DateTime result = DateTime.Parse(dateTimeInformation);
-            if(result.Millisecond == 0)
+            var result = DateTime.Parse(dateTimeInformation,CultureInfo.InvariantCulture);
+            if (result.Ticks == 0)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(100);
                 dateTimeInformation = activity.GetCorrectSystemInformation(enTypeOfSystemInformationToGather.FullDateTime);
                 result = DateTime.Parse(dateTimeInformation);
-                Assert.IsTrue(result.Millisecond > 0);
+                Assert.IsTrue(result.Ticks > 0);
             }
-            Assert.IsTrue(result.Millisecond > 0);
+            Assert.IsTrue(result.Ticks > 0);
         }
 
         [TestMethod]
@@ -533,7 +536,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
 
             // remove test datalist ;)
 
@@ -591,7 +594,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
             // remove test datalist ;)
 
             var actualArray = actual.ToArray();
@@ -619,7 +622,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             //------------Execute Test---------------------------
             var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            List<string> actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
+            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out string error);
 
             // remove test datalist ;)
 
@@ -854,6 +857,46 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(1, dsfForEachItems.Count);
             Assert.AreEqual("[[testVar]]", dsfForEachItems[0].Name);
             Assert.AreEqual("[[testVar]]", dsfForEachItems[0].Value);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfGatherSystemInformationActivity_GetState")]
+        public void DsfGatherSystemInformationActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            IList<GatherSystemInformationTO> systemInformationCollection = new List<GatherSystemInformationTO> { new GatherSystemInformationTO(enTypeOfSystemInformationToGather.CPUAvailable, "[[testVar]]", 1) };
+            //------------Setup for test--------------------------
+            var act = new DsfGatherSystemInformationActivity { SystemInformationCollection=systemInformationCollection };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(1, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "SystemInformationCollection",
+                    Type = StateVariable.StateType.InputOutput,
+                     Value= ActivityHelper.GetSerializedStateValueFromCollection(systemInformationCollection)
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
 
         static DsfGatherSystemInformationActivity DsfGatherSystemInformationActivity(Mock<IGetSystemInformation> mock)

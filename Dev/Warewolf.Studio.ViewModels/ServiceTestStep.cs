@@ -8,29 +8,27 @@ using Dev2.Data.Util;
 using Microsoft.Practices.Prism.Mvvm;
 using Newtonsoft.Json;
 
-
-
 namespace Warewolf.Studio.ViewModels
 {
     public class ServiceTestStep : BindableBase, IServiceTestStep
     {
-        private string _stepDescription;
-        private StepType _type;
-        private string _activityType;
-        private ObservableCollection<IServiceTestOutput> _stepOutputs;
-        private Guid _uniqueId;
-        private IServiceTestStep _parent;
-        private ObservableCollection<IServiceTestStep> _children;
-        private bool _isTestStepExpanded;
-        private bool _isTestStepExpanderEnabled;
-        private bool _assertSelected;
-        private bool _mockSelected;
-        private ImageSource _stepIcon;
-        private bool _testPassed;
-        private bool _testPending;
-        private bool _testInvalid;
-        private bool _testFailing;
-        private TestRunResult _result;
+        string _stepDescription;
+        StepType _type;
+        string _activityType;
+        ObservableCollection<IServiceTestOutput> _stepOutputs;
+        Guid _uniqueId;
+        IServiceTestStep _parent;
+        ObservableCollection<IServiceTestStep> _children;
+        bool _isTestStepExpanded;
+        bool _isTestStepExpanderEnabled;
+        bool _assertSelected;
+        bool _mockSelected;
+        ImageSource _stepIcon;
+        bool _testPassed;
+        bool _testPending;
+        bool _testInvalid;
+        bool _testFailing;
+        TestRunResult _result;
 
         public ServiceTestStep(Guid uniqueId, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs, StepType stepType)
         {
@@ -96,10 +94,6 @@ namespace Warewolf.Studio.ViewModels
                 _stepOutputs = value;
                 if (value != null)
                 {
-                    if (value.Count < 1)
-                    {
-                        TestInvalid = true;
-                    }
                     SetControlFlowValues(value);
                 }
                 OnPropertyChanged(() => StepOutputs);
@@ -114,21 +108,19 @@ namespace Warewolf.Studio.ViewModels
             {
                 var lastOrDefault = _stepOutputs.LastOrDefault(
                         output => !string.IsNullOrWhiteSpace(output.Variable) && !string.IsNullOrWhiteSpace(output.Value));
-                if (lastOrDefault != null)
+                if (lastOrDefault != null && DataListUtil.IsValueRecordset(lastOrDefault?.Variable))
                 {
-                    if (DataListUtil.IsValueRecordset(lastOrDefault?.Variable))
+                    var serviceTestOutput = new ServiceTestOutput("", "", "", "")
                     {
-                        var serviceTestOutput = new ServiceTestOutput("", "", "", "")
-                        {
-                            AddNewAction = () => AddNewOutput(_stepOutputs.LastOrDefault().Variable)
-                        };
-                        _stepOutputs.Add(serviceTestOutput);
-                    }
+                        AddNewAction = () => AddNewOutput(_stepOutputs.LastOrDefault().Variable)
+                    };
+                    _stepOutputs.Add(serviceTestOutput);
                 }
+
             }
         }
 
-        private void SetControlFlowValues(ObservableCollection<IServiceTestOutput> value)
+        void SetControlFlowValues(ObservableCollection<IServiceTestOutput> value)
         {
             if (ActivityType != "DsfDecision" && ActivityType != "DsfSwitch")
             {
@@ -191,19 +183,19 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private void UpdateTestPassed()
+        void UpdateTestPassed()
         {
             var testPassed = _result.RunTestResult == RunResult.TestPassed;
             TestPassed = !MockSelected && testPassed;
         }
 
-        private void UpdateTestFailed()
+        void UpdateTestFailed()
         {
             var testFailed = _result.RunTestResult == RunResult.TestFailed;
             TestFailing = !MockSelected && testFailed;
         }
 
-        private void UpdateTestInvalid()
+        void UpdateTestInvalid()
         {
             var testInvalid = _result.RunTestResult == RunResult.TestInvalid ||
                               _result.RunTestResult == RunResult.TestResourceDeleted ||
@@ -211,7 +203,7 @@ namespace Warewolf.Studio.ViewModels
             TestInvalid = !MockSelected && testInvalid;
         }
 
-        private void UpdateTestPending()
+        void UpdateTestPending()
         {
             var testPending = _result.RunTestResult != RunResult.TestFailed &&
                                   _result.RunTestResult != RunResult.TestPassed &&
@@ -306,7 +298,6 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        
         public bool IsExpanderVisible => Children.Count > 0;
 
         public bool AssertSelected
@@ -333,7 +324,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool MockSelected
         {
-            get { return _mockSelected; }
+            get => _mockSelected;
             set
             {
                 _mockSelected = value;
@@ -344,22 +335,27 @@ namespace Warewolf.Studio.ViewModels
                     {
                         foreach (var serviceTestOutput in StepOutputs)
                         {
-                            if (serviceTestOutput is ServiceTestOutput item)
-                            {
-                                if (!item.IsSearchCriteriaEnabled)
-                                {
-                                    item.IsSearchCriteriaEnabled = true;
-                                }
-                                if (!item.IsSinglematchCriteriaVisible)
-                                {
-                                    item.IsSinglematchCriteriaVisible = true;
-                                    item.IsBetweenCriteriaVisible = false;
-                                }
-                            }
+                            MockSelectedOutput(serviceTestOutput);
                         }
                     }
                 }
                 OnPropertyChanged(() => MockSelected);
+            }
+        }
+
+        static void MockSelectedOutput(IServiceTestOutput serviceTestOutput)
+        {
+            if (serviceTestOutput is ServiceTestOutput item)
+            {
+                if (!item.IsSearchCriteriaEnabled)
+                {
+                    item.IsSearchCriteriaEnabled = true;
+                }
+                if (!item.IsSinglematchCriteriaVisible)
+                {
+                    item.IsSinglematchCriteriaVisible = true;
+                    item.IsBetweenCriteriaVisible = false;
+                }
             }
         }
 
@@ -372,73 +368,33 @@ namespace Warewolf.Studio.ViewModels
             else
             {
                 var lastRow = StepOutputs.LastOrDefault();
-                if (lastRow != null)
+                if (lastRow != null && !string.IsNullOrEmpty(lastRow.Variable.Trim()))
                 {
-                    if (!string.IsNullOrEmpty(lastRow.Variable.Trim()))
+                    var serviceTestOutput = new ServiceTestOutput("", "", "", "")
                     {
-                        var serviceTestOutput = new ServiceTestOutput("", "", "", "")
-                        {
-                            AddNewAction = () => AddNewOutput("")
-                        };
-                        StepOutputs?.Add(serviceTestOutput);
-                    }
+                        AddNewAction = () => AddNewOutput("")
+                    };
+                    StepOutputs?.Add(serviceTestOutput);
                 }
+
             }
         }
 
-        private void AddNewRecordsetOutput(string varName)
+        void AddNewRecordsetOutput(string varName)
         {
             if (DataListUtil.GetRecordsetIndexType(varName) == enRecordsetIndexType.Numeric)
             {
                 var extractedIndex = DataListUtil.ExtractIndexRegionFromRecordset(varName);
                 if (int.TryParse(extractedIndex, out int intIndex))
                 {
-                    intIndex++;
-                    var blankName = DataListUtil.ReplaceRecordsetIndexWithBlank(varName);
-                    var indexedName = DataListUtil.ReplaceRecordsetBlankWithIndex(blankName, intIndex);
-                    var lastInput = StepOutputs.LastOrDefault();
-                    if (lastInput != null)
-                    {
-                        if (string.IsNullOrEmpty(lastInput.Variable.Trim()))
-                        {
-                            lastInput.Variable = indexedName;
-                        }
-                        else
-                        {
-                            if (!string.IsNullOrEmpty(lastInput.Value.Trim()))
-                            {
-                                var serviceTestOutput = new ServiceTestOutput(indexedName, "", "", "") { AddNewAction = () => AddNewOutput(indexedName) };
-                                StepOutputs?.Add(serviceTestOutput);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var serviceTestOutput = new ServiceTestOutput(indexedName, "", "", "") { AddNewAction = () => AddNewOutput(indexedName) };
-                        StepOutputs?.Add(serviceTestOutput);
-                    }
+                    intIndex = AddNewRecordsetOutput(varName, intIndex);
                 }
             }
             else
             {
                 if (StepOutputs != null && StepOutputs.Count >= 1)
                 {
-                    var testOutput = StepOutputs.LastOrDefault();
-                    if (string.IsNullOrWhiteSpace(testOutput?.Variable) && string.IsNullOrWhiteSpace(testOutput?.Value))
-                    {
-                        if (testOutput != null)
-                        {
-                            testOutput.Variable = varName;
-                        }
-                    }
-                    else
-                    {
-                        var serviceTestOutput = new ServiceTestOutput(varName, "", "", "")
-                        {
-                            AddNewAction = () => AddNewOutput(varName)
-                        };
-                        StepOutputs?.Add(serviceTestOutput);
-                    }
+                    AddNewRecordsetOutput(varName, StepOutputs.LastOrDefault());
                 }
                 else
                 {
@@ -449,6 +405,55 @@ namespace Warewolf.Studio.ViewModels
                     StepOutputs?.Add(serviceTestOutput);
                 }
             }
+        }
+
+        private void AddNewRecordsetOutput(string varName, IServiceTestOutput testOutput)
+        {
+            if (string.IsNullOrWhiteSpace(testOutput?.Variable) && string.IsNullOrWhiteSpace(testOutput?.Value))
+            {
+                if (testOutput != null)
+                {
+                    testOutput.Variable = varName;
+                }
+            }
+            else
+            {
+                var serviceTestOutput = new ServiceTestOutput(varName, "", "", "")
+                {
+                    AddNewAction = () => AddNewOutput(varName)
+                };
+                StepOutputs?.Add(serviceTestOutput);
+            }
+        }
+
+        int AddNewRecordsetOutput(string varName, int intIndex)
+        {
+            intIndex++;
+            var blankName = DataListUtil.ReplaceRecordsetIndexWithBlank(varName);
+            var indexedName = DataListUtil.ReplaceRecordsetBlankWithIndex(blankName, intIndex);
+            var lastInput = StepOutputs.LastOrDefault();
+            if (lastInput != null)
+            {
+                if (string.IsNullOrEmpty(lastInput.Variable.Trim()))
+                {
+                    lastInput.Variable = indexedName;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(lastInput.Value.Trim()))
+                    {
+                        var serviceTestOutput = new ServiceTestOutput(indexedName, "", "", "") { AddNewAction = () => AddNewOutput(indexedName) };
+                        StepOutputs?.Add(serviceTestOutput);
+                    }
+                }
+            }
+            else
+            {
+                var serviceTestOutput = new ServiceTestOutput(indexedName, "", "", "") { AddNewAction = () => AddNewOutput(indexedName) };
+                StepOutputs?.Add(serviceTestOutput);
+            }
+
+            return intIndex;
         }
     }
 }

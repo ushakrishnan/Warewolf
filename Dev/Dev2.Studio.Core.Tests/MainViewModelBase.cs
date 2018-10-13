@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -75,6 +75,8 @@ namespace Dev2.Core.Tests
             mockEnv.Setup(g => g.All()).Returns(new List<IServer>());
             CustomContainer.Register(mockEnv.Object);
             var mockEnvironmentModel = new Mock<IServer>();
+            var mockEnvironmentConnection = SetupMockConnection();
+            mockEnvironmentModel.SetupGet(it => it.Connection).Returns(mockEnvironmentConnection.Object);
             mockEnvironmentModel.Setup(model => model.AuthorizationService).Returns(new Mock<IAuthorizationService>().Object);
             mockEnv.Setup(repository => repository.Source).Returns(mockEnvironmentModel.Object);
 
@@ -83,9 +85,9 @@ namespace Dev2.Core.Tests
             EventAggregator = new Mock<IEventAggregator>();
             PopupController = new Mock<IPopupController>();
             WindowManager = new Mock<IWindowManager>();
-            Mock<IAsyncWorker> asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
-            Mock<IWorkspaceItemRepository> mockWorkspaceItemRepository = GetworkspaceItemRespository();
-            
+            var asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
+            var mockWorkspaceItemRepository = GetworkspaceItemRespository();
+
             new WorkspaceItemRepository(mockWorkspaceItemRepository.Object);
             
             var vieFactory = new Mock<IViewFactory>();
@@ -93,6 +95,17 @@ namespace Dev2.Core.Tests
             vieFactory.Setup(factory => factory.GetViewGivenServerResourceType(It.IsAny<string>()))
                 .Returns(viewMock.Object);
             ShellViewModel = new ShellViewModel(EventAggregator.Object, asyncWorker.Object, environmentRepo,new Mock<IVersionChecker>().Object, vieFactory.Object, false, null, PopupController.Object);
+        }
+
+        private static Mock<IEnvironmentConnection> SetupMockConnection()
+        {
+            var uri = new Uri("http://bravo.com/");
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(a => a.AppServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.AuthenticationType).Returns(Dev2.Runtime.ServiceModel.Data.AuthenticationType.Public);
+            mockEnvironmentConnection.Setup(a => a.WebServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.ID).Returns(Guid.Empty);
+            return mockEnvironmentConnection;
         }
 
         protected void CreateFullExportsAndVm(IExplorerViewModel viewModel)
@@ -112,9 +125,9 @@ namespace Dev2.Core.Tests
             CustomContainer.Register(WindowManager.Object);
             CustomContainer.Register(PopupController.Object);
             BrowserPopupController = new Mock<IBrowserPopupController>();
-            Mock<IAsyncWorker> asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
-            Mock<IWorkspaceItemRepository> mockWorkspaceItemRepository = GetworkspaceItemRespository();
-            
+            var asyncWorker = AsyncWorkerTests.CreateSynchronousAsyncWorker();
+            var mockWorkspaceItemRepository = GetworkspaceItemRespository();
+
             new WorkspaceItemRepository(mockWorkspaceItemRepository.Object);
             
             var explorerViewModel = new Mock<IExplorerViewModel>();
@@ -192,7 +205,7 @@ namespace Dev2.Core.Tests
             connection.Setup(c => c.WebServerUri)
                 .Returns(new Uri($"http://127.0.0.{rand.Next(1, 100)}:{rand.Next(1, 100)}"));
             connection.Setup(c => c.IsConnected).Returns(true);
-            int cnt = 0;
+            var cnt = 0;
             connection.Setup(c => c.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>()))
                 .Returns(
                     () =>
@@ -235,7 +248,6 @@ namespace Dev2.Core.Tests
             item.SetupGet(i => i.ID).Returns(FirstResourceId);
             list.Add(item.Object);
             MockWorkspaceRepo.SetupGet(c => c.WorkspaceItems).Returns(list);
-            MockWorkspaceRepo.Setup(c => c.UpdateWorkspaceItem(It.IsAny<IContextualResourceModel>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
             MockWorkspaceRepo.Setup(c => c.Remove(FirstResource.Object)).Verifiable();
             return MockWorkspaceRepo;
         }

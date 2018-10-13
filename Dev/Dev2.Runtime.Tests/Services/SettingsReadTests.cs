@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +24,7 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
-
+using Dev2.Infrastructure.Tests.Services.Security;
 
 namespace Dev2.Tests.Runtime.Services
 {
@@ -43,7 +43,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("SettingsRead_Execute")]
         public void SettingsRead_Execute_SecurityReadDoesNotThrowException_HasErrorsIsFalseAndSecurityPermissionsAreAssigned()
@@ -79,18 +79,17 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsNotNull(settings);
             Assert.IsNotNull(settings.Security);
             Assert.IsFalse(settings.HasError);
-
-            var comparer = new WindowsGroupPermissionEqualityComparer();
+            
             Assert.AreEqual(2, settings.Security.WindowsGroupPermissions.Count);
 
             for(var i = 0; i < securityPermissions.Count; i++)
             {
-                var result = comparer.Equals(securityPermissions[i], settings.Security.WindowsGroupPermissions[i]);
+                var result = SecurityServiceBaseTests.WindowsGroupPermissionEquals(securityPermissions[i], settings.Security.WindowsGroupPermissions[i]);
                 Assert.IsTrue(result);
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("SettingsRead_Execute")]
         public void SettingsRead_Execute_SecurityReadDoesThrowException_HasErrorsIsTrueAndDefaultPermissionsAreAssigned()
@@ -117,13 +116,13 @@ namespace Dev2.Tests.Runtime.Services
             var expected = SecurityRead.DefaultPermissions[0];
             var actual = settings.Security.WindowsGroupPermissions[0];
 
-            var result = new WindowsGroupPermissionEqualityComparer().Equals(expected, actual);
+            var result = SecurityServiceBaseTests.WindowsGroupPermissionEquals(expected, actual);
             Assert.IsTrue(result);
         }
 
         #endregion
         
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("SettingsRead_CreateSecurityReadEndPoint")]
         public void SettingsRead_CreateSecurityReadEndPoint_IsInstanceOfSecurityRead()
@@ -143,7 +142,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SettingsRead_HandlesType_ReturnsSettingsReadService()
         {
             var esb = new SettingsRead();
@@ -155,7 +154,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void SettingsRead_CreateServiceEntry_ReturnsDynamicService()
         {
             var esb = new SettingsRead();

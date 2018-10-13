@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -44,7 +44,7 @@ namespace Dev2.Runtime.ESB.WF
             if (dataObject != null)
             {
                 var debugState = GetDebugState(dataObject, stateType, hasErrors, existingErrors, errors, workflowStartTime, interrogateInputs, interrogateOutputs, durationVisible);
-                WriteDebug(dataObject, debugState);
+                TryWriteDebug(dataObject, debugState);
             }
         }
 
@@ -61,9 +61,12 @@ namespace Dev2.Runtime.ESB.WF
             {
                 existingErrors = errorMessage;
             }
-            else if (!existingErrors.Contains(errorMessage))
+            else
             {
-                existingErrors += Environment.NewLine + errorMessage;
+                if (!existingErrors.Contains(errorMessage))
+                {
+                    existingErrors += Environment.NewLine + errorMessage;
+                }
             }
             var name = "localhost";
             var hasRemote = Guid.TryParse(dataObject.RemoteInvokerID, out Guid remoteID);
@@ -111,7 +114,7 @@ namespace Dev2.Runtime.ESB.WF
             return debugState;
         }
 
-        public void WriteDebug(IDSFDataObject dataObject, DebugState debugState)
+        public void TryWriteDebug(IDSFDataObject dataObject, DebugState debugState)
         {
             if (dataObject.IsDebugMode() || dataObject.RunWorkflowAsync && !dataObject.IsFromWebServer)
             {
@@ -119,20 +122,10 @@ namespace Dev2.Runtime.ESB.WF
                 if (debugState.StateType == StateType.End)
                 {
                     debugDispatcher.Write(debugState, dataObject.IsServiceTestExecution, dataObject.IsDebugFromWeb, dataObject.TestName, dataObject.RemoteInvoke, dataObject.RemoteInvokerID, dataObject.ParentInstanceID, dataObject.RemoteDebugItems);
-                    string dataObjectExecutionId = dataObject.ExecutionID.ToString();
+                    var dataObjectExecutionId = dataObject.ExecutionID.ToString();
                     try
                     {
-                        var resource = _lazyCat.GetResource(GlobalConstants.ServerWorkspaceID, dataObject.ResourceID);
-                        var executePayload = ExecutionEnvironmentUtils.GetJsonOutputFromEnvironment(dataObject, resource.DataList.ToString(), 0);
-                        string executionLogginResultString = GlobalConstants.ExecutionLoggingResultStartTag + (executePayload ?? "").Replace(Environment.NewLine, string.Empty) + GlobalConstants.ExecutionLoggingResultEndTag;
-                        if (dataObject.Environment.HasErrors())
-                        {
-                            Dev2Logger.Error(executionLogginResultString, dataObjectExecutionId);
-                        }
-                        else
-                        {
-                            Dev2Logger.Debug(executionLogginResultString, dataObjectExecutionId);
-                        }
+                        WriteDebug(dataObject, dataObjectExecutionId);
                     }
                     catch (Exception)
                     {
@@ -146,8 +139,22 @@ namespace Dev2.Runtime.ESB.WF
             }
         }
 
+        private void WriteDebug(IDSFDataObject dataObject, string dataObjectExecutionId)
+        {
+            var resource = _lazyCat.GetResource(GlobalConstants.ServerWorkspaceID, dataObject.ResourceID);
+            var executePayload = ExecutionEnvironmentUtils.GetJsonOutputFromEnvironment(dataObject, resource.DataList.ToString(), 0);
+            var executionLogginResultString = GlobalConstants.ExecutionLoggingResultStartTag + (executePayload ?? "").Replace(Environment.NewLine, string.Empty) + GlobalConstants.ExecutionLoggingResultEndTag;
+            if (dataObject.Environment.HasErrors())
+            {
+                Dev2Logger.Error(executionLogginResultString, dataObjectExecutionId);
+            }
+            else
+            {
+                Dev2Logger.Debug(executionLogginResultString, dataObjectExecutionId);
+            }
+        }
 
-        private static DebugState BuildDebugState(IDSFDataObject dataObject, StateType stateType, bool hasErrors, string existingErrors, DateTime? workflowStartTime, bool durationVisible, Guid parentInstanceId, string name, bool hasError)
+        static DebugState BuildDebugState(IDSFDataObject dataObject, StateType stateType, bool hasErrors, string existingErrors, DateTime? workflowStartTime, bool durationVisible, Guid parentInstanceId, string name, bool hasError)
         {
             var debugState = new DebugState
             {
@@ -177,9 +184,9 @@ namespace Dev2.Runtime.ESB.WF
             return debugState;
         }
 
-        private readonly Func<IDebugDispatcher> _getDebugDispatcher = () => DebugDispatcher.Instance;
+        readonly Func<IDebugDispatcher> _getDebugDispatcher = () => DebugDispatcher.Instance;
 
-        private List<DebugItem> GetDebugValues(IList<IDev2Definition> values, IDSFDataObject dataObject, out ErrorResultTO errors)
+        List<DebugItem> GetDebugValues(IList<IDev2Definition> values, IDSFDataObject dataObject, out ErrorResultTO errors)
         {
             errors = new ErrorResultTO();
             var results = new List<DebugItem>();
@@ -207,7 +214,7 @@ namespace Dev2.Runtime.ESB.WF
             return results;
         }
 
-        private string GetVariableName(IDev2Definition value)
+        string GetVariableName(IDev2Definition value)
         {
             string variableName;
             if (value.IsJsonArray && value.Name.StartsWith("@"))
@@ -226,20 +233,20 @@ namespace Dev2.Runtime.ESB.WF
             return variableName;
         }
 
-        private void AddDebugItem(DebugOutputBase parameters, IDebugItem debugItem)
+        void AddDebugItem(DebugOutputBase parameters, IDebugItem debugItem)
         {
             var debugItemResults = parameters.GetDebugItemResult();
             debugItem.AddRange(debugItemResults);
         }
 
-        private readonly IResourceCatalog _lazyCat = ResourceCatalog.Instance;
+        readonly IResourceCatalog _lazyCat = ResourceCatalog.Instance;
         /// <summary>
         /// Finds the service shape.
         /// </summary>
         /// <param name="workspaceId">The workspace ID.</param>
         /// <param name="resourceId">The ID of the resource</param>
         /// <returns></returns>
-        private string FindServiceShape(Guid workspaceId, Guid resourceId)
+        string FindServiceShape(Guid workspaceId, Guid resourceId)
         {
             const string EmptyDataList = "<DataList></DataList>";
             var resource = _lazyCat.GetResource(workspaceId, resourceId);

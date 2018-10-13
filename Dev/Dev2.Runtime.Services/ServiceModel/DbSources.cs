@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,7 +31,7 @@ namespace Dev2.Runtime.ServiceModel
                     result.DatabaseList = broker.GetDatabases(dbSourceDetails);
                     break;
                 case enSourceType.MySqlDatabase:
-                    var mybroker = CreateMySqlDatabaseBroker();
+                    var mybroker = CreateMySqlDatabaseBroker();                    
                     result.DatabaseList = mybroker.GetDatabases(dbSourceDetails);
                     break;
                 case enSourceType.Oracle:
@@ -46,7 +46,11 @@ namespace Dev2.Runtime.ServiceModel
                     var postgreBroker = CreatePostgreDatabaseBroker();
                     result.DatabaseList = postgreBroker.GetDatabases(dbSourceDetails);
                     break;
-                case enSourceType.WebService:
+				case enSourceType.SQLiteDatabase:
+					var sqliteBroker = CreateSqliteDatabaseBroker();
+					result.DatabaseList = sqliteBroker.GetDatabases(dbSourceDetails);
+					break;
+				case enSourceType.WebService:
                     break;
                 case enSourceType.DynamicService:
                     break;
@@ -83,26 +87,16 @@ namespace Dev2.Runtime.ServiceModel
 
         #endregion
 
-        protected SqlDatabaseBroker CreateDatabaseBroker()
-        {
-            return new SqlDatabaseBroker();
-        }
-        protected MySqlDatabaseBroker CreateMySqlDatabaseBroker()
-        {
-            return new MySqlDatabaseBroker();
-        }
-        protected OracleDatabaseBroker CreateOracleDatabaseBroker()
-        {
-            return new OracleDatabaseBroker();
-        }
-        protected ODBCDatabaseBroker CreateODBCDatabaseBroker()
-        {
-            return new ODBCDatabaseBroker();
-        }
+        protected SqlDatabaseBroker CreateDatabaseBroker() => new SqlDatabaseBroker();
 
-        protected PostgreSqlDataBaseBroker CreatePostgreDatabaseBroker()
-        {
-            return new PostgreSqlDataBaseBroker();
-        }
-    }
+        protected MySqlDatabaseBroker CreateMySqlDatabaseBroker() => new MySqlDatabaseBroker();
+
+        protected OracleDatabaseBroker CreateOracleDatabaseBroker() => new OracleDatabaseBroker();
+
+        protected ODBCDatabaseBroker CreateODBCDatabaseBroker() => new ODBCDatabaseBroker();
+
+        protected PostgreSqlDataBaseBroker CreatePostgreDatabaseBroker() => new PostgreSqlDataBaseBroker();
+
+		protected SqliteDatabaseBroker CreateSqliteDatabaseBroker() => new SqliteDatabaseBroker();
+	}
 }

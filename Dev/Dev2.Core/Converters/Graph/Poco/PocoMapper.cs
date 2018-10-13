@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -41,27 +41,25 @@ namespace Unlimited.Framework.Converters.Graph.Poco
 
         #region Private Methods
 
-        private IEnumerable<IPath> BuildPaths(object data, Stack<Tuple<string,bool, bool, object>> propertyStack,
+        IEnumerable<IPath> BuildPaths(object data, Stack<Tuple<string, bool, bool, object>> propertyStack,
             object root)
         {
             var paths = new List<IPath>();
 
-            if (propertyStack.Count == 0 && data.GetType().IsEnumerable())
+            if (propertyStack.Count == 0 && data.GetType().IsEnumerable() && data is IEnumerable enumerableData)
             {
-                if (data is IEnumerable enumerableData)
+                var enumerator = enumerableData.GetEnumerator();
+                enumerator.Reset();
+                if (enumerator.MoveNext())
                 {
-                    IEnumerator enumerator = enumerableData.GetEnumerator();
-                    enumerator.Reset();
-                    if (enumerator.MoveNext())
-                    {
-                        propertyStack.Push(new Tuple<string, bool, bool, object>("UnnamedArray", true, true, enumerableData));
-                        MapData(enumerator.Current, propertyStack, root, paths);
-                        propertyStack.Pop();
+                    propertyStack.Push(new Tuple<string, bool, bool, object>("UnnamedArray", true, true, enumerableData));
+                    MapData(enumerator.Current, propertyStack, root, paths);
+                    propertyStack.Pop();
 
 
-                    }
                 }
             }
+
 
             if (propertyStack.Count == 0 && data.GetType().IsPrimitive())
             {
@@ -76,12 +74,12 @@ namespace Unlimited.Framework.Converters.Graph.Poco
             return paths;
         }
 
-        private void MapData(object data, Stack<Tuple<string,bool, bool, object>> propertyStack, object root, List<IPath> paths)
+        void MapData(object data, Stack<Tuple<string, bool, bool, object>> propertyStack, object root, List<IPath> paths)
         {
-            PropertyInfo[] dataProperties = data.GetType()
+            var dataProperties = data.GetType()
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
-            foreach(PropertyInfo propertyInfo in dataProperties.Where(p => p.PropertyType.IsPrimitive()))
+            foreach (PropertyInfo propertyInfo in dataProperties.Where(p => p.PropertyType.IsPrimitive()))
             {
                 object propertyData;
 
@@ -89,19 +87,19 @@ namespace Unlimited.Framework.Converters.Graph.Poco
                 {
                     propertyData = propertyInfo.GetValue(data, null);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                     propertyData = null;
                 }
 
-                if(propertyData != null)
+                if (propertyData != null)
                 {
                     paths.Add(BuildPath(propertyStack, propertyInfo.Name, propertyInfo.PropertyType.IsEnumerable()));
                 }
             }
 
-            foreach(PropertyInfo propertyInfo in dataProperties.Where(p => !p.PropertyType.IsPrimitive()))
+            foreach (PropertyInfo propertyInfo in dataProperties.Where(p => !p.PropertyType.IsPrimitive()))
             {
                 object propertyData;
 
@@ -109,33 +107,17 @@ namespace Unlimited.Framework.Converters.Graph.Poco
                 {
                     propertyData = propertyInfo.GetValue(data, null);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
                     propertyData = null;
                 }
 
-                if(propertyData != null)
+                if (propertyData != null)
                 {
-                    if(propertyInfo.PropertyType.IsEnumerable())
+                    if (propertyInfo.PropertyType.IsEnumerable())
                     {
-                        if (propertyData is IEnumerable enumerableData)
-                        {
-                            propertyStack.Push(new Tuple<string, bool, bool, object>(propertyInfo.Name, propertyInfo.PropertyType.IsEnumerable(), false, data));
-                            paths.AddRange(BuildPaths(propertyData, propertyStack, root));
-                            propertyStack.Pop();
-
-                            IEnumerator enumerator = enumerableData.GetEnumerator();
-                            enumerator.Reset();
-                            if (enumerator.MoveNext())
-                            {
-                                propertyData = enumerator.Current;
-
-                                propertyStack.Push(new Tuple<string, bool, bool, object>(propertyInfo.Name, propertyInfo.PropertyType.IsEnumerable(), true, data));
-                                paths.AddRange(BuildPaths(propertyData, propertyStack, root));
-                                propertyStack.Pop();
-                            }
-                        }
+                        MapEnumarableData(data, propertyStack, root, paths, propertyInfo, propertyData);
                     }
                     else
                     {
@@ -147,22 +129,43 @@ namespace Unlimited.Framework.Converters.Graph.Poco
             }
         }
 
-        private IPath BuildPath(Stack<Tuple<string,bool, bool, object>> propertyStack, string name, bool isEnumerable)
+        void MapEnumarableData(object data, Stack<Tuple<string, bool, bool, object>> propertyStack, object root, List<IPath> paths, PropertyInfo propertyInfo, object propertyData)
+        {
+            if (propertyData is IEnumerable enumerableData)
+            {
+                propertyStack.Push(new Tuple<string, bool, bool, object>(propertyInfo.Name, propertyInfo.PropertyType.IsEnumerable(), false, data));
+                paths.AddRange(BuildPaths(propertyData, propertyStack, root));
+                propertyStack.Pop();
+
+                var enumerator = enumerableData.GetEnumerator();
+                enumerator.Reset();
+                if (enumerator.MoveNext())
+                {
+                    propertyData = enumerator.Current;
+
+                    propertyStack.Push(new Tuple<string, bool, bool, object>(propertyInfo.Name, propertyInfo.PropertyType.IsEnumerable(), true, data));
+                    paths.AddRange(BuildPaths(propertyData, propertyStack, root));
+                    propertyStack.Pop();
+                }
+            }
+        }
+
+        IPath BuildPath(Stack<Tuple<string, bool, bool, object>> propertyStack, string name, bool isEnumerable)
         {
             var path = new PocoPath();
 
             path.ActualPath = string.Join(PocoPath.SeperatorSymbol,
-                propertyStack.Reverse().Select(p => path.CreatePathSegment(p.Item1,p.Item2).ToString(p.Item3)));
+                propertyStack.Reverse().Select(p => path.CreatePathSegment(p.Item1, p.Item2).ToString(p.Item3)));
 
-            List<Tuple<IPathSegment, bool>> displayPathSegments =
+            var displayPathSegments =
                 propertyStack.Reverse()
                     .Select(p => new Tuple<IPathSegment, bool>(path.CreatePathSegment(p.Item1, p.Item2), p.Item3))
                     .ToList();
-            bool recordsetEncountered = false;
+            var recordsetEncountered = false;
 
             for (int i = displayPathSegments.Count - 1; i >= 0; i--)
             {
-                Tuple<IPathSegment, bool> pathSegment = displayPathSegments[i];
+                var pathSegment = displayPathSegments[i];
                 if (recordsetEncountered)
                 {
                     pathSegment.Item1.IsEnumarable = false;
@@ -187,7 +190,7 @@ namespace Unlimited.Framework.Converters.Graph.Poco
                 path.DisplayPath += PocoPath.SeperatorSymbol;
             }
 
-            path.ActualPath += path.CreatePathSegment(name,isEnumerable);
+            path.ActualPath += path.CreatePathSegment(name, isEnumerable);
             path.DisplayPath += path.CreatePathSegment(name, isEnumerable);
 
             return path;

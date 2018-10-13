@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -29,25 +30,25 @@ namespace Dev2.Activities.Designers2.Core
         readonly IDatabaseServiceViewModel _viewmodel;
         readonly IDbServiceModel _serverModel;
         bool _isGenerateInputsEmptyRows;
-        private bool _okSelected;
-        private DataTable _testResults;
-        private bool _testResultsAvailable;
-        private bool _isTestResultsEmptyRows;
-        private bool _isTesting;
-        private IDatabaseService _model;
-        private bool _inputCountExpandAllowed;
-        private bool _outputCountExpandAllowed;
-        private bool _testPassed;
-        private bool _testFailed;
-        private string _testMessage;
-        private bool _showTestMessage;
+        bool _okSelected;
+        DataTable _testResults;
+        bool _testResultsAvailable;
+        bool _isTestResultsEmptyRows;
+        bool _isTesting;
+        IDatabaseService _model;
+        bool _inputCountExpandAllowed;
+        bool _outputCountExpandAllowed;
+        bool _testPassed;
+        bool _testFailed;
+        string _testMessage;
+        bool _showTestMessage;
 
         public ManageDatabaseServiceInputViewModel(IDatabaseServiceViewModel model, IDbServiceModel serviceModel)
         {
             IsTesting = false;
             CloseCommand = new DelegateCommand(ExecuteClose);
             OkCommand = new DelegateCommand(ExecuteOk);
-            TestCommand = new DelegateCommand(ExecuteTest);
+            TestCommand = new DelegateCommand(TryExecuteTest);
             _generateOutputArea = new GenerateOutputsRegion();
             _generateInputArea = new GenerateInputsRegion();
             Errors = new List<string>();
@@ -135,8 +136,8 @@ namespace Dev2.Activities.Designers2.Core
 
         List<IServiceOutputMapping> GetDbOutputMappingsFromTable(DataTable testResults)
         {
-            List<IServiceOutputMapping> mappings = new List<IServiceOutputMapping>();
-            
+            var mappings = new List<IServiceOutputMapping>();
+
             if (testResults != null)
             {
                 if (testResults.Columns.Count >= 1)
@@ -156,43 +157,14 @@ namespace Dev2.Activities.Designers2.Core
             return new List<IServiceOutputMapping>();
         }
 
-        public void ExecuteTest()
+        public void TryExecuteTest()
         {
             OutputArea.IsEnabled = true;
             IsTesting = true;
             ResetTestForExecute();
             try
             {
-                TestResults = _serverModel.TestService(Model);
-                if (Model.Source.Type == enSourceType.ODBC)
-                {
-                    var dbSource = ResourceCatalog.Instance.GetResource<DbSource>(GlobalConstants.ServerWorkspaceID, Model.Source.Id);
-                    TestResults.TableName = dbSource.DatabaseName.Replace(" ","");
-                }
-                if (TestResults != null)
-                {
-                    if (TestResults.Columns.Count >= 1)
-                    {
-                        TestResultsAvailable = TestResults.Rows.Count != 0;
-                        IsTestResultsEmptyRows = TestResults.Rows.Count < 1;
-                        _generateOutputArea.IsEnabled = true;
-                        OutputCountExpandAllowed = TestResults.Rows.Count > 3;
-
-                        if (!OutputCountExpandAllowed)
-                        {
-                            InputCountExpandAllowed = true;
-                        }
-                    }
-                    IsTesting = false;
-                    TestPassed = true;
-                    ShowTestMessage = TestResults.Columns.Count < 1;
-                    if (ShowTestMessage)
-                    {
-                        TestMessage = Warewolf.Studio.Resources.Languages.Core.NoReturnedDataExecuteSuccess;
-                    }
-
-                    TestFailed = false;
-                }
+                ExecuteTest();
             }
             catch (Exception e)
             {
@@ -206,8 +178,47 @@ namespace Dev2.Activities.Designers2.Core
                 _viewmodel.ErrorMessage(e, true);
             }
         }
+        [ExcludeFromCodeCoverage]
+        private void ProcessOdbc()
+        {
+            if (Model.Source.Type == enSourceType.ODBC)
+            {
+                var dbSource = ResourceCatalog.Instance.GetResource<DbSource>(GlobalConstants.ServerWorkspaceID, Model.Source.Id);
+                TestResults.TableName = dbSource.DatabaseName.Replace(" ", "");
+            }
+        }
 
-        private void ResetTestForExecute()
+        void ExecuteTest()
+        {
+            TestResults = _serverModel.TestService(Model);
+            ProcessOdbc();
+            if (TestResults != null)
+            {
+                if (TestResults.Columns.Count >= 1)
+                {
+                    TestResultsAvailable = TestResults.Rows.Count != 0;
+                    IsTestResultsEmptyRows = TestResults.Rows.Count < 1;
+                    _generateOutputArea.IsEnabled = true;
+                    OutputCountExpandAllowed = TestResults.Rows.Count > 3;
+
+                    if (!OutputCountExpandAllowed)
+                    {
+                        InputCountExpandAllowed = true;
+                    }
+                }
+                IsTesting = false;
+                TestPassed = true;
+                ShowTestMessage = TestResults.Columns.Count < 1;
+                if (ShowTestMessage)
+                {
+                    TestMessage = Warewolf.Studio.Resources.Languages.Core.NoReturnedDataExecuteSuccess;
+                }
+
+                TestFailed = false;
+            }
+        }
+
+        void ResetTestForExecute()
         {
             TestResults = null;
             TestPassed = false;
@@ -250,10 +261,7 @@ namespace Dev2.Activities.Designers2.Core
         public IList<IToolRegion> Dependants { get; set; }
         public IList<string> Errors { get; private set; }
 
-        public IToolRegion CloneRegion()
-        {
-            return this;
-        }
+        public IToolRegion CloneRegion() => this;
 
         public void RestoreRegion(IToolRegion toRestore)
         {
@@ -277,7 +285,7 @@ namespace Dev2.Activities.Designers2.Core
             get { return _testPassed; }
             set
             {
-                _testPassed = value; 
+                _testPassed = value;
                 OnPropertyChanged();
             }
         }
@@ -297,7 +305,7 @@ namespace Dev2.Activities.Designers2.Core
             get { return _testMessage; }
             set
             {
-                _testMessage = value; 
+                _testMessage = value;
                 OnPropertyChanged();
             }
         }
@@ -307,7 +315,7 @@ namespace Dev2.Activities.Designers2.Core
             get { return _showTestMessage; }
             set
             {
-                _showTestMessage = value; 
+                _showTestMessage = value;
                 OnPropertyChanged();
             }
         }
@@ -396,21 +404,10 @@ namespace Dev2.Activities.Designers2.Core
                 OnPropertyChanged();
             }
         }
-        public IGenerateOutputArea OutputArea
-        {
-            get
-            {
-                return _generateOutputArea;
-            }
-        }
+        public IGenerateOutputArea OutputArea => _generateOutputArea;
+
         public IOutputDescription Description { get; set; }
-        public IGenerateInputArea InputArea
-        {
-            get
-            {
-                return _generateInputArea;
-            }
-        }
+        public IGenerateInputArea InputArea => _generateInputArea;
 
         #endregion
 

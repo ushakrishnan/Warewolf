@@ -35,7 +35,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             }
             else
             {
-                XElement versionXml = XElement.Parse(xml);
+                var versionXml = XElement.Parse(xml);
                 DateTimeStamp = DateTime.Parse(versionXml.AttributeSafe("DateTimeStamp"));
                 Reason = versionXml.AttributeSafe("Reason");
                 User = versionXml.AttributeSafe("User");
@@ -54,10 +54,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         public Guid ResourceId { get; set; }
         public Guid VersionId { get; set; }
 
-        public override string ToString()
-        {
-            return $"ResourceId:{ResourceId} Version:{VersionId} ";
-        }
+        public override string ToString() => $"ResourceId:{ResourceId} Version:{VersionId} ";
 
         #endregion
     }

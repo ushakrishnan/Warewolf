@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Linq;
 using ActivityUnitTests;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums.Enums;
+using Dev2.Common.State;
 using Dev2.Data.Interfaces.Enums;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -41,9 +42,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         #endregion Properties
 
         #region Private Methods
-         //SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
-         //                  "[[resRecordSet().number]]", "[[recordSet(*).number]]", enRoundingType.Normal, "", "");
-        private void SetupArguments(string currentDl, string testData, string result, string expression,
+        //SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
+        //                  "[[resRecordSet().number]]", "[[recordSet(*).number]]", enRoundingType.Normal, "", "");
+        void SetupArguments(string currentDl, string testData, string result, string expression,
             enRoundingType roundingType, string roundingDecimalPlaces, string decimalPlacesToShow)
         {
             TestStartNode = new FlowStep
@@ -71,7 +72,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "[[number]]", enRoundingType.Normal, "", "");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "790";
 
@@ -87,7 +88,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[resRecordSet().number]]", "[[recordSet(*).number]]", enRoundingType.Normal, "", "");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             GetRecordSetFieldValueFromDataList(result.Environment, "resRecordSet", "number", out IList<string> actual, out string error);
 
@@ -103,7 +104,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "123.123", enRoundingType.Normal, "2", "1");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "123.1";
 
@@ -117,7 +118,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "123.123", enRoundingType.Normal, "", "3");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "123.000";
 
@@ -133,7 +134,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.NumberFormatActivity_DataList_WithData, ActivityStrings.NumberFormatActivity_DataList_Shape,
                            "[[res]]", "123.123", enRoundingType.None, "", "");
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string expected = "123.123";
 
@@ -322,6 +323,74 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(1, dsfForEachItems.Count);
             Assert.AreEqual(result, dsfForEachItems[0].Name);
             Assert.AreEqual(result, dsfForEachItems[0].Value);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfNumberFormatActivity_GetState")]
+        public void DsfNumberFormatActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            const string expression = "[[Numeric(1).num]]";
+            const string roundingType = "Up";
+            const string result = "[[res]]";
+            const string roundingDecimalPlaces = "2";
+            const string decimalPlacesToShow = "2";
+            //------------Setup for test--------------------------
+            var act = new DsfNumberFormatActivity { Expression = expression, RoundingType = roundingType, RoundingDecimalPlaces = roundingDecimalPlaces, DecimalPlacesToShow = decimalPlacesToShow, Result = result };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(5, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "Expression",
+                    Type = StateVariable.StateType.Input,
+                    Value = expression
+                },
+                new StateVariable
+                {
+                    Name = "RoundingType",
+                    Type = StateVariable.StateType.Input,
+                    Value = roundingType
+                },
+                new StateVariable
+                {
+                    Name = "RoundingDecimalPlaces",
+                    Type = StateVariable.StateType.Input,
+                    Value = roundingDecimalPlaces
+                },
+                new StateVariable
+                {
+                    Name = "DecimalPlacesToShow",
+                    Type = StateVariable.StateType.Input,
+                    Value = decimalPlacesToShow
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = result
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
 
     }

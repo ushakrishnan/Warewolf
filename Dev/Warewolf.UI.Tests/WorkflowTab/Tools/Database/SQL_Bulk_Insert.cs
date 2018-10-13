@@ -1,5 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
+using System.Reflection;
+using Warewolf.Launcher;
 using Warewolf.UI.Tests.DBSource.DBSourceUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
@@ -9,8 +12,8 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database
     [CodedUITest]
     public class SQL_Bulk_Insert
     {
-        [TestMethod]
-        [TestCategory("Database Tools")]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("MSSql")]
         public void SQLBulkInsertTool_Small_And_Large_Then_QVIView_UITest()
         {
             Assert.IsTrue(DatabaseToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlBulkInsert.Exists, "SQLBulkInsert tool does not exist after dragging in from the toolbox");
@@ -44,8 +47,8 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database
             Assert.IsTrue(DatabaseToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlBulkInsert.QuickVariableInputContentPane.Exists, "QVI Content Pane on SQLBulkInsert Tool is not open");
         }
 
-        [TestMethod]
-        [TestCategory("Database Tools")]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("MSSql")]
         public void Confirm_ErrorMessage_On_NoDB_Or_TableSelection_Then_NewSource_UITest()
         {
             // Confirm Error Message on No Database or table selection

@@ -6,9 +6,9 @@ using Warewolf.Studio.Views;
 
 namespace Dev2
 {
-    internal class ViewFactory : IViewFactory
+    class ViewFactory : IViewFactory
     {
-        private readonly ConcurrentDictionary<string, Func<IView>> _viewMap =
+        readonly ConcurrentDictionary<string, Func<IView>> _viewMap =
             new ConcurrentDictionary<string, Func<IView>>();
 
         public ViewFactory()
@@ -32,7 +32,8 @@ namespace Dev2
             _viewMap.TryAdd("Oracle", () => new ManageDatabaseSourceControl());
             _viewMap.TryAdd("ODBC", () => new ManageDatabaseSourceControl());
             _viewMap.TryAdd("SqlDatabase", () => new ManageDatabaseSourceControl());
-        }
+			_viewMap.TryAdd("SqliteDatabase", () => new ManageDatabaseSourceControl());
+		}
 
         public IView GetViewGivenServerResourceType(string resourceModel)
         {

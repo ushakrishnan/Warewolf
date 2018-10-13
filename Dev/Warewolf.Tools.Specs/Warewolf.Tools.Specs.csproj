@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props')" />
+  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Warewolf.Tools.Specs</RootNamespace>
     <AssemblyName>Warewolf.Tools.Specs</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
@@ -32,6 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376</WarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -41,11 +42,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
       <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.4.2.0\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
     <Reference Include="FluentAssertions">
       <HintPath>..\packages\FluentAssertions.3.4.0\lib\net45\FluentAssertions.dll</HintPath>
@@ -64,13 +69,13 @@
       <HintPath>..\packages\Prism.Mvvm.1.1.1\lib\net45\Microsoft.Practices.Prism.SharedInterfaces.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.1.18\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
+      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.1.18\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
+      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="Moq">
-      <HintPath>..\packages\Moq.4.2.1510.2205\lib\net40\Moq.dll</HintPath>
+    <Reference Include="Moq, Version=4.7.137.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <HintPath>..\packages\Moq.4.7.137\lib\net45\Moq.dll</HintPath>
     </Reference>
     <Reference Include="netDumbster">
       <HintPath>..\packages\netDumbster.1.3.0.7\lib\net40\netDumbster.dll</HintPath>
@@ -84,25 +89,38 @@
     <Reference Include="System" />
     <Reference Include="System.Activities" />
     <Reference Include="System.Activities.Presentation" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite, Version=1.0.108.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.108.0\lib\net46\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Runtime.DurableInstancing" />
+    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="TechTalk.SpecFlow, Version=2.2.0.0, Culture=neutral, PublicKeyToken=0778194805d6db41, processorArchitecture=MSIL">
-      <HintPath>..\packages\SpecFlow.2.2.0\lib\net45\TechTalk.SpecFlow.dll</HintPath>
+    <Reference Include="TechTalk.SpecFlow, Version=2.3.2.0, Culture=neutral, PublicKeyToken=0778194805d6db41, processorArchitecture=MSIL">
+      <HintPath>..\packages\SpecFlow.2.3.2\lib\net45\TechTalk.SpecFlow.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Warewolf.Launcher\EnableDocker.txt">
+      <Visible>False</Visible>
+      <Link>EnableDocker.txt</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="BuildConfig.cs" />
     <Compile Include="..\Dev2.IntegrationTests\Services.Sql\SqlServerTestUtils.cs">
       <Link>Toolbox\Recordset\SqlBulkInsert\SqlServerTestUtils.cs</Link>
     </Compile>
-    <Compile Include="..\AssemblyCommonInfo.cs">
+    <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
     <None Include="..\Run Tests.ps1">
@@ -110,6 +128,9 @@
       <Link>Run Tests.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
+      <Visible>False</Visible>
+    </AdditionalFiles>
     <Compile Include="BaseTypes\CommonSteps.cs" />
     <Compile Include="BaseTypes\FileToolsBase.cs" />
     <Compile Include="BaseTypes\RecordSetBase.cs" />
@@ -131,6 +152,12 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="Toolbox\ControlFlow\Switch\SwitchSteps.cs" />
+    <Compile Include="Toolbox\Database\AdvancedRecordset\AdvancedRecordset.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>AdvancedRecordset.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Database\AdvancedRecordset\AdvancedRecordsetSteps.cs" />
     <Compile Include="Toolbox\Database\DatabaseToolsSteps.cs" />
     <Compile Include="Toolbox\Data\AssignObject\AssignObject.feature.cs">
       <DependentUpon>AssignObject.feature</DependentUpon>
@@ -174,6 +201,12 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="Toolbox\Data\DataSplit\DataSplitSteps.cs" />
+    <Compile Include="Toolbox\Data\DotNetAssign\DotNetAssign.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DotNetAssign.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Data\DotNetAssign\DotNetAssignSteps.cs" />
     <Compile Include="Toolbox\Data\FindIndex\FindIndex.feature.cs">
       <DependentUpon>FindIndex.feature</DependentUpon>
       <AutoGen>True</AutoGen>
@@ -192,6 +225,12 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="Toolbox\Email\Exchange\ExchangeEmailSteps.cs" />
+    <Compile Include="Toolbox\Exchange\ExchangeEmail.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ExchangeEmail.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Exchange\ExchangeEmailSteps.cs" />
     <Compile Include="Toolbox\FileAndFolder\Copy\Copy.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -213,9 +252,9 @@
     <Compile Include="Toolbox\FileAndFolder\DomainResolution.cs" />
     <Compile Include="Toolbox\FileAndFolder\FileAndFolderSpecsCleanup.cs" />
     <Compile Include="Toolbox\FileAndFolder\Move\Move.feature.cs">
-      <DependentUpon>Move.feature</DependentUpon>
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
+      <DependentUpon>Move.feature</DependentUpon>
     </Compile>
     <Compile Include="Toolbox\FileAndFolder\Move\MoveSteps.cs" />
     <Compile Include="Toolbox\FileAndFolder\Read File\Read File1.feature.cs">
@@ -224,6 +263,12 @@
       <DependentUpon>Read File.feature</DependentUpon>
     </Compile>
     <Compile Include="Toolbox\FileAndFolder\Read File\ReadFileSteps.cs" />
+    <Compile Include="Toolbox\FileAndFolder\ReadFolderNew\Read Folder New.feature.cs">
+      <DependentUpon>Read Folder New.feature</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="Toolbox\FileAndFolder\ReadFolderNew\ReadFolderNewSteps.cs" />
     <Compile Include="Toolbox\FileAndFolder\Read Folder\Read Folder.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -258,6 +303,17 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ForEach.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Resources\Web\WebGet.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>WebGet.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Resources\Web\WebGetSteps.cs" />
+    <Compile Include="Toolbox\Utility\DateandTime\DateandTime.feature.cs">
+      <DependentUpon>DateandTime.feature</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
     </Compile>
     <Compile Include="Toolbox\Utility\RabbitMQ\Consume\ConsumeRabbitMQSteps.cs" />
     <Compile Include="Toolbox\Utility\RabbitMQ\Consume\ConsumeRabbitMQ.feature.cs">
@@ -452,11 +508,6 @@
       <DependentUpon>DateandTimeDifference.feature</DependentUpon>
     </Compile>
     <Compile Include="Toolbox\Utility\DateandTimeDifference\DateandTimeDifferenceSteps.cs" />
-    <Compile Include="Toolbox\Utility\DateandTime\DateandTime.feature.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>DateandTime.feature</DependentUpon>
-    </Compile>
     <Compile Include="Toolbox\Utility\DateandTime\DateandTimeSteps.cs" />
     <Compile Include="Toolbox\Email\Email\Email.feature.cs">
       <AutoGen>True</AutoGen>
@@ -519,6 +570,10 @@
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Switch.feature.cs</LastGenOutput>
     </None>
+    <None Include="Toolbox\Database\AdvancedRecordset\AdvancedRecordset.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>AdvancedRecordset.feature.cs</LastGenOutput>
+    </None>
     <None Include="Toolbox\Data\AssignObject\AssignObject.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>AssignObject.feature.cs</LastGenOutput>
@@ -547,6 +602,10 @@
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>DataSplit.feature.cs</LastGenOutput>
     </None>
+    <None Include="Toolbox\Data\DotNetAssign\DotNetAssign.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>DotNetAssign.feature.cs</LastGenOutput>
+    </None>
     <None Include="Toolbox\Data\FindIndex\FindIndex.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>FindIndex.feature.cs</LastGenOutput>
@@ -556,6 +615,10 @@
       <LastGenOutput>Replace.feature.cs</LastGenOutput>
     </None>
     <None Include="Toolbox\Email\Exchange\ExchangeEmail.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>ExchangeEmail.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Toolbox\Exchange\ExchangeEmail.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>ExchangeEmail.feature.cs</LastGenOutput>
     </None>
@@ -579,6 +642,10 @@
     <None Include="Toolbox\FileAndFolder\Read File\Read File.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Read File1.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Toolbox\FileAndFolder\ReadFolderNew\Read Folder New.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>Read Folder New.feature.cs</LastGenOutput>
     </None>
     <None Include="Toolbox\FileAndFolder\Read Folder\Read Folder.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
@@ -609,6 +676,14 @@
     <None Include="Toolbox\LoopConstructs\Select And Apply\SelectAndApply.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>SelectAndApply.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Toolbox\Resources\Web\WebGet.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>WebGet.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Toolbox\Utility\DateandTime\DateandTime.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>DateandTime.feature.cs</LastGenOutput>
     </None>
     <None Include="Toolbox\Utility\RabbitMQ\Consume\ConsumeRabbitMQ.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
@@ -738,10 +813,6 @@
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>DateandTimeDifference.feature.cs</LastGenOutput>
     </None>
-    <None Include="Toolbox\Utility\DateandTime\DateandTime.feature">
-      <Generator>SpecFlowSingleFileGenerator</Generator>
-      <LastGenOutput>DateandTime.feature.cs</LastGenOutput>
-    </None>
     <None Include="Toolbox\Email\Email\Email.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Email.feature.cs</LastGenOutput>
@@ -812,6 +883,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Dev2.Activities.Designers.Tests\Dev2.Activities.Designers.Tests.csproj">
+      <Project>{3C4AC14C-4134-48A6-A9EA-9D47218E05C5}</Project>
+      <Name>Dev2.Activities.Designers.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Activities.Designers\Dev2.Activities.Designers.csproj">
       <Project>{B95B724A-B052-4E18-98A4-88072C8DF2C2}</Project>
       <Name>Dev2.Activities.Designers</Name>
@@ -872,9 +947,29 @@
       <Project>{37149E8E-FEF2-47C0-8391-80DCCE86D26D}</Project>
       <Name>Dev2.Studio.Interfaces</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Studio\Dev2.Studio.csproj">
+      <Project>{62247A80-2266-4295-A8F6-A05507E2796E}</Project>
+      <Name>Dev2.Studio</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Core\Warewolf.Core.csproj">
       <Project>{8FD23CE0-02BB-48E1-A914-BA467938CE78}</Project>
       <Name>Warewolf.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
+      <Project>{e0f7c709-a61b-4829-a659-d7780052326a}</Project>
+      <Name>Warewolf.Language.Parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Launcher\Warewolf.Launcher.csproj">
+      <Project>{9B669D51-14CE-44A3-9407-8251BA3BAD19}</Project>
+      <Name>Warewolf.Launcher</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Parser.Interop\Warewolf.Parser.Interop.csproj">
+      <Project>{6eb59eee-4e16-4f29-b1b0-715e56e9139d}</Project>
+      <Name>Warewolf.Parser.Interop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Resource\Warewolf.Resource.csproj">
+      <Project>{DFF93ECB-FDD1-405E-AE02-9F4BC7571C1B}</Project>
+      <Name>Warewolf.Resource</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Storage.Interfaces\Warewolf.Storage.Interfaces.csproj">
       <Project>{61a15557-1d18-4c69-88eb-31bf49b7fb50}</Project>
@@ -888,13 +983,9 @@
       <Project>{f9fe2ce9-625e-4e7f-8f4c-fce28bb59510}</Project>
       <Name>Warewolf.Studio.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WarewolfLanguageParser\WarewolfLanguageParser.fsproj">
-      <Project>{e0f7c709-a61b-4829-a659-d7780052326a}</Project>
-      <Name>WarewolfLanguageParser</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WarewolfParserInterop\WarewolfParserInterop.csproj">
-      <Project>{6EB59EEE-4E16-4F29-B1B0-715E56E9139D}</Project>
-      <Name>WarewolfParserInterop</Name>
+    <ProjectReference Include="..\Warewolf.Studio.ViewModels\Warewolf.Studio.ViewModels.csproj">
+      <Project>{C52B12C2-6A1D-4C4F-A878-CF283662A226}</Project>
+      <Name>Warewolf.Studio.ViewModels</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />
@@ -919,17 +1010,20 @@
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>"$(SolutionDir)packages\SpecFlow.2.2.0\tools\specflow.exe" generateall "$(ProjectPath)"
-powershell.exe -ExecutionPolicy RemoteSigned -nologo -noprofile -file "$(ProjectDir)Toolbox\FileAndFolder\AddGuidToPaths.ps1"</PreBuildEvent>
+    <PreBuildEvent>powershell.exe -ExecutionPolicy RemoteSigned -nologo -noprofile -file "$(ProjectDir)Toolbox\FileAndFolder\AddGuidToPaths.ps1"</PreBuildEvent>
   </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props'))" />
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets'))" />
+    <Error Condition="!Exists('..\packages\SpecFlow.2.3.2\build\SpecFlow.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SpecFlow.2.3.2\build\SpecFlow.targets'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets'))" />
   </Target>
-  <Import Project="..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" />
+  <Import Project="..\packages\SpecFlow.2.3.2\build\SpecFlow.targets" Condition="Exists('..\packages\SpecFlow.2.3.2\build\SpecFlow.targets')" />
+  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,5 +1,7 @@
 ﻿using Dev2.Common;
+using Dev2.Common.Wrappers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.IO;
 
 namespace Dev2.Diagnostics.Test
 {
@@ -55,7 +57,6 @@ namespace Dev2.Diagnostics.Test
   <level value=""Level0"" />
   <eventLogEntryType value=""ERROR"" />
 </mapping>");
-
         }
-    }
-};
+    };
+}

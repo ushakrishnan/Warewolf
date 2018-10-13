@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -35,13 +35,13 @@ namespace Dev2.Activities.Designers2.ComDLL
 {
     public class ComDllViewModel : CustomToolWithRegionBase, IComViewModel
     {
-        private IOutputsToolRegion _outputsRegion;
-        private IDotNetInputRegion _inputArea;
-        private ISourceToolRegion<IComPluginSource> _sourceRegion;
-        private INamespaceToolRegion<INamespaceItem> _namespaceRegion;
-        private IActionToolRegion<IPluginAction> _actionRegion;
+        IOutputsToolRegion _outputsRegion;
+        IDotNetInputRegion _inputArea;
+        ISourceToolRegion<IComPluginSource> _sourceRegion;
+        INamespaceToolRegion<INamespaceItem> _namespaceRegion;
+        IActionToolRegion<IPluginAction> _actionRegion;
 
-        private IErrorInfo _worstDesignError;
+        IErrorInfo _worstDesignError;
 
         const string DoneText = "Done";
         const string FixText = "Fix";
@@ -64,7 +64,7 @@ namespace Dev2.Activities.Designers2.ComDLL
 
         Guid UniqueID => GetProperty<Guid>();
 
-        private void SetupCommonProperties()
+        void SetupCommonProperties()
         {
             AddTitleBarMappingToggle();
             InitialiseViewModel(new ManageComPluginServiceInputViewModel(this, Model));
@@ -80,7 +80,7 @@ namespace Dev2.Activities.Designers2.ComDLL
             UpdateWorstError();
         }
 
-        private void InitialiseViewModel(IManageComPluginServiceInputViewModel manageServiceInputViewModel)
+        void InitialiseViewModel(IManageComPluginServiceInputViewModel manageServiceInputViewModel)
         {
             ManageServiceInputViewModel = manageServiceInputViewModel;
 
@@ -266,7 +266,7 @@ namespace Dev2.Activities.Designers2.ComDLL
             }
         }
 
-        private IErrorInfo NoError { get; set; }
+        IErrorInfo NoError { get; set; }
 
         public bool IsWorstErrorReadOnly
         {
@@ -289,14 +289,14 @@ namespace Dev2.Activities.Designers2.ComDLL
         DependencyProperty.Register("WorstError", typeof(ErrorType), typeof(ComDllViewModel), new PropertyMetadata(ErrorType.None));
 
         bool _generateOutputsVisible;
-        private ServiceInputBuilder _builder;
+        ServiceInputBuilder _builder;
 
         public DelegateCommand TestInputCommand { get; set; }
 
-        private string Type => GetProperty<string>();
-        
+        string Type => GetProperty<string>();
 
-        private void FixErrors()
+
+        void FixErrors()
         {
         }
 
@@ -326,65 +326,9 @@ namespace Dev2.Activities.Designers2.ComDLL
             IList<IToolRegion> regions = new List<IToolRegion>();
             if (SourceRegion == null)
             {
-                SourceRegion = new ComSourceRegion(Model, ModelItem)
-                {
-                    SourceChangedAction = () =>
-                        {
-                            if (Regions != null)
-                            {
-                                foreach (var toolRegion in Regions)
-                                {
-                                    toolRegion.Errors?.Clear();
-                                }
-                            }
-                        }
-                };
-                regions.Add(SourceRegion);
-                NamespaceRegion = new ComNamespaceRegion(Model, ModelItem, SourceRegion)
-                {
-                    SourceChangedNamespace = () =>
-                        {
-                            OutputsRegion.IsEnabled = false;
-                            if (Regions != null)
-                            {
-                                foreach (var toolRegion in Regions)
-                                {
-                                    toolRegion.Errors?.Clear();
-                                }
-                            }
-                        }
-                };
-                NamespaceRegion.SomethingChanged += (sender, args) =>
-                {
-                    if (args.Errors != null)
-                    {
-                        Errors =
-                            args.Errors.Select(e => new ActionableErrorInfo { ErrorType = ErrorType.Critical, Message = e } as IActionableErrorInfo)
-                                .ToList();
-                    }
-                };
-                regions.Add(NamespaceRegion);
-                ActionRegion = new ComActionRegion(Model, ModelItem, SourceRegion, NamespaceRegion)
-                {
-                    SourceChangedAction = () =>
-                        {
-                            OutputsRegion.IsEnabled = false;
-                            if (Regions != null)
-                            {
-                                foreach (var toolRegion in Regions)
-                                {
-                                    toolRegion.Errors?.Clear();
-                                }
-                            }
-                        }
-                };
-                ActionRegion.ErrorsHandler += (sender, list) =>
-                {
-                    List<ActionableErrorInfo> errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
-                    UpdateDesignValidationErrors(errorInfos);
-                    Errors = new List<IActionableErrorInfo>(errorInfos);
-                };
-                regions.Add(ActionRegion);
+                AddSourceRegion(regions);
+                AddNamespaceRegion(regions);
+                AddActionRegion(regions);
                 InputArea = new DotNetInputRegion(ModelItem, ActionRegion);
                 regions.Add(InputArea);
                 OutputsRegion = new OutputsRegion(ModelItem, true);
@@ -404,6 +348,77 @@ namespace Dev2.Activities.Designers2.ComDLL
             regions.Add(ManageServiceInputViewModel);
             Regions = regions;
             return regions;
+        }
+
+        private void AddActionRegion(IList<IToolRegion> regions)
+        {
+            ActionRegion = new ComActionRegion(Model, ModelItem, SourceRegion, NamespaceRegion)
+            {
+                SourceChangedAction = () =>
+                {
+                    OutputsRegion.IsEnabled = false;
+                    if (Regions != null)
+                    {
+                        foreach (var toolRegion in Regions)
+                        {
+                            toolRegion.Errors?.Clear();
+                        }
+                    }
+                }
+            };
+            ActionRegion.ErrorsHandler += (sender, list) =>
+            {
+                var errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
+                UpdateDesignValidationErrors(errorInfos);
+                Errors = new List<IActionableErrorInfo>(errorInfos);
+            };
+            regions.Add(ActionRegion);
+        }
+
+        private void AddNamespaceRegion(IList<IToolRegion> regions)
+        {
+            NamespaceRegion = new ComNamespaceRegion(Model, ModelItem, SourceRegion)
+            {
+                SourceChangedNamespace = () =>
+                {
+                    OutputsRegion.IsEnabled = false;
+                    if (Regions != null)
+                    {
+                        foreach (var toolRegion in Regions)
+                        {
+                            toolRegion.Errors?.Clear();
+                        }
+                    }
+                }
+            };
+            NamespaceRegion.SomethingChanged += (sender, args) =>
+            {
+                if (args.Errors != null)
+                {
+                    Errors =
+                        args.Errors.Select(e => new ActionableErrorInfo { ErrorType = ErrorType.Critical, Message = e } as IActionableErrorInfo)
+                            .ToList();
+                }
+            };
+            regions.Add(NamespaceRegion);
+        }
+
+        private void AddSourceRegion(IList<IToolRegion> regions)
+        {
+            SourceRegion = new ComSourceRegion(Model, ModelItem)
+            {
+                SourceChangedAction = () =>
+                {
+                    if (Regions != null)
+                    {
+                        foreach (var toolRegion in Regions)
+                        {
+                            toolRegion.Errors?.Clear();
+                        }
+                    }
+                }
+            };
+            regions.Add(SourceRegion);
         }
 
         public ErrorRegion ErrorRegion { get; private set; }
@@ -516,7 +531,7 @@ namespace Dev2.Activities.Designers2.ComDLL
             }
         }
 
-        public void SetDisplayName(string outputFieldName)
+        public void SetDisplayName(string displayName)
         {
             var index = DisplayName.IndexOf(" -", StringComparison.Ordinal);
 
@@ -525,19 +540,19 @@ namespace Dev2.Activities.Designers2.ComDLL
                 DisplayName = DisplayName.Remove(index);
             }
 
-            var displayName = DisplayName;
+            var displayName2 = DisplayName;
 
-            if (!string.IsNullOrEmpty(displayName) && displayName.Contains("Dsf"))
+            if (!string.IsNullOrEmpty(displayName2) && displayName2.Contains("Dsf"))
             {
-                DisplayName = displayName;
+                DisplayName = displayName2;
             }
-            if (!string.IsNullOrWhiteSpace(outputFieldName))
+            if (!string.IsNullOrWhiteSpace(displayName))
             {
-                DisplayName = displayName + outputFieldName;
+                DisplayName = displayName2 + displayName;
             }
         }
 
-        private IComPluginServiceModel Model { get; set; }
+        IComPluginServiceModel Model { get; set; }
 
         void SetRegionVisibility(bool value)
         {

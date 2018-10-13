@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props')" />
+  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -12,7 +12,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2.Tests.Runtime</RootNamespace>
     <AssemblyName>Dev2.Runtime.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <SccProjectName>
@@ -43,14 +43,15 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\AssemblyCommonInfo.cs">
-      <Link>Properties\AssemblyCommonInfo.cs</Link>
-    </Compile>
-    <None Include="..\Run Tests.ps1">
+    <None Include="..\Warewolf.Launcher\EnableDocker.txt">
       <Visible>False</Visible>
-      <Link>Run Tests.ps1</Link>
+      <Link>EnableDocker.txt</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="BuildConfig.cs" />
+    <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
+      <Visible>False</Visible>
+    </AdditionalFiles>
     <Reference Include="AeroWizard, Version=2.1.7.0, Culture=neutral, PublicKeyToken=915e74f5d64b8f37, processorArchitecture=MSIL">
       <HintPath>..\packages\AeroWizard.2.1.7\lib\net40\AeroWizard.dll</HintPath>
       <Private>True</Private>
@@ -58,6 +59,9 @@
     <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
       <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.4.2.0\lib\net45\Castle.Core.dll</HintPath>
     </Reference>
     <Reference Include="CubicOrange.Windows.Forms.ActiveDirectory, Version=2.5.2.0, Culture=neutral, PublicKeyToken=4d9365c354fd6f36, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\CubicOrange.Windows.Forms.ActiveDirectory.dll</HintPath>
@@ -139,10 +143,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.1.18\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
+      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.1.18\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
+      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Win32.TaskScheduler, Version=2.5.20.0, Culture=neutral, PublicKeyToken=0d013ddd5178a2ae, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskScheduler.2.5.20\lib\net40\Microsoft.Win32.TaskScheduler.dll</HintPath>
@@ -152,9 +156,8 @@
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\Microsoft.Win32.TaskSchedulerEditor.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Moq, Version=4.2.1510.2205, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
-      <HintPath>..\packages\Moq.4.2.1510.2205\lib\net40\Moq.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Moq, Version=4.7.137.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <HintPath>..\packages\Moq.4.7.137\lib\net45\Moq.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -224,6 +227,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppUsageStatsTests.cs" />
     <Compile Include="AssemblyLoaderTests.cs" />
     <Compile Include="ESB\ComPlugin\ComPluginRuntimeHandlerTest.cs" />
     <Compile Include="ESB\ComPlugin\ComPluginServiceExecutionFactoryTest.cs" />
@@ -231,8 +235,10 @@
     <Compile Include="ESB\Control\EsbServiceInvokerTests.cs" />
     <Compile Include="ESB\Control\EsbServicesEndpointTests.cs" />
     <Compile Include="ESB\Control\ServiceLocatorTests.cs" />
+    <Compile Include="ESB\Execution\Dev2StateLoggerTests.cs" />
     <Compile Include="ESB\Execution\InternalServiceContainerTests.cs" />
     <Compile Include="ESB\Execution\ServiceTestExecutionContainerTests.cs" />
+    <Compile Include="ESB\Execution\StateNotifierTests.cs" />
     <Compile Include="ESB\Execution\WebServiceContainerTests.cs" />
     <Compile Include="ESB\Execution\WfExecutionContainerTests.cs" />
     <Compile Include="ESB\Plugin\PluginRuntimeHandlerTest.cs" />
@@ -251,6 +257,10 @@
     <Compile Include="Plugins\ServiceConstructorListTests.cs" />
     <Compile Include="ResourceUpgraders\BaseUpgradeConvertorTests.cs" />
     <Compile Include="ResourceUpgraders\EncryptionResourceUpgraderTests.cs" />
+    <Compile Include="Search\ActivitySearcherTests.cs" />
+    <Compile Include="Search\ResourceSearcherTests.cs" />
+    <Compile Include="Search\TestSearcherTests.cs" />
+    <Compile Include="Search\VariableListSearcherTests.cs" />
     <Compile Include="ServiceModel\ComPluginServicesTest.cs" />
     <Compile Include="ServiceModel\Data\ComPluginSourceTests.cs" />
     <Compile Include="ServiceModel\Data\DropBoxSourceTests.cs" />
@@ -260,6 +270,7 @@
     <Compile Include="ServiceModel\OauthSourceTest.cs" />
     <Compile Include="ServiceModel\TestDbSourceServiceTests.cs" />
     <Compile Include="Services\CreateFolderTest.cs" />
+    <Compile Include="Services\FetchResourceDefinitionTests.cs" />
     <Compile Include="Services\FindResourceTestsS.cs" />
     <Compile Include="Services\FetchServerPermissionsTests.cs" />
     <Compile Include="Services\DeleteAllTestsTests.cs" />
@@ -289,7 +300,6 @@
     <Compile Include="Services\GetDirectoriesRelativeToServerTests.cs" />
     <Compile Include="Services\GetScheduledResourceHistoryTest.cs" />
     <Compile Include="Services\GetScheduledResourcesTest.cs" />
-    <Compile Include="Security\ServerSecurityServiceTests.cs" />
     <Compile Include="Security\TestServerSecurityService.cs" />
     <Compile Include="Json\JsonResource.cs" />
     <Compile Include="ServiceModel\Data\RecordsetListHelperTests.cs" />
@@ -305,8 +315,6 @@
     <Compile Include="ServiceModel\Esb\Brokers\TestDbServer.cs" />
     <Compile Include="ServiceModel\Utils\ServiceMappingHelperTest.cs" />
     <Compile Include="Services\FetchCurrentServerLogTests.cs" />
-    <Compile Include="ESB\WebServiceContainerMock.cs" />
-    <Compile Include="ESB\WebServiceContainerTests.cs" />
     <Compile Include="ServiceModel\DummyClassForPluginTest.cs" />
     <Compile Include="ServiceModel\PluginServicesMock.cs" />
     <Compile Include="ServiceModel\PluginServicesTest.cs" />
@@ -350,6 +358,7 @@
     <Compile Include="Services\SavePluginServiceTests.cs" />
     <Compile Include="Services\SaveScheduledResourceTest.cs" />
     <Compile Include="Services\DirectDeployTest.cs" />
+    <Compile Include="Services\ServerSettingsTest.cs" />
     <Compile Include="Services\SaveTestsTest.cs" />
     <Compile Include="Services\SchedulerTestBase.cs" />
     <Compile Include="Services\SecurityReadTests.cs" />
@@ -361,6 +370,7 @@
     <Compile Include="Services\PingTests.cs" />
     <Compile Include="Services\TestSettingsRead.cs" />
     <Compile Include="Services\SavePerformanceCountesTests.cs" />
+    <Compile Include="Services\FetchAllTestsTest.cs" />
     <Compile Include="Util\FindResourceHelperTest.cs" />
     <Compile Include="Util\ScrubberTestsJson.cs" />
     <Compile Include="Util\ScrubberTestsXml.cs" />
@@ -369,7 +379,6 @@
     <Compile Include="WebServer\AbstractWebRequestHandlerTests.cs" />
     <Compile Include="WebServer\Controllers\TestWebServerController.cs" />
     <Compile Include="WebServer\Controllers\TestUserWebServerController.cs" />
-    <Compile Include="WebServer\Controllers\WebServerControllerTests.cs" />
     <Compile Include="WebServer\DataObjectExtentionsTests.cs" />
     <Compile Include="WebServer\GetApisJsonServiceHandlerTest.cs" />
     <Compile Include="WebServer\Hubs\EsbHubTests.cs" />
@@ -389,7 +398,6 @@
     <Compile Include="Security\TestServerAuthorizationService.cs" />
     <Compile Include="Security\TestAuthorizationRequest.cs" />
     <Compile Include="WebServer\ApisJsonBuilderTests.cs" />
-    <Compile Include="WebServer\WebsiteServiceHandlerTest.cs" />
     <Compile Include="WebServer\WebGetRequestHandlerTest.cs" />
     <Compile Include="WebServer\WebPostRequestHandlerTest.cs" />
     <Compile Include="WebServer\WebServerStartupTests.cs" />
@@ -426,6 +434,10 @@
     <ProjectReference Include="..\Dev2.Diagnostics\Dev2.Diagnostics.csproj">
       <Project>{A7D9DA27-F023-4588-AA64-AC2DE44C0B82}</Project>
       <Name>Dev2.Diagnostics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Infrastructure.Tests\Dev2.Infrastructure.Tests.csproj">
+      <Project>{D754B817-A714-4E6E-BD46-8C4FFFFBDACB}</Project>
+      <Name>Dev2.Infrastructure.Tests</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Infrastructure\Dev2.Infrastructure.csproj">
       <Project>{615eae6d-040c-4364-b708-63dc8755cd4f}</Project>
@@ -475,13 +487,29 @@
       <Project>{034E0B3D-3BDC-4B8E-BC77-EC09877B6FBF}</Project>
       <Name>Dev2.UnitTestUtils</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Util\Dev2.Util.csproj">
+      <Project>{1990550D-EA6F-4DAC-9B5E-8571E86923ED}</Project>
+      <Name>Dev2.Util</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.COMIPC.Client\Warewolf.COMIPC.Client.csproj">
+      <Project>{bca6f2b3-c102-45b5-8f64-f0cce2533f1f}</Project>
+      <Name>Warewolf.COMIPC.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
+      <Project>{df3ab090-911f-4646-9ad1-205e2ced908a}</Project>
+      <Name>Warewolf.Language.Parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Launcher\Warewolf.Launcher.csproj">
+      <Project>{9B669D51-14CE-44A3-9407-8251BA3BAD19}</Project>
+      <Name>Warewolf.Launcher</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Parser.Interop\Warewolf.Parser.Interop.csproj">
+      <Project>{6eb59eee-4e16-4f29-b1b0-715e56e9139d}</Project>
+      <Name>Warewolf.Parser.Interop</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Security\Warewolf.Security.csproj">
       <Project>{ca5e9373-46fe-41b9-ab2e-bd637f48b456}</Project>
       <Name>Warewolf.Security</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TestingDotnetDllCascading\TestingDotnetDllCascading.csproj">
-      <Project>{a4f1daa7-9eab-4e46-9e73-bae87179f737}</Project>
-      <Name>TestingDotnetDllCascading</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Core\Warewolf.Core.csproj">
       <Project>{8fd23ce0-02bb-48e1-a914-ba467938ce78}</Project>
@@ -503,17 +531,9 @@
       <Project>{B3D070E0-11C1-4C1C-81A5-E680C1494945}</Project>
       <Name>Warewolf.Storage</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WarewolfCOMIPC.Client\WarewolfCOMIPC.Client.csproj">
-      <Project>{bca6f2b3-c102-45b5-8f64-f0cce2533f1f}</Project>
-      <Name>WarewolfCOMIPC.Client</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WarewolfLanguageParser\WarewolfLanguageParser.fsproj">
-      <Project>{e0f7c709-a61b-4829-a659-d7780052326a}</Project>
-      <Name>WarewolfLanguageParser</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WarewolfParserInterop\WarewolfParserInterop.csproj">
-      <Project>{6EB59EEE-4E16-4F29-B1B0-715E56E9139D}</Project>
-      <Name>WarewolfParserInterop</Name>
+    <ProjectReference Include="..\Warewolf.TestingDotnetDllCascading\Warewolf.TestingDotnetDllCascading.csproj">
+      <Project>{7925b0c6-88dc-49a4-bbe1-c0550987f63a}</Project>
+      <Name>Warewolf.TestingDotnetDllCascading</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -695,6 +715,7 @@
     <EmbeddedResource Include="XML\OauthSource.xml" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="XML\fileThatsNotWarewolfResource.xml" />
     <EmbeddedResource Include="XML\Sharepoint Connectors Testing.xml" />
     <EmbeddedResource Include="XML\SharePoint Test Server.xml" />
     <EmbeddedResource Include="XML\delete.xml" />
@@ -712,6 +733,9 @@
     <EmbeddedResource Include="TextFiles\LogFileWithFlatResultsNEwFormat.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="TextFiles\LogFileWithFlatResultsNEwFormatWithErrors.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="TextFiles\SubFolderB\SubFolderBTextFile1.txt" />
     <Content Include="TextFiles\SubFolderA\SubFolderATextFile1.txt" />
     <EmbeddedResource Include="TextFiles\LogFileWithUrl.txt">
@@ -720,6 +744,9 @@
     <Content Include="TextFiles\TextFile2.txt" />
     <Content Include="TextFiles\TextFile1.txt" />
     <EmbeddedResource Include="XML\DebugPayload.xml" />
+    <EmbeddedResource Include="XML\testingExtension.xml" />
+    <EmbeddedResource Include="XML\WarewolfResourceFile.xml" />
+    <EmbeddedResource Include="XML\QLINKHUB.xml" />
     <Content Include="XML\GenDev.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -729,14 +756,22 @@
   <PropertyGroup>
     <PostBuildEvent>if exist "$(SolutionDir)WarewolfCOMIPC\bin\x86\Debug\WarewolfCOMIPC.exe" copy "$(SolutionDir)WarewolfCOMIPC\bin\x86\Debug\WarewolfCOMIPC.exe" "$(TargetDir)WarewolfCOMIPC.exe"</PostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>taskkill /f /im Warewolf.COMIPC.exe /fi "STATUS eq RUNNING"
+taskkill /f /im Warewolf.COMIPC.vshost.exe /fi "STATUS eq RUNNING"
+if not exist "$(TargetDir)Warewolf.COMIPC.exe" xcopy /Y "$(SolutionDir)Warewolf.COMIPC\bin\x86\$(ConfigurationName)\Warewolf.COMIPC.exe" "$(TargetDir)"
+if "$(ConfigurationName)"=="Debug" if not exist "$(TargetDir)Warewolf.COMIPC.pdb" xcopy /Y "$(SolutionDir)Warewolf.COMIPC\bin\x86\Debug\Warewolf.COMIPC.pdb" "$(TargetDir)"</PostBuildEvent>
+  </PropertyGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props'))" />
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets'))" />
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets'))" />
   </Target>
-  <Import Project="..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets')" />
+  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

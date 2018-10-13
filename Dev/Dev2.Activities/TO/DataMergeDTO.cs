@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -71,11 +71,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region Properties
 
-        public bool IsPaddingFocused { get { return _isPaddingFocused; } set { OnPropertyChanged(ref _isPaddingFocused, value); } }
+        public bool IsPaddingFocused { get => _isPaddingFocused; set => OnPropertyChanged(ref _isPaddingFocused, value); }
 
-        public bool IsAtFocused { get { return _isAtFocused; } set { OnPropertyChanged(ref _isAtFocused, value); } }
+        public bool IsAtFocused { get => _isAtFocused; set => OnPropertyChanged(ref _isAtFocused, value); }
 
-        public bool IsFieldNameFocused { get { return _isFieldNameFocused; } set { OnPropertyChanged(ref _isFieldNameFocused, value); } }
+        public bool IsFieldNameFocused { get => _isFieldNameFocused; set => OnPropertyChanged(ref _isFieldNameFocused, value); }
 
         public bool Inserted { get; set; }
 
@@ -104,11 +104,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        public bool EnableAt { get { return _enableAt; } set { OnPropertyChanged(ref _enableAt, value); } }
+        public bool EnableAt { get => _enableAt; set => OnPropertyChanged(ref _enableAt, value); }
 
-        public bool EnablePadding { get { return _enablePadding; } set { OnPropertyChanged(ref _enablePadding, value); } }
+        public bool EnablePadding { get => _enablePadding; set => OnPropertyChanged(ref _enablePadding, value); }
 
-        public int IndexNumber { get { return _indexNum; } set { OnPropertyChanged(ref _indexNum, value); } }
+        public int IndexNumber { get => _indexNum; set => OnPropertyChanged(ref _indexNum, value); }
 
         [FindMissing]
         public string InputVariable
@@ -166,18 +166,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return false;
         }
 
-        public bool CanAdd()
-        {
-            bool result = true;
-            if (MergeType == MergeTypeIndex || MergeType == MergeTypeChars)
-            {
-                if (string.IsNullOrEmpty(InputVariable) && string.IsNullOrEmpty(At))
-                {
-                    result = false;
-                }
-            }
-            return result;
-        }
+        public bool CanAdd() => !((MergeType == MergeTypeIndex || MergeType == MergeTypeChars) && string.IsNullOrEmpty(InputVariable) && string.IsNullOrEmpty(At));
 
         public void ClearRow()
         {
@@ -192,18 +181,15 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region IsEmpty
 
-        public bool IsEmpty()
-        {
-            return string.IsNullOrEmpty(InputVariable) && MergeType == MergeTypeIndex && string.IsNullOrEmpty(At)
+        public bool IsEmpty() => string.IsNullOrEmpty(InputVariable) && MergeType == MergeTypeIndex && string.IsNullOrEmpty(At)
                    || string.IsNullOrEmpty(InputVariable) && MergeType == MergeTypeChars && string.IsNullOrEmpty(At)
                    || string.IsNullOrEmpty(InputVariable) && MergeType == MergeTypeNone && string.IsNullOrEmpty(At);
-        }
 
         #endregion
 
         public override IRuleSet GetRuleSet(string propertyName, string datalist)
         {
-            RuleSet ruleSet = new RuleSet();
+            var ruleSet = new RuleSet();
             if (IsEmpty())
             {
                 return ruleSet;
@@ -213,7 +199,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 case "Input":
                     if (!string.IsNullOrEmpty(InputVariable))
                     {
-                        var inputExprRule = new IsValidExpressionRule(() => InputVariable, datalist, "0");
+                        var inputExprRule = new IsValidExpressionRule(() => InputVariable, datalist, "0", new VariableUtils());
                         ruleSet.Add(inputExprRule);
                     }
                     else
@@ -225,7 +211,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 case "At":
                     if (MergeType == MergeTypeIndex)
                     {
-                        var atExprRule = new IsValidExpressionRule(() => At, datalist, "1");
+                        var atExprRule = new IsValidExpressionRule(() => At, datalist, "1", new VariableUtils());
                         ruleSet.Add(atExprRule);
 
                         ruleSet.Add(new IsStringEmptyRule(() => atExprRule.ExpressionValue));
@@ -235,7 +221,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 case "Padding":
                     if (!string.IsNullOrEmpty(Padding))
                     {
-                        var paddingExprRule = new IsValidExpressionRule(() => Padding, datalist, "0");
+                        var paddingExprRule = new IsValidExpressionRule(() => Padding, datalist, "0", new VariableUtils());
                         ruleSet.Add(paddingExprRule);
 
                         ruleSet.Add(new IsSingleCharRule(() => paddingExprRule.ExpressionValue));

@@ -45,8 +45,8 @@ namespace Dev2.Activities.Designers.Tests.Core
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>());
             var nameSpace = new Mock<INamespaceToolRegion<INamespaceItem>>();
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
-            DotNetConstructorRegion DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
+            var DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
 
             var region = new DotNetConstructorInputRegion(ModelItemUtils.CreateModelItem(act), DotNetConstructorRegion);
             Assert.AreEqual(region.IsEnabled, false);
@@ -76,8 +76,8 @@ namespace Dev2.Activities.Designers.Tests.Core
             var src = new Mock<IPluginServiceModel>();
             var nameSpace = new Mock<INamespaceToolRegion<INamespaceItem>>();
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>());
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
-            DotNetConstructorRegion DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
+            var DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
 
             var region = new DotNetConstructorInputRegion(ModelItemUtils.CreateModelItem(act), DotNetConstructorRegion);
             Assert.AreEqual(region.IsEnabled, false);
@@ -98,9 +98,9 @@ namespace Dev2.Activities.Designers.Tests.Core
             var act = new DsfEnhancedDotNetDllActivity() { SourceId = id };
             var src = new Mock<IPluginServiceModel>();
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>());
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
             var nameSpace = new Mock<INamespaceToolRegion<INamespaceItem>>();
-            DotNetConstructorRegion DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
+            var DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
 
             var region = new DotNetConstructorInputRegion(ModelItemUtils.CreateModelItem(act), DotNetConstructorRegion);
             Assert.AreEqual(region.IsEnabled, false);
@@ -115,9 +115,9 @@ namespace Dev2.Activities.Designers.Tests.Core
             var act = new DsfEnhancedDotNetDllActivity() { SourceId = id };
             var src = new Mock<IPluginServiceModel>();
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>());
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
             var nameSpace = new Mock<INamespaceToolRegion<INamespaceItem>>();
-            DotNetConstructorRegion DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
+            var DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
 
             var region = new DotNetConstructorInputRegion(ModelItemUtils.CreateModelItem(act), DotNetConstructorRegion);
             Assert.AreEqual(region.IsEnabled, false);
@@ -135,15 +135,15 @@ namespace Dev2.Activities.Designers.Tests.Core
             var src = new Mock<IPluginServiceModel>();
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>());
             var nameSpace = new Mock<INamespaceToolRegion<INamespaceItem>>();
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
-            DotNetConstructorRegion DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
+            var DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
 
             var region = new DotNetConstructorInputRegion(ModelItemUtils.CreateModelItem(act), DotNetConstructorRegion);
             
             var regionToRestore = new DotNetConstructorInputRegionClone();
             regionToRestore.IsEnabled = true;
             //------------Execute Test---------------------------
-            region.RestoreRegion(regionToRestore);
+            region.RestoreRegion(regionToRestore as IToolRegion);
             //------------Assert Results-------------------------
 
         }
@@ -161,9 +161,9 @@ namespace Dev2.Activities.Designers.Tests.Core
 
             var lst = new ObservableCollection<IPluginSource>() { new PluginSourceDefinition() { Name = "bravo" }, new PluginSourceDefinition() { Name = "johnny" } };
             src.Setup(a => a.RetrieveSources()).Returns(lst);
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()));
             var nameSpace = new Mock<INamespaceToolRegion<INamespaceItem>>();
-            DotNetConstructorRegion DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
+            var DotNetConstructorRegion = new DotNetConstructorRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfEnhancedDotNetDllActivity()), sourceRegion, nameSpace.Object);
 
             var region = new DotNetConstructorInputRegion(ModelItemUtils.CreateModelItem(act), DotNetConstructorRegion);
 
@@ -202,7 +202,7 @@ namespace Dev2.Activities.Designers.Tests.Core
 
             //---------------Assert Precondition----------------
 
-            var countBefore = DataListSingleton.ActiveDataList.ScalarCollection.Count;
+            var countBefore = DataListSingleton.ActiveDataList.ScalarCollectionCount;
             Assert.AreEqual(4, countBefore);
             //---------------Execute Test ----------------------
             var inputRegion = new DotNetConstructorInputRegion(modelItem, actionRegion.Object);
@@ -244,7 +244,7 @@ namespace Dev2.Activities.Designers.Tests.Core
 
             //---------------Assert Precondition----------------
 
-            var countBefore = DataListSingleton.ActiveDataList.ScalarCollection.Count;
+            var countBefore = DataListSingleton.ActiveDataList.ScalarCollectionCount;
             Assert.AreEqual(4, countBefore);
             //---------------Execute Test ----------------------
             var inputRegion = new DotNetConstructorInputRegion(modelItem, actionRegion.Object);
@@ -286,7 +286,7 @@ namespace Dev2.Activities.Designers.Tests.Core
 
             //---------------Assert Precondition----------------
 
-            var countBefore = DataListSingleton.ActiveDataList.ScalarCollection.Count;
+            var countBefore = DataListSingleton.ActiveDataList.ScalarCollectionCount;
             Assert.AreEqual(4, countBefore);
             //---------------Execute Test ----------------------
             var inputRegion = new DotNetConstructorInputRegion(modelItem, actionRegion.Object);
@@ -328,7 +328,7 @@ namespace Dev2.Activities.Designers.Tests.Core
 
             //---------------Assert Precondition----------------
 
-            var countBefore = DataListSingleton.ActiveDataList.ScalarCollection.Count;
+            var countBefore = DataListSingleton.ActiveDataList.ScalarCollectionCount;
             Assert.AreEqual(4, countBefore);
             //---------------Execute Test ----------------------
             var inputRegion = new DotNetConstructorInputRegion(modelItem, actionRegion.Object);
@@ -342,7 +342,7 @@ namespace Dev2.Activities.Designers.Tests.Core
 
         }
 
-        private IPluginConstructor ValueFunction()
+        IPluginConstructor ValueFunction()
         {
             return new PluginConstructor()
             {
@@ -355,7 +355,7 @@ namespace Dev2.Activities.Designers.Tests.Core
             };
         }
 
-        private IPluginConstructor ValueFunctionWithTypes()
+        IPluginConstructor ValueFunctionWithTypes()
         {
             return new PluginConstructor()
             {
@@ -368,7 +368,7 @@ namespace Dev2.Activities.Designers.Tests.Core
             };
         }
 
-        private IPluginConstructor ValueFunctionWithTypesNoValues()
+        IPluginConstructor ValueFunctionWithTypesNoValues()
         {
             return new PluginConstructor()
             {

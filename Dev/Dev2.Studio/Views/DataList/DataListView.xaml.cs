@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,16 +15,15 @@ using Dev2.Common.Interfaces;
 using Dev2.Studio.Interfaces.DataList;
 using Dev2.Studio.ViewModels.WorkSurface;
 using Microsoft.Practices.Prism.Mvvm;
-
+using Warewolf.Studio.Resources.Languages;
 
 namespace Dev2.Studio.Views.DataList
 {
     /// <summary>
     /// Interaction logic for DataListView.xaml
     /// </summary>
-    public partial class DataListView : IView,ICheckControlEnabledView
+    public partial class DataListView : IView, ICheckControlEnabledView
     {
-
         public DataListView()
         {
             InitializeComponent();
@@ -33,11 +32,11 @@ namespace Dev2.Studio.Views.DataList
 
         #region Events
 
-        private void NametxtTextChanged(object sender, RoutedEventArgs e)
+        void NametxtTextChanged(object sender, RoutedEventArgs e)
         {
             if (DataContext is IDataListViewModel vm)
             {
-                TextBox txtbox = sender as TextBox;
+                var txtbox = sender as TextBox;
                 if (txtbox?.DataContext is IDataListItemModel itemThatChanged)
                 {
                     itemThatChanged.IsExpanded = true;
@@ -46,9 +45,9 @@ namespace Dev2.Studio.Views.DataList
             }
         }
 
-        private void Inputcbx_OnChecked(object sender, RoutedEventArgs e)
+        void Inputcbx_OnChecked(object sender, RoutedEventArgs e)
         {
-            CheckBox checkBox = sender as CheckBox;
+            var checkBox = sender as CheckBox;
             if (checkBox == null || !checkBox.IsEnabled)
             {
                 return;
@@ -56,9 +55,9 @@ namespace Dev2.Studio.Views.DataList
             WriteToResourceModel();
         }
 
-        private void Outputcbx_OnChecked(object sender, RoutedEventArgs e)
+        void Outputcbx_OnChecked(object sender, RoutedEventArgs e)
         {
-            CheckBox checkBox = sender as CheckBox;
+            var checkBox = sender as CheckBox;
             if (checkBox == null || !checkBox.IsEnabled)
             {
                 return;
@@ -66,25 +65,27 @@ namespace Dev2.Studio.Views.DataList
             WriteToResourceModel();
         }
 
-        private void NametxtFocusLost(object sender, RoutedEventArgs e)
+        void NametxtFocusLost(object sender, RoutedEventArgs e)
         {
             DoDataListValidation(sender);
         }
 
         void DoDataListValidation(object sender)
         {
-            if (DataContext is IDataListViewModel vm)
+            if (DataContext is IDataListViewModel vm && sender is TextBox txtbox)
             {
-                if (sender is TextBox txtbox)
+                var itemThatChanged = txtbox.DataContext as IDataListItemModel;
+                vm.RemoveBlankRows(itemThatChanged);
+                vm.ValidateNames(itemThatChanged);
+
+                if (vm.HasErrors && vm.DataListErrorMessage.Length != 0)
                 {
-                    IDataListItemModel itemThatChanged = txtbox.DataContext as IDataListItemModel;
-                    vm.RemoveBlankRows(itemThatChanged);
-                    vm.ValidateNames(itemThatChanged);
+                    vm.LogCustomTrackerEvent(TrackEventVariables.EventCategory, TrackEventVariables.IncorrectSyntax, "Variable Textbox input - " + vm.DataListErrorMessage);
                 }
             }
         }
 
-        private void UserControlLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        void UserControlLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
             WriteToResourceModel();
         }
@@ -93,7 +94,7 @@ namespace Dev2.Studio.Views.DataList
 
         #region Private Methods
 
-        private void WriteToResourceModel()
+        void WriteToResourceModel()
         {
             if (DataContext is IDataListViewModel vm && !vm.IsSorting)
             {
@@ -103,7 +104,7 @@ namespace Dev2.Studio.Views.DataList
 
         #endregion Private Methods
 
-        private void UIElement_OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        void UIElement_OnLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
         {
             var vm = DataContext as IDataListViewModel;
             var model = vm?.Parent as WorkSurfaceContextViewModel;
@@ -130,5 +131,14 @@ namespace Dev2.Studio.Views.DataList
         }
 
         #endregion
+
+        private void SearchTextBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is TextBox textBoxSearch)
+            {
+                var vm = DataContext as IDataListViewModel;
+                vm.LogCustomTrackerEvent(TrackEventVariables.EventCategory, TrackEventVariables.VariablesSearch, textBoxSearch.Text);
+            }
+        }
     }
 }

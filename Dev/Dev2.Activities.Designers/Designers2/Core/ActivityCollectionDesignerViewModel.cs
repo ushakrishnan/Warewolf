@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -56,7 +56,7 @@ namespace Dev2.Activities.Designers2.Core
 
         public abstract void InsertAt(int indexNumber);
 
-        protected abstract void AddToCollection(IEnumerable<string> source, bool overWrite);
+        protected abstract void AddToCollection(IEnumerable<string> sources, bool overwrite);
 
         public QuickVariableInputViewModel QuickVariableInputViewModel
         {
@@ -101,18 +101,19 @@ namespace Dev2.Activities.Designers2.Core
         {
             if(!_isToggleCheckedChanged)
             {
-                if(propertyName == ShowLargeProperty.Name)
+                if (propertyName == ShowLargeProperty.Name)
                 {
                     _isToggleCheckedChanged = true;
                     ShowQuickVariableInput = false;
                 }
-                else if(propertyName == ShowQuickVariableInputProperty.Name)
+                else
                 {
-                    if(PreviousView == ShowLargeProperty.Name)
+                    if (propertyName == ShowQuickVariableInputProperty.Name && PreviousView == ShowLargeProperty.Name)
                     {
                         _isToggleCheckedChanged = true;
                         ShowLarge = false;
                     }
+
                 }
                 _isToggleCheckedChanged = false;
 

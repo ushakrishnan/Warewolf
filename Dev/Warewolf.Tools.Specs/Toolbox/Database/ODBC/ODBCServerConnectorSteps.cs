@@ -22,10 +22,10 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
     [Binding]
     public class ODBCServerConnectorSteps
     {
-        private DbSourceDefinition _greenPointSource;
-        private DbAction _importOrderAction;
-        private DbSourceDefinition _testingDbSource;
-        private DbAction _getCountriesAction;
+        DbSourceDefinition _greenPointSource;
+        DbAction _importOrderAction;
+        DbSourceDefinition _testingDbSource;
+        DbAction _getCountriesAction;
 
         [Given(@"I open workflow with ODBC connector")]
         public void GivenIOpenWorkflowWithODBC()
@@ -122,11 +122,6 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
             return ScenarioContext.Current.Get<T>("ViewModel");
         }
 
-        Mock<IManageServiceInputViewModel> GetInputViewModel()
-        {
-            return ScenarioContext.Current.Get<Mock<IManageServiceInputViewModel>>("mockServiceInputViewModel");
-        }
-
         Mock<IDbServiceModel> GetDbServiceModel()
         {
             return ScenarioContext.Current.Get<Mock<IDbServiceModel>>("mockDbServiceModel");
@@ -221,7 +216,7 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
         public void ThenInputsAppearAs(Table table)
         {
             var viewModel = ScenarioContext.Current.Get<ODBCDatabaseDesignerViewModel>("ViewModel");
-            int rowNum = 0;
+            var rowNum = 0;
             foreach (var row in table.Rows)
             {
                 var inputValue = row["Input"];
@@ -236,8 +231,6 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
                 }
                 rowNum++;
             }
-            //var viewModel = GetViewModel<ODBCDatabaseDesignerViewModel>();
-            //DatabaseToolsSteps.AssertAgainstServiceInputs(table, viewModel.ToModel().Inputs);
         }        
 
         [When(@"I Select GreenPoint as ODBC Source")]
@@ -306,7 +299,7 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
         [Then(@"Test ODBC Inputs appear as")]
         public void ThenTestInputsAppearAs(Table table)
         {
-            int rowNum = 0;
+            var rowNum = 0;
             var viewModel = GetViewModel<ODBCDatabaseDesignerViewModel>();
             foreach (var row in table.Rows)
             {
@@ -347,34 +340,13 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
             AssertAgainstOutputs(table, outputMappings);
         }
 
-        private static void CheckODBCToolTestInputs(Table table, ICollection<IServiceOutputMapping> inputs)
-        {
-            Assert.IsNotNull(inputs);
-            //TODO:Assert.AreEqual(table.Rows.Count, outputMappings.Count, "Wrong number of outputs in ODBC view model.");
-            if (table.Rows.Count == 0)
-            {
-                if (inputs != null)
-                {
-                    Assert.AreEqual(inputs.Count, 0);
-                }
-            }
-            else
-            {
-                var matched = table.Rows.Zip(inputs, (a, b) => new Tuple<TableRow, IServiceOutputMapping>(a, b));
-                foreach (var a in matched)
-                {
-                    Assert.AreEqual(a.Item1.Keys.FirstOrDefault(), a.Item2.MappedFrom);
-                }
-            }
-        }
-
-        private static void AssertAgainstOutputs(Table table, ICollection<IServiceOutputMapping> outputs)
+        static void AssertAgainstOutputs(Table table, ICollection<IServiceOutputMapping> outputs)
         {
             if (table.Rows.Count == 0)
             {
                 if (outputs != null)
                 {
-                    Assert.AreEqual(outputs.Count, 0);
+                    Assert.AreEqual(0, outputs.Count);
                 }
             }
             else

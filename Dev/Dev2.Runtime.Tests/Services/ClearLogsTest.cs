@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,7 +26,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class ClearLogsTest
     {
-        private static readonly Guid _workspaceID = Guid.Parse("34c0ce48-1f02-4a47-ad51-19ee3789ed4c");
+        static readonly Guid _workspaceID = Guid.Parse("34c0ce48-1f02-4a47-ad51-19ee3789ed4c");
         readonly static object SyncRoot = new object();
 
         static string _testDir;
@@ -44,7 +44,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ClearLogNonValidDirectoryExpectsNoDelete()
         {
             //setup
@@ -59,7 +59,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsTrue(result.Contains("Error clearing"));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ClearLogNoDirectoryPassedExpectsNoDelete()
         {
             //execute
@@ -71,7 +71,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsTrue(result.Contains("Can't delete a file if no directory is passed."));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ClearLogDirectoryExpectsFilesDeleted()
         {
             lock(SyncRoot)
@@ -100,11 +100,11 @@ namespace Dev2.Tests.Runtime.Services
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ClearLogExecuteWithValidPathAndLockedExpectedReturnsError()
         {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-            lock(SyncRoot)
+            var serializer = new Dev2JsonSerializer();
+            lock (SyncRoot)
             {
                 //setup
                 var fileName1 = Guid.NewGuid().ToString() + "_Test.log";
@@ -144,7 +144,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogHandlesTypeExpectedReturnsDeleteLogService()
         {
             var esb = new ClearLog();
@@ -156,7 +156,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void DeleteLogCreateServiceEntryExpectedReturnsDynamicService()
         {
             var esb = new ClearLog();
@@ -175,7 +175,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Helpers
 
-        private Mock<IWorkspace> GetWorkspace()
+        Mock<IWorkspace> GetWorkspace()
         {
             var mock = new Mock<IWorkspace>();
             mock.Setup(w => w.ID).Returns(_workspaceID);
@@ -184,7 +184,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #endregion
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -198,7 +198,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty,resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()

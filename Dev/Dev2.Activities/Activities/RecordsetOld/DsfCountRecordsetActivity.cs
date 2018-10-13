@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Linq;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
 using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.Diagnostics;
@@ -29,7 +30,8 @@ using Warewolf.Storage.Interfaces;
 namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 {
-    public class DsfCountRecordsetActivity : DsfActivityAbstract<string>
+#pragma warning disable S3776,S1541,S134,CC0075,S1066,S1067
+   public class DsfCountRecordsetActivity : DsfActivityAbstract<string>,IEquatable<DsfCountRecordsetActivity>
     {
         #region Fields
 
@@ -55,32 +57,37 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             DisplayName = "Count Records";
         }
 
-        
-        protected override void CacheMetadata(NativeActivityMetadata metadata)
+        public override IEnumerable<StateVariable> GetState()
         {
-            base.CacheMetadata(metadata);
-
+            return new[] {
+                new StateVariable
+                {
+                    Name = "RecordsetName",
+                    Value = RecordsetName,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="CountNumber",
+                    Value = CountNumber,
+                    Type = StateVariable.StateType.Output
+                }
+            };
         }
-        
+
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
-        public override List<string> GetOutputs()
-        {
-            return new List<string> { CountNumber };
-        }
-
+        public override List<string> GetOutputs() => new List<string> { CountNumber };
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-
-
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var errors = new ErrorResultTO();
             allErrors.MergeErrors(errors);
             InitializeDebug(dataObject);
             // Process if no errors
@@ -92,38 +99,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 {
                     try
                     {
-                        string rs = DataListUtil.ExtractRecordsetNameFromValue(RecordsetName);
-                        if(CountNumber == string.Empty)
-                        {
-                            allErrors.AddError(ErrorResource.BlankResultVariable);
-                        }
-                        if(dataObject.IsDebugMode())
-                        {
-                            AddDebugInputItem(new DebugEvalResult(dataObject.Environment.ToStar(RecordsetName), "Recordset", dataObject.Environment, update));
-                        }
-                        var rule = new IsSingleValueRule(() => CountNumber);
-                        var single = rule.Check();
-                        if (single != null)
-                        {
-                            allErrors.AddError(single.Message);
-                        }
-                        else
-                        {
-                            if (dataObject.Environment.HasRecordSet(RecordsetName))
-                            {
-                                var count = dataObject.Environment.GetCount(rs);
-                                var value = count.ToString();
-                                dataObject.Environment.Assign(CountNumber, value, update);
-                                AddDebugOutputItem(new DebugEvalResult(CountNumber, "", dataObject.Environment, update));
-
-                            }
-                            else
-                            {
-                                allErrors.AddError(String.Format(ErrorResource.NullRecordSet, RecordsetName));
-                            }
-                        }
+                        TryExecuteTool(dataObject, update, allErrors);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         AddDebugInputItem(new DebugItemStaticDataParams("", RecordsetName, "Recordset", "="));
                         allErrors.AddError(e.Message);
@@ -150,16 +128,47 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
+        private void TryExecuteTool(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            var rs = DataListUtil.ExtractRecordsetNameFromValue(RecordsetName);
+            if (CountNumber == string.Empty)
+            {
+                allErrors.AddError(ErrorResource.BlankResultVariable);
+            }
+            if (dataObject.IsDebugMode())
+            {
+                AddDebugInputItem(new DebugEvalResult(dataObject.Environment.ToStar(RecordsetName), "Recordset", dataObject.Environment, update));
+            }
+            var rule = new IsSingleValueRule(() => CountNumber);
+            var single = rule.Check();
+            if (single != null)
+            {
+                allErrors.AddError(single.Message);
+            }
+            else
+            {
+                if (dataObject.Environment.HasRecordSet(RecordsetName))
+                {
+                    var count = dataObject.Environment.GetCount(rs);
+                    var value = count.ToString();
+                    dataObject.Environment.Assign(CountNumber, value, update);
+                    AddDebugOutputItem(new DebugEvalResult(CountNumber, "", dataObject.Environment, update));
+
+                }
+                else
+                {
+                    allErrors.AddError(String.Format(ErrorResource.NullRecordSet, RecordsetName));
+                }
+            }
+        }
+
         #region Get Debug Inputs/Outputs
 
         #region GetDebugInputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
-        {
-            return _debugInputs;
-        }
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update) => _debugInputs;
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugOutput in _debugOutputs)
             {
@@ -197,17 +206,60 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(RecordsetName);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(RecordsetName);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(CountNumber);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(CountNumber);
 
         #endregion
 
+        public bool Equals(DsfCountRecordsetActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && string.Equals(RecordsetName, other.RecordsetName) 
+                && string.Equals(DisplayName, other.DisplayName) 
+                && string.Equals(CountNumber, other.CountNumber);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfCountRecordsetActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (RecordsetName != null ? RecordsetName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (CountNumber != null ? CountNumber.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
+#pragma warning restore S3776,S1541,S134,CC0075,S1066,S1067
 }

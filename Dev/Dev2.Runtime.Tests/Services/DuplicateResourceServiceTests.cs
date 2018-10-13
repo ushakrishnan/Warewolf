@@ -17,7 +17,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DuplicateResourceServiceTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -31,7 +31,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -45,12 +45,12 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Contribute, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void HandlesType_GivenServiceIsCreated_ShouldHandleCorrectly()
         {
             //---------------Set up test pack-------------------
-            DuplicateResourceService resourceService = new DuplicateResourceService();
+            var resourceService = new DuplicateResourceService();
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -59,12 +59,12 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("DuplicateResourceService", handlesType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateServiceEntry_GivenServiceIsCreated_ShouldCreateCorrectDynamicService()
         {
             //---------------Set up test pack-------------------
-            DuplicateResourceService resourceService = new DuplicateResourceService();
+            var resourceService = new DuplicateResourceService();
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -73,7 +73,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(1, handlesType.Actions.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenResourcePayLoad_ShouldExctactPayLoad()
         {
@@ -87,7 +87,7 @@ namespace Dev2.Tests.Runtime.Services
                     DuplicatedItems = new List<IExplorerItem> { resource.Object }
                 });
             var workScpace = new Mock<IWorkspace>();
-            DuplicateResourceService resourceService = new DuplicateResourceService(resourceCatalog.Object);
+            var resourceService = new DuplicateResourceService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -102,7 +102,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsNotNull(stringBuilder);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenMissingDestinationPath_ShouldReturnFailure()
         {
@@ -115,11 +115,11 @@ namespace Dev2.Tests.Runtime.Services
                     DuplicatedItems = new List<IExplorerItem> { resource.Object }
                 });
             var workScpace = new Mock<IWorkspace>();
-            DuplicateResourceService resourceService = new DuplicateResourceService(resourceCatalog.Object);
+            var resourceService = new DuplicateResourceService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             try
             {
                 stringBuilder = resourceService.Execute(new Dictionary<string, StringBuilder>
@@ -139,7 +139,7 @@ namespace Dev2.Tests.Runtime.Services
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenMissingResourceId_ShouldReturnFailure()
         {
@@ -152,7 +152,7 @@ namespace Dev2.Tests.Runtime.Services
                     DuplicatedItems = new List<IExplorerItem> { resource.Object }
                 });
             var workScpace = new Mock<IWorkspace>();
-            DuplicateResourceService resourceService = new DuplicateResourceService(resourceCatalog.Object);
+            var resourceService = new DuplicateResourceService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -170,7 +170,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("ResourceId is required", executeMessage.Message.ToString());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenCatalogThrowsException_ShouldReturnFailureAndCatalogException()
         {
@@ -180,11 +180,11 @@ namespace Dev2.Tests.Runtime.Services
                 .Throws(new Exception("Catalog Error"));
             var workScpace = new Mock<IWorkspace>();
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DuplicateResourceService resourceService = new DuplicateResourceService(resourceCatalog.Object);
+            var resourceService = new DuplicateResourceService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             try
             {
                 stringBuilder = resourceService.Execute(new Dictionary<string, StringBuilder>

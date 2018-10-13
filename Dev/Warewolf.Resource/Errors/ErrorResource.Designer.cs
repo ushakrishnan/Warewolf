@@ -115,6 +115,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;FromExpression&apos; - Result - Invalid expression: opening and closing brackets don&apos;t match.
+        /// </summary>
+        public static string BaseConvertInputInvalidExpressionErrorTest {
+            get {
+                return ResourceManager.GetString("BaseConvertInputInvalidExpressionErrorTest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to BCC address is not in the valid format: {0}.
         /// </summary>
         public static string BCCAddressInvalidFormat {
@@ -354,6 +363,15 @@ namespace Warewolf.Resource.Errors {
         public static string CanOnlyExecuteWorkflowsFromWebBrowser {
             get {
                 return ResourceManager.GetString("CanOnlyExecuteWorkflowsFromWebBrowser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;StringToConvert&apos; - Result - Invalid expression: opening and closing brackets don&apos;t match.
+        /// </summary>
+        public static string CaseConvertInputInvalidExpressionErrorTest {
+            get {
+                return ResourceManager.GetString("CaseConvertInputInvalidExpressionErrorTest", resourceCulture);
             }
         }
         
@@ -1465,6 +1483,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Result - Invalid expression: opening and closing brackets don&apos;t match.
+        /// </summary>
+        public static string GatherSystemInfoInputInvalidExpressionErrorTest {
+            get {
+                return ResourceManager.GetString("GatherSystemInfoInputInvalidExpressionErrorTest", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Gridsplitter only works in grid.
         /// </summary>
         public static string GridsplitterOnlyWorksInGrids {
@@ -2248,6 +2275,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No Resources found for Resource ID: {0}.
+        /// </summary>
+        public static string NoResourcesFound {
+            get {
+                return ResourceManager.GetString("NoResourcesFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No SharePoint list name set.
         /// </summary>
         public static string NoSharepointListNameSet {
@@ -2361,6 +2397,15 @@ namespace Warewolf.Resource.Errors {
         public static string NothingToSplit {
             get {
                 return ResourceManager.GetString("NothingToSplit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid command sent to ExecuteXmlReader.  The command must return an Xml result..
+        /// </summary>
+        public static string NotXmlResults {
+            get {
+                return ResourceManager.GetString("NotXmlResults", resourceCulture);
             }
         }
         
@@ -3303,6 +3348,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed: Switch must have a Default arm connected..
+        /// </summary>
+        public static string SwitchNoDefaultError {
+            get {
+                return ResourceManager.GetString("SwitchNoDefaultError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Add Time amount must be numeric.
         /// </summary>
         public static string TimeMustBeNumeric {
@@ -3443,6 +3497,24 @@ namespace Warewolf.Resource.Errors {
         public static string UserInputRequired {
             get {
                 return ResourceManager.GetString("UserInputRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User: {0} does not have Execute Permission to resource {1}..
+        /// </summary>
+        public static string UserNotAuthorizedToExecuteException {
+            get {
+                return ResourceManager.GetString("UserNotAuthorizedToExecuteException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User: {0} requires View and Execute permissions to Execute resource {1}..
+        /// </summary>
+        public static string UserNotAuthorizedToExecuteOuterWorkflowException {
+            get {
+                return ResourceManager.GetString("UserNotAuthorizedToExecuteOuterWorkflowException", resourceCulture);
             }
         }
         

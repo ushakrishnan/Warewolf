@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -47,21 +47,21 @@ namespace Dev2.Studio.Core.AppResources.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if(value == null)
+            if (value == null)
             {
                 return NullValue;
             }
 
-            if(value is string)
+            if (value is string)
             {
                 return TrueEnumValues.Any(e =>
-                    {
-                        object tempEnumValue = Dev2EnumConverter.GetEnumFromStringDiscription(value.ToString(), e.GetType());
-                        return Equals(e, tempEnumValue);
-                    });
+                {
+                    var tempEnumValue = Dev2EnumConverter.GetEnumFromStringDiscription(value.ToString(), e.GetType());
+                    return Equals(e, tempEnumValue);
+                });
             }
 
-            if(!value.GetType().IsEnum)
+            if (!value.GetType().IsEnum)
             {
                 return Binding.DoNothing;
             }
@@ -69,9 +69,6 @@ namespace Dev2.Studio.Core.AppResources.Converters
             return TrueEnumValues.Any(e => Equals(e, value));
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return Binding.DoNothing;
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 }

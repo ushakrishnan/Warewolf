@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,7 +31,13 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class FetchExplorerItemsTest
     {
-        [TestMethod]
+        [TestInitialize]
+        public void Setup()
+        {
+            CustomContainer.Register<IActivityParser>(new Mock<IActivityParser>().Object);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -45,7 +51,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -59,7 +65,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchExplorerItems_HandlesType")]
         public void FetchExplorerItems_HandlesType_ExpectName()
@@ -74,7 +80,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("FetchExplorerItemsService", fetchExplorerItems.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("FetchExplorerItems_Execute")]
         public void FetchExplorerItems_Execute_NullValuesParameter_ErrorResult()
@@ -83,13 +89,13 @@ namespace Dev2.Tests.Runtime.Services
             var fetchExplorerItems = new FetchExplorerItems();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchExplorerItems.Execute(null, null);
-            IExplorerRepositoryResult result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
+            var jsonResult = fetchExplorerItems.Execute(null, null);
+            var result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
             //------------Assert Results-------------------------
             Assert.AreEqual(ExecStatus.Fail, result.Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchExplorerItems_HandlesType")]
         public void FetchExplorerItems_Execute_ExpectName()
@@ -113,7 +119,7 @@ namespace Dev2.Tests.Runtime.Services
             var message = serializer.Deserialize<CompressedExecuteMessage>(execute);
             Assert.AreEqual(serializer.Deserialize<IExplorerItem>(message.GetDecompressedMessage()).ResourceId, item.ResourceId);
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchExplorerItems_HandlesType")]
         public void FetchExplorerItems_ExecuteReloadTrue_ExpectName()
@@ -137,7 +143,8 @@ namespace Dev2.Tests.Runtime.Services
             var message = serializer.Deserialize<CompressedExecuteMessage>(execute);
             Assert.AreEqual(serializer.Deserialize<IExplorerItem>(message.GetDecompressedMessage()).ResourceId, item.ResourceId);
         }
-        [TestMethod]
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchExplorerItems_HandlesType")]
         public void FetchExplorerItems_ExecuteReloadTrueWithExecutionManager_ExpectCallsStartAndStopRefresh()
@@ -165,9 +172,32 @@ namespace Dev2.Tests.Runtime.Services
             exeManager.Verify(manager => manager.StopRefresh(),Times.AtLeastOnce());
             CustomContainer.DeRegister<IExecutionManager>();
         }
-        
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Candice Daniel")]
+        [TestCategory("FetchExplorerItems_HandlesType")]
+        public void FetchExplorerItems_Execute_NoRefresh()
+        {
+            //------------Setup for test--------------------------
+            var fetchExplorerItems = new FetchExplorerItems();
 
-        [TestMethod]
+            var item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
+            Assert.IsNotNull(item);
+            var repo = new Mock<IExplorerServerResourceRepository>();
+            var ws = new Mock<IWorkspace>();
+            repo.Setup(a => a.Load(GlobalConstants.ServerWorkspaceID, true))
+                .Returns(item).Verifiable();
+            var serializer = new Dev2JsonSerializer();
+            ws.Setup(a => a.ID).Returns(Guid.Empty);
+            fetchExplorerItems.ServerExplorerRepo = repo.Object;
+            //------------Execute Test---------------------------
+            var jsonResult = fetchExplorerItems.Execute(new Dictionary<string, StringBuilder> { { "ReloadResourceCatalogue",new StringBuilder("ddd") } }, ws.Object);
+            var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
+            //------------Assert Results-------------------------
+            //Assert.AreEqual(ExecStatus.Fail, result.Status)
+        }
+
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchExplorerItems_HandlesType")]
         public void FetchExplorerItems_CreateServiceEntry_ExpectProperlyFormedDynamicService()

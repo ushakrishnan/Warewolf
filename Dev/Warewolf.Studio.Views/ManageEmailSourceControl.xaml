@@ -6,7 +6,8 @@
              xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
              xmlns:core="clr-namespace:Warewolf.Studio.Core;assembly=Warewolf.Studio.Core"
              xmlns:languages="clr-namespace:Warewolf.Studio.Resources.Languages;assembly=Warewolf.Studio.Resources"
-             xmlns:customControls="clr-namespace:Warewolf.Studio.CustomControls;assembly=Warewolf.Studio.CustomControls"
+             xmlns:customControls="clr-namespace:Dev2.Activities.AttachedProperties;assembly=Dev2.Activities.Designers"
+             xmlns:doubleClick="clr-namespace:Warewolf.Studio.CustomControls;assembly=Warewolf.Studio.CustomControls"
              xmlns:views="clr-namespace:Warewolf.Studio.Views"
              xmlns:interfaces="clr-namespace:Dev2.Common.Interfaces;assembly=Dev2.Common.Interfaces"
              xmlns:luna="clr-namespace:Warewolf.Studio.Themes.Luna;assembly=Warewolf.Studio.Themes.Luna"
@@ -70,7 +71,8 @@
                              Grid.Row="0" 
                              Grid.Column="1" 
                              ToolTip="{x:Static languages:Tooltips.ManageEmailHostNameTooltip}"
-                             Text="{Binding HostName, UpdateSourceTrigger=PropertyChanged}">
+                             Text="{Binding HostName, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}"
+                             AutomationProperties.ItemStatus="{Binding RelativeSource={RelativeSource Self}, Path=BorderBrush}">
                         <i:Interaction.Behaviors>
                             <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceHostNameHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
@@ -137,7 +139,8 @@
                              Grid.Row="4" 
                              Grid.Column="1" 
                              ToolTip="{x:Static languages:Tooltips.ManageEmailPortTooltip}"
-                             Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}">
+                             Text="{Binding Port, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource StringToIntInRangeConverter}, ValidatesOnDataErrors=True}"
+                             AutomationProperties.ItemStatus="{Binding RelativeSource={RelativeSource Self}, Path=BorderBrush}">
                         <i:Interaction.Behaviors>
                             <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourcePortHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
@@ -149,7 +152,8 @@
                              Grid.Column="1" 
                              ToolTip="{x:Static languages:Tooltips.ManageEmailTimeoutTooltip}"
                              Margin="{StaticResource ControlBorderTop}"
-                             Text="{Binding Timeout, UpdateSourceTrigger=PropertyChanged}">
+                             Text="{Binding Timeout, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource StringToIntInRangeConverter}, ValidatesOnDataErrors=True}"
+                             AutomationProperties.ItemStatus="{Binding RelativeSource={RelativeSource Self}, Path=BorderBrush}">
                         <i:Interaction.Behaviors>
                             <core:HelpSetter Text="{x:Static languages:HelpText.EmailSourceTimeoutHelp}" DataContext="{Binding}" />
                         </i:Interaction.Behaviors>
@@ -242,7 +246,7 @@
                          Style="{StaticResource ErrorMessageTextboxStyle}"
                          Visibility="{Binding Path=TestFailed,Converter={StaticResource BoolToVisibilityConverter}}">
                     <i:Interaction.Behaviors>
-                        <customControls:DoubleClickBehavior/>
+                        <doubleClick:DoubleClickBehavior/>
                     </i:Interaction.Behaviors>
                 </TextBox>
             </Grid>

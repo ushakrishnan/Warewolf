@@ -78,7 +78,7 @@ Scenario: Test WF with Sql Server
 		And I Add "dbo.Pr_CitiesGetCountries" as TestStep
 		And I add StepOutputs as 
 		| Variable Name                                | Condition | Value    |
-		| [[dbo_Pr_CitiesGetCountries(2).CountryID]]   | =         | 40  |
+		| [[dbo_Pr_CitiesGetCountries(2).CountryID]]   | =         | 40       |
 		| [[dbo_Pr_CitiesGetCountries(2).Description]] | =         | Djibouti |
 		When I save
 		And I run the test
@@ -157,7 +157,7 @@ Scenario: Test WF with Decision
 
 Scenario: Test WF with SqlBulk Insert
 		Given I have a workflow "SqlBulkTestWF"
-		 And "SqlBulkTestWF" contains an SQL Bulk Insert "BulkInsert" using database "Dev2TestingDB" and table "dbo.MailingList" and KeepIdentity set "true" and Result set "[[result]]" for testing as
+		 And "SqlBulkTestWF" contains an SQL Bulk Insert "BulkInsert" using database "NewSqlBulkInsertSource" and table "dbo.MailingList" and KeepIdentity set "true" and Result set "[[result]]" for testing as
 		   | Column | Mapping             | IsNullable | DataTypeName | MaxLength | IsAutoIncrement |
 		   | Name   | Warewolf            | false      | varchar      | 50        | false           |
 		   | Email  | Warewolf@dev2.co.za | false      | varchar      | 50        | false           |

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -66,7 +66,7 @@ namespace Dev2.Runtime.ResourceUpgrades
 
         XElement Upgrade(XElement arg)
         {
-            string xml = arg.ToString();
+            var xml = arg.ToString();
             xml = EncryptPasswordsAndConnectionStrings(xml);
             return XElement.Parse(xml);
         }
@@ -75,24 +75,13 @@ namespace Dev2.Runtime.ResourceUpgrades
 
         #endregion
 
-        public string EncryptSourceConnectionStrings(string xml)
-        {
-            return StringTransform.TransformAllMatches(xml, new List<StringTransform> { _replacements["Source"] });
-        }
+        public string EncryptSourceConnectionStrings(string xml) => StringTransform.TransformAllMatches(xml, new List<StringTransform> { _replacements["Source"] });
 
-        public string EncryptDsfFileWritePasswords(string xml)
-        {
-            return StringTransform.TransformAllMatches(xml, new List<StringTransform> { _replacements["DsfAbstractFileActivity"] });
-        }
+        public string EncryptDsfFileWritePasswords(string xml) => StringTransform.TransformAllMatches(xml, new List<StringTransform> { _replacements["DsfAbstractFileActivity"] });
 
-        public string EncryptPasswordsAndConnectionStrings(string xml)
-        {
-            return EncryptSourceConnectionStrings(
+        public string EncryptPasswordsAndConnectionStrings(string xml) => EncryptSourceConnectionStrings(
                 EncryptDsfFileWritePasswords(
                 xml)
                 );
-        }
-
-
     }
 }

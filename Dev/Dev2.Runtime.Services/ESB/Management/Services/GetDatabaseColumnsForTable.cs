@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,39 +18,22 @@ using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
 using Oracle.ManagedDataAccess.Client;
 using System.Data.Odbc;
-using Dev2.Common.Interfaces.Enums;
+using System.Data.SQLite;
 using MySql.Data.MySqlClient;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    // NOTE: Only use for design time in studio as errors will NOT be forwarded!
-    public class GetDatabaseColumnsForTable : IEsbManagementEndpoint
+    public class GetDatabaseColumnsForTable : DefaultEsbManagementEndpoint
     {
-        #region Implementation of ISpookyLoadable<string>
-
-        public string HandlesType()
-        {
-            return "GetDatabaseColumnsForTableService";
-        }
-
-        #endregion
-
-        #region Implementation of IEsbManagementEndpoint
-
-        /// <summary>
-        /// Executes the service
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <param name="theWorkspace">The workspace.</param>
-        /// <returns></returns>
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        #region Implementation of DefaultEsbManagementEndpoint
+        
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             if (values == null)
             {
@@ -76,7 +59,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 schema = tmp.ToString();
             }
 
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
 
             if (string.IsNullOrEmpty(database))
             {
@@ -117,7 +100,26 @@ namespace Dev2.Runtime.ESB.Management.Services
                             }
                             break;
                         }
-                    case enSourceType.Oracle:
+					case enSourceType.SQLiteDatabase:
+						{
+							using (var connection = new SQLiteConnection(runtTimedbSource.ConnectionString))
+							{
+								// Connect to the database then retrieve the schema information.
+								connection.Open();
+								var sql = @"select  * from  " + tableName.Trim('"').Replace("[", "").Replace("]", "") + " Limit 1 ";
+
+								using (var sqlcmd = new SQLiteCommand(sql, connection))
+								{
+									// force it closed so we just get the proper schema ;)
+									using (var sdr = sqlcmd.ExecuteReader(CommandBehavior.CloseConnection))
+									{
+										columnInfo = sdr.GetSchemaTable();
+									}
+								}
+							}
+							break;
+						}
+					case enSourceType.Oracle:
                         {
                             using (var connection = new OracleConnection(runtTimedbSource.ConnectionString))
                             {
@@ -189,20 +191,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     foreach (DataRow row in columnInfo.Rows)
                     {
-                        var columnName = row["ColumnName"] as string;
-                        var isNullable = row["AllowDBNull"] is bool && (bool)row["AllowDBNull"];
-                        var isIdentity = row["IsIdentity"] is bool && (bool)row["IsIdentity"];
-                        var dbColumn = new DbColumn { ColumnName = columnName, IsNullable = isNullable, IsAutoIncrement = isIdentity };
-
-                        var typeValue = dbSource.ServerType == enSourceType.SqlDatabase ? row["DataTypeName"] as string : ((Type)row["DataType"]).Name;
-                        if (Enum.TryParse(typeValue, true, out SqlDbType sqlDataType))
-                        {
-                            dbColumn.SqlDataType = sqlDataType;
-                        }
-
-                        var columnLength = row["ColumnSize"] as int? ?? -1;
-                        dbColumn.MaxLength = columnLength;
-                        dbColumns.Items.Add(dbColumn);
+                        AddDbColumn(dbSource, dbColumns, row);
                     }
                 }
                 return serializer.SerializeToBuilder(dbColumns);
@@ -215,40 +204,28 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        /// <summary>
-        /// Creates the service entry.
-        /// </summary>
-        /// <returns></returns>
-        public DynamicService CreateServiceEntry()
+        static void AddDbColumn(DbSource dbSource, DbColumnList dbColumns, DataRow row)
         {
-            var ds = new DynamicService
+            var columnName = row["ColumnName"] as string;
+            var isNullable = row["AllowDBNull"] is bool && (bool)row["AllowDBNull"];
+            var isIdentity = row["IsIdentity"] is bool && (bool)row["IsIdentity"];
+            var dbColumn = new DbColumn { ColumnName = columnName, IsNullable = isNullable, IsAutoIncrement = isIdentity };
+
+            var typeValue = dbSource.ServerType == enSourceType.SqlDatabase ? row["DataTypeName"] as string : ((Type)row["DataType"]).Name;
+            if (Enum.TryParse(typeValue, true, out SqlDbType sqlDataType))
             {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Database ColumnIODirection=\"Input\"/><TableName ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
+                dbColumn.SqlDataType = sqlDataType;
+            }
 
-            var sa = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            ds.Actions.Add(sa);
-
-            return ds;
+            var columnLength = row["ColumnSize"] as int? ?? -1;
+            dbColumn.MaxLength = columnLength;
+            dbColumns.Items.Add(dbColumn);
         }
 
         #endregion
 
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Database ColumnIODirection=\"Input\"/><TableName ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
+        public override string HandlesType() => "GetDatabaseColumnsForTableService";
     }
 }

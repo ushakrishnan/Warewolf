@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -51,8 +51,20 @@ namespace Dev2.Runtime.ServiceModel.Data
                 Outputs.AddRange(outputs);
             }
         }
-
-        [DataMember]
+		public ServiceMethod(string name, string sourceCode, string queryString, IOutputDescription outputDescription, IEnumerable<MethodOutput> outputs)
+		{
+			Name = name;
+			SourceCode = sourceCode;
+			QueryString = queryString;
+			OutputDescription = outputDescription;
+			OutParameters = new List<MethodParameter>();
+			Outputs = new List<MethodOutput>();
+			if (outputs != null)
+			{
+				Outputs.AddRange(outputs);
+			}
+		}
+		[DataMember]
         public List<MethodParameter> OutParameters { get; set; }
 
         #endregion
@@ -70,8 +82,8 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         [DataMember]
         public string SourceCode { get; set; }
-
-        [DataMember]
+		public string QueryString { get; }
+		[DataMember]
         public string FullName { get; set; }
 
         [DataMember]
@@ -94,10 +106,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         #region ToString
 
-        public override string ToString()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
+        public override string ToString() => JsonConvert.SerializeObject(this);
 
         #endregion
 

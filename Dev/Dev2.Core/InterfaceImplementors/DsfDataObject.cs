@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,11 +12,13 @@ using System;
 using System.Activities.Persistence;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+
 using System.Linq;
 using System.Reflection;
 using System.Security.Principal;
 using System.Text;
 using System.Xml.Linq;
+
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Communication;
@@ -41,14 +43,14 @@ namespace Dev2.DynamicServices
     {
         #region Class Members
 
-        private readonly XNamespace _dSfDataObjectNs = XNamespace.Get("http://dev2.co.za/");
-        private string _parentWorkflowInstanceId = string.Empty;
-        private readonly ConcurrentStack<IExecutionEnvironment> _environments;
+        readonly XNamespace _dSfDataObjectNs = XNamespace.Get("http://dev2.co.za/");
+        string _parentWorkflowInstanceId = string.Empty;
+        readonly ConcurrentStack<IExecutionEnvironment> _environments;
         #endregion Class Members
 
         #region Constructor
 
-        private DsfDataObject()
+        DsfDataObject()
         {
             Environment = new ExecutionEnvironment();
             _environments = new ConcurrentStack<IExecutionEnvironment>();
@@ -75,90 +77,17 @@ namespace Dev2.DynamicServices
                         xe = XElement.Parse(xmldata);
                     }
                 }
-                
                 catch (Exception)
-                
                 {
-                    // we only trying to parse ;)
+                    // try parse ;)
                 }
 
                 if (xe != null)
                 {
-                    bool isDebug;
-                    string debugString = ExtractValue(xe, "IsDebug");
-                    if (!string.IsNullOrEmpty(debugString))
-                    {
-                        bool.TryParse(debugString, out isDebug);
-                    }
-                    else
-                    {
-                        debugString = ExtractValue(xe, "BDSDebugMode");
-                        bool.TryParse(debugString, out isDebug);
-                    }
-                    IsDebug = isDebug;
-
-                    Guid.TryParse(ExtractValue(xe, "DebugSessionID"), out Guid debugSessionId);
-                    DebugSessionID = debugSessionId;
-
-                    if (Guid.TryParse(ExtractValue(xe, "EnvironmentID"), out Guid environmentId))
-                    {
-                        EnvironmentID = environmentId;
-                        DebugEnvironmentId = environmentId;
-                    }
-
-                    bool isOnDemandSimulation = false;
-                    string onDemandSimulationString = ExtractValue(xe, "IsOnDemandSimulation");
-                    if (!string.IsNullOrEmpty(onDemandSimulationString))
-                    {
-                        bool.TryParse(onDemandSimulationString, out isOnDemandSimulation);
-                    }
-                    IsOnDemandSimulation = isOnDemandSimulation;
-
-                    ParentServiceName = ExtractValue(xe, "ParentServiceName");
-                    _parentWorkflowInstanceId = ExtractValue(xe, "ParentWorkflowInstanceId");
-
-                    Guid.TryParse(ExtractValue(xe, "ExecutionCallbackID"), out Guid executionCallbackId);
-                    ExecutionCallbackID = executionCallbackId;
-
-                    Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid bookmarkExecutionCallbackId);
-                    BookmarkExecutionCallbackID = bookmarkExecutionCallbackId;
-
-                    if (BookmarkExecutionCallbackID == Guid.Empty && ExecutionCallbackID != Guid.Empty)
-                    {
-                        BookmarkExecutionCallbackID = ExecutionCallbackID;
-                    }
-
-                    Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid parentInstanceId);
-
-                    ParentInstanceID = ExtractValue(xe, "ParentInstanceID");
-
-                    Int32.TryParse(ExtractValue(xe, "NumberOfSteps"), out int numberOfSteps);
-                    NumberOfSteps = numberOfSteps;
-
-                    CurrentBookmarkName = ExtractValue(xe, "CurrentBookmarkName");
-
-
-                    if (Guid.TryParse(ExtractValue(xe, "WorkflowInstanceId"), out Guid instId))
-                    {
-                        WorkflowInstanceId = instId;
-                    }
-
-
-                    //
-                    // Extract merge data form request
-                    //
-                    ExtractInMergeDataFromRequest(xe);
-                    ExtractOutMergeDataFromRequest(xe);
+                    ExtractXmlValues(xe);
 
                     // set the ID ;)
                     DataListID = dataListId;
-
-                    // set the IsDataListScoped flag ;)
-                    bool.TryParse(ExtractValue(xe, "IsDataListScoped"), out bool isScoped);
-                    IsDataListScoped = isScoped;
-
-                    // Set incoming service name ;)
-                    ServiceName = ExtractValue(xe, "Service");
 
                     // finally set raw payload
                     RawPayload = new StringBuilder(xmldata);
@@ -171,12 +100,86 @@ namespace Dev2.DynamicServices
             }
         }
 
+        void ExtractXmlValues(XElement xe)
+        {
+            bool isDebug;           
+            var debugString = ExtractValue(xe, "IsDebug");
+            if (!string.IsNullOrEmpty(debugString))
+            {
+                bool.TryParse(debugString, out isDebug);
+            }
+            else
+            {
+                debugString = ExtractValue(xe, "BDSDebugMode");
+                bool.TryParse(debugString, out isDebug);
+            }
+            IsDebug = isDebug;
+
+            Guid.TryParse(ExtractValue(xe, "DebugSessionID"), out Guid debugSessionId);
+            DebugSessionID = debugSessionId;
+
+            if (Guid.TryParse(ExtractValue(xe, "EnvironmentID"), out Guid environmentId))
+            {
+                EnvironmentID = environmentId;
+                DebugEnvironmentId = environmentId;
+            }
+
+            var isOnDemandSimulation = false;
+            var onDemandSimulationString = ExtractValue(xe, "IsOnDemandSimulation");
+            if (!string.IsNullOrEmpty(onDemandSimulationString))
+            {
+                bool.TryParse(onDemandSimulationString, out isOnDemandSimulation);
+            }
+            IsOnDemandSimulation = isOnDemandSimulation;
+
+            ParentServiceName = ExtractValue(xe, "ParentServiceName");
+            _parentWorkflowInstanceId = ExtractValue(xe, "ParentWorkflowInstanceId");
+
+            Guid.TryParse(ExtractValue(xe, "ExecutionCallbackID"), out Guid executionCallbackId);
+            ExecutionCallbackID = executionCallbackId;
+
+            Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid bookmarkExecutionCallbackId);
+            BookmarkExecutionCallbackID = bookmarkExecutionCallbackId;
+
+            if (BookmarkExecutionCallbackID == Guid.Empty && ExecutionCallbackID != Guid.Empty)
+            {
+                BookmarkExecutionCallbackID = ExecutionCallbackID;
+            }
+
+            Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid parentInstanceId);
+
+            ParentInstanceID = ExtractValue(xe, "ParentInstanceID");
+
+            Int32.TryParse(ExtractValue(xe, "NumberOfSteps"), out int numberOfSteps);
+            NumberOfSteps = numberOfSteps;
+
+            CurrentBookmarkName = ExtractValue(xe, "CurrentBookmarkName");
+
+            if (Guid.TryParse(ExtractValue(xe, "WorkflowInstanceId"), out Guid instId))
+            {
+                WorkflowInstanceId = instId;
+            }
+
+            //
+            // Extract merge data form request
+            //
+            ExtractInMergeDataFromRequest(xe);
+            ExtractOutMergeDataFromRequest(xe);
+
+            // set the IsDataListScoped flag ;)
+            bool.TryParse(ExtractValue(xe, "IsDataListScoped"), out bool isScoped);
+            IsDataListScoped = isScoped;
+
+            // Set incoming service name ;)
+            ServiceName = ExtractValue(xe, "Service");
+        }
+
         public Guid DebugEnvironmentId { get; set; }
 
-        private string ExtractValue(XElement xe, string elementName)
+        string ExtractValue(XElement xe, string elementName)
         {
-            IEnumerable<XElement> tmp = xe.Descendants(elementName);
-            XElement targetElement = tmp.FirstOrDefault();
+            var tmp = xe.Descendants(elementName);
+            var targetElement = tmp.FirstOrDefault();
 
             return targetElement?.Value ?? string.Empty;
         }
@@ -185,7 +188,7 @@ namespace Dev2.DynamicServices
 
         #region Properties
 
-        private StringBuilder _rawPayload;
+        StringBuilder _rawPayload;
         public ServiceAction ExecuteAction { get; set; }
         public string ParentWorkflowXmlData { get; set; }
         public Guid DebugSessionID { get; set; }
@@ -313,6 +316,8 @@ namespace Dev2.DynamicServices
 
         public Guid? ExecutionID { get; set; }
         public string WebUrl { get; set; }
+        public IStateNotifier StateNotifier { get; set; }
+        public IDev2WorkflowSettings Settings { get; set; }
 
         #endregion Properties
 
@@ -386,19 +391,24 @@ namespace Dev2.DynamicServices
             result.WebUrl = WebUrl;
             result.IsSubExecution = IsSubExecution;
             result.QueryString = QueryString;
+            result.ExecutingUser = ExecutingUser;
+            result.StateNotifier = StateNotifier;
             if (ServiceTest != null)
             {
-                Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+                var serializer = new Dev2JsonSerializer();
                 var testString = serializer.Serialize(ServiceTest);
                 result.ServiceTest = serializer.Deserialize<IServiceTestModelTO>(testString);
+            }            
+            if (Settings != null)
+            {
+                var serializer = new Dev2JsonSerializer();
+                var testString = serializer.Serialize(Settings);
+                result.Settings = serializer.Deserialize<IDev2WorkflowSettings>(testString);
             }
             return result;
         }
 
-        public bool IsDebugMode()
-        {
-            return (IsDebug || WorkflowLoggger.ShouldLog(ResourceID) || RemoteInvoke) && !RunWorkflowAsync;
-        }
+        public bool IsDebugMode() => (IsDebug || WorkflowLoggger.ShouldLog(ResourceID) || RemoteInvoke) && !RunWorkflowAsync;
 
         #endregion
 
@@ -444,7 +454,7 @@ namespace Dev2.DynamicServices
         {
             foreach (XName key in readWriteValues.Keys)
             {
-                PropertyInfo pi = typeof(IDSFDataObject).GetProperty(key.LocalName);
+                var pi = typeof(IDSFDataObject).GetProperty(key.LocalName);
 
                 if (pi != null)
                 {
@@ -457,7 +467,7 @@ namespace Dev2.DynamicServices
 
         #region Private Methods
 
-        private void ExtractOutMergeDataFromRequest(XElement xe)
+        void ExtractOutMergeDataFromRequest(XElement xe)
         {
             Guid.TryParse(ExtractValue(xe, "DatalistOutMergeID"), out Guid datalistOutMergeId);
             DatalistOutMergeID = datalistOutMergeId;
@@ -476,7 +486,7 @@ namespace Dev2.DynamicServices
                 : DataListMergeFrequency.OnCompletion;
         }
 
-        private void ExtractInMergeDataFromRequest(XElement xe)
+        void ExtractInMergeDataFromRequest(XElement xe)
         {
             Guid.TryParse(ExtractValue(xe, "DatalistInMergeID"), out Guid datalistInMergeId);
             DatalistInMergeID = datalistInMergeId;

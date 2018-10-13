@@ -53,7 +53,7 @@ public class COMPluginSourceSteps
 
     }
 
-    private static ManageComPluginSourceControl CreateSourceControl()
+    static ManageComPluginSourceControl CreateSourceControl()
     {
         return new ManageComPluginSourceControl();
     }
@@ -70,6 +70,7 @@ public class COMPluginSourceSteps
         };
         return listing;
     }
+
     [BeforeScenario("ComPluginSource")]
     public void SetupForPluginSource()
     {

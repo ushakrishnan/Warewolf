@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -51,19 +51,15 @@ namespace Dev2.DataList.Contract
             Recordset = recordset;
             RecordsetIndex = index;
 
-            if(recordset != null)
+            if (recordset != null && recordset.Contains("[") && recordset.Contains("]"))
             {
-                if(recordset.Contains("[") && recordset.Contains("]"))
-                {
-                    int start = recordset.IndexOf("(", StringComparison.Ordinal);
-                    Recordset = start != -1 ? recordset.Substring(0, start) : recordset.Replace("[", "").Replace("]", "");
-                }
+                var start = recordset.IndexOf("(", StringComparison.Ordinal);
+                Recordset = start != -1 ? recordset.Substring(0, start) : recordset.Replace("[", "").Replace("]", "");
             }
-
+            
             Field = field;
             Description = description;
-
-
+            
             if(useRaw)
             {
                 DisplayValue = field.Length > 0 ? "[[" + recordset + field + "]]" : "[[" + field + "]]";
@@ -79,30 +75,40 @@ namespace Dev2.DataList.Contract
                 {
                     if(field.Length > 0)
                     {
-                        if(recordset != null && recordset.Contains("(") && recordset.Contains(")"))
-                        {
-                            string tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
-
-                            DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")." + field + "]]";
-                        }
-                        else
-                        {
-                            DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")." + field + "]]";
-                        }
+                        DisplayRecordsetWithField(recordset, field);
                     }
                     else
                     {
-                        if(recordset != null && recordset.Contains("(") && recordset.Contains(")"))
-                        {
-                            string tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
-                            DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")]]";
-                        }
-                        else
-                        {
-                            DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")]]";
-                        }
+                        DisplayRecordsetOnly(recordset);
                     }
                 }
+            }
+        }
+
+        private void DisplayRecordsetOnly(string recordset)
+        {
+            if (recordset != null && recordset.Contains("(") && recordset.Contains(")"))
+            {
+                var tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
+                DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")]]";
+            }
+            else
+            {
+                DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")]]";
+            }
+        }
+
+        private void DisplayRecordsetWithField(string recordset, string field)
+        {
+            if (recordset != null && recordset.Contains("(") && recordset.Contains(")"))
+            {
+                var tmp = recordset.Substring(0, recordset.IndexOf("(", StringComparison.Ordinal));
+
+                DisplayValue = "[[" + tmp + "(" + RecordsetIndex + ")." + field + "]]";
+            }
+            else
+            {
+                DisplayValue = "[[" + Recordset + "(" + RecordsetIndex + ")." + field + "]]";
             }
         }
     }

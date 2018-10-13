@@ -9,6 +9,10 @@ using TechTalk.SpecFlow;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapClasses;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
+using Microsoft.VisualStudio.TestTools.UITest.Extension;
+using Warewolf.Launcher;
+using System.IO;
+using System.Reflection;
 
 namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
 {
@@ -19,7 +23,7 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
         [Then(@"Destination Remote Server Is Connected")]
         public void ThenDestinationRemoteServerIsConnected()
         {
-            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.RemoteConnectionIntegrationText.Exists, "Remote Server is Disconnected");
+            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.RemoteContainerText.Exists, "Remote Server is Disconnected");
         }
 
         [Then(@"The deploy validation message is ""(.*)""")]
@@ -55,6 +59,14 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
         {
             MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DeployButton.WaitForControlCondition((control) => { return (control as WpfButton).Enabled; }, 60000);
             Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DeployButton.Enabled, "Deploy button is not enabled");
+        }
+
+        [Given(@"I Click Close Deploy Tab")]
+        [When(@"I Click Close Deploy Tab")]
+        [Then(@"I Click Close Deploy Tab")]
+        public void Click_Close_Deploy_Tab()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.CloseButton, new Point(16, 11));
         }
 
         [Then(@"Filtered Resourse Is Checked For Deploy")]
@@ -93,6 +105,17 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
             Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.RemoteConnectionIntegrationText.Exists, "Selected source server in deploy is not Remote Connection Integration (Connected).");
         }
 
+        [When(@"I Select LocalServerSource From Deploy Tab Destination Server Combobox")]
+        [Then(@"I Select LocalServerSource From Deploy Tab Destination Server Combobox")]
+        [Given(@"I Select LocalServerSource From Deploy Tab Destination Server Combobox")]
+        public void Select_LocalServerSource_From_Deploy_Tab_Destination_Server_Combobox()
+        {
+            UIMap.WaitForControlVisible(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.ToggleButton);
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.ToggleButton);
+            Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsLocalServerSource);
+            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.LocalServerSourceText.Exists, "Selected source server in deploy is not Remote Connection Integration (Connected).");
+        }
+
         [When(@"I Select LocalhostConnected From Deploy Tab Source Server Combobox")]
         [Then(@"I Select LocalhostConnected From Deploy Tab Source Server Combobox")]
         [Given(@"I Select LocalhostConnected From Deploy Tab Source Server Combobox")]
@@ -101,9 +124,8 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
             UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.ToggleButton);
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsLocalhost);
-            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.RemoteConnectionIntegrationText.Exists, "Selected source server in deploy is not Remote Connection Integration.");
+            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.RemoteContainerText.Exists, "Selected source server in deploy is not Remote Connection Integration.");
         }
-
 
         [When(@"I Select localhost From Deploy Tab Source Server Combobox")]
         public void Select_localhost_From_Deploy_Tab_Source_Server_Combobox()
@@ -114,40 +136,22 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsLocalhost, new Point(226, 13));
             Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.LocalhostText.Exists, "Selected source server in deploy is not localhost (Connected).");
         }
-
-        [When(@"I Select RemoteConnectionIntegration \(Connected\) From Deploy Tab Source Server Combobox")]
-        public void Select_ConnectedRemoteConnectionIntegration_From_Deploy_Tab_Source_Server_Combobox()
-        {
-            UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
-            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.ToggleButton, new Point(230, 9));
-            Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Text, new Point(226, 13));
-            Assert.AreEqual("Remote Connection Integration (Connected)", MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.RemoteConnectionIntegrationText.DisplayText, "Selected source server in deploy is not Remote Connection Integration (Connected).");
-        }
-
-        [Given(@"I Select RemoteConnectionIntegration \(Connected\) From Deploy Tab Destination Server Combobox")]
-        [When(@"I Select RemoteConnectionIntegration \(Connected\) From Deploy Tab Destination Server Combobox")]
-        [Then(@"I Select RemoteConnectionIntegration \(Connected\) From Deploy Tab Destination Server Combobox")]
-        public void Select_ConnectedRemoteConnectionIntegration_From_Deploy_Tab_Destination_Server_Combobox()
-        {
-            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.ToggleButton, new Point(230, 9));
-            Mouse.Click(MainStudioWindow.DeployDestinationRemoteConnection.ConnectedRemoteServer);
-            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.RemoteConnectionIntegrationText.Exists, "Selected destination server in deploy is not Remote Connection Integration (Connected).");
-        }
         
         [When(@"I Select RemoteConnectionIntegration From Deploy Tab Destination Server Combobox")]
         public void Select_RemoteConnectionIntegration_From_Deploy_Tab_Destination_Server_Combobox()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.ToggleButton, new Point(230, 9));
-            Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Exists, "Remote Connection Integration option does not exist in Destination server combobox.");
+            Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer.Exists, "Remote Connection Integration option does not exist in Destination server combobox.");
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Text, new Point(226, 13));
+            UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Spinner);
             Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.RemoteConnectionIntegrationText.Exists, "Selected destination server in deploy is not Remote Connection Integration.");
-        }
+        }        
 
-        [When(@"I Select LocalhostConnected From Deploy Tab Destination Server Combobox")]
+       [When(@"I Select LocalhostConnected From Deploy Tab Destination Server Combobox")]
         public void Select_LocalhostConnected_From_Deploy_Tab_Destination_Server_Combobox()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DestinationServerConectControl.Combobox.ToggleButton, new Point(230, 9));
-            Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsLocalhost.Exists, "Remote Connection Integration option does not exist in Destination server combobox.");
+            Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsLocalhost.Exists, "Remote Container option does not exist in Destination server combobox.");
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsLocalhost, new Point(226, 13));
         }
         
@@ -182,10 +186,18 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsNewRemoteServer, new Point(223, 10));
         }
 
-        [When(@"I Click Deploy Tab Destination Server Remote Connection Intergration Item")]
-        [Then(@"I Click Deploy Tab Destination Server Remote Connection Intergration Item")]
-        [Given(@"I Click Deploy Tab Destination Server Remote Connection Intergration Item")]
-        public void Click_Deploy_Tab_Destination_Server_Remote_Connection_Intergration_Item()
+        [When(@"I Click Deploy Tab Destination Server Remote Container Item")]
+        [Then(@"I Click Deploy Tab Destination Server Remote Container Item")]
+        [Given(@"I Click Deploy Tab Destination Server Remote Container Item")]
+        public void Click_Deploy_Tab_Destination_Server_Remote_Container_Item()
+        {
+            Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer, new Point(223, 10));
+        }
+
+        [When(@"I Click Deploy Tab Destination Server Remote Connection Integration Item")]
+        [Then(@"I Click Deploy Tab Destination Server Remote Connection Integration Item")]
+        [Given(@"I Click Deploy Tab Destination Server Remote Connection Integration Item")]
+        public void Click_Deploy_Tab_Destination_Server_Remote_Connection_Integration_Item()
         {
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration, new Point(223, 10));
         }
@@ -257,12 +269,19 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
                 Assert.IsFalse(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DeployButton.Enabled);
         }
 
-        [Given(@"I Select localhost from the source tab")]
-        [When(@"I Select localhost from the source tab")]
-        [Then(@"I Select localhost from the source tab")]
+        [Given(@"I Select localhost checkbox from the source tab")]
+        [When(@"I Select localhost checkbox from the source tab")]
+        [Then(@"I Select localhost checkbox from the source tab")]
         public void WhenISelectLocalhostFromTheSourceTab()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.EnvironmentNameCheckCheckBox);
+        }
+
+        [Given(@"Source explorer first item is checked")]
+        [Then(@"Source explorer first item is checked")]
+        public void SourceExplorerFirstItemIsChecked()
+        {
+            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Item1.CheckBox.Checked, "Explorer first resources is unchecked.");
         }
 
         [Then(@"I validate I can not Deploy ""(.*)""")]
@@ -288,33 +307,129 @@ namespace Warewolf.UI.Tests.Deploy.DeployUIMapClasses
         {
             MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.SourceServerName.FirstExplorerTreeItem.CheckBox.Checked = true;
         }
-        
+
+        [When(@"I DeSelect Deploy First Source Item")]
+        [Then(@"I DeSelect Deploy First Source Item")]
+        [Given(@"I DeSelect Deploy First Source Item")]
+        public void DeSelect_Deploy_First_Source_Item()
+        {
+            MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.SourceServerName.FirstExplorerTreeItem.CheckBox.Checked = false;
+        }
+
         [When(@"I Click Deploy Tab Deploy Button")]
         public void Click_Deploy_Tab_Deploy_Button()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DeployButton);
-            DialogsUIMap.MessageBoxWindow.WaitForControlExist(60000);
             WaitForDeploySuccess();
         }
 
         void WaitForDeploySuccess()
         {
-            var timeout = 60;
-            var successful = false;
-            while (timeout-- > 0 && !successful)
+            bool seenVersionConflict = false;
+            bool seenSecondVersionConflict = false;
+            bool seenConflict = false;
+            bool successful = TryWaitForADeployMessageDialog(ref seenVersionConflict, ref seenSecondVersionConflict, ref seenConflict);
+            if (!successful)
             {
-                if (DialogsUIMap.MessageBoxWindow.Exists)
+                successful = TryWaitForADeployMessageDialog(ref seenVersionConflict, ref seenSecondVersionConflict, ref seenConflict);
+                if (!successful)
                 {
-                    DialogsUIMap.MessageBoxWindow.OKButton.WaitForControlReady(60000);
-                    successful = UIMap.ControlExistsNow(DialogsUIMap.MessageBoxWindow.ResourcesDeployedSucText);
-                    Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
-                }
-                else
-                {
-                    Playback.Wait(1000);
+                    successful = TryWaitForADeployMessageDialog(ref seenVersionConflict, ref seenSecondVersionConflict, ref seenConflict);
+                    if (!successful)
+                    {
+                        successful = TryWaitForADeployMessageDialog(ref seenVersionConflict, ref seenSecondVersionConflict, ref seenConflict);
+                    }
                 }
             }
             Assert.IsTrue(successful, "Deploy failed.");
+        }
+
+        [When(@"I Click Deploy Tab Deploy Button with no version conflict dialog")]
+        public void Click_Deploy_Tab_Deploy_Button_no_version_conflict_dialog()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.DeployButton);
+            WaitForDeploySuccessSkippingVersionConflicts();
+        }
+
+        void WaitForDeploySuccessSkippingVersionConflicts()
+        {
+            bool seenVersionConflict = false;
+            bool seenConflict = false;
+            bool successful = TryWaitForADeployMessageDialog(ref seenConflict, ref seenVersionConflict);
+            if (!successful)
+            {
+                successful = TryWaitForADeployMessageDialog(ref seenConflict, ref seenVersionConflict);
+                if (!successful)
+                {
+                    successful = TryWaitForADeployMessageDialog(ref seenConflict, ref seenVersionConflict);
+                }
+            }
+            Assert.IsTrue(successful, "Deploy failed.");
+        }
+
+        bool TryWaitForADeployMessageDialog(ref bool seenConflict, ref bool seenVersionConflict, ref bool seenSecondVersionConflict)
+        {
+            bool OKButtonReady = DialogsUIMap.MessageBoxWindow.OKButton.WaitForControlCondition((control) => { return control.TryGetClickablePoint(out Point point); }, 60000);
+            if (!seenVersionConflict && !seenSecondVersionConflict && !seenConflict)
+            {
+                seenVersionConflict = DialogsUIMap.MessageBoxWindow.DeployVersionConflicText.Exists;
+                if (seenVersionConflict && OKButtonReady)
+                {
+                    Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+                    return false;
+                }
+            }
+            if (!seenSecondVersionConflict && !seenConflict)
+            {
+                seenSecondVersionConflict = DialogsUIMap.MessageBoxWindow.DeployVersionConflicText.Exists;
+                if (seenSecondVersionConflict && OKButtonReady)
+                {
+                    Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+                    return false;
+                }
+            }
+            if (!seenConflict)
+            {
+                seenConflict = DialogsUIMap.MessageBoxWindow.DeployConflictsText.Exists;
+                if (seenConflict && OKButtonReady)
+                {
+                    Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+                    return false;
+                }
+            }
+            var successful = DialogsUIMap.MessageBoxWindow.ResourcesDeployedSucText.Exists;
+            if (successful && OKButtonReady)
+            {
+                Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+            }
+            return successful;
+        }
+
+        bool TryWaitForADeployMessageDialog(ref bool seenConflict, ref bool seenVersionConflict)
+        {
+            DialogsUIMap.MessageBoxWindow.OKButton.WaitForControlCondition((control) => { return control.TryGetClickablePoint(out Point point); }, 60000);
+            if (!seenVersionConflict && !seenConflict)
+            {
+                if (DialogsUIMap.MessageBoxWindow.DeployVersionConflicText.Exists)
+                {
+                    Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+                    return false;
+                }
+            }
+            if (!seenConflict)
+            {
+                if (DialogsUIMap.MessageBoxWindow.DeployConflictsText.Exists)
+                {
+                    Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+                    return false;
+                }
+            }
+            var successful = DialogsUIMap.MessageBoxWindow.ResourcesDeployedSucText.Exists;
+            if (successful)
+            {
+                Mouse.Click(DialogsUIMap.MessageBoxWindow.OKButton);
+            }
+            return successful;
         }
 
         [When(@"I Click Deploy Tab Deploy Button And Cancel")]

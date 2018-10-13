@@ -1,4 +1,5 @@
-﻿using System.CodeDom.Compiler;
+﻿using Keyboard = Microsoft.VisualStudio.TestTools.UITesting.Keyboard;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UITest.Extension;
@@ -15,6 +16,8 @@ using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.DotNetPluginSource.DotNetPluginSourceUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
 using Warewolf.UI.Tests.ComPluginSource.ComPluginSourceUIMapClasses;
+using System.Diagnostics;
+using System;
 
 namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
 {
@@ -34,6 +37,18 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
         public void Open_SQLBulkInsertTool_QVIView()
         {
             MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlBulkInsert.QVIToggleButton.Pressed = true;
+        }
+
+        [When(@"I Double Click AdvancedRecordset Tool to Change View")]
+        public void AdvancedRecordsetTool_ChangeView_With_DoubleClick()
+        {
+            Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.AdvancedRecordset, new Point(238, 15));
+        }
+
+        [When(@"I Single Click AdvancedRecordset Tool to Change View")]
+        public void AdvancedRecordsetTool_Select_With_SingleClick()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.AdvancedRecordset, new Point(238, 15));
         }
 
         [When(@"I Double Click MySqlDatabase Tool to Change View")]
@@ -63,9 +78,11 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
         [When(@"I Double Click SqlServerDatabase Tool to Change View")]
         public void SqlServerDatabaseTool_ChangeView_With_DoubleClick()
         {
-            Point point;
-            MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.WaitForControlCondition((control)=> { return control.TryGetClickablePoint(out point); }, 60000);
-            Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase, new Point(169, 10));
+            Point point = new Point();
+            MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.WaitForControlCondition((control) => { return control.TryGetClickablePoint(out point); }, 60000);
+            point.Y = point.Y + 5;
+            point.X = point.X + 30;
+            Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase, point);
         }
 
         [Given(@"I Double Click SqlBulkInsert Tool to Change View")]
@@ -81,6 +98,11 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
         {
             Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.DoneButton.Exists, "SQL Server large view done button does not exist.");
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.DoneButton, new Point(35, 6));
+        }
+
+        internal void Open_AdvancedRecordset_Large_View_By_Double_Click()
+        {
+            Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.AdvancedRecordset, new Point(215, 6));
         }
 
         [When(@"I Click SQL Server Large View Generate Outputs")]
@@ -125,6 +147,11 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
         public void Click_NewSourceButton_From_OracleTool()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.OracleDatabaseActCustom.LargeView.NewSourceButton, new Point(30, 4));
+        }
+
+        internal void Right_Click_AdvancedRecordsetTool()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.AdvancedRecordset, MouseButtons.Right, ModifierKeys.None, new Point(182, 15));
         }
 
         [Given(@"I Click New Source Button From PostgreSQL Tool")]
@@ -215,6 +242,13 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
             Assert.AreEqual("0", MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkflowSurfaceContext.UIContentDockManagerCustom.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.LargeView.InputsTable.Row1.DataCell.DataCombobox.DataTextbox.Text, "SQL Server large view inputs row 1 data textbox text is not equal to S");
         }
 
+        [When(@"I Type 0 Into SQL Server Large View Inputs Row2 Data Textbox")]
+        public void Type_0_Into_SQL_Server_Large_View_Inputs_Row2_Data_Textbox()
+        {
+            MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkflowSurfaceContext.UIContentDockManagerCustom.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.LargeView.InputsTable.Row2.DataCell.DataCombobox.DataTextbox.Text = "0";
+            Assert.AreEqual("0", MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkflowSurfaceContext.UIContentDockManagerCustom.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.LargeView.InputsTable.Row2.DataCell.DataCombobox.DataTextbox.Text, "SQL Server large view inputs row 2 data textbox text is not equal to S");
+        }
+
         [When(@"I Type 0 Into SQL Server Large View Test Inputs Row1 Test Data Textbox")]
         public void Type_0_Into_SQL_Server_Large_View_Test_Inputs_Row1_Test_Data_Textbox()
         {
@@ -275,6 +309,11 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Database.DatabaseToolsUIMapClasses
         public void Click_EditSourceButton_On_SQLServerTool()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.SqlServerDatabase.LargeView.EditSourceButton);
+        }
+
+        public WpfEdit GetTestInputTextboxFromRow(UITestControl row)
+        {
+            return row.GetChildren()[2].GetChildren()[0].GetChildren()[0] as WpfEdit;
         }
 
         UIMap UIMap

@@ -16,7 +16,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class FetchPerformanceCountersTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -30,7 +30,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -44,7 +44,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchPerformanceCounters_HandlesType")]
         public void FetchPerformanceCounters_HandlesType_Get_ReturnsKnownString()
@@ -58,7 +58,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(fetchPerformanceCounters.HandlesType(), "FetchPerformanceCounters");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchPerformanceCounters_HandlesType")]
         public void FetchPerformanceCounters_HandlesType_Get_DynamicServiceEntry()
@@ -74,7 +74,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchPerformanceCounters_Manager")]
 
@@ -86,13 +86,13 @@ namespace Dev2.Tests.Runtime.Services
             //------------Execute Test---------------------------
 
             //------------Assert Results-------------------------
-            PrivateObject p = new PrivateObject(fetchPerformanceCounters);
+            var p = new PrivateObject(fetchPerformanceCounters);
             var nll =   p.GetProperty("Manager");
             Assert.IsNull(nll);
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchPerformanceCounters_Manager")]
         public void FetchPerformanceCounters_Manager_ValueIfRegistered()
@@ -106,13 +106,13 @@ namespace Dev2.Tests.Runtime.Services
             //------------Execute Test---------------------------
 
             //------------Assert Results-------------------------
-            PrivateObject p = new PrivateObject(fetchPerformanceCounters);
-           Assert.IsNotNull( p.GetProperty("Manager"));
+            var p = new PrivateObject(fetchPerformanceCounters);
+            Assert.IsNotNull( p.GetProperty("Manager"));
            Assert.IsTrue(ReferenceEquals( mng.Object, p.GetProperty("Manager")));
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("FetchPerformanceCounters_Manager")]
 
@@ -129,7 +129,7 @@ namespace Dev2.Tests.Runtime.Services
            var output =  fetchPerformanceCounters.Execute(new Dictionary<string, StringBuilder>(),new Mock<IWorkspace>().Object);
             //------------Assert Results-------------------------
             Assert.IsNotNull(output);
-            Dev2JsonSerializer ser = new Dev2JsonSerializer();
+            var ser = new Dev2JsonSerializer();
             var res =   ser.Deserialize<IPerformanceCounterTo>(output);
             Assert.IsNotNull(res);
         }

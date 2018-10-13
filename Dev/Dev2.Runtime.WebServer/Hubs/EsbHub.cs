@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -56,29 +56,15 @@ namespace Dev2.Runtime.WebServer.Hubs
         }
 
         #region Implementation of IDebugWriter
-
-        /// <summary>
-        ///     Writes the given state.
-        ///     <remarks>
-        ///         This must implement the one-way (fire and forget) message exchange pattern.
-        ///     </remarks>
-        /// </summary>
-        /// <param name="debugState">The state to be written.</param>
+        
         public void Write(IDebugState debugState)
         {
             SendDebugState(debugState as DebugState);
         }
         
-        /// <summary>
-        ///     Writes the given state.
-        ///     <remarks>
-        ///         This must implement the one-way (fire and forget) message exchange pattern.
-        ///     </remarks>
-        /// </summary>
-        /// <param name="serializedState">The state to be written.</param>
-        public void Write(string serializedState)
+        public void Write(string serializeObject)
         {
-            var debugState = _serializer.Deserialize<DebugState>(serializedState);
+            var debugState = _serializer.Deserialize<DebugState>(serializeObject);
             SendDebugState(debugState);
         }
 
@@ -181,7 +167,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                     var task = new Task<string>(() => value);
                     ResourceAffectedMessagesCache.Remove(resourceId);
                     task.Start();
-                    return await task;
+                    return await task.ConfigureAwait(true);
                 }
             }
             catch (Exception e)
@@ -202,12 +188,12 @@ namespace Dev2.Runtime.WebServer.Hubs
                 var user = hubCallerConnectionContext.User(Context.User.Identity.Name);
                 user.SendDebugState(debugSerializated);
             }
-            catch
+            catch (Exception ex)
             {
                 var user = hubCallerConnectionContext.Caller;
                 user.SendDebugState(debugSerializated);
             }
-           
+
         }
 
         void WriteEventProviderClientMessage<TMemo>(IEnumerable<ICompileMessageTO> messages, Action<TMemo, ICompileMessageTO> coalesceErrors)
@@ -242,7 +228,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                 foreach (var message in grouping)
                 {
                     memo.WorkspaceID = message.WorkspaceID;
-                    coalesceErrors(memo, message);
+                    coalesceErrors?.Invoke(memo, message);
                 }
             }
         }
@@ -251,18 +237,11 @@ namespace Dev2.Runtime.WebServer.Hubs
         {
             var task = new Task(() => DebugDispatcher.Instance.Add(workspaceId, this));
             task.Start();
-            await task;
+            await task.ConfigureAwait(true);
         }
-
-        /// <summary>
-        ///     Fetches the execute payload fragment.
-        /// </summary>
-        /// <param name="receipt">The receipt.</param>
-        /// <returns></returns>
+        
         public async Task<string> FetchExecutePayloadFragment(FutureReceipt receipt)
         {
-            // Set Requesting User as per what is authorized ;)
-            // Sneaky people may try to forge packets to get payload ;)
             if (Context.User.Identity.Name != null)
             {
                 receipt.User = Context.User.Identity.Name;
@@ -274,7 +253,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                 var task = new Task<string>(() => value);
 
                 task.Start();
-                return await task;
+                return await task.ConfigureAwait(true);
             }
             catch (Exception e)
             {
@@ -284,15 +263,6 @@ namespace Dev2.Runtime.WebServer.Hubs
             return null;
         }
 
-        /// <summary>
-        ///     Executes the command.
-        /// </summary>
-        /// <param name="envelope">The envelope.</param>
-        /// <param name="endOfStream">if set to <c>true</c> [end of stream].</param>
-        /// <param name="workspaceId">The workspace unique identifier.</param>
-        /// <param name="dataListId">The data list unique identifier.</param>
-        /// <param name="messageId">The message unique identifier.</param>
-        /// <returns></returns>
         public async Task<Receipt> ExecuteCommand(Envelope envelope, bool endOfStream, Guid workspaceId, Guid dataListId, Guid messageId)
         {
             var internalServiceRequestHandler = new InternalServiceRequestHandler { ExecutingUser = Context.User };
@@ -333,13 +303,11 @@ namespace Dev2.Runtime.WebServer.Hubs
                         };
 
                         var value = processRequest?.ToString();
-                        if (!string.IsNullOrEmpty(value))
+                        if (!string.IsNullOrEmpty(value) && !ResultsCache.Instance.AddResult(future, value))
                         {
-                            if (!ResultsCache.Instance.AddResult(future, value))
-                            {
-                                Dev2Logger.Error(new Exception(string.Format(ErrorResource.FailedToBuildFutureReceipt, Context.ConnectionId, value)), GlobalConstants.WarewolfError);
-                            }
+                            Dev2Logger.Error(new Exception(string.Format(ErrorResource.FailedToBuildFutureReceipt, Context.ConnectionId, value)), GlobalConstants.WarewolfError);
                         }
+
                         return new Receipt { PartID = envelope.PartID, ResultParts = 1 };
 
                     }
@@ -350,7 +318,7 @@ namespace Dev2.Runtime.WebServer.Hubs
                     return null;
                 });
                 task.Start();
-                return await task;
+                return await task.ConfigureAwait(true);
             }
             catch (Exception e)
             {
@@ -361,13 +329,7 @@ namespace Dev2.Runtime.WebServer.Hubs
         }
 
         #region Overrides of Hub
-
-        /// <summary>
-        ///     Called when the connection connects to this hub instance.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="T:System.Threading.Tasks.Task" />
-        /// </returns>
+        
         public override Task OnConnected()
         {
             
@@ -392,7 +354,7 @@ namespace Dev2.Runtime.WebServer.Hubs
             
             SetupEvents();
 
-            Task t = new Task(() =>
+            var t = new Task(() =>
             {
                 var workspaceId = Server.GetWorkspaceID(Context.User.Identity);
                 ResourceCatalog.Instance.LoadServerActivityCache();

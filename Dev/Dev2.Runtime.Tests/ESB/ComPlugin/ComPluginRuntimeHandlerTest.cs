@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,21 +28,12 @@ using System.Diagnostics;
 
 namespace Dev2.Tests.Runtime.ESB.ComPlugin
 {
-
-    /// <summary>
-    /// Summary description for ComPluginRuntimeHandlerTest
-    /// </summary>
     [TestClass]
 
     public class ComPluginRuntimeHandlerTest
     {
         public const string adodbConnectionClassId = "00000514-0000-0010-8000-00AA006D2EA4";
-
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        
+                
         public TestContext TestContext { get; set; }
 
         [ClassInitialize]
@@ -59,13 +50,13 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
                     stream.CopyTo(fileStream);
                 }
             }
-            Process regeditProcess = Process.Start("regedit.exe", "/s " + RegistryFilePath);
+            var regeditProcess = Process.Start("regedit.exe", "/s " + RegistryFilePath);
             regeditProcess.WaitForExit();
         }
 
         #region FetchNamespaceListObject
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_ListMethods")]
         public void ComPluginRuntimeHandler_ListMethods_WhenValidDll_ExpectListMethods_32bit()
@@ -85,7 +76,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             Assert.AreEqual(0, serviceMethodList.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_ListMethods")]
         public void ComPluginRuntimeHandler_ListMethods_WhenValidDll_ExpectListMethods_64Bit()
@@ -106,7 +97,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             CollectionAssert.AllItemsAreNotNull(result);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_FetchNamespaceListObject")]
         public void ComPluginRuntimeHandler_FetchNamespaceListObject_WhenValidDll_ExpectNamespaces()
@@ -128,14 +119,14 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             Assert.IsTrue(string.IsNullOrEmpty(assemblyLocation));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
-        public void BuildValuedTypeParams_GivenValid_ShouldPassThrough()
+        public void TryBuildValuedTypeParams_GivenValid_ShouldPassThrough()
         {
             //---------------Set up test pack-------------------
             var type = typeof(ComPluginRuntimeHandler);
-            var methodInfo = type.GetMethod("BuildValuedTypeParams", BindingFlags.Static | BindingFlags.NonPublic);
-            ComPluginInvokeArgs args = new ComPluginInvokeArgs
+            var methodInfo = type.GetMethod("TryBuildValuedTypeParams", BindingFlags.Static | BindingFlags.NonPublic);
+            var args = new ComPluginInvokeArgs
             {
                 ClsId = adodbConnectionClassId,
                 Is32Bit = false,
@@ -150,19 +141,19 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
                 }
             };
             //---------------Execute Test ----------------------
-            var enumerable = methodInfo.Invoke("BuildValuedTypeParams", new object[] { args }) as IEnumerable<object>;
+            var enumerable = methodInfo.Invoke("TryBuildValuedTypeParams", new object[] { args }) as IEnumerable<object>;
             //---------------Test Result -----------------------
             Assert.AreEqual(1,enumerable?.Count());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
-        public void BuildValuedTypeParams_GivenValidObjectparam_ShouldPassThrough()
+        public void TryBuildValuedTypeParams_GivenValidObjectparam_ShouldPassThrough()
         {
             //---------------Set up test pack-------------------
             var type = typeof(ComPluginRuntimeHandler);
-            var methodInfo = type.GetMethod("BuildValuedTypeParams", BindingFlags.Static | BindingFlags.NonPublic);
-            ComPluginInvokeArgs args = new ComPluginInvokeArgs
+            var methodInfo = type.GetMethod("TryBuildValuedTypeParams", BindingFlags.Static | BindingFlags.NonPublic);
+            var args = new ComPluginInvokeArgs
             {
                 ClsId = adodbConnectionClassId,
                 Is32Bit = false,
@@ -178,12 +169,12 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
                 }
             };
             //---------------Execute Test ----------------------
-            var enumerable = methodInfo.Invoke("BuildValuedTypeParams", new object[] { args }) as IEnumerable<object>;
+            var enumerable = methodInfo.Invoke("TryBuildValuedTypeParams", new object[] { args }) as IEnumerable<object>;
             //---------------Test Result -----------------------
             Assert.AreEqual(1,enumerable?.Count());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_FetchNamespaceListObject")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -198,7 +189,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_FetchNamespaceListObject")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -220,7 +211,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
 
         #region ListNamespaces
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_ListNamespaces")]
         public void ComPluginRuntimeHandler_ListNamespaces_WhenValidClassID_ExpectNamespaces()
@@ -235,7 +226,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_ListNamespaces")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -249,7 +240,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_ListMethods")]
         public void ComPluginRuntimeHandler_ListMethods_WhenInvalidLocation_ExpectNoResults()
@@ -263,10 +254,10 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             }
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_ListMethods")]
-        [DeploymentItem("WarewolfCOMIPC.exe")]
+        [DeploymentItem("Warewolf.COMIPC.exe"),DeploymentItem("Warewolf.COMIPC.pdb")]
         public void ComPluginRuntimeHandler_ListMethods_WhenValidLocation_ExpectResults()
         {
             //------------Setup for test--------------------------
@@ -283,7 +274,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
 
         #region Run and test
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_Run")]
         public void ComPluginRuntimeHandler_Run_WhenInvalidMethod_ExpectNoReturn()
@@ -300,7 +291,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_Test")]
         public void ComPluginRuntimeHandler_Test_WhenInvalidMethod_ExpectNoReturn()
@@ -317,7 +308,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_Test")]
         public void ComPluginRuntimeHandler_Test_WhenValidMethod_ExpectReturn()
@@ -339,7 +330,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("ComPluginRuntimeHandler_Run")]
         [ExpectedException(typeof(NullReferenceException))]
@@ -382,7 +373,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             };
         }
 
-        private static ComPluginService CreatePluginService()
+        static ComPluginService CreatePluginService()
         {
             return CreatePluginService(new ServiceMethod
             {
@@ -390,7 +381,7 @@ namespace Dev2.Tests.Runtime.ESB.ComPlugin
             });
         }
 
-        private static ComPluginService CreatePluginService(ServiceMethod method)
+        static ComPluginService CreatePluginService(ServiceMethod method)
         {
             var type = typeof(DummyClassForPluginTest);
 

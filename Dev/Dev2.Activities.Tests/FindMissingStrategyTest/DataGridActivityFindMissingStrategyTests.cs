@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using System.Collections.Generic;
 using Dev2.Activities;
+using Dev2.Activities.WcfEndPoint;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Convertors.Case;
 using Dev2.Common.Interfaces.DB;
@@ -19,7 +20,6 @@ using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
-
 
 namespace Dev2.Tests.Activities.FindMissingStrategyTest
 {
@@ -40,11 +40,11 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         [TestMethod]
         public void GetActivityFieldsOffBaseConvertActivityExpectedAllFindMissingFieldsToBeReturned()
         {
-            DsfBaseConvertActivity baseConvertActivity = new DsfBaseConvertActivity { ConvertCollection = new List<BaseConvertTO> { new BaseConvertTO("[[FromExpression]]", "Text", "Binary", "[[ToExpression]]", 1), new BaseConvertTO("[[FromExpression2]]", "Text", "Binary", "[[ToExpression2]]", 2) } };
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
-            List<string> actual = strategy.GetActivityFields(baseConvertActivity);
-            List<string> expected = new List<string> { "[[FromExpression]]", "[[ToExpression]]", "[[FromExpression2]]", "[[ToExpression2]]" };
+            var baseConvertActivity = new DsfBaseConvertActivity { ConvertCollection = new List<BaseConvertTO> { new BaseConvertTO("[[FromExpression]]", "Text", "Binary", "[[ToExpression]]", 1), new BaseConvertTO("[[FromExpression2]]", "Text", "Binary", "[[ToExpression2]]", 2) } };
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var actual = strategy.GetActivityFields(baseConvertActivity);
+            var expected = new List<string> { "[[FromExpression]]", "[[ToExpression]]", "[[FromExpression2]]", "[[ToExpression2]]" };
             CollectionAssert.AreEqual(expected, actual);
         }
 
@@ -53,11 +53,11 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         [TestMethod]
         public void GetActivityFieldsOffGatherSystemInfoExpectedAllFindMissingFieldsToBeReturned()
         {
-            DsfGatherSystemInformationActivity baseConvertActivity = new DsfGatherSystemInformationActivity{SystemInformationCollection  = new List<GatherSystemInformationTO> {new GatherSystemInformationTO(enTypeOfSystemInformationToGather.CPUAvailable, "res",1)} };
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
-            List<string> actual = strategy.GetActivityFields(baseConvertActivity);
-            List<string> expected = new List<string> { "res" };
+            var baseConvertActivity = new DsfGatherSystemInformationActivity{SystemInformationCollection  = new List<GatherSystemInformationTO> {new GatherSystemInformationTO(enTypeOfSystemInformationToGather.CPUAvailable, "res",1)} };
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var actual = strategy.GetActivityFields(baseConvertActivity);
+            var expected = new List<string> { "res" };
             CollectionAssert.AreEqual(expected, actual);
         }
 
@@ -67,11 +67,11 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         [TestMethod]
         public void GetActivityFieldsOffCaseConvertActivityExpectedAllFindMissingFieldsToBeReturned()
         {
-            DsfCaseConvertActivity caseConvertActivity = new DsfCaseConvertActivity { ConvertCollection = new List<ICaseConvertTO> { new CaseConvertTO("[[StringToConvert]]", "UPPER", "[[Result]]", 1), new CaseConvertTO("[[StringToConvert2]]", "UPPER", "[[Result2]]", 2) } };
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
-            List<string> actual = strategy.GetActivityFields(caseConvertActivity);
-            List<string> expected = new List<string> { "[[StringToConvert]]", "[[Result]]", "[[StringToConvert2]]", "[[Result2]]" };
+            var caseConvertActivity = new DsfCaseConvertActivity { ConvertCollection = new List<ICaseConvertTO> { new CaseConvertTO("[[StringToConvert]]", "UPPER", "[[Result]]", 1), new CaseConvertTO("[[StringToConvert2]]", "UPPER", "[[Result2]]", 2) } };
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var actual = strategy.GetActivityFields(caseConvertActivity);
+            var expected = new List<string> { "[[StringToConvert]]", "[[Result]]", "[[StringToConvert2]]", "[[Result2]]" };
             CollectionAssert.AreEqual(expected, actual);
         }
 
@@ -82,11 +82,11 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         [TestMethod]
         public void GetActivityFieldsOffMultiAssignActivityExpectedAllFindMissingFieldsToBeReturned()
         {
-            DsfMultiAssignActivity multiAssignActivity = new DsfMultiAssignActivity { FieldsCollection = new List<ActivityDTO> { new ActivityDTO("[[AssignRight1]]", "[[AssignLeft1]]", 1), new ActivityDTO("[[AssignRight2]]", "[[AssignLeft2]]", 2) } };
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
-            List<string> actual = strategy.GetActivityFields(multiAssignActivity);
-            List<string> expected = new List<string> { "[[AssignRight1]]", "[[AssignLeft1]]", "[[AssignRight2]]", "[[AssignLeft2]]" };
+            var multiAssignActivity = new DsfMultiAssignActivity { FieldsCollection = new List<ActivityDTO> { new ActivityDTO("[[AssignRight1]]", "[[AssignLeft1]]", 1), new ActivityDTO("[[AssignRight2]]", "[[AssignLeft2]]", 2) } };
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var actual = strategy.GetActivityFields(multiAssignActivity);
+            var expected = new List<string> { "[[AssignRight1]]", "[[AssignLeft1]]", "[[AssignRight2]]", "[[AssignLeft2]]" };
             CollectionAssert.AreEqual(expected, actual);
         }
 
@@ -98,8 +98,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_WebGetActivity_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfWebGetActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -131,8 +131,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_WebDeleteActivity_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfWebDeleteActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -164,8 +164,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_WebPutActivity_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfWebPutActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -199,8 +199,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_DotNetDll_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfDotNetDllActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -228,8 +228,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_SqlServer_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfSqlServerDatabaseActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -256,8 +256,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_MySql_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfMySqlDatabaseActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -283,8 +283,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_Oracle_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfOracleDatabaseActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -311,8 +311,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_PostgreSQL_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfPostgreSqlActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -339,8 +339,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_ODBC_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfODBCDatabaseActivity
             {
                 CommandText = "[[InputValue1]] [[InputValue2]][[InputValue3]]",
@@ -365,8 +365,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_DsfEnhancedDotNetDllActivity_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfEnhancedDotNetDllActivity
             {
                 ObjectName = "[[@Home]]",
@@ -401,8 +401,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_DsfEnhancedDotNetDllActivityWithMethodWithInputs_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfEnhancedDotNetDllActivity
             {
                 ObjectName = "[[@Home]]",
@@ -442,8 +442,8 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         public void DataGridActivityFindMissingStrategy_GetActivityFields_WebPostActivity_ShouldReturnResults()
         {
             //------------Setup for test--------------------------
-            Dev2FindMissingStrategyFactory fac = new Dev2FindMissingStrategyFactory();
-            IFindMissingStrategy strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
             var activity = new DsfWebPostActivity
             {
                 Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
@@ -469,6 +469,180 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
             Assert.IsTrue(fields.Contains("Content-Type"));
             Assert.IsTrue(fields.Contains("[[ctype]]"));
             Assert.IsTrue(fields.Contains("[[data]]"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_WebPostActivity_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfWebPostActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                QueryString = "[[qstring]]",
+                Headers = new List<INameValue> { new NameValue("Content-Type", "[[ctype]]") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                PostData = "[[data]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.IsTrue(fields.Contains("TheObject"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_WebDeleteActivity_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfWebDeleteActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                QueryString = "[[qstring]]",
+                Headers = new List<INameValue> { new NameValue("Content-Type", "[[ctype]]") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.IsTrue(fields.Contains("TheObject"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_WebPutActivity_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfWebPutActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                QueryString = "[[qstring]]",
+                Headers = new List<INameValue> { new NameValue("Content-Type", "[[ctype]]") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                PutData = "[[putdata]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.IsTrue(fields.Contains("TheObject"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_WebGetActivity_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfWebGetActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                QueryString = "[[qstring]]",
+                Headers = new List<INameValue> { new NameValue("Content-Type", "[[ctype]]") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.IsTrue(fields.Contains("TheObject"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_DotNetDll_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfDotNetDllActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(6, fields.Count);
+            Assert.IsTrue(fields.Contains("TheObject"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_ComDll_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfComDllActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(6, fields.Count);
+            Assert.IsTrue(fields.Contains("TheObject"));
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("DataGridActivityFindMissingStrategy_GetActivityFields")]
+        public void DataGridActivityFindMissingStrategy_GetActivityFields_WcfEndPoint_ShouldReturnResults_IsObject()
+        {
+            //------------Setup for test--------------------------
+            var fac = new Dev2FindMissingStrategyFactory();
+            var strategy = fac.CreateFindMissingStrategy(enFindMissingType.DataGridActivity);
+            var activity = new DsfWcfEndPointActivity
+            {
+                Inputs = new List<IServiceInput> { new ServiceInput("Input1", "[[InputValue1]]"), new ServiceInput("Input2", "[[InputValue2]]"), new ServiceInput("Input3", "[[InputValue3]]") },
+                Outputs = new List<IServiceOutputMapping> { new ServiceOutputMapping("Output1", "OutputValue1", "rec"), new ServiceOutputMapping("Output2", "OutputValue2", "rec") },
+                OnErrorVariable = "[[err]]",
+                OnErrorWorkflow = "[[errSvc]]",
+                IsObject = true,
+                ObjectName = "TheObject"
+            };
+            //------------Execute Test---------------------------
+            var fields = strategy.GetActivityFields(activity);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(6, fields.Count);
+            Assert.IsTrue(fields.Contains("TheObject"));
         }
     }
 }

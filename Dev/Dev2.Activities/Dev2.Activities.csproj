@@ -8,7 +8,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2</RootNamespace>
     <AssemblyName>Dev2.Activities</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>
     </SccProjectName>
@@ -22,6 +22,8 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
     <SonarQubeTestProject>False</SonarQubeTestProject>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -34,7 +36,9 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
     <CodeAnalysisRuleSet>Dev2.Activities.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -47,6 +51,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
+    <LangVersion>latest</LangVersion>
     <CodeAnalysisRuleSet>Dev2.Activities.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
@@ -151,8 +157,12 @@
     <Reference Include="System" />
     <Reference Include="System.Activities" />
     <Reference Include="System.Activities.Presentation" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite, Version=1.0.108.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.108.0\lib\net46\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Management" />
@@ -161,10 +171,16 @@
     <Reference Include="System.Runtime.DurableInstancing" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Activities" />
+    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web.Services" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="TSQL_Parser, Version=1.1.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\TSQL.Parser.1.1.1\lib\net40\TSQL_Parser.dll</HintPath>
+    </Reference>
     <Reference Include="Weave, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\Weave.dll</HintPath>
@@ -172,15 +188,52 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\AssemblyCommonInfo.cs">
+    <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
+    <Compile Include="Activities\AdvancedRecordsetActivity.cs" />
+    <Compile Include="Activities\AdvancedRecordset\AdvancedRecordset.cs" />
+    <Compile Include="Activities\AdvancedRecordset\IAdvancedRecordset.cs" />
+    <Compile Include="Activities\Exchange\DsfExchangeEmailNewActivity.cs" />
+    <Compile Include="Activities\IAdapterActivity.cs" />
+    <Compile Include="Activities\PathOperations\DsfFolderReadActivity.cs" />
+    <Compile Include="Comparer\ActivityComparer.cs" />
+    <Compile Include="Comparer\GatherSystemInformationTOComparer.cs" />
+    <Compile Include="Comparer\DataSplitDTOComparer.cs" />
+    <Compile Include="Comparer\EmailSourceComparer.cs" />
+    <Compile Include="Comparer\FindRecordsTOComparer.cs" />
+    <Compile Include="Comparer\DataMergeDTOComparer.cs" />
+    <Compile Include="Comparer\JsonMappingToComparer.cs" />
+    <Compile Include="Comparer\SwitchesActivityComparer.cs" />
+    <Compile Include="Comparer\FlowSwitchActivityComparer.cs" />
+    <Compile Include="Comparer\ActivityDTOComparer.cs" />
+    <Compile Include="Comparer\ActivityDtoObjectComparer.cs" />
+    <Compile Include="Comparer\ActivityFuncComparer.cs" />
+    <Compile Include="Comparer\BaseConvertTOComparer.cs" />
+    <Compile Include="Comparer\CaseConvertToComparer.cs" />
+    <Compile Include="Comparer\NameValueComparer.cs" />
+    <Compile Include="Comparer\ServiceOutputMappingComparer.cs" />
+    <Compile Include="Comparer\ServiceInputComparer.cs" />
+    <Compile Include="Comparer\DataColumnMappingComparer.cs" />
+    <Compile Include="Comparer\DelegateArgumentComparer.cs" />
+    <Compile Include="Comparer\EnhancedPluginComparer.cs" />
+    <Compile Include="Comparer\PluginActionComparer.cs" />
+    <Compile Include="Comparer\PluginConstructorComparer.cs" />
+    <Compile Include="Comparer\SimplePluginComparer.cs" />
+    <Compile Include="Comparer\SharepointReadListToComparer.cs" />
+    <Compile Include="Comparer\SharepointSearchToComparer.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" Condition="!Exists('..\AssemblyCommonInfo.cs')" />
     <None Include="..\Run Tests.ps1">
       <Link>Run Tests.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>False</Visible>
     </None>
+    <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
+      <Visible>False</Visible>
+    </AdditionalFiles>
     <Compile Include="Activities\ActivityParser.cs" />
+    <Compile Include="Activities\DateAndTime\DsfDotNetDateTimeActivity.cs" />
+    <Compile Include="Activities\DateAndTime\DsfDotNetDateTimeDifferenceActivity.cs" />
     <Compile Include="Activities\DebugCopyException.cs" />
     <Compile Include="Activities\DebugEvalResult.cs" />
     <Compile Include="Activities\Debug\DebugItemServiceTestStaticDataParams.cs" />
@@ -210,12 +263,17 @@
     <Compile Include="Activities\DropBox2016\UploadActivity\IDropBoxUpload.cs" />
     <Compile Include="Activities\DsfAggregateCalculateActivity.cs" />
     <Compile Include="Activities\DsfBaseActivity.cs" />
+    <Compile Include="Activities\DsfDotNetAggregateCalculateActivity.cs" />
+    <Compile Include="Activities\DsfDotNetCalculateActivity.cs" />
     <Compile Include="Activities\DsfDecision.cs" />
     <Compile Include="Activities\DsfComDllActivity.cs" />
     <Compile Include="Activities\DsfDeleteRecordActivity.cs" />
     <Compile Include="Activities\DsfDotNetDllActivity.cs" />
     <Compile Include="Activities\DsfCreateJsonActivity.cs" />
     <Compile Include="Activities\DsfEnhancedDotNetDllActivity.cs" />
+    <Compile Include="Activities\DsfDotNetMultiAssignObjectActivity.cs" />
+    <Compile Include="Activities\DsfDotNetMultiAssignActivity.cs" />
+    <Compile Include="Activities\DsfDotNetGatherSystemInformationActivity.cs" />
     <Compile Include="Activities\DsfMethodBasedActivity.cs" />
     <Compile Include="Activities\DsfMultiAssignObjectActivity.cs" />
     <Compile Include="Activities\DsfMySqlDatabaseActivity.cs" />
@@ -265,13 +323,13 @@
     <Compile Include="Activities\DsfCommentActivity.cs" />
     <Compile Include="Activities\DsfWebPostActivity.cs" />
     <Compile Include="Activities\DsfWebPutActivity.cs" />
-    <Compile Include="Activities\DsfWebserviceActivity.cs" />
     <Compile Include="Activities\DsfWorkflowActivity.cs" />
     <Compile Include="Activities\DsfXPathActivity.cs" />
     <Compile Include="Activities\EmailSender.cs" />
     <Compile Include="Activities\Exchange\DsfExchangeEmailActivity.cs" />
     <Compile Include="Activities\FindRecordsTO.cs" />
     <Compile Include="Activities\GetSystemInformationHelper.cs" />
+    <Compile Include="Activities\GetSystemInformationStandardHelper.cs" />
     <Compile Include="Activities\HttpClientCredentialManager.cs" />
     <Compile Include="Activities\IEmailSender.cs" />
     <Compile Include="Activities\IFlowNodeActivity.cs" />
@@ -335,6 +393,8 @@
     <Compile Include="BussinessLogic\RsOpNotHex.cs" />
     <Compile Include="BussinessLogic\RsOpNotRegex.cs" />
     <Compile Include="BussinessLogic\RsOpNotStartsWith.cs" />
+    <Compile Include="Factories\Case\CaseConverter.cs" />
+    <Compile Include="Factories\Case\CaseConverterFactory.cs" />
     <Compile Include="Factories\Dev2FindMissingStrategyFactory.cs" />
     <Compile Include="FindMissingStrategies\DataGridActivityFindMissingStrategy.cs" />
     <Compile Include="FindMissingStrategies\DsfActivityFindMissingStrategy.cs" />
@@ -409,15 +469,14 @@
     <Compile Include="Validation\IsSingleRecordSetRule.cs" />
     <Compile Include="Validation\IsSingleValueRuleSet.cs" />
     <Compile Include="Validation\IsValidCalculateRule.cs" />
-    <Compile Include="Validation\IsValidExpressionRule.cs" />
     <Compile Include="Validation\IsValidJsonCreateMappingSourceExpression.cs" />
     <Compile Include="Validation\IsValidJsonCreateMappingSourceRule.cs" />
     <Compile Include="Validation\ShouldNotBeVariableRule.cs" />
-    <Compile Include="Validation\VariableUtils.cs" />
     <Compile Include="Value Objects\ForEachBootstrapTOEnvironment.cs" />
     <Compile Include="Value Objects\ForEachInnerActivityTO.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="Dev2.Activities.ruleset" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
@@ -476,9 +535,25 @@
       <Project>{019A92B9-9209-4930-BC96-381CB8B1C0EA}</Project>
       <Name>Dev2.Services.Execution</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Services.Sql\Dev2.Services.Sql.csproj">
+      <Project>{FF3115B2-370E-4E40-99C5-7D239BC28679}</Project>
+      <Name>Dev2.Services.Sql</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Util\Dev2.Util.csproj">
       <Project>{1990550D-EA6F-4DAC-9B5E-8571E86923ED}</Project>
       <Name>Dev2.Util</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Exchange.Email.Wrapper\Warewolf.Exchange.Email.Wrapper.csproj">
+      <Project>{b02e76f0-9b4b-41f6-8d3a-00e4564142b3}</Project>
+      <Name>Warewolf.Exchange.Email.Wrapper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
+      <Project>{df3ab090-911f-4646-9ad1-205e2ced908a}</Project>
+      <Name>Warewolf.Language.Parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Parser.Interop\Warewolf.Parser.Interop.csproj">
+      <Project>{6eb59eee-4e16-4f29-b1b0-715e56e9139d}</Project>
+      <Name>Warewolf.Parser.Interop</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Security\Warewolf.Security.csproj">
       <Project>{CA5E9373-46FE-41B9-AB2E-BD637F48B456}</Project>
@@ -508,19 +583,20 @@
       <Project>{cb565c94-8833-4911-b20f-0921ee3c286c}</Project>
       <Name>Warewolf.Studio.Resources</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WarewolfLanguageParser\WarewolfLanguageParser.fsproj">
-      <Project>{e0f7c709-a61b-4829-a659-d7780052326a}</Project>
-      <Name>WarewolfLanguageParser</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\WarewolfParserInterop\WarewolfParserInterop.csproj">
-      <Project>{6eb59eee-4e16-4f29-b1b0-715e56e9139d}</Project>
-      <Name>WarewolfParserInterop</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
+    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.Common.dll" />
+    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets'))" />
+  </Target>
 </Project>

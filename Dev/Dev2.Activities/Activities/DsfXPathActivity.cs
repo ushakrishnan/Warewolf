@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,12 +17,14 @@ using System.Linq;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
 using Dev2.Data.Parsers;
 using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
+using Dev2.Utilities;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Storage;
@@ -30,8 +32,8 @@ using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Utility-Path", "XPath", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Xpath")]
-    public class DsfXPathActivity : DsfActivityAbstract<string>, ICollectionActivity
+    [ToolDescriptorInfo("Utility-Path", "XPath", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Xpath")]
+    public class DsfXPathActivity : DsfActivityAbstract<string>, ICollectionActivity,IEquatable<DsfXPathActivity>
     {
         #region Fields
 
@@ -81,18 +83,35 @@ namespace Dev2.Activities
             ResultsCollection = new List<XPathDTO>();
         }
 
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "SourceString",
+                    Value = SourceString,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="ResultsCollection",
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(ResultsCollection),
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
+
+
         #endregion
 
-        public override List<string> GetOutputs()
-        {
-            return ResultsCollection?.Select(dto => dto.OutputVariable).ToList() ?? new List<string>();
-        }
+        public override List<string> GetOutputs() => ResultsCollection?.Select(dto => dto.OutputVariable).ToList() ?? new List<string>();
 
         #region Overridden NativeActivity Methods
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
 
             ExecuteTool(dataObject, 0);
         }
@@ -102,10 +121,10 @@ namespace Dev2.Activities
             _debugOutputs.Clear();
 
             _isDebugMode = dataObject.IsDebugMode();
-            ErrorResultTO errors = new ErrorResultTO();
-            ErrorResultTO allErrors = new ErrorResultTO();
-            XPathParser parser = new XPathParser();
-            int i = 0;
+            var errors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var parser = new XPathParser();
+            var i = 0;
 
             InitializeDebug(dataObject);
             try
@@ -140,21 +159,21 @@ namespace Dev2.Activities
             }
         }
 
-        private void ProcessErrors(IDSFDataObject dataObject, int update, bool hasErrors, ErrorResultTO allErrors, int actualIndex)
+        void ProcessErrors(IDSFDataObject dataObject, int update, bool hasErrors, ErrorResultTO allErrors, int actualIndex)
         {
-            if(hasErrors)
+            if (hasErrors)
             {
                 DisplayAndWriteError("DsfXPathActivity", allErrors);
                 var errorString = allErrors.MakeDataListReady();
                 dataObject.Environment.AddError(errorString);
-                if(actualIndex > -1)
+                if (actualIndex > -1)
                 {
                     dataObject.Environment.Assign(ResultsCollection[actualIndex].OutputVariable, null, update);
                 }
-                if(_isDebugMode)
+                if (_isDebugMode)
                 {
                     var itemToAdd = new DebugItem();
-                    if(actualIndex < 0)
+                    if (actualIndex < 0)
                     {
                         actualIndex = 0;
                     }
@@ -173,14 +192,14 @@ namespace Dev2.Activities
 
         }
 
-        private void DoDebug(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        void DoDebug(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
         {
-            if(_isDebugMode && !allErrors.HasErrors())
+            if (_isDebugMode && !allErrors.HasErrors())
             {
                 var innerCount = 1;
-                foreach(var debugOutputTo in ResultsCollection)
+                foreach (var debugOutputTo in ResultsCollection)
                 {
-                    if(!string.IsNullOrEmpty(debugOutputTo.OutputVariable))
+                    if (!string.IsNullOrEmpty(debugOutputTo.OutputVariable))
                     {
                         var itemToAdd = new DebugItem();
                         AddDebugItem(new DebugItemStaticDataParams("", innerCount.ToString(CultureInfo.InvariantCulture)), itemToAdd);
@@ -192,44 +211,56 @@ namespace Dev2.Activities
             }
         }
 
-        private int Process(IDSFDataObject dataObject, int update, int i, XPathParser parser, ErrorResultTO allErrors, ErrorResultTO errors)
+        int Process(IDSFDataObject dataObject, int update, int i, XPathParser parser, ErrorResultTO allErrors, ErrorResultTO errors)
         {
             if (!string.IsNullOrEmpty(SourceString))
             {
-
                 var itr = new WarewolfListIterator();
                 var sourceIterator = new WarewolfIterator(dataObject.Environment.Eval(SourceString, update));
                 itr.AddVariableToIterateOn(sourceIterator);
                 while (itr.HasMoreData())
                 {
                     var c = itr.FetchNextValue(sourceIterator);
-                    for (i = 0; i < ResultsCollection.Count; i++)
-                    {
-                        if (!string.IsNullOrEmpty(ResultsCollection[i].OutputVariable))
-                        {
-                            var xpathEntry = dataObject.Environment.Eval(ResultsCollection[i].XPath, update);
-                            var xpathIterator = new WarewolfIterator(xpathEntry);
-                            while (xpathIterator.HasMoreData())
-                            {
-                                var xpathCol = xpathIterator.GetNextValue();
-                                try
-                                {
-                                    List<string> eval = parser.ExecuteXPath(c, xpathCol).ToList();
-                                    var variable = ResultsCollection[i].OutputVariable;
-                                    AssignResult(variable, dataObject, eval, update);
-                                }
-                                catch (Exception e)
-                                {
-                                    allErrors.AddError(e.Message);
-                                    dataObject.Environment.Assign(ResultsCollection[i].OutputVariable, null, update);
-                                }
-                            }
-                        }
-                    }
+                    i = ProcessResultsCollection(dataObject, update, parser, allErrors, c);
                     allErrors.MergeErrors(errors);
                 }
             }
             return i;
+        }
+
+        int ProcessResultsCollection(IDSFDataObject dataObject, int update, XPathParser parser, ErrorResultTO allErrors, string c)
+        {
+            int i;
+            for (i = 0; i < ResultsCollection.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(ResultsCollection[i].OutputVariable))
+                {
+                    IterateOverXPath(dataObject, update, parser, allErrors, c, i);
+                }
+            }
+
+            return i;
+        }
+
+        void IterateOverXPath(IDSFDataObject dataObject, int update, XPathParser parser, ErrorResultTO allErrors, string c, int i)
+        {
+            var xpathEntry = dataObject.Environment.Eval(ResultsCollection[i].XPath, update);
+            var xpathIterator = new WarewolfIterator(xpathEntry);
+            while (xpathIterator.HasMoreData())
+            {
+                var xpathCol = xpathIterator.GetNextValue();
+                try
+                {
+                    var eval = parser.ExecuteXPath(c, xpathCol).ToList();
+                    var variable = ResultsCollection[i].OutputVariable;
+                    AssignResult(variable, dataObject, eval, update);
+                }
+                catch (Exception e)
+                {
+                    allErrors.AddError(e.Message);
+                    dataObject.Environment.Assign(ResultsCollection[i].OutputVariable, null, update);
+                }
+            }
         }
 
         void AssignResult(string variable, IDSFDataObject dataObject, IEnumerable<string> eval, int update)
@@ -262,29 +293,24 @@ namespace Dev2.Activities
             var i = 1;
             foreach(var xPathDto in resultsCollection)
             {
-                if(!String.IsNullOrEmpty(xPathDto.OutputVariable))
+                if (!String.IsNullOrEmpty(xPathDto.OutputVariable) && _isDebugMode)
                 {
-                    if(_isDebugMode)
-                    {
-                        var itemToAdd = new DebugItem();
-                        AddDebugItem(new DebugItemStaticDataParams("", i.ToString(CultureInfo.InvariantCulture)), itemToAdd);
-                        AddDebugItem(new DebugItemWarewolfAtomResult(xPathDto.XPath,xPathDto.OutputVariable, ""), itemToAdd);
-                        _debugInputs.Add(itemToAdd);
-                        i++;
-                    }
+                    var itemToAdd = new DebugItem();
+                    AddDebugItem(new DebugItemStaticDataParams("", i.ToString(CultureInfo.InvariantCulture)), itemToAdd);
+                    AddDebugItem(new DebugItemWarewolfAtomResult(xPathDto.XPath, xPathDto.OutputVariable, ""), itemToAdd);
+                    _debugInputs.Add(itemToAdd);
+                    i++;
                 }
+
             }
         }
 
-        private void AddSourceStringDebugInputItem(string expression, IExecutionEnvironment environment, int update)
+        void AddSourceStringDebugInputItem(string expression, IExecutionEnvironment environment, int update)
         {
             AddDebugInputItem(new DebugEvalResult(expression, "XML", environment, update));
         }
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.MixedActivity;
-        }
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.MixedActivity;
 
         #endregion
 
@@ -305,7 +331,7 @@ namespace Dev2.Activities
             var listOfValidRows = ResultsCollection.Where(c => !c.CanRemove()).ToList();
             if(listOfValidRows.Count > 0)
             {
-                XPathDTO xPathDto = ResultsCollection.Last(c => !c.CanRemove());
+                var xPathDto = ResultsCollection.Last(c => !c.CanRemove());
                 var startIndex = ResultsCollection.IndexOf(xPathDto) + 1;
                 foreach(var s in listToAdd)
                 {
@@ -380,7 +406,7 @@ namespace Dev2.Activities
 
         #region GetDebugInputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugInput in _debugInputs)
             {
@@ -393,7 +419,7 @@ namespace Dev2.Activities
 
         #region GetDebugOutputs
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -415,7 +441,7 @@ namespace Dev2.Activities
                 foreach(Tuple<string, string> t in updates)
                 {
                     // locate all updates for this tuple
-                    Tuple<string, string> t1 = t;
+                    var t1 = t;
                     var items = ResultsCollection.Where(c => !string.IsNullOrEmpty(c.XPath) && c.XPath.Equals(t1.Item1));
 
                     // issues updates
@@ -471,10 +497,7 @@ namespace Dev2.Activities
 
         #region Implementation of ICollectionActivity
 
-        public int GetCollectionCount()
-        {
-            return ResultsCollection.Count(xPathDto => !xPathDto.CanRemove());
-        }
+        public int GetCollectionCount() => ResultsCollection.Count(xPathDto => !xPathDto.CanRemove());
 
         public void AddListToCollection(IList<string> listToAdd, bool overwrite, ModelItem modelItem)
         {
@@ -489,5 +512,54 @@ namespace Dev2.Activities
         }
 
         #endregion
+
+        public bool Equals(DsfXPathActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other)
+                && ResultsCollection.SequenceEqual(other.ResultsCollection)
+                && string.Equals(SourceString, other.SourceString) ;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfXPathActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (ResultsCollection != null ? ResultsCollection.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (SourceString != null ? SourceString.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ _isDebugMode.GetHashCode();
+                return hashCode;
+            }
+        }
     }
 }

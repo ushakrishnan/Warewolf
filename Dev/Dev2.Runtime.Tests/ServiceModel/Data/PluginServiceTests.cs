@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
     {
         #region CTOR
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServiceContructorWithDefaultExpectedInitializesProperties()
         {
             var service = new PluginService();
@@ -36,14 +36,14 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("PluginService", service.ResourceType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void PluginServiceContructorWithNullXmlExpectedThrowsArgumentNullException()
         {
             var service = new PluginService(null);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServiceContructorWithInvalidXmlExpectedDoesNotThrowExceptionAndInitializesProperties()
         {
             var xml = new XElement("root");
@@ -53,7 +53,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
             Assert.AreEqual("PluginService", service.ResourceType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServiceContructorWithValidXmlExpectedInitializesProperties()
         {
             var xml = XmlResource.Fetch("PluginService");
@@ -66,7 +66,7 @@ namespace Dev2.Tests.Runtime.ServiceModel.Data
 
         #region ToXml
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void PluginServiceToXmlExpectedSerializesProperties()
         {
             var expected = new PluginService

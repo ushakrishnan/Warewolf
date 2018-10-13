@@ -20,28 +20,29 @@ namespace Warewolf.Studio.ViewModels
     public abstract class DatabaseSourceViewModelBase : SourceBaseImpl<IDbSource>, IDatabaseSourceViewModel
     {
         #region Fields
-        private IManageDatabaseSourceModel _updateManager;
-        private CancellationTokenSource _token;
-        private bool _testPassed;
-        private bool _testFailed;
-        private bool _testing;
-        private string _testMessage;
-        private IList<string> _databaseNames;
-        private IList<ComputerName> _computerNames;
-        private ComputerName _serverName;
-        private AuthenticationType _authenticationType;
-       
-        private string _userName;
-        private string _password;
-        private string _databaseName;
-        private readonly string _warewolfserverName;
-        private string _resourceName;
-        private string _headerText;
-        private string _emptyServerName;
-        private string _path;
-        private bool _canSelectWindows;
-        private bool _canSelectServer;
-        private bool _canSelectUser;
+        IManageDatabaseSourceModel _updateManager;
+        CancellationTokenSource _token;
+        bool _testPassed;
+        bool _testFailed;
+        bool _testing;
+        string _testMessage;
+        IList<string> _databaseNames;
+        IList<ComputerName> _computerNames;
+        ComputerName _serverName;
+        AuthenticationType _authenticationType;
+
+        string _userName;
+        string _password;
+        int _connectionTimeout;
+        string _databaseName;
+        readonly string _warewolfserverName;
+        string _resourceName;
+        string _headerText;
+        string _emptyServerName;
+        string _path;
+        bool _canSelectWindows;
+        bool _canSelectServer;
+        bool _canSelectUser;
 
         #endregion
 
@@ -171,6 +172,20 @@ namespace Warewolf.Studio.ViewModels
                 }
             }
         }
+        public int ConnectionTimeout
+        {
+            get { return _connectionTimeout; }
+            set
+            {
+                if (_connectionTimeout != value)
+                {
+                    _connectionTimeout = value;
+                    OnPropertyChanged(() => ConnectionTimeout);
+                    OnPropertyChanged(() => Header);
+                    Reset();
+                }
+            }
+        }
         public bool UserAuthenticationSelected => AuthenticationType == AuthenticationType.User;
         public string UserName
         {
@@ -195,7 +210,7 @@ namespace Warewolf.Studio.ViewModels
                 Reset();
             }
         }
-
+       
         public string DatabaseName
         {
             get { return _databaseName; }
@@ -332,9 +347,10 @@ namespace Warewolf.Studio.ViewModels
             GetLoadComputerNamesTask(null);
         }
 
-        private void InitializeViewModel(string dbSourceImage)
+        void InitializeViewModel(string dbSourceImage)
         {
             CanSelectServer = true;
+            ConnectionTimeout = 30;
             CanSelectUser = true;
             CanSelectWindows = true;
             EmptyServerName = "";
@@ -364,13 +380,13 @@ namespace Warewolf.Studio.ViewModels
 
         #region Methods
 
-        private void PerformInitialise(IManageDatabaseSourceModel updateManager, IEventAggregator aggregator)
+        void PerformInitialise(IManageDatabaseSourceModel updateManager, IEventAggregator aggregator)
         {
             VerifyArgument.IsNotNull("updateManager", updateManager);
             VerifyArgument.IsNotNull("aggregator", aggregator);
             _updateManager = updateManager;
             TestCommand = new DelegateCommand(TestConnection, CanTest);
-            OkCommand = new DelegateCommand(SaveConnection, CanSave);
+            OkCommand = new DelegateCommand(TrySaveConnection, CanSave);
             CancelTestCommand = new DelegateCommand(CancelTest, CanCancelTest);
             Testing = false;
             _testPassed = false;
@@ -430,19 +446,16 @@ namespace Warewolf.Studio.ViewModels
             return true;
         }
 
-        private void SetupHeaderTextFromExisting()
+        void SetupHeaderTextFromExisting()
         {
             HeaderText = (DbSource == null ? ResourceName : DbSource.Name).Trim();
 
             Header = DbSource == null ? ResourceName : DbSource.Name;
         }
 
-        public override bool CanSave()
-        {
-            return TestPassed && !string.IsNullOrEmpty(DatabaseName);
-        }
+        public override bool CanSave() => TestPassed && !string.IsNullOrEmpty(DatabaseName);
 
-        private IList<string> SetupProgressSpinner()
+        IList<string> SetupProgressSpinner()
         {
             Dispatcher.CurrentDispatcher.Invoke(() =>
             {
@@ -470,34 +483,18 @@ namespace Warewolf.Studio.ViewModels
             }
             return serverName;
         }
-        private void SaveConnection()
+
+        void TrySaveConnection()
         {
             Testing = true;
             TestFailed = false;
-            
+
             if (DbSource == null)
             {
                 RequestServiceNameViewModel.Wait();
                 if (RequestServiceNameViewModel.Exception == null)
                 {
-                    var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
-                    var res = requestServiceNameViewModel.ShowSaveDialog();
-
-                    if (res == MessageBoxResult.OK)
-                    {
-                        _resourceName = requestServiceNameViewModel.ResourceName.Name;
-                        var src = ToDbSource();
-
-                        src.Path = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
-                        Save(src);
-                        if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null && !TestFailed)
-                        {
-                            DbSource = src;
-                            Path = DbSource.Path;
-                            SetupHeaderTextFromExisting();
-                            AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
-                        }
-                    }
+                    SaveConnection();
                 }
                 else
                 {
@@ -512,29 +509,46 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private void CancelTest()
+        void SaveConnection()
         {
-            if (_token != null)
+            var requestServiceNameViewModel = RequestServiceNameViewModel.Result;
+            var res = requestServiceNameViewModel.ShowSaveDialog();
+
+            if (res == MessageBoxResult.OK)
             {
-                if (!_token.IsCancellationRequested && _token.Token.CanBeCanceled)
+                _resourceName = requestServiceNameViewModel.ResourceName.Name;
+                var src = ToDbSource();
+
+                src.Path = requestServiceNameViewModel.ResourceName.Path ?? requestServiceNameViewModel.ResourceName.Name;
+                Save(src);
+                if (requestServiceNameViewModel.SingleEnvironmentExplorerViewModel != null && !TestFailed)
                 {
-                    _token.Cancel();
-                    Dispatcher.CurrentDispatcher.Invoke(() =>
-                    {
-                        Testing = false;
-                        TestFailed = true;
-                        TestPassed = false;
-                        TestMessage = "Test Cancelled";
-                    });
+                    DbSource = src;
+                    Path = DbSource.Path;
+                    SetupHeaderTextFromExisting();
+                    AfterSave(requestServiceNameViewModel.SingleEnvironmentExplorerViewModel.Environments[0].ResourceId, src.Id);
                 }
             }
         }
-        private bool CanCancelTest()
-        {
-            return Testing;
-        }
 
-        private void Reset()
+        void CancelTest()
+        {
+            if (_token != null && !_token.IsCancellationRequested && _token.Token.CanBeCanceled)
+            {
+                _token.Cancel();
+                Dispatcher.CurrentDispatcher.Invoke(() =>
+                {
+                    Testing = false;
+                    TestFailed = true;
+                    TestPassed = false;
+                    TestMessage = "Test Cancelled";
+                });
+            }
+
+        }
+        bool CanCancelTest() => Testing;
+
+        void Reset()
         {
             TestPassed = false;
             TestMessage = "";
@@ -544,7 +558,7 @@ namespace Warewolf.Studio.ViewModels
             ViewModelUtils.RaiseCanExecuteChanged(OkCommand);
         }
 
-        private void GetLoadComputerNamesTask(Action additionalUiAction)
+        void GetLoadComputerNamesTask(Action additionalUiAction)
         {
             AsyncWorker.Start(() => _updateManager.GetComputerNames().Select(name => new ComputerName { Name = name }).ToList(), names =>
             {
@@ -564,10 +578,10 @@ namespace Warewolf.Studio.ViewModels
 
         public override void Save()
         {
-            SaveConnection();
+            TrySaveConnection();
         }
 
-        private void Save(IDbSource toDbSource)
+        void Save(IDbSource toDbSource)
         {
             try
             {

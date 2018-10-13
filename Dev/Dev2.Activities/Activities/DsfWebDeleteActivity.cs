@@ -11,7 +11,7 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("WebMethods", "DELETE", ToolType.Native, "6C5F6D7E-4B42-4874-8197-DBE68D4A9F2D", "Dev2.Acitivities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Delete")]
+    [ToolDescriptorInfo("WebMethods", "DELETE", ToolType.Native, "6C5F6D7E-4B42-4874-8197-DBE68D4A9F2D", "Dev2.Activities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Delete")]
     public class DsfWebDeleteActivity : DsfWebActivityBase
     {
 
@@ -41,7 +41,7 @@ namespace Dev2.Activities
             }
 
             var url = ResourceCatalog.GetResource<WebSource>(Guid.Empty, SourceId);
-            var webRequestResult = PerformWebPostRequest(head, query, url, string.Empty);
+            var webRequestResult = PerformWebRequest(head, query, url, string.Empty);
             ResponseManager = new ResponseManager { OutputDescription = OutputDescription, Outputs = Outputs , IsObject = IsObject, ObjectName = ObjectName};
             ResponseManager.PushResponseIntoEnvironment(webRequestResult, update, dataObject);
             

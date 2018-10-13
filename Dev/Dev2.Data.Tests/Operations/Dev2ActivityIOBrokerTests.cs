@@ -78,7 +78,7 @@ namespace Dev2.Data.Tests.Operations
         {
             //---------------Set up test pack-------------------
             var activityOperationsBroker = CreateBroker();
-            PrivateObject obj = new PrivateObject(activityOperationsBroker);
+            var obj = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var invoke = obj.Invoke("IsBase64", "Content-Type:BASE64SomeJunkdata");
@@ -92,7 +92,7 @@ namespace Dev2.Data.Tests.Operations
         {
             //---------------Set up test pack-------------------
             var activityOperationsBroker = CreateBroker();
-            PrivateObject obj = new PrivateObject(activityOperationsBroker);
+            var obj = new PrivateType(activityOperationsBroker.GetType());
             var mockEndpoint = new Mock<IActivityIOOperationsEndPoint>();
             var mockActIo = new Mock<IActivityIOPath>();
             const string path = "C:\\Home\\txt\\a.srx";
@@ -101,7 +101,7 @@ namespace Dev2.Data.Tests.Operations
             mockEndpoint.Setup(point => point.IOPath).Returns(mockActIo.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var pathReturned = obj.Invoke("GetFileNameFromEndPoint", mockEndpoint.Object);
+            var pathReturned = obj.InvokeStatic("GetFileNameFromEndPoint", mockEndpoint.Object);
             //---------------Test Result -----------------------
             Assert.AreEqual(path, pathReturned);
         }
@@ -112,7 +112,7 @@ namespace Dev2.Data.Tests.Operations
         {
             //---------------Set up test pack-------------------
             var activityOperationsBroker = CreateBroker();
-            PrivateObject obj = new PrivateObject(activityOperationsBroker);
+            var prType = new PrivateType(activityOperationsBroker.GetType());
             var mockEndpoint = new Mock<IActivityIOOperationsEndPoint>();
             var mockActIo = new Mock<IActivityIOPath>();
             const string path = "C:\\Home\\txt\\a.srx";
@@ -121,7 +121,11 @@ namespace Dev2.Data.Tests.Operations
             mockEndpoint.Setup(point => point.IOPath).Returns(mockActIo.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var pathReturned = obj.Invoke("GetFileNameFromEndPoint", mockEndpoint.Object, mockActIo.Object);
+            var args = new object[]
+            {
+                mockEndpoint.Object, mockActIo.Object
+            };
+            var pathReturned = prType.InvokeStatic("GetFileNameFromEndPoint", args);
             //---------------Test Result -----------------------
             Assert.AreEqual(path, pathReturned);
         }
@@ -173,12 +177,12 @@ namespace Dev2.Data.Tests.Operations
             Assert.AreEqual(0, activityIOPaths.Count);
         }
 
-        private static IActivityOperationsBroker CreateBroker()
+        static IActivityOperationsBroker CreateBroker()
         {
             return ActivityIOFactory.CreateOperationsBroker();
         }
 
-        private static IActivityOperationsBroker CreateBroker(IFile file, ICommon common)
+        static IActivityOperationsBroker CreateBroker(IFile file, ICommon common)
         {
             return ActivityIOFactory.CreateOperationsBroker(file, common);
         }
@@ -193,7 +197,7 @@ namespace Dev2.Data.Tests.Operations
             pathMock.Setup(path => path.Path).Returns(txt);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+            var commonDataUtils = new Util.CommonDataUtils();
             var value = commonDataUtils.IsNotFtpTypePath( pathMock.Object);
             //---------------Test Result -----------------------
             Assert.IsTrue(bool.Parse(value.ToString()));
@@ -209,7 +213,7 @@ namespace Dev2.Data.Tests.Operations
             pathMock.Setup(path => path.Path).Returns(txt);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+            var commonDataUtils = new Util.CommonDataUtils();
             var value = commonDataUtils.IsNotFtpTypePath(pathMock.Object);
             //---------------Test Result -----------------------
             Assert.IsFalse(bool.Parse(value.ToString()));
@@ -223,7 +227,7 @@ namespace Dev2.Data.Tests.Operations
             const string txt = "\\\\Home\\a.txt";
             var pathMock = new Mock<IActivityIOPath>();
             pathMock.Setup(path => path.Path).Returns(txt);
-            Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+            var commonDataUtils = new Util.CommonDataUtils();
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var value = commonDataUtils.IsUncFileTypePath(pathMock.Object);
@@ -240,7 +244,7 @@ namespace Dev2.Data.Tests.Operations
             var dev2CrudOperationTO = new Dev2CRUDOperationTO(true);
             var endPoint = new Mock<IActivityIOOperationsEndPoint>();
             endPoint.Setup(point => point.CreateDirectory(It.IsAny<IActivityIOPath>(), dev2CrudOperationTO)).Returns(true);
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var invoke = privateObject.Invoke("CreateDirectory", endPoint.Object, dev2CrudOperationTO);
@@ -261,7 +265,7 @@ namespace Dev2.Data.Tests.Operations
             //---------------Execute Test ----------------------
             try
             {
-                Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+                var commonDataUtils = new Util.CommonDataUtils();
                 commonDataUtils.ValidateEndPoint( endPoint.Object, dev2CrudOperationTO);
             }
             catch (Exception e)
@@ -286,7 +290,7 @@ namespace Dev2.Data.Tests.Operations
             //---------------Execute Test ----------------------
             try
             {
-                Dev2.Data.Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+                var commonDataUtils = new Util.CommonDataUtils();
                 commonDataUtils.ValidateEndPoint(endPoint.Object, dev2CrudOperationTO);
             }
             catch (Exception e)
@@ -304,7 +308,7 @@ namespace Dev2.Data.Tests.Operations
             //---------------Set up test pack-------------------
             var file = new Mock<IFile>();
             var activityOperationsBroker = CreateBroker(file.Object, new Util.CommonDataUtils());
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             try
@@ -325,7 +329,7 @@ namespace Dev2.Data.Tests.Operations
             var file = new Mock<IFile>();
             file.Setup(file1 => file1.Delete(It.IsAny<string>()));
             var activityOperationsBroker = CreateBroker(file.Object, new Util.CommonDataUtils());
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             privateObject.Invoke("RemoveTmpFile", "SomePath");
@@ -349,7 +353,7 @@ namespace Dev2.Data.Tests.Operations
             dst.Setup(point => point.PathSeperator()).Returns(",");
             dst.Setup(point => point.IOPath.Path).Returns("path");
             dst.Setup(point => point.PathExist(dstPath.Object)).Returns(true);
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             try
@@ -375,10 +379,10 @@ namespace Dev2.Data.Tests.Operations
         {
             //---------------Set up test pack-------------------
             var activityOperationsBroker = CreateBroker();
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+            var commonDataUtils = new Util.CommonDataUtils();
             var path = commonDataUtils.CreateTmpDirectory();
             //---------------Test Result -----------------------
             Assert.IsNotNull(path);
@@ -391,7 +395,7 @@ namespace Dev2.Data.Tests.Operations
         public void ExtractZipCompressionLevel_GivenLevel_ShouldCorreclty()
         {
             //---------------Set up test pack-------------------
-            Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+            var commonDataUtils = new Util.CommonDataUtils();
             var level = commonDataUtils.ExtractZipCompressionLevel("Test");
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -407,7 +411,7 @@ namespace Dev2.Data.Tests.Operations
         {
             //---------------Set up test pack-------------------
             var activityOperationsBroker = CreateBroker();
-            Util.CommonDataUtils  commonDataUtils = new Util.CommonDataUtils();
+            var  commonDataUtils = new Util.CommonDataUtils();
             const string dispatcherInvoke = "Dispatcher.Invoke";
             Stream stream = new MemoryStream(Encoding.ASCII.GetBytes(dispatcherInvoke));
             const string ranString = "Rando.net";
@@ -466,7 +470,7 @@ namespace Dev2.Data.Tests.Operations
             dst.Setup(point => point.PathSeperator()).Returns(",");
             var args = new Dev2UnZipOperationTO("password", false);
             Func<string> performAfterValidation = () => "Success";
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             try
@@ -537,9 +541,9 @@ namespace Dev2.Data.Tests.Operations
             dst.Setup(point => point.PathExist(dstPath.Object)).Returns(true);
             src.Setup(point => point.Get(It.IsAny<IActivityIOPath>(), It.IsAny<List<string>>())).Returns(new MemoryStream());
             src.Setup(point => point.IOPath.PathType).Returns(enActivityIOPathType.FileSystem);
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             var path = "";
-            bool result = false;
+            var result = false;
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             try
@@ -662,14 +666,14 @@ namespace Dev2.Data.Tests.Operations
             //---------------Set up test pack-------------------
             var tempFileName = Path.GetTempFileName();
             var tempPath = Path.GetDirectoryName(tempFileName);
-            Dev2UnZipOperationTO operationTO = new Dev2UnZipOperationTO("Password", false);
-            ZipFile file = new ZipFile();
+            var operationTO = new Dev2UnZipOperationTO("Password", false);
+            var file = new ZipFile();
             file.AddFile(tempFileName);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             try
             {
-                Util.CommonDataUtils commonDataUtils = new Util.CommonDataUtils();
+                var commonDataUtils = new Util.CommonDataUtils();
                 file.Save(tempFileName);
                 commonDataUtils.ExtractFile(operationTO, file, tempPath);
             }
@@ -696,7 +700,7 @@ namespace Dev2.Data.Tests.Operations
             var fileMock = new Mock<IFile>();
             fileMock.Setup(file => file.ReadAllBytes(It.IsAny<string>())).Returns(Encoding.ASCII.GetBytes("Hello world"));
             var activityOperationsBroker = CreateBroker(fileMock.Object, commonMock.Object);
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             var dst = new Mock<IActivityIOOperationsEndPoint>();
             dst.Setup(point => point.PathExist(It.IsAny<IActivityIOPath>())).Returns(false);
             dst.Setup(point => point.PathSeperator()).Returns(",");
@@ -734,7 +738,7 @@ namespace Dev2.Data.Tests.Operations
             var fileMock = new Mock<IFile>();
             fileMock.Setup(file => file.ReadAllBytes(It.IsAny<string>())).Returns(Encoding.ASCII.GetBytes("Hello world"));
             var activityOperationsBroker = CreateBroker(fileMock.Object, commonMock.Object);
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
+            var privateObject = new PrivateObject(activityOperationsBroker);
             var dst = new Mock<IActivityIOOperationsEndPoint>();
             var src = new Mock<IActivityIOOperationsEndPoint>();
             dst.Setup(point => point.PathExist(It.IsAny<IActivityIOPath>())).Returns(true);
@@ -772,30 +776,6 @@ namespace Dev2.Data.Tests.Operations
                 File.Delete(tempFileName);
                 File.Delete(tempSrcName);
             }
-        }
-
-        [TestMethod]
-        [Owner("Sanele Mthembu")]
-        public void PutRaw_GivenAppendFromBottom_RemovesTempFile()
-        {
-            //------------Setup for test-------------------------
-            var commonMock = new Mock<ICommon>();
-            var fileMock = new Mock<IFile>();
-            var ioPathMock = new Mock<IActivityIOPath>();
-            var putRawOperationMock = new Mock<IDev2PutRawOperationTO>();
-            fileMock.Setup(file => file.WriteAllBytes(It.IsAny<string>(), It.IsAny<byte[]>()));
-            fileMock.Setup(file => file.Exists(It.IsAny<string>())).Returns(true);
-            var activityOperationsBroker = CreateBroker(fileMock.Object, commonMock.Object);
-            PrivateObject privateObject = new PrivateObject(activityOperationsBroker);
-            var activityIOOperationsEndPointMock = new Mock<IActivityIOOperationsEndPoint>();
-            activityIOOperationsEndPointMock.Setup(point => point.IOPath).Returns(ioPathMock.Object);
-            activityIOOperationsEndPointMock.Setup(point =>point.Get(ioPathMock.Object, It.IsAny<List<string>>())).Returns(new MemoryStream());
-            putRawOperationMock.Setup(to => to.WriteType).Returns(WriteType.AppendBottom);
-            //------------Execute Test---------------------------
-            var args = new object[] { activityIOOperationsEndPointMock.Object, putRawOperationMock.Object };
-            privateObject.Invoke("PutRaw", args);
-            //------------Assert Results-------------------------
-            fileMock.Verify(file => file.Delete(It.IsAny<string>()), Times.AtLeastOnce);
-        }
+        }                    
     }
 }

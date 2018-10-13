@@ -10,9 +10,8 @@ namespace Warewolf.UI.Tests.WebSource
     {
         const string SourceName = "CodedUITestWebServiceSource";
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Web Sources")]
-        // ReSharper disable once InconsistentNaming
         public void Create_Save_And_Edit_WebServiceSource_From_ExplorerContextMenu_UITests()
         {
             //Create Source
@@ -46,13 +45,9 @@ namespace Warewolf.UI.Tests.WebSource
             ExplorerUIMap.Select_Source_From_ExplorerContextMenu(SourceName);
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.AnonymousRadioButton.Selected);
         }
-
-        /// <summary>
-        /// If this test is failing, check first to see if the Link is still working.
-        /// </summary>
-        [TestMethod]
-        [TestCategory("Web Sources")]
-        // ReSharper disable once InconsistentNaming        
+        
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Web Sources")]     
         public void Test_WebServiceSource_DefaulQuery_UITests()
         {
             //Create Source
@@ -65,7 +60,27 @@ namespace Warewolf.UI.Tests.WebSource
             Assert.IsTrue(UIMap.MainStudioWindow.SideMenuBar.SaveButton.Enabled, "Save Ribbon Button is not enabled after clicking new web source test button and waiting one minute (60000ms).");
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.DefaultQueryTextBox.TestPassedImage.Exists, "Expected Test to Pass, but got different results after clicking test button.");
         }
-
+        
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Web Sources")]       
+        public void Test_WebServiceSource_ValidateDefaultHttps_AddedOnMissingText_UITests()
+        {
+            const string httpsAddress = "https://data.gov.in";
+            const string httpAddress = "http://data.gov.in";
+            const string noPrefixAddress = "data.gov.in";
+            //Create Source
+            ExplorerUIMap.Click_NewWebSource_From_ExplorerContextMenu();
+            WebSourceUIMap.Enter_TextIntoAddress_On_WebServiceSourceTab(httpsAddress);
+            Keyboard.SendKeys("\t");
+            Assert.AreEqual(httpsAddress, WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.AddressTextbox.Text);
+            WebSourceUIMap.Enter_TextIntoAddress_On_WebServiceSourceTab(noPrefixAddress);
+            Keyboard.SendKeys("\t");
+            Assert.AreEqual(httpsAddress, WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.AddressTextbox.Text);
+            WebSourceUIMap.Enter_TextIntoAddress_On_WebServiceSourceTab(httpAddress);
+            Keyboard.SendKeys("\t");
+            Assert.AreEqual(httpAddress, WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.AddressTextbox.Text);
+        }
+        
         #region Additional test attributes
 
         [TestInitialize()]

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Dev2.Common.Annotations;
 using Dev2.Common.Interfaces.DB;
 
 
@@ -26,7 +25,7 @@ namespace Dev2.Common.Interfaces
         public bool HasError { get; set; }
         public bool IsProperty { get; set; }
         public event PropertyChangedEventHandler PropertyChanged;
-        [NotifyPropertyChangedInvocator]
+
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -73,19 +72,11 @@ namespace Dev2.Common.Interfaces
                 return ((Inputs?.GetHashCode() ?? 0) * 397) ^ (Method?.GetHashCode() ?? 0);
             }
         }
-        public string GetIdentifier()
-        {
-            return FullName + Method;
-        }
-        public static bool operator ==(PluginAction left, PluginAction right)
-        {
-            return Equals(left, right);
-        }
+        public string GetIdentifier() => FullName + Method;
 
-        public static bool operator !=(PluginAction left, PluginAction right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator ==(PluginAction left, PluginAction right) => Equals(left, right);
+
+        public static bool operator !=(PluginAction left, PluginAction right) => !Equals(left, right);
 
         #region Overrides of Object
 
@@ -95,10 +86,7 @@ namespace Dev2.Common.Interfaces
         /// <returns>
         /// A string that represents the current object.
         /// </returns>
-        public override string ToString()
-        {
-            return Method;
-        }
+        public override string ToString() => Method;
 
         public Guid ID { get; set; }
 

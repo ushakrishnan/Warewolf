@@ -4,12 +4,9 @@ using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.ServiceModel;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
@@ -18,30 +15,15 @@ using Warewolf.Resource.Errors;
 namespace Dev2.Runtime.ESB.Management.Services
 {
 
-    public class GetSharepointListService : IEsbManagementEndpoint
+    public class GetSharepointListService : DefaultEsbManagementEndpoint
     {
-        #region Implementation of ISpookyLoadable<string>
-
-        public string HandlesType()
+        #region Implementation of DefaultEsbManagementEndpoint
+        
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            return "GetSharepointListService";
-        }
+            var serializer = new Dev2JsonSerializer();
 
-        #endregion
-
-        #region Implementation of IEsbManagementEndpoint
-
-        /// <summary>
-        /// Executes the service
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <param name="theWorkspace">The workspace.</param>
-        /// <returns></returns>
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
-        {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
-
-            if(values == null)
+            if (values == null)
             {
                 throw new InvalidDataContractException(ErrorResource.NoParameter);
             }
@@ -54,7 +36,7 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             if(string.IsNullOrEmpty(serializedSource))
             {
-                ExecuteMessage message = new ExecuteMessage();
+                var message = new ExecuteMessage();
                 message.HasError = true;
                 message.SetMessage(ErrorResource.NoSharepointServerSet);
                 Dev2Logger.Debug(ErrorResource.NoSharepointServerSet, GlobalConstants.WarewolfDebug);
@@ -99,7 +81,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             try
             {
                 Dev2Logger.Info("Get Sharepoint Server Lists. " + source.Server, GlobalConstants.WarewolfDebug);
-                List<SharepointListTo> lists = runtimeSource.LoadLists();
+                var lists = runtimeSource.LoadLists();
                 return serializer.SerializeToBuilder(lists);
             }
             catch(Exception ex)
@@ -109,40 +91,10 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        /// <summary>
-        /// Creates the service entry.
-        /// </summary>
-        /// <returns></returns>
-        public DynamicService CreateServiceEntry()
-        {
-            var ds = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Database ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
-
-            var sa = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            ds.Actions.Add(sa);
-
-            return ds;
-        }
-
         #endregion
 
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Database ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
+        public override string HandlesType() => "GetSharepointListService";
     }
 }

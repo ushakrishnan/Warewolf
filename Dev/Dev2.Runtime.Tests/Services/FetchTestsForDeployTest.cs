@@ -17,7 +17,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class FetchTestsForDeployTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -31,7 +31,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -45,7 +45,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("FetchTests_HandlesType")]
         public void FetchTests_HandlesType_ExpectName()
@@ -60,7 +60,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("FetchTestsForDeploy", fetchTests.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_NullValues_ErrorResult()
@@ -69,13 +69,13 @@ namespace Dev2.Tests.Runtime.Services
             var fetchTests = new FetchTestsForDeploy();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchTests.Execute(null, null);
+            var jsonResult = fetchTests.Execute(null, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_ResourceIDNotPresent_ErrorResult()
@@ -85,13 +85,13 @@ namespace Dev2.Tests.Runtime.Services
             var fetchTests = new FetchTestsForDeploy();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchTests.Execute(values, null);
+            var jsonResult = fetchTests.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_ResourceIDNotGuid_ErrorResult()
@@ -101,14 +101,14 @@ namespace Dev2.Tests.Runtime.Services
             var fetchTests = new FetchTestsForDeploy();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchTests.Execute(values, null);
+            var jsonResult = fetchTests.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
         
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_ExpectTestList()

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -46,15 +46,15 @@ namespace Dev2.Studio.Views.Workflow
             _currentTab = InputTab.Grid;
         }
 
-        private TextEditor _editor;
-        private TextEditor _jsonEditor;
-        private AbstractFoldingStrategy _foldingStrategy;
-        private FoldingManager _foldingManager;
+        TextEditor _editor;
+        TextEditor _jsonEditor;
+        AbstractFoldingStrategy _foldingStrategy;
+        FoldingManager _foldingManager;
         DispatcherTimer _foldingUpdateTimer;
         readonly Grid _blackoutGrid = new Grid();
         InputTab _currentTab;
 
-        private void SetUpTextEditor()
+        void SetUpTextEditor()
         {
             _editor = new TextEditor { SyntaxHighlighting = HighlightingManager.Instance.GetDefinition("XML"), ShowLineNumbers = true, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto };
             _editor.SetValue(AutomationProperties.AutomationIdProperty, "UI_XMLEditor_AutoID");
@@ -73,22 +73,50 @@ namespace Dev2.Studio.Views.Workflow
 
         void OnFoldingUpdateTimerOnTick(object sender, EventArgs e)
         {
-            if (_foldingStrategy != null && _foldingManager != null)
+            if (_foldingStrategy != null && _foldingManager != null && !string.IsNullOrEmpty(_editor.Document.Text))
             {
-                if (!string.IsNullOrEmpty(_editor.Document.Text))
-                {
-                    _foldingStrategy.UpdateFoldings(_foldingManager, _editor.Document);
-                }
+                _foldingStrategy.UpdateFoldings(_foldingManager, _editor.Document);
             }
+
         }
 
-        private void ShowDataInOutputWindow(string input)
+        void ShowDataInOutputWindow(string input)
         {
             _editor.Text = input;
             XmlOutput.Content = _editor;
         }
 
-        private void TextBoxTextChanged(object sender, RoutedEventArgs routedEventArgs)
+        void TryShowDataInOutputWindow(WorkflowInputDataViewModel vm)
+        {
+            if (_currentTab == InputTab.Grid)
+            {
+                try
+                {
+                    vm.SetXmlData();
+                    ShowDataInOutputWindow(vm.XmlData);
+                }
+                catch
+                {
+                    vm.ShowInvalidDataPopupMessage();
+                }
+            }
+            if (_currentTab == InputTab.Json)
+            {
+                try
+                {
+                    vm.XmlData = GetXmlDataFromJson();
+                    vm.SetWorkflowInputData();
+                    vm.SetXmlData();
+                    ShowDataInOutputWindow(vm.XmlData);
+                }
+                catch
+                {
+                    vm.ShowInvalidDataPopupMessage();
+                }
+            }
+        }
+
+        void TextBoxTextChanged(object sender, RoutedEventArgs routedEventArgs)
         {
             if (routedEventArgs.OriginalSource is IntellisenseTextBox tb)
             {
@@ -98,7 +126,7 @@ namespace Dev2.Studio.Views.Workflow
             }
         }
 
-        private void TabControlSelectionChanged(object sender, SelectionChangedEventArgs e)
+        void TryChangeTab(object sender, SelectionChangedEventArgs e)
         {
             if (e.Source is TabControl ctrl)
             {
@@ -109,104 +137,77 @@ namespace Dev2.Studio.Views.Workflow
                     vm.IsInError = false;
                     if (tabItem != null && tabItem.Header.ToString() == "XML")
                     {
-                        switch (_currentTab)
-                        {
-                            case InputTab.Grid:
-                                try
-                                {
-                                    vm.SetXmlData();
-                                    ShowDataInOutputWindow(vm.XmlData);
-                                }
-                                catch
-                                {
-                                    vm.ShowInvalidDataPopupMessage();
-                                }
-                                break;
-                            case InputTab.Json:
-                                try
-                                {
-                                    vm.XmlData = GetXmlDataFromJson();
-                                    vm.SetWorkflowInputData();
-                                    vm.SetXmlData();
-                                    ShowDataInOutputWindow(vm.XmlData);
-                                }
-                                catch
-                                {
-                                    vm.ShowInvalidDataPopupMessage();
-                                }
-                                break;
-                            case InputTab.Xml:
-                                break;
-                            default:
-                                break;
-                        }
+                        TryShowDataInOutputWindow(vm);
                         _currentTab = InputTab.Xml;
                     }
                     else if (tabItem != null && tabItem.Header.ToString() == "JSON")
                     {
-                        var xml = new XmlDocument();
-                        switch (_currentTab)
-                        {
-                            case InputTab.Grid:
-                                vm.SetXmlData();
-                                if (vm.XmlData != null)
-                                {
-                                    xml.LoadXml(vm.XmlData);
-                                }
-                                break;
-                            case InputTab.Xml:
-                                if (!string.IsNullOrEmpty(_editor.Text))
-                                {
-                                    try
-                                    {
-                                        xml.LoadXml(_editor.Text);
-                                    }
-                                    catch
-                                    {
-                                        vm.ShowInvalidDataPopupMessage();
-                                    }
-                                }
-                                break;
-                            case InputTab.Json:
-                                break;
-                            default:
-                                break;
-                        }
-                        if (!string.IsNullOrEmpty(vm.JsonData))
-                        {
-                            _jsonEditor.Text = vm.JsonData;
-                        }
-                        else
-                        {
-                            if (xml.FirstChild != null)
-                            {
-                                var json = JsonConvert.SerializeXmlNode(xml.FirstChild, Newtonsoft.Json.Formatting.Indented, true);
-                                _jsonEditor.Text = json;
-                            }
-                        }
-                        JsonOutput.Content = _jsonEditor;
-                        _currentTab = InputTab.Json;
+                        SetCurrentTabToJson(vm);
                     }
                     else
                     {
-                        try
-                        {
-                            var xmlData = _editor.Text;
-                            if (_currentTab == InputTab.Json)
-                            {
-                                xmlData = GetXmlDataFromJson();
-                            }
-                            vm.XmlData = xmlData;
-                            vm.SetWorkflowInputData();
-                            _currentTab = InputTab.Grid;
-                        }
-                        catch
-                        {
-                            vm.IsInError = true;
-                        }
+                        TryChangeTab(vm);
                     }
                 }
             }
+        }
+
+        void TryChangeTab(WorkflowInputDataViewModel vm)
+        {
+            try
+            {
+                var xmlData = _editor.Text;
+                if (_currentTab == InputTab.Json)
+                {
+                    xmlData = GetXmlDataFromJson();
+                }
+                vm.XmlData = xmlData;
+                vm.SetWorkflowInputData();
+                _currentTab = InputTab.Grid;
+            }
+            catch (Exception ex)
+            {
+                vm.IsInError = true;
+            }
+        }
+
+        private void SetCurrentTabToJson(WorkflowInputDataViewModel vm)
+        {
+            var xml = new XmlDocument();
+            if (_currentTab == InputTab.Grid)
+            {
+                vm.SetXmlData();
+                if (vm.XmlData != null)
+                {
+                    xml.LoadXml(vm.XmlData);
+                }
+            }
+            if (_currentTab == InputTab.Xml && !string.IsNullOrEmpty(_editor.Text))
+            {
+                try
+                {
+                    xml.LoadXml(_editor.Text);
+                }
+                catch (Exception ex)
+                {
+                    vm.ShowInvalidDataPopupMessage();
+                }
+            }
+
+            if (!string.IsNullOrEmpty(vm.JsonData))
+            {
+                _jsonEditor.Text = vm.JsonData;
+            }
+            else
+            {
+                if (xml.FirstChild != null)
+                {
+                    var json = JsonConvert.SerializeXmlNode(xml.FirstChild, Newtonsoft.Json.Formatting.Indented, true);
+                    _jsonEditor.Text = json;
+                }
+            }
+            JsonOutput.Content = _jsonEditor;
+            _currentTab = InputTab.Json;
         }
 
         string GetXmlDataFromJson()
@@ -224,7 +225,7 @@ namespace Dev2.Studio.Views.Workflow
             return _editor.Text;
         }
 
-        private void MenuItemAddRow(object sender, RoutedEventArgs e)
+        void MenuItemAddRow(object sender, RoutedEventArgs e)
         {
 
             if (DataContext is WorkflowInputDataViewModel vm && vm.AddBlankRow(DataListInputs.ActiveItem as IDataListItem, out int indexToSelect))
@@ -234,24 +235,24 @@ namespace Dev2.Studio.Views.Workflow
             }
         }
 
-        private void FocusOnAddition()
+        void FocusOnAddition()
         {
             try
             {
                 var row = GetSelectedRow(DataListInputs);
-                if(row != null)
+                if (row != null)
                 {
                     var intelbox = FindByName("txtValue", row) as IntellisenseTextBox;
                     intelbox?.Focus();
                 }
             }
-            catch(Exception)
+            catch (Exception)
             {
                 //
             }
         }
 
-        private void MenuItemDeleteRow(object sender, RoutedEventArgs e)
+        void MenuItemDeleteRow(object sender, RoutedEventArgs e)
         {
             if (DataContext is WorkflowInputDataViewModel vm && vm.RemoveRow(DataListInputs.ActiveItem as IDataListItem, out int indexToSelect))
             {
@@ -259,7 +260,7 @@ namespace Dev2.Studio.Views.Workflow
             }
         }
 
-        private void IntellisenseTextBoxPreviewKeyDown(object sender, KeyEventArgs e)
+        void IntellisenseTextBoxPreviewKeyDown(object sender, KeyEventArgs e)
         {
             var vm = DataContext as WorkflowInputDataViewModel;
 
@@ -268,20 +269,26 @@ namespace Dev2.Studio.Views.Workflow
                 InsertEmptyRow();
                 e.Handled = true;
             }
-            else if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift && e.Key == Key.Delete)
+            else
             {
-                DeleteLastRow();
-                e.Handled = true;
+                if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift && e.Key == Key.Delete)
+                {
+                    DeleteLastRow();
+                    e.Handled = true;
+                }
             }
             if ((e.KeyboardDevice.Modifiers == ModifierKeys.Shift && (e.KeyboardDevice.IsKeyDown(Key.Tab) || e.Key == Key.Tab)) || e.KeyboardDevice.IsKeyDown(Key.Up))
             {
                 MoveToPreviousRow(vm);
                 e.Handled = true;
             }
-            else if (e.KeyboardDevice.IsKeyDown(Key.Tab) || e.KeyboardDevice.IsKeyDown(Key.Down))
+            else
             {
-                MoveToNextRow(vm);
-                e.Handled = true;
+                if (e.KeyboardDevice.IsKeyDown(Key.Tab) || e.KeyboardDevice.IsKeyDown(Key.Down))
+                {
+                    MoveToNextRow(vm);
+                    e.Handled = true;
+                }
             }
         }
 
@@ -305,7 +312,7 @@ namespace Dev2.Studio.Views.Workflow
             }
         }
 
-        private void GridPreviewKeyDown(object sender, KeyEventArgs e)
+        void GridPreviewKeyDown(object sender, KeyEventArgs e)
         {
             UIElement keyboardFocus = Keyboard.FocusedElement as TextBox;
             if (e.KeyboardDevice.IsKeyDown(Key.LeftShift) && e.KeyboardDevice.IsKeyDown(Key.Tab))
@@ -324,7 +331,7 @@ namespace Dev2.Studio.Views.Workflow
             }
         }
 
-        private static FrameworkElement FindByName(string name, FrameworkElement root)
+        static FrameworkElement FindByName(string name, FrameworkElement root)
         {
             if (root != null)
             {
@@ -341,15 +348,21 @@ namespace Dev2.Studio.Views.Workflow
                     var count = VisualTreeHelper.GetChildrenCount(current);
                     for (var supplierCounter = 0; supplierCounter < count; ++supplierCounter)
                     {
-                        var child = VisualTreeHelper.GetChild(current, supplierCounter);
-                        if (child is FrameworkElement item)
-                        {
-                            tree.Push(item);
-                        }
+                        tree = TreePushChild(tree, current, supplierCounter);
                     }
                 }
             }
             return null;
+        }
+
+        static Stack<FrameworkElement> TreePushChild(Stack<FrameworkElement> tree, FrameworkElement current, int supplierCounter)
+        {
+            var child = VisualTreeHelper.GetChild(current, supplierCounter);
+            if (child is FrameworkElement item)
+            {
+                tree.Push(item);
+            }
+            return tree;
         }
 
         static CellsPanel GetSelectedRow(XamGrid grid)
@@ -358,7 +371,7 @@ namespace Dev2.Studio.Views.Workflow
             return row?.Control;
         }
 
-        private void ExecuteClicked(object sender, RoutedEventArgs e)
+        void ExecuteClicked(object sender, RoutedEventArgs e)
         {
             var tabItem = TabItems.SelectedItem as TabItem;
             if (DataContext is WorkflowInputDataViewModel vm)
@@ -366,26 +379,34 @@ namespace Dev2.Studio.Views.Workflow
                 vm.IsInError = false;
                 if (tabItem != null)
                 {
-                    if (tabItem.Header.ToString() == "XML")
-                    {
-                        try
-                        {
-                            vm.XmlData = _editor.Text;
-                            vm.SetWorkflowInputData();
-                        }
-                        catch
-                        {
-                            vm.IsInError = true;
-                        }
-                    }
-                    else if (tabItem.Header.ToString() == "JSON")
-                    {
-                        vm.XmlData = GetXmlDataFromJson();
-                        vm.SetWorkflowInputData();
-                    }
+                    TrySetWorkflowInputData(tabItem, vm);
                 }
             }
             DestroyTimer();
+        }
+
+        void TrySetWorkflowInputData(TabItem tabItem, WorkflowInputDataViewModel vm)
+        {
+            if (tabItem.Header.ToString() == "XML")
+            {
+                try
+                {
+                    vm.XmlData = _editor.Text;
+                    vm.SetWorkflowInputData();
+                }
+                catch (Exception ex)
+                {
+                    vm.IsInError = true;
+                }
+            }
+            else
+            {
+                if (tabItem.Header.ToString() == "JSON")
+                {
+                    vm.XmlData = GetXmlDataFromJson();
+                    vm.SetWorkflowInputData();
+                }
+            }
         }
 
         void DestroyTimer()
@@ -451,7 +472,7 @@ namespace Dev2.Studio.Views.Workflow
             FocusOnAddition();
         }
 
-        private void WorkflowInputDataView_OnKeyUp(object sender, KeyEventArgs e)
+        void WorkflowInputDataView_OnKeyUp(object sender, KeyEventArgs e)
         {
             if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
             {

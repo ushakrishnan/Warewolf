@@ -24,7 +24,7 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person>() });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person>() });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
@@ -35,7 +35,7 @@ namespace WarewolfParsingTest
             Assert.IsTrue(evalled.IsWarewolfAtomResult);
             var res = (evalled as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult).Item;
             var str = (res as DataStorage.WarewolfAtom.DataString).ToString();
-            Assert.AreEqual(str,j.ToString());
+            Assert.AreEqual(str, j.ToString());
         }
 
         [TestMethod]
@@ -45,14 +45,14 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person>() });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person>() });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
             //------------Assert Results-------------------------
             Assert.IsTrue(added.JsonObjects.ContainsKey("bob"));
             Assert.AreEqual((added.JsonObjects["bob"] as JObject).GetValue("Name").ToString(), "n");
-            var evalled = CommonFunctions.evalResultToString( EvaluationFunctions.eval(added, 0, false, "[[@bob.Name]]"));
+            var evalled = CommonFunctions.evalResultToString(EvaluationFunctions.eval(added, 0, false, "[[@bob.Name]]"));
 
             Assert.AreEqual(evalled, "n");
         }
@@ -64,7 +64,7 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person>(), Spouse = new Person() { Name = "o", Children = new List<Person>() } });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person>(), Spouse = new Person() { Name = "o", Children = new List<Person>() } });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
@@ -83,7 +83,7 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
@@ -104,7 +104,7 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() }, new Person() { Name = "q", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() }, new Person() { Name = "q", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
@@ -122,7 +122,7 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() }, new Person() { Name = "q", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() }, new Person() { Name = "q", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
@@ -142,7 +142,7 @@ namespace WarewolfParsingTest
         {
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
-            JObject j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() }, new Person() { Name = "q", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
+            var j = JObject.FromObject(new Person() { Name = "n", Children = new List<Person> { new Person() { Name = "p", Children = new List<Person>() }, new Person() { Name = "q", Children = new List<Person>() } }, Spouse = new Person() { Name = "o", Children = new List<Person>() } });
             var added = WarewolfDataEvaluationCommon.addToJsonObjects(createDataSet, "bob", j);
             //------------Execute Test---------------------------
 
@@ -162,9 +162,9 @@ namespace WarewolfParsingTest
             //------------Setup for test--------------------------
             var createDataSet = WarewolfTestData.CreateTestEnvWithData;
             var x = new[] { new Person() { Name = "n", Children = new List<Person>() }, new Person() { Name = "n", Children = new List<Person>() } };
-            var j = JArray.FromObject( x );
+            var j = JArray.FromObject(x);
             var q = j.SelectTokens("[*]");
-          //  var added = AssignEvaluation.addToJsonObjects(createDataSet, "bob", j);
+            //  var added = AssignEvaluation.addToJsonObjects(createDataSet, "bob", j);
             ////------------Execute Test---------------------------
 
             ////------------Assert Results-------------------------
@@ -194,10 +194,10 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
@@ -225,10 +225,10 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "1"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
@@ -258,10 +258,10 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "1"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
@@ -289,10 +289,10 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
@@ -317,8 +317,8 @@ namespace WarewolfParsingTest
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
 
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
 
 
             var items = env.EvalWhere("[[a]]", a => PublicFunctions.AtomtoString(a) == "25", 0);
@@ -333,7 +333,7 @@ namespace WarewolfParsingTest
         [TestCategory("WarewolfParse_EvalWhere")]
         public void WarewolfParse_Eval_where_WithNoIndexAndMultipleColumns_MultipleEvalsErrorsRecordSetName()
         {
-            
+
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
             var assigns = new List<IAssignValue>
              {
@@ -343,19 +343,19 @@ namespace WarewolfParsingTest
                  new AssignValue("[[rec().a]]", "27"),
 
              };
-            ExecutionEnvironment env = new ExecutionEnvironment();
+            var env = new ExecutionEnvironment();
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
+
 
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "28"), 0);
 
-            
-            
+
+
             var items = env.EvalWhere("[[rec()]]", a => PublicFunctions.AtomtoString(a) == "25", 0);
             Assert.AreEqual(items.ToArray()[0], 1);
         }
@@ -371,9 +371,9 @@ namespace WarewolfParsingTest
             WarewolfTestData.CreateTestEnvEmpty("");
 
 
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
-            
+
+            var env = new ExecutionEnvironment();
+
             var items = env.EvalWhere("x", a => PublicFunctions.AtomtoString(a) == "25", 0);
 
         }
@@ -381,15 +381,15 @@ namespace WarewolfParsingTest
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("WarewolfParse_EvalWhere")]
-         [ExpectedException(typeof(Exception))]
+        [ExpectedException(typeof(Exception))]
         public void WarewolfParse_Eval_where_WithNoIndexAndMultipleColumns_MultipleEvalsErrorsOnComplex()
         {
 
-            
+
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            ExecutionEnvironment env = new ExecutionEnvironment();
-            
+            var env = new ExecutionEnvironment();
+
             var items = env.EvalWhere("[[rec()]] b", a => PublicFunctions.AtomtoString(a) == "25", 0);
 
         }
@@ -405,11 +405,11 @@ namespace WarewolfParsingTest
             var env = CreateEnvironmentWithData();
 
 
-            
+
             //------------Execute Test---------------------------
             var res = EvaluationFunctions.evalForCalculate(env, 0, GlobalConstants.CalculateTextConvertPrefix + "Sum([[x]])" + GlobalConstants.CalculateTextConvertSuffix);
             //------------Assert Results-------------------------
-            Assert.AreEqual(CommonFunctions.evalResultToString(res),GlobalConstants.CalculateTextConvertPrefix + "Sum(1)" + GlobalConstants.CalculateTextConvertSuffix );
+            Assert.AreEqual(CommonFunctions.evalResultToString(res), GlobalConstants.CalculateTextConvertPrefix + "Sum(1)" + GlobalConstants.CalculateTextConvertSuffix);
         }
 
         [TestMethod]
@@ -505,7 +505,7 @@ namespace WarewolfParsingTest
             //------------Execute Test---------------------------
             var res = EvaluationFunctions.evalForCalculate(env, 0, GlobalConstants.CalculateTextConvertPrefix + "Sum([[Rec(*).a]])" + GlobalConstants.CalculateTextConvertSuffix);
             //------------Assert Results-------------------------
-            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(1)" + GlobalConstants.CalculateTextConvertSuffix+","+ GlobalConstants.CalculateTextConvertPrefix + "Sum(2)" + GlobalConstants.CalculateTextConvertSuffix+","+ GlobalConstants.CalculateTextConvertPrefix + "Sum(3)" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
+            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(1)" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(2)" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(3)" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
         }
 
         [TestMethod]
@@ -539,7 +539,7 @@ namespace WarewolfParsingTest
             //------------Execute Test---------------------------
             var res = EvaluationFunctions.evalForCalculate(env, 0, GlobalConstants.CalculateTextConvertPrefix + "Sum([[Rec(*).a]][[x]])" + GlobalConstants.CalculateTextConvertSuffix);
             //------------Assert Results-------------------------
-            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(11)" + GlobalConstants.CalculateTextConvertSuffix+","+ GlobalConstants.CalculateTextConvertPrefix + "Sum(21)" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(31)" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
+            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(11)" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(21)" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(31)" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
         }
 
         [TestMethod]
@@ -555,7 +555,7 @@ namespace WarewolfParsingTest
             //------------Execute Test---------------------------
             var res = EvaluationFunctions.evalForCalculateAggregate(env, 0, GlobalConstants.AggregateCalculateTextConvertPrefix + "Sum([[Rec(*).a]][[x]])" + GlobalConstants.AggregateCalculateTextConvertSuffix);
             //------------Assert Results-------------------------
-            Assert.AreEqual(CommonFunctions.evalResultToString(res), GlobalConstants.AggregateCalculateTextConvertPrefix+ "Sum(1,2,31)" + GlobalConstants.AggregateCalculateTextConvertSuffix);
+            Assert.AreEqual(CommonFunctions.evalResultToString(res), GlobalConstants.AggregateCalculateTextConvertPrefix + "Sum(1,2,31)" + GlobalConstants.AggregateCalculateTextConvertSuffix);
         }
 
         [TestMethod]
@@ -619,7 +619,7 @@ namespace WarewolfParsingTest
             //------------Execute Test---------------------------
             var res = EvaluationFunctions.evalForCalculate(env, 0, GlobalConstants.CalculateTextConvertPrefix + "Sum([[@Person.Score(*)]])" + GlobalConstants.CalculateTextConvertSuffix);
             //------------Assert Results-------------------------
-            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(\"2\")" + GlobalConstants.CalculateTextConvertSuffix+","+ GlobalConstants.CalculateTextConvertPrefix + "Sum(\"3\")" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res) );
+            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(\"2\")" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(\"3\")" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
         }
 
         [TestMethod]
@@ -646,9 +646,9 @@ namespace WarewolfParsingTest
             //------------Setup for test--------------------------
             var env = CreateEnvironmentWithData();
             //------------Execute Test---------------------------
-            var res = EvaluationFunctions.evalForCalculate(env, 0, GlobalConstants.CalculateTextConvertPrefix + "Sum( [[Rec()]])" + GlobalConstants.CalculateTextConvertSuffix);
+            var res = EvaluationFunctions.evalForCalculate(env, 0, GlobalConstants.CalculateTextConvertPrefix + "Sum([[Rec()]])" + GlobalConstants.CalculateTextConvertSuffix);
             //------------Assert Results-------------------------
-            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(3)" + GlobalConstants.CalculateTextConvertSuffix+","+ GlobalConstants.CalculateTextConvertPrefix + "Sum(c)" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
+            Assert.AreEqual(GlobalConstants.CalculateTextConvertPrefix + "Sum(3)" + GlobalConstants.CalculateTextConvertSuffix + "," + GlobalConstants.CalculateTextConvertPrefix + "Sum(c)" + GlobalConstants.CalculateTextConvertSuffix, CommonFunctions.evalResultToString(res));
         }
 
         [TestMethod]
@@ -659,7 +659,7 @@ namespace WarewolfParsingTest
             //------------Setup for test--------------------------
             var env = CreateEnvironmentWithData();
             //------------Execute Test---------------------------
-            var res = EvaluationFunctions.evalForCalculateAggregate(env, 0, GlobalConstants.AggregateCalculateTextConvertPrefix + "Sum( [[Rec()]])" + GlobalConstants.AggregateCalculateTextConvertSuffix);
+            var res = EvaluationFunctions.evalForCalculateAggregate(env, 0, GlobalConstants.AggregateCalculateTextConvertPrefix + "Sum([[Rec()]])" + GlobalConstants.AggregateCalculateTextConvertSuffix);
             //------------Assert Results-------------------------
             Assert.AreEqual(CommonFunctions.evalResultToString(res), GlobalConstants.AggregateCalculateTextConvertPrefix + "Sum(3,c)" + GlobalConstants.AggregateCalculateTextConvertSuffix);
         }
@@ -840,22 +840,22 @@ namespace WarewolfParsingTest
             Assert.AreEqual(CommonFunctions.evalResultToString(res.Last()), "3,c");
         }
 
-        private static DataStorage.WarewolfEnvironment CreateEnvironmentWithData()
+        static DataStorage.WarewolfEnvironment CreateEnvironmentWithData()
         {
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
-            env.Assign("[[Rec(1).a]]","1",0);
+
+            var env = new ExecutionEnvironment();
+            env.Assign("[[Rec(1).a]]", "1", 0);
             env.Assign("[[Rec(2).a]]", "2", 0);
             env.Assign("[[Rec(3).a]]", "3", 0);
             env.Assign("[[Rec(1).b]]", "a", 0);
             env.Assign("[[Rec(2).b]]", "b", 0);
             env.Assign("[[Rec(3).b]]", "c", 0);
-            env.Assign("[[x]]","1",0);
+            env.Assign("[[x]]", "1", 0);
             env.Assign("[[y]]", "y", 0);
             env.Assign("[[z]]", "2", 0);
             env.Assign("[[q]]", "r", 0);
             env.Assign("[[r]]", "1", 0);
-            env.AssignJson(new AssignValue("[[@Person.Name]]","bob"),0 );
+            env.AssignJson(new AssignValue("[[@Person.Name]]", "bob"), 0);
             env.AssignJson(new AssignValue("[[@Person.Age]]", "22"), 0);
             env.AssignJson(new AssignValue("[[@Person.Spouse.Name]]", "dora"), 0);
             env.AssignJson(new AssignValue("[[@Person.Children(1).Name]]", "Mary"), 0);
@@ -863,7 +863,7 @@ namespace WarewolfParsingTest
             env.AssignJson(new AssignValue("[[@Person.Score(1)]]", "2"), 0);
             env.AssignJson(new AssignValue("[[@Person.Score(2)]]", "3"), 0);
             env.AssignJson(new AssignValue("[[array(1)]]", "bob"), 0);
-            PrivateObject p = new PrivateObject(env);
+            var p = new PrivateObject(env);
             return (DataStorage.WarewolfEnvironment)p.GetFieldOrProperty("_env");
         }
 
@@ -884,10 +884,10 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
@@ -917,16 +917,16 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
             env.AssignWithFrame(new AssignValue("[[rec(*).a]]", "28"), 0);
 
-            var items = env.EvalAsListOfStrings("[[rec(*).a]]",0);
+            var items = env.EvalAsListOfStrings("[[rec(*).a]]", 0);
             Assert.AreEqual(items.ToArray()[0], "28");
             Assert.AreEqual(items.ToArray()[1], "28");
 
@@ -948,10 +948,10 @@ namespace WarewolfParsingTest
              };
             var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
 
-            
+
             var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
-            
-            ExecutionEnvironment env = new ExecutionEnvironment();
+
+            var env = new ExecutionEnvironment();
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "25"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "26"), 0);
             env.AssignWithFrame(new AssignValue("[[rec().a]]", "27"), 0);
@@ -960,6 +960,44 @@ namespace WarewolfParsingTest
             var items = env.EvalAsListOfStrings("[[rsec(*).a]]", 0);
             Assert.AreEqual(items.Count, 1);
             Assert.AreEqual(items[0], "28");
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        public void AppendObjectToArrayInAnObject()
+        {
+            var assigns = new List<IAssignValue>
+             {
+                 new AssignValue("[[@obj.addr().a]]", "125"),
+                 new AssignValue("[[@obj.addr().b]]", "133"),
+                 new AssignValue("[[@obj.addr().c]]", "126"),
+
+                 new AssignValue("[[@obj.addr().a]]", "225"),
+                 new AssignValue("[[@obj.addr().b]]", "233"),
+                 new AssignValue("[[@obj.addr().c]]", "226"),
+             };
+            var testEnv = WarewolfTestData.CreateTestEnvEmpty("");
+
+            var testEnv2 = PublicFunctions.EvalMultiAssign(assigns, 0, testEnv);
+
+            // assert that a, b, and c belong to the same object in the addr array inside obj
+            Assert.IsTrue(testEnv2.JsonObjects.ContainsKey("obj"));
+            var obj = testEnv2.JsonObjects["obj"] as JObject;
+            Assert.IsNotNull(obj, "not a JObject");
+            var addrList = obj["addr"] as JArray;
+            Assert.IsNotNull(addrList, "not a JArray");
+            Assert.AreEqual(2, addrList.Count);
+            var addr = addrList.First as JObject;
+            Assert.IsNotNull(addr, "not a JObject");
+
+            Assert.AreEqual(125, addr["a"].Value<int>());
+            Assert.AreEqual(133, addr["b"].Value<int>());
+            Assert.AreEqual(126, addr["c"].Value<int>());
+
+            addr = addrList.Last as JObject;
+            Assert.AreEqual(225, addr["a"].Value<int>());
+            Assert.AreEqual(233, addr["b"].Value<int>());
+            Assert.AreEqual(226, addr["c"].Value<int>());
         }
     }
 }

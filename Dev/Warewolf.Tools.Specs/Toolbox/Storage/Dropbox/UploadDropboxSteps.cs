@@ -25,7 +25,7 @@ namespace Dev2.Activities.Specs.Toolbox.Storage.Dropbox
     [Binding]
     public class UploadDropboxSteps : RecordSetBases
     {
-        private readonly ScenarioContext scenarioContext;
+        readonly ScenarioContext scenarioContext;
 
         public UploadDropboxSteps(ScenarioContext scenarioContext)
             : base(scenarioContext)
@@ -76,11 +76,6 @@ namespace Dev2.Activities.Specs.Toolbox.Storage.Dropbox
             return scenarioContext.Get<DropBoxUploadViewModel>("uploadViewModel");
         }
 
-        Mock<IServer> GeEnvrionmentModel()
-        {
-            return scenarioContext.Get<Mock<IServer>>("mockEnvironmentModel");
-        }
-
         [Given(@"New is Enabled")]
         [When(@"New is Enabled")]
         [Then(@"New is Enabled")]
@@ -93,7 +88,7 @@ namespace Dev2.Activities.Specs.Toolbox.Storage.Dropbox
         [When(@"the Dropbox tool is executed")]
         public void WhenTheDropboxToolIsExecuted()
         {
-            IDSFDataObject result = ExecuteProcess(isDebug: true, throwException: false);
+            var result = ExecuteProcess(isDebug: true, throwException: false);
             scenarioContext.Add("result", result);
         }
 

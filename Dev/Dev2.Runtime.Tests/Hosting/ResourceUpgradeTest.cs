@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,7 @@ namespace Dev2.Tests.Runtime.Hosting
     public class ResourceUpgradeTest
     {
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrade_Ctor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -35,7 +35,7 @@ namespace Dev2.Tests.Runtime.Hosting
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("ResourceUpgrade_Ctor")]
         public void ResourceUpgrade_Properties()

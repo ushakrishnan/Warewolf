@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Activities;
 using System.Collections.Generic;
 using Dev2.Activities;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
 using Dev2.Interfaces;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -51,6 +52,11 @@ namespace Dev2.Tests.Activities.ActivityTests
             }
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
+        }
+
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
             throw new NotImplementedException();
@@ -85,6 +91,19 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             DispatchDebugState(dataObject, stateType,0);
             return DebugState;
+        }
+
+        public bool Equals(TestActivity other)
+        {
+            return ReferenceEquals(this, other);
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is TestActivity instance)
+            {
+                return Equals(instance);
+            }
+            return false;
         }
     }
 

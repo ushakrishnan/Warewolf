@@ -21,16 +21,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core;
-
-
-
+using Dev2.Explorer;
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
     [TestClass]
     public class StudioServerProxyTests
     {
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -42,7 +40,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -54,7 +52,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_Constructor")]
         public void StudioServerProxy_Constructor_WhenValidArgs_ShouldConstuct()
@@ -72,7 +70,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(studioServerProxy.AdminManagerProxy);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_LoadExplorer")]
         public void StudioServerProxy_LoadExplorer_Called_ShouldLoadExplorerItems()
@@ -88,7 +86,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(item);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_LoadExplorer")]
         public void StudioServerProxy_LoadExplorerDuplicates_Called_ShouldLoadDuplicates()
@@ -104,7 +102,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(item);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_LoadExplorer")]
         public void StudioServerProxy_Delete_WhenResource_ShouldDeleteResource()
@@ -123,7 +121,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockPopupController.Setup(controller => controller.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "false", true, true, false, false, false, false)).Returns(MessageBoxResult.OK);
             CustomContainer.Register(mockPopupController.Object);
             //------------Execute Test---------------------------
-            var item = studioServerProxy.Delete(mockExplorerItemModel.Object);
+            var item = studioServerProxy.TryDelete(mockExplorerItemModel.Object);
             //------------Assert Results-------------------------
             Assert.IsNotNull(item);
             mockUpdateManagerProxy.Verify(manager => manager.DeleteResource(It.IsAny<Guid>()), Times.Once);
@@ -131,7 +129,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(item.IsDeleted);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Hagashen Naidu")]
         [TestCategory("StudioServerProxy_LoadExplorer")]
         public void StudioServerProxy_Delete_WhenVersion_ShouldDeleteVersion()
@@ -156,7 +154,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockPopupController.Setup(controller => controller.Show(It.IsAny<string>(), It.IsAny<string>(), MessageBoxButton.OK, MessageBoxImage.Error, "false", true, true, false, false, false, false)).Returns(MessageBoxResult.OK);
             CustomContainer.Register(mockPopupController.Object);
             //------------Execute Test---------------------------
-            var item = studioServerProxy.Delete(mockExplorerItemModel.Object);
+            var item = studioServerProxy.TryDelete(mockExplorerItemModel.Object);
             //------------Assert Results-------------------------
             Assert.IsNotNull(item);
             mockVersionManager.Verify(manager => manager.DeleteVersion(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
@@ -164,7 +162,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(item.IsDeleted);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_RenameFolder")]
         public void StudioServerProxy_Rename_WhenFolder_ShouldRenameFolder()
@@ -193,7 +191,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             updateManagerProxy.Setup(manager => manager.RenameFolder(It.IsAny<string>(), It.IsAny<string>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_Rename")]
         public void StudioServerProxy_Rename_WhenNotFolder_ShouldRenameResourceId()
@@ -222,7 +220,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             updateManagerProxy.Setup(manager => manager.Rename(It.IsAny<Guid>(), It.IsAny<string>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_Move")]
         public void StudioServerProxy_Move_WhenSucces_ShouldReturnTrue()
@@ -255,7 +253,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             updateManagerProxy.Verify(manager => manager.MoveItem(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_Move")]
         public void StudioServerProxy_Move_WhenFaulty_ShouldReturnfalse()
@@ -290,7 +288,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
       
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_GetVersion")]
         public void StudioServerProxy_GetVersion_WhenGivenVersion_ShouldLoadUsingVersion()
@@ -315,7 +313,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockVersionManager.Verify(manager => manager.GetVersion(versionInfo, It.IsAny<Guid>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_GetVersions")]
         public void StudioServerProxy_GetVersions_WhenGivenVersionId_ShouldLoadUsingVersionId()
@@ -343,7 +341,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockVersionManager.Verify(manager => manager.GetVersions(It.IsAny<Guid>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_Rollback")]
         public void StudioServerProxy_Rollback_GivenVersionIdAndResourceId_ShouldLoadVersionIdAndResourceId()
@@ -372,7 +370,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             mockVersionManager.Verify(manager => manager.RollbackTo(It.IsAny<Guid>(), It.IsAny<string>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_CreateFolder")]
         public void StudioServerProxy_CreateFolder_VerifyFolderCreated()
@@ -394,7 +392,42 @@ namespace Warewolf.Studio.ViewModels.Tests
             updateManagerProxy.Verify(manager => manager.AddFolder(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("StudioServerProxy_CreateFolder")]
+        public void StudioServerProxy_CreateFolder_VerifyFolderIsTrue()
+        {
+            //------------Setup for test--------------------------
+            var commControllerFatoryMock = new Mock<ICommunicationControllerFactory>();
+            var commController = new Mock<ICommunicationController>();
+            commController.Setup(controller => controller.ExecuteCommand<IExplorerRepositoryResult>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>())).Returns(new ExplorerRepositoryResult(ExecStatus.Success,""));            
+            ServerExplorerItem sendItem = null;
+            var serialiser = new Dev2JsonSerializer();
+            commController.Setup(controller => controller.AddPayloadArgument(It.IsAny<string>(), It.IsAny<StringBuilder>())).Callback((string key, StringBuilder builder) => {
+                sendItem = serialiser.Deserialize<ServerExplorerItem>(builder);
+            });
+            commControllerFatoryMock.Setup(controller => controller.CreateController(It.IsAny<string>())).Returns(commController.Object);
+            var studioServerProxy = new StudioServerProxy(commControllerFatoryMock.Object, new Mock<IEnvironmentConnection>().Object);
+            var mockQueryManager = new Mock<IQueryManager>();
+            var mockVersionManager = new Mock<IVersionManager>();
+            studioServerProxy.QueryManagerProxy = mockQueryManager.Object;
+            studioServerProxy.VersionManager = mockVersionManager.Object;
+
+            var resID = Guid.NewGuid();
+            var resName = "TestFolder";
+            var resPath = "TestFolderPath";
+
+            //------------Execute Test---------------------------
+            studioServerProxy.CreateFolder(resPath, resName, resID);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(resID, sendItem.ResourceId);
+            Assert.AreEqual(resName, sendItem.DisplayName);
+            Assert.AreEqual(resPath + "\\" + resName, sendItem.ResourcePath);
+            Assert.AreEqual("Folder", sendItem.ResourceType);
+            Assert.AreEqual(true, sendItem.IsFolder);
+        }
+
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_HasDependencies")]
         public void StudioServerProxy_HasDependencies_GivenNoNodes_ShowDepenciesIsFalse()
@@ -418,7 +451,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_HasDependencies")]
         public void StudioServerProxy_HasDependencies_GivenNodesAndDeleteAnyway_ShowDepenciesIsFalse()
@@ -450,7 +483,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_HasDependencies")]
         public void StudioServerProxy_HasDependencies_GivenNodesAndOkClicked_ShowSetupCorrectly()
@@ -495,7 +528,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_HasDependencies")]
         public void StudioServerProxy_HasDependencies_GivenNodesAndCanceClicked_ShowsDependencies()
@@ -542,17 +575,17 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         }
 
-      
 
 
 
-        private Task<IExplorerRepositoryResult> ValueFunction(ExecStatus status)
+
+        Task<IExplorerRepositoryResult> ValueFunction(ExecStatus status)
         {
             IExplorerRepositoryResult result = new ExplorerRepositoryResult(status, "");
             return Task.FromResult(result);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("StudioServerProxy_LoadExplorer")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -565,7 +598,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Pieter Terblanche")]
         [TestCategory("StudioServerProxy_VersionManager")]
         public void StudioServerProxy_VersionManager_GetVersions_ServerDown_ShowPopup()

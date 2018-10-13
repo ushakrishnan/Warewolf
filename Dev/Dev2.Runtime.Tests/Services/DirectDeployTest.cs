@@ -23,7 +23,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DirectDeployTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -37,7 +37,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnGuid()
@@ -62,7 +62,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreNotEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -76,7 +76,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.DeployTo, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_HandlesType")]
         public void DirectDeploy_HandlesType_ExpectName()
@@ -91,7 +91,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("DirectDeploy", directDeploy.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_Execute")]
         public void DirectDeploy_Execute_NullValues_ErrorResult()
@@ -100,13 +100,13 @@ namespace Dev2.Tests.Runtime.Services
             var directDeploy = new DirectDeploy();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = directDeploy.Execute(null, null);
+            var jsonResult = directDeploy.Execute(null, null);
             var result = serializer.Deserialize<IEnumerable<DeployResult>>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.Any(r => r.HasError));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_Execute")]
         public void DirectDeploy_Execute_ResourceIDNotPresent_ErrorResult()
@@ -116,13 +116,13 @@ namespace Dev2.Tests.Runtime.Services
             var directDeploy = new DirectDeploy();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = directDeploy.Execute(values, null);
+            var jsonResult = directDeploy.Execute(values, null);
             var result = serializer.Deserialize<IEnumerable<DeployResult>>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.Any(r => r.HasError));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_Execute")]
         public void Execute_CanNotConnect()
@@ -162,13 +162,13 @@ namespace Dev2.Tests.Runtime.Services
             directDeploy.TestCatalog = testCatalogMock.Object;
             directDeploy.ResourceCatalog = resourceCatalog.Object;
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = directDeploy.Execute(inputs, null);
+            var jsonResult = directDeploy.Execute(inputs, null);
             var result = serializer.Deserialize<IEnumerable<DeployResult>>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.All(r => r.HasError));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_Execute")]
         public void Execute_DeployTests_IsNull()
@@ -207,13 +207,13 @@ namespace Dev2.Tests.Runtime.Services
             directDeploy.TestCatalog = testCatalogMock.Object;
             directDeploy.ResourceCatalog = resourceCatalog.Object;
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = directDeploy.Execute(inputs, null);
+            var jsonResult = directDeploy.Execute(inputs, null);
             var result = serializer.Deserialize<IEnumerable<DeployResult>>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.All(r => r.HasError));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_Execute")]
         public void Execute_ResourceIDsToDeploy_IsNull()
@@ -253,13 +253,13 @@ namespace Dev2.Tests.Runtime.Services
             directDeploy.TestCatalog = testCatalogMock.Object;
             directDeploy.ResourceCatalog = resourceCatalog.Object;
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = directDeploy.Execute(inputs, null);
+            var jsonResult = directDeploy.Execute(inputs, null);
             var result = serializer.Deserialize<IEnumerable<DeployResult>>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.All(r => r.HasError));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Peter Bezuidenhout")]
         [TestCategory("DirectDeploy_Execute")]
         public void Execute_ValidValues_ValidResults()
@@ -299,7 +299,7 @@ namespace Dev2.Tests.Runtime.Services
             directDeploy.TestCatalog = testCatalogMock.Object;
             directDeploy.ResourceCatalog = resourceCatalog.Object;
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = directDeploy.Execute(inputs, null);
+            var jsonResult = directDeploy.Execute(inputs, null);
             var result = serializer.Deserialize<IEnumerable<DeployResult>>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.All(r => !r.HasError));

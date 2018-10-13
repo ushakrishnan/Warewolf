@@ -45,7 +45,7 @@ namespace Warewolf.Studio.ViewModels
 
         public abstract string Name { get; set; }
 
-        public abstract void FromModel(T service);
+        public abstract void FromModel(T source);
 
         #endregion
 
@@ -96,10 +96,7 @@ namespace Warewolf.Studio.ViewModels
 
         public Guid SelectedGuid { get; set; }
 
-        public void Dispose()
-        {
-            OnDispose();
-        }
+        public void Dispose() => OnDispose();
 
         protected virtual void OnDispose()
         {
@@ -111,11 +108,11 @@ namespace Warewolf.Studio.ViewModels
             {
                 return "Failed";
             }
-            string exceptionMsg = Resources.Languages.Core.ExceptionErrorLabel + exception.Message;
+            var exceptionMsg = Resources.Languages.Core.ExceptionErrorLabel + exception.Message;
 
             if (exception.InnerException != null)
             {
-                string innerExpceptionMsg = Resources.Languages.Core.InnerExceptionErrorLabel + exception.InnerException.Message;
+                var innerExpceptionMsg = Resources.Languages.Core.InnerExceptionErrorLabel + exception.InnerException.Message;
                 return exceptionMsg + Environment.NewLine + Environment.NewLine + innerExpceptionMsg;
             }
             return exceptionMsg;

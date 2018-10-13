@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,17 +42,17 @@ namespace Dev2.Activities.Designers2.ODBC
     
     public class ODBCDatabaseDesignerViewModel : CustomToolWithRegionBase, IDatabaseServiceViewModel
     {
-        private IOutputsToolRegion _outputsRegion;
-        private IDatabaseInputRegion _inputArea;
-        private ISourceToolRegion<IDbSource> _sourceRegion;
-        private IActionToolRegion<IDbAction> _actionRegion;
+        IOutputsToolRegion _outputsRegion;
+        IDatabaseInputRegion _inputArea;
+        ISourceToolRegion<IDbSource> _sourceRegion;
+        IActionToolRegion<IDbAction> _actionRegion;
 
-        private IErrorInfo _worstDesignError;
+        IErrorInfo _worstDesignError;
 
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
-        private string _commandText;
+        string _commandText;
 
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
 
@@ -72,7 +72,7 @@ namespace Dev2.Activities.Designers2.ODBC
 
         Guid UniqueID => GetProperty<Guid>();
 
-        private void SetupCommonProperties()
+        void SetupCommonProperties()
         {
             AddTitleBarMappingToggle();
             InitialiseViewModel(new ManageDatabaseServiceInputViewModel(this, Model));
@@ -88,7 +88,7 @@ namespace Dev2.Activities.Designers2.ODBC
             UpdateWorstError();
         }
 
-        private void InitialiseViewModel(IManageDatabaseInputViewModel manageServiceInputViewModel)
+        void InitialiseViewModel(IManageDatabaseInputViewModel manageServiceInputViewModel)
         {
             ManageServiceInputViewModel = manageServiceInputViewModel;
 
@@ -218,19 +218,16 @@ namespace Dev2.Activities.Designers2.ODBC
                     break;
                 }
             }
-            WorstDesignError = worstError[0];
+            SetWorstDesignError(worstError[0]);
         }
 
-        IErrorInfo WorstDesignError
+        void SetWorstDesignError(IErrorInfo value)
         {
-            set
+            if (_worstDesignError != value)
             {
-                if (_worstDesignError != value)
-                {
-                    _worstDesignError = value;
-                    IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value?.ErrorType ?? ErrorType.None;
-                }
+                _worstDesignError = value;
+                IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
+                WorstError = value?.ErrorType ?? ErrorType.None;
             }
         }
 
@@ -259,7 +256,7 @@ namespace Dev2.Activities.Designers2.ODBC
             var service = ToModel();
             if (!string.IsNullOrEmpty(CommandText))
             {
-                ServiceInputBuilder builder = new ServiceInputBuilder();
+                var builder = new ServiceInputBuilder();
                 var serviceInputs = new List<IServiceInput>();
                 builder.GetValue(CommandText, serviceInputs);
                 service.Inputs = serviceInputs;
@@ -278,7 +275,7 @@ namespace Dev2.Activities.Designers2.ODBC
             }
         }
 
-        private IErrorInfo NoError { get; set; }
+        IErrorInfo NoError { get; set; }
         public string CommandText
         {
             get { return _commandText; }
@@ -286,7 +283,7 @@ namespace Dev2.Activities.Designers2.ODBC
             {
                 _commandText = value;
                 InitializeProperties();
-                ToModel();
+                UpdateActionRegionSelectionAction();
             }
         }
         public bool IsWorstErrorReadOnly
@@ -313,9 +310,9 @@ namespace Dev2.Activities.Designers2.ODBC
 
         public ICommand TestInputCommand { get; set; }
 
-        private string Type => GetProperty<string>();
-        
-        
+        string Type => GetProperty<string>();
+
+
         void AddTitleBarMappingToggle()
         {
             HasLargeView = true;
@@ -351,7 +348,7 @@ namespace Dev2.Activities.Designers2.ODBC
                 };
                 ActionRegion.ErrorsHandler += (sender, list) =>
                 {
-                    List<ActionableErrorInfo> errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
+                    var errorInfos = list.Select(error => new ActionableErrorInfo(new ErrorInfo { ErrorType = ErrorType.Critical, Message = error }, () => { })).ToList();
                     UpdateDesignValidationErrors(errorInfos);
                     Errors = new List<IActionableErrorInfo>(errorInfos);
                 };
@@ -457,19 +454,25 @@ namespace Dev2.Activities.Designers2.ODBC
 
         public IDatabaseService ToModel()
         {
-            if (!string.IsNullOrEmpty(CommandText))
-            {
-                DbAction command = new DbAction { Name = CommandText };
-                ActionRegion.SelectedAction = command;
-            }
+            UpdateActionRegionSelectionAction();
             var databaseService = new DatabaseService
             {
                 Source = SourceRegion.SelectedSource,
                 Action = ActionRegion.SelectedAction,
-                Inputs = new List<IServiceInput>()
+                Inputs = new List<IServiceInput>(),
+                CommandTimeout = InputArea.CommandTimeout
             };
 
             return databaseService;
+        }
+
+        private void UpdateActionRegionSelectionAction()
+        {
+            if (!string.IsNullOrEmpty(CommandText))
+            {
+                var command = new DbAction { Name = CommandText, ExecuteAction = CommandText, SourceId = SourceRegion.SelectedSource.Id };
+                ActionRegion.SelectedAction = command;
+            }
         }
 
         public void ErrorMessage(Exception exception, bool hasError)
@@ -486,7 +489,7 @@ namespace Dev2.Activities.Designers2.ODBC
             OutputsRegion.IsEnabled = true;
         }
 
-        public void SetDisplayName(string outputFieldName)
+        public void SetDisplayName(string displayName)
         {
             var index = DisplayName.IndexOf(" -", StringComparison.Ordinal);
 
@@ -495,19 +498,19 @@ namespace Dev2.Activities.Designers2.ODBC
                 DisplayName = DisplayName.Remove(index);
             }
 
-            var displayName = DisplayName;
+            var displayName2 = DisplayName;
 
-            if (!string.IsNullOrEmpty(displayName) && displayName.Contains("Dsf"))
+            if (!string.IsNullOrEmpty(displayName2) && displayName2.Contains("Dsf"))
             {
-                DisplayName = displayName;
+                DisplayName = displayName2;
             }
-            if (!string.IsNullOrWhiteSpace(outputFieldName))
+            if (!string.IsNullOrWhiteSpace(displayName))
             {
-                DisplayName = displayName + outputFieldName;
+                DisplayName = displayName2 + displayName;
             }
         }
 
-        private IDbServiceModel Model { get; set; }
+        IDbServiceModel Model { get; set; }
         IDbActionToolRegion<IDbAction> IDatabaseServiceViewModel.ActionRegion { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         void SetRegionVisibility(bool value)

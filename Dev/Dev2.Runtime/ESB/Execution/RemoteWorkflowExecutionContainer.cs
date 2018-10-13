@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -98,7 +98,7 @@ namespace Dev2.Runtime.ESB.Execution
             Dev2Logger.Debug("Creating DataList fragment for remote execute", GlobalConstants.WarewolfDebug);
             var dataListFragment = ExecutionEnvironmentUtils.GetXmlInputFromEnvironment(DataObject, DataObject.RemoteInvokeResultShape.ToString(), update);
 
-            string result = string.Empty;
+            var result = string.Empty;
 
             var connection = GetConnection(DataObject.EnvironmentID);
             if (connection == null)
@@ -110,7 +110,7 @@ namespace Dev2.Runtime.ESB.Execution
             try
             {
                 result = ExecutePostRequest(connection, serviceName, dataListFragment);
-                IList<IDebugState> msg = DataObject.IsDebug ? FetchRemoteDebugItems(connection) : new List<IDebugState>();
+                var msg = DataObject.IsDebug ? FetchRemoteDebugItems(connection) : new List<IDebugState>();
                 DataObject.RemoteDebugItems = msg; // set them so they can be acted upon
             }
             catch (Exception e)
@@ -127,12 +127,9 @@ namespace Dev2.Runtime.ESB.Execution
             return Guid.Empty;
         }
 
-        public override bool CanExecute(Guid resourceId, IDSFDataObject dataObject, AuthorizationContext authorizationContext)
-        {
-            return true;
-        }
+        public override bool CanExecute(Guid resourceId, IDSFDataObject dataObject, AuthorizationContext authorizationContext) => true;
 
-        private string ExecutePostRequest(Connection connection, string serviceName, string payload, bool isDebugMode = true)
+        string ExecutePostRequest(Connection connection, string serviceName, string payload, bool isDebugMode = true)
         {
             var result = string.Empty;
 
@@ -145,9 +142,9 @@ namespace Dev2.Runtime.ESB.Execution
                 {
                     if (response != null)
                     {
-                        
+
                         using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                        
+
                         {
                             result = reader.ReadToEnd();
                         }
@@ -158,10 +155,7 @@ namespace Dev2.Runtime.ESB.Execution
             return result;
         }
 
-        public override IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity)
-        {
-            return null;
-        }
+        public override IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity) => null;
 
         protected virtual IList<IDebugState> FetchRemoteDebugItems(Connection connection)
         {
@@ -169,7 +163,7 @@ namespace Dev2.Runtime.ESB.Execution
 
             if (data != null)
             {
-                IList<IDebugState> fetchRemoteDebugItems = RemoteDebugItemParser.ParseItems(data);
+                var fetchRemoteDebugItems = RemoteDebugItemParser.ParseItems(data);
                 fetchRemoteDebugItems.ForEach(state => state.SessionID = DataObject.DebugSessionID);
                 return fetchRemoteDebugItems;
             }
@@ -187,13 +181,11 @@ namespace Dev2.Runtime.ESB.Execution
             try
             {
                 var returnData = ExecuteGetRequest(connection, "ping", "<DataList></DataList>", false);
-                if (!string.IsNullOrEmpty(returnData))
+                if (!string.IsNullOrEmpty(returnData) && returnData.Contains("Pong"))
                 {
-                    if (returnData.Contains("Pong"))
-                    {
-                        return true;
-                    }
+                    return true;
                 }
+
             }
             catch (Exception)
             {
@@ -202,7 +194,9 @@ namespace Dev2.Runtime.ESB.Execution
             return false;
         }
 
-        protected virtual string ExecuteGetRequest(Connection connection, string serviceName, string payload, bool isDebugMode = true)
+        protected virtual string ExecuteGetRequest(Connection connection, string serviceName, string payload) => ExecuteGetRequest(connection, serviceName, payload, true);
+
+        protected virtual string ExecuteGetRequest(Connection connection, string serviceName, string payload, bool isDebugMode)
         {
             var result = string.Empty;
 
@@ -229,19 +223,16 @@ namespace Dev2.Runtime.ESB.Execution
             return result;
         }
 
-        private static string GetServiceToExecute(Connection connection, string serviceName)
-        {
-            return connection.WebAddress + "Secure/" + serviceName + ".json";
-        }
+        static string GetServiceToExecute(Connection connection, string serviceName) => connection.WebAddress + "Secure/" + serviceName + ".json";
 
-        private WebRequest BuildPostRequest(string serviceToExecute, string payload, AuthenticationType authenticationType, string userName, string password, bool isDebug)
+        WebRequest BuildPostRequest(string serviceToExecute, string payload, AuthenticationType authenticationType, string userName, string password, bool isDebug)
         {
             var escapeUriString = Uri.EscapeUriString(serviceToExecute);
             var req = WebRequest.Create(escapeUriString);
             req.Method = "POST";
             UpdateRequest(authenticationType, userName, password, isDebug, req);
 
-            byte[] data = Encoding.ASCII.GetBytes(payload);
+            var data = Encoding.ASCII.GetBytes(payload);
 
             req.ContentType = "application/x-www-form-urlencoded";
             req.ContentLength = data.Length;
@@ -254,7 +245,7 @@ namespace Dev2.Runtime.ESB.Execution
             return req;
         }
 
-        private void UpdateRequest(AuthenticationType authenticationType, string userName, string password, bool isDebug, WebRequest req)
+        void UpdateRequest(AuthenticationType authenticationType, string userName, string password, bool isDebug, WebRequest req)
         {
             if (authenticationType == AuthenticationType.Windows)
             {
@@ -283,7 +274,7 @@ namespace Dev2.Runtime.ESB.Execution
             ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
         }
 
-        private WebRequest BuildGetWebRequest(string requestUri, AuthenticationType authenticationType, string userName, string password, bool isdebug)
+        WebRequest BuildGetWebRequest(string requestUri, AuthenticationType authenticationType, string userName, string password, bool isdebug)
         {
             try
             {
@@ -297,7 +288,7 @@ namespace Dev2.Runtime.ESB.Execution
             }
         }
 
-        private WebRequest BuildSimpleGetWebRequest(string requestUri)
+        WebRequest BuildSimpleGetWebRequest(string requestUri)
         {
             try
             {
@@ -312,7 +303,7 @@ namespace Dev2.Runtime.ESB.Execution
             }
         }
 
-        private Connection GetConnection(Guid environmentId)
+        Connection GetConnection(Guid environmentId)
         {
             if (environmentId == Guid.Empty)
             {
@@ -346,7 +337,7 @@ namespace Dev2.Runtime.ESB.Execution
                 var returnData = ExecuteGetRequest(connection, "FindResourceService", $"ResourceType=TypeWorkflowService&ResourceName={serviceName}&ResourceId={serviceId}", isDebugMode);
                 if (!string.IsNullOrEmpty(returnData))
                 {
-                    Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+                    var serializer = new Dev2JsonSerializer();
                     var serializableResources = serializer.Deserialize<IList<SerializableResource>>(returnData);
                     return serializableResources.FirstOrDefault(resource => resource.ResourceType == "WorkflowService");
                 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,27 +33,22 @@ using Dev2.ViewModels;
 using Dev2.Workspaces;
 using Infragistics.Windows.DockManager;
 
-
 namespace Dev2.Studio.Views
 {
     public partial class ShellView : IWin32Window
     {
-        private static bool _isSuperMaximising;
-        private bool _isLocked;
+        static bool _isSuperMaximising;
+        bool _isLocked;
         readonly string _savedLayout;
-        private static ShellView _this;
+        static ShellView _this;
 
         #region Constructor
 
-        public static ShellView GetInstance()
-        {
-            return _this;
-        }
+        public static ShellView GetInstance() => _this;
 
         public ShellView()
         {
             InitializeComponent();
-            _isSuperMaximising = false;
             _isLocked = true;
             HideFullScreenPanel.IsHitTestVisible = false;
             ShowFullScreenPanel.IsHitTestVisible = false;
@@ -85,10 +80,12 @@ namespace Dev2.Studio.Views
                 }
             }
 
+#pragma warning disable S3010 // For testing (Studio reset shortcut)
             _this = this;
+#pragma warning restore S3010
         }
 
-        private string FilePath => Path.Combine(new[]
+        string FilePath => Path.Combine(new[]
         {
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             StringResources.App_Data_Directory,
@@ -96,14 +93,14 @@ namespace Dev2.Studio.Views
             "WorkspaceLayout.xml"
         });
 
-        private void GetFilePath()
+        void GetFilePath()
         {
             if (!File.Exists(FilePath))
             {
-                FileInfo fileInfo = new FileInfo(FilePath);
+                var fileInfo = new FileInfo(FilePath);
                 if (fileInfo.Directory != null)
                 {
-                    string finalDirectoryPath = fileInfo.Directory.FullName;
+                    var finalDirectoryPath = fileInfo.Directory.FullName;
 
                     if (!Directory.Exists(finalDirectoryPath))
                     {
@@ -120,33 +117,26 @@ namespace Dev2.Studio.Views
             Maximise();
         }
 
-        private void Maximise()
+        void Maximise()
         {
             var handle = new WinInterop.WindowInteropHelper(this).Handle;
             var handleSource = WinInterop.HwndSource.FromHwnd(handle);
             handleSource?.AddHook(WindowProc);
         }
 
-        private static IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        static IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            switch (msg)
+            if (msg == 0x0024 && !_isSuperMaximising)
             {
-                case 0x0024:/* WM_GETMINMAXINFO */
-                    if (!_isSuperMaximising)
-                    {
-                        WmGetMinMaxInfo(hwnd, lParam);
-                        handled = true;
-                    }
-                    break;
-                default:
-                    break;
+                WmGetMinMaxInfo(hwnd, lParam);
+                handled = true;
             }
             return (IntPtr)0;
         }
 
-        private static void WmGetMinMaxInfo(IntPtr hwnd, IntPtr lParam)
+        static void WmGetMinMaxInfo(IntPtr hwnd, IntPtr lParam)
         {
-            var mmi = (MINMAXINFO)Marshal.PtrToStructure(lParam, typeof(MINMAXINFO));
+            var mmi = (Minmaxinfo)Marshal.PtrToStructure(lParam, typeof(Minmaxinfo));
 
             // Adjust the maximized size and position to fit the work area of the correct monitor
             var currentScreen = Screen.FromHandle(hwnd);
@@ -161,18 +151,18 @@ namespace Dev2.Studio.Views
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        
-        public struct MINMAXINFO
+
+        public struct Minmaxinfo
         {
-            public POINT ptReserved;
-            public POINT ptMaxSize;
-            public POINT ptMaxPosition;
-            public POINT ptMinTrackSize;
-            public POINT ptMaxTrackSize;
+            public Point ptReserved;
+            public Point ptMaxSize;
+            public Point ptMaxPosition;
+            public Point ptMinTrackSize;
+            public Point ptMaxTrackSize;
         };
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct POINT
+        public struct Point
         {
             /// <summary>
             /// x coordinate of point.
@@ -187,18 +177,23 @@ namespace Dev2.Studio.Views
             /// <summary>
             /// Construct a point of coordinates (x,y).
             /// </summary>
-            public POINT(int x, int y)
+            public Point(int x, int y)
             {
                 this.x = x;
                 this.y = y;
             }
         }
 
-        private void Shell_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        void Shell_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if ((Keyboard.Modifiers == (ModifierKeys.Alt | ModifierKeys.Control)) && (e.Key == Key.F4))
             {
                 ResetToStartupView();
+            }
+            if (e.Key == Key.Home && (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                var shellViewModel = DataContext as ShellViewModel;
+                shellViewModel?.MergeCommand.Execute(null);
             }
             if (e.Key == Key.F1)
             {
@@ -229,40 +224,16 @@ namespace Dev2.Studio.Views
                 ClearTabItems(mainViewModel);
 
                 var localhostServer = mainViewModel.LocalhostServer;
-                if (localhostServer.IsConnected)
+                if (localhostServer.IsConnected && !Equals(mainViewModel.ActiveServer, localhostServer))
                 {
-                    if (!Equals(mainViewModel.ActiveServer, localhostServer))
-                    {
-                        mainViewModel.SetActiveServer(localhostServer.EnvironmentID);
-                        mainViewModel.SetActiveServer(localhostServer);
-                    }
+                    mainViewModel.SetActiveServer(localhostServer.EnvironmentID);
+                    mainViewModel.SetActiveServer(localhostServer);
                 }
 
                 var explorerViewModel = mainViewModel.ExplorerViewModel;
                 if (explorerViewModel != null)
                 {
-                    explorerViewModel.SearchText = string.Empty;
-
-                    if (explorerViewModel.ConnectControlViewModel != null)
-                    {
-                        foreach (var server in explorerViewModel.ConnectControlViewModel.Servers)
-                        {
-                            if (server != null && server.DisplayName != localhostServer.DisplayName && server.IsConnected)
-                            {
-                                server.Disconnect();
-                            }
-                        }
-                    }
-
-                    var environmentViewModels = explorerViewModel.Environments;
-                    if (environmentViewModels?.Count > 1)
-                    {
-                        for (var i = 0; i < environmentViewModels.Count - 1; i++)
-                        {
-                            var remoteEnvironment = environmentViewModels.FirstOrDefault(model => model.ResourceId != Guid.Empty);
-                            environmentViewModels.Remove(remoteEnvironment);
-                        }
-                    }
+                    DisconnectAllServers(localhostServer, explorerViewModel);
                 }
 
                 if (mainViewModel.ToolboxViewModel != null)
@@ -274,7 +245,38 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void ClearTabItems(ShellViewModel mainViewModel)
+        static void DisconnectAllServers(Interfaces.IServer localhostServer, Interfaces.IExplorerViewModel explorerViewModel)
+        {
+            explorerViewModel.SearchText = string.Empty;
+
+            DisconnectServers(localhostServer, explorerViewModel);
+
+            var environmentViewModels = explorerViewModel.Environments;
+            if (environmentViewModels?.Count > 1)
+            {
+                for (var i = 0; i < environmentViewModels.Count - 1; i++)
+                {
+                    var remoteEnvironment = environmentViewModels.FirstOrDefault(model => model.ResourceId != Guid.Empty);
+                    environmentViewModels.Remove(remoteEnvironment);
+                }
+            }
+        }
+
+        static void DisconnectServers(Interfaces.IServer localhostServer, Interfaces.IExplorerViewModel explorerViewModel)
+        {
+            if (explorerViewModel.ConnectControlViewModel != null)
+            {
+                foreach (var server in explorerViewModel.ConnectControlViewModel.Servers)
+                {
+                    if (server != null && server.DisplayName != localhostServer.DisplayName && server.IsConnected)
+                    {
+                        server.Disconnect();
+                    }
+                }
+            }
+        }
+
+        void ClearTabItems(ShellViewModel mainViewModel)
         {
             for (int i = TabManager.Items.Count - 1; i >= 0; i--)
             {
@@ -285,34 +287,33 @@ namespace Dev2.Studio.Views
             TabManager.Items.Clear();
         }
 
-        private static void ClearWindowCollection(ShellViewModel mainViewModel)
+        static void ClearWindowCollection(ShellViewModel mainViewModel)
         {
             var windowCollection = System.Windows.Application.Current.Windows;
             foreach (var window in windowCollection)
             {
-
                 if (window is Window window1 && window1.Name != "MainViewWindow")
                 {
                     if (window1.GetType().Name == "ToolWindowHostWindow")
                     {
-                        var contentPane = window1.Content as PaneToolWindow;
-                        var splitPane = contentPane?.Pane;
-
-                        if (splitPane != null)
-                        {
-                            foreach (var item in splitPane.Panes)
-                            {
-                                var pane = item as ContentPane;
-                                RemoveWorkspaceItems(pane, mainViewModel);
-                            }
-                        }
+                        ClearWindowCollection(mainViewModel, window1);
                     }
                     window1.Close();
                 }
             }
         }
 
-        private static void RemoveWorkspaceItems(ContentPane pane, ShellViewModel shellViewModel)
+        static void ClearWindowCollection(ShellViewModel mainViewModel, Window window1)
+        {
+            var contentPane = window1.Content as PaneToolWindow;
+            foreach (var item in contentPane?.Pane?.Panes)
+            {
+                var pane = item as ContentPane;
+                RemoveWorkspaceItems(pane, mainViewModel);
+            }
+        }
+
+        static void RemoveWorkspaceItems(ContentPane pane, ShellViewModel shellViewModel)
         {
             var item1 = pane?.Content as WorkflowDesignerViewModel;
             if (item1?.ResourceModel != null)
@@ -342,7 +343,7 @@ namespace Dev2.Studio.Views
             Toolboxcontrol.Focus();
         }
 
-        private static void SetMenuExpanded(XmlDocument xmlDocument, ShellViewModel shellViewModel)
+        static void SetMenuExpanded(XmlDocument xmlDocument, ShellViewModel shellViewModel)
         {
             var elementsByTagNameMenuExpanded = xmlDocument.GetElementsByTagName("MenuExpanded");
             if (elementsByTagNameMenuExpanded.Count > 0)
@@ -360,7 +361,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private static void SetMenuPanelOpen(XmlDocument xmlDocument, ShellViewModel shellViewModel)
+        static void SetMenuPanelOpen(XmlDocument xmlDocument, ShellViewModel shellViewModel)
         {
             var elementsByTagNameMenuPanelOpen = xmlDocument.GetElementsByTagName("MenuPanelOpen");
             if (elementsByTagNameMenuPanelOpen.Count > 0)
@@ -374,7 +375,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private static void SetMenuPanelLockedOpen(XmlDocument xmlDocument, ShellViewModel shellViewModel)
+        static void SetMenuPanelLockedOpen(XmlDocument xmlDocument, ShellViewModel shellViewModel)
         {
             var elementsByTagNameMenuPanelLockedOpen = xmlDocument.GetElementsByTagName("MenuPanelLockedOpen");
             if (elementsByTagNameMenuPanelLockedOpen.Count > 0)
@@ -407,7 +408,7 @@ namespace Dev2.Studio.Views
 
         void MainView_OnClosing(object sender, CancelEventArgs e)
         {
-            ShellViewModel shellViewModel = DataContext as ShellViewModel;
+            var shellViewModel = DataContext as ShellViewModel;
             if (shellViewModel != null)
             {
                 if (!shellViewModel.OnStudioClosing())
@@ -415,7 +416,7 @@ namespace Dev2.Studio.Views
                     e.Cancel = true;
                 }
 
-                if (shellViewModel.IsDownloading())
+                if (ShellViewModel.IsDownloading())
                 {
                     e.Cancel = true;
                 }
@@ -424,10 +425,10 @@ namespace Dev2.Studio.Views
             SaveLayout(shellViewModel);
         }
 
-        private void SaveLayout(ShellViewModel shellViewModel)
+        void SaveLayout(ShellViewModel shellViewModel)
         {
             var dockManagerLayout = DockManager.SaveLayout();
-            XmlDocument document = new XmlDocument();
+            var document = new XmlDocument();
             document.LoadXml(dockManagerLayout);
             var menuExpandedNode = document.CreateNode(XmlNodeType.Element, "MenuExpanded", document.NamespaceURI);
             menuExpandedNode.InnerXml = (shellViewModel != null && shellViewModel.MenuExpanded).ToString();
@@ -451,7 +452,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void SlidingMenuPane_OnSizeChanged(object sender, SizeChangedEventArgs e)
+        void SlidingMenuPane_OnSizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (DataContext is ShellViewModel vm)
             {
@@ -459,46 +460,11 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void DockManager_OnToolWindowLoaded(object sender, PaneToolWindowEventArgs e)
+        void TryDockManager_OnToolWindowLoaded(object sender, PaneToolWindowEventArgs e)
         {
             try
             {
-                var window = e.Window;
-                var resourceDictionary = System.Windows.Application.Current.Resources;
-                if (resourceDictionary["WarewolfToolWindow"] is Style style)
-                {
-                    window.UseOSNonClientArea = false;
-                    window.Style = style;
-                    window.PreviewMouseLeftButtonUp += WindowOnPreviewMouseDown;
-                }
-
-                if (e.Source.GetType() == typeof(XamDockManager))
-                {
-                    var binding = Infragistics.Windows.Utilities.CreateBindingObject(DataContextProperty, BindingMode.OneWay, sender as XamDockManager);
-                    e.Window.SetBinding(DataContextProperty, binding);
-
-                    ShellViewModel shellViewModel = DataContext as ShellViewModel;
-                    PaneToolWindow = window;
-
-                    if (PaneToolWindow.Pane.Panes != null && PaneToolWindow.Pane.Panes.Count > 0)
-                    {
-                        var workSurfaceContextViewModel = PaneToolWindow.Pane.Panes[0].DataContext as WorkSurfaceContextViewModel;
-                        shellViewModel?.ActivateItem(workSurfaceContextViewModel);
-                        PaneToolWindow.Name = "FloatingWindow";
-                        if (string.IsNullOrWhiteSpace(e.Window.Title))
-                        {
-                            PaneToolWindow.Title = Title;
-                        }
-                        else
-                        {
-                            UpdatePaneToolWindow(sender);
-                        }
-                        if (workSurfaceContextViewModel?.ContextualResourceModel != null)
-                        {
-                            PaneToolWindow.ToolTip = "Floating window for - " + workSurfaceContextViewModel.ContextualResourceModel.DisplayName;
-                        }
-                    }
-                }
+                DockManager_OnToolWindowLoaded(sender, e);
             }
             catch (Exception ex)
             {
@@ -506,68 +472,90 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void UpdatePaneToolWindow(object sender)
+        void DockManager_OnToolWindowLoaded(object sender, PaneToolWindowEventArgs e)
+        {
+            var window = e.Window;
+            var resourceDictionary = System.Windows.Application.Current.Resources;
+            if (resourceDictionary["WarewolfToolWindow"] is Style style)
+            {
+                window.UseOSNonClientArea = false;
+                window.Style = style;
+                window.PreviewMouseLeftButtonUp += WindowOnPreviewMouseDown;
+            }
+
+            if (e.Source.GetType() == typeof(XamDockManager))
+            {
+                var binding = Infragistics.Windows.Utilities.CreateBindingObject(DataContextProperty, BindingMode.OneWay, sender as XamDockManager);
+                e.Window.SetBinding(DataContextProperty, binding);
+
+                var shellViewModel = DataContext as ShellViewModel;
+                PaneToolWindow = window;
+
+                if (PaneToolWindow.Pane.Panes != null && PaneToolWindow.Pane.Panes.Count > 0)
+                {
+                    var workSurfaceContextViewModel = PaneToolWindow.Pane.Panes[0].DataContext as WorkSurfaceContextViewModel;
+                    shellViewModel?.ActivateItem(workSurfaceContextViewModel);
+                    PaneToolWindow.Name = "FloatingWindow";
+                    if (string.IsNullOrWhiteSpace(e.Window.Title))
+                    {
+                        PaneToolWindow.Title = Title;
+                    }
+                    else
+                    {
+                        UpdatePaneToolWindow(sender);
+                    }
+                    if (workSurfaceContextViewModel?.ContextualResourceModel != null)
+                    {
+                        PaneToolWindow.ToolTip = "Floating window for - " + workSurfaceContextViewModel.ContextualResourceModel.DisplayName;
+                    }
+                }
+            }
+        }
+
+        void UpdatePaneToolWindow(object sender)
         {
             var dockManager = sender as XamDockManager;
-            string displayName = string.Empty;
-            if (dockManager?.DataContext.GetType() == typeof (WorkflowDesignerViewModel))
+            var displayName = string.Empty;
+            if (dockManager?.DataContext.GetType() == typeof(WorkflowDesignerViewModel))
             {
                 var workflowDesignerViewModel = dockManager.DataContext as WorkflowDesignerViewModel;
                 displayName = workflowDesignerViewModel?.DisplayName;
             }
-            else if (dockManager?.DataContext.GetType() == typeof (StudioTestViewModel))
+            else if (dockManager?.DataContext.GetType() == typeof(StudioTestViewModel))
             {
                 var studioTestViewModel = dockManager.DataContext as StudioTestViewModel;
                 displayName = studioTestViewModel?.DisplayName;
             }
-            else if (dockManager?.DataContext.GetType() == typeof (SchedulerViewModel))
+            else
             {
-                var schedulerViewModel = dockManager.DataContext as SchedulerViewModel;
-                displayName = schedulerViewModel?.DisplayName;
+                if (dockManager?.DataContext.GetType() == typeof(SchedulerViewModel))
+                {
+                    var schedulerViewModel = dockManager.DataContext as SchedulerViewModel;
+                    displayName = schedulerViewModel?.DisplayName;
+                }
             }
             SetPaneToolWindowTitle(displayName);
         }
 
-        private void SetPaneToolWindowTitle(string displayName)
+        void SetPaneToolWindowTitle(string displayName)
         {
             var title = PaneToolWindow.Title;
             var newTitle = " - " + displayName?.Replace("*", "").TrimEnd();
-            if (!title.Contains(newTitle))
+            if (!title.Contains(newTitle) && !string.IsNullOrWhiteSpace(displayName))
             {
-                if (!string.IsNullOrWhiteSpace(displayName))
-                {
-                    PaneToolWindow.Title = PaneToolWindow.Title + " - " + displayName;
-                }
+                PaneToolWindow.Title = PaneToolWindow.Title + " - " + displayName;
             }
         }
 
         public PaneToolWindow PaneToolWindow { get; set; }
 
-        private void WindowOnPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        void WindowOnPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             try
             {
                 if (DataContext is ShellViewModel shellViewModel)
                 {
-                    var paneToolWindow = sender as PaneToolWindow;
-                    if (paneToolWindow?.Pane?.Panes.Count > 0)
-                    {
-                        if (paneToolWindow.Pane.Panes[0] is ContentPane contentPane)
-                        {
-                            var workSurfaceContextViewModel = contentPane.DataContext as WorkSurfaceContextViewModel;
-                            shellViewModel.ActivateItem(workSurfaceContextViewModel);
-                        }
-                        else
-                        {
-                            var tabGroupPane = paneToolWindow.Pane.Panes[0] as TabGroupPane;
-                            if (tabGroupPane?.Items.Count >= 1)
-                            {
-                                var selectedContent = tabGroupPane.SelectedContent as ContentPane;
-                                var workSurfaceContextViewModel = selectedContent?.DataContext as WorkSurfaceContextViewModel;
-                                shellViewModel.ActivateItem(workSurfaceContextViewModel);
-                            }
-                        }
-                    }
+                    WindowOnPreviewMouseDown(sender, shellViewModel);
                 }
             }
             catch (Exception ex)
@@ -576,7 +564,30 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void EnterSuperMaximisedMode()
+        static void WindowOnPreviewMouseDown(object sender, ShellViewModel shellViewModel)
+        {
+            var paneToolWindow = sender as PaneToolWindow;
+            if (paneToolWindow?.Pane?.Panes.Count > 0)
+            {
+                if (paneToolWindow.Pane.Panes[0] is ContentPane contentPane)
+                {
+                    var workSurfaceContextViewModel = contentPane.DataContext as WorkSurfaceContextViewModel;
+                    shellViewModel.ActivateItem(workSurfaceContextViewModel);
+                }
+                else
+                {
+                    var tabGroupPane = paneToolWindow.Pane.Panes[0] as TabGroupPane;
+                    if (tabGroupPane?.Items.Count >= 1)
+                    {
+                        var selectedContent = tabGroupPane.SelectedContent as ContentPane;
+                        var workSurfaceContextViewModel = selectedContent?.DataContext as WorkSurfaceContextViewModel;
+                        shellViewModel.ActivateItem(workSurfaceContextViewModel);
+                    }
+                }
+            }
+        }
+
+        void EnterSuperMaximisedMode()
         {
             _isSuperMaximising = true;
             var dependencyObject = GetTemplateChild("PART_TITLEBAR");
@@ -588,12 +599,12 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void CloseSuperMaximised(object sender, RoutedEventArgs e)
+        void CloseSuperMaximised(object sender, RoutedEventArgs e)
         {
             ExitSuperMaximisedMode();
         }
 
-        private void ExitSuperMaximisedMode()
+        void ExitSuperMaximisedMode()
         {
             DoCloseExitFullScreenPanelAnimation();
             _isSuperMaximising = false;
@@ -606,13 +617,13 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void DoCloseExitFullScreenPanelAnimation()
+        void DoCloseExitFullScreenPanelAnimation()
         {
             var storyboard = Resources["AnimateExitFullScreenPanelClose"] as Storyboard;
             storyboard?.Begin();
         }
 
-        private void ShowFullScreenPanel_OnMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        void ShowFullScreenPanel_OnMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_isSuperMaximising)
             {
@@ -625,7 +636,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void DoAnimateOpenTitleBar()
+        void DoAnimateOpenTitleBar()
         {
             if (Resources["AnimateOpenTitleBorder"] is Storyboard storyboard)
             {
@@ -635,7 +646,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void HideFullScreenPanel_OnMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        void HideFullScreenPanel_OnMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (_isSuperMaximising)
             {
@@ -647,7 +658,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void DoAnimateCloseTitle()
+        void DoAnimateCloseTitle()
         {
             if (Resources["AnimateCloseTitleBorder"] is Storyboard storyboard)
             {
@@ -660,7 +671,7 @@ namespace Dev2.Studio.Views
         bool restoreIfMove;
         bool allowMaximizeState;
 
-        private void PART_TITLEBAR_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        void PART_TITLEBAR_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ClickCount == 2)
             {
@@ -677,7 +688,7 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void SwitchState()
+        void SwitchState()
         {
             switch (WindowState)
             {
@@ -695,37 +706,38 @@ namespace Dev2.Studio.Views
                 case WindowState.Minimized:
                     break;
                 default:
+                    WindowState = WindowState.Normal;
                     break;
             }
         }
 
-        private void PART_CLOSE_Click(object sender, RoutedEventArgs e)
+        void PART_CLOSE_Click(object sender, RoutedEventArgs e)
         {
             Close();
         }
 
-        private void PART_MAXIMIZE_RESTORE_Click(object sender, RoutedEventArgs e)
+        void PART_MAXIMIZE_RESTORE_Click(object sender, RoutedEventArgs e)
         {
             ToggleWindowState();
         }
 
-        private void ToggleWindowState()
+        void ToggleWindowState()
         {
             WindowState = WindowState == WindowState.Normal ? WindowState.Maximized : WindowState.Normal;
             ResizeMode = WindowState == WindowState.Normal ? ResizeMode.CanResize : ResizeMode.CanMinimize;
         }
 
-        private void PART_MINIMIZE_Click(object sender, RoutedEventArgs e)
+        void PART_MINIMIZE_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
         }
 
-        private void PART_SUPER_MAXIMIZE_RESTORE_Click(object sender, RoutedEventArgs e)
+        void PART_SUPER_MAXIMIZE_RESTORE_Click(object sender, RoutedEventArgs e)
         {
             EnterSuperMaximisedMode();
         }
 
-        private void PART_LOCK_Click(object sender, RoutedEventArgs e)
+        void PART_LOCK_Click(object sender, RoutedEventArgs e)
         {
             var dependencyObject = GetTemplateChild("PART_LOCK");
             if (dependencyObject != null)
@@ -755,7 +767,7 @@ namespace Dev2.Studio.Views
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool GetCursorPos(out POINT lpPoint);
+        static extern bool GetCursorPos(out Point lpPoint);
         void PART_TITLEBAR_OnMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             try
@@ -764,16 +776,16 @@ namespace Dev2.Studio.Views
                 {
                     restoreIfMove = false;
 
-                    double percentHorizontal = e.GetPosition(this).X / ActualWidth;
-                    double targetHorizontal = RestoreBounds.Width * percentHorizontal;
+                    var percentHorizontal = e.GetPosition(this).X / ActualWidth;
+                    var targetHorizontal = RestoreBounds.Width * percentHorizontal;
 
-                    double percentVertical = e.GetPosition(this).Y / ActualHeight;
-                    double targetVertical = RestoreBounds.Height * percentVertical;
+                    var percentVertical = e.GetPosition(this).Y / ActualHeight;
+                    var targetVertical = RestoreBounds.Height * percentVertical;
 
                     WindowState = WindowState.Normal;
                     ResizeMode = WindowState == WindowState.Normal ? ResizeMode.CanResize : ResizeMode.CanMinimize;
 
-                    GetCursorPos(out POINT lMousePosition);
+                    GetCursorPos(out Point lMousePosition);
 
                     Left = lMousePosition.x - targetHorizontal;
                     Top = lMousePosition.y - targetVertical;
@@ -783,7 +795,7 @@ namespace Dev2.Studio.Views
                 }
                 if (allowMaximizeState)
                 {
-                    GetCursorPos(out POINT lMousePosition);
+                    GetCursorPos(out Point lMousePosition);
 
                     if (lMousePosition.y <= 0)
                     {
@@ -797,19 +809,25 @@ namespace Dev2.Studio.Views
             }
         }
 
-        private void ContentDockManager_OnPaneDragEnded(object sender, PaneDragEndedEventArgs e)
+        void ContentDockManager_OnPaneDragEnded(object sender, PaneDragEndedEventArgs e)
         {
             if (e.Panes != null)
             {
                 var tabGroupPane = e.Panes[0].Parent as TabGroupPane;
                 var splitPane = tabGroupPane?.Parent as SplitPane;
-                if (splitPane?.Parent is PaneToolWindow paneToolWindow)
+                if (splitPane?.Parent is PaneToolWindow paneToolWindow && string.IsNullOrWhiteSpace(paneToolWindow.Title))
                 {
-                    if (string.IsNullOrWhiteSpace(paneToolWindow.Title))
-                    {
-                        paneToolWindow.Title = Title;
-                    }
+                    paneToolWindow.Title = Title;
                 }
+
+            }
+        }
+
+        void MainViewWindow_Closed(object sender, EventArgs e)
+        {
+            foreach (Process proc in Process.GetProcessesByName("Warewolf Studio"))
+            {
+                Dev2Logger.Warn(proc.ProcessName + " still running in the background.", "Warewolf Warn");
             }
         }
     }

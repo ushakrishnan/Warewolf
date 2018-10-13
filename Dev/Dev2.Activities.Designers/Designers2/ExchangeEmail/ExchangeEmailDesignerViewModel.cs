@@ -24,25 +24,15 @@ using Dev2.Validation;
 using Warewolf.Resource.Errors;
 using Dev2.Studio.Interfaces;
 
-
-
-
-
-
-
-
-
 namespace Dev2.Activities.Designers2.ExchangeEmail
 {
     public class ExchangeEmailDesignerViewModel : CustomToolWithRegionBase, IExchangeServiceViewModel
     {
-
         readonly IEventAggregator _eventPublisher;
         readonly IServer _server;
         readonly IAsyncWorker _asyncWorker;
-        private ISourceToolRegion<IExchangeSource> _sourceRegion;
+        ISourceToolRegion<IExchangeSource> _sourceRegion;
 
-        
         public RelayCommand TestEmailAccountCommand { get; private set; }
         public ICommand ChooseAttachmentsCommand { get; private set; }
 
@@ -83,19 +73,19 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Email_Exchange_Send;
         }
 
-        private void SetupCommonProperties()
+        void SetupCommonProperties()
         {
             Testing = false;
             AddTitleBarMappingToggle();
             InitialiseViewModel();
         }
-        
+
         void AddTitleBarMappingToggle()
         {
             HasLargeView = true;
         }
 
-        private void InitialiseViewModel()
+        void InitialiseViewModel()
         {
             BuildRegions();
             InitializeProperties();
@@ -118,10 +108,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
 
         public ISourceToolRegion<IExchangeSource> SourceRegion
         {
-            get
-            {
-                return _sourceRegion;
-            }
+            get => _sourceRegion;
             set
             {
                 _sourceRegion = value;
@@ -129,35 +116,30 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             }
         }
 
-        private string _statusMessage;
+        string _statusMessage;
         public string StatusMessage
         {
-            get { return _statusMessage; }
+            get => _statusMessage;
             set
             {
                 _statusMessage = value;
-
                 OnPropertyChanged("StatusMessage");
             }
         }
 
-        private bool _testing;
+        bool _testing;
 
         public bool Testing
         {
-            get
-            {
-                return _testing;
-            }
-             set
+            get => _testing;
+            set
             {
                 _testing = value;
-
                 OnPropertyChanged("Testing");
             }
         }
 
-        private IExchangeServiceModel Model { get; set; }
+        IExchangeServiceModel Model { get; set; }
         public override IList<IToolRegion> BuildRegions()
         {
             IList<IToolRegion> regions = new List<IToolRegion>();
@@ -169,36 +151,37 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         }
 
         public static readonly DependencyProperty CanTestEmailAccountProperty = DependencyProperty.Register("CanTestEmailAccount", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(true));
-        public bool IsEmailSourceFocused { get { return (bool)GetValue(IsEmailSourceFocusedProperty); } set { SetValue(IsEmailSourceFocusedProperty, value); } }
+        public bool IsEmailSourceFocused { get => (bool)GetValue(IsEmailSourceFocusedProperty); set => SetValue(IsEmailSourceFocusedProperty, value); }
         public static readonly DependencyProperty IsEmailSourceFocusedProperty = DependencyProperty.Register("IsEmailSourceFocused", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(default(bool)));
-        
-        public bool IsToFocused { get { return (bool)GetValue(IsToFocusedProperty); } set { SetValue(IsToFocusedProperty, value); } }
+
+        public bool IsToFocused { get => (bool)GetValue(IsToFocusedProperty); set => SetValue(IsToFocusedProperty, value); }
         public static readonly DependencyProperty IsToFocusedProperty = DependencyProperty.Register("IsToFocused", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsCcFocused { get { return (bool)GetValue(IsCcFocusedProperty); } set { SetValue(IsCcFocusedProperty, value); } }
+        public bool IsCcFocused { get => (bool)GetValue(IsCcFocusedProperty); set => SetValue(IsCcFocusedProperty, value); }
         public static readonly DependencyProperty IsCcFocusedProperty = DependencyProperty.Register("IsCcFocused", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsBccFocused { get { return (bool)GetValue(IsBccFocusedProperty); } set { SetValue(IsBccFocusedProperty, value); } }
+        public bool IsBccFocused { get => (bool)GetValue(IsBccFocusedProperty); set => SetValue(IsBccFocusedProperty, value); }
         public static readonly DependencyProperty IsBccFocusedProperty = DependencyProperty.Register("IsBccFocused", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsSubjectFocused { get { return (bool)GetValue(IsSubjectFocusedProperty); } set { SetValue(IsSubjectFocusedProperty, value); } }
+        public bool IsSubjectFocused { get => (bool)GetValue(IsSubjectFocusedProperty); set => SetValue(IsSubjectFocusedProperty, value); }
         public static readonly DependencyProperty IsSubjectFocusedProperty = DependencyProperty.Register("IsSubjectFocused", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsAttachmentsFocused { get { return (bool)GetValue(IsAttachmentsFocusedProperty); } set { SetValue(IsAttachmentsFocusedProperty, value); } }
+        public bool IsAttachmentsFocused { get => (bool)GetValue(IsAttachmentsFocusedProperty); set => SetValue(IsAttachmentsFocusedProperty, value); }
         public static readonly DependencyProperty IsAttachmentsFocusedProperty = DependencyProperty.Register("IsAttachmentsFocused", typeof(bool), typeof(ExchangeEmailDesignerViewModel), new PropertyMetadata(default(bool)));
-        string To { get { return GetProperty<string>(); } }
-        string Cc { get { return GetProperty<string>(); } }
-        string Bcc { get { return GetProperty<string>(); } }
-        string Attachments { get { return GetProperty<string>(); } set { SetProperty(value); } }
-        string Subject { get { return GetProperty<string>(); } }
-        string Body { get { return GetProperty<string>(); } }
+        string To => GetProperty<string>();
+
+        string Cc => GetProperty<string>();
+
+        string Bcc => GetProperty<string>();
+
+        string Attachments { get => GetProperty<string>(); set => SetProperty(value); }
+        string Subject => GetProperty<string>();
+
+        string Body => GetProperty<string>();
 
         public bool CanTestEmailAccount
         {
-            get
-            {
-                return (bool)GetValue(CanTestEmailAccountProperty);
-            }
+            get => (bool)GetValue(CanTestEmailAccountProperty);
             set
             {
                 SetValue(CanTestEmailAccountProperty, value);
@@ -208,7 +191,6 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
 
         public void TestEmailAccount()
         {
-
             if (Errors != null && Errors.Count > 0)
             {
                 return;
@@ -229,15 +211,15 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
                 Errors = new List<IActionableErrorInfo> { new ActionableErrorInfo(() => IsToFocused = true) { Message = ErrorResource.InvalidSource } };
                 return;
             }
-        
-            var testSource = new ExchangeSource()
+
+            var testSource = new ExchangeSource
             {
                 AutoDiscoverUrl = SourceRegion.SelectedSource.AutoDiscoverUrl,
                 Password = SourceRegion.SelectedSource.Password,
                 UserName = SourceRegion.SelectedSource.UserName,
             };
 
-            var testMessage = new ExchangeTestMessage()
+            var testMessage = new ExchangeTestMessage
             {
                 Body = Body,
                 Subject = Subject,
@@ -270,7 +252,7 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             SendEmail(testSource, testMessage);
         }
 
-        private void SendEmail(ExchangeSource testSource, ExchangeTestMessage testMessage)
+        void SendEmail(ExchangeSource testSource, ExchangeTestMessage testMessage)
         {
             _asyncWorker.Start(() =>
             {
@@ -294,30 +276,27 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
             StatusMessage = message;
         }
 
-
         void ChooseAttachments()
         {
-
-    
             const string Separator = ";";
-            var message = new FileChooserMessage();
-            message.SelectedFiles = Attachments.Split(Separator.ToCharArray());
+            var message = new FileChooserMessage
+            {
+                SelectedFiles = Attachments.Split(Separator.ToCharArray())
+            };
             message.PropertyChanged += (sender, args) =>
             {
-                if (args.PropertyName == "SelectedFiles")
+                if (args.PropertyName == "SelectedFiles" && message.SelectedFiles != null)
                 {
-                    if (message.SelectedFiles != null)
+                    if (string.IsNullOrEmpty(Attachments))
                     {
-                        if (string.IsNullOrEmpty(Attachments))
-                        {
-                            Attachments = string.Join(Separator, message.SelectedFiles);
-                        }
-                        else
-                        {
-                            Attachments += Separator + string.Join(Separator, message.SelectedFiles);
-                        }
+                        Attachments = string.Join(Separator, message.SelectedFiles);
+                    }
+                    else
+                    {
+                        Attachments += Separator + string.Join(Separator, message.SelectedFiles);
                     }
                 }
+
             };
             _eventPublisher.Publish(message);
         }
@@ -333,31 +312,31 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
 
         IEnumerable<IActionableErrorInfo> ValidateThis()
         {
-            foreach (var error in GetRuleSet("EmailSource", GetDatalistString()).ValidateRules("'Email Source'", () => IsEmailSourceFocused = true))
+            foreach (var error in GetRuleSet("EmailSource", GetDatalistString?.Invoke()).ValidateRules("'Email Source'", () => IsEmailSourceFocused = true))
             {
                 yield return error;
             }
-            foreach (var error in GetRuleSet("Recipients", GetDatalistString()).ValidateRules("'To', 'Cc' or 'Bcc'", () => IsToFocused = true))
+            foreach (var error in GetRuleSet("Recipients", GetDatalistString?.Invoke()).ValidateRules("'To', 'Cc' or 'Bcc'", () => IsToFocused = true))
             {
                 yield return error;
             }
-            foreach (var error in GetRuleSet("To", GetDatalistString()).ValidateRules("'To'", () => IsToFocused = true))
+            foreach (var error in GetRuleSet("To", GetDatalistString?.Invoke()).ValidateRules("'To'", () => IsToFocused = true))
             {
                 yield return error;
             }
-            foreach (var error in GetRuleSet("Cc", GetDatalistString()).ValidateRules("'Cc'", () => IsCcFocused = true))
+            foreach (var error in GetRuleSet("Cc", GetDatalistString?.Invoke()).ValidateRules("'Cc'", () => IsCcFocused = true))
             {
                 yield return error;
             }
-            foreach (var error in GetRuleSet("Bcc", GetDatalistString()).ValidateRules("'Bcc'", () => IsBccFocused = true))
+            foreach (var error in GetRuleSet("Bcc", GetDatalistString?.Invoke()).ValidateRules("'Bcc'", () => IsBccFocused = true))
             {
                 yield return error;
             }
-            foreach (var error in GetRuleSet("SubjectAndBody", GetDatalistString()).ValidateRules("'Subject' or 'Body'", () => IsSubjectFocused = true))
+            foreach (var error in GetRuleSet("SubjectAndBody", GetDatalistString?.Invoke()).ValidateRules("'Subject' or 'Body'", () => IsSubjectFocused = true))
             {
                 yield return error;
             }
-            foreach (var error in GetRuleSet("Attachments", GetDatalistString()).ValidateRules("'Attachments'", () => IsAttachmentsFocused = true))
+            foreach (var error in GetRuleSet("Attachments", GetDatalistString?.Invoke()).ValidateRules("'Attachments'", () => IsAttachmentsFocused = true))
             {
                 yield return error;
             }
@@ -373,22 +352,22 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
                     ruleSet.Add(new IsNullRule(() => SourceRegion.SelectedSource));
                     break;
                 case "To":
-                    var toExprRule = new IsValidExpressionRule(() => To, datalist, "user@test.com");
+                    var toExprRule = new IsValidExpressionRule(() => To, datalist, "user@test.com", new VariableUtils());
                     ruleSet.Add(toExprRule);
                     ruleSet.Add(new IsValidEmailAddressRule(() => toExprRule.ExpressionValue));
                     break;
                 case "Cc":
-                    var ccExprRule = new IsValidExpressionRule(() => Cc, datalist, "user@test.com");
+                    var ccExprRule = new IsValidExpressionRule(() => Cc, datalist, "user@test.com", new VariableUtils());
                     ruleSet.Add(ccExprRule);
                     ruleSet.Add(new IsValidEmailAddressRule(() => ccExprRule.ExpressionValue));
                     break;
                 case "Bcc":
-                    var bccExprRule = new IsValidExpressionRule(() => Bcc, datalist, "user@test.com");
+                    var bccExprRule = new IsValidExpressionRule(() => Bcc, datalist, "user@test.com", new VariableUtils());
                     ruleSet.Add(bccExprRule);
                     ruleSet.Add(new IsValidEmailAddressRule(() => bccExprRule.ExpressionValue));
                     break;
                 case "Attachments":
-                    var attachmentsExprRule = new IsValidExpressionRule(() => Attachments, datalist, @"c:\test.txt");
+                    var attachmentsExprRule = new IsValidExpressionRule(() => Attachments, datalist, @"c:\test.txt", new VariableUtils());
                     ruleSet.Add(attachmentsExprRule);
                     ruleSet.Add(new IsValidFileNameRule(() => attachmentsExprRule.ExpressionValue));
                     break;
@@ -411,10 +390,3 @@ namespace Dev2.Activities.Designers2.ExchangeEmail
         }
     }
 }
-
-
-
-
-
-
-

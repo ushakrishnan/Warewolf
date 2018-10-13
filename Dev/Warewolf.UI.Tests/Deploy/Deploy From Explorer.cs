@@ -11,7 +11,7 @@ namespace Warewolf.UI.Tests
     [CodedUITest]
     public class Deploy_From_Explorer
     {        
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Deploy from Explorer")]
         public void Deploying_From_Explorer_Opens_The_Deploy_With_Resource_Already_Checked()
         {
@@ -19,10 +19,12 @@ namespace Warewolf.UI.Tests
             ExplorerUIMap.RightClick_Explorer_Localhost_FirstItem();
             ExplorerUIMap.Select_Deploy_From_ExplorerContextMenu();
             DeployUIMap.WhenISelectFromTheSourceTab("Hello World");
+            DeployUIMap.Click_Deploy_Tab_Source_Refresh_Button();
+            UIMap.WaitForSpinner(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
             DeployUIMap.ThenFilteredResourseIsCheckedForDeploy();
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Deploy from Explorer")]
         public void Deploying_From_Explorer_Opens_The_Deploy_With_All_Resources_In_Folder_Already_Checked()
         {
@@ -30,7 +32,32 @@ namespace Warewolf.UI.Tests
             ExplorerUIMap.RightClick_Explorer_Localhost_FirstItem();
             ExplorerUIMap.Select_Deploy_From_ExplorerContextMenu();
             DeployUIMap.Enter_DeployViewOnly_Into_Deploy_Source_Filter("Unit Tests");
+            DeployUIMap.Click_Deploy_Tab_Source_Refresh_Button();
+            UIMap.WaitForSpinner(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
             DeployUIMap.ThenFilteredResourseIsCheckedForDeploy();
+            Assert.AreEqual("4", DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.OverrideHyperlink.UIItem1Text.DisplayText);
+            DeployUIMap.Enter_DeployViewOnly_Into_Deploy_Source_Filter("Check Result");
+            DeployUIMap.DeSelect_Deploy_First_Source_Item();
+            Assert.AreEqual("3", DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.OverrideHyperlink.UIItem1Text.DisplayText);
+        }
+
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Deploy from Explorer")]
+        public void Deploying_From_Explorer_Opens_The_Deploy_With_The_Resource_In_Folder_Already_Checked_And_Refresh_Keeps_Selected()
+        {
+            ExplorerUIMap.Filter_Explorer("Check Result");
+            ExplorerUIMap.RightClick_Explorer_Localhost_SecondItem();
+            ExplorerUIMap.Select_Deploy_From_ExplorerContextMenu();
+            DeployUIMap.Enter_DeployViewOnly_Into_Deploy_Source_Filter("Check Result");
+            DeployUIMap.Click_Deploy_Tab_Source_Refresh_Button();
+            UIMap.WaitForSpinner(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
+            DeployUIMap.ThenFilteredResourseIsCheckedForDeploy();
+            Assert.AreEqual("1", DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.OverrideHyperlink.UIItem1Text.DisplayText);
+            DeployUIMap.Enter_DeployViewOnly_Into_Deploy_Source_Filter("");
+            DeployUIMap.Click_Deploy_Tab_Source_Refresh_Button();
+            UIMap.WaitForSpinner(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
+            Assert.AreEqual("1", DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.OverrideHyperlink.UIItem1Text.DisplayText);
         }
 
         #region Additional test attributes

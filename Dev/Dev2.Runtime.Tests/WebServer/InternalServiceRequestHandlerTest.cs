@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -37,14 +37,14 @@ namespace Dev2.Tests.Runtime.WebServer
         ///</summary>
         public TestContext TestContext { get; set; }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         [ExpectedException(typeof(FormatException))]
         public void InternalServiceRequestHandler_ProcessRequest_WhenMalformedConnectionId_ExpectException()
         {
             //------------Setup for test--------------------------
-            Mock<IPrincipal> principle = new Mock<IPrincipal>();
+            var principle = new Mock<IPrincipal>();
             principle.Setup(p => p.Identity.Name).Returns("FakeUser");
 
             var eer = new EsbExecuteRequest
@@ -57,16 +57,16 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         [ExpectedException(typeof(Exception))]
         public void InternalServiceRequestHandler_ProcessRequest_WhenNullExecutingUserInFirstOverload_ExpectException()
         {
             //------------Setup for test--------------------------
-            Mock<ICommunicationContext> ctx = new Mock<ICommunicationContext>();
-            NameValueCollection boundVariables = new NameValueCollection { { "servicename", "ping" }, { "instanceid", "" }, { "bookmark", "" } };
-            NameValueCollection queryString = new NameValueCollection { { GlobalConstants.DLID, Guid.Empty.ToString() }, { "wid", Guid.Empty.ToString() } };
+            var ctx = new Mock<ICommunicationContext>();
+            var boundVariables = new NameValueCollection { { "servicename", "ping" }, { "instanceid", "" }, { "bookmark", "" } };
+            var queryString = new NameValueCollection { { GlobalConstants.DLID, Guid.Empty.ToString() }, { "wid", Guid.Empty.ToString() } };
             ctx.Setup(c => c.Request.BoundVariables).Returns(boundVariables);
             ctx.Setup(c => c.Request.QueryString).Returns(queryString);
             ctx.Setup(c => c.Request.Uri).Returns(new Uri("http://localhost"));
@@ -78,15 +78,15 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         public void InternalServiceRequestHandler_ProcessRequest_WhenExecutingUser()
         {
             //------------Setup for test--------------------------
-            Mock<ICommunicationContext> ctx = new Mock<ICommunicationContext>();
-            NameValueCollection boundVariables = new NameValueCollection { { "servicename", "ping" }, { "instanceid", "" }, { "bookmark", "" } };
-            NameValueCollection queryString = new NameValueCollection { { GlobalConstants.DLID, Guid.Empty.ToString() }, { "wid", Guid.Empty.ToString() } };
+            var ctx = new Mock<ICommunicationContext>();
+            var boundVariables = new NameValueCollection { { "servicename", "ping" }, { "instanceid", "" }, { "bookmark", "" } };
+            var queryString = new NameValueCollection { { GlobalConstants.DLID, Guid.Empty.ToString() }, { "wid", Guid.Empty.ToString() } };
             ctx.Setup(c => c.Request.BoundVariables).Returns(boundVariables);
             ctx.Setup(c => c.Request.QueryString).Returns(queryString);
             ctx.Setup(c => c.Request.Uri).Returns(new Uri("http://localhost:3142/secure/Testing123.json?<DataList></DataList>&wid=7481a128-cf36-427c-90d7-daa32368af8d"));
@@ -100,7 +100,7 @@ namespace Dev2.Tests.Runtime.WebServer
             internalServiceRequestHandler.ProcessRequest(ctx.Object);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         [ExpectedException(typeof(Exception))]
@@ -111,7 +111,7 @@ namespace Dev2.Tests.Runtime.WebServer
             {
                 { "DebugPayload", new StringBuilder("<DataList>Value:SomeStringAsValue,IsDebug:true</DataList>") }
             };
-            EsbExecuteRequest eer = new EsbExecuteRequest
+            var eer = new EsbExecuteRequest
             {
                 ServiceName = "Ping",
                 Args = args,
@@ -123,7 +123,7 @@ namespace Dev2.Tests.Runtime.WebServer
             internalServiceRequestHandler.ProcessRequest(eer, Guid.Empty, Guid.Empty, Guid.NewGuid().ToString());
 
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         public void InternalServiceRequestHandler_ProcessRequest()
@@ -147,7 +147,7 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void BuildStudioUrl_GivenPayLoad_BuildCorrect_WebURL()
         {
@@ -168,7 +168,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsFalse(invoke.Contains(Environment.NewLine));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void BuildStudioUrl_GivenPayLoad_BuildCorrect_WebURL_StripDebugInfo()
         {
@@ -196,7 +196,7 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         public void InternalServiceRequestHandler_ProcessRequestGivenIsServiceTestExecution()
@@ -225,7 +225,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsNotNull(processRequest);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("InternalServiceRequestHandler_ProcessRequest")]
         public void InternalServiceRequestHandler_ProcessRequestGivenUnAuthorizedPermission()

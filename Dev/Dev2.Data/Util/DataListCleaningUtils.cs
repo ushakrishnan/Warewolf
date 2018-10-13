@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,50 +17,54 @@ using Dev2.Data.Util;
 
 
 namespace Dev2.DataList.Contract
-
 {
-    public class DataListCleaningUtils
+    public static class DataListCleaningUtils
     {
         public static List<string> SplitIntoRegions(string result)
         {
             if(!String.IsNullOrEmpty(result))
             {
-                try
-                {
-                    var allRegions = new List<string>();
-                    Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
-                    IList<IParseTO> makeParts = parser.MakeParts(result);
-                    foreach(var makePart in makeParts.Where(c => !c.HangingOpen))
-                    {
-                        if(makePart.Child != null)
-                        {
-                            int indexOfBracket = makePart.Payload.IndexOf("(", StringComparison.Ordinal);
-                            string tmpresult = makePart.Payload.Insert(indexOfBracket + 1, DataListUtil.AddBracketsToValueIfNotExist(makePart.Child.Payload));
-                            allRegions.Add(string.Concat("[[", tmpresult, "]]"));
-                        }
-                        else
-                        {
-                            allRegions.Add(string.Concat("[[", makePart.Payload, "]]"));
-                        }
-                    }
-                    return allRegions;
-                }
-                catch(Exception)
-                {
-
-                    return new List<string> { null };
-                }
+                return TrySplitIntoRegions(result);
             }
             return new List<string> { null };
         }
 
-        private static IEnumerable<string> AddChildrenPart(IParseTO child)
+        private static List<string> TrySplitIntoRegions(string result)
         {
-            List<string> results = new List<string>();
-            if(child != null)
+            try
+            {
+                var allRegions = new List<string>();
+                var parser = new Dev2DataLanguageParser();
+                var makeParts = parser.MakeParts(result);
+                foreach (var makePart in makeParts.Where(c => !c.HangingOpen))
+                {
+                    if (makePart.Child != null)
+                    {
+                        var indexOfBracket = makePart.Payload.IndexOf("(", StringComparison.Ordinal);
+                        var tmpresult = makePart.Payload.Insert(indexOfBracket + 1, DataListUtil.AddBracketsToValueIfNotExist(makePart.Child.Payload));
+                        allRegions.Add(string.Concat("[[", tmpresult, "]]"));
+                    }
+                    else
+                    {
+                        allRegions.Add(string.Concat("[[", makePart.Payload, "]]"));
+                    }
+                }
+                return allRegions;
+            }
+            catch (Exception)
+            {
+
+                return new List<string> { null };
+            }
+        }
+
+        static IEnumerable<string> AddChildrenPart(IParseTO child)
+        {
+            var results = new List<string>();
+            if (child != null)
             {
                 results.Add(DataListUtil.AddBracketsToValueIfNotExist(child.Payload));
-                if(child.Child != null)
+                if (child.Child != null)
                 {
                     results.AddRange(AddChildrenPart(child.Child).Select(DataListUtil.AddBracketsToValueIfNotExist));
                 }
@@ -75,9 +79,9 @@ namespace Dev2.DataList.Contract
                 try
                 {
                     var allRegions = new List<string>();
-                    Dev2DataLanguageParser parser = new Dev2DataLanguageParser();
-                    IList<IParseTO> makeParts = parser.MakeParts(result);
-                    foreach(var makePart in makeParts.Where(c => !c.HangingOpen))
+                    var parser = new Dev2DataLanguageParser();
+                    var makeParts = parser.MakeParts(result);
+                    foreach (var makePart in makeParts.Where(c => !c.HangingOpen))
                     {
                         allRegions.Add(DataListUtil.AddBracketsToValueIfNotExist(makePart.Payload));
                         allRegions.AddRange(AddChildrenPartForFindMissing(makePart.Child));
@@ -93,13 +97,13 @@ namespace Dev2.DataList.Contract
 
         }
 
-        private static IEnumerable<string> AddChildrenPartForFindMissing(IParseTO child)
+        static IEnumerable<string> AddChildrenPartForFindMissing(IParseTO child)
         {
-            List<string> results = new List<string>();
-            if(child != null)
+            var results = new List<string>();
+            if (child != null)
             {
                 results.Add(DataListUtil.AddBracketsToValueIfNotExist(child.Payload));
-                if(child.Child != null)
+                if (child.Child != null)
                 {
                     results.AddRange(AddChildrenPart(child.Child).Select(DataListUtil.AddBracketsToValueIfNotExist));
                 }

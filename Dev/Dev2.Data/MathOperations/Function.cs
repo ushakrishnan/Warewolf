@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,21 +17,16 @@ using Warewolf.Resource.Errors;
 
 
 namespace Dev2.MathOperations
-
 {
-
-    // PBI 1214: This class is used to create a dev2 function used by the Calculate Tool
-    //           This contains a set of values that can fully describe a function
-    //           from it's Name, to the Argument List, to the description of what the function actually does.
     public class Function : IFunction
     {
 
         #region Private Members
 
-        private string _functionName;
-        private IList<string> _arguments;
-        private IList<string> _argumentDescriptions;
-        private string _description;
+        string _functionName;
+        IList<string> _arguments;
+        IList<string> _argumentDescriptions;
+        string _description;
 
         #endregion Private Members
 
@@ -66,7 +61,7 @@ namespace Dev2.MathOperations
 
         #region Public Methods
 
-        public void CreateCustomFunction(string functionName, List<string> args, List<string> argumentDescriptions, string description, Func<double[], double> function, IDev2CalculationManager calcManager)
+        public void CreateCustomFunction(string functionName, List<string> arguments, List<string> argumentDescriptions, string description, Func<double[], double> function, IDev2CalculationManager calcManager)
         {
             if (CreateCustomFunction(functionName, function, out CustomCalculationFunction calcFunction))
             {
@@ -74,7 +69,7 @@ namespace Dev2.MathOperations
                 {
                     calcManager.RegisterUserDefinedFunction(calcFunction);
                     SetFunctionName(functionName);
-                    SetArguments(args);
+                    SetArguments(arguments);
                     SetArgumentDescriptions(argumentDescriptions);
                     SetDescription(description);
                 }
@@ -97,7 +92,7 @@ namespace Dev2.MathOperations
 
         #region Private Methods
 
-        private static bool CreateCustomFunction(string functionName, Func<double[], double> func, out CustomCalculationFunction custCalculation)
+        static bool CreateCustomFunction(string functionName, Func<double[], double> func, out CustomCalculationFunction custCalculation)
         {
             bool isSucessfullyCreated;
             try
@@ -115,7 +110,7 @@ namespace Dev2.MathOperations
 
         }
 
-        private void SetFunctionName(string functionName)
+        void SetFunctionName(string functionName)
         {
             if (!string.IsNullOrEmpty(functionName))
             {
@@ -123,22 +118,22 @@ namespace Dev2.MathOperations
             }
             else
             {
-                
+
                 throw new ArgumentNullException("Cannot set Function Name to an empty string");
             }
         }
 
-        private void SetArguments(IList<string> args)
+        void SetArguments(IList<string> args)
         {
             _arguments = args ?? new List<string>();
         }
 
-        private void SetArgumentDescriptions(IList<string> argumentDescriptions)
+        void SetArgumentDescriptions(IList<string> argumentDescriptions)
         {
             _argumentDescriptions = argumentDescriptions ?? new List<string>();
         }
 
-        private void SetDescription(string description)
+        void SetDescription(string description)
         {
             _description = !string.IsNullOrEmpty(description) ? description : string.Empty;
         }

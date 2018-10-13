@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -43,7 +43,7 @@ namespace Dev2.Studio.Views.Workflow
             }
             if (e.ChangedButton == MouseButton.Right)
             {
-                DependencyObject node = e.OriginalSource as DependencyObject;
+                var node = e.OriginalSource as DependencyObject;
                 while (node != null)
                 {
                     if (node is ActivityDesigner)
@@ -52,27 +52,7 @@ namespace Dev2.Studio.Views.Workflow
                     }
                     if (node.GetType().Name.Contains("StartSymbol"))
                     {
-                        var grid = e.OriginalSource as Grid;
-                        var rect = e.OriginalSource as System.Windows.Shapes.Rectangle;
-                        if (grid != null)
-                        {
-                            grid.ContextMenu = WorkflowDesigner.Resources["StartNodeContextMenu"] as ContextMenu;
-                            if (grid.ContextMenu != null)
-                            {
-                                grid.ContextMenu.IsOpen = true;
-                                grid.ContextMenu.DataContext = DataContext;
-
-                            }
-                        }
-                        else if (rect != null)
-                        {
-                            rect.ContextMenu = WorkflowDesigner.Resources["StartNodeContextMenu"] as ContextMenu;
-                            if (rect.ContextMenu != null)
-                            {
-                                rect.ContextMenu.IsOpen = true;
-                                rect.ContextMenu.DataContext = DataContext;
-                            }
-                        }
+                        RightClickStartNode(e);
                         break;
                     }
                     node = VisualTreeHelper.GetParent(node);
@@ -80,6 +60,34 @@ namespace Dev2.Studio.Views.Workflow
             }
             OnPreviewMouseDown(e);
         }
+
+        private void RightClickStartNode(MouseButtonEventArgs e)
+        {
+            var rect = e.OriginalSource as System.Windows.Shapes.Rectangle;
+            if (e.OriginalSource is Grid grid)
+            {
+                grid.ContextMenu = WorkflowDesigner.Resources["StartNodeContextMenu"] as ContextMenu;
+                if (grid.ContextMenu != null)
+                {
+                    grid.ContextMenu.IsOpen = true;
+                    grid.ContextMenu.DataContext = DataContext;
+
+                }
+            }
+            else
+            {
+                if (rect != null)
+                {
+                    rect.ContextMenu = WorkflowDesigner.Resources["StartNodeContextMenu"] as ContextMenu;
+                    if (rect.ContextMenu != null)
+                    {
+                        rect.ContextMenu.IsOpen = true;
+                        rect.ContextMenu.DataContext = DataContext;
+                    }
+                }
+            }
+        }
+
         //a return from here without settings handled to true and DragDropEffects.None implies that the item drop is allowed
         void DropPointOnDragEnter(object sender, DragEventArgs e)
         {
@@ -114,10 +122,13 @@ namespace Dev2.Studio.Views.Workflow
                 e.Effects = DragDropEffects.None;
                 e.Handled = true;
             }
-            else if (_dragDropHelpers.PreventDrop(dataObject))
+            else
             {
-                e.Effects = DragDropEffects.None;
-                e.Handled = true;
+                if (_dragDropHelpers.PreventDrop(dataObject))
+                {
+                    e.Effects = DragDropEffects.None;
+                    e.Handled = true;
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -33,7 +33,6 @@ using Warewolf.Studio.Core.Popup;
 using Warewolf.Studio.Resources.Languages;
 using Warewolf.Studio.ViewModels;
 
-
 namespace Dev2.Settings.Security
 {
     public class SecurityViewModel : SettingsItemViewModel, IHelpSource, IUpdatesHelp
@@ -43,12 +42,10 @@ namespace Dev2.Settings.Security
         readonly IWin32Window _parentWindow;
         readonly IServer _environment;
         bool _isUpdatingHelpText;
-        private static IDomain _domain = new DomainWrapper();
+        static IDomain _domain = new DomainWrapper();
 
-        
         public SecurityViewModel()
         {
-            
         }
 
         internal SecurityViewModel(SecuritySettingsTO securitySettings, IWin32Window parentWindow, IServer environment)
@@ -94,7 +91,7 @@ namespace Dev2.Settings.Security
             _directoryObjectPicker.TargetComputer = string.Empty;
             _directoryObjectPicker.ShowAdvancedView = false;
 
-            PickWindowsGroupCommand = new DelegateCommand(PickWindowsGroup);
+            PickWindowsGroupCommand = new DelegateCommand(PickWindowsGroup, o => CanPickWindowsGroup(securitySettings?.WindowsGroupPermissions));
             PickResourceCommand = new DelegateCommand(PickResource);
 
             InitializeHelp();
@@ -102,9 +99,11 @@ namespace Dev2.Settings.Security
             InitializePermissions(securitySettings?.WindowsGroupPermissions);
         }
 
+        static bool CanPickWindowsGroup(IEnumerable<WindowsGroupPermission> permissions) => permissions != null;
+
         public ObservableCollection<WindowsGroupPermission> ServerPermissions
         {
-            get { return _serverPermissions; }
+            get => _serverPermissions;
             private set
             {
                 _serverPermissions = value;
@@ -114,7 +113,7 @@ namespace Dev2.Settings.Security
 
         public ObservableCollection<WindowsGroupPermission> ResourcePermissions
         {
-            get { return _resourcePermissions; }
+            get => _resourcePermissions;
             private set
             {
                 _resourcePermissions = value;
@@ -158,10 +157,10 @@ namespace Dev2.Settings.Security
 
         [JsonIgnore]
         public static readonly DependencyProperty IsResourceHelpVisibleProperty = DependencyProperty.Register(@"IsResourceHelpVisible", typeof(bool), typeof(SecurityViewModel), new PropertyMetadata(false, IsResourceHelpVisiblePropertyChanged));
-        private ObservableCollection<WindowsGroupPermission> _serverPermissions;
-        private ObservableCollection<WindowsGroupPermission> _resourcePermissions;
-        private ObservableCollection<WindowsGroupPermission> _itemResourcePermissions;
-        private ObservableCollection<WindowsGroupPermission> _itemServerPermissions;
+        ObservableCollection<WindowsGroupPermission> _serverPermissions;
+        ObservableCollection<WindowsGroupPermission> _resourcePermissions;
+        ObservableCollection<WindowsGroupPermission> _itemResourcePermissions;
+        ObservableCollection<WindowsGroupPermission> _itemServerPermissions;
 
         static void IsResourceHelpVisiblePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs args)
         {
@@ -323,15 +322,12 @@ namespace Dev2.Settings.Security
                     };
                     popupController.Show(popupMessage);
                 }
-                Dev2Logger.Error(@"Error opening group picker: ", e, "Warewolf Error");
+                Dev2Logger.Error(@"Error opening group picker: ", e, GlobalConstants.WarewolfError);
             }
             return DialogResult.Cancel;
         }
 
-        public virtual DirectoryObject[] GetSelectedObjectsFromDirectoryObjectPickerDialog()
-        {
-            return _directoryObjectPicker.SelectedObjects;
-        }
+        public virtual DirectoryObject[] GetSelectedObjectsFromDirectoryObjectPickerDialog() => _directoryObjectPicker.SelectedObjects;
 
         void RegisterPropertyChanged(WindowsGroupPermission permission)
         {
@@ -348,40 +344,50 @@ namespace Dev2.Settings.Security
 
                 if (permission.IsNew)
                 {
-                    if (permission.IsValid)
-                    {
-                        permission.IsNew = false;
-                        var newPermission = CreateNewPermission(permission.IsServer);
-
-                        if (permission.IsServer)
-                        {
-                            ServerPermissions.Add(newPermission);
-                        }
-                        else
-                        {
-                            ResourcePermissions.Add(newPermission);
-                        }
-                    }
+                    AddPermission(permission);
                 }
                 else
                 {
-                    var isEmpty = string.IsNullOrEmpty(permission.WindowsGroup);
-                    if (isEmpty)
-                    {
-                        if (permission.IsServer)
-                        {
-                            ServerPermissions.Remove(permission);
-                        }
-                        else
-                        {
-                            ResourcePermissions.Remove(permission);
-                        }
-                    }
+                    RemovePermission(permission);
                 }
             }
         }
 
-        void UpdateOverridingPermission(WindowsGroupPermission windowsGroupPermission, string propertyName)
+        private void RemovePermission(WindowsGroupPermission permission)
+        {
+            var isEmpty = string.IsNullOrEmpty(permission.WindowsGroup);
+            if (isEmpty)
+            {
+                if (permission.IsServer)
+                {
+                    ServerPermissions.Remove(permission);
+                }
+                else
+                {
+                    ResourcePermissions.Remove(permission);
+                }
+            }
+        }
+
+        private void AddPermission(WindowsGroupPermission permission)
+        {
+            if (permission.IsValid)
+            {
+                permission.IsNew = false;
+                var newPermission = CreateNewPermission(permission.IsServer);
+
+                if (permission.IsServer)
+                {
+                    ServerPermissions.Add(newPermission);
+                }
+                else
+                {
+                    ResourcePermissions.Add(newPermission);
+                }
+            }
+        }
+
+        static void UpdateOverridingPermission(WindowsGroupPermission windowsGroupPermission, string propertyName)
         {
             if (windowsGroupPermission == null)
             {
@@ -441,9 +447,7 @@ namespace Dev2.Settings.Security
 
         ActivityDesignerToggle CreateHelpToggle(DependencyProperty targetProperty)
         {
-            var toggle = ActivityDesignerToggle.Create(@"ServiceHelp", @"Close Help", @"ServiceHelp", @"Open Help", @"HelpToggle", this, targetProperty
-                );
-
+            var toggle = ActivityDesignerToggle.Create(@"ServiceHelp", @"Close Help", @"ServiceHelp", @"Open Help", @"HelpToggle", this, targetProperty);
             return toggle;
         }
 
@@ -509,6 +513,20 @@ namespace Dev2.Settings.Security
             return duplicates.Any();
         }
 
+        public bool HasInvalidResourcePermission()
+        {
+            foreach (var item in ResourcePermissions.Where(perm => !perm.IsDeleted))
+            {
+                if ((!string.IsNullOrEmpty(item.ResourceName)
+                    && string.IsNullOrEmpty(item.WindowsGroup))
+                || (string.IsNullOrEmpty(item.ResourceName)
+                && !string.IsNullOrEmpty(item.WindowsGroup)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         #region Implementation of IUpdatesHelp
 
         public void UpdateHelpDescriptor(string helpText)
@@ -521,11 +539,10 @@ namespace Dev2.Settings.Security
         [JsonIgnore]
         public Visibility Visibility => IsInDomain();
 
-        private static Visibility IsInDomain()
+        static Visibility IsInDomain()
         {
             try
             {
-                
                 var computerDomain = _domain.GetComputerDomain();
                 return Visibility.Visible;
             }
@@ -533,8 +550,6 @@ namespace Dev2.Settings.Security
             {
                 return Visibility.Collapsed;
             }
-
-
         }
 
         #region CloneItems
@@ -565,23 +580,23 @@ namespace Dev2.Settings.Security
             }
         }
 
-        private ObservableCollection<WindowsGroupPermission> CloneResourcePermissions(ObservableCollection<WindowsGroupPermission> resourcePermissions)
+        static ObservableCollection<WindowsGroupPermission> CloneResourcePermissions(ObservableCollection<WindowsGroupPermission> resourcePermissions)
         {
             var resolver = new ShouldSerializeContractResolver();
             var ser = JsonConvert.SerializeObject(resourcePermissions, new JsonSerializerSettings { ContractResolver = resolver });
-            ObservableCollection<WindowsGroupPermission> clone = JsonConvert.DeserializeObject<ObservableCollection<WindowsGroupPermission>>(ser);
+            var clone = JsonConvert.DeserializeObject<ObservableCollection<WindowsGroupPermission>>(ser);
             return clone;
         }
 
-        private ObservableCollection<WindowsGroupPermission> CloneServerPermissions(ObservableCollection<WindowsGroupPermission> serverPermissions)
+        static ObservableCollection<WindowsGroupPermission> CloneServerPermissions(ObservableCollection<WindowsGroupPermission> serverPermissions)
         {
             var resolver = new ShouldSerializeContractResolver();
             var ser = JsonConvert.SerializeObject(serverPermissions, new JsonSerializerSettings { ContractResolver = resolver });
-            ObservableCollection<WindowsGroupPermission> clone = JsonConvert.DeserializeObject<ObservableCollection<WindowsGroupPermission>>(ser);
+            var clone = JsonConvert.DeserializeObject<ObservableCollection<WindowsGroupPermission>>(ser);
             return clone;
         }
 
-        private bool Equals(ObservableCollection<WindowsGroupPermission> serverPermissions, ObservableCollection<WindowsGroupPermission> resourcePermissions)
+        bool Equals(ObservableCollection<WindowsGroupPermission> serverPermissions, ObservableCollection<WindowsGroupPermission> resourcePermissions)
         {
             if (ReferenceEquals(null, serverPermissions))
             {
@@ -595,7 +610,7 @@ namespace Dev2.Settings.Security
             return EqualsSeq(serverPermissions, resourcePermissions);
         }
 
-        private bool EqualsSeq(ObservableCollection<WindowsGroupPermission> serverPermissions, ObservableCollection<WindowsGroupPermission> resourcePermissions)
+        bool EqualsSeq(ObservableCollection<WindowsGroupPermission> serverPermissions, ObservableCollection<WindowsGroupPermission> resourcePermissions)
         {
             var serverPermissionCompare = ServerPermissionsCompare(serverPermissions, true);
             var resourcePermissionCompare = ResourcePermissionsCompare(resourcePermissions, true);
@@ -604,7 +619,7 @@ namespace Dev2.Settings.Security
             return @equals;
         }
 
-        private bool ServerPermissionsCompare(ObservableCollection<WindowsGroupPermission> serverPermissions, bool serverPermissionCompare)
+        bool ServerPermissionsCompare(ObservableCollection<WindowsGroupPermission> serverPermissions, bool serverPermissionCompare)
         {
             if (_serverPermissions == null)
             {
@@ -696,7 +711,7 @@ namespace Dev2.Settings.Security
             return serverPermissionCompare;
         }
 
-        private bool ResourcePermissionsCompare(ObservableCollection<WindowsGroupPermission> resourcePermissions, bool resourcePermissionCompare)
+        bool ResourcePermissionsCompare(ObservableCollection<WindowsGroupPermission> resourcePermissions, bool resourcePermissionCompare)
         {
             if (_resourcePermissions == null)
             {

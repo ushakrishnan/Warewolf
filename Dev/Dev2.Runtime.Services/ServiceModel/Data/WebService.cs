@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -177,15 +177,13 @@ namespace Dev2.Runtime.ServiceModel.Data
             {
                 // If disposing equals true, dispose all managed 
                 // and unmanaged resources. 
-                if(disposing)
+                // Dispose managed resources.
+                if (disposing && Source != null)
                 {
-                    // Dispose managed resources.
-                    if(Source != null)
-                    {
-                        ((WebSource)Source).Dispose();
-                        Source = null;
-                    }
+                    ((WebSource)Source).Dispose();
+                    Source = null;
                 }
+
 
                 // Call the appropriate methods to clean up 
                 // unmanaged resources here. 

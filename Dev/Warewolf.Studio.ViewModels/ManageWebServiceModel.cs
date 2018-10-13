@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -38,10 +38,7 @@ namespace Warewolf.Studio.ViewModels
 
         #region Implementation of IWebServiceModel
 
-        public ICollection<IWebServiceSource> RetrieveSources()
-        {
-            return new List<IWebServiceSource>(QueryProxy.FetchWebServiceSources());
-        }
+        public ICollection<IWebServiceSource> RetrieveSources() => new List<IWebServiceSource>(QueryProxy.FetchWebServiceSources());
 
         public void CreateNewSource()
         {
@@ -53,10 +50,7 @@ namespace Warewolf.Studio.ViewModels
             _shell.EditResource(selectedSource);
         }
 
-        public string TestService(IWebService inputValues)
-        {
-            return UpdateRepository != null ? UpdateRepository.TestWebService(inputValues) : "Error";
-        }
+        public string TestService(IWebService inputValues) => UpdateRepository != null ? UpdateRepository.TestWebService(inputValues) : "Error";
 
         #endregion
     }

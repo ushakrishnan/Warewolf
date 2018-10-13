@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,9 +8,11 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System.IO;
 using System.Windows.Forms;
 using Caliburn.Micro;
 using CubicOrange.Windows.Forms.ActiveDirectory;
+using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Dialogs;
@@ -20,14 +22,15 @@ using Dev2.Settings.Logging;
 using Dev2.Settings.Perfcounters;
 using Dev2.Settings.Security;
 using Dev2.Studio.Interfaces;
+using log4net.Config;
 using Moq;
 
 namespace Dev2.Core.Tests.Settings
 {
     public class TestSettingsViewModel : SettingsViewModel
     {
-        private SecurityViewModel _theSecurityViewModel;
-        private PerfcounterViewModel _thePerfcounterViewModel;
+        SecurityViewModel _theSecurityViewModel;
+        PerfcounterViewModel _thePerfcounterViewModel;
 
         public TestSettingsViewModel()
         {
@@ -82,7 +85,22 @@ namespace Dev2.Core.Tests.Settings
 
         protected override LogSettingsViewModel CreateLoggingViewModel()
         {
-            return TheLogSettingsViewModel ?? new LogSettingsViewModel(new LoggingSettingsTo(), new Mock<IServer>().Object);
+            return TheLogSettingsViewModel ?? CreateLogSettingViewModel();
+        }
+
+        static LogSettingsViewModel CreateLogSettingViewModel()
+        {
+            XmlConfigurator.ConfigureAndWatch(new FileInfo("Settings.config"));
+            var loggingSettingsTo = new LoggingSettingsTo { FileLoggerLogSize = 50, FileLoggerLogLevel = "TRACE" };
+
+            var _resourceRepo = new Mock<IResourceRepository>();
+            var env = new Mock<IServer>();
+            var serverSettingsData = new ServerSettingsData { AuditFilePath = "somePath" };
+            _resourceRepo.Setup(res => res.GetServerSettings(env.Object)).Returns(serverSettingsData);
+            env.Setup(a => a.ResourceRepository).Returns(_resourceRepo.Object);
+
+            var logSettingsViewModel = new LogSettingsViewModel(loggingSettingsTo, env.Object);
+            return logSettingsViewModel;
         }
 
         public void CallDeactivate()

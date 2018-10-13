@@ -6,6 +6,8 @@ using Dev2.Data.Util;
 using Dev2.MathOperations;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
+using Dev2.Common.Interfaces.Diagnostics.Debug;
+using System.Text;
 
 namespace Dev2.Data
 {
@@ -15,6 +17,8 @@ namespace Dev2.Data
         CommonFunctions.WarewolfEvalResult.WarewolfAtomResult _scalarResult;
         readonly int _maxValue;
         int _currentValue;
+        readonly FunctionEvaluatorOption _functionEvaluatorOption;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="T:System.Object"/> class.
         /// </summary>
@@ -25,34 +29,47 @@ namespace Dev2.Data
             SetupForWarewolfRecordSetResult(warewolfEvalResult);
             _maxValue = _listResult?.Item.Count(atom => atom != null) ?? 1;
             _currentValue = 0;
+            _functionEvaluatorOption = FunctionEvaluatorOption.Dev2DateTimeFormat;
+        }
+
+        public WarewolfIterator(CommonFunctions.WarewolfEvalResult warewolfEvalResult, FunctionEvaluatorOption functionEvaluatorOption)
+            : this(warewolfEvalResult)
+        {
+            _functionEvaluatorOption = functionEvaluatorOption;
         }
 
         void SetupForWarewolfRecordSetResult(CommonFunctions.WarewolfEvalResult warewolfEvalResult)
         {
-            if (warewolfEvalResult.IsWarewolfRecordSetResult)
+            if (warewolfEvalResult.IsWarewolfRecordSetResult && warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfRecordSetResult listResult)
             {
-                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfRecordSetResult listResult)
+                var stringValue = "";
+                foreach (var item in listResult.Item.Data)
                 {
-                    var stringValue = "";
-                    foreach (var item in listResult.Item.Data)
-                    {
-                        if (item.Key != EvaluationFunctions.PositionColumn)
-                        {
-                            var data = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomListresult(item.Value) as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
-                            var warewolfEvalResultToString = ExecutionEnvironment.WarewolfEvalResultToString(data);
-                            if (string.IsNullOrEmpty(stringValue))
-                            {
-                                stringValue = warewolfEvalResultToString;
-                            }
-                            else
-                            {
-                                stringValue += "," + warewolfEvalResultToString;
-                            }
-                        }
-                    }
-                    _scalarResult = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.NewDataString(stringValue)) as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
+                    stringValue = SetupListResultItem(item);
+                }
+                _scalarResult = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.NewDataString(stringValue)) as CommonFunctions.WarewolfEvalResult.WarewolfAtomResult;
+            }
+
+        }
+
+        private static String SetupListResultItem(System.Collections.Generic.KeyValuePair<string, WarewolfParserInterop.WarewolfAtomList<DataStorage.WarewolfAtom>> item)
+        {
+            var stringValue = new StringBuilder();
+            if (item.Key != EvaluationFunctions.PositionColumn)
+            {
+                var data = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomListresult(item.Value) as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+                var warewolfEvalResultToString = ExecutionEnvironment.WarewolfEvalResultToString(data);
+                if (string.IsNullOrEmpty(stringValue.ToString()))
+                {
+                    stringValue = new StringBuilder(warewolfEvalResultToString);
+                }
+                else
+                {
+                    stringValue.Append("," + warewolfEvalResultToString);
                 }
             }
+
+            return stringValue.ToString();
         }
 
         void SetupScalarResult(CommonFunctions.WarewolfEvalResult warewolfEvalResult)
@@ -65,22 +82,17 @@ namespace Dev2.Data
 
         void SetupListResult(CommonFunctions.WarewolfEvalResult warewolfEvalResult)
         {
-            if (warewolfEvalResult.IsWarewolfAtomListresult)
+            if (warewolfEvalResult.IsWarewolfAtomListresult && warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult warewolfAtomListresult)
             {
-                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult warewolfAtomListresult)
-                {
-                    warewolfAtomListresult.Item.ResetCurrentEnumerator();
-                    _listResult = warewolfAtomListresult;
-                }
+                warewolfAtomListresult.Item.ResetCurrentEnumerator();
+                _listResult = warewolfAtomListresult;
             }
+
         }
 
         #region Implementation of IWarewolfIterator
 
-        public int GetLength()
-        {
-            return _maxValue;
-        }
+        public int GetLength() => _maxValue;
 
         public string GetNextValue()
         {
@@ -94,9 +106,9 @@ namespace Dev2.Data
             return _scalarResult != null ? DoCalcution(ExecutionEnvironment.WarewolfAtomToStringErrorIfNull(_scalarResult.Item)) : null;
         }
 
-        static string DoCalcution(string warewolfAtomToString)
+        string DoCalcution(string warewolfAtomToString)
         {
-            if(warewolfAtomToString == null)
+            if (warewolfAtomToString == null)
             {
                 return null;
             }
@@ -104,25 +116,12 @@ namespace Dev2.Data
 
             if (isCalcEvaluation)
             {
-                var functionEvaluator = new FunctionEvaluator();
+                var functionEvaluator = new FunctionEvaluator(_functionEvaluatorOption);
                 var tryEvaluateFunction = functionEvaluator.TryEvaluateFunction(cleanExpression, out string eval, out string error);
                 warewolfAtomToString = eval;
                 if (eval == cleanExpression.Replace("\"", "") && cleanExpression.Contains("\""))
                 {
-                    try
-                    {
-                        var b = functionEvaluator.TryEvaluateFunction(cleanExpression.Replace("\"", ""), out string eval2, out error);
-                        if (b)
-                        {
-                            warewolfAtomToString = eval2;
-
-                        }
-                    }
-                    catch (Exception err)
-                    {
-
-                        Dev2Logger.Warn(err, "Warewolf Warn");
-                    }
+                    TryEvalAsFunction(ref warewolfAtomToString, cleanExpression, functionEvaluator, ref error);
                 }
                 if (!tryEvaluateFunction)
                 {
@@ -137,10 +136,26 @@ namespace Dev2.Data
             return warewolfAtomToString;
         }
 
-        public bool HasMoreData()
+        private static void TryEvalAsFunction(ref string warewolfAtomToString, string cleanExpression, FunctionEvaluator functionEvaluator, ref string error)
         {
-            return _currentValue <= _maxValue - 1;
+            try
+            {
+                var b = functionEvaluator.TryEvaluateFunction(cleanExpression.Replace("\"", ""), out string eval2, out error);
+                if (b)
+                {
+                    warewolfAtomToString = eval2;
+
+                }
+            }
+            catch (Exception err)
+            {
+
+                Dev2Logger.Warn(err, "Warewolf Warn");
+            }
         }
+
+        public bool HasMoreData() => _currentValue <= _maxValue - 1;
+
         #endregion
     }
 }

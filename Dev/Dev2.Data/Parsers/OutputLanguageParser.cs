@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,17 +31,9 @@ namespace Dev2.Data.Parsers
         #endregion
 
         #region Methods
-        public IList<IDev2Definition> Parse(string OutputDefinition)
-        {
-            return base.Parse(OutputDefinition);
-        }
+        public IList<IDev2Definition> Parse(string OutputDefinition) => base.Parse(OutputDefinition);
 
-        public IList<IDev2Definition> ParseAndAllowBlanks(string OutputDefinition)
-        {
-            
-            return base.Parse(OutputDefinition, false);
-            
-        }
+        public IList<IDev2Definition> ParseAndAllowBlanks(string OutputDefinition) => base.Parse(OutputDefinition, false);
         #endregion
     }
 }

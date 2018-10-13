@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,6 +15,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Services.Sql;
+using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Sql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -178,7 +179,7 @@ namespace Dev2.Sql.Tests
             var mockCommand = new Mock<IDbCommand>();
             var somethingAdded = false;
            
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
@@ -228,7 +229,7 @@ namespace Dev2.Sql.Tests
             //factory.Setup(a => a.CreateCommand(It.IsAny<IDbConnection>(), CommandType.Text, GlobalConstants.SchemaQuery)).Returns(mockCommand.Object);
             //factory.Setup(a => a.CreateCommand(It.IsAny<IDbConnection>(), CommandType.StoredProcedure, "Dave.Bob")).Returns(mockCommand.Object);
             //factory.Setup(a => a.CreateCommand(It.IsAny<IDbConnection>(), CommandType.Text, "sp_helptext 'Dave.Bob'")).Returns(helpTextCommand.Object);
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
@@ -286,7 +287,7 @@ namespace Dev2.Sql.Tests
             var somethingAdded = false;
             var funcAdded = false;
             
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
@@ -341,7 +342,7 @@ namespace Dev2.Sql.Tests
             mockCommand.SetupAllProperties();
             var somethingAdded = false;
             var funcAdded = false;
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
             dt.Columns.Add("SPECIFIC_SCHEMA");
@@ -404,7 +405,7 @@ namespace Dev2.Sql.Tests
             {
                 sqlServer.Connect("a");
                 factory.Verify(a => a.BuildConnection(It.IsAny<string>()));
-                conn.Verify(a => a.Open());
+                conn.Verify(a => a.EnsureOpen());
 
 
 
@@ -436,7 +437,7 @@ namespace Dev2.Sql.Tests
 
             sqlServer.Connect("a");
             sqlServer.BeginTransaction();
-            conn.Verify(a => a.Open(), Times.Never);//Connection is open
+            conn.Verify(a => a.EnsureOpen(), Times.Never);//Connection is open
 
             //------------Assert Results-------------------------
             conn.Verify(a => a.BeginTransaction());
@@ -468,7 +469,7 @@ namespace Dev2.Sql.Tests
                 sqlServer.BeginTransaction();
                 sqlServer.RollbackTransaction();
                 factory.Verify(a => a.BuildConnection(It.IsAny<string>()));
-                conn.Verify(a => a.Open(), Times.Never);
+                conn.Verify(a => a.EnsureOpen(), Times.Never);
 
                 dbTran.Verify(a => a.Rollback());
                 dbTran.Verify(a => a.Dispose());
@@ -493,7 +494,7 @@ namespace Dev2.Sql.Tests
             //------------Setup for test--------------------------
             var factory = new Mock<IConnectionBuilder>();
             var mockCommand = new Mock<IDbCommand>();
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
 
             dt.Columns.Add("ROUTINE_NAME");
             dt.Columns.Add("ROUTINE_TYPE");
@@ -566,7 +567,7 @@ namespace Dev2.Sql.Tests
 
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(new Mock<IDataReader>().Object);
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -611,7 +612,7 @@ namespace Dev2.Sql.Tests
 
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Throws(new DbEx("There is no text for object "));
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -647,6 +648,7 @@ namespace Dev2.Sql.Tests
 
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
+        [ExpectedException(typeof(DbEx))]
         [TestCategory("SqlServer_FetchDataTable")]
         public void SqlServer_FetchDataTable_OnException()
 
@@ -661,7 +663,7 @@ namespace Dev2.Sql.Tests
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>()))
                 .Throws(new DbEx("There is no text for object "));
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -754,7 +756,7 @@ namespace Dev2.Sql.Tests
             mockCommand.Setup(a => a.Parameters).Returns(added);
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(new Mock<IDataReader>().Object);
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -793,7 +795,7 @@ namespace Dev2.Sql.Tests
             mockCommand.Setup(a => a.Parameters).Returns(added);
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(new Mock<IDataReader>().Object);
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -828,7 +830,7 @@ namespace Dev2.Sql.Tests
             mockCommand.Setup(a => a.Parameters).Returns(added);
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(new Mock<IDataReader>().Object);
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -841,7 +843,7 @@ namespace Dev2.Sql.Tests
             {
                 //------------Execute Test---------------------------
                 sqlServer.Connect("bob", CommandType.StoredProcedure, "select * from ");
-                PrivateObject privateObject = new PrivateObject(sqlServer);
+                var privateObject = new PrivateObject(sqlServer);
                 var commandText = (string)privateObject.GetField("_commantText");
                 var commandType = (CommandType)privateObject.GetField("_commandType");
                 Assert.AreEqual(commandType, CommandType.Text);
@@ -869,7 +871,7 @@ namespace Dev2.Sql.Tests
             mockCommand.Setup(a => a.Parameters).Returns(added);
             var helpTextCommand = new Mock<IDbCommand>();
             helpTextCommand.Setup(a => a.ExecuteReader(It.IsAny<CommandBehavior>())).Returns(new Mock<IDataReader>().Object);
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("database_name");
             dt.Rows.Add("Bob");
             dt.Rows.Add("Dave");
@@ -1057,6 +1059,54 @@ namespace Dev2.Sql.Tests
                 sqlServer.Dispose();
             }
         }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ConnectionBuilder")]
+        public void ConnectionBuilder_GivenConnectionString_ShouldReturnUpdatedConnectionWithPoolNoMARS()
+
+        {
+            //------------Setup for test--------------------------
+            var connectionBuilder = new ConnectionBuilder();
+            var source = new DbSource();
+            source.Server = "localhost";
+            source.ServerType = Common.Interfaces.Core.DynamicServices.enSourceType.SqlDatabase;
+            source.AuthenticationType = AuthenticationType.Windows;
+            //------------Execute Test---------------------------
+
+            var updatedConnectionString = connectionBuilder.ConnectionString(source.ConnectionString);
+            //------------Assert Results-------------------------
+            Assert.IsFalse(updatedConnectionString.Contains("MultipleActiveResultSets=True"));
+            StringAssert.Contains(updatedConnectionString, "Application Name=\"Warewolf Service\"");
+            StringAssert.Contains(updatedConnectionString, "Pooling=True");
+            StringAssert.Contains(updatedConnectionString, "Data Source=localhost");
+            StringAssert.Contains(updatedConnectionString, "Integrated Security=True");
+            StringAssert.Contains(updatedConnectionString, "Max Pool Size=100");
+            StringAssert.Contains(updatedConnectionString, "Connect Timeout=30");
+
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("ConnectionBuilder")]
+        public void ConnectionBuilder_GivenConnectionString_ShouldReturnConnectionUpdatedConnectionWithPoolNoMARS()
+
+        {
+            //------------Setup for test--------------------------
+            var connectionBuilder = new ConnectionBuilder();
+            var source = new DbSource();
+            source.Server = "localhost";
+            source.ServerType = Common.Interfaces.Core.DynamicServices.enSourceType.SqlDatabase;
+            source.AuthenticationType = AuthenticationType.Windows;
+            //------------Execute Test---------------------------
+
+            var connection = connectionBuilder.BuildConnection(source.ConnectionString);
+            //------------Assert Results-------------------------
+            Assert.IsNotNull(connection);
+            Assert.IsInstanceOfType(connection, typeof(ISqlConnection));
+
+        }
+
     }
     class DbEx : DbException
     {

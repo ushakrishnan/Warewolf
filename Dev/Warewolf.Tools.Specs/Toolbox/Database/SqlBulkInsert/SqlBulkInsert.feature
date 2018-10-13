@@ -1,4 +1,5 @@
-﻿@Database
+﻿@SqlBulkInsert
+@MSTest:DeploymentItem:EnableDocker.txt
 Feature: SqlBulkInsert
 	In order to quickly insert large amounts of data in a sql server database
 	As a Warewolf user
@@ -305,7 +306,6 @@ Scenario: Import data into Table Batch size is 2
 	|   |                                                       |          |        | 2          |         | NO                | NO              | YES           | NO            | NO                       | NO              |
 
 Scenario: Import data into Table timeout after 3 second
-	#Note there is a trigger to wait for 2 seconds to simulate inserting large data
 	Given I have this data
 	| Col1 | Col2     | Col3                                 |
 	| 1    | TestData | 279c690e-3304-47a0-8bde-5d3ca2520a34 |
@@ -313,9 +313,9 @@ Scenario: Import data into Table timeout after 3 second
 	| 3    | TestData | 279c690e-3304-47a0-8bde-5d3ca2520a34 |	
 	And Timeout in 3 seconds
 	When the tool is executed
-	Then  number of inserts is 1
-	And the execution has "NO" error
-		And the debug inputs as  
+	Then the execution has "NO" error
+	And  number of inserts is 1
+	And the debug inputs as  
 	| # |                                                       | To Field | Type   | Batch Size | Timeout | Check Constraints | Keep Table Lock | Fire Triggers | Keep Identity | Use Internal Transaction | Skip Blank Rows |
 	| 1 | [[rs(1).Col1]] = 1                                    |          |        |            |         |                   |                 |               |               |                          |                 |
 	|   | [[rs(2).Col1]] = 2                                    |          |        |            |         |                   |                 |               |               |                          |                 |

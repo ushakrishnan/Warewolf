@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -42,18 +42,18 @@ namespace Dev2.Activities.Designers2.Core
         readonly IComViewModel _viewmodel;
         readonly IComPluginServiceModel _serverModel;
         bool _isGenerateInputsEmptyRows;
-        private bool _okSelected;
-        private string _testResults;
-        private bool _testResultsAvailable;
-        private bool _isTestResultsEmptyRows;
-        private bool _isTesting;
-        private IComPluginService _model;
-        private bool _pasteResponseVisible;
-        private RecordsetList _recordsetList;
-        private bool _outputCountExpandAllowed;
-        private bool _inputCountExpandAllowed;
-        private bool _testPassed;
-        private bool _testFailed;
+        bool _okSelected;
+        string _testResults;
+        bool _testResultsAvailable;
+        bool _isTestResultsEmptyRows;
+        bool _isTesting;
+        IComPluginService _model;
+        bool _pasteResponseVisible;
+        RecordsetList _recordsetList;
+        bool _outputCountExpandAllowed;
+        bool _inputCountExpandAllowed;
+        bool _testPassed;
+        bool _testFailed;
 
         public ManageComPluginServiceInputViewModel(IComViewModel model, IComPluginServiceModel serviceModel)
         {
@@ -252,10 +252,7 @@ namespace Dev2.Activities.Designers2.Core
         public IList<IToolRegion> Dependants { get; set; }
         public IList<string> Errors { get; private set; }
 
-        public IToolRegion CloneRegion()
-        {
-            return this;
-        }
+        public IToolRegion CloneRegion() => this;
 
         public void RestoreRegion(IToolRegion toRestore)
         {
@@ -381,21 +378,11 @@ namespace Dev2.Activities.Designers2.Core
                 OnPropertyChanged();
             }
         }
-        public IGenerateOutputArea OutputArea
-        {
-            get
-            {
-                return _generateOutputArea;
-            }
-        }
+        public IGenerateOutputArea OutputArea => _generateOutputArea;
+
         public IOutputDescription Description { get; set; }
-        public IGenerateInputArea InputArea
-        {
-            get
-            {
-                return _generateInputArea;
-            }
-        }
+        public IGenerateInputArea InputArea => _generateInputArea;
+
         public bool PasteResponseVisible
         {
             get

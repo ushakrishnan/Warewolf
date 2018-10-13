@@ -11,7 +11,7 @@ namespace Dev2.Runtime.ESB.Management.Services
 {
     public class LogDataServiceBase
     {
-        private string _serverLogFilePath;
+        string _serverLogFilePath;
         public string ServerLogFilePath
         {
             get
@@ -24,15 +24,9 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs) => Guid.Empty;
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Administrator;
-        }
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Administrator;
 
         public IEnumerable<dynamic> BuildTempObjects()
         {
@@ -70,9 +64,6 @@ namespace Dev2.Runtime.ESB.Management.Services
             return tmpObjects;
         }
 
-        private string[] GetLogEntryValues(string singleEntry)
-        {
-            return Regex.Split(singleEntry, GlobalConstants.LogFileRegex);
-        }
+        string[] GetLogEntryValues(string singleEntry) => Regex.Split(singleEntry, GlobalConstants.LogFileRegex);
     }
 }

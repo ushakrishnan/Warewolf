@@ -21,9 +21,9 @@ namespace Dev2.Activities.Designers2.Service
 {
     public class MappingManager
     {
-        private readonly ServiceDesignerViewModel _serviceDesignerViewModel;
-        private IWebActivityFactory _activityFactory;
-        private IDataMappingViewModelFactory _mappingFactory;
+        readonly ServiceDesignerViewModel _serviceDesignerViewModel;
+        IWebActivityFactory _activityFactory;
+        IDataMappingViewModelFactory _mappingFactory;
         bool _resourcesUpdated;
 
         internal MappingManager(ServiceDesignerViewModel serviceDesignerViewModel)
@@ -80,7 +80,7 @@ namespace Dev2.Activities.Designers2.Service
             DataMappingViewModel = new DataMappingViewModel(webAct, OnMappingCollectionChanged);
         }
 
-        private void OnMappingCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        void OnMappingCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (e.NewItems != null)
             {
@@ -98,7 +98,7 @@ namespace Dev2.Activities.Designers2.Service
             }
         }
 
-        private void OnMappingPropertyChanged(object sender, PropertyChangedEventArgs e)
+        void OnMappingPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
@@ -123,41 +123,21 @@ namespace Dev2.Activities.Designers2.Service
             CheckIsDeleted(memo);
 
             _serviceDesignerViewModel.ValidationMemoManager.UpdateDesignValidationErrors(memo.Errors.Where(info => info.InstanceID == _serviceDesignerViewModel.UniqueID && info.ErrorType != ErrorType.None));
-            if (_serviceDesignerViewModel.SourceId == Guid.Empty)
+            if (_serviceDesignerViewModel.SourceId == Guid.Empty && checkSource && _serviceDesignerViewModel.CheckSourceMissing())
             {
-                if (checkSource && _serviceDesignerViewModel.CheckSourceMissing())
-                {
-                    InitializeMappings();
-                    UpdateMappings();
-                }
+                InitializeMappings();
+                UpdateMappings();
             }
+
         }
 
-        private void CheckRequiredMappingChangedErrors(DesignValidationMemo memo)
+        void CheckRequiredMappingChangedErrors(DesignValidationMemo memo)
         {
             var keepError = false;
             var reqiredMappingChanged = memo.Errors.FirstOrDefault(c => c.FixType == FixType.IsRequiredChanged);
             if (reqiredMappingChanged != null)
             {
-                if (reqiredMappingChanged.FixData != null)
-                {
-                    var xElement = XElement.Parse(reqiredMappingChanged.FixData);
-                    var inputOutputViewModels = DeserializeMappings(true, xElement);
-
-                    foreach (var input in inputOutputViewModels)
-                    {
-                        IInputOutputViewModel currentInputViewModel = input;
-                        var inputOutputViewModel = DataMappingViewModel?.Inputs.FirstOrDefault(c => c.Name == currentInputViewModel.Name);
-                        if (inputOutputViewModel != null)
-                        {
-                            inputOutputViewModel.Required = input.Required;
-                            if (inputOutputViewModel.MapsTo == string.Empty && inputOutputViewModel.Required)
-                            {
-                                keepError = true;
-                            }
-                        }
-                    }
-                }
+                keepError = KeepError(reqiredMappingChanged);
 
                 if (!keepError)
                 {
@@ -168,7 +148,49 @@ namespace Dev2.Activities.Designers2.Service
             }
         }
 
-        private void CheckIsDeleted(DesignValidationMemo memo)
+        bool KeepError(IErrorInfo reqiredMappingChanged)
+        {
+            bool keepError = false;
+            if (reqiredMappingChanged.FixData != null)
+            {
+                keepError = KeepFixDataError(reqiredMappingChanged);
+            }
+
+            return keepError;
+        }
+
+        bool KeepFixDataError(IErrorInfo reqiredMappingChanged)
+        {
+            bool keepError = false;
+            var xElement = XElement.Parse(reqiredMappingChanged.FixData);
+            var inputOutputViewModels = DeserializeMappings(true, xElement);
+
+            foreach (var input in inputOutputViewModels)
+            {
+                keepError = KeepInputOutputViewModelError(input);
+            }
+
+            return keepError;
+        }
+
+        bool KeepInputOutputViewModelError(IInputOutputViewModel input)
+        {
+            bool keepError = false;
+            var currentInputViewModel = input;
+            var inputOutputViewModel = DataMappingViewModel?.Inputs.FirstOrDefault(c => c.Name == currentInputViewModel.Name);
+            if (inputOutputViewModel != null)
+            {
+                inputOutputViewModel.Required = input.Required;
+                if (inputOutputViewModel.MapsTo == string.Empty && inputOutputViewModel.Required)
+                {
+                    keepError = true;
+                }
+            }
+
+            return keepError;
+        }
+
+        void CheckIsDeleted(DesignValidationMemo memo)
         {
             var error = memo.Errors.FirstOrDefault(c => c.FixType == FixType.Delete);
             _serviceDesignerViewModel.IsDeleted = error != null;
@@ -220,12 +242,9 @@ namespace Dev2.Activities.Designers2.Service
             }
         }
 
-        private ErrorInfo CreateMappingIsRequiredMessage()
-        {
-            return new ErrorInfo { ErrorType = ErrorType.Critical, FixData = CreateFixedData(), FixType = FixType.IsRequiredChanged, InstanceID = _serviceDesignerViewModel.UniqueID };
-        }
+        ErrorInfo CreateMappingIsRequiredMessage() => new ErrorInfo { ErrorType = ErrorType.Critical, FixData = CreateFixedData(), FixType = FixType.IsRequiredChanged, InstanceID = _serviceDesignerViewModel.UniqueID };
 
-        private string CreateFixedData()
+        string CreateFixedData()
         {
             var serializer = new Dev2JsonSerializer();
             var result = serializer.Serialize(DataMappingListFactory.CreateListInputMapping(DataMappingViewModel.GetInputString(DataMappingViewModel.Inputs)));
@@ -260,7 +279,7 @@ namespace Dev2.Activities.Designers2.Service
 
                 foreach (var newMapping in newMappings)
                 {
-                    IInputOutputViewModel mapping = newMapping;
+                    var mapping = newMapping;
                     var oldMapping = oldMappings.FirstOrDefault(m => m.Name.Equals(mapping.Name, StringComparison.InvariantCultureIgnoreCase));
                     if (oldMapping != null)
                     {
@@ -312,7 +331,7 @@ namespace Dev2.Activities.Designers2.Service
             {
                 serviceDesignerViewModel.ValidationMemoManager.UpdateLastValidationMemoWithVersionChanged();
                 _resourcesUpdated = true;
-                serviceDesignerViewModel.ValidationMemoManager.VersionsDifferent = true;
+                serviceDesignerViewModel.ValidationMemoManager.SetVersionsDifferent(true);
             }
         }
     }

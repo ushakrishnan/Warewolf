@@ -20,7 +20,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DeleteResourceServiceTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -34,7 +34,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -48,12 +48,12 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Contribute, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void HandlesType_GivenServiceIsCreated_ShouldHandleCorrectly()
         {
             //---------------Set up test pack-------------------
-            DeleteResource resourceService = new DeleteResource();
+            var resourceService = new DeleteResource();
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -62,12 +62,12 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("DeleteResourceService", handlesType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateServiceEntry_GivenServiceIsCreated_ShouldCreateCorrectDynamicService()
         {
             //---------------Set up test pack-------------------
-            DeleteResource resourceService = new DeleteResource();
+            var resourceService = new DeleteResource();
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -76,7 +76,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(1, handlesType.Actions.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenGlobalWorkspace_ShouldDeleteTests()
         {
@@ -90,7 +90,7 @@ namespace Dev2.Tests.Runtime.Services
                 Message = "Hi", Status = ExecStatus.Success
             });
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DeleteResource resourceService = new DeleteResource(resourceCatalog.Object, testCatalog.Object);
+            var resourceService = new DeleteResource(resourceCatalog.Object, testCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -108,7 +108,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsFalse(string.IsNullOrEmpty(executeMessage.Message.ToString()));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenWorkspace_ShouldNotDeleteTests()
         {
@@ -123,7 +123,7 @@ namespace Dev2.Tests.Runtime.Services
                 Status = ExecStatus.Success
             });
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DeleteResource resourceService = new DeleteResource(resourceCatalog.Object, testCatalog.Object);
+            var resourceService = new DeleteResource(resourceCatalog.Object, testCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------

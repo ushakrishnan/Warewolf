@@ -17,7 +17,7 @@ namespace Dev2.Tests.Runtime.Services
          [TestClass]
     public class GetServerVersionTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -31,7 +31,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -45,7 +45,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             
@@ -62,7 +62,7 @@ namespace Dev2.Tests.Runtime.Services
                 Assert.AreEqual("GetServerVersion", getVersions.HandlesType());
             }
 
-            [TestMethod]
+            [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_Execute")]
             public void GetVersions_Execute_NullValuesParameter_ErrorResult()
@@ -71,13 +71,13 @@ namespace Dev2.Tests.Runtime.Services
                 var getVersions = new GetServerVersion();
                 var serializer = new Dev2JsonSerializer();
                 //------------Execute Test---------------------------
-                StringBuilder jsonResult = getVersions.Execute(null, null);
-                var result = serializer.Deserialize<string>(jsonResult);
+                var jsonResult = getVersions.Execute(null, null);
+            var result = serializer.Deserialize<string>(jsonResult);
                 //------------Assert Results-------------------------
                 Assert.IsNotNull(result);
             }
 
-            [TestMethod]
+            [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             public void GetVersions_Execute_ExpectName()
@@ -85,8 +85,8 @@ namespace Dev2.Tests.Runtime.Services
                 //------------Setup for test--------------------------
                 var getVersions = new GetVersions();
                 var resourceId = Guid.NewGuid();
-                ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
-                var repo = new Mock<IServerVersionRepository>();
+                var item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
+            var repo = new Mock<IServerVersionRepository>();
                 var ws = new Mock<IWorkspace>();
                 repo.Setup(a => a.GetVersions(resourceId)).Returns(new List<IExplorerItem> {item});
                 var serializer = new Dev2JsonSerializer();
@@ -99,7 +99,7 @@ namespace Dev2.Tests.Runtime.Services
                 Assert.AreEqual(serializer.Deserialize<IList<IExplorerItem>>(ax.ToString())[0].ResourceId, item.ResourceId);
             }
 
-            [TestMethod]
+            [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             public void GetVersions_CreateServiceEntry_ExpectProperlyFormedDynamicService()

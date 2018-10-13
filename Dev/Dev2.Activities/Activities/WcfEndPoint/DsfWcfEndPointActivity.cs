@@ -16,8 +16,8 @@ using Warewolf.Storage;
 
 namespace Dev2.Activities.WcfEndPoint
 {
-    [ToolDescriptorInfo("WcfEndPoint", "WCF", ToolType.Native, "6AEB1028-6332-46F9-8BED-641DE4EA038E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Resources", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Resources_WCF")]
-    public class DsfWcfEndPointActivity : DsfMethodBasedActivity
+    [ToolDescriptorInfo("WcfEndPoint", "WCF", ToolType.Native, "6AEB1028-6332-46F9-8BED-641DE4EA038E", "Dev2.Activities", "1.0.0.0", "Legacy", "Resources", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Resources_WCF")]
+    public class DsfWcfEndPointActivity : DsfMethodBasedActivity,IEquatable<DsfWcfEndPointActivity>
     {
         public IWcfAction Method { get; set; }
         public IOutputDescription OutputDescription { get; set; }
@@ -28,18 +28,20 @@ namespace Dev2.Activities.WcfEndPoint
             DisplayName = "WCF Service";
         }
 
-        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO errors, int update)
+        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
         {
-            errors = new ErrorResultTO();
+            tmpErrors = new ErrorResultTO();
             if (Method == null)
             {
-                errors.AddError(ErrorResource.NoMethodSelected);
+                tmpErrors.AddError(ErrorResource.NoMethodSelected);
                 return;
             }
-            ExecuteService(update, out errors, Method, dataObject, OutputFormatterFactory.CreateOutputFormatter(OutputDescription));
+            ExecuteService(update, out tmpErrors, Method, dataObject, OutputFormatterFactory.CreateOutputFormatter(OutputDescription));
         }
 
-        protected void ExecuteService(int update, out ErrorResultTO errors, IWcfAction method, IDSFDataObject dataObject, IOutputFormatter formater = null)
+        protected void ExecuteService(int update, out ErrorResultTO errors, IWcfAction method, IDSFDataObject dataObject) => ExecuteService(update, out errors, method, dataObject, null);
+
+        protected void ExecuteService(int update, out ErrorResultTO errors, IWcfAction method, IDSFDataObject dataObject, IOutputFormatter formater)
         {
             errors = new ErrorResultTO();
             Source = ResourceCatalog.GetResource<WcfSource>(dataObject.WorkspaceID, SourceId);
@@ -51,10 +53,10 @@ namespace Dev2.Activities.WcfEndPoint
             {
                 while (itrCollection.HasMoreData())
                 {
-                    int pos = 0;
+                    var pos = 0;
                     foreach (var itr in itrs)
                     {
-                        string injectVal = itrCollection.FetchNextValue(itr);
+                        var injectVal = itrCollection.FetchNextValue(itr);
                         var param = methodParameters.ToList()[pos];
 
 
@@ -83,9 +85,53 @@ namespace Dev2.Activities.WcfEndPoint
         }
         public IResponseManager ResponseManager { get; set; }
 
-        public override enFindMissingType GetFindMissingType()
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
+
+        public bool Equals(DsfWcfEndPointActivity other)
         {
-            return enFindMissingType.DataGridActivity;
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && Equals(Method, other.Method) && Equals(OutputDescription, other.OutputDescription) && Equals(Source, other.Source);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfWcfEndPointActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Method != null ? Method.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (OutputDescription != null ? OutputDescription.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Source != null ? Source.GetHashCode() : 0);
+                return hashCode;
+            }
         }
     }
 }

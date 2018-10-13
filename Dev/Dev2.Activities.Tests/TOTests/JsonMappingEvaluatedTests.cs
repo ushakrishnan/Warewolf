@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -39,10 +39,10 @@ namespace Dev2.Tests.Activities.TOTests
             //------------Execute Test---------------------------
 
             // scalar evaluating to atom
-            string sn = "[[a]]";
+            var sn = "[[a]]";
             const string sns = "[[as]]";
             const string snf = "[[af]]";
-            string dn = "a";
+            var dn = "a";
             const string dns = "as";
             const string dnf = "af";
             var scalarsSn = new[] { "[[x().z]]", "[[x]]", sn, sns, snf };
@@ -62,7 +62,7 @@ namespace Dev2.Tests.Activities.TOTests
                 {
                     //((object[])((CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult)jsonMappingEvaluatedLocal.EvalResult).Item.GetValue(0))[0].Should().Be(((object[])((CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult)dataObject.Environment.EvalForJson(scalarsSn[i])).Item.GetValue(0))[0]);
                     jsonMappingEvaluatedLocal.EvalResult.Should().Be(dataObject.Environment.EvalForJson(scalarsSn[i]));
-                    jsonMappingEvaluatedLocal.EvalResultAsObject.Should().Be(scalarsV[i]);
+                    jsonMappingEvaluatedLocal.GetEvalResultAsObject().Should().Be(scalarsV[i]);
                 }
                 jsonMappingEvaluatedLocal.Count.Should().Be(1);
             }

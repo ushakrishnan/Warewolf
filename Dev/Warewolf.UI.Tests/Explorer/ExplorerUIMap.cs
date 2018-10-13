@@ -23,6 +23,8 @@ using Warewolf.UI.Tests.EmailSource.EmailSourceUIMapClasses;
 using Warewolf.UI.Tests.ExchangeSource.ExchangeSourceUIMapClasses;
 using Warewolf.UI.Tests.Deploy.DeployUIMapClasses;
 using Warewolf.UI.Tests.DependencyGraph.DependencyGraphUIMapClasses;
+using Warewolf.UI.Tests.Merge.MergeConflictsUIMapClasses;
+using Warewolf.UI.Tests.Merge.MergeDialogUIMapClasses;
 
 namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
 {
@@ -232,8 +234,18 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Mouse.StartDragging(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, new Point(94, 11));
             Mouse.StopDragging(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.SecondItem, new Point(90, 7));
         }
-        
-        [When(@"I Select Remote Connection Integration From Explorer")]
+
+        [When(@"I Select Remote Container From Explorer")]
+        public void Select_RemoteContainer_From_Explorer()
+        {
+            var toggleButton = MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ConnectControl.ServerComboBox.ToggleButton;
+            Mouse.Click(toggleButton, new Point(136, 7));
+            UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer.Text.WaitForControlExist(60000);
+            Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer.Text.Exists, "Remote Container does not appear in the explorer connect control.");
+            Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer.Text, new Point(138, 6));
+        }
+
+        [When(@"I Select RemoteConnectionIntegration From Explorer")]
         public void Select_RemoteConnectionIntegration_From_Explorer()
         {
             var toggleButton = MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ConnectControl.ServerComboBox.ToggleButton;
@@ -241,6 +253,16 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Text.WaitForControlExist(60000);
             Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Text.Exists, "Remote Connection Integration does not appear in the explorer connect control.");
             Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Text, new Point(138, 6));
+        }
+
+        [When(@"I Select Local Server Source From Explorer")]
+        public void Select_LocalServerSource_From_Explorer()
+        {
+            var toggleButton = MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ConnectControl.ServerComboBox.ToggleButton;
+            Mouse.Click(toggleButton, new Point(136, 7));
+            UIMap.MainStudioWindow.ComboboxListItemAsLocalServerSource.Text.WaitForControlExist(60000);
+            Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsLocalServerSource.Text.Exists, "Local Server Source does not appear in the explorer connect control.");
+            Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsLocalServerSource.Text, new Point(138, 6));
         }
 
         [Then(@"Remote ""(.*)"" is open")]
@@ -283,6 +305,15 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, MouseButtons.Right, ModifierKeys.None, new Point(101, 9));
         }
 
+        [Given(@"I open ""(.*)"" workflow")]
+        [When(@"I open ""(.*)"" workflow")]
+        public void IOpenWorkflow(string resourceName)
+        {
+            MainStudioWindow.DockManager.SplitPaneLeft.Explorer.SearchTextBox.Text = resourceName;
+            Open_Explorer_First_Item_With_Double_Click();
+            WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WaitForControlExist();
+        }
+
         [Given(@"I RightClick Explorer First Remote Server First Item")]
         [When(@"I RightClick Explorer First Remote Server First Item")]
         [Then(@"I RightClick Explorer First Remote Server First Item")]
@@ -290,11 +321,19 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer.FirstItem, MouseButtons.Right, ModifierKeys.None, new Point(107, 9));
         }
-        
+
         [When(@"I RightClick Explorer Localhost First Item")]
         public void RightClick_Explorer_Localhost_FirstItem()
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, MouseButtons.Right, ModifierKeys.None, new Point(77, 9));
+        }
+
+        [Given(@"I Click Explorer Localhost First Item History")]
+        [When(@"I Click Explorer Localhost First Item History")]
+        [Then(@"I Click Explorer Localhost First Item Histor")]
+        public void Click_Explorer_Localhost_First_Item_First_History_Item()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.SecondItem.FirstSubItem, MouseButtons.Left, ModifierKeys.None, new Point(77, 9));
         }
 
         [Given(@"I RightClick Explorer Localhost Second Item")]
@@ -438,7 +477,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         [Then(@"I Select Explorer Remote Server Dropdown List")]
         public void Select_Explorer_Remote_Server_Dropdown_List()
         {
-            Mouse.Click(MainStudioWindow.RemoteConnectionItem);
+            Mouse.Click(MainStudioWindow.ComboboxItemAsRemoteConnectionIntegration);
         }
 
         [Given(@"I Click Explorer ServerCombobox ToggleButton")]
@@ -465,7 +504,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ConnectControl.NewServerButton, new Point(11, 10));
         }
-        
+
         [When(@"I Click Edit Server Button From Explorer Connect Control")]
         public void Click_EditServerButton_From_ExplorerConnectControl()
         {
@@ -476,6 +515,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         [When(@"I Refresh Explorer")]
         public void Click_Explorer_Refresh_Button()
         {
+            UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.Spinner);
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerRefreshButton, new Point(10, 10));
             UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.Spinner);
         }
@@ -484,7 +524,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         public void SetupPublicPermissionsForForRemoteServer(string resource)
         {
             Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost);
-            Select_RemoteConnectionIntegration_From_Explorer();
+            Select_RemoteContainer_From_Explorer();
             Playback.Wait(1000);
             UIMap.Click_Settings_RibbonButton();
             var deleteFirstResourceButton = SettingsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ResourcePermissions.Row1.RemovePermissionButton;
@@ -546,18 +586,17 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost);
         }
-        
+
         [When(@"I Filter the Explorer with ""(.*)""")]
         public void Filter_Explorer(string FilterText)
         {
-            if (MainStudioWindow.DockManager.SplitPaneLeft.Explorer.SearchTextBox.Text != FilterText)
-                MainStudioWindow.DockManager.SplitPaneLeft.Explorer.SearchTextBox.Text = FilterText;
+            MainStudioWindow.DockManager.SplitPaneLeft.Explorer.SearchTextBox.Text = FilterText;
         }
 
         [When(@"I validate and delete the existing resource with ""(.*)""")]
         public void WhenIValidateAndDeleteTheExistingResourceWith(string resourceName)
         {
-            string resourcePath =  @"\\TST-CI-REMOTE\C$\ProgramData\Warewolf\Resources\" + resourceName;
+            string resourcePath = @"\\tst-ci-remote-obsolete\C$\ProgramData\Warewolf\Resources\" + resourceName;
 
             if (File.Exists(resourcePath))
             {
@@ -565,7 +604,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             }
         }
 
-        [When(@"I Wait For Explorer Localhost Spinner")]
+        [Given(@"I Wait For Explorer Localhost Spinner")]
         public void WaitForExplorerLocalhostSpinner()
         {
             UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.Checkbox.Spinner);
@@ -606,7 +645,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         [Then(@"I Try Remove ""(.*)"" From Remote Server Explorer")]
         public void I_Try_Remove_From_Remote_Server_Explorer(string ResourceName)
         {
-            Select_RemoteConnectionIntegration_From_Explorer();
+            Select_RemoteContainer_From_Explorer();
             Filter_Explorer(ResourceName);
             try
             {
@@ -821,12 +860,11 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.SourcesMenuItem);
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.SourcesMenuItem.NewSharepointSource);
         }
-
-        [Given(@"I Click Show Server Version From Explorer Context Menu")]
+        
         [When(@"I Click Show Server Version From Explorer Context Menu")]
-        [Then(@"I Click Show Server Version From Explorer Context Menu")]
-        public void Click_ShowServerVersion_From_ExplorerContextMenu()
+        public void Select_ShowServerVersion_From_ExplorerContextMenu()
         {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost, MouseButtons.Right, ModifierKeys.None, new Point(72, 8));
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.ShowServerVersion, new Point(45, 13));
         }
 
@@ -862,26 +900,6 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Open);
         }
 
-        [Given(@"I Click AssignStep In Debug Output")]
-        [When(@"I Click AssignStep In Debug Output")]
-        [Then(@"I Click AssignStep In Debug Output")]
-        public void Click_AssignStep_InDebugOutput()
-        {
-            Mouse.Click(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.AssignOnDebugOutput);
-        }
-        public void Click_SelectAndApplyStep_InDebugOutput()
-        {
-            Mouse.Click(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.SelectandapplyTreeItem);
-        }
-
-        [Given(@"I Click DecisionStep In Debug Output")]
-        [When(@"I Click DecisionStep In Debug Output")]
-        [Then(@"I Click DecisionStep In Debug Output")]
-        public void Click_DesicionStep_InDebugOutput()
-        {
-            Mouse.Click(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.DecisionOnDebugOutput);
-        }
-
         [Given(@"I Open Explorer First Item Tests With Context Menu")]
         [When(@"I Open Explorer First Item Tests With Context Menu")]
         [Then(@"I Open Explorer First Item Tests With Context Menu")]
@@ -891,6 +909,24 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Assert.IsTrue(UIMap.MainStudioWindow.ExplorerContextMenu.Tests.Exists, "View tests does not exist in explorer context menu.");
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Tests);
             Assert.IsTrue(WorkflowServiceTestingUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.Exists, "Workflow service tests tab is not open after clicking Tests context menu item in the explorer context menu.");
+        }
+
+        [Given(@"I Open Explorer First Item Merge With Context Menu")]
+        [When(@"I Open Explorer First Item Merge With Context Menu")]
+        [Then(@"I Open Explorer First Item Merge With Context Menu")]
+        public void Open_ExplorerFirstItemMerge_With_ExplorerContextMenu()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, MouseButtons.Right, ModifierKeys.None, new Point(107, 9));
+            Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Merge);
+        }
+
+        [Given(@"I Open Explorer First Sub Item Version History From Explorer Context Menu")]
+        [When(@"I Open Explorer First Sub Item Version History From Explorer Context Menu")]
+        [Then(@"I Open Explorer First Sub Item Version History From Explorer Context Menu")]
+        public void Open_ExplorerFirstSubItemVersionHistory_From_ExplorerContextMenu()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem.FirstSubItem, MouseButtons.Right, ModifierKeys.None, new Point(69, 10));
+            Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.ShowVersionHistory, new Point(66, 15));
         }
 
         [Given(@"I Open Explorer First Item Version History From Explorer Context Menu")]
@@ -911,6 +947,15 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Assert.IsTrue(UIMap.MainStudioWindow.ExplorerContextMenu.Open.Exists, "Open does not exist in explorer context menu.");
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Open);
         }
+        [Given(@"I Delete FirstResource Version FromContextMenu")]
+        [When(@"I Delete FirstResource Version FromContextMenu")]
+        [Then(@"I Delete FirstResource Version FromContextMenu")]
+        public void Delete_FirstResourceVersion_From_ExplorerContextMenu()
+        {
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem.FirstSubItem, MouseButtons.Right, ModifierKeys.None, new Point(77, 12));
+            Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Delete);
+        }
+
 
         [Given(@"I Delete FirstResource FromContextMenu")]
         [When(@"I Delete FirstResource FromContextMenu")]
@@ -968,7 +1013,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Assert.IsTrue(DialogsUIMap.MessageBoxWindow.Exists, "Message box does not exist");
             Assert.IsTrue(DialogsUIMap.MessageBoxWindow.YesButton.Exists, "Message box Yes button does not exist");
         }
-        
+
         [When(@"I Select Deploy From Explorer Context Menu")]
         public void Select_Deploy_From_ExplorerContextMenu()
         {
@@ -1031,6 +1076,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.Spinner);
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, MouseButtons.Right, ModifierKeys.None, new Point(77, 9));
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.ShowDependencies);
+            DependencyGraphUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DependencyGraphTab.WorksurfaceContext.DependencyView.WaitForControlExist(60000);
             Assert.IsTrue(DependencyGraphUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DependencyGraphTab.WorksurfaceContext.DependencyView.Exists, "Dependency graph tab is not showen after clicking show dependancies explorer content menu item.");
         }
 
@@ -1091,9 +1137,16 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Assert.IsTrue(WorkflowServiceTestingUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.WorkSurfaceContext.ServiceTestView.Exists, "Workflow test tab does not exist after openning it by clicking the explorer context menu item.");
         }
 
-        [Given(@"I Open Explorer First Item With Double Click")]
+        [Given(@"I Have ""(.*)"" Open")]
+        [When(@"I Open ""(.*)"" With Double Click")]
+        [Then(@"""(.*)"" is Open")]
+        public void Open_Item_With_Double_Click(string ItemName)
+        {
+            Filter_Explorer(ItemName);
+            Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, MouseButtons.Left, ModifierKeys.None, new Point(40, 9));
+        }
+        
         [When(@"I Open Explorer First Item With Double Click")]
-        [Then(@"I Open Explorer First Item With Double Click")]
         public void Open_Explorer_First_Item_With_Double_Click()
         {
             Mouse.DoubleClick(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem, MouseButtons.Left, ModifierKeys.None, new Point(40, 9));
@@ -1126,7 +1179,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Delete, new Point(61, 15));
             Mouse.Click(DialogsUIMap.MessageBoxWindow.YesButton, new Point(7, 12));
         }
-        
+
         [When(@"I Collapse Localhost")]
         public void Collapse_Localhost()
         {
@@ -1139,7 +1192,39 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.Expanded = true;
         }
 
+        [Given(@"I Click Merge From Context Menu")]
+        [When(@"I Click Merge From Context Menu")]
+        [Then(@"I Click Merge From Context Menu")]
+        public void Click_Merge_From_Context_Menu()
+        {
+            Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Merge);
+            Assert.IsTrue(MergeDialogUIMap.MergeDialogWindow.Exists, "Merge Popup window did not Open after clicking merge.");
+        }
+
+        [When(@"I Open Context Menu For ""(.*)"" Service")]
+        public void Open_Context_Menu_For_Service(string serviceName)
+        {
+            Filter_Explorer(serviceName);
+            RightClick_Explorer_Localhost_First_Item_First_SubItem();
+            Mouse.Click(UIMap.MainStudioWindow.ExplorerContextMenu.Merge);
+            Assert.IsTrue(MergeDialogUIMap.MergeDialogWindow.Exists, "Merge Popup window did not Open after clicking merge.");
+        }
+
         #region UIMaps
+        public MergeConflictsUIMap MergeConflictsUIMap
+        {
+            get
+            {
+                if (_MergeConflictsUIMap == null)
+                {
+                    _MergeConflictsUIMap = new MergeConflictsUIMap();
+                }
+
+                return _MergeConflictsUIMap;
+            }
+        }
+
+        private MergeConflictsUIMap _MergeConflictsUIMap;
         WorkflowTabUIMap WorkflowTabUIMap
         {
             get
@@ -1304,6 +1389,21 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         }
 
         private DependencyGraphUIMap _DependencyGraphUIMap;
+
+        public MergeDialogUIMap MergeDialogUIMap
+        {
+            get
+            {
+                if (_MergeDialogUIMap == null)
+                {
+                    _MergeDialogUIMap = new MergeDialogUIMap();
+                }
+
+                return _MergeDialogUIMap;
+            }
+        }
+
+        private MergeDialogUIMap _MergeDialogUIMap;
 
         #endregion
     }

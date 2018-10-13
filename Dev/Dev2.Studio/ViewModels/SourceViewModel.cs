@@ -17,7 +17,7 @@ namespace Dev2.ViewModels
         where T : IEquatable<T>
     {
         readonly IPopupController _popupController;
-        private readonly IServer _server;
+        readonly IServer _server;
 
         public SourceViewModel(IEventAggregator eventPublisher, SourceBaseImpl<T> vm, IPopupController popupController,IView view,IServer server)
             : base(eventPublisher)
@@ -50,10 +50,7 @@ namespace Dev2.ViewModels
         public override bool HasVariables => false;
         public override bool HasDebugOutput => false;
 
-        public override object GetView(object context = null)
-        {
-            return View;
-        }
+        public override object GetView(object context = null) => View;
 
         protected override void OnViewAttached(object view, object context)
         {
@@ -126,7 +123,7 @@ namespace Dev2.ViewModels
             {
                 if (IsDirty)
                 {
-                    MessageBoxResult result = IsDirtyPopup();
+                    var result = IsDirtyPopup();
                     switch (result)
                     {
                         case MessageBoxResult.No:
@@ -146,7 +143,7 @@ namespace Dev2.ViewModels
                 }
                 else if (ViewModel.HasChanged)
                 {
-                    MessageBoxResult result = HasChangedPopup();
+                    var result = HasChangedPopup();
                     switch (result)
                     {
                         case MessageBoxResult.No:
@@ -178,21 +175,15 @@ namespace Dev2.ViewModels
             return true;
         }
 
-        private MessageBoxResult IsDirtyPopup()
-        {
-            return _popupController.Show(string.Format(StringResources.ItemSource_NotSaved),
+        MessageBoxResult IsDirtyPopup() => _popupController.Show(string.Format(StringResources.ItemSource_NotSaved),
                                     $"Save {ViewModel.Header.Replace("*", "")}?",
                                                       MessageBoxButton.YesNoCancel,
                                                       MessageBoxImage.Information, "", false, false, true, false, false, false);
-        }
 
-        private MessageBoxResult HasChangedPopup()
-        {
-            return _popupController.Show(string.Format(StringResources.ItemSource_HasChanged_NotTested),
+        MessageBoxResult HasChangedPopup() => _popupController.Show(string.Format(StringResources.ItemSource_HasChanged_NotTested),
                                     $"Test {ViewModel.Header.Replace("*", "")}?",
                                                       MessageBoxButton.YesNo,
                                                       MessageBoxImage.Information, "", false, false, true, false, false, false);
-        }
 
         #endregion
     }

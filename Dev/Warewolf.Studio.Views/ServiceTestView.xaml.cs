@@ -11,9 +11,6 @@ using Warewolf.Studio.ViewModels;
 
 namespace Warewolf.Studio.Views
 {
-    /// <summary>
-    /// Interaction logic for ServiceTestView.xaml
-    /// </summary>
     public partial class ServiceTestView : IView
     {
         public ServiceTestView()
@@ -24,7 +21,7 @@ namespace Warewolf.Studio.Views
             PreviewDrop += DropPointOnDragEnter;
         }
 
-        private void DropPointOnDragEnter(object sender, DragEventArgs e)
+        void DropPointOnDragEnter(object sender, DragEventArgs e)
         {
             if (sender != null)
             {
@@ -37,26 +34,31 @@ namespace Warewolf.Studio.Views
         {
             if (e.ChangedButton == MouseButton.Left)
             {
-                DependencyObject node = e.OriginalSource as DependencyObject;
-                while (node != null)
-                {
-                    if (node is WorkflowViewElement)
-                    {
-                        var dt = DataContext as ServiceTestViewModel;
-                        var wd = dt?.WorkflowDesignerViewModel;
-                        var designer = node as WorkflowViewElement;
-                        var modelItem = designer.ModelItem;
-                        if (wd != null && wd.IsTestView && modelItem != null)
-                        {
-                            wd.ItemSelectedAction?.Invoke(modelItem);
-                        }
-                        break;
-                    }
-                    node = node is Visual ? VisualTreeHelper.GetParent(node) : null;
-                }
+                InvokeParentModelItem(e.OriginalSource as DependencyObject);
             }
         }
-        private void ToggleButton_OnChecked(object sender, RoutedEventArgs e)
+
+        void InvokeParentModelItem(DependencyObject node)
+        {
+            while (node != null)
+            {
+                if (node is WorkflowViewElement)
+                {
+                    var dt = DataContext as ServiceTestViewModel;
+                    var wd = dt?.WorkflowDesignerViewModel;
+                    var designer = node as WorkflowViewElement;
+                    var modelItem = designer.ModelItem;
+                    if (wd != null && wd.IsTestView && modelItem != null)
+                    {
+                        wd.ItemSelectedAction?.Invoke(modelItem);
+                    }
+                    break;
+                }
+                node = node is Visual ? VisualTreeHelper.GetParent(node) : null;
+            }
+        }
+
+        void ToggleButton_OnChecked(object sender, RoutedEventArgs e)
         {
 
             if (sender is ToggleButton control)
@@ -65,14 +67,14 @@ namespace Warewolf.Studio.Views
             }
         }
 
-        private void RefreshCommands(RoutedEventArgs e)
+        void RefreshCommands(RoutedEventArgs e)
         {
             var serviceTestViewModel = DataContext as IServiceTestViewModel;
             serviceTestViewModel?.RefreshCommands();
             e.Handled = true;
         }
 
-        private void SelectedTestCheckBox_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        void SelectedTestCheckBox_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is CheckBox cb)
             {
@@ -81,7 +83,7 @@ namespace Warewolf.Studio.Views
             }
         }
 
-        private void SelectedTestRunTestButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        void SelectedTestRunTestButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is Button btn)
             {
@@ -90,21 +92,21 @@ namespace Warewolf.Studio.Views
             }
         }
 
-        private void MainGrid_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        void MainGrid_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var serviceTestViewModel = DataContext as IServiceTestViewModel;
             serviceTestViewModel?.UpdateHelpDescriptor(Studio.Resources.Languages.HelpText.ServiceTestGenericHelpText);
             e.Handled = true;
         }
 
-        private void ListBoxItemGrid_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        void ListBoxItemGrid_OnMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             var serviceTestViewModel = DataContext as IServiceTestViewModel;
             serviceTestViewModel?.UpdateHelpDescriptor(Studio.Resources.Languages.HelpText.ServiceTestSelectedTestHelpText);
             e.Handled = true;
         }
 
-        private void AutoCompleteBox_OnTextChanged(object sender, RoutedEventArgs e)
+        void AutoCompleteBox_OnTextChanged(object sender, RoutedEventArgs e)
         {
             var textBox = sender as IntellisenseTextBox;
             if (textBox != null)
@@ -112,16 +114,13 @@ namespace Warewolf.Studio.Views
                 RefreshCommands(e);
             }
 
-            if (textBox == null)
+            if (textBox == null && sender is TextBox box)
             {
-                if (sender is TextBox box)
-                {
-                    RefreshCommands(e);
-                }
+                RefreshCommands(e);
             }
         }
 
-        private void Selector_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        void Selector_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var routedEventArgs = new RoutedEventArgs(e.RoutedEvent);
             RefreshCommands(routedEventArgs);

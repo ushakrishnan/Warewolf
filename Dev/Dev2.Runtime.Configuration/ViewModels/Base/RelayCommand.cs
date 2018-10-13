@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,10 +36,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
 
         #region ICommand Members
 
-        public bool CanExecute(object parameter)
-        {
-            return _canHandlingMethodExecute == null || _canHandlingMethodExecute(parameter);
-        }
+        public bool CanExecute(object parameter) => _canHandlingMethodExecute == null || _canHandlingMethodExecute(parameter);
 
         public event EventHandler CanExecuteChanged;
 
@@ -95,12 +92,7 @@ namespace Dev2.Runtime.Configuration.ViewModels.Base
 
         #region ICommand Members
 
-        public bool CanExecute(object parameter)
-        {
-            
-            return _canExecute?.Invoke((T)parameter) ?? true;
-            
-        }
+        public bool CanExecute(object parameter) => _canExecute?.Invoke((T)parameter) ?? true;
 
         public event EventHandler CanExecuteChanged;
 

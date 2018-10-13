@@ -21,12 +21,12 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
 {
     public class DropBoxDownloadViewModel : FileActivityDesignerViewModel, INotifyPropertyChanged
     {
-        private ObservableCollection<DropBoxSource> _sources;
-        private string _toPath;
-        private string _result;
-        private string _fromPath;
-        private bool _overwriteFile;
-        private readonly IDropboxSourceManager _sourceManager;
+        ObservableCollection<DropBoxSource> _sources;
+        string _toPath;
+        string _result;
+        string _fromPath;
+        bool _overwriteFile;
+        readonly IDropboxSourceManager _sourceManager;
         public DropBoxDownloadViewModel(ModelItem modelItem)
             : this(modelItem, new DropboxSourceManager())
         {
@@ -80,13 +80,7 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
         }
         
         public RelayCommand EditDropboxSourceCommand { get; private set; }
-        public bool IsDropboxSourceSelected
-        {
-            get
-            {
-                return SelectedSource != null;
-            }
-        }
+        public bool IsDropboxSourceSelected => SelectedSource != null;
 
         public string ToPath
         {
@@ -147,16 +141,16 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
                 OnPropertyChanged();
             }
         }
-        
-      
 
-        private void EditDropBoxSource()
+
+
+        void EditDropBoxSource()
         {
             var shellViewModel = CustomContainer.Get<IShellViewModel>();
             var activeServer = shellViewModel.ActiveServer;
             if (activeServer != null)
             {
-                shellViewModel.OpenResource(SelectedSource.ResourceID,activeServer.EnvironmentID, activeServer);
+                shellViewModel.OpenResource(SelectedSource.ResourceID, activeServer.EnvironmentID, activeServer);
             }
         }
 
@@ -196,13 +190,10 @@ namespace Dev2.Activities.Designers2.DropBox2016.Download
 
 
         public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged(string propertyName = null)
+        protected void OnPropertyChanged() => OnPropertyChanged(null);
+        protected void OnPropertyChanged(string propertyName)
         {
-            var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
 

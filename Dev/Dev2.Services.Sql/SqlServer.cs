@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,7 +32,7 @@ namespace Dev2.Services.Sql
             _connection = null;
         }
 
-        private readonly IConnectionBuilder _connectionBuilder;
+        readonly IConnectionBuilder _connectionBuilder;
         public SqlServer(IConnectionBuilder connectionBuilder)
         {
             _connectionBuilder = connectionBuilder;
@@ -43,14 +43,15 @@ namespace Dev2.Services.Sql
 
         }
 
+        public int? CommandTimeout { get; set; }
         public bool IsConnected { get; }
-        public string ConnectionString { get; }
-        private string _connectionString;
-        private ISqlConnection _connection;
-        private IDbTransaction _transaction;
+        public string ConnectionString { get => _connectionString; }
+        string _connectionString;
+        ISqlConnection _connection;
+        IDbTransaction _transaction;
 
 
-        public bool Connect(string connectionString)
+        public void Connect(string connectionString)
         {
             _connectionString = connectionString;
             _connection = _connectionBuilder.BuildConnection(_connectionString);
@@ -58,14 +59,17 @@ namespace Dev2.Services.Sql
             try
             {
                 _connection.TryOpen();
-                return true;
             }
             catch (Exception e)
             {
                 Dev2Logger.Error(e, GlobalConstants.WarewolfError);
-                return false;
+                throw new WarewolfDbException(e.Message);
             }
+        }
 
+        public void Connect()
+        {
+            Connect(_connectionString);
         }
 
         public void BeginTransaction()
@@ -112,7 +116,7 @@ namespace Dev2.Services.Sql
                 if (_connection?.State != ConnectionState.Open)
                 {
                     _connection = _connectionBuilder.BuildConnection(_connectionString);
-                    _connection.Open();
+                    _connection.EnsureOpen();
                     var dbCommand = _connection.CreateCommand();
                     TrySetTransaction(_transaction, dbCommand);
                     dbCommand.CommandText = command.CommandText;
@@ -129,18 +133,11 @@ namespace Dev2.Services.Sql
                 }
                 using (command)
                 {
-                    try
+                    using (var executeReader = command.ExecuteReader())
                     {
-                        using (var executeReader = command.ExecuteReader())
-                        {
-                            var dataTable = new DataTable();
-                            dataTable.Load(executeReader);
-                            return dataTable;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        return new DataTable(e.Message);
+                        var dataTable = new DataTable();
+                        dataTable.Load(executeReader);
+                        return dataTable;
                     }
                 }
             }
@@ -173,7 +170,7 @@ namespace Dev2.Services.Sql
             foreach (DataRow row in proceduresDataTable.Rows)
             {
                 var fullProcedureName = GetFullProcedureName(row, procedureDataColumn, procedureSchemaColumn);
-                _connection.TryOpen();
+                Connect();
                 var sqlCommand = _connection.CreateCommand();
                 TrySetTransaction(_transaction, sqlCommand);
                 sqlCommand.CommandText = fullProcedureName;
@@ -181,37 +178,45 @@ namespace Dev2.Services.Sql
 
                 using (sqlCommand)
                 {
-                    try
-                    {
-                        var parameters = GetProcedureParameters(sqlCommand);
-                        const string helpText = "";
-
-                        if (IsStoredProcedure(row, procedureTypeColumn))
-                        {
-                            procedureProcessor(sqlCommand, parameters, helpText, fullProcedureName);
-                        }
-                        else if (IsFunction(row, procedureTypeColumn))
-                        {
-                            functionProcessor(sqlCommand, parameters, helpText, fullProcedureName);
-                        }
-                        else if (IsTableValueFunction(row, procedureTypeColumn))
-                        {
-                            functionProcessor(sqlCommand, parameters, helpText,
-                                CreateTVFCommand(fullProcedureName, parameters));
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Dev2Logger.Error(e, GlobalConstants.WarewolfError);
-                        if (!continueOnProcessorException)
-                        {
-                            throw;
-                        }
-                    }
+                    TryFetch(procedureProcessor, functionProcessor, continueOnProcessorException, procedureTypeColumn, row, fullProcedureName, sqlCommand);
                 }
-
             }
         }
+
+        private void TryFetch(Func<IDbCommand, List<IDbDataParameter>, string, string, bool> procedureProcessor, Func<IDbCommand, List<IDbDataParameter>, string, string, bool> functionProcessor, bool continueOnProcessorException, DataColumn procedureTypeColumn, DataRow row, string fullProcedureName, IDbCommand sqlCommand)
+        {
+            try
+            {
+                var parameters = GetProcedureParameters(sqlCommand);
+                const string helpText = "";
+
+                if (IsStoredProcedure(row, procedureTypeColumn))
+                {
+                    procedureProcessor?.Invoke(sqlCommand, parameters, helpText, fullProcedureName);
+                }
+                else if (IsFunction(row, procedureTypeColumn))
+                {
+                    functionProcessor?.Invoke(sqlCommand, parameters, helpText, fullProcedureName);
+                }
+                else
+                {
+                    if (IsTableValueFunction(row, procedureTypeColumn))
+                    {
+                        functionProcessor?.Invoke(sqlCommand, parameters, helpText,
+                            CreateTVFCommand(fullProcedureName, parameters));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                if (!continueOnProcessorException)
+                {
+                    throw;
+                }
+            }
+        }
+
 
         public void FetchStoredProcedures(
             Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> procedureProcessor,
@@ -219,15 +224,15 @@ namespace Dev2.Services.Sql
 
 
         public void FetchStoredProcedures(
-            Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> procedureProcessor, 
-            Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> functionProcessor, 
+            Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> procedureProcessor,
+            Func<IDbCommand, List<IDbDataParameter>, List<IDbDataParameter>, string, string, bool> functionProcessor,
             bool continueOnProcessorException, string dbName)
         {
         }
 
-        private DataTable GetSchema()
+        DataTable GetSchema()
         {
-            const string commandText = GlobalConstants.SchemaQuery;
+            var commandText = GlobalConstants.SchemaQuery;
             _connection.TryOpen();
             using (_connection)
             {
@@ -238,10 +243,9 @@ namespace Dev2.Services.Sql
                     sqlCommand.CommandType = CommandType.Text;
                     return FetchDataTable(sqlCommand);
                 }
-
             }
         }
-        private static DataColumn GetDataColumn(DataTable dataTable, string columnName)
+        static DataColumn GetDataColumn(DataTable dataTable, string columnName)
         {
             var dataColumn = dataTable.Columns[columnName];
             if (dataColumn == null)
@@ -251,7 +255,7 @@ namespace Dev2.Services.Sql
             return dataColumn;
         }
 
-        private static string GetFullProcedureName(DataRow row, DataColumn procedureDataColumn,
+        static string GetFullProcedureName(DataRow row, DataColumn procedureDataColumn,
             DataColumn procedureSchemaColumn)
         {
             var procedureName = row[procedureDataColumn].ToString();
@@ -259,7 +263,7 @@ namespace Dev2.Services.Sql
             return schemaName + "." + procedureName;
         }
 
-        private List<IDbDataParameter> GetProcedureParameters(IDbCommand command)
+        List<IDbDataParameter> GetProcedureParameters(IDbCommand command)
         {
             //Please do not use SqlCommandBuilder.DeriveParameters(command); as it does not handle CLR procedures correctly.
             var originalCommandText = command.CommandText;
@@ -277,7 +281,7 @@ namespace Dev2.Services.Sql
                     continue;
                 }
                 Enum.TryParse(row["DATA_TYPE"] as string, true, out SqlDbType sqlType);
-                int maxLength = row["CHARACTER_MAXIMUM_LENGTH"] as int? ?? -1;
+                var maxLength = row["CHARACTER_MAXIMUM_LENGTH"] as int? ?? -1;
                 var sqlParameter = new SqlParameter(parameterName, sqlType, maxLength);
                 command.Parameters.Add(sqlParameter);
                 if (parameterName.ToLower(CultureInfo.InvariantCulture) == "@return_value")
@@ -342,13 +346,16 @@ namespace Dev2.Services.Sql
                 throw new Exception(ErrorResource.PleaseConnectFirst);
             }
             var sqlCommand = _connection.CreateCommand();
+            if (CommandTimeout != null)
+            {
+                sqlCommand.CommandTimeout = CommandTimeout.Value;
+            }
             TrySetTransaction(_transaction, sqlCommand);
-            sqlCommand.CommandTimeout = (int)GlobalConstants.TransactionTimeout.TotalSeconds;
             return sqlCommand;
         }
 
-        private string _commantText;
-        private CommandType _commandType;
+        string _commantText;
+        CommandType _commandType;
 
 
         public bool Connect(string connectionString, CommandType commandType, string commandText)
@@ -394,36 +401,70 @@ namespace Dev2.Services.Sql
 
             return true;
         }
-
-        public DataTable FetchDataTable(params IDbDataParameter[] dbDataParameters)
+        public DataSet FetchDataSet(IDbCommand command)
         {
-
             if (_connection == null)
             {
                 throw new Exception(ErrorResource.PleaseConnectFirst);
             }
             _connection.TryOpen();
-
-            using (_connection)
+            _connection.TryOpen();
+            using (var sqlCommand = _connection.CreateCommand())
             {
-                if (_connection.State != ConnectionState.Open)
+                TrySetTransaction(_transaction, sqlCommand);
+                sqlCommand.CommandText = _commantText;
+                sqlCommand.CommandType = _commandType;
+                if (CommandTimeout != null)
                 {
-                    _connection = _connectionBuilder.BuildConnection(_connectionString);
+                    sqlCommand.CommandTimeout = CommandTimeout.Value;
                 }
-                using (var sqlCommand = _connection.CreateCommand())
-                {
-                    TrySetTransaction(_transaction, sqlCommand);
-                    sqlCommand.CommandText = _commantText;
-                    sqlCommand.CommandType = _commandType;
-                    sqlCommand.CommandTimeout = (int)GlobalConstants.TransactionTimeout.TotalSeconds;
-                    foreach (var dbDataParameter in dbDataParameters)
-                    {
-                        sqlCommand.Parameters.Add(dbDataParameter);
-                    }
-                    return FetchDataTable(sqlCommand);
-                }
+                return FetchDataSet(sqlCommand);
             }
+        }
+        public int ExecuteNonQuery(IDbCommand command)
+        {
+            if (_connection == null)
+            {
+                throw new Exception(ErrorResource.PleaseConnectFirst);
+            }
+            _connection.TryOpen();
+            _connection.TryOpen();
+            int retValue = 0;
+            using (var sqlCommand = _connection.CreateCommand())
+            {
+                TrySetTransaction(_transaction, sqlCommand);
+                sqlCommand.CommandText = _commantText;
+                sqlCommand.CommandType = _commandType;
+                if (CommandTimeout != null)
+                {
+                    sqlCommand.CommandTimeout = CommandTimeout.Value;
+                }
+                retValue = Convert.ToInt32(sqlCommand.ExecuteNonQuery());
+                return retValue;
+            }
+        }
 
+        public int ExecuteScalar(IDbCommand command)
+        {
+            if (_connection == null)
+            {
+                throw new Exception(ErrorResource.PleaseConnectFirst);
+            }
+            _connection.TryOpen();
+            _connection.TryOpen();
+            int retValue = 0;
+            using (var sqlCommand = _connection.CreateCommand())
+            {
+                TrySetTransaction(_transaction, sqlCommand);
+                sqlCommand.CommandText = _commantText;
+                sqlCommand.CommandType = _commandType;
+                if (CommandTimeout != null)
+                {
+                    sqlCommand.CommandTimeout = CommandTimeout.Value;
+                }
+                retValue = Convert.ToInt32(sqlCommand.ExecuteScalar());
+                return retValue;
+            }
         }
     }
 

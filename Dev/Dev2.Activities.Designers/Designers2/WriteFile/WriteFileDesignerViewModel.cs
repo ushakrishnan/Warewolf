@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -35,17 +35,19 @@ namespace Dev2.Activities.Designers2.WriteFile
         public override void Validate()
         {
             Errors = null;
-            string content = FileContents;
+            var content = FileContents;
             ValidateUserNameAndPassword();
             ValidateOutputPath();
             ValidateFileContent(content, "Contents");
             
         }
 
-        string FileContents { get { return GetProperty<string>(); } }
+        string FileContents => GetProperty<string>();
+
         bool Overwrite { set => SetProperty(value); get => GetProperty<bool>(); }
-        bool AppendTop { get { return GetProperty<bool>(); } }
-        bool AppendBottom { get { return GetProperty<bool>(); } }
+        bool AppendTop => GetProperty<bool>();
+
+        bool AppendBottom => GetProperty<bool>();
 
         public override void UpdateHelpDescriptor(string helpText)
         {

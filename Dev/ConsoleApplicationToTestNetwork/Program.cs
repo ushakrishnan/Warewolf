@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,7 +24,7 @@ namespace ConsoleApplicationToTestNetwork
     {
         private static void Main(string[] args)
         {
-            string uri = "http://sandbox-dev2:3142";  //"http://sandbox-1:3142"; //"http://localHost:3142/";
+            string uri = "http://sandbox-dev2:3142";
             List<string> timings = new List<string>();
             float incrementingFactor = 1.125f;
             int roundsPerPacketStep = 10,

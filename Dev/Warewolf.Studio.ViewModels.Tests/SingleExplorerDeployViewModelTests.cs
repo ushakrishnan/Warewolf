@@ -14,24 +14,24 @@ using Microsoft.Practices.Prism.PubSubEvents;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Dev2.Threading;
-
-
+using Dev2;
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
     [TestClass]
     public class SingleExplorerDeployViewModelTests
     {
-        private Mock<IDeployDestinationExplorerViewModel> _destView;
-        private Mock<IDeploySourceExplorerViewModel> _sourceView;
-        private Mock<IDeployStatsViewerViewModel> _statsView;
-        private Mock<IShellViewModel> _shellVm;
-        private Mock<IServer> _serverMock;
-        private Mock<IServer> _differentServerMock;
-        private Mock<IEventAggregator> _eventAggregatorMock;
-        private Mock<IStudioUpdateManager> _updateRepositoryMock;
+        Mock<IDeployDestinationExplorerViewModel> _destView;
+        Mock<IDeploySourceExplorerViewModel> _sourceView;
+        Mock<IDeployStatsViewerViewModel> _statsView;
+        Mock<IShellViewModel> _shellVm;
+        Mock<IServer> _serverMock;
+        Mock<IServer> _differentServerMock;
+        Mock<IEventAggregator> _eventAggregatorMock;
+        Mock<IStudioUpdateManager> _updateRepositoryMock;
+        Mock<IExplorerTooltips> _explorerTooltips;
 
-        private Guid _serverEnvironmentId;
+        Guid _serverEnvironmentId;
 
         [TestInitialize]
         public void Initialize()
@@ -42,15 +42,29 @@ namespace Warewolf.Studio.ViewModels.Tests
             _statsView.SetupAllProperties();
             _shellVm = new Mock<IShellViewModel>();
             _serverMock = new Mock<IServer>();
+            var mockEnvironmentConnection = SetupMockConnection();
+            mockEnvironmentConnection.Setup(connection => connection.IsConnected).Returns(true);
+            _serverMock.Setup(server => server.Connection).Returns(mockEnvironmentConnection.Object);
             _differentServerMock = new Mock<IServer>();
             _eventAggregatorMock = new Mock<IEventAggregator>();
             _updateRepositoryMock = new Mock<IStudioUpdateManager>();
             _sourceView.Setup(model => model.SelectedItems).Returns(new List<IExplorerTreeItem>());
+            _explorerTooltips = new Mock<IExplorerTooltips>();
+            CustomContainer.Register(_explorerTooltips.Object);
         }
 
-        //SingleExplorerDeployViewModel(IDeployDestinationExplorerViewModel destination, IDeploySourceExplorerViewModel source, 
-        //IEnumerable<IExplorerTreeItem> selectedItems, IDeployStatsViewerViewModel stats, IShellViewModel shell, IPopupController popupController)
-        [TestMethod]
+        private static Mock<IEnvironmentConnection> SetupMockConnection()
+        {
+            var uri = new Uri("http://bravo.com/");
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(a => a.AppServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.AuthenticationType).Returns(Dev2.Runtime.ServiceModel.Data.AuthenticationType.Public);
+            mockEnvironmentConnection.Setup(a => a.WebServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.ID).Returns(Guid.Empty);
+            return mockEnvironmentConnection;
+        }
+
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void CanDeploytests_GivenCanSelectAllDependencies_ShouldMatch()
         {
@@ -75,7 +89,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(singleExplorerDeployViewModel.CanDeployTests);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void CanDeploy_GivenDestinationIsNotConnected_ShouldReturnFalseAndSetCorrectMessage()
         {
@@ -106,7 +120,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(Resources.Languages.Core.DeployDestinationNotConnected, errorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void DestinationOnPropertyChanged_GivenisConnectedChanged_ShouldHandleDeployChanged()
         {
@@ -121,7 +135,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _destView.Setup(model => model.ConnectControlViewModel).Returns(connectControl.Object);
             _sourceView.Setup(model => model.ConnectControlViewModel).Returns(connectControl.Object);
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
-            bool wasCalled = false;
+            var wasCalled = false;
             singleExplorerDeployViewModel.Destination.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == "IsConnected")
@@ -144,7 +158,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(wasCalled);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void Destination_GivenNewDestinationIsCreated_ShouldHaveNewDestination()
         {
@@ -157,6 +171,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             _shellVm.Setup(model => model.ExplorerViewModel).Returns(new Mock<IExplorerViewModel>().Object);
             _shellVm.Setup(model => model.ExplorerViewModel.ConnectControlViewModel).Returns(new Mock<IConnectControlViewModel>().Object);
             _shellVm.Setup(model => model.LocalhostServer).Returns(_serverMock.Object);
+            var envMock = new Mock<IEnvironmentViewModel>();
+            _shellVm.SetupGet(model => model.ExplorerViewModel.Environments).Returns(new Caliburn.Micro.BindableCollection<IEnvironmentViewModel>()
+            {
+                envMock.Object
+            });
             var popupController = new Mock<IPopupController>();
             var connectControl = new Mock<IConnectControlViewModel>();
             connectControl.SetupAllProperties();
@@ -172,7 +191,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(Equals(deployDestinationExplorerViewModelBefore, singleExplorerDeployViewModel.Destination));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenServerIsNotConnected_ShouldHaveFalse()
         {
@@ -195,14 +214,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(Resources.Languages.Core.DeploySourceNotConnected, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenSourceAndDestinationAreSameServer_ShouldHaveFalse()
         {
@@ -233,14 +252,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(Resources.Languages.Core.DeploySourceDestinationAreSame, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenSourceServerSelectedItemsIsNull_ShouldHaveFalse()
         {
@@ -275,14 +294,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(Resources.Languages.Core.DeployNoResourcesSelected, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenNoSourceServerPermissions_ShouldHaveFalse()
         {
@@ -324,14 +343,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(StringResources.SourcePermission_Error, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenNoDestinarionSourcePermissions_ShouldHaveFalse()
         {
@@ -375,14 +394,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(StringResources.DestinationPermission_Error, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenIsDeployingIsTrue_ShouldHaveFalse()
         {
@@ -426,7 +445,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             typeof(SingleExplorerDeployViewModel).GetProperty("IsDeploying").SetValue(privateObject.Target, true);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
@@ -434,7 +453,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenAllValidRequirements_ShouldHaveTrue()
         {
@@ -478,7 +497,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(true, canDeploy);
@@ -486,7 +505,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenSelectedServerIsNull_ShouldHaveFalse()
         {
@@ -513,7 +532,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
@@ -521,7 +540,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenNoSelectedItem_ShouldHaveFalse()
         {
@@ -535,6 +554,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             _shellVm.Setup(model => model.LocalhostServer).Returns(_serverMock.Object);
             _shellVm.Setup(model => model.ExplorerViewModel).Returns(new Mock<IExplorerViewModel>().Object);
             _shellVm.Setup(model => model.ExplorerViewModel.ConnectControlViewModel).Returns(new Mock<IConnectControlViewModel>().Object);
+            var envMock = new Mock<IEnvironmentViewModel>();
+            _shellVm.SetupGet(model => model.ExplorerViewModel.Environments).Returns(new Caliburn.Micro.BindableCollection<IEnvironmentViewModel>()
+            {
+                envMock.Object
+            });
             var popupController = new Mock<IPopupController>();
             var connectControl = new Mock<IConnectControlViewModel>();
             connectControl.SetupAllProperties();
@@ -549,14 +573,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Test Result -----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(Resources.Languages.Core.DeploySourceNotConnected, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CanDeploy_GivenDestinationIsNotConnected_ShouldHaveFalse()
         {
@@ -570,12 +594,20 @@ namespace Warewolf.Studio.ViewModels.Tests
             _shellVm.Setup(model => model.LocalhostServer).Returns(_serverMock.Object);
             _shellVm.Setup(model => model.ExplorerViewModel).Returns(new Mock<IExplorerViewModel>().Object);
             _shellVm.Setup(model => model.ExplorerViewModel.ConnectControlViewModel).Returns(new Mock<IConnectControlViewModel>().Object);
+            var envMock = new Mock<IEnvironmentViewModel>();
+            _shellVm.SetupGet(model => model.ExplorerViewModel.Environments).Returns(new Caliburn.Micro.BindableCollection<IEnvironmentViewModel>()
+            {
+                envMock.Object
+            });
             var popupController = new Mock<IPopupController>();
             var connectControl = new Mock<IConnectControlViewModel>();
             var differentConnectControl = new Mock<IConnectControlViewModel>();
             connectControl.SetupAllProperties();
             differentConnectControl.SetupAllProperties();
             _differentServerMock = new Mock<IServer>();
+            var mockEnvironmentConnection = SetupMockConnection();
+            mockEnvironmentConnection.Setup(connection => connection.IsConnected).Returns(true);
+            _differentServerMock.Setup(server => server.Connection).Returns(mockEnvironmentConnection.Object);
             differentConnectControl.Setup(model => model.SelectedConnection).Returns(_differentServerMock.Object);
             _destView.Setup(model => model.ConnectControlViewModel).Returns(differentConnectControl.Object);
             _destView.Setup(model => model.SelectedEnvironment).Returns(It.IsAny<IEnvironmentViewModel>());
@@ -588,14 +620,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Test Result -----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             var canDeploy = privateObject.GetProperty("CanDeploy");
             //---------------Test Result -----------------------
             Assert.AreEqual(false, canDeploy);
             Assert.AreEqual(Resources.Languages.Core.DeployDestinationNotConnected, singleExplorerDeployViewModel.ErrorMessage);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DestinationServerStateChanged_GivenDestinationIsDisconnected_Should()
         {
@@ -618,13 +650,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Test Result -----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("DestinationServerStateChanged", null, _serverMock.Object);
             //---------------Test Result -----------------------
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DestinationServerStateChanged_GivenDestinationConnected_Should()
         {
@@ -652,7 +684,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Test Result -----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("DestinationServerStateChanged", null, _serverMock.Object);
             //---------------Test Result -----------------------
             Assert.IsFalse(singleExplorerDeployViewModel.ShowNewItemsList);
@@ -664,7 +696,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(singleExplorerDeployViewModel.NewResourcesViewCommand);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DefaultValues_GivenNewInstance_Should()
         {
@@ -703,7 +735,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DeployConflics_GivenDifferntServerVersions_ShouldHaveIsDeployingFalse()
         {
@@ -725,13 +757,22 @@ namespace Warewolf.Studio.ViewModels.Tests
             _destView.Setup(model => model.SelectedEnvironment).Returns(It.IsAny<IEnvironmentViewModel>());
             _destView.Setup(model => model.SelectedServer).Returns(_differentServerMock.Object);
             _destView.Setup(model => model.MinSupportedVersion).Returns(new Version("2.0.0.0"));
+            var explorerItemViewModels = new List<IExplorerItemViewModel>
+            {
+                new ExplorerItemViewModel(new Mock<IServer>().Object, new Mock<IExplorerTreeItem>().Object, a => { }, new Mock<IShellViewModel>().Object, new Mock<IPopupController>().Object) { ResourcePath = "Somepath" }
+            };
+            _destView.Setup(model => model.SelectedEnvironment.AsList()).Returns(explorerItemViewModels);
             _sourceView.Setup(model => model.ServerVersion).Returns(new Version("1.0.0.0"));
             _sourceView.Setup(model => model.ConnectControlViewModel).Returns(connectControl.Object);
             _sourceView.Setup(model => model.SelectedEnvironment).Returns(new Mock<IEnvironmentViewModel>().Object);
-            _sourceView.SetupGet(model => model.SelectedItems).Returns(new List<IExplorerTreeItem>
+            var explorerTreeItem1 = new Mock<IExplorerTreeItem>();
+            explorerTreeItem1.Setup(item => item.ResourceId).Returns(Guid.NewGuid);
+            explorerTreeItem1.Setup(model => model.ResourcePath).Returns("Somepath");
+            var explorerTreeItems = new List<IExplorerTreeItem>
             {
-                new ExplorerItemViewModel(_serverMock.Object, It.IsAny<IExplorerTreeItem>(), model => It.IsAny<IExplorerItemViewModel>(),_shellVm.Object, new Mock<IPopupController>().Object)
-            });
+                explorerTreeItem1.Object
+            };
+            _sourceView.Setup(model => model.SelectedItems).Returns(explorerTreeItems);
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             var privateObject = new PrivateObject(singleExplorerDeployViewModel);
 
@@ -742,7 +783,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(singleExplorerDeployViewModel.IsDeploying);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void IsDeploying_GivenSameServerVersions_ShouldHaveIsDeployingTrue()
         {
@@ -764,13 +805,22 @@ namespace Warewolf.Studio.ViewModels.Tests
             _destView.Setup(model => model.SelectedEnvironment).Returns(It.IsAny<IEnvironmentViewModel>());
             _destView.Setup(model => model.SelectedServer).Returns(_differentServerMock.Object);
             _destView.Setup(model => model.MinSupportedVersion).Returns(new Version("1.0.0.0"));
+            var explorerItemViewModels = new List<IExplorerItemViewModel>
+            {
+                new ExplorerItemViewModel(new Mock<IServer>().Object, new Mock<IExplorerTreeItem>().Object, a => { }, new Mock<IShellViewModel>().Object, new Mock<IPopupController>().Object) { ResourcePath = "Somepath" }
+            };
+            _destView.Setup(model => model.SelectedEnvironment.AsList()).Returns(explorerItemViewModels);
             _sourceView.Setup(model => model.ServerVersion).Returns(new Version("1.0.0.0"));
             _sourceView.Setup(model => model.ConnectControlViewModel).Returns(connectControl.Object);
             _sourceView.Setup(model => model.SelectedEnvironment).Returns(new Mock<IEnvironmentViewModel>().Object);
-            _sourceView.SetupGet(model => model.SelectedItems).Returns(new List<IExplorerTreeItem>
+            var explorerTreeItem1 = new Mock<IExplorerTreeItem>();
+            explorerTreeItem1.Setup(item => item.ResourceId).Returns(Guid.NewGuid);
+            explorerTreeItem1.Setup(model => model.ResourcePath).Returns("Somepath");
+            var explorerTreeItems = new List<IExplorerTreeItem>
             {
-                new ExplorerItemViewModel(_serverMock.Object, It.IsAny<IExplorerTreeItem>(), model => It.IsAny<IExplorerItemViewModel>(),_shellVm.Object, new Mock<IPopupController>().Object)
-            });
+                explorerTreeItem1.Object
+            };
+            _sourceView.Setup(model => model.SelectedItems).Returns(explorerTreeItems);
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             typeof(SingleExplorerDeployViewModel).GetProperty("IsDeploying").SetValue(privateObject.Target, true);
@@ -781,7 +831,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(singleExplorerDeployViewModel.IsDeploying);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void IsDeploying_GivenSourceServerIsOldVersionAndPopupCancelClick_ShouldHaveIsDeployingTrue()
         {
@@ -803,13 +853,22 @@ namespace Warewolf.Studio.ViewModels.Tests
             _destView.Setup(model => model.SelectedEnvironment).Returns(It.IsAny<IEnvironmentViewModel>());
             _destView.Setup(model => model.SelectedServer).Returns(_differentServerMock.Object);
             _destView.Setup(model => model.MinSupportedVersion).Returns(new Version("2.0.0.0"));
+            var explorerItemViewModels = new List<IExplorerItemViewModel>
+            {
+                new ExplorerItemViewModel(new Mock<IServer>().Object, new Mock<IExplorerTreeItem>().Object, a => { }, new Mock<IShellViewModel>().Object, new Mock<IPopupController>().Object) { ResourcePath = "Somepath" }
+            };
+            _destView.Setup(model => model.SelectedEnvironment.AsList()).Returns(explorerItemViewModels);
             _sourceView.Setup(model => model.ServerVersion).Returns(new Version("1.0.0.0"));
             _sourceView.Setup(model => model.ConnectControlViewModel).Returns(connectControl.Object);
             _sourceView.Setup(model => model.SelectedEnvironment).Returns(new Mock<IEnvironmentViewModel>().Object);
-            _sourceView.SetupGet(model => model.SelectedItems).Returns(new List<IExplorerTreeItem>
+            var explorerTreeItem1 = new Mock<IExplorerTreeItem>();
+            explorerTreeItem1.Setup(item => item.ResourceId).Returns(Guid.NewGuid);
+            explorerTreeItem1.Setup(model => model.ResourcePath).Returns("Somepath");
+            var explorerTreeItems = new List<IExplorerTreeItem>
             {
-                new ExplorerItemViewModel(_serverMock.Object, It.IsAny<IExplorerTreeItem>(), model => It.IsAny<IExplorerItemViewModel>(),_shellVm.Object, new Mock<IPopupController>().Object)
-            });
+                explorerTreeItem1.Object
+            };
+            _sourceView.Setup(model => model.SelectedItems).Returns(explorerTreeItems);
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             typeof(SingleExplorerDeployViewModel).GetProperty("IsDeploying").SetValue(privateObject.Target, true);
@@ -821,7 +880,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DeployConflics_GivenDestinationHasOldVersionServerVersions_ShouldHaveIsDeployingFalse()
         {
@@ -861,7 +920,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         }
 
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void StatsViewModel_GivenNewInstance_ShouldNotBeNull()
         {
@@ -884,13 +943,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Test Result -----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("DestinationServerStateChanged", new object[] { null, null });
             //---------------Test Result -----------------------
             Assert.IsNotNull(singleExplorerDeployViewModel.StatsViewModel);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void ConflictNewResourceText_GivenViewOverrides_ShouldHaveText()
         {
@@ -909,13 +968,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("ViewOverrides");
             //---------------Test Result -----------------------
             Assert.IsFalse(string.IsNullOrEmpty(singleExplorerDeployViewModel.ConflictNewResourceText));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void ConflictNewResourceText_GivenViewNewResources_ShouldHaveText()
         {
@@ -934,14 +993,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, new List<IExplorerTreeItem>(), _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("ViewNewResources");
             //---------------Test Result -----------------------
             Assert.IsFalse(string.IsNullOrEmpty(singleExplorerDeployViewModel.ConflictNewResourceText));
             Assert.AreEqual("List of New Resources", singleExplorerDeployViewModel.ConflictNewResourceText);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void UpdateHelpDescriptor_GivenSomeMessage_ShouldHaveSomeMessage()
         {
@@ -964,7 +1023,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //---------------Test Result -----------------------
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DeploySuccessMessage_GivenSomeError_ShouldHaveEmptyText()
         {
@@ -992,7 +1051,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(singleExplorerDeployViewModel.DeploySuccessfull);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void NewResourceCount_GivenEmptyStateItems_Should0()
         {
@@ -1016,7 +1075,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(string.IsNullOrEmpty(singleExplorerDeployViewModel.NewResourcesCount));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void Source_GivenNewSourceIsCreated_ShouldHaveNewSource()
         {
@@ -1044,7 +1103,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(Equals(deploySourceExplorerViewModelBefore, singleExplorerDeployViewModel.Source));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void NewItems_GivenCalculateAction_AreEqualTo_StatViewNew()
         {
@@ -1071,7 +1130,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(singleExplorerDeployViewModel.NewItems, _statsView.Object.New);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void SourcesCount_GivenCalculateAction_AreEqualTo_StatViewSources()
         {
@@ -1097,7 +1156,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(singleExplorerDeployViewModel.SourcesCount, _statsView.Object.Sources.ToString());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void ConflictItems_GivenCalculateAction_AreEqualToStatViewConflictItems()
         {
@@ -1125,7 +1184,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //---------------Test Result -----------------------
             Assert.AreEqual(singleExplorerDeployViewModel.ConflictItems, _statsView.Object.Conflicts);
         }
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void UpdateServerCompareChanged_ShouldRecalculate_Items()
         {
@@ -1160,7 +1219,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _statsView.Setup(model => model.Sources).Returns(20);
             _statsView.Setup(model => model.NewResources).Returns(30);
             _statsView.Setup(model => model.Overrides).Returns(10);
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("UpdateServerCompareChanged", new object[] { null, null });
             //---------------Test Result -----------------------
             Assert.IsFalse(singleExplorerDeployViewModel.ShowConflicts);
@@ -1170,7 +1229,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual("10", singleExplorerDeployViewModel.OverridesCount);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void SelectDependencies_GivenSourceWithDependencies_ShouldHaveItemsSelected()
         {
@@ -1187,7 +1246,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var selectedEnv = new Mock<IEnvironmentViewModel>();
             var newServer = new Mock<IServer>();
             var explorerTreeItem1 = new Mock<IExplorerTreeItem>();
-            Guid newGuid = Guid.NewGuid();
+            var newGuid = Guid.NewGuid();
             explorerTreeItem1.Setup(item => item.ResourceId).Returns(newGuid);
             explorerTreeItem1.Setup(item => item.AllowResourceCheck).Returns(true);
 
@@ -1217,13 +1276,13 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, explorerTreeItems, _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("SelectDependencies");
             //---------------Test Result -----------------------
             mock.VerifySet(model => model.IsResourceChecked = true, Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void DestinationConnectControlViewModel_GivenDestinationConnectControlViewModelIsSetToSameValue_ShouldReturn()
         {
@@ -1258,7 +1317,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(singleExplorerDeployViewModel.DestinationConnectControlViewModel);
             Assert.IsNotNull(singleExplorerDeployViewModel.SourceConnectControlViewModel);
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             typeof(SingleExplorerDeployViewModel).GetProperty("DestinationConnectControlViewModel").SetValue(privateObject.Target, connectControl.Object);
             typeof(SingleExplorerDeployViewModel).GetProperty("SourceConnectControlViewModel").SetValue(privateObject.Target, connectControl.Object);
             //---------------Test Result -----------------------
@@ -1266,7 +1325,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(singleExplorerDeployViewModel.SourceConnectControlViewModel);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void CheckResourceNameConflict_GivenSourceWith1ItemAndDestinationWith1Item_ShouldSetIsDeployingToFalse()
         {
@@ -1299,14 +1358,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             var singleExplorerDeployViewModel = new SingleExplorerDeployViewModel(_destView.Object, _sourceView.Object, explorerTreeItems, _statsView.Object, _shellVm.Object, popupController.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("CheckResourceNameConflict");
             //---------------Test Result -----------------------
             Assert.IsFalse(singleExplorerDeployViewModel.IsDeploying);
             popupController.Verify(controller => controller.ShowDeployResourceNameConflict(It.IsAny<string>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void Deploy_ShouldSetIsDeployingToTrue()
         {
@@ -1361,7 +1420,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             };
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             privateObject.Invoke("Deploy");
             //---------------Test Result -----------------------
             Assert.IsTrue(singleExplorerDeployViewModel.DeploySuccessfull);
@@ -1370,7 +1429,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _statsView.Verify(model => model.ReCalculate(), Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void Deploy_GivenConflictsAndMessageBoxResultCancel_ShouldSetIsDeployingToFalse()
         {
@@ -1428,7 +1487,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             {
                 new Conflict()
             };
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             typeof(SingleExplorerDeployViewModel).GetProperty("ConflictItems").SetValue(privateObject.Target, conflicts);
             privateObject.Invoke("Deploy");
             //---------------Test Result -----------------------
@@ -1437,7 +1496,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(singleExplorerDeployViewModel.ShowConflictItemsList);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Sanele Mthembu")]
         public void Deploy_GivenConflictsAndMessageBoxResultOK_ShouldSetIsDeployingToTrue()
         {
@@ -1496,7 +1555,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             {
                 new Conflict()
             };
-            PrivateObject privateObject = new PrivateObject(singleExplorerDeployViewModel);
+            var privateObject = new PrivateObject(singleExplorerDeployViewModel);
             typeof(SingleExplorerDeployViewModel).GetProperty("ConflictItems").SetValue(privateObject.Target, conflicts);
             privateObject.Invoke("Deploy");
             //---------------Test Result -----------------------

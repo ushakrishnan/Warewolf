@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,10 +14,12 @@ using Dev2.TO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Activities.Statements;
 using System.Collections.ObjectModel;
-using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using System.Collections.Generic;
 using System;
+using System.Linq;
+using Dev2.Common.State;
+using Dev2.Utilities;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -38,7 +40,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "somevalue";
             GetScalarValueFromEnvironment(result.Environment, "@test.value1", out string actual, out string error);
 
@@ -73,9 +75,9 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
-            string expected1 = "Iris";
-            string expected2 = "30";
+            var result = ExecuteProcess();
+            var expected1 = "Iris";
+            var expected2 = "30";
             GetScalarValueFromEnvironment(result.Environment, "@test.Name", out string actual1, out string error);
             GetScalarValueFromEnvironment(result.Environment, "@test.Age", out string actual2, out error);
 
@@ -96,7 +98,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "somevalue@#";
             GetScalarValueFromEnvironment(result.Environment, "@test.value1", out string actual, out string error);
 
@@ -117,7 +119,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "somevalue2";
             GetScalarValueFromEnvironment(result.Environment, "@test.value1", out string actual, out string error);
 
@@ -140,7 +142,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected1 = "somevalue1", expected2 = "somevalue2", expected3 = "somevalue3", expected4 = "somevalue4";
             GetScalarValueFromEnvironment(result.Environment, "@test.value1", out string actual1, out string error);
             GetScalarValueFromEnvironment(result.Environment, "@test.value2", out string actual2, out error);
@@ -166,7 +168,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "@test.value", out string actual, out string error);
 
             Assert.IsTrue(actual == string.Empty);
@@ -185,7 +187,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             Assert.IsTrue(result.Environment.HasErrors());
         }
@@ -203,7 +205,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             Assert.IsTrue(result.Environment.HasErrors());
         }
@@ -221,7 +223,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "somevalue";
             GetScalarValueFromEnvironment(result.Environment, "@test.value1.value2.value3.value4", out string actual, out string error);
 
@@ -241,7 +243,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "7";
             GetScalarValueFromEnvironment(result.Environment, "@test.value1", out string actual, out string error);
 
@@ -266,7 +268,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "7";
             GetScalarValueFromEnvironment(result.Environment, "@test.total1", out string actual, out string error);
 
@@ -289,7 +291,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected1 = "somevalue1", expected2 = "somevalue2", expected3 = "somevalue3", expected4 = "somevalue4";
             GetScalarValueFromEnvironment(result.Environment, "@test.value(1)", out string actual1, out string error);
             GetScalarValueFromEnvironment(result.Environment, "@test.value(2)", out string actual2, out error);
@@ -319,7 +321,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "4";
             GetScalarValueFromEnvironment(result.Environment, "@test.total1", out string actual, out string error);
 
@@ -348,7 +350,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                          , ActivityStrings.scalarShape
                          , fieldCollection);
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             const string expected = "Bob";
             GetScalarValueFromEnvironment(result.Environment, "@Pet.Owner(1).Name", out string actual, out string error);
             Assert.AreEqual(expected, actual);
@@ -367,7 +369,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
         }
 
-        private void SetupArguments(string currentDL, string testData, ObservableCollection<AssignObjectDTO> fieldCollection, string outputMapping = null)
+        void SetupArguments(string currentDL, string testData, ObservableCollection<AssignObjectDTO> fieldCollection, string outputMapping = null)
         {
             if (outputMapping == null)
             {
@@ -392,12 +394,12 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfMultiAssignObjectActivity_UpdateForEachInputs_WhenContainsMatchingStarAndOtherData_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<AssignObjectDTO> fieldsCollection = new List<AssignObjectDTO>
+            var fieldsCollection = new List<AssignObjectDTO>
             {
                 new AssignObjectDTO("[[@Pet.Owner(1).Name]]", "Bob", 1),
             };
 
-            DsfMultiAssignObjectActivity act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
+            var act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
 
             //------------Execute Test---------------------------
 
@@ -418,12 +420,12 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfMultiAssignObjectActivity_UpdateForEachOutputs_WhenContainsMatchingStar_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<AssignObjectDTO> fieldsCollection = new List<AssignObjectDTO>
+            var fieldsCollection = new List<AssignObjectDTO>
             {
                 new AssignObjectDTO("[[@Pet.Owner(1).Name]]", "Bob", 1),
             };
 
-            DsfMultiAssignObjectActivity act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
+            var act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
 
             //------------Execute Test---------------------------
 
@@ -444,12 +446,12 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfMultiAssignActivity_GetForEachInputs_Normal_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<AssignObjectDTO> fieldsCollection = new List<AssignObjectDTO>
+            var fieldsCollection = new List<AssignObjectDTO>
             {
                 new AssignObjectDTO("[[@Pet.Name]]", "[[result]]", 1),
             };
 
-            DsfMultiAssignObjectActivity act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
+            var act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
 
             //------------Execute Test---------------------------
 
@@ -466,12 +468,12 @@ namespace Dev2.Tests.Activities.ActivityTests
         public void DsfMultiAssignActivity_GetForEachOutputs_Normal_UpdateSuccessful()
         {
             //------------Setup for test--------------------------
-            List<AssignObjectDTO> fieldsCollection = new List<AssignObjectDTO>
+            var fieldsCollection = new List<AssignObjectDTO>
             {
                 new AssignObjectDTO("[[@Pet.Name]]", "[[result]]", 1),
             };
 
-            DsfMultiAssignObjectActivity act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
+            var act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
 
             //------------Execute Test---------------------------
 
@@ -482,6 +484,126 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual("[[@Pet.Name]]", inputs[0].Value);
             Assert.AreEqual("[[result]]", inputs[0].Name);
         }
-    }
 
+        [TestMethod]
+        [TestCategory("DsfMultiAssignActivity_GetForEachOutputs")]
+        public void DsfMultiAssignObjectActivity_GetState_Returns_Inputs_And_Outputs()
+        {
+            //------------Setup for test--------------------------
+            var fieldsCollection = new List<AssignObjectDTO>
+            {
+                new AssignObjectDTO("[[@Pet.Name]]", "[[result]]", 1),
+            };
+            var act = new DsfMultiAssignObjectActivity { FieldsCollection = fieldsCollection };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(1, stateItems.Count());
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name="Fields Collection",
+                    Type = StateVariable.StateType.InputOutput,
+                    Value = ActivityHelper.GetSerializedStateValueFromCollection(fieldsCollection)
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
+
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("DsfMultiAssignObjectActivity_FunctionalityTests")]
+        public void MultiAssignObjectWithJsonArrayMultiplePropertiesWithoutIndex()
+        {
+            var fieldCollection = new ObservableCollection<AssignObjectDTO>();
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Name]]", "Bob", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Surname]]", "Dill", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Age]]", "20", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Gender]]", "Male", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Name]]", "Jane", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Surname]]", "Doe", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Age]]", "30", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers().Gender]]", "Female", fieldCollection.Count));
+
+            SetupArguments(ActivityStrings.scalarShape, ActivityStrings.scalarShape, fieldCollection);
+
+            var result = ExecuteProcess();
+
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Name", out string actual, out string error);
+            Assert.AreEqual("Bob", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Surname", out actual, out error);
+            Assert.AreEqual("Dill", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Age", out actual, out error);
+            Assert.AreEqual("20", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Gender", out actual, out error);
+            Assert.AreEqual("Male", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Name", out actual, out error);
+            Assert.AreEqual("Jane", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Surname", out actual, out error);
+            Assert.AreEqual("Doe", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Age", out actual, out error);
+            Assert.AreEqual("30", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Gender", out actual, out error);
+            Assert.AreEqual("Female", actual);
+
+        }
+
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("DsfMultiAssignObjectActivity_FunctionalityTests")]
+        public void MultiAssignObjectWithJsonArrayMultiplePropertiesWithIndex()
+        {
+            var fieldCollection = new ObservableCollection<AssignObjectDTO>();
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Name]]", "Warewolf", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Location]]", "Ireland", fieldCollection.Count));
+
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(1).Name]]", "Bob", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(1).Surname]]", "Dill", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(1).Age]]", "20", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(1).Gender]]", "Male", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(2).Name]]", "Jane", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(2).Surname]]", "Doe", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(2).Age]]", "30", fieldCollection.Count));
+            fieldCollection.Add(new AssignObjectDTO("[[@Org.Workers(2).Gender]]", "Female", fieldCollection.Count));
+
+            SetupArguments(ActivityStrings.scalarShape, ActivityStrings.scalarShape, fieldCollection);
+
+            var result = ExecuteProcess();
+
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Name", out string actual, out string error);
+            Assert.AreEqual("Bob", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Surname", out actual, out error);
+            Assert.AreEqual("Dill", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Age", out actual, out error);
+            Assert.AreEqual("20", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(1).Gender", out actual, out error);
+            Assert.AreEqual("Male", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Name", out actual, out error);
+            Assert.AreEqual("Jane", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Surname", out actual, out error);
+            Assert.AreEqual("Doe", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Age", out actual, out error);
+            Assert.AreEqual("30", actual);
+            GetScalarValueFromEnvironment(result.Environment, "@Org.Workers(2).Gender", out actual, out error);
+            Assert.AreEqual("Female", actual);
+
+        }
+
+
+    }
 }

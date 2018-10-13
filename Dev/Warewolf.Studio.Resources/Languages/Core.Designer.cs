@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Core {
@@ -120,6 +120,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ConnectedLabel {
             get {
                 return ResourceManager.GetString("ConnectedLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timeout.
+        /// </summary>
+        public static string ConnectionTimeoutLabel {
+            get {
+                return ResourceManager.GetString("ConnectionTimeoutLabel", resourceCulture);
             }
         }
         
@@ -250,6 +259,42 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to There are no items to deploy in this folder..
+        /// </summary>
+        public static string DeployEmptyFolderDescription {
+            get {
+                return ResourceManager.GetString("DeployEmptyFolderDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Deploy Empty Folder.
+        /// </summary>
+        public static string DeployEmptyFolderHeader {
+            get {
+                return ResourceManager.GetString("DeployEmptyFolderHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There are no items to deploy on this server..
+        /// </summary>
+        public static string DeployEmptyServerDescription {
+            get {
+                return ResourceManager.GetString("DeployEmptyServerDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Deploy Empty Server.
+        /// </summary>
+        public static string DeployEmptyServerHeader {
+            get {
+                return ResourceManager.GetString("DeployEmptyServerHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nothing selected to deploy..
         /// </summary>
         public static string DeployNoResourcesSelected {
@@ -309,6 +354,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string DeploySourceNotConnected {
             get {
                 return ResourceManager.GetString("DeploySourceNotConnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your .Net installation appears to be corrupt. Uninstall Warewolf, reinstall the .Net framework and then reinstall Warewolf..
+        /// </summary>
+        public static string DotNetFrameworkInstallError {
+            get {
+                return ResourceManager.GetString("DotNetFrameworkInstallError", resourceCulture);
             }
         }
         
@@ -494,6 +548,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Hide Version History.
+        /// </summary>
+        public static string HideVersionHistoryLabel {
+            get {
+                return ResourceManager.GetString("HideVersionHistoryLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Host.
         /// </summary>
         public static string HostNameLabel {
@@ -622,6 +685,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Search.
+        /// </summary>
+        public static string MenuDialogSearchLabel {
+            get {
+                return ResourceManager.GetString("MenuDialogSearchLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Settings.
         /// </summary>
         public static string MenuDialogSettingsLabel {
@@ -663,6 +735,24 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string MenuDialogUnLockLabel {
             get {
                 return ResourceManager.GetString("MenuDialogUnLockLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To start the Merge process, select a radio button below..
+        /// </summary>
+        public static string MergeConflictsStartProcessText {
+            get {
+                return ResourceManager.GetString("MergeConflictsStartProcessText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Below is a list of the selected workflow versions to merge with. Select from the radio button and press Enter or click Merge to continue with the merge process. If you are not sure which version to merge with, press Escape or click Cancel, then find the Workflow in the Explorer, right-click and select &apos;Show Version History&apos; to view the previous versions..
+        /// </summary>
+        public static string MergeSelectionViewInformationLabel {
+            get {
+                return ResourceManager.GetString("MergeSelectionViewInformationLabel", resourceCulture);
             }
         }
         
@@ -829,6 +919,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Revulytics sdk error.
+        /// </summary>
+        public static string RevulyticsSdkError {
+            get {
+                return ResourceManager.GetString("RevulyticsSdkError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Make current version.
         /// </summary>
         public static string RollbackHeader {
@@ -962,6 +1061,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string SchedulerUnsavedTaskMessage {
             get {
                 return ResourceManager.GetString("SchedulerUnsavedTaskMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The server selected is not up to date with the latest server version..
+        /// </summary>
+        public static string SearchVersionConflictError {
+            get {
+                return ResourceManager.GetString("SearchVersionConflictError", resourceCulture);
             }
         }
         
@@ -1165,6 +1273,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Show Version History.
+        /// </summary>
+        public static string ShowVersionHistoryLabel {
+            get {
+                return ResourceManager.GetString("ShowVersionHistoryLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New Microsoft SQL Server Source.
         /// </summary>
         public static string SqlServerSourceNewHeaderLabel {
@@ -1309,7 +1426,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Copyright © 2017 Warewolf, All rights reserved..
+        ///   Looks up a localized string similar to Copyright © {0} Warewolf, All rights reserved..
         /// </summary>
         public static string WarewolfCopyright {
             get {

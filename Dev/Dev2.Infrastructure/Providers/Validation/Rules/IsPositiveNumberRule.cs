@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,13 +26,11 @@ namespace Dev2.Providers.Validation.Rules
         {
             var isValid = false;
             var value = GetValue();
-            if (int.TryParse(value, out int x))
+            if (int.TryParse(value, out int x) && x >= 0)
             {
-                if(x >= 0)
-                {
-                    isValid = true;
-                }
+                isValid = true;
             }
+
             return isValid ? null : CreatError();
         }
     }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -55,12 +55,12 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
         string FieldsToSearch => GetProperty<string>();
 
-        public bool IsFieldsToSearchFocused { get { return (bool)GetValue(IsFieldsToSearchFocusedProperty); } set { SetValue(IsFieldsToSearchFocusedProperty, value); } }
+        public bool IsFieldsToSearchFocused { get => (bool)GetValue(IsFieldsToSearchFocusedProperty); set => SetValue(IsFieldsToSearchFocusedProperty, value); }
         public static readonly DependencyProperty IsFieldsToSearchFocusedProperty = DependencyProperty.Register("IsFieldsToSearchFocused", typeof(bool), typeof(FindRecordsMultipleCriteriaDesignerViewModel), new PropertyMetadata(default(bool)));
 
         string Result => GetProperty<string>();
 
-        public bool IsResultFocused { get { return (bool)GetValue(IsResultFocusedProperty); } set { SetValue(IsResultFocusedProperty, value); } }
+        public bool IsResultFocused { get => (bool)GetValue(IsResultFocusedProperty); set => SetValue(IsResultFocusedProperty, value); }
         public static readonly DependencyProperty IsResultFocusedProperty = DependencyProperty.Register("IsResultFocused", typeof(bool), typeof(FindRecordsMultipleCriteriaDesignerViewModel), new PropertyMetadata(default(bool)));
 
         void OnSearchTypeChanged(object indexObj)
@@ -115,17 +115,17 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
                 yield break;
             }
 
-            foreach (var error in dto.GetRuleSet("SearchCriteria", GetDatalistString()).ValidateRules("'Match'", () => mi.SetProperty("IsSearchCriteriaFocused", true)))
+            foreach (var error in dto.GetRuleSet("SearchCriteria", GetDatalistString?.Invoke()).ValidateRules("'Match'", () => mi.SetProperty("IsSearchCriteriaFocused", true)))
             {
                 yield return error;
             }
 
-            foreach(var error in dto.GetRuleSet("From", GetDatalistString()).ValidateRules("'From'", () => mi.SetProperty("IsFromFocused", true)))
+            foreach(var error in dto.GetRuleSet("From", GetDatalistString?.Invoke()).ValidateRules("'From'", () => mi.SetProperty("IsFromFocused", true)))
             {
                 yield return error;
             }
 
-            foreach(var error in dto.GetRuleSet("To", GetDatalistString()).ValidateRules("'To'", () => mi.SetProperty("IsToFocused", true)))
+            foreach(var error in dto.GetRuleSet("To", GetDatalistString?.Invoke()).ValidateRules("'To'", () => mi.SetProperty("IsToFocused", true)))
             {
                 yield return error;
             }
@@ -145,7 +145,7 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
             {
                 case "FieldsToSearch":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => FieldsToSearch));
-                    ruleSet.Add(new IsValidExpressionRule(() => FieldsToSearch, GetDatalistString(), "1"));
+                    ruleSet.Add(new IsValidExpressionRule(() => FieldsToSearch, GetDatalistString?.Invoke(), "1", new VariableUtils()));
                     ruleSet.Add(new HasNoDuplicateEntriesRule(() => FieldsToSearch));
                     ruleSet.Add(new HasNoIndexsInRecordsetsRule(() => FieldsToSearch));
                     ruleSet.Add(new ScalarsNotAllowedRule(() => FieldsToSearch));
@@ -153,7 +153,7 @@ namespace Dev2.Activities.Designers2.FindRecordsMultipleCriteria
 
                 case "Result":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => Result));
-                    ruleSet.Add(new IsValidExpressionRule(() => Result, GetDatalistString(), "1"));
+                    ruleSet.Add(new IsValidExpressionRule(() => Result, GetDatalistString?.Invoke(), "1", new VariableUtils()));
                     break;
                 default:
                     break;

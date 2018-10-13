@@ -139,7 +139,7 @@ namespace Dev2.Activities.Designers.Tests.DotNetDll
 
             //------------Assert Results-------------------------
             vm.SetDisplayName("dsfbob_builer");
-            PrivateObject p = new PrivateObject(vm);
+            var p = new PrivateObject(vm);
             Assert.AreEqual(p.GetProperty("DisplayName"), "DotNet DLLdsfbob_builer");
         }
 
@@ -218,7 +218,7 @@ namespace Dev2.Activities.Designers.Tests.DotNetDll
 
             var vm = new DotNetDllEnhancedViewModel(CreateModelItemWithValues(), ps.Object);
             vm.DesignValidationErrors.Add(new ErrorInfo { Message = "bob error", ErrorType = ErrorType.Critical });
-            PrivateObject p = new PrivateObject(vm);
+            var p = new PrivateObject(vm);
             p.Invoke("UpdateWorstError");
             var inf = p.GetProperty("WorstDesignError") as ErrorInfo;
             //------------Assert Results-------------------------
@@ -687,7 +687,7 @@ namespace Dev2.Activities.Designers.Tests.DotNetDll
             Assert.IsTrue(modelItem.ItemType == typeof(DsfEnhancedDotNetDllActivity));
             Assert.IsNotNull(dotNetDllEnhancedViewModel.DeleteActionCommand);
             Assert.IsTrue(dotNetDllEnhancedViewModel.DeleteActionCommand.CanExecute(null));
-            bool wasCalled = false;
+            var wasCalled = false;
             dotNetDllEnhancedViewModel.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == "MethodsToRunList")
@@ -848,8 +848,6 @@ namespace Dev2.Activities.Designers.Tests.DotNetDll
             Assert.IsNotNull(outputsRegion);
             Assert.AreEqual(true, outputsRegion.IsObject);
             Assert.AreEqual("@Human", outputsRegion.ObjectName);
-            //Assert.AreEqual(humanString.RemoveWhiteSpace().Replace(Environment.NewLine,"").TrimStart().TrimEnd()
-            //    , outputsRegion.ObjectResult.RemoveWhiteSpace().Replace(Environment.NewLine, "").TrimStart().TrimEnd());
             Assert.AreEqual(0, outputsRegion.Outputs.Count);
             Assert.AreEqual(1, outputsRegion.Dependants.Count);
             Assert.AreEqual("OutputsRegion", outputsRegion.ToolRegionName);
@@ -932,27 +930,27 @@ namespace Dev2.Activities.Designers.Tests.DotNetDll
 
             var methodToolRegions = dotNetDllEnhancedViewModel.MethodsToRunList;
             Assert.AreEqual(3, methodToolRegions.Count);
-            IMethodToolRegion<IPluginAction> methodToolRegion1 = methodToolRegions[0];
+            var methodToolRegion1 = methodToolRegions[0];
             Assert.IsNotNull(methodToolRegion1.SelectedMethod);
             Assert.AreEqual("SetNameInternal", methodToolRegion1.SelectedMethod.Method);
             Assert.AreEqual(true, methodToolRegion1.SelectedMethod.IsVoid);
             Assert.AreEqual(false, methodToolRegion1.SelectedMethod.IsObject);
             Assert.AreEqual(0, methodToolRegion1.SelectedMethod.Inputs.Count);
 
-            IMethodToolRegion<IPluginAction> methodToolRegion2 = methodToolRegions[1];
+            var methodToolRegion2 = methodToolRegions[1];
             Assert.IsNotNull(methodToolRegion2.SelectedMethod);
             Assert.AreEqual("ToString", methodToolRegion2.SelectedMethod.Method);
             Assert.AreEqual(false, methodToolRegion2.SelectedMethod.IsVoid);
             Assert.AreEqual(true, methodToolRegion2.SelectedMethod.IsObject);
             Assert.AreEqual(2, methodToolRegion2.SelectedMethod.Inputs.Count);
 
-            IMethodToolRegion<IPluginAction> emptyMethod = methodToolRegions[2];
+            var emptyMethod = methodToolRegions[2];
             Assert.IsNull(emptyMethod.SelectedMethod);
 
         }
 
-        private static readonly Guid id = Guid.NewGuid();
-        private static Mock<IPluginServiceModel> SetupEmptyMockSource()
+        static readonly Guid id = Guid.NewGuid();
+        static Mock<IPluginServiceModel> SetupEmptyMockSource()
         {
             var ps = new Mock<IPluginServiceModel>();
             ps.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource> { new PluginSourceDefinition { Id = id } });

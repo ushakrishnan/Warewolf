@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Dev2.Common.Interfaces.DB;
@@ -18,13 +19,13 @@ using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("Odbc", "ODBC", ToolType.Native, "8999E59B-38A3-43BB-A98F-6090C5C9EE11", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Database", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Database_ODBC")]
-    public class DsfODBCDatabaseActivity : DsfActivity
+    [ToolDescriptorInfo("Odbc", "ODBC", ToolType.Native, "8999E59B-38A3-43BB-A98F-6090C5C9EE11", "Dev2.Activities", "1.0.0.0", "Legacy", "Database", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Database_ODBC")]
+    public class DsfODBCDatabaseActivity : DsfActivity,IEquatable<DsfODBCDatabaseActivity>
     {
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IServiceExecution ServiceExecution { get; protected set; }
         public string CommandText { get; set; }
-
+        public int? CommandTimeout { get; set; }
         public DsfODBCDatabaseActivity()
         {
             Type = "ODBC Connector";
@@ -32,15 +33,15 @@ namespace Dev2.Activities
             CommandText = "";
         }
 
-        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO errors, int update)
+        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
         {
             var execErrors = new ErrorResultTO();
 
-            errors = new ErrorResultTO();
-            errors.MergeErrors(execErrors);
+            tmpErrors = new ErrorResultTO();
+            tmpErrors.MergeErrors(execErrors);
             if (string.IsNullOrEmpty(CommandText))
             {
-                errors.AddError(ErrorResource.NoActionsInSelectedDB);
+                tmpErrors.AddError(ErrorResource.NoActionsInSelectedDB);
                 return;
             }
             if (ServiceExecution is DatabaseServiceExecution databaseServiceExecution)
@@ -54,7 +55,7 @@ namespace Dev2.Activities
             {
                 dataObject.Environment.Errors.Add(error);
             }
-            errors.MergeErrors(execErrors);
+            tmpErrors.MergeErrors(execErrors);
         }
 
         public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
@@ -69,7 +70,7 @@ namespace Dev2.Activities
             {
                 foreach (var serviceInput in Inputs)
                 {
-                    DebugItem debugItem = new DebugItem();
+                    var debugItem = new DebugItem();
                     AddDebugItem(new DebugEvalResult(serviceInput.Value, serviceInput.Name, env, update), debugItem);
                     _debugInputs.Add(debugItem);
                 }
@@ -81,10 +82,14 @@ namespace Dev2.Activities
         {
 
             base.BeforeExecutionStart(dataObject, tmpErrors);
-            ServiceExecution = new DatabaseServiceExecution(dataObject);
-            var databaseServiceExecution = ServiceExecution as DatabaseServiceExecution;
-            databaseServiceExecution.ProcedureName = databaseServiceExecution.ODBCMethod(CommandText);
 
+            var databaseServiceExecution = new DatabaseServiceExecution(dataObject);
+            if (CommandTimeout != null)
+            {
+                databaseServiceExecution.CommandTimeout = CommandTimeout.Value;
+            }
+            databaseServiceExecution.ProcedureName = databaseServiceExecution.OdbcMethod(CommandText);
+            ServiceExecution = databaseServiceExecution;
             ServiceExecution.GetSource(SourceId);
             ServiceExecution.BeforeExecution(tmpErrors);
         }
@@ -95,9 +100,54 @@ namespace Dev2.Activities
             ServiceExecution.AfterExecution(tmpErrors);
         }
 
-        public override enFindMissingType GetFindMissingType()
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
+
+        public bool Equals(DsfODBCDatabaseActivity other)
         {
-            return enFindMissingType.DataGridActivity;
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && (SourceId != null && SourceId.Equals(other.SourceId))
+                && string.Equals(CommandText, other.CommandText);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfODBCDatabaseActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SourceId.GetHashCode() );
+                hashCode = (hashCode * 397) ^ (CommandText.GetHashCode() );
+                return hashCode;
+            }
         }
     }
 }

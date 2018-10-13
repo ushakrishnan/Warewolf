@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,6 +8,7 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using System;
 using System.IO;
 
 namespace Dev2.Common.Interfaces.Wrappers
@@ -30,5 +31,18 @@ namespace Dev2.Common.Interfaces.Wrappers
         FileAttributes GetAttributes(string path);
 
         void SetAttributes(string path, FileAttributes fileAttributes);
+        Stream OpenRead(string path);
+        IDev2StreamWriter AppendText(string filePath);
+
+        DateTime GetLastWriteTime(string filePath);
+    }
+
+    public interface IDev2StreamWriter : IDisposable
+    {
+        TextWriter SynchronizedTextWriter { get; }
+
+        void WriteLine(string v);
+        void WriteLine();
+        void Flush();
     }
 }

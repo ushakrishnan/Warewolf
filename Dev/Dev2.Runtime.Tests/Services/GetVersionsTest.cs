@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,7 +30,7 @@ using Moq;
         [TestClass]
         public class GetVersionsTest
         {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -44,7 +44,7 @@ using Moq;
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -58,7 +58,7 @@ using Moq;
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             public void GetVersions_HandlesType_ExpectName()
@@ -73,7 +73,7 @@ using Moq;
                 Assert.AreEqual("GetVersions", getVersions.HandlesType());
             }
 
-            [TestMethod]
+            [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_Execute")]
             public void GetVersions_Execute_NullValuesParameter_ErrorResult()
@@ -82,13 +82,13 @@ using Moq;
                 var getVersions = new GetVersions();
                 var serializer = new Dev2JsonSerializer();
                 //------------Execute Test---------------------------
-                StringBuilder jsonResult = getVersions.Execute(null, null);
-                IExplorerRepositoryResult result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
-                //------------Assert Results-------------------------
-                Assert.AreEqual(ExecStatus.Fail, result.Status);
+                var jsonResult = getVersions.Execute(null, null);
+            var result = serializer.Deserialize<IExplorerRepositoryResult>(jsonResult);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(ExecStatus.Fail, result.Status);
             }
 
-            [TestMethod]
+            [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             public void GetVersions_Execute_ExpectName()
@@ -96,8 +96,8 @@ using Moq;
                 //------------Setup for test--------------------------
                 var getVersions = new GetVersions();
                 var resourceId = Guid.NewGuid();
-                ServerExplorerItem item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
-                var repo = new Mock<IServerVersionRepository>();
+                var item = new ServerExplorerItem("a", Guid.NewGuid(), "Folder", null, Permissions.DeployFrom, "");
+            var repo = new Mock<IServerVersionRepository>();
                 var ws = new Mock<IWorkspace>();
                 repo.Setup(a => a.GetVersions(resourceId)).Returns(new List<IExplorerItem> {item});
                 var serializer = new Dev2JsonSerializer();
@@ -110,7 +110,7 @@ using Moq;
                 Assert.AreEqual(serializer.Deserialize<IList<IExplorerItem>>(ax.ToString())[0].ResourceId, item.ResourceId);
             }
 
-            [TestMethod]
+            [TestMethod, DeploymentItem("EnableDocker.txt")]
             [Owner("Leon Rajindrapersadh")]
             [TestCategory("GetVersions_HandlesType")]
             public void GetVersions_CreateServiceEntry_ExpectProperlyFormedDynamicService()

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,10 +22,7 @@ namespace Dev2.Converters
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
-        public IBaseConversionBroker CreateBroker(IBaseConverter from, IBaseConverter to)
-        {
-            return new Dev2BaseConversionBroker(from, to);
-        }
+        public IBaseConversionBroker CreateBroker(IBaseConverter from, IBaseConverter to) => new Dev2BaseConversionBroker(from, to);
 
         /// <summary>
         ///     Create a base converter

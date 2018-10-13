@@ -213,11 +213,47 @@ namespace Warewolf.UI.Tests.Settings.SettingsUIMapClasses
         {
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab, new Point(57, 7));
         }
-
-        public void Click_Settings_Resource_Permissions_Row1_Add_Resource_Button()
+        public void Click_Settings_Server_Permissions_Row3_Add_Resource_Button()
         {
+            Assert.IsTrue(FindAddWindowsGroupButton(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ResourcePermissions.Row1).Enabled);
             Mouse.Click(FindAddResourceButton(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ResourcePermissions.Row1));
             Assert.IsTrue(DialogsUIMap.ServicePickerDialog.Exists, "Service picker dialog does not exist.");
+        }
+        public void Click_Settings_Resource_Permissions_Row1_Add_Resource_Button()
+        {
+            Assert.IsTrue(FindAddWindowsGroupButton(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ResourcePermissions.Row1).Enabled);
+            Mouse.Click(FindAddResourceButton(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ResourcePermissions.Row1));
+            Assert.IsTrue(DialogsUIMap.ServicePickerDialog.Exists, "Service picker dialog does not exist.");
+        }
+
+        public WpfEdit FindServerPermissionsWindowsGroupTextbox(UITestControl row)
+        {
+            var firstOrDefaultCell = row.GetChildren().Where(child => child.ControlType == ControlType.Cell).ElementAtOrDefault(0);
+            return firstOrDefaultCell?.GetChildren().FirstOrDefault(child => child.ControlType == ControlType.Edit) as WpfEdit;
+        }
+
+        public WpfCheckBox FindServerPermissionsAdministratorPermissionsCheckbox(UITestControl row)
+        {
+            var firstOrDefaultCell = row.GetChildren().Where(child => child.ControlType == ControlType.Cell).ElementAtOrDefault(3);
+            return firstOrDefaultCell?.GetChildren().FirstOrDefault(child => child.ControlType == ControlType.CheckBox) as WpfCheckBox;
+        }
+
+        public WpfCheckBox FindServerPermissionsContributePermissionsCheckbox(UITestControl row)
+        {
+            var firstOrDefaultCell = row.GetChildren().Where(child => child.ControlType == ControlType.Cell).ElementAtOrDefault(6);
+            return firstOrDefaultCell?.GetChildren().FirstOrDefault(child => child.ControlType == ControlType.CheckBox) as WpfCheckBox;
+        }
+
+        public void AddNewServerPermissionsUser()
+        {
+            var thirdRowGroupUser = FindServerPermissionsWindowsGroupTextbox(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ServerPermissions.ThridRow).Text;
+            if (string.IsNullOrWhiteSpace(thirdRowGroupUser))
+            {
+                FindServerPermissionsWindowsGroupTextbox(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ServerPermissions.ThridRow).Text = "Warewolf User";
+                FindServerPermissionsAdministratorPermissionsCheckbox(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ServerPermissions.ThridRow).Checked = true;
+                FindServerPermissionsContributePermissionsCheckbox(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ServerPermissions.ThridRow).Checked = false;
+                Mouse.Click(UIMap.MainStudioWindow.SideMenuBar.SaveButton);
+            }
         }
 
         [When(@"I Click Select Resource Button From Resource Permissions")]
@@ -380,7 +416,7 @@ namespace Warewolf.UI.Tests.Settings.SettingsUIMapClasses
             if (deleteFirstResourceButton.Enabled)
             {
                 var selectedResource = FindSelectedResourceText(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.SecurityTab.SecurityWindow.ResourcePermissions.Row1).DisplayText;
-                if(!selectedResource.EndsWith(resource))
+                if (!selectedResource.EndsWith(resource))
                 {
                     Mouse.Click(deleteFirstResourceButton);
                     UIMap.Click_Save_Ribbon_Button_With_No_Save_Dialog();
@@ -505,13 +541,13 @@ namespace Warewolf.UI.Tests.Settings.SettingsUIMapClasses
         [When(@"I Click Server Log File Button")]
         public void Click_Server_Log_File_Button()
         {
-            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsViewConte.ServerLogs.ServerLogFile.ItemHyperlink, new Point(83, 6));
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsView.ServerLogFileItemText.ServerLogFileHyperlink, new Point(83, 6));
         }
 
         [When(@"I Click Studio Log File")]
         public void Click_Studio_Log_File()
         {
-            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsViewConte.StudioLogs.StudioLogFile.ItemHyperlink, new Point(79, 10));
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsView.StudioLogs.StudioLogFile.ItemHyperlink, new Point(79, 10));
         }
 
         [Given(@"I Click Close Settings Tab Button")]
@@ -538,7 +574,7 @@ namespace Warewolf.UI.Tests.Settings.SettingsUIMapClasses
                 ServerSourceUIMap.Click_Close_Server_Source_Wizard_Tab_Button();
                 UIMap.WaitForSpinner(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
                 Mouse.Click(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.ToggleButton);
-                Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration);
+                Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer);
                 DeployUIMap.Click_Deploy_Tab_Source_Server_Edit_Button();
                 Assert.IsTrue(windowsRadioButton.Selected);
             }
@@ -551,7 +587,7 @@ namespace Warewolf.UI.Tests.Settings.SettingsUIMapClasses
                 ServerSourceUIMap.Click_Close_Server_Source_Wizard_Tab_Button();
                 UIMap.WaitForSpinner(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerExplorer.ExplorerTree.LocalHost.Spinner);
                 Mouse.Click(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab.WorkSurfaceContext.DockManager.DeployView.SourceServerConectControl.Combobox.ToggleButton);
-                Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration);
+                Mouse.Click(UIMap.MainStudioWindow.ComboboxListItemAsRemoteContainer);
                 DeployUIMap.Click_Deploy_Tab_Source_Server_Edit_Button();
                 Assert.IsTrue(publicRadioButton.Selected);
             }
@@ -584,8 +620,19 @@ namespace Warewolf.UI.Tests.Settings.SettingsUIMapClasses
 
         public void Select_Fatal_Event_Log()
         {
-            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsViewConte.LoggingTypesComboBox.ToggleButtonButton);
+            Mouse.Click(MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsView.LoggingTypesComboBox.ToggleButtonButton);
             Mouse.Click(MainStudioWindow.FatalOnlylogeventsthCustom);
+        }
+
+        public void Assert_Audits_File_Path(string expectedPath)
+        {
+            var filePath = MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsView.AuditsFilePathComboBox.AuditsFilePathTextbox.Text;
+            Assert.AreEqual(expectedPath, filePath);
+        }
+
+        public void Update_Audits_File_Path(string changedPath)
+        {
+            MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab.WorksurfaceContext.SettingsView.TabList.LoggingTab.LogSettingsView.AuditsFilePathComboBox.AuditsFilePathTextbox.Text = changedPath;
         }
     }
 }

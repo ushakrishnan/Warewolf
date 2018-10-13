@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ namespace Dev2.Tests.Runtime.Util
     [TestClass]
     public class RemoteDebugItemParserTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("RemoteDebugItemParser_Parse")]
         
@@ -30,12 +30,12 @@ namespace Dev2.Tests.Runtime.Util
 
         {
             //------------Setup for test--------------------------
-            List<IDebugState> items = new List<IDebugState>
+            var items = new List<IDebugState>
             {
                 new DebugState {ActivityType = ActivityType.Workflow, ClientID = Guid.Empty, DisplayName = "DebugState"}
             };
 
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             var data = serializer.Serialize(items);
 
             //------------Execute Test---------------------------
@@ -47,7 +47,7 @@ namespace Dev2.Tests.Runtime.Util
             Assert.AreEqual(ActivityType.Workflow, result[0].ActivityType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("RemoteDebugItemParser_Parse")]
         
@@ -72,7 +72,7 @@ namespace Dev2.Tests.Runtime.Util
             Assert.AreEqual(ActivityType.Workflow, result[9].ActivityType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Travis Frisinger")]
         [TestCategory("RemoteDebugItemParser_Parse")]
         

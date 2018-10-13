@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,12 +13,10 @@ using System.Collections.Generic;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.ServerProxyLayer;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Diagnostics;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
@@ -29,7 +27,7 @@ namespace Dev2.Runtime.ESB.Management.Services
 
     public class TestDbSourceService : IEsbManagementEndpoint
     {
-        private readonly IDbSources _dbSources;
+        readonly IDbSources _dbSources;
 
         public TestDbSourceService()
             : this(new DbSources())
@@ -37,27 +35,18 @@ namespace Dev2.Runtime.ESB.Management.Services
 
         }
 
-        public TestDbSourceService(IDbSources dbSources)
-        {
-            _dbSources = dbSources;
-        }
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
+        public TestDbSourceService(IDbSources dbSources) => _dbSources = dbSources;
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Contribute;
-        }
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs) => Guid.Empty;
+
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Contribute;
 
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            ExecuteMessage msg = new ExecuteMessage();
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var msg = new ExecuteMessage();
+            var serializer = new Dev2JsonSerializer();
             try
             {
-
                 Dev2Logger.Info("Test DB Connection Service", GlobalConstants.WarewolfInfo);
 
                 values.TryGetValue("DbSource", out StringBuilder resourceDefinition);
@@ -72,8 +61,8 @@ namespace Dev2.Runtime.ESB.Management.Services
                         Server = src.ServerName,
                         Password = src.Password,
                         ServerType = src.Type,
+                        ConnectionTimeout = src.ConnectionTimeout,
                         UserID = src.UserName
-
                     });
 
                 });
@@ -97,18 +86,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             return serializer.SerializeToBuilder(msg);
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService newDs = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><Roles ColumnIODirection=\"Input\"/><DbSource ColumnIODirection=\"Input\"/><WorkspaceID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-            newDs.Actions.Add(sa);
+        public DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Roles ColumnIODirection=\"Input\"/><DbSource ColumnIODirection=\"Input\"/><WorkspaceID ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            return newDs;
-        }
-
-        public string HandlesType()
-        {
-            return "TestDbSourceService";
-        }
+        public string HandlesType() => "TestDbSourceService";
     }
 }

@@ -20,8 +20,8 @@ using Moq;
 using TechTalk.SpecFlow;
 using Warewolf.Studio.ViewModels;
 using Dev2.Threading;
-
-
+using Dev2.ConnectionHelpers;
+using Dev2.Studio.Core;
 
 namespace Warewolf.UIBindingTests.Deploy
 {
@@ -40,8 +40,12 @@ namespace Warewolf.UIBindingTests.Deploy
         {
             Core.Utils.SetupResourceDictionary();
             var serverRepo = new Mock<IServerRepository>();
+            var connectControlSingleton = new Mock<IConnectControlSingleton>();
+            CustomContainer.Register(connectControlSingleton.Object);
 
-            
+            var explorerTooltips = new Mock<IExplorerTooltips>();
+            CustomContainer.Register(explorerTooltips.Object);
+
             var shell = GetMockShellVm(true, localhostString);
             var shellViewModel = GetMockShellVm(false, destinationServerString);
             serverRepo.Setup(repository => repository.ActiveServer).Returns(shellViewModel.ActiveServer);
@@ -116,6 +120,11 @@ namespace Warewolf.UIBindingTests.Deploy
             var shell = new Mock<IShellViewModel>();
             shell.Setup(model => model.ExplorerViewModel).Returns(new Mock<IExplorerViewModel>().Object);
             shell.Setup(model => model.ExplorerViewModel.ConnectControlViewModel).Returns(new Mock<IConnectControlViewModel>().Object);
+            var env = new Mock<IEnvironmentViewModel>();
+            shell.SetupGet(model => model.ExplorerViewModel.Environments).Returns(new Caliburn.Micro.BindableCollection<IEnvironmentViewModel>()
+            {
+                env.Object
+            });
             var containsKey = ScenarioContext.Current.ContainsKey(localhostString);
             if (!containsKey)
             {
@@ -126,6 +135,7 @@ namespace Warewolf.UIBindingTests.Deploy
             }
             else
             {
+                var mockEnvironmentConnection = SetupMockConnection();
                 var server = ScenarioContext.Current.Get<Mock<IServer>>(localhostString);
                 var mock = new Mock<IServer>();
                 mock.SetupGet(p => p.DisplayName).Returns(name);
@@ -136,6 +146,7 @@ namespace Warewolf.UIBindingTests.Deploy
                 mock.SetupGet(p => p.CanDeployFrom).Returns(true);
                 mock.Setup(a => a.GetServerVersion()).Returns("1.0.0.0");
                 mock.Setup(a => a.GetMinSupportedVersion()).Returns("1.0.0.0");
+                mock.SetupGet(it => it.Connection).Returns(mockEnvironmentConnection.Object);
                 shell.Setup(a => a.LocalhostServer).Returns(server.Object);
                 shell.Setup(a => a.ActiveServer).Returns(mock.Object);
                 if (!ScenarioContext.Current.ContainsKey(destinationServerString))
@@ -156,8 +167,20 @@ namespace Warewolf.UIBindingTests.Deploy
             return shell.Object;
         }
 
+        private static Mock<IEnvironmentConnection> SetupMockConnection()
+        {
+            var uri = new Uri("http://bravo.com/");
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(a => a.AppServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.AuthenticationType).Returns(Dev2.Runtime.ServiceModel.Data.AuthenticationType.Public);
+            mockEnvironmentConnection.Setup(a => a.WebServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.ID).Returns(Guid.Empty);
+            return mockEnvironmentConnection;
+        }
+
         static IServer GetMockServer(string name)
         {
+            var mockEnvironmentConnection = SetupMockConnection();
             var server = new Mock<IServer>();
             var qp = new Mock<IQueryManager>();
             qp.Setup(a => a.FetchDependenciesOnList(It.IsAny<IEnumerable<Guid>>())).Returns(new List<Guid> { Guid.Parse("5C8B5660-CE6E-4D22-84D8-5B77DC749F70") });
@@ -180,6 +203,7 @@ namespace Warewolf.UIBindingTests.Deploy
             server.Setup(a => a.CanDeployFrom).Returns(true);
             server.Setup(a => a.GetServerVersion()).Returns("1.0.0.0");
             server.Setup(a => a.GetMinSupportedVersion()).Returns("1.0.0.0");
+            server.SetupGet(it => it.Connection).Returns(mockEnvironmentConnection.Object);
             if (!name.Equals(localhostString, StringComparison.InvariantCultureIgnoreCase))
             {
                 server.Setup(a => a.DisplayName).Returns(name);
@@ -240,30 +264,6 @@ namespace Warewolf.UIBindingTests.Deploy
                 }
             };
         }
-
-        //static IExplorerItemViewModel CreateExplorerVms()
-        //{
-        //    ExplorerItemViewModel ax = null;
-        //    var server = new Mock<IServer>();
-        //    server.SetupGet(server1 => server1.CanDeployFrom).Returns(true);
-        //    ax = new ExplorerItemViewModel(server.Object, null, a => { }, new Mock<IShellViewModel>().Object, new Mock<Dev2.Common.Interfaces.Studio.Controller.IPopupController>().Object)
-        //    {
-        //        ResourceName = "Examples",
-        //        Children = new ObservableCollection<IExplorerItemViewModel>
-        //        {
-                    
-        //            new ExplorerItemViewModel(server.Object, ax, a => { }
-        //            , new Mock<IShellViewModel>().Object
-        //            , new Mock<Dev2.Common.Interfaces.Studio.Controller.IPopupController>().Object)
-        //            {
-        //                ResourceName = "Utility - Date and Time",
-        //                ResourcePath = "Examples\\Utility - Date and Time",
-        //                ResourceType = "WorkflowService"
-        //            }
-        //        }
-        //    };
-        //    return ax;
-        //}
 
         [Given(@"selected Source Server is ""(.*)""")]
         public void GivenSelectedSourceServerIs(string selectedSourceServer)
@@ -551,7 +551,7 @@ namespace Warewolf.UIBindingTests.Deploy
             SetDestPermisions(deployFrom, deployTo, destinationServer);
         }
 
-        private void SetDestPermisions(bool deployFrom, bool deployTo, Mock<IServer> Mockserver)
+        void SetDestPermisions(bool deployFrom, bool deployTo, Mock<IServer> Mockserver)
         {
             var destinationServer = Mockserver;
             destinationServer.Setup(server => server.CanDeployFrom).Returns(deployFrom);
@@ -632,7 +632,7 @@ namespace Warewolf.UIBindingTests.Deploy
         {
             var viewModel = GetViewModel();
             var deployStatsViewerViewModel = ScenarioContext.Current.Get<DeployStatsViewerViewModel>(statsString);
-            deployStatsViewerViewModel.Calculate(new List<IExplorerTreeItem>(viewModel.Source.SelectedItems));
+            deployStatsViewerViewModel.TryCalculate(new List<IExplorerTreeItem>(viewModel.Source.SelectedItems));
         }
 
         [Then(@"New Resource is ""(.*)""")]
@@ -658,6 +658,7 @@ namespace Warewolf.UIBindingTests.Deploy
         {
             var msg = new Mock<IPopupMessage>();
             GetPopup().Object.Show(msg.Object);
+            CustomContainer.Register<IServerRepository>(new ServerRepository());
         }
 
         [Then(@"a warning message appears ""(.*)""")]

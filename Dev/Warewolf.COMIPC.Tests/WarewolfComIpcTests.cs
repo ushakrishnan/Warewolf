@@ -27,14 +27,14 @@ namespace WarewolfCOMIPC.Test
                     stream.CopyTo(fileStream);
                 }
             }
-            Process regeditProcess = Process.Start("regedit.exe", "/s " + RegistryFilePath);
+            var regeditProcess = Process.Start("regedit.exe", "/s " + RegistryFilePath);
             regeditProcess.WaitForExit();
         }
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("WarewolfCOMIPCClient_Execute")]
-        [DeploymentItem("WarewolfCOMIPC.exe")]
+        [DeploymentItem("Warewolf.COMIPC.exe")]
         [DeploymentItem("Dev2.Runtime.Tests.dll")]
         public void WarewolfCOMIPCClient_Execute_GetType_ShouldReturnType()
         {
@@ -50,7 +50,7 @@ namespace WarewolfCOMIPC.Test
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        [DeploymentItem("WarewolfCOMIPC.exe")]
+        [DeploymentItem("Warewolf.COMIPC.exe")]
         [DeploymentItem("Dev2.Runtime.Tests.dll")]
         public void GetMethods_GivenConnection_ShouldReturnMethodList()
         {
@@ -69,6 +69,7 @@ namespace WarewolfCOMIPC.Test
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         [DeploymentItem("Dev2.Runtime.Tests.dll")]
+        [DeploymentItem("Warewolf.COMIPC.exe"),DeploymentItem("Warewolf.COMIPC.pdb")]
         public void ExecuteSpecifiedMethod_GivenConnection_ReturnSuccess()
         {
             //---------------Set up test pack-------------------
@@ -76,10 +77,10 @@ namespace WarewolfCOMIPC.Test
             //---------------Assert Precondition----------------
 
             //---------------Execute Test ----------------------
-             KeyValuePair<bool, string> execute = (KeyValuePair<bool, string>)IpcClient.GetIPCExecutor().Invoke(classId, "Open", Execute.ExecuteSpecifiedMethod, new ParameterInfoTO[] { });
+             var execute = (KeyValuePair<bool, string>)IpcClient.GetIPCExecutor().Invoke(classId, "Open", Execute.ExecuteSpecifiedMethod, new ParameterInfoTO[] { });
 
             //---------------Test Result -----------------------
-            
+
             Assert.IsNotNull(execute.Value);
         }
     }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -68,14 +68,14 @@ namespace Dev2.Activities.Designers2.Zip
         public override void Validate()
         {
             Errors = null;
-            string password = ArchivePassword;
+            var password = ArchivePassword;
             ValidateUserNameAndPassword();
             ValidateDestinationUsernameAndPassword();
             ValidateInputAndOutputPaths();
             ValidateArchivePassword(password, "Archive Password");
         }
 
-        string ArchivePassword { get { return GetProperty<string>(); } }
+        string ArchivePassword => GetProperty<string>();
 
         public override void UpdateHelpDescriptor(string helpText)
         {

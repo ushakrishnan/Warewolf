@@ -16,7 +16,7 @@ namespace Dev2.Tests.Runtime.WebServer
     [TestClass]
     public class ApisJsonBuilderTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -31,7 +31,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -46,7 +46,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_Constructor")]
         public void ApisJsonBuilder_Constructor_AuthorizationService_PropertySet()
@@ -61,7 +61,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsNotNull(builder.ResourceCatalog);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_BuildForPath")]
         public void ApisJsonBuilder_BuildForPath_NullPath_ShouldBuildForWholeCatalog()
@@ -89,11 +89,11 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
             Assert.IsNotNull(apisJson);
             Assert.AreEqual(exceptedApisJson,apisJson);
-            Assert.AreEqual(exceptedApisJson.Apis.Count,apisJson.Apis.Count);
+            Assert.AreEqual(exceptedApisJson.Apis.Count, apisJson.Apis.Count);
             Assert.AreEqual(exceptedApisJson.Apis[0].BaseUrl.Contains("secure"), apisJson.Apis[0].BaseUrl.Contains("secure"));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_BuildForPath")]
         public void ApisJsonBuilder_BuildForPath_WithPath_ShouldBuildForResourcesAtPath()
@@ -126,7 +126,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(exceptedApisJson.Apis[0].BaseUrl,apisJson.Apis[0].BaseUrl);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_BuildForPath")]
         public void ApisJsonBuilder_BuildForPath_WithPathHasSubDirectories_ShouldBuildForAllResourcesAtPath()
@@ -161,8 +161,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(exceptedApisJson.Apis[1].BaseUrl, apisJson.Apis[1].BaseUrl);
         }
 
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_BuildForPath")]
         public void ApisJsonBuilder_BuildForPath_OnlyAuthorized_ShouldBuildForWholeCatalog()
@@ -201,8 +200,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(exceptedApisJson.Apis[0].BaseUrl, apisJson.Apis[0].BaseUrl);
         }
 
-
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("ApisJsonBuilder_BuildForPath")]
         public void ApisJsonBuilder_BuildForPath_OnlyAuthorized_MixPublicWithSecure_ShouldBuildForWholeCatalog()
@@ -244,6 +242,85 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(exceptedApisJson.Apis[1].BaseUrl, apisJson.Apis[1].BaseUrl);
         }
 
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Ashley Lewis")]
+        public void ApisJsonBuilder_GetHashCode()
+        {
+            var apiJson = new ApisJson
+            {
+                Name = EnvironmentVariables.PublicWebServerUri,
+                Description = "",
+                SpecificationVersion = "0.15",
+                Apis = new List<SingleApi>()
+            };
+            Assert.IsInstanceOfType(apiJson.GetHashCode(), typeof(int), "ApisJson object did not hash.");
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Ashley Lewis")]
+        public void ApisJsonBuilder_Include_Equals()
+        {
+            var apiJson = new ApisJson
+            {
+                Include = new List<IncludeApi>()
+                {
+                    new IncludeApi()
+                    {
+                        Name = "Included Api",
+                        Url = "Included Url"
+                    }
+                }
+            };
+            var differentApiJson = new ApisJson
+            {
+                Include = new List<IncludeApi>()
+                {
+                    new IncludeApi()
+                    {
+                        Name = "Different Included Api",
+                        Url = "Different Included Url"
+                    }
+                }
+            };
+            Assert.IsFalse(differentApiJson.Include == apiJson.Include, "ApisJson object cannot compare Included Apis.");
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Ashley Lewis")]
+        public void ApisJsonBuilder_Maintainers_Equals()
+        {
+            var apiJson = new ApisJson
+            {
+                Maintainers = new List<MaintainerApi>()
+                {
+                    new MaintainerApi()
+                    {
+                        Fn = "Ashley Lewis",
+                        Email = "ashley.lewis@dev2.co.za",
+                        Url = "https://warewolf.io",
+                        Org = "https://dev2.co.za",
+                        Adr = "Bellevue, Kloof",
+                        Tel = "9139",
+                        XTwitter = "@warewolf",
+                        XGithub = "Warewolf-ESB/Warewolf",
+                        Photo = "https://warewolf.io/images/logo.png",
+                        VCard = "39A03A58-978F-4CFB-B1D1-3EFA6C55E380"
+                    }
+                }
+            };
+            var differentApiJson = new ApisJson
+            {
+                Maintainers = new List<MaintainerApi>()
+                {
+                    new MaintainerApi()
+                    {
+                        Fn = "A Totally Different Ashley Lewis",
+                        Email = "not.ashley.lewis@dev2.co.za"
+                    }
+                }
+            };
+            Assert.IsFalse(differentApiJson.Maintainers == apiJson.Maintainers, "ApisJson object cannot compare Maintainers.");
+        }
 
         static ApisJson GetExceptedApisJsonForServerNoSecurity()
         {
@@ -403,13 +480,17 @@ namespace Dev2.Tests.Runtime.WebServer
                 SpecificationVersion = "0.15",
                 Apis = new List<SingleApi>()
             };
-            
+
             var singleApi2 = new SingleApi
             {
                 Name = "Execution Engine Test",
                 Description = "",
                 BaseUrl = EnvironmentVariables.PublicWebServerUri + "secure/Acceptance Testing Resources/Execution Engine/Execution Engine Test.json",
-                Properties = new List<PropertyApi>()
+                Properties = new List<PropertyApi>(),
+                HumanUrl = "https://warewolf.io",
+                Image = "https://warewolf.io/images/logo.png",
+                Version = "1.0",
+                Tags = new List<string>()
             };
             var swagger2 = new PropertyApi
             {

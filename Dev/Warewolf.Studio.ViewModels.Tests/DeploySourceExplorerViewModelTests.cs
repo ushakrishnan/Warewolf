@@ -10,6 +10,7 @@ using Dev2.Studio.Interfaces;
 using Dev2.Studio.Interfaces.Deploy;
 using Microsoft.Practices.Prism.PubSubEvents;
 using Moq;
+using Dev2;
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -18,14 +19,14 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private DeploySourceExplorerViewModel _target;
-        private Mock<IEnvironmentViewModel> _selectedEnvironment;
-        private Mock<IShellViewModel> _shellViewModelMock;
-        private Mock<IServer> _serverMock;
-        private Mock<IEventAggregator> _eventAggregatorMock;
-        private Mock<IDeployStatsViewerViewModel> _deployStatsViewerViewModel;
-        private Mock<IStudioUpdateManager> _studioUpdateManagerMock;
-        private Mock<IExplorerItem> _explorerItemMock;
+        DeploySourceExplorerViewModel _target;
+        Mock<IEnvironmentViewModel> _selectedEnvironment;
+        Mock<IShellViewModel> _shellViewModelMock;
+        Mock<IServer> _serverMock;
+        Mock<IEventAggregator> _eventAggregatorMock;
+        Mock<IDeployStatsViewerViewModel> _deployStatsViewerViewModel;
+        Mock<IStudioUpdateManager> _studioUpdateManagerMock;
+        Mock<IExplorerItem> _explorerItemMock;
 
         #endregion Fields
 
@@ -34,6 +35,8 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestInitialize]
         public void TestInitialize()
         {
+            var explorerTooltips = new Mock<IExplorerTooltips>();
+            CustomContainer.Register(explorerTooltips.Object);
             _selectedEnvironment = new Mock<IEnvironmentViewModel>();
             _selectedEnvironment.Setup(p => p.DisplayName).Returns("someResName");
             _shellViewModelMock = new Mock<IShellViewModel>();
@@ -48,17 +51,41 @@ namespace Warewolf.Studio.ViewModels.Tests
             _serverMock.Setup(it => it.LoadExplorer(false)).ReturnsAsync(_explorerItemMock.Object);
             _serverMock.SetupGet(it => it.UpdateRepository).Returns(_studioUpdateManagerMock.Object);
             _serverMock.SetupGet(it => it.DisplayName).Returns("someResName");
+
+            var mockEnvironmentConnection = SetupMockConnection();
+            _serverMock.SetupGet(it => it.Connection).Returns(mockEnvironmentConnection.Object);
+
             _shellViewModelMock.SetupGet(it => it.LocalhostServer).Returns(_serverMock.Object);
             _eventAggregatorMock = new Mock<IEventAggregator>();
             _deployStatsViewerViewModel = new Mock<IDeployStatsViewerViewModel>();
+
+            var environmentRepository = new Mock<IServerRepository>();
+            var environments = new List<IServer>
+                {
+                    _serverMock.Object
+                };
+            environmentRepository.Setup(e => e.All()).Returns(environments);
+            CustomContainer.Register(environmentRepository.Object);
+
             _target = new DeploySourceExplorerViewModel(_shellViewModelMock.Object, _eventAggregatorMock.Object, _deployStatsViewerViewModel.Object, _selectedEnvironment.Object);
+        }
+
+        private static Mock<IEnvironmentConnection> SetupMockConnection()
+        {
+            var uri = new Uri("http://bravo.com/");
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(a => a.AppServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.AuthenticationType).Returns(Dev2.Runtime.ServiceModel.Data.AuthenticationType.Public);
+            mockEnvironmentConnection.Setup(a => a.WebServerUri).Returns(uri);
+            mockEnvironmentConnection.Setup(a => a.ID).Returns(Guid.Empty);
+            return mockEnvironmentConnection;
         }
 
         #endregion Test initialize
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEnvironments()
         {
             //arrange
@@ -69,7 +96,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsNotNull(env);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestPreselected()
         {
             //arrange
@@ -104,7 +131,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             secondPreselectedItemMock.VerifySet(it => it.IsResourceChecked = true);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectedItemsEmpty()
         {
             //arrange
@@ -117,7 +144,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(!actual.Any());
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectedItemsNotEmpty()
         {
             //arrange
@@ -141,7 +168,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(actual.Contains(child.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectedItemsSet()
         {
             //arrange
@@ -169,7 +196,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child3.VerifySet(it => it.IsSelected = true, Times.Never);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectedItemsSetEnvironmentNull()
         {
             //arrange
@@ -191,7 +218,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             child3.VerifySet(it => it.IsSelected = true, Times.Never);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestServerVersion()
         {
             //arrange
@@ -212,8 +239,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         #endregion Test properties
 
         #region Test methods
-
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectedEnvironmentChanged()
         {
             //arrange
@@ -222,6 +248,10 @@ namespace Warewolf.Studio.ViewModels.Tests
             var serverId = Guid.NewGuid();
             serverMock.SetupGet(it => it.EnvironmentID).Returns(serverId);
             serverMock.SetupGet(it => it.DisplayName).Returns("newServerName");
+
+            var mockEnvironmentConnection = SetupMockConnection();
+            serverMock.SetupGet(it => it.Connection).Returns(mockEnvironmentConnection.Object);
+
             environmentViewModelMock.SetupGet(it => it.IsVisible).Returns(true);
             environmentViewModelMock.SetupGet(it => it.Server).Returns(serverMock.Object);
             var env = _target.Environments.First();
@@ -231,8 +261,12 @@ namespace Warewolf.Studio.ViewModels.Tests
             explorerItemViewModelMock.SetupGet(it => it.ResourceName).Returns("newServerName");
             explorerItemViewModelMock.SetupGet(it => it.ResourceId).Returns(serverId);
             explorerItemViewModelMock.SetupGet(it => it.Children).Returns(new ObservableCollection<IExplorerItemViewModel>());
+            environmentViewModelMock
+                .Setup(it => it.AsList())
+                .Returns(new List<IExplorerItemViewModel>() { explorerItemViewModelMock.Object });
             env.AddChild(explorerItemViewModelMock.Object);
             env.ResourceId = serverId;
+            env.Server = serverMock.Object;
             var environmentViewModels = _target.Environments.Union(new[] { environmentViewModelMock.Object }).ToList();
             _target.Environments = new ObservableCollection<IEnvironmentViewModel>(environmentViewModels);
 
@@ -253,7 +287,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             explorerItemViewModelMock.VerifySet(it => it.CanDrag = false);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public async Task TestOtherServerСonnect()
         {
             //arrange
@@ -268,14 +302,14 @@ namespace Warewolf.Studio.ViewModels.Tests
             serverMock.Setup(it => it.ConnectAsync()).ReturnsAsync(true);
 
             //act
-            await _target.ConnectControlViewModel.Connect(serverMock.Object);
+            await _target.ConnectControlViewModel.TryConnectAsync(serverMock.Object);
 
             //assert
             Assert.IsTrue(isEnvironmentChanged);
             Assert.AreEqual(1, _target.Environments.Count);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEnvironmentSelectAll()
         {
             //arrange
@@ -293,10 +327,33 @@ namespace Warewolf.Studio.ViewModels.Tests
             env.SelectAll();
 
             //assert
-            _deployStatsViewerViewModel.Verify(it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(list => list.Count == 1 && list.Contains(explorerItemViewModelResourceCheckedMock.Object))));
+            _deployStatsViewerViewModel.Verify(it => it.TryCalculate(It.Is<IList<IExplorerTreeItem>>(list => list.Count == 1 && list.Contains(explorerItemViewModelResourceCheckedMock.Object))));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
+        public void TestCalculateOnNullExplorerItems()
+        {
+            //arrange
+            var explorerItemViewModelMock = new Mock<IExplorerItemViewModel>();
+            var selectedEnvironmentMock = new Mock<IEnvironmentViewModel>();
+            selectedEnvironmentMock.Setup(it => it.IsConnected).Returns(true);
+            selectedEnvironmentMock.Setup(it => it.AsList()).Returns(new List<IExplorerItemViewModel> { explorerItemViewModelMock.Object });
+
+            var destination = new Mock<IDeployDestinationExplorerViewModel>();
+            destination.Setup(dest => dest.ConnectControlViewModel).Returns(new Mock<IConnectControlViewModel>().Object);
+            destination.Setup(dest => dest.SelectedEnvironment).Returns(selectedEnvironmentMock.Object);
+
+            var deployStatsViewerViewModel = new DeployStatsViewerViewModel(destination.Object);
+            deployStatsViewerViewModel.ReCalculate();
+
+            //assert
+            Assert.AreEqual(0, deployStatsViewerViewModel.Connectors);
+            Assert.AreEqual(0, deployStatsViewerViewModel.Services);
+            Assert.AreEqual(0, deployStatsViewerViewModel.Sources);
+            Assert.AreEqual(0, deployStatsViewerViewModel.Unknown);
+        }
+
+        [TestMethod,Timeout(60000)]
         public void TestSelectActionFolder()
         {
             //arrange
@@ -313,53 +370,51 @@ namespace Warewolf.Studio.ViewModels.Tests
             //assert
 
             _deployStatsViewerViewModel.Verify(
-                it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
+                it => it.TryCalculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectActionParentFolder()
         {
             //arrange
             var childMock = new Mock<IExplorerItemViewModel>();
             var axParentMock = new Mock<IExplorerItemViewModel>();
-            var axMock = new Mock<IExplorerItemViewModel>();
-            axMock.SetupGet(it => it.IsResourceChecked).Returns(true);
-            axMock.SetupGet(it => it.ResourceType).Returns("DbService");
+            childMock.SetupGet(it => it.IsResourceChecked).Returns(true);
+            childMock.SetupGet(it => it.ResourceType).Returns("DbService");
             axParentMock.SetupGet(it => it.ResourceType).Returns("Folder");
-            axMock.SetupGet(it => it.Parent).Returns(axParentMock.Object);
-            axMock.Setup(it => it.Children)
+            childMock.SetupGet(it => it.Parent).Returns(axParentMock.Object);
+            axParentMock.Setup(it => it.UnfilteredChildren)
                 .Returns(new ObservableCollection<IExplorerItemViewModel>() { childMock.Object });
 
             //act
-            _target.Environments.First().SelectAction(axMock.Object);
+            _target.Environments.First().SelectAction(childMock.Object);
 
             //assert
             axParentMock.VerifySet(it => it.IsFolderChecked = true);
             _deployStatsViewerViewModel.Verify(
-                it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
+                it => it.TryCalculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSelectActionParentServerSource()
         {
             //arrange
             var childMock = new Mock<IExplorerItemViewModel>();
-            var axParentMock = new Mock<IExplorerItemViewModel>();
-            var axMock = new Mock<IExplorerItemViewModel>();
-            axMock.SetupGet(it => it.IsResourceChecked).Returns(true);
-            axMock.SetupGet(it => it.ResourceType).Returns("DbService");
+            var axParentMock = new Mock<IEnvironmentViewModel>();
+            childMock.SetupGet(it => it.IsResourceChecked).Returns(true);
+            childMock.SetupGet(it => it.ResourceType).Returns("DbService");
             axParentMock.SetupGet(it => it.ResourceType).Returns("ServerSource");
-            axMock.SetupGet(it => it.Parent).Returns(axParentMock.Object);
-            axMock.Setup(it => it.Children)
+            childMock.SetupGet(it => it.Parent).Returns(axParentMock.Object);
+            axParentMock.Setup(it => it.UnfilteredChildren)
                 .Returns(new ObservableCollection<IExplorerItemViewModel>() { childMock.Object });
 
             //act
-            _target.Environments.First().SelectAction(axMock.Object);
+            _target.Environments.First().SelectAction(childMock.Object);
 
             //assert
             axParentMock.VerifySet(it => it.IsFolderChecked = true);
             _deployStatsViewerViewModel.Verify(
-                it => it.Calculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
+                it => it.TryCalculate(It.Is<IList<IExplorerTreeItem>>(match => !match.Any())));
         }        
         #endregion Test methods
     }

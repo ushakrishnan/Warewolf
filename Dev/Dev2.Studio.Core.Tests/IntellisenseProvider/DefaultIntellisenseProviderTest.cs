@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -34,15 +34,15 @@ namespace Dev2.Core.Tests.IntellisenseProvider
     [TestClass]
     public class DefaultIntellisenseProviderTest
     {
-        
-        private IResourceModel _resourceModel;
+
+        IResourceModel _resourceModel;
 
         #region Test Initialization
 
         [TestInitialize]
         public void Init()
         {
-            PrivateType p = new PrivateType(typeof(Dev2DataLanguageParser));
+            var p = new PrivateType(typeof(Dev2DataLanguageParser));
             var cache = p.GetStaticField("_expressionCache") as ConcurrentDictionary<string, IList<IIntellisenseResult>>;
             Assert.IsNotNull(cache);
             cache.Clear();
@@ -1018,7 +1018,55 @@ namespace Dev2.Core.Tests.IntellisenseProvider
 
             //------------Assert Results-------------------------
 
-            Assert.AreEqual("some string [[obfsucationStaging]]", result);
+            Assert.AreEqual("some string [[obfsucationStaging]] some string", result);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DefaultIntellisenseProvider_PerformMultipleSelection")]
+        public void DefaultIntellisenseProvider_PerformMultipleSelection_WhenSelectingOpenBracket_InsertedNormally()
+        {
+            //------------Setup for test--------------------------
+            var context = new IntellisenseProviderContext
+            {
+                CaretPosition = 11,
+                CaretPositionOnPopup = 0,
+                DesiredResultSet = IntellisenseDesiredResultSet.Default,
+                FilterType = enIntellisensePartType.None,
+                InputText = "s [[a]] s [",
+                IsInCalculateMode = false
+            };
+
+            //------------Execute Test---------------------------
+            var result = new DefaultIntellisenseProvider().PerformResultInsertion("[[b]]", context);
+
+            //------------Assert Results-------------------------
+
+            Assert.AreEqual("s [[a]] s [[b]]", result);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DefaultIntellisenseProvider_PerformMultipleSelection")]
+        public void DefaultIntellisenseProvider_PerformMultipleSelection_WhenSelectingChar_InsertedNormally()
+        {
+            //------------Setup for test--------------------------
+            var context = new IntellisenseProviderContext
+            {
+                CaretPosition = 11,
+                CaretPositionOnPopup = 0,
+                DesiredResultSet = IntellisenseDesiredResultSet.Default,
+                FilterType = enIntellisensePartType.None,
+                InputText = "s [[a]] s b",
+                IsInCalculateMode = false
+            };
+
+            //------------Execute Test---------------------------
+            var result = new DefaultIntellisenseProvider().PerformResultInsertion("[[b]]", context);
+
+            //------------Assert Results-------------------------
+
+            Assert.AreEqual("s [[a]] s [[b]]", result);
         }
 
         [TestMethod]
@@ -1125,8 +1173,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var scalarDataListItemWithNoError = DataListItemModelFactory.CreateScalarItemModel("var", "Random Variable", enDev2ColumnArgumentDirection.Both);
             scalarDataListItemWithError.HasError = true;
             scalarDataListItemWithError.ErrorMessage = "This is an Error";
-            dataListViewModel.ScalarCollection.Add(scalarDataListItemWithError);
-            dataListViewModel.ScalarCollection.Add(scalarDataListItemWithNoError);
+            dataListViewModel.Add(scalarDataListItemWithError);
+            dataListViewModel.Add(scalarDataListItemWithNoError);
             dataListViewModel.WriteToResourceModel();
             DataListSingleton.SetDataList(dataListViewModel);
         }
@@ -1349,7 +1397,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             //The only reason this logic needs to run is to check that a zero caret position doesn't crash it!!!
-            string actual = new DefaultIntellisenseProvider().PerformResultInsertion("", context);
+            var actual = new DefaultIntellisenseProvider().PerformResultInsertion("", context);
             Assert.AreEqual("", actual);
         }
 
@@ -1528,8 +1576,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialScalarAndFullRegionExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 3,
                 InputText = "[[S]]",
@@ -1537,7 +1585,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[Scalar]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[Scalar]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[Scalar]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1547,8 +1595,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetAndPartialRegionExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 9,
                 InputText = "[[City().",
@@ -1556,7 +1604,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City().GeoLocation]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City().GeoLocation]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City().GeoLocation]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1565,8 +1613,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetWithIndexAndPartialRegionExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 10,
                 InputText = "[[City(4).",
@@ -1574,7 +1622,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City(4).GeoLocation]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(4).GeoLocation]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(4).GeoLocation]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1583,8 +1631,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetAndPartialRegionAndStarIndexExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 10,
                 InputText = "[[City(*).",
@@ -1592,7 +1640,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City(*).GeoLocation]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(*).GeoLocation]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(*).GeoLocation]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1601,8 +1649,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetWithClosedBracketsAndFullRegionExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 9,
                 InputText = "[[City().]]",
@@ -1610,7 +1658,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City().GeoLocation]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City().GeoLocation]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City().GeoLocation]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1619,8 +1667,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetWithClosedBracketsAndFullRegionAnNumberIndexExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 11,
                 InputText = "[[City(44).]]",
@@ -1628,7 +1676,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City(44).GeoLocation]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(44).GeoLocation]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(44).GeoLocation]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1637,8 +1685,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetWithClosedBracketsAndFullRegionAnStarIndexExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 10,
                 InputText = "[[City(*).]]",
@@ -1646,7 +1694,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City(*).GeoLocation]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(*).GeoLocation]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City(*).GeoLocation]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1654,8 +1702,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestMethod]
         public void PerformResultInsertionWithPartialRecordsetExpectedResultInsertsText()
         {
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = 4,
                 InputText = "City",
@@ -1663,7 +1711,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[City()]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[City()]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[City()]]", intellisenseProviderContext);
 
             Assert.AreEqual(exprected, actual);
         }
@@ -1672,8 +1720,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         public void PerformResultInsertionWithPartialRecordsetFieldAfterScalarExpectedCompleteResult()
         {
             const string currentText = "[[index1]][[rec().fi";
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = currentText.Length,
                 InputText = currentText,
@@ -1681,7 +1729,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[index1]][[rec().field]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[rec().field]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[rec().field]]", intellisenseProviderContext);
             Assert.AreEqual(exprected, actual, "Inserting a recordset after a scalar from intellisense results performs an incorrect insertion");
         }
 
@@ -1689,8 +1737,8 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         public void PerformResultInsertionWithRecordsetAfterScalarExpectedCompleteResult()
         {
             const string currentText = "[[index1]][[rec";
-            DefaultIntellisenseProvider defaultIntellisenseProvider = new DefaultIntellisenseProvider();
-            IntellisenseProviderContext intellisenseProviderContext = new IntellisenseProviderContext
+            var defaultIntellisenseProvider = new DefaultIntellisenseProvider();
+            var intellisenseProviderContext = new IntellisenseProviderContext
             {
                 CaretPosition = currentText.Length,
                 InputText = currentText,
@@ -1698,7 +1746,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             };
 
             const string exprected = "[[index1]][[rec().field]]";
-            string actual = defaultIntellisenseProvider.PerformResultInsertion("[[rec().field]]", intellisenseProviderContext);
+            var actual = defaultIntellisenseProvider.PerformResultInsertion("[[rec().field]]", intellisenseProviderContext);
             Assert.AreEqual(exprected, actual, "Inserting a recordset after a scalar from intellisense results performs an incorrect insertion");
         }
 

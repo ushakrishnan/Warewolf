@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,7 @@ using Unlimited.Framework.Converters.Graph.String;
 
 namespace Unlimited.Framework.Converters.Graph
 {
-    public class InterrogatorFactory
+    public static class InterrogatorFactory
     {
         #region Class Members
 
@@ -41,18 +41,15 @@ namespace Unlimited.Framework.Converters.Graph
 
         #region Properties
 
-        private static Dictionary<Type, IInterrogator> Interrogators { get; set; }
+        static Dictionary<Type, IInterrogator> Interrogators { get; set; }
 
-        private static IInterrogator DefaultInterrogator { get; set; }
+        static IInterrogator DefaultInterrogator { get; set; }
 
         #endregion Properties
 
         #region Methods
 
-        public static IInterrogator CreateInteregator(Type dataType)
-        {
-            return Interrogators.TryGetValue(dataType, out IInterrogator interrogatror) ? interrogatror : DefaultInterrogator;
-        }
+        public static IInterrogator CreateInteregator(Type dataType) => Interrogators.TryGetValue(dataType, out IInterrogator interrogatror) ? interrogatror : DefaultInterrogator;
 
         #endregion Methods
     }

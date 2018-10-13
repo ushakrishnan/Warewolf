@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,8 +21,7 @@ namespace Unlimited.Framework.Converters.Graph
     {
         #region Constructor
 
-        
-        public BasePath()
+        protected BasePath()
         {
             ActualPath = "";
             DisplayPath = "";
@@ -50,10 +49,7 @@ namespace Unlimited.Framework.Converters.Graph
 
         #region Override Methods
 
-        public override string ToString()
-        {
-            return ActualPath;
-        }
+        public override string ToString() => ActualPath;
 
         #endregion Override Methods
 

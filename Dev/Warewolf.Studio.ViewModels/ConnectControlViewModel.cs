@@ -1,7 +1,7 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -23,9 +23,7 @@ using Microsoft.Practices.Prism.Commands;
 using Microsoft.Practices.Prism.Mvvm;
 using Microsoft.Practices.Prism.PubSubEvents;
 using Warewolf.Resource.Errors;
-
-
-
+using Dev2.Instrumentation;
 
 namespace Warewolf.Studio.ViewModels
 {
@@ -36,12 +34,15 @@ namespace Warewolf.Studio.ViewModels
         IServer _selectedConnection;
         ObservableCollection<IServer> _servers;
         bool _isLoading;
-        private Guid? _selectedId;
-        private readonly ObservableCollection<IServer> _existingServers;
+        Guid? _selectedId;
+        readonly ObservableCollection<IServer> _existingServers;
         public IPopupController PopupController { get; set; }
-        private readonly IServerRepository _serverRepository;
+        readonly IServerRepository _serverRepository;
+        bool _canEditServer;
+        bool _canCreateServer;
+        private readonly IApplicationTracker _applicationTracker;
 
-        public ConnectControlViewModel(IServer server, IEventAggregator aggregator) 
+        public ConnectControlViewModel(IServer server, IEventAggregator aggregator)
             : this(server, aggregator, null, null)
         {
         }
@@ -74,15 +75,35 @@ namespace Warewolf.Studio.ViewModels
             {
                 Server.UpdateRepository.ServerSaved += UpdateRepositoryOnServerSaved;
             }
-            ShouldUpdateActiveEnvironment = false;          
+            ShouldUpdateActiveEnvironment = false;
+            CanEditServer = true;
+            CanCreateServer = true;
+            _applicationTracker = CustomContainer.Get<IApplicationTracker>();
         }
 
         public bool ShouldUpdateActiveEnvironment { get; set; }
 
-        private bool CanExecuteMethod()
+        public bool CanEditServer
         {
-            return SelectedConnection.EnvironmentID != Guid.Empty;
+            get => _canEditServer;
+            set
+            {
+                _canEditServer = value;
+                OnPropertyChanged(() => CanEditServer);
+            }
         }
+
+        public bool CanCreateServer
+        {
+            get => _canCreateServer;
+            set
+            {
+                _canCreateServer = value;
+                OnPropertyChanged(() => CanEditServer);
+            }
+        }
+
+        bool CanExecuteMethod() => SelectedConnection?.EnvironmentID != Guid.Empty;
 
         void UpdateRepositoryOnServerSaved(Guid savedServerID, bool isDeleted = false)
         {
@@ -156,21 +177,21 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private void SetupServerDisconnect()
+        void SetupServerDisconnect()
         {
             foreach (var server in Servers)
             {
                 server.NetworkStateChanged += OnServerOnNetworkStateChanged;
             }
         }
-        private void RemoveServerDisconnect()
+        void RemoveServerDisconnect()
         {
             foreach (var server in Servers)
             {
                 server.NetworkStateChanged -= OnServerOnNetworkStateChanged;
             }
         }
-        private void OnServerOnNetworkStateChanged(INetworkStateChangedEventArgs args, IServer server1)
+        void OnServerOnNetworkStateChanged(INetworkStateChangedEventArgs args, IServer server1)
         {
             if (args.State != ConnectionNetworkState.Connecting && args.State != ConnectionNetworkState.Connected && !server1.IsConnected)
             {
@@ -178,7 +199,7 @@ namespace Warewolf.Studio.ViewModels
                 {
                     if (!IsConnecting && server1.EnvironmentID == Guid.Empty)
                     {
-                        ServerHasDisconnected(this, server1);
+                        ServerHasDisconnected?.Invoke(this, server1);
                     }
                     IsConnected = false;
                     ServerDisconnected?.Invoke(this, SelectedConnection);
@@ -203,7 +224,7 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private async Task<bool> ConnectOrDisconnect()
+        async Task<bool> ConnectOrDisconnectAsync()
         {
             var isConnected = false;
             if (_selectedConnection == null)
@@ -227,34 +248,30 @@ namespace Warewolf.Studio.ViewModels
                 IsConnecting = true;
                 IsConnected = false;
                 IsLoading = true;
-                isConnected = await Connect(_selectedConnection);
+                isConnected = await TryConnectAsync(_selectedConnection).ConfigureAwait(true);
                 IsConnected = _selectedConnection.IsConnected;
                 IsConnecting = false;
-                IsLoading = false;
                 SetActiveEnvironment();
             }
             return isConnected;
         }
 
-        async Task CheckVersionConflict()
+        async Task CheckVersionConflictAsync()
         {
             try
             {
-                IsLoading = true;
                 IsConnecting = true;
-                var isConnected = await ConnectOrDisconnect();
+                var isConnected = await ConnectOrDisconnectAsync().ConfigureAwait(true);
                 if (_selectedConnection.IsConnected && isConnected)
                 {
                     Version.TryParse(_selectedConnection.GetServerVersion(), out Version sourceVersionNumber);
                     Version.TryParse(Resources.Languages.Core.CompareCurrentServerVersion, out Version destVersionNumber);
-                    if (sourceVersionNumber != null && destVersionNumber != null)
+                    if (sourceVersionNumber != null && destVersionNumber != null && sourceVersionNumber < destVersionNumber)
                     {
-                        if (sourceVersionNumber < destVersionNumber)
-                        {
-                            PopupController.ShowConnectServerVersionConflict(sourceVersionNumber.ToString(),
-                                destVersionNumber.ToString());
-                        }
+                        PopupController.ShowConnectServerVersionConflict(sourceVersionNumber.ToString(),
+                            destVersionNumber.ToString());
                     }
+
                 }
             }
             catch
@@ -263,13 +280,10 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private IServer Server { get; set; }
+        IServer Server { get; set; }
         public ObservableCollection<IServer> Servers
         {
-            get
-            {
-                return _servers;
-            }
+            get => _servers;
             private set
             {
                 _servers = value;
@@ -278,10 +292,7 @@ namespace Warewolf.Studio.ViewModels
         }
         public IServer SelectedConnection
         {
-            get
-            {
-                return _selectedConnection;
-            }
+            get => _selectedConnection;
             set
             {
                 if (value != null && !Equals(_selectedConnection, value))
@@ -289,8 +300,12 @@ namespace Warewolf.Studio.ViewModels
                     _selectedConnection = value;
                     if (value.EnvironmentID != Guid.Empty && !value.IsConnected)
                     {
-
-                        var isConnected = CheckVersionConflict();
+                        var isConnected = CheckVersionConflictAsync();
+                    }
+                    // revulytics log if ware wolf store selected
+                    if (!value.IsLocalHost && value.Connection.AppServerUri.ToString().Contains("store.warewolf.io"))
+                    {
+                        _applicationTracker?.TrackEvent(Resources.Languages.TrackEventMenu.EventCategory, Resources.Languages.TrackEventMenu.WarewolfStore);
                     }
                     SetActiveEnvironment();
                     OnPropertyChanged(() => SelectedConnection);
@@ -301,7 +316,7 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private void SetActiveEnvironment()
+        void SetActiveEnvironment()
         {
             if (_selectedConnection?.DisplayName != null)
             {
@@ -314,8 +329,12 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        private void NewServer()
+        void NewServer()
         {
+            if (_applicationTracker != null)
+            {
+                _applicationTracker.TrackEvent(Resources.Languages.TrackEventMenu.EventCategory, Resources.Languages.TrackEventMenu.NewRemoteServer);
+            }
             var mainViewModel = CustomContainer.Get<IShellViewModel>();
             if (mainViewModel != null && ShouldUpdateActiveEnvironment)
             {
@@ -330,10 +349,7 @@ namespace Warewolf.Studio.ViewModels
         public ICommand NewConnectionCommand { get; private set; }
         public bool IsConnected
         {
-            get
-            {
-                return _isConnected;
-            }
+            get => _isConnected;
             private set
             {
                 _isConnected = value;
@@ -342,10 +358,7 @@ namespace Warewolf.Studio.ViewModels
         }
         public bool IsConnecting
         {
-            get
-            {
-                return _isConnecting;
-            }
+            get => _isConnecting;
             private set
             {
                 _isConnecting = value;
@@ -354,10 +367,7 @@ namespace Warewolf.Studio.ViewModels
         }
         public bool IsLoading
         {
-            get
-            {
-                return _isLoading;
-            }
+            get => _isLoading;
             set
             {
                 _isLoading = value;
@@ -365,41 +375,13 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
-        public async Task<bool> Connect(IServer connection)
+        public async Task<bool> TryConnectAsync(IServer connection)
         {
             if (connection != null)
             {
                 try
                 {
-                    var connected = await connection.ConnectAsync();
-                    if (connected && connection.IsConnected)
-                    {
-                        if (ShouldUpdateActiveEnvironment)
-                        {
-                            SetActiveServer(connection);
-                        }
-                    }
-                    else
-                    {
-                        var result = PopupController?.ShowConnectionTimeoutConfirmation(connection.DisplayName);
-                        if (result == MessageBoxResult.Yes)
-                        {
-                            await Connect(connection);
-                        }                                                 
-                        else
-                        {
-                            ServerDisconnected?.Invoke(this, connection);
-                        }
-                    }
-                    OnPropertyChanged(() => connection.IsConnected);
-                    if (ServerConnected != null && connected && connection.IsConnected)
-                    {
-                        ServerConnected(this, connection);
-                        if (ShouldUpdateActiveEnvironment)
-                        {
-                            SetActiveServer(connection);
-                        }
-                    }
+                    await ConnectAsync(connection).ConfigureAwait(true);
                 }
                 catch (Exception)
                 {
@@ -410,7 +392,40 @@ namespace Warewolf.Studio.ViewModels
             return false;
         }
 
-        private static void SetActiveServer(IServer connection)
+        async Task ConnectAsync(IServer connection)
+        {
+            var connected = await connection.ConnectAsync().ConfigureAwait(true);
+            if (connected && connection.IsConnected)
+            {
+                if (ShouldUpdateActiveEnvironment)
+                {
+                    SetActiveServer(connection);
+                }
+            }
+            else
+            {
+                var result = PopupController?.ShowConnectionTimeoutConfirmation(connection.DisplayName);
+                if (result == MessageBoxResult.Yes)
+                {
+                    await TryConnectAsync(connection).ConfigureAwait(true);
+                }
+                else
+                {
+                    ServerDisconnected?.Invoke(this, connection);
+                }
+            }
+            OnPropertyChanged(() => connection.IsConnected);
+            if (ServerConnected != null && connected && connection.IsConnected)
+            {
+                ServerConnected?.Invoke(this, connection);
+                if (ShouldUpdateActiveEnvironment)
+                {
+                    SetActiveServer(connection);
+                }
+            }
+        }
+
+        static void SetActiveServer(IServer connection)
         {
             var mainViewModel = CustomContainer.Get<IShellViewModel>();
             mainViewModel?.SetActiveServer(connection.EnvironmentID);

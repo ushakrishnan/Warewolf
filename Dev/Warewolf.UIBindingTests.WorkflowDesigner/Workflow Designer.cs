@@ -42,7 +42,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
     [TestClass]
     public class Workflow_Designer
     {
-        private Mock<IShellViewModel> _shellViewModelMock;
+        Mock<IShellViewModel> _shellViewModelMock;
 
         [TestInitialize]
         public void Init()
@@ -505,6 +505,78 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             //------------Assert Results-------------------------
         }
 
+        private static void SetupViewModel(out Mock<IContextualResourceModel> resourceModel, out WorkflowDesignerViewModelMock viewModel)
+        {
+            var workflow = new ActivityBuilder
+            {
+                Implementation = new Flowchart
+                {
+                    StartNode = CreateFlowNode(Guid.NewGuid(), "CanSaveTest", true, typeof(TestActivity))
+                }
+            };
+
+            var resourceRep = new Mock<IResourceRepository>();
+            resourceRep.Setup(r => r.All()).Returns(new List<IResourceModel>());
+            resourceRep.Setup(r => r.FetchResourceDefinition(It.IsAny<IServer>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<bool>())).Returns(new ExecuteMessage());
+            resourceRep.Setup(repository => repository.Save(It.IsAny<IResourceModel>())).Verifiable();
+            resourceModel = new Mock<IContextualResourceModel>();
+            var mockEnvironmentModel = new Mock<IServer>();
+            var mockConnection = new Mock<IEnvironmentConnection>();
+            mockConnection.Setup(connection => connection.IsConnected).Returns(true);
+            mockConnection.Setup(connection => connection.WebServerUri).Returns(new Uri("http://myMachineName:3142"));
+            var serverEvents = new Mock<IEventPublisher>();
+            mockConnection.Setup(m => m.ServerEvents).Returns(serverEvents.Object);
+            mockEnvironmentModel.Setup(model => model.Connection).Returns(mockConnection.Object);
+            resourceModel.Setup(m => m.Environment).Returns(mockEnvironmentModel.Object);
+            resourceModel.Setup(m => m.Environment.IsConnected).Returns(true);
+            resourceModel.Setup(m => m.Environment.ResourceRepository).Returns(resourceRep.Object);
+            resourceModel.Setup(m => m.Environment.Connection).Returns(mockConnection.Object);
+            resourceModel.Setup(model => model.IsNewWorkflow).Returns(true);
+            resourceModel.Setup(model => model.Category).Returns("myservice");
+            resourceModel.Setup(model => model.ResourceName).Returns("myservice");
+            resourceModel.Setup(model => model.DataList).Returns(StringResourcesTest.DebugInputWindow_NoInputs_XMLData);
+            var workflowHelper = new Mock<IWorkflowHelper>();
+            workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
+            workflowHelper.Setup(helper => helper.SerializeWorkflow(It.IsAny<ModelService>())).Returns(new StringBuilder("my workflow"));
+            var mockPopController = new Mock<IPopupController>();
+            mockPopController.Setup(controller => controller.ShowNoInputsSelectedWhenClickLink()).Verifiable();
+            var mockExtenalProcessExecutor = new Mock<IExternalProcessExecutor>();
+            mockExtenalProcessExecutor.Setup(executor => executor.OpenInBrowser(It.IsAny<Uri>())).Verifiable();
+            viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, mockPopController.Object, mockExtenalProcessExecutor.Object);
+            viewModel.InitializeDesigner(new Dictionary<Type, Type>());
+            resourceModel.SetupProperty(model => model.WorkflowXaml);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("WorkflowDesignerModel_CanMerge")]
+        public void WorkflowDesignerViewModel_CanMerge_ExpectedTrue()
+        {
+            //------------Setup for test--------------------------
+            SetupViewModel(out Mock<IContextualResourceModel> resourceModel, out WorkflowDesignerViewModelMock viewModel);
+            resourceModel.Setup(model => model.IsVersionResource).Returns(true);
+            //------------Assert Preconditions-------------------
+            Assert.IsNull(resourceModel.Object.WorkflowXaml);
+            //------------Execute Test---------------------------
+            Assert.IsTrue(viewModel.CanMerge);
+            //------------Assert Results-------------------------
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("WorkflowDesignerModel_MergeCommand")]
+        public void WorkflowDesignerViewModel_MergeCommand_CanExecute()
+        {
+            //------------Setup for test--------------------------
+            SetupViewModel(out Mock<IContextualResourceModel> resourceModel, out WorkflowDesignerViewModelMock viewModel);
+            //------------Assert Preconditions-------------------
+            Assert.IsNull(resourceModel.Object.WorkflowXaml);
+            //------------Execute Test---------------------------
+            viewModel.MergeCommand.Execute(null);
+            Assert.IsTrue(viewModel.MergeCommand.CanExecute(null));
+            //------------Assert Results-------------------------
+        }
+
         [TestMethod]
         [Owner("Pieter Terblanche")]
         [TestCategory("WorkflowDesignerModel_ShowDependenciesCommand")]
@@ -712,7 +784,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -834,7 +906,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -943,7 +1015,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
         {
             var eventAggregator = new EventAggregator();
 
-            Mock<IContextualResourceModel> mockResourceModel = Dev2MockFactory.SetupResourceModelMock();
+            var mockResourceModel = Dev2MockFactory.SetupResourceModelMock();
             mockResourceModel.Setup(resModel => resModel.WorkflowXaml).Returns(WorkflowDesignerUnitTest.WorkflowXAMLForTest());
 
             var dataListViewModel = WorkflowDesignerUnitTest.CreateDataListViewModel(mockResourceModel, eventAggregator);
@@ -954,45 +1026,48 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             dataListItems.Add(dataListItem);
             dataListItems.Add(secondDataListItem);
             DataListSingleton.SetDataList(dataListViewModel);
-            Mock<IPopupController> mockPopUp = Dev2MockFactory.CreateIPopup(MessageBoxResult.Yes);
+            var mockPopUp = Dev2MockFactory.CreateIPopup(MessageBoxResult.Yes);
 
-            dataListItems.ToList().ForEach(dataListViewModel.ScalarCollection.Add);
+            dataListItems.ToList().ForEach(dataListViewModel.Add);
             dataListViewModel.RecsetCollection.Clear();
-            WorkflowDesignerViewModel workflowDesigner = WorkflowDesignerUnitTest.CreateWorkflowDesignerViewModelWithDesignerAttributesInitialized(mockResourceModel.Object, eventAggregator);
+            var workflowDesigner = WorkflowDesignerUnitTest.CreateWorkflowDesignerViewModelWithDesignerAttributesInitialized(mockResourceModel.Object, eventAggregator);
             workflowDesigner.PopUp = mockPopUp.Object;
 
             Assert.IsFalse(workflowDesigner.CanCopyUrl);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.CopyUrlTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.CopyUrlTooltip);
 
             Assert.IsFalse(workflowDesigner.CanViewSwagger);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.ViewSwaggerTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.ViewSwaggerTooltip);
 
             Assert.IsFalse(workflowDesigner.CanShowDependencies);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.ShowDependenciesTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.ShowDependenciesTooltip);
 
             Assert.IsFalse(workflowDesigner.CanDeploy);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DeployTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DeployTooltip);
+
+            Assert.IsFalse(workflowDesigner.CanMerge);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.ViewMergeTooltip, workflowDesigner.MergeTooltip);
 
             Assert.IsFalse(workflowDesigner.CanDuplicate);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DuplicateTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DuplicateTooltip);
 
             Assert.IsFalse(workflowDesigner.CanRunAllTests);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.RunAllTestsTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.RunAllTestsTooltip);
 
             Assert.IsFalse(workflowDesigner.CanCreateTest);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.CreateTestTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.CreateTestTooltip);
 
             Assert.IsFalse(workflowDesigner.CanCreateSchedule);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.ScheduleTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.ScheduleTooltip);
 
             Assert.IsFalse(workflowDesigner.CanDebugBrowser);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DebugBrowserTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DebugBrowserTooltip);
 
             Assert.IsFalse(workflowDesigner.CanDebugStudio);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DebugStudioTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DebugStudioTooltip);
 
             Assert.IsFalse(workflowDesigner.CanDebugInputs);
-            Assert.AreEqual(Warewolf.Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DebugInputsTooltip);
+            Assert.AreEqual(Studio.Resources.Languages.Tooltips.NoPermissionsToolTip, workflowDesigner.DebugInputsTooltip);
 
             Assert.IsTrue(dataListViewModel.ScalarCollection[0].IsUsed);
             Assert.IsTrue(dataListViewModel.ScalarCollection[1].IsUsed);
@@ -1031,7 +1106,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -1080,11 +1155,11 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
                 }
             };
 
-            Mock<IContextualResourceModel> mockResourceModel = Dev2MockFactory.SetupResourceModelMock();
-            Mock<IWorkflowHelper> mockWorkflowHelper = new Mock<IWorkflowHelper>();
-            Mock<IServer> mockEnv = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
-            Guid envId2 = Guid.NewGuid();
-            Mock<IServer> mockEnv2 = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
+            var mockResourceModel = Dev2MockFactory.SetupResourceModelMock();
+            var mockWorkflowHelper = new Mock<IWorkflowHelper>();
+            var mockEnv = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
+            var envId2 = Guid.NewGuid();
+            var mockEnv2 = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
             mockEnv.Setup(c => c.EnvironmentID).Returns(envId2);
             mockResourceModel.Setup(c => c.Environment).Returns(mockEnv.Object);
 
@@ -1104,7 +1179,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -1138,9 +1213,9 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
 
             #endregion
 
-            var testClass = new WorkflowDesignerViewModelMock(mockResourceModel.Object, mockWorkflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var testClass = new WorkflowDesignerViewModelMock(mockResourceModel.Object, mockWorkflowHelper.Object);
 
-            List<ModelItem> flowNodes = new List<ModelItem>();
+            var flowNodes = new List<ModelItem>();
             flowNodes.Add(source.Object);
             flowNodes.Add(source1.Object);
             flowNodes.Add(source2.Object);
@@ -1166,11 +1241,11 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
                 }
             };
 
-            Mock<IContextualResourceModel> mockResourceModel = Dev2MockFactory.SetupResourceModelMock();
-            Mock<IWorkflowHelper> mockWorkflowHelper = new Mock<IWorkflowHelper>();
-            Mock<IServer> mockEnv = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
-            Guid envId2 = Guid.NewGuid();
-            Mock<IServer> mockEnv2 = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
+            var mockResourceModel = Dev2MockFactory.SetupResourceModelMock();
+            var mockWorkflowHelper = new Mock<IWorkflowHelper>();
+            var mockEnv = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
+            var envId2 = Guid.NewGuid();
+            var mockEnv2 = Dev2MockFactory.SetupEnvironmentModel(mockResourceModel, null);
             mockEnv.Setup(c => c.EnvironmentID).Returns(envId2);
             mockResourceModel.Setup(c => c.Environment).Returns(mockEnv.Object);
 
@@ -1192,7 +1267,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
 
             
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -1226,9 +1301,9 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
 
             #endregion
 
-            var testClass = new WorkflowDesignerViewModelMock(mockResourceModel.Object, mockWorkflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var testClass = new WorkflowDesignerViewModelMock(mockResourceModel.Object, mockWorkflowHelper.Object);
 
-            List<ModelItem> flowNodes = new List<ModelItem>();
+            var flowNodes = new List<ModelItem>();
             flowNodes.Add(source.Object);
             flowNodes.Add(source1.Object);
             flowNodes.Add(source2.Object);
@@ -1270,7 +1345,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -1319,7 +1394,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
 
             #endregion
@@ -1365,7 +1440,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             viewModel.SetupRequestExapandAll();
             #endregion
@@ -1412,7 +1487,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             viewModel.SetupRequestExapandAll();
             viewModel.SetupRequestRestoreAll();
@@ -1460,7 +1535,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             viewModel.SetupRequestCollapseAll();
             viewModel.SetupRequestRestoreAll();
@@ -1508,7 +1583,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             viewModel.SetupRequestCollapseAll();
             viewModel.SetupRequestRestoreAll();
@@ -1565,7 +1640,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
             workflowHelper.Setup(helper => helper.SerializeWorkflow(It.IsAny<ModelService>())).Returns(new StringBuilder("my workflow"));
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             resourceModel.SetupProperty(model => model.WorkflowXaml);
 
@@ -1640,7 +1715,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             //------------Assert Results-------------------------
             Assert.AreEqual("http://mymachinename:3142/secure/myservice.json?<DataList></DataList>&wid=00000000-0000-0000-0000-000000000000", workflowLink);
             Assert.AreEqual("http://mymachinename:3142/secure/myservice.json?<DataList></DataList>", displayWorkflowLink);
-            mockExtenalProcessExecutor.Verify(executor => executor.OpenInBrowser(It.IsAny<Uri>()));
+            Assert.IsTrue(viewModel.DebugBrowserCommand.CanExecute(null));
             Assert.AreEqual(Visibility.Visible, viewModel.WorkflowLinkVisible);
         }
 
@@ -1755,7 +1830,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
             workflowHelper.Setup(helper => helper.SerializeWorkflow(It.IsAny<ModelService>())).Returns(new StringBuilder("my workflow"));
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             resourceModel.SetupProperty(model => model.WorkflowXaml);
 
@@ -1805,7 +1880,7 @@ namespace Warewolf.UIBindingTests.WorkflowDesigner
             var workflowHelper = new Mock<IWorkflowHelper>();
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object, new Mock<IExternalProcessExecutor>().Object);
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             viewModel.InitializeDesigner(new Dictionary<Type, Type>());
             resourceModel.SetupProperty(model => model.WorkflowXaml);
             #endregion

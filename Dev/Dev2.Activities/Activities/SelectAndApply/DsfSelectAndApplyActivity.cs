@@ -8,6 +8,7 @@ using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Common.Interfaces;
+using Dev2.Comparer;
 using Dev2.Data.TO;
 using Dev2.Diagnostics.Debug;
 using Dev2.Interfaces;
@@ -17,18 +18,14 @@ using Warewolf.Core;
 using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
-
-
-
-
+using Dev2.Common.State;
 
 namespace Dev2.Activities.SelectAndApply
 {
-   
-    [ToolDescriptorInfo("SelectApply", "Select and apply", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8FA3E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Loop Constructs", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_LoopConstruct_Select_and_Apply")]
-    public class DsfSelectAndApplyActivity : DsfActivityAbstract<bool>
+    [ToolDescriptorInfo("SelectApply", "Select and apply", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8FA3E", "Dev2.Activities", "1.0.0.0", "Legacy", "Loop Constructs", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_LoopConstruct_Select_and_Apply")]
+    public class DsfSelectAndApplyActivity : DsfActivityAbstract<bool>, IEquatable<DsfSelectAndApplyActivity>
     {
-        private class NullDataSource : Exception
+        class NullDataSource : Exception
         {
 
         }
@@ -38,14 +35,23 @@ namespace Dev2.Activities.SelectAndApply
             ApplyActivityFunc = new ActivityFunc<string, bool>
             {
                 DisplayName = "Data Action",
-                Argument = new DelegateInArgument<string>($"explicitData_{DateTime.Now.ToString("yyyyMMddhhmmss")}")
+                Argument = new DelegateInArgument<string>($"explicitData_{DateTime.Now:yyyyMMddhhmmss}")
             };
         }
 
-        public override List<string> GetOutputs()
+        public override IEnumerable<IDev2Activity> GetChildrenNodes()
         {
-            return new List<string>();
+            var act = ApplyActivityFunc.Handler as IDev2ActivityIOMapping;
+            if (act == null)
+            {
+                return new List<IDev2Activity>();
+            }
+            var nextNodes = new List<IDev2Activity> { act };
+            return nextNodes;
         }
+
+        public override List<string> GetOutputs() => new List<string>();
+
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             metadata.AddDelegate(ApplyActivityFunc);
@@ -53,16 +59,15 @@ namespace Dev2.Activities.SelectAndApply
             base.CacheMetadata(metadata);
         }
 
-        #region Overrides of DsfNativeActivity<bool>
         [FindMissing]
         public string DataSource { get; set; }
         [FindMissing]
         public string Alias { get; set; }
         public ActivityFunc<string, bool> ApplyActivityFunc { get; set; }
 
-        private string _previousParentId;
-        private Guid _originalUniqueID;
-        private string _childUniqueID;
+        string _previousParentId;
+        Guid _originalUniqueID;
+        string _childUniqueID;
 
         /// <summary>
         /// When overridden runs the activity's execution logic
@@ -83,6 +88,24 @@ namespace Dev2.Activities.SelectAndApply
             UniqueID = isNestedForEach ? Guid.NewGuid().ToString() : UniqueID;
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = "DataSource",
+                    Type = StateVariable.StateType.Input,
+                    Value = DataSource
+                },
+                new StateVariable
+                {
+                    Name = "Alias",
+                    Type = StateVariable.StateType.InputOutput,
+                    Value = Alias
+                }
+            };
+        }
+
         protected override void OnBeforeExecute(NativeActivityContext context)
         {
             var dataObject = context.GetExtension<IDSFDataObject>();
@@ -92,7 +115,6 @@ namespace Dev2.Activities.SelectAndApply
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
             throw new NotImplementedException();
-
         }
 
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
@@ -100,19 +122,11 @@ namespace Dev2.Activities.SelectAndApply
             throw new NotImplementedException();
         }
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(Alias);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(Alias);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(Alias.Replace("*", ""));
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Alias.Replace("*", ""));
 
-        #region Get Debug Inputs/Outputs
-
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach (IDebugItem debugInput in _debugInputs)
             {
@@ -121,16 +135,11 @@ namespace Dev2.Activities.SelectAndApply
             return _debugInputs;
         }
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
-        {
-            return _debugOutputs;
-        }
-
-        #endregion Get Debug Inputs/Outputs
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update) => _debugOutputs;
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
-            ErrorResultTO allErrors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
             InitializeDebug(dataObject);
 
             if (string.IsNullOrEmpty(DataSource))
@@ -148,7 +157,6 @@ namespace Dev2.Activities.SelectAndApply
                 {
                     dataObject.Environment.AddError(fetchError);
                 }
-
             }
             var startTime = DateTime.Now;
             _previousParentId = dataObject.ParentInstanceID;
@@ -157,7 +165,7 @@ namespace Dev2.Activities.SelectAndApply
 
             dataObject.ForEachNestingLevel++;
 
-            List<string> expressions = new List<string>();
+            var expressions = new List<string>();
             try
             {
                 string ds;
@@ -175,7 +183,6 @@ namespace Dev2.Activities.SelectAndApply
                     //Do nothing exception aleady added to errors
                     throw new NullDataSource();
                 }
-
 
                 if (dataObject.IsDebugMode())
                 {
@@ -221,65 +228,33 @@ namespace Dev2.Activities.SelectAndApply
             }
             finally
             {
-
-                if (dataObject.IsDebugMode())
+                if (dataObject.IsServiceTestExecution)
                 {
-                    if (dataObject.IsServiceTestExecution)
+                    if (dataObject.IsDebugMode())
                     {
-                        var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
-                        var serviceTestSteps = serviceTestStep?.Children;
-                        UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList());
-                        if (serviceTestStep != null)
-                        {
-                            var testRunResult = new TestRunResult();
-                            GetFinalTestRunResult(serviceTestStep, testRunResult, dataObject);
-                            serviceTestStep.Result = testRunResult;
-
-                            var debugItems = TestDebugMessageRepo.Instance.GetDebugItems(dataObject.ResourceID, dataObject.TestName);
-                            debugItems = debugItems.Where(state => state.WorkSurfaceMappingId == serviceTestStep.UniqueId).ToList();
-                            var debugStates = debugItems.LastOrDefault();
-
-                            var debugItemStaticDataParams = new DebugItemServiceTestStaticDataParams(serviceTestStep.Result.Message, serviceTestStep.Result.RunTestResult == RunResult.TestFailed);
-                            DebugItem itemToAdd = new DebugItem();
-                            itemToAdd.AddRange(debugItemStaticDataParams.GetDebugItemResult());
-                            debugStates?.AssertResultList?.Add(itemToAdd);
-
-                        }
+                        GetTestOurputResultForDebug(dataObject);
+                    }
+                    else
+                    {
+                        GetTestOutputForBrowserExecution(dataObject);
                     }
                 }
+
                 dataObject.PopEnvironment();
                 dataObject.ForEachNestingLevel--;
                 if (allErrors.HasErrors())
                 {
-                    if (allErrors.HasErrors())
+                    DisplayAndWriteError("DsfSelectAndApplyActivity", allErrors);
+                    foreach (var fetchError in allErrors.FetchErrors())
                     {
-                        DisplayAndWriteError("DsfSelectAndApplyActivity", allErrors);
-                        foreach (var fetchError in allErrors.FetchErrors())
-                        {
-                            dataObject.Environment.AddError(fetchError);
-                        }
+                        dataObject.Environment.AddError(fetchError);
                     }
                 }
                 if (dataObject.IsDebugMode())
                 {
                     foreach (var expression in expressions)
                     {
-                        var data = dataObject.Environment.Eval(expression, update);
-                        if (data.IsWarewolfAtomListresult)
-                        {
-                            var lst = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
-                            AddDebugOutputItem(new DebugItemWarewolfAtomListResult(lst, "", "", expression, "", "", "="));
-                        }
-                        else
-                        {
-                            if (data.IsWarewolfAtomResult)
-                            {
-                                if (data is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atom)
-                                {
-                                    AddDebugOutputItem(new DebugItemWarewolfAtomResult(atom.Item.ToString(), expression, ""));
-                                }
-                            }
-                        }
+                        AddExpresionEvalOutputItem(dataObject, update, expression);
                     }
 
                     DispatchDebugState(dataObject, StateType.End, update, startTime, DateTime.Now);
@@ -288,7 +263,57 @@ namespace Dev2.Activities.SelectAndApply
             }
         }
 
-        private void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult, IDSFDataObject dataObject)
+        void AddExpresionEvalOutputItem(IDSFDataObject dataObject, int update, string expression)
+        {
+            var data = dataObject.Environment.Eval(expression, update);
+            if (data.IsWarewolfAtomListresult)
+            {
+                var lst = data as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+                AddDebugOutputItem(new DebugItemWarewolfAtomListResult(lst, "", "", expression, "", "", "="));
+            }
+            else
+            {
+                if (data.IsWarewolfAtomResult && (data is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atom))
+                {
+                    AddDebugOutputItem(new DebugItemWarewolfAtomResult(atom.Item.ToString(), expression, ""));
+                }
+            }
+        }
+
+        void GetTestOutputForBrowserExecution(IDSFDataObject dataObject)
+        {
+            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.FirstOrDefault(step => step.UniqueId == Guid.Parse(UniqueID));
+            if (serviceTestStep != null)
+            {
+                var testRunResult = new TestRunResult();
+                GetFinalTestRunResult(serviceTestStep, testRunResult, dataObject);
+                serviceTestStep.Result = testRunResult;
+            }
+        }
+
+        void GetTestOurputResultForDebug(IDSFDataObject dataObject)
+        {
+            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
+            var serviceTestSteps = serviceTestStep?.Children;
+            UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList());
+            if (serviceTestStep != null)
+            {
+                var testRunResult = new TestRunResult();
+                GetFinalTestRunResult(serviceTestStep, testRunResult, dataObject);
+                serviceTestStep.Result = testRunResult;
+
+                var debugItems = TestDebugMessageRepo.Instance.GetDebugItems(dataObject.ResourceID, dataObject.TestName);
+                debugItems = debugItems.Where(state => state.WorkSurfaceMappingId == serviceTestStep.UniqueId).ToList();
+                var debugStates = debugItems.LastOrDefault();
+
+                var debugItemStaticDataParams = new DebugItemServiceTestStaticDataParams(serviceTestStep.Result.Message, serviceTestStep.Result.RunTestResult == RunResult.TestFailed);
+                var itemToAdd = new DebugItem();
+                itemToAdd.AddRange(debugItemStaticDataParams.GetDebugItemResult());
+                debugStates?.AssertResultList?.Add(itemToAdd);
+            }
+        }
+
+        void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult, IDSFDataObject dataObject)
         {
             RegularActivityAssertion(dataObject, serviceTestStep);
             var nonPassingSteps = serviceTestStep.Children?.Where(step => step.Result?.RunTestResult != RunResult.TestPassed).ToList();
@@ -316,18 +341,68 @@ namespace Dev2.Activities.SelectAndApply
             UniqueID = _originalUniqueID.ToString();
         }
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.ForEach;
-        }
-        #endregion Overrides of DsfNativeActivity<bool>
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.ForEach;
 
-        private void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps)
+        void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps)
         {
             ServiceTestHelper.UpdateDebugStateWithAssertions(dataObject, serviceTestTestSteps, _childUniqueID);
+        }
 
+        public bool Equals(DsfSelectAndApplyActivity other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var activityFuncComparer = new ActivityFuncComparer();
+            return base.Equals(other)
+                && string.Equals(_previousParentId, other._previousParentId)
+                && Equals(_originalUniqueID, other._originalUniqueID)
+                && string.Equals(_childUniqueID, other._childUniqueID)
+                && string.Equals(DataSource, other.DataSource)
+                && string.Equals(Alias, other.Alias)
+                && activityFuncComparer.Equals(ApplyActivityFunc, other.ApplyActivityFunc);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfSelectAndApplyActivity)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_previousParentId != null ? _previousParentId.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ _originalUniqueID.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_childUniqueID != null ? _childUniqueID.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (DataSource != null ? DataSource.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Alias != null ? Alias.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ApplyActivityFunc != null ? ApplyActivityFunc.GetHashCode() : 0);
+                return hashCode;
+            }
         }
     }
-
-    
 }

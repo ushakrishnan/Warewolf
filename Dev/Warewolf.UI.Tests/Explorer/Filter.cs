@@ -8,24 +8,34 @@ namespace Warewolf.UI.Tests
     [CodedUITest]
     public class Filter
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Explorer")]
         public void Search_ExplorerResource()
         {
             ExplorerUIMap.Filter_Explorer("Hello World");
+            Keyboard.SendKeys("{ENTER}");
             Assert.IsTrue(ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem.Exists);
             Assert.IsFalse(UIMap.ControlExistsNow(ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.SecondItem), "Second Item exists in the Explorer Exists");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Explorer")]
         public void Search_ExplorerFolder()
         {
-            ExplorerUIMap.Filter_Explorer("Examples");
+            ExplorerUIMap.Filter_Explorer("Acceptance Testing Resources");
             Assert.IsTrue(ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem.Exists);
             Assert.IsFalse(UIMap.ControlExistsNow(ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.SecondItem), "Second Item exists in the Explorer Exists");
         }
-      
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Explorer")]
+        public void Clear_Filter_With_Esc_Key()
+        {
+            ExplorerUIMap.Filter_Explorer("Hello World");
+            Keyboard.SendKeys("{ESCAPE}");
+            Assert.AreEqual(string.Empty, ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.SearchTextBox.Text, "Filter textbox not cleared by ESC key.");
+        }
+
 
         #region Additional test attributes
 

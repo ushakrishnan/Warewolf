@@ -9,7 +9,7 @@ namespace Warewolf.Studio.ViewModels.Tests
     public class RequestNameServiceViewModelTests
     {
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeploySourceExplorerViewModel_Ctor_valid")]
         public void TestDispose()
@@ -18,9 +18,9 @@ namespace Warewolf.Studio.ViewModels.Tests
             var connectionObject = new Mock<IEnvironmentConnection>();
             serverRepo.Setup(repository => repository.ActiveServer.Connection).Returns(connectionObject.Object);
             CustomContainer.Register(serverRepo.Object);
-            RequestServiceNameViewModel vm = new RequestServiceNameViewModel();
+            var vm = new RequestServiceNameViewModel();
             var x = new Mock<IExplorerViewModel>();
-            PrivateObject p = new PrivateObject(vm);
+            var p = new PrivateObject(vm);
             var env = new Mock<IEnvironmentViewModel>();
             p.SetField("_environmentViewModel", env.Object);
             vm.SingleEnvironmentExplorerViewModel = x.Object;
@@ -36,7 +36,7 @@ namespace Warewolf.Studio.ViewModels.Tests
     public class ManageDatabaseSourceModellTests
     {
 
-      /*  [TestMethod]
+      /*  [TestMethod,Timeout(60000)]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("DeploySourceExplorerViewModel_Ctor_valid")]
         public void TestDispose()

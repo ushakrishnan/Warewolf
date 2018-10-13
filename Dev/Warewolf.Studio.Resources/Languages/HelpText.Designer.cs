@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class HelpText {
@@ -57,6 +57,53 @@ namespace Warewolf.Studio.Resources.Languages {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Local variable to be used in SQL Query..
+        /// </summary>
+        public static string AdvancedRecordsetLocalVariable {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetLocalVariable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;b&gt;Examples&lt;/b&gt;
+        ///&lt;b&gt;Note: &lt;/b&gt;Data changes in SQL are persisted to Warewolf recordsets.&lt;br/&gt;
+        ///&lt;i&gt;The Table Name you are selecting From is Case sensitive. It should match the Casing of the Recordset Name.&lt;/i&gt;
+        ///	&lt;br /&gt;&lt;br /&gt;
+        ///	&lt;b&gt;SELECT &lt;/b&gt; &lt;i&gt;*&lt;/i&gt;&lt;br /&gt;
+        ///	&lt;b&gt;FROM&lt;/b&gt; &lt;i&gt;person&lt;/i&gt;&lt;br /&gt;
+        ///	&lt;b&gt;JOIN&lt;/b&gt; &lt;i&gt;address&lt;/i&gt;&lt;b&gt; ON&lt;/b&gt; &lt;i&gt;person.addressID == address.ID&lt;/i&gt;&lt;br /&gt;
+        ///	&lt;b&gt;WHERE&lt;/b&gt; &lt;i&gt;person.name = &apos;Bob&apos;&lt;/i&gt;&lt;br /&gt;
+        ///	&lt;b&gt;ORDER BY&lt;/b&gt; &lt;i&gt;person.name&lt;/i&gt;&lt;br /&gt;
+        ///	&lt;b&gt;LIMIT &lt;/b&gt;&lt;i&gt;10&lt;/i&gt;
+        ///	&lt;br /&gt;&lt;br /&gt;
+        ///	&lt;b&gt;SELE [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string AdvancedRecordsetSqlQuery {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetSqlQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generate the Outputs of the SQL Query..
+        /// </summary>
+        public static string AdvancedRecordsetSqlQueryExecuteCommand {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetSqlQueryExecuteCommand", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value of the local variable to be used in SQL Query. Scalar variables can be used as a value..
+        /// </summary>
+        public static string AdvancedRecordsetVariable {
+            get {
+                return ResourceManager.GetString("AdvancedRecordsetVariable", resourceCulture);
             }
         }
         
@@ -214,6 +261,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Timeout of the database command. To use the databases default timeout, leave the field blank. Note: SQL Server with a Command Timeout set to 0, will wait indefinitely..
+        /// </summary>
+        public static string CommandTimeoutHelp {
+            get {
+                return ResourceManager.GetString("CommandTimeoutHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Comments do not execute and are place holders for future services or tools or simply to leave commentary inside the workflow.	You can connect comments into the process flow and they will simply be skipped during execution. However, they will appear in the debug output.	Allowed:	Notes and comments will not be executed at run time but will show up in the debug output..
         /// </summary>
         public static string CommentHelpComment {
@@ -310,6 +366,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ConnectControlViewToggleConnectionHelp {
             get {
                 return ResourceManager.GetString("ConnectControlViewToggleConnectionHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timeout of the database connection.
+        /// </summary>
+        public static string ConnectionTimeoutHelp {
+            get {
+                return ResourceManager.GetString("ConnectionTimeoutHelp", resourceCulture);
             }
         }
         
@@ -749,7 +814,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Describe the format of the date times you are entering. e.g. 23-July 1978 would be described as dd-MM yyyy.	Leaving this field blank will assume the system date time format.	To escape text or non-date information use &apos;around the text you want to escape&apos;. e.g. Time is now 15 hours and 33 minutes. Would have an input format of &apos;Time is now&apos; 24hr &apos;hours and&apos; min &apos;minutes.&apos; 	&lt;br /&gt;	Allowed:&lt;br /&gt;	Data   	&lt;ol&gt;	&lt;li&gt;[[Scalar]]&lt;/li&gt;	&lt;li&gt;[[Recordset(n).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset(*).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset().F [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to Describe the format of the date times you are entering. e.g. 23-July 1978 would be described as dd-MM yyyy. The default date time format is shown, if this is not the required format, then it can be changed to the format needed.	Leaving this field blank will assume the system date time format.	To escape text or non-date information use &apos;around the text you want to escape&apos;. e.g. Time is now 15 hours and 33 minutes. Would have an input format of &apos;Time is now&apos; HH &apos;hours and&apos; m &apos;minutes.&apos; 	&lt;br /&gt;	Allowed:&lt;br /&gt;	 [rest of string was truncated]&quot;;.
         /// </summary>
         public static string DateTimeDifferenceHelpInputFormat {
             get {
@@ -794,7 +859,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Describe the format of the date time you are entering. e.g. 23-July 1978 would be described as dd-MM yyyy.	Leaving this field blank will assume the system date time format.	To escape text or non-date information use &apos;around the text you want to escape&apos;. e.g. Time is now 15 hours and 33 minutes. Would have an input format of &apos;Time is now&apos; 24hr &apos;hours and&apos; min &apos;minutes.&apos; 	&lt;br /&gt;	Allowed:&lt;br /&gt;	Data   	&lt;ol&gt;	&lt;li&gt;[[Scalar]]&lt;/li&gt;	&lt;li&gt;[[Recordset(n).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset(*).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset().Fi [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to Describe the format of the date times you are entering. e.g. 23-July 1978 would be described as dd-MM yyyy. The default date time format is shown, if this is not the required format, then it can be changed to the format needed.	Leaving this field blank will assume the system date time format.	To escape text or non-date information use &apos;around the text you want to escape&apos;. e.g. Time is now 15 hours and 33 minutes. Would have an input format of &apos;Time is now&apos; HH &apos;hours and&apos; m &apos;minutes.&apos; 	&lt;br /&gt;	Allowed:&lt;br /&gt;	 [rest of string was truncated]&quot;;.
         /// </summary>
         public static string DateTimeHelpInputformat {
             get {
@@ -803,7 +868,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Describe the format you would like the date time to be returned in.	Leaving this field blank will assume the same as the Input Format.	To include text or non-date information use &apos;around the text you want to escape&apos;. e.g. Time is now 15 hours and 33 minutes. Would have an output format of &apos;Time is now&apos; 24hr &apos;hours and&apos; min &apos;minutes.&apos; 	&lt;br /&gt;	Allowed:&lt;br /&gt;	Data   	&lt;ol&gt;	&lt;li&gt;[[Scalar]]&lt;/li&gt;	&lt;li&gt;[[Recordset(n).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset(*).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset().Field]]&lt;/li&gt;	&lt;/ol&gt;.
+        ///   Looks up a localized string similar to Describe the format of the date times you are entering. e.g. 23-July 1978 would be described as dd-MM yyyy. The default date time format is shown, if this is not the required format, then it can be changed to the format needed.	Leaving this field blank will assume the system date time format.	To escape text or non-date information use &apos;around the text you want to escape&apos;. e.g. Time is now 15 hours and 33 minutes. Would have an input format of &apos;Time is now&apos; HH &apos;hours and&apos; m &apos;minutes.&apos; 	&lt;br /&gt;	Allowed:&lt;br /&gt;	 [rest of string was truncated]&quot;;.
         /// </summary>
         public static string DateTimeHelpOutputformat {
             get {
@@ -1145,7 +1210,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select a preconfigured email source or &quot;New Email Source...&quot; to add a new one..
+        ///   Looks up a localized string similar to Select a preconfigured email source..
         /// </summary>
         public static string EmailHelpMailSource {
             get {
@@ -1564,6 +1629,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string LengthHelpResult {
             get {
                 return ResourceManager.GetString("LengthHelpResult", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Folder Path to store the audit database. The default Folder Path is C:\ProgramData\Warewolf\Audits.
+        /// </summary>
+        public static string LoggingViewAuditsFilePathHelpText {
+            get {
+                return ResourceManager.GetString("LoggingViewAuditsFilePathHelpText", resourceCulture);
             }
         }
         
@@ -1992,11 +2066,113 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Search in Warewolf for &lt;br/&gt;
+        ///- Resource Name &lt;br/&gt;
+        ///- Tool Title &lt;br/&gt;
+        ///- Scalar &lt;br/&gt;
+        ///- Object &lt;br/&gt;
+        ///- Recordset &lt;br/&gt;
+        ///- Input Variable &lt;br/&gt;
+        ///- Output Variable &lt;br/&gt;
+        ///- Test Name.
+        /// </summary>
+        public static string MenuSearchHelp {
+            get {
+                return ResourceManager.GetString("MenuSearchHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Edit or View system settings such as Security and Logging..
         /// </summary>
         public static string MenuSettingsHelp {
             get {
                 return ResourceManager.GetString("MenuSettingsHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Tool connection radio button to keep the current Tool connection changes..
+        /// </summary>
+        public static string MergeCurrentArmRBHelp {
+            get {
+                return ResourceManager.GetString("MergeCurrentArmRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Tool radio button to keep the current Tool changes..
+        /// </summary>
+        public static string MergeCurrentConflictRBHelp {
+            get {
+                return ResourceManager.GetString("MergeCurrentConflictRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Tool radio button to keep the difference Tool changes..
+        /// </summary>
+        public static string MergeCurrentVariablesRBHelp {
+            get {
+                return ResourceManager.GetString("MergeCurrentVariablesRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the current Workflow name radio button to keep the current Workflow name changes..
+        /// </summary>
+        public static string MergeCurrentWorkflowNameRBHelp {
+            get {
+                return ResourceManager.GetString("MergeCurrentWorkflowNameRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Tool connection radio button to keep the difference Tool connection changes..
+        /// </summary>
+        public static string MergeDifferenceArmRBHelp {
+            get {
+                return ResourceManager.GetString("MergeDifferenceArmRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Variable radio button to keep the difference Variable changes..
+        /// </summary>
+        public static string MergeDifferenceConflictRBHelp {
+            get {
+                return ResourceManager.GetString("MergeDifferenceConflictRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Variable radio button to keep the difference Variable changes..
+        /// </summary>
+        public static string MergeDifferenceVariablesRBHelp {
+            get {
+                return ResourceManager.GetString("MergeDifferenceVariablesRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the difference Workflow name radio button to keep the difference Workflow name changes..
+        /// </summary>
+        public static string MergeDifferenceWorkflowNameRBHelp {
+            get {
+                return ResourceManager.GetString("MergeDifferenceWorkflowNameRBHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Merge feature provides you with the options to select between conflicts related to the current state of your workflow and the version of your workflow selected to merge against. 
+        ///
+        ///A list of conflicts will be shown starting with the Workflow name, then the Variables, and then the Tools and Tool connected states. 
+        ///
+        ///If there are no conflicts, a green tick will be displayed. As each selection is made, the selected Tool will appear on the design surface to the right. Once a Tool connection conflict is se [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string MergeWorkflowStartupHelp {
+            get {
+                return ResourceManager.GetString("MergeWorkflowStartupHelp", resourceCulture);
             }
         }
         
@@ -2078,6 +2254,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string NativeActivityHelpPuterrorinthisvariable {
             get {
                 return ResourceManager.GetString("NativeActivityHelpPuterrorinthisvariable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a connection to a new email server..
+        /// </summary>
+        public static string NewEmailSourceHelp {
+            get {
+                return ResourceManager.GetString("NewEmailSourceHelp", resourceCulture);
             }
         }
         
@@ -2834,6 +3019,114 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ScriptingHelpScript {
             get {
                 return ResourceManager.GetString("ScriptingHelpScript", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Input text to search for any matching search options.
+        /// </summary>
+        public static string SearchInputHelpText {
+            get {
+                return ResourceManager.GetString("SearchInputHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search All&quot; option will check or uncheck all search options.
+        /// </summary>
+        public static string SearchMatchAllHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchAllHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Match case&quot; option will find only those instances that are written the same way.
+        /// </summary>
+        public static string SearchMatchCaseHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchCaseHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Input Variable&quot; option will find only variables marked as &quot;Input&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchInputVariableHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchInputVariableHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Object&quot; option will find only variables created as &quot;Objects&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchObjectNameHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchObjectNameHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Output Variable&quot; option will find only variables marked as &quot;Output&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchOutputVariableHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchOutputVariableHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Recordset&quot; option will find only variables created as &quot;Recordset&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchRecSetNameHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchRecSetNameHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Scalar&quot; option will find only variables created as &quot;Scalar&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchScalarNameHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchScalarNameHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Test Name&quot; option will find only &quot;Tests&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchTestNameHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchTestNameHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Tool Title&quot; option will find only &quot;Tools&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchToolTitleHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchToolTitleHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Match whole word&quot; option will find only the words that are written the same way.
+        /// </summary>
+        public static string SearchMatchWholeWordHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchWholeWordHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &quot;Search Resource Name&quot; option will find only &quot;Resources&quot; that match the input field.
+        /// </summary>
+        public static string SearchMatchWorkflowNameHelpText {
+            get {
+                return ResourceManager.GetString("SearchMatchWorkflowNameHelpText", resourceCulture);
             }
         }
         
@@ -3819,6 +4112,20 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string TestsDeleteSelectedTestHelpText {
             get {
                 return ResourceManager.GetString("TestsDeleteSelectedTestHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the Advanced Recordset tool to write and execute Structured Query Language (SQL) against any combination of Warewolf Recordsets already set up.&lt;br /&gt;
+        ///	&lt;br /&gt; The tool will allow you to execute SQL against a Warewolf recordset and then map Warewolf data out of the new recordset created from the results.
+        ///	&lt;br /&gt;&lt;br /&gt;
+        ///	Warewolf Recordsets and Warewolf Scalars used in the SQL Statement are loaded.
+        ///	This will allow you to write simple or complex SQL to manipulate your data. &lt;br /&gt;&lt;br /&gt;
+        ///	Once executed  [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Tool_AdvancedRecordset {
+            get {
+                return ResourceManager.GetString("Tool_AdvancedRecordset", resourceCulture);
             }
         }
         

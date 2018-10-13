@@ -27,10 +27,7 @@ namespace Warewolf.Studio.ViewModels
 
         #region Implementation of IManageDatabaseSourceModel
 
-        public string TestConnection(IExchangeSource resource)
-        {
-            return _updateRepository.TestConnection(resource);
-        }
+        public string TestConnection(IExchangeSource resource) => _updateRepository.TestConnection(resource);
 
         public void Save(IExchangeSource toDbSource)
         {
@@ -42,7 +39,16 @@ namespace Warewolf.Studio.ViewModels
             var xaml = _queryProxy.FetchResourceXaml(exchangeSourceResourceID);
             var db = new ExchangeSource(xaml.ToXElement());
 
-            var def = new ExchangeSourceDefinition(db);
+            var def = new ExchangeSourceDefinition
+            {
+                AutoDiscoverUrl = db.AutoDiscoverUrl,
+                Id = db.ResourceID,
+                Password = db.Password,
+                UserName = db.UserName,
+                Path = "",
+                Timeout = db.Timeout,
+                ResourceName = db.ResourceName,
+            };
             return def;
         }
 

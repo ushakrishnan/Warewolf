@@ -7,13 +7,10 @@ using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 
 namespace Dev2.Common.TimeZoneBuilder
 {
-    internal class TimeZoneBuilder : ITimeZoneBuilder
+    class TimeZoneBuilder : ITimeZoneBuilder
     {
-
         #region Implementation of IDateTimeParserBuilder
-        /// <summary>
-        ///     Creates a list of all valid time zones
-        /// </summary>
+
         public void Build()
         {
             TimeZones = new Dictionary<string, ITimeZoneTO>();
@@ -28,10 +25,10 @@ namespace Dev2.Common.TimeZoneBuilder
                 {
                     for (int minutes = 0; minutes < 2; minutes++)
                     {
-                        string min = minutes == 0 ? "00" : "30";
-                        string hrs = string.Concat(hours / Math.Abs(hours) < 0 ? "-" : "+",
+                        var min = minutes == 0 ? "00" : "30";
+                        var hrs = string.Concat(hours / Math.Abs(hours) < 0 ? "-" : "+",
                             Math.Abs(hours).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
-                        string uct = string.Concat(UctShort, hrs, ":", min);
+                        var uct = string.Concat(UctShort, hrs, ":", min);
                         TimeZones.Add(uct.ToLower(), new TimeZoneTO(UctShort, uct, UctLong));
                     }
                 }
@@ -42,37 +39,13 @@ namespace Dev2.Common.TimeZoneBuilder
                 }
             }
 
-            //
-            // Create GMT entries
-            //
-            const string GmtShort = "GMT";
-            const string GmtLong = "Greenwich Mean Time";
-            TimeZones.Add(GmtShort.ToLower(), new TimeZoneTO(GmtShort, GmtShort, GmtLong));
-            TimeZones.Add(GmtLong.ToLower(), new TimeZoneTO(GmtShort, GmtShort, GmtLong));
+            CreateGMTEntries();            
+            ReadSystemTimeZones();
 
-            for (int hours = -12; hours < 13; hours++)
-            {
-                if (hours != 0)
-                {
-                    for (int minutes = 0; minutes < 2; minutes++)
-                    {
-                        string min = minutes == 0 ? "00" : "30";
-                        string hrs = string.Concat(hours / Math.Abs(hours) < 0 ? "-" : "+",
-                            Math.Abs(hours).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
-                        string gmt = string.Concat(GmtShort, hrs, ":", min);
-                        TimeZones.Add(gmt.ToLower(), new TimeZoneTO(GmtShort, gmt, GmtLong));
-                    }
-                }
-                else
-                {
-                    TimeZones.Add(GmtShort + "-00:30", new TimeZoneTO(GmtShort, GmtShort + "-00:30", GmtLong));
-                    TimeZones.Add(GmtShort + "+00:30", new TimeZoneTO(GmtShort, GmtShort + "+00:30", GmtLong));
-                }
-            }
+        }
 
-            //
-            // Read in system time zones
-            //
+        private void ReadSystemTimeZones()
+        {
             foreach (TimeZoneInfo timeZoneInfo in TimeZoneInfo.GetSystemTimeZones())
             {
                 if (!TimeZones.TryGetValue(timeZoneInfo.DisplayName.ToLower(), out ITimeZoneTO timeZoneTo))
@@ -93,7 +66,34 @@ namespace Dev2.Common.TimeZoneBuilder
                         new TimeZoneTO(timeZoneInfo.StandardName, timeZoneInfo.StandardName, timeZoneInfo.DisplayName));
                 }
             }
+        }
 
+        private void CreateGMTEntries()
+        {
+            const string GmtShort = "GMT";
+            const string GmtLong = "Greenwich Mean Time";
+            TimeZones.Add(GmtShort.ToLower(), new TimeZoneTO(GmtShort, GmtShort, GmtLong));
+            TimeZones.Add(GmtLong.ToLower(), new TimeZoneTO(GmtShort, GmtShort, GmtLong));
+
+            for (int hours = -12; hours < 13; hours++)
+            {
+                if (hours != 0)
+                {
+                    for (int minutes = 0; minutes < 2; minutes++)
+                    {
+                        var min = minutes == 0 ? "00" : "30";
+                        var hrs = string.Concat(hours / Math.Abs(hours) < 0 ? "-" : "+",
+                            Math.Abs(hours).ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+                        var gmt = string.Concat(GmtShort, hrs, ":", min);
+                        TimeZones.Add(gmt.ToLower(), new TimeZoneTO(GmtShort, gmt, GmtLong));
+                    }
+                }
+                else
+                {
+                    TimeZones.Add(GmtShort + "-00:30", new TimeZoneTO(GmtShort, GmtShort + "-00:30", GmtLong));
+                    TimeZones.Add(GmtShort + "+00:30", new TimeZoneTO(GmtShort, GmtShort + "+00:30", GmtLong));
+                }
+            }
         }
 
         #endregion

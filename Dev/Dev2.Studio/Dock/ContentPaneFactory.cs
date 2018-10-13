@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,7 +32,7 @@ namespace Dev2.Studio.Dock
 {
     public class ContentPaneFactory : ContainerFactory
     {
-        private DependencyObject _target;
+        DependencyObject _target;
 
         static ContentPaneFactory()
         {
@@ -72,7 +72,7 @@ namespace Dev2.Studio.Dock
 
             base.PrepareContainerForItem(container, item);
 
-            ContentPane pane = container as ContentPane;
+            var pane = container as ContentPane;
 
             SetTabName(pane, item);
             
@@ -93,8 +93,8 @@ namespace Dev2.Studio.Dock
 
                 if (RemoveItemOnClose)
                 {
-                    IEditableCollectionView cv = CollectionViewSource.GetDefaultView(ItemsSource) as IEditableCollectionView;
-                    
+                    var cv = CollectionViewSource.GetDefaultView(ItemsSource) as IEditableCollectionView;
+
                     pane.CloseAction = PaneCloseAction.RemovePane;
 
                     if(null == cv || !cv.CanRemove)
@@ -105,7 +105,7 @@ namespace Dev2.Studio.Dock
             }
         }
 
-        private void PaneOnPreviewMouseDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
+        void PaneOnPreviewMouseDown(object sender, MouseButtonEventArgs mouseButtonEventArgs)
         {
             var mvm = Application.Current.MainWindow.DataContext as ShellViewModel;
             if (mvm?.ActiveItem != null)
@@ -126,55 +126,40 @@ namespace Dev2.Studio.Dock
             {
                 var tabGroupPane = contentPane.Parent as TabGroupPane;
                 var splitPane = tabGroupPane?.Parent as SplitPane;
-                if (splitPane?.Parent is PaneToolWindow paneToolWindow)
+                if (splitPane?.Parent is PaneToolWindow paneToolWindow && string.IsNullOrWhiteSpace(paneToolWindow.Title))
                 {
-                    if (string.IsNullOrWhiteSpace(paneToolWindow.Title))
+                    var hasMainWindow = Application.Current != null && Application.Current.MainWindow != null;
+                    if (hasMainWindow && Application.Current.MainWindow.DataContext != null && Application.Current.MainWindow.DataContext is ShellViewModel mainViewModel)
                     {
-                        if (Application.Current != null)
-                        {
-                            if (Application.Current.MainWindow != null)
-                            {
-                                if (Application.Current.MainWindow.DataContext != null)
-                                {
-                                    if (Application.Current.MainWindow.DataContext is ShellViewModel mainViewModel)
-                                    {
-                                        paneToolWindow.Title = mainViewModel.DisplayName;
-                                    }
-                                }
-                            }
-                        }
+                        paneToolWindow.Title = mainViewModel.DisplayName;
                     }
                 }
             }
         }
 
-        private void ViewModelDeactivated(object sender, DeactivationEventArgs e)
+        void ViewModelDeactivated(object sender, DeactivationEventArgs e)
         {
-            if(e.WasClosed)
+            if (e.WasClosed && _target is TabGroupPane container && sender is WorkSurfaceContextViewModel model)
             {
-                if (_target is TabGroupPane container)
-                {
-                    if (sender is WorkSurfaceContextViewModel model)
-                    {
-                        var toRemove = container.Items.Cast<ContentPane>().ToList()
-                            .FirstOrDefault(p => p.Content != null && p.Content == model.WorkSurfaceViewModel);
+                var toRemove = container.Items.Cast<ContentPane>().ToList()
+                    .FirstOrDefault(p => p.Content != null && p.Content == model.WorkSurfaceViewModel);
 
-                        if (toRemove != null)
-                        {
-                            RemovePane(toRemove);
-                        }
-                        if (toRemove != null &&
-                            Application.Current != null &&
-                            !Application.Current.Dispatcher.HasShutdownStarted)
-                        {
-                            container.Items.Remove(toRemove);
-                        }
-                    }
+                if (toRemove != null)
+                {
+                    RemovePane(toRemove);
+                }
+                if (toRemove != null &&
+                    Application.Current != null &&
+                    !Application.Current.Dispatcher.HasShutdownStarted)
+                {
+                    container.Items.Remove(toRemove);
                 }
             }
+
+
         }
-        
-        private void SetTabName(ContentPane pane, object item)
+
+        void SetTabName(ContentPane pane, object item)
         {
             if (item is WorkSurfaceContextViewModel model)
             {
@@ -186,7 +171,7 @@ namespace Dev2.Studio.Dock
                 pane.Name = item.ToString();
             }
         }
-        
+
         protected sealed override void ValidateContainerType(Type elementType)
         {
             if(!typeof(ContentPane).IsAssignableFrom(elementType))
@@ -235,48 +220,45 @@ namespace Dev2.Studio.Dock
             DependencyProperty.RegisterAttached("PaneFactory", typeof(ContentPaneFactory), typeof(ContentPaneFactory),
                 new FrameworkPropertyMetadata(null,
                     OnPaneFactoryChanged));
-        
+
         [AttachedPropertyBrowsableForType(typeof(DocumentContentHost))]
         [AttachedPropertyBrowsableForType(typeof(TabGroupPane))]
         [AttachedPropertyBrowsableForType(typeof(SplitPane))]
-        public static ContentPaneFactory GetPaneFactory(DependencyObject d)
-        {
-            return (ContentPaneFactory)d.GetValue(PaneFactoryProperty);
-        }
-        
+        public static ContentPaneFactory GetPaneFactory(DependencyObject d) => (ContentPaneFactory)d.GetValue(PaneFactoryProperty);
+
         public static void SetPaneFactory(DependencyObject d, ContentPaneFactory value)
         {
             d.SetValue(PaneFactoryProperty, value);
         }
 
-        private static void OnPaneFactoryChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static void OnPaneFactoryChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if(d is DocumentContentHost || d is TabGroupPane || d is SplitPane)
+            if (d is DocumentContentHost || d is TabGroupPane || d is SplitPane)
             {
-                ContentPaneFactory oldFactory = (ContentPaneFactory)e.OldValue;
-                ContentPaneFactory newFactory = (ContentPaneFactory)e.NewValue;
+                var oldFactory = (ContentPaneFactory)e.OldValue;
+                var newFactory = (ContentPaneFactory)e.NewValue;
 
-                if(oldFactory != null && oldFactory.Equals(newFactory))
+                if (oldFactory != null && oldFactory.Equals(newFactory))
                 {
                     return;
                 }
 
-                if(oldFactory != null)
+                if (oldFactory != null)
                 {
                     oldFactory._target = null;
 
-                    foreach(var o in oldFactory.GetElements())
+                    foreach (var o in oldFactory.GetElements())
                     {
                         var cp = (ContentPane)o;
                         oldFactory.RemovePane(cp);
                     }
                 }
 
-                if(newFactory != null)
+                if (newFactory != null)
                 {
                     newFactory._target = d;
 
-                    foreach(var o in newFactory.GetElements())
+                    foreach (var o in newFactory.GetElements())
                     {
                         var cp = (ContentPane)o;
                         newFactory.AddPane(cp);
@@ -284,7 +266,7 @@ namespace Dev2.Studio.Dock
                 }
             }
         }
-        
+
         public static readonly DependencyProperty RemoveItemOnCloseProperty = DependencyProperty.Register("RemoveItemOnClose",
             typeof(bool), typeof(ContentPaneFactory), new FrameworkPropertyMetadata(KnownBoxes.TrueBox));
         
@@ -325,7 +307,7 @@ namespace Dev2.Studio.Dock
         {
             if (_target is DocumentContentHost host)
             {
-                ContentPane sibling = GetSiblingDocument();
+                var sibling = GetSiblingDocument();
                 TabGroupPane tgp = null;
 
                 if (sibling != null)
@@ -336,10 +318,10 @@ namespace Dev2.Studio.Dock
 
                 if (null == tgp)
                 {
-                    SplitPane sp = new SplitPane();
+                    var sp = new SplitPane();
                     tgp = new TabGroupPane { Name = "Z" + Guid.NewGuid().ToString("N") };
                     sp.Panes.Add(tgp);
-                    DocumentContentHost dch = host;
+                    var dch = host;
                     dch.Panes.Add(sp);
                 }
 
@@ -373,43 +355,43 @@ namespace Dev2.Studio.Dock
                 }
             }
         }
-        
-        private ContentPane GetSiblingDocument()
-        {
-            DocumentContentHost dch = _target as DocumentContentHost;
 
-            if(dch == null)
+        ContentPane GetSiblingDocument()
+        {
+            var dch = _target as DocumentContentHost;
+
+            if (dch == null)
             {
                 return null;
             }
 
-            if(null != dch.ActiveDocument)
+            if (null != dch.ActiveDocument)
             {
                 return dch.ActiveDocument;
             }
 
-            XamDockManager dm = XamDockManager.GetDockManager(dch);
+            var dm = XamDockManager.GetDockManager(dch);
 
-            if(dm == null)
+            if (dm == null)
             {
                 return null;
             }
 
             ContentPane firstDocument = null;
 
-            foreach(ContentPane cp in dm.GetPanes(PaneNavigationOrder.VisibleOrder))
+            foreach (ContentPane cp in dm.GetPanes(PaneNavigationOrder.VisibleOrder))
             {
-                if(cp.PaneLocation != PaneLocation.Document)
+                if (cp.PaneLocation != PaneLocation.Document)
                 {
                     continue;
                 }
 
-                if(firstDocument == null)
+                if (firstDocument == null)
                 {
                     firstDocument = cp;
                 }
 
-                if(cp.Visibility != Visibility.Visible)
+                if (cp.Visibility != Visibility.Visible)
                 {
                     continue;
                 }
@@ -428,39 +410,42 @@ namespace Dev2.Studio.Dock
 
                 if (pane.DataContext is WorkSurfaceContextViewModel model)
                 {
-                    var workflowVm = model.WorkSurfaceViewModel as IWorkflowDesignerViewModel;
-                    IContextualResourceModel resource = workflowVm?.ResourceModel;
-
-                    if (resource != null && !resource.IsWorkflowSaved)
-                    {
-                        CloseCurrent(e, model);
-                    }
-                    else
-                    {
-                        if (model.WorkSurfaceViewModel is IStudioTab sourceView)
-                        {
-                            CloseCurrent(e, model);
-                        }
-                    }
+                    CloseCurrentWorkSurfaceWorkflowDesignerViewModel(e, model);
                 }
             }
         }
 
-        private static void CloseCurrent(PaneClosingEventArgs e, WorkSurfaceContextViewModel model)
+        static void CloseCurrentWorkSurfaceWorkflowDesignerViewModel(PaneClosingEventArgs e, WorkSurfaceContextViewModel model)
+        {
+            var workflowVm = model.WorkSurfaceViewModel as IWorkflowDesignerViewModel;
+            var resource = workflowVm?.ResourceModel;
+
+            if (resource != null && !resource.IsWorkflowSaved)
+            {
+                CloseCurrent(e, model);
+            }
+            else
+            {
+                if (model.WorkSurfaceViewModel is IStudioTab sourceView)
+                {
+                    CloseCurrent(e, model);
+                }
+            }
+        }
+
+        static void CloseCurrent(PaneClosingEventArgs e, WorkSurfaceContextViewModel model)
         {
             var vm = model;
             vm.TryClose();
-            if (vm.Parent is ShellViewModel mainVm)
+            if (vm.Parent is ShellViewModel mainVm && !mainVm.CloseCurrent)
             {
-                if (!mainVm.CloseCurrent)
-                {
-                    e.Cancel = true;
-                }
+                e.Cancel = true;
             }
+
         }
 
 
-        private void OnPaneClosed(object sender, PaneClosedEventArgs e)
+        void OnPaneClosed(object sender, PaneClosedEventArgs e)
         {
             if (sender is ContentPane pane && IsContainerInUse(pane) && pane.CloseAction == PaneCloseAction.RemovePane)
             {
@@ -483,9 +468,9 @@ namespace Dev2.Studio.Dock
             }
         }
 
-        private void RaiseInitializeContentPane(ContentPane pane)
+        void RaiseInitializeContentPane(ContentPane pane)
         {
-            if(null == _target)
+            if (null == _target)
             {
                 return;
             }
@@ -493,16 +478,16 @@ namespace Dev2.Studio.Dock
             var args = new InitializeContentPaneEventArgs(pane) { RoutedEvent = InitializeContentPaneEvent };
             UiElementHelper.RaiseEvent(_target, args);
         }
-        
+
         protected virtual void RemovePane(ContentPane cp)
         {
-            DependencyProperty closeProp = ContentPane.CloseActionProperty;
-            if(cp == null)
+            var closeProp = ContentPane.CloseActionProperty;
+            if (cp == null)
             {
                 return;
             }
 
-            object oldValue = cp.ReadLocalValue(closeProp);
+            var oldValue = cp.ReadLocalValue(closeProp);
             BindingExpressionBase oldExpression = cp.GetBindingExpression(closeProp);
 
             cp.CloseAction = PaneCloseAction.RemovePane;

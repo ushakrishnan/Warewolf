@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.Practices.Prism.Mvvm;
@@ -61,14 +62,14 @@ namespace Warewolf.Studio.Views
 
         public Visibility GetUsernameVisibility()
         {
-            BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
+            var be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
 
         public Visibility GetPasswordVisibility()
         {
-            BindingExpression be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
+            var be = UserNamePasswordContainer.GetBindingExpression(VisibilityProperty);
             be?.UpdateTarget();
             return UserNamePasswordContainer.Visibility;
         }
@@ -96,34 +97,22 @@ namespace Warewolf.Studio.Views
 
         public string GetErrorMessage()
         {
-            BindingExpression be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
+            var be = ErrorTextBlock.GetBindingExpression(TextBox.TextProperty);
             be?.UpdateTarget();
             return ErrorTextBlock.Text;
         }
 
-        public string GetAddress()
-        {
-            return ServerTextBox.Text;
-        }
+        public string GetAddress() => ServerTextBox.Text;
 
-        public string GetDefaultQuery()
-        {
-            return DefaultQueryTextBox.Text;
-        }
+        public string GetDefaultQuery() => DefaultQueryTextBox.Text;
 
-        public string GetUsername()
-        {
-            return UserNameTextBox.Text;
-        }
+        public string GetUsername() => UserNameTextBox.Text;
 
-        public string GetPassword()
-        {
-            return PasswordTextBox.Password;
-        }
+        public string GetPassword() => PasswordTextBox.Password;
 
         public string GetTestDefault()
         {
-            BindingExpression be = TestDefault.GetBindingExpression(Hyperlink.NavigateUriProperty);
+            var be = TestDefault.GetBindingExpression(Hyperlink.NavigateUriProperty);
             be?.UpdateTarget();
             return TestDefault.NavigateUri.ToString();
         }
@@ -135,7 +124,7 @@ namespace Warewolf.Studio.Views
 
         public string GetHeaderText()
         {
-            BindingExpression be = HeaderTextBlock.GetBindingExpression(TextBlock.TextProperty);
+            var be = HeaderTextBlock.GetBindingExpression(TextBlock.TextProperty);
             be?.UpdateTarget();
             return HeaderTextBlock.Text;
         }
@@ -143,6 +132,18 @@ namespace Warewolf.Studio.Views
         public void CancelTest()
         {
             CancelButton.Command.Execute(null);
+        }
+
+        void ServerTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textbox)
+            {
+                var viewModel = textbox.DataContext as ManageWebserviceSourceViewModel;
+                if (!viewModel.HostName.Contains("://"))
+                {
+                    viewModel.HostName = GlobalConstants.HTTPSAddress + viewModel.HostName;
+                }
+            }
         }
     }
 }

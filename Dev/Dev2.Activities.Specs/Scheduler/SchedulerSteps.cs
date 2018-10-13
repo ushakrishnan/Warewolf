@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -41,8 +41,8 @@ namespace Dev2.Activities.Specs.Scheduler
     [Binding]
     public class SchedulerSteps
     {
-        private static ScenarioContext _scenarioContext;
-        private readonly CommonSteps _commonSteps;
+        static ScenarioContext _scenarioContext;
+        readonly CommonSteps _commonSteps;
 
         public SchedulerSteps(ScenarioContext scenarioContext)
         {
@@ -53,6 +53,7 @@ namespace Dev2.Activities.Specs.Scheduler
 
             _scenarioContext = scenarioContext;
             _commonSteps = new CommonSteps(_scenarioContext);
+            CustomContainer.Register(new Mock<IExplorerTooltips>().Object);
         }
 
         [Given(@"I have a schedule ""(.*)""")]
@@ -85,7 +86,7 @@ namespace Dev2.Activities.Specs.Scheduler
         [Given(@"""(.*)"" has a Schedule of")]
         public void GivenHasAScheduleOf(string scheduleName, Table table)
         {
-            AppSettings.LocalHost = "http://localhost:3142";
+            AppUsageStats.LocalHost = "http://localhost:3142";
             var mockServer = new Mock<IServer>();
             var mockshell = new Mock<IShellViewModel>();
             mockshell.Setup(a => a.ActiveServer).Returns(mockServer.Object);
@@ -96,10 +97,10 @@ namespace Dev2.Activities.Specs.Scheduler
             var mockPopupController = new Mock<IPopupController>();
             mockPopupController.Setup(controller => controller.ShowDeleteConfirmation(It.IsAny<string>())).Returns(MessageBoxResult.Yes);
             var serverRepository = ServerRepository.Instance;
-            IServer server = serverRepository.Source;
+            var server = serverRepository.Source;
             CustomContainer.Register(serverRepository);
-            SchedulerViewModel scheduler = new SchedulerViewModel(EventPublishers.Aggregator, new DirectoryObjectPickerDialog(), mockPopupController.Object, AsyncWorkerTests.CreateSynchronousAsyncWorker().Object, new Mock<IServer>().Object, a => new Mock<IServer>().Object);
-         
+            var scheduler = new SchedulerViewModel(EventPublishers.Aggregator, new DirectoryObjectPickerDialog(), mockPopupController.Object, AsyncWorkerTests.CreateSynchronousAsyncWorker().Object, new Mock<IServer>().Object, a => new Mock<IServer>().Object);
+
             var resourceId = table.Rows[0]["ResourceId"];
 
             server.Connect();
@@ -118,7 +119,7 @@ namespace Dev2.Activities.Specs.Scheduler
             var task = scheduler.SelectedTask;
             UpdateTrigger(task, table);
 
-            PrivateObject po = new PrivateObject(scheduler.CurrentEnvironment);
+            var po = new PrivateObject(scheduler.CurrentEnvironment);
             var mockAuth = new Mock<IAuthorizationService>();
             mockAuth.Setup(a => a.IsAuthorized(It.IsAny<AuthorizationContext>(), null)).Returns(true);
             po.SetFieldOrProperty("AuthorizationService", mockAuth.Object);
@@ -129,15 +130,14 @@ namespace Dev2.Activities.Specs.Scheduler
                 if (scheduler.HasErrors)
                 {
                     _scenarioContext["Error"] = scheduler.Error;
+                    Console.WriteLine("Error creating schedule: " + scheduler.Error);
                 }
             }
             catch (Exception e)
             {
-
                 _scenarioContext["Error"] = e.Message;
+                Console.WriteLine("Error creating schedule: " + e.Message);
             }
-
-
         }
 
         void UpdateTrigger(IScheduledResource task, Table table)
@@ -236,8 +236,8 @@ namespace Dev2.Activities.Specs.Scheduler
         [Then(@"the history debug output for ""(.*)"" for row ""(.*)"" is")]
         public void ThenTheHistoryDebugOutputForForRowIs(string p0, int p1, Table table)
         {
-            IList<IResourceHistory> resources = _scenarioContext["History"] as IList<IResourceHistory>;
-            
+            var resources = _scenarioContext["History"] as IList<IResourceHistory>;
+
             var debug = resources.First().DebugOutput;
             
             var debugTocompare = debug.Last();
@@ -277,18 +277,16 @@ namespace Dev2.Activities.Specs.Scheduler
         {
             try
             {
-
-                int i = 0;
+                var i = 0;
                 var x = new TaskService();
                 x.GetFolder("Warewolf");
                 var task = x.FindTask(scheduleName);
+                Assert.IsNotNull(task, "Task " + scheduleName + " not found in Warewolf folder");
                 do
                 {
                     task.Run();
-
-
                     const int TimeOut = 10;
-                    int time = 0;
+                    var time = 0;
                     while (task.State == TaskState.Running && time < TimeOut)
                     {
                         time++;
@@ -296,20 +294,17 @@ namespace Dev2.Activities.Specs.Scheduler
                     }
                     i++;
 
-
                 } while (i < times);
             }
             catch (Exception e)
             {
-
                 _scenarioContext["Error"] = e;
             }
-
         }
 
         public static bool AccountExists(string name)
         {
-            bool accountExists = false;
+            var accountExists = false;
             try
             {
                 var id = GetUserSecurityIdentifier(name);
@@ -326,8 +321,8 @@ namespace Dev2.Activities.Specs.Scheduler
 
         public static SecurityIdentifier GetUserSecurityIdentifier(string name)
         {
-            NTAccount acct = new NTAccount(Environment.MachineName, name);
-            SecurityIdentifier id = (SecurityIdentifier)acct.Translate(typeof(SecurityIdentifier));
+            var acct = new NTAccount(Environment.MachineName, name);
+            var id = (SecurityIdentifier)acct.Translate(typeof(SecurityIdentifier));
             return id;
         }
 
@@ -335,8 +330,8 @@ namespace Dev2.Activities.Specs.Scheduler
         {
             try
             {
-                PrincipalContext context = new PrincipalContext(ContextType.Machine);
-                UserPrincipal user = new UserPrincipal(context);
+                var context = new PrincipalContext(ContextType.Machine);
+                var user = new UserPrincipal(context);
                 user.SetPassword(password);
                 user.DisplayName = username;
                 user.Name = username;
@@ -356,7 +351,7 @@ namespace Dev2.Activities.Specs.Scheduler
 
         public static void AddUserToGroup(string groupName, PrincipalContext context, UserPrincipal user)
         {
-            GroupPrincipal usersGroup = GroupPrincipal.FindByIdentity(context, groupName);
+            var usersGroup = GroupPrincipal.FindByIdentity(context, groupName);
             if (usersGroup != null)
             {
                 usersGroup.Members.Add(user);
@@ -367,8 +362,11 @@ namespace Dev2.Activities.Specs.Scheduler
         [AfterScenario("@Scheduler")]
         public static void CleanupAfterTestScheduler()
         {
-            var vm = _scenarioContext["Scheduler"] as SchedulerViewModel;
-            vm?.DeleteCommand.Execute(vm.SelectedTask);
+            if (_scenarioContext.ContainsKey("Scheduler"))
+            {
+                var vm = _scenarioContext["Scheduler"] as SchedulerViewModel;
+                vm?.DeleteCommand.Execute(vm.SelectedTask);
+            }
         }
     }
 }

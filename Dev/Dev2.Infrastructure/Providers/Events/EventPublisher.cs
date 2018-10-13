@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,10 +31,7 @@ namespace Dev2.Providers.Events
         public int Count => _subjects.Count;
 
         public bool RemoveEvent<TEvent>()
-            where TEvent : class, new()
-        {
-            return _subjects.TryRemove(typeof(TEvent), out object value);
-        }
+            where TEvent : class, new() => _subjects.TryRemove(typeof(TEvent), out object value);
 
         public IObservable<TEvent> GetEvent<TEvent>()
             where TEvent : class, new()

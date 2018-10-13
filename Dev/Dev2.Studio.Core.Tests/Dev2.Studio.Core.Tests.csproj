@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props')" />
+  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -12,7 +12,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2.Core.Tests</RootNamespace>
     <AssemblyName>Dev2.Studio.Core.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <SccProjectName>SAK</SccProjectName>
@@ -40,6 +40,9 @@
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
+    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
+      <HintPath>..\packages\Castle.Core.4.2.0\lib\net45\Castle.Core.dll</HintPath>
+    </Reference>
     <Reference Include="FontAwesome.WPF, Version=4.5.0.37524, Culture=neutral, PublicKeyToken=0758b07a11a4f466, processorArchitecture=MSIL">
       <HintPath>..\packages\FontAwesome.WPF.4.5.0.8\lib\net40\FontAwesome.WPF.dll</HintPath>
       <Private>True</Private>
@@ -89,6 +92,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\Microsoft.Expression.Interactions.dll</HintPath>
     </Reference>
+    <Reference Include="InfragisticsWPF4.DataPresenter.v15.1">
+      <HintPath>..\Binaries\InfragisticsWPF4.DataPresenter.v15.1.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Practices.Prism.Composition">
       <HintPath>..\packages\Prism.Composition.5.0.0\lib\NET45\Microsoft.Practices.Prism.Composition.dll</HintPath>
       <Private>True</Private>
@@ -117,10 +123,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.1.18\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
+      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.1.18\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
+      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Win32.TaskScheduler, Version=2.5.20.0, Culture=neutral, PublicKeyToken=0d013ddd5178a2ae, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskScheduler.2.5.20\lib\net40\Microsoft.Win32.TaskScheduler.dll</HintPath>
@@ -130,9 +136,8 @@
       <HintPath>..\packages\TaskSchedulerEditor.2.5.20\lib\net40\Microsoft.Win32.TaskSchedulerEditor.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Moq, Version=4.2.1510.2205, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
-      <HintPath>..\packages\Moq.4.2.1510.2205\lib\net40\Moq.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Moq, Version=4.7.137.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
+      <HintPath>..\packages\Moq.4.7.137\lib\net45\Moq.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -191,7 +196,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\AssemblyCommonInfo.cs">
+    <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
     <None Include="..\Run Tests.ps1">
@@ -199,6 +204,9 @@
       <Link>Run Tests.ps1</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
+      <Visible>False</Visible>
+    </AdditionalFiles>
     <Compile Include="Activities\Services\DesignerManagementServiceTests.cs" />
     <Compile Include="Activities\WorkerServicePropertyInterigatorTest.cs" />
     <Compile Include="Activities\WorkflowPropertyInterigatorTest.cs" />
@@ -211,15 +219,20 @@
     <Compile Include="AppResources\Converters\MultipleBoolToEnabledConverterTests.cs" />
     <Compile Include="AppResources\Converters\SimpleEnumToBoolConverterTests.cs" />
     <Compile Include="BaseWorkSurfaceViewModelTests.cs" />
+    <Compile Include="CommonSetupHelper.cs" />
     <Compile Include="ConnectionHelpers\ConnectControlSingletonTests.cs" />
     <Compile Include="Controller\CommunicationControllerTests.cs" />
     <Compile Include="CustomContainerTests.cs" />
+    <Compile Include="DataListViewModelEqualityTests.cs" />
     <Compile Include="DependencyVisualiserViewModelTests.cs" />
     <Compile Include="DependencyGraph\CircularDependencyTests.cs" />
     <Compile Include="DependencyGraph\GraphTests.cs" />
     <Compile Include="DeployDtoTests.cs" />
     <Compile Include="Dialogs\ProgressDialogViewModelTests.cs" />
     <Compile Include="ExceptionViewModelTest.cs" />
+    <Compile Include="Factories\CustomGitOpsTests.cs" />
+    <Compile Include="Helpers\ResouceModel.cs" />
+    <Compile Include="Helpers\ResourceExtensionHelperTests.cs" />
     <Compile Include="Helpers\TestProgressFileDownloaderTests.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -253,6 +266,15 @@
     <Compile Include="IntellisenseProvider\DefaultIntellisenseProviderTest.cs" />
     <Compile Include="IntellisenseProvider\EventLogParser.cs" />
     <Compile Include="MainViewModelBase.cs" />
+    <Compile Include="Merge\ConnectorConflictRowTests.cs" />
+    <Compile Include="Merge\ConflictModelFactoryTests.cs" />
+    <Compile Include="Merge\ConflictRowListTests.cs" />
+    <Compile Include="Merge\ConnectorConflictItemTests.cs" />
+    <Compile Include="Merge\ToolConflictItemTests.cs" />
+    <Compile Include="Merge\ToolConflictRowTests.cs" />
+    <Compile Include="Merge\MergePreviewWorkflowStateApplierTests.cs" />
+    <Compile Include="Merge\ConflictListStateApplierTests.cs" />
+    <Compile Include="Merge\Utils\MergeTestUtils.cs" />
     <Compile Include="ShellViewModelMock.cs" />
     <Compile Include="Custom Dev2 Controls\Intellisense\IntellisenseTextBoxTests.cs" />
     <Compile Include="ModelTests\RecordSetItemModelTests.cs" />
@@ -264,7 +286,6 @@
     <Compile Include="PopupControllerTests.cs" />
     <Compile Include="QuickVariableInputModelTests.cs" />
     <Compile Include="Security\ClientSecurityServiceTests.cs" />
-    <Compile Include="Services\HelpConfigurationTests.cs" />
     <Compile Include="Services\ServerServiceConfigurationTest.cs" />
     <Compile Include="Settings\PerfCounterViewModelTests.cs" />
     <Compile Include="Settings\SettingsViewModelTests.cs" />
@@ -283,6 +304,12 @@
     <Compile Include="TestUtil.cs" />
     <Compile Include="ComplexObjectItemModelTests.cs" />
     <Compile Include="StudioTestViewModelTest.cs" />
+    <Compile Include="MergeWorkflowViewModelTests.cs" />
+    <Compile Include="MergeViewModelTest.cs" />
+    <Compile Include="QueryManagerProxyTest.cs" />
+    <Compile Include="ExplorerDeleteProviderTests.cs" />
+    <Compile Include="TabGroupPaneBindingBehaviorTests.cs" />
+    <Compile Include="UpdateProxyTest.cs" />
     <Compile Include="UtilsTests\ActivityDesignerLanuageNotationConverterTest.cs" />
     <Compile Include="UtilsTests\DataListConversionUtilTest.cs" />
     <Compile Include="UtilsTests\WebServerTests.cs" />
@@ -311,7 +338,7 @@
     <Compile Include="Helpers\VersionCheckerTests.cs" />
     <Compile Include="InputOutputViewModelTest.cs" />
     <Compile Include="ShellViewModelPersistenceMock.cs" />
-    <Compile Include="MainViewModelTest.cs" />
+    <Compile Include="MainViewModelTests.cs" />
     <Compile Include="Dev2MockFactory.cs" />
     <Compile Include="ModelTests\DataListItemModelTest.cs" />
     <Compile Include="TestResourceRepository.cs" />
@@ -337,6 +364,8 @@
     <Compile Include="Utils\UIElementExtensionMethods.cs" />
     <Compile Include="Utils\WorkflowDesignerUtilsTest.cs" />
     <Compile Include="ViewFactoryTests.cs" />
+    <Compile Include="Workflows\MergePreviewWorkflowDesignerViewModelMock.cs" />
+    <Compile Include="Workflows\WorkflowDesignerUnitTest.Merge.cs" />
     <Compile Include="Workflows\DesignerDataListUtilsTest.cs" />
     <Compile Include="Workflows\TestActivity.cs" />
     <Compile Include="Workflows\WorkflowDesignerViewModelMock.cs" />
@@ -398,6 +427,10 @@
       <Project>{615EAE6D-040C-4364-B708-63DC8755CD4F}</Project>
       <Name>Dev2.Infrastructure</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Instrumentation\Dev2.Instrumentation.csproj">
+      <Project>{52F26184-CB50-4D82-B8A2-83F73D2B5011}</Project>
+      <Name>Dev2.Instrumentation</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Intellisense\Dev2.Intellisense.csproj">
       <Project>{DB2FBC8D-3271-4D1D-A6BC-F4DFC530918B}</Project>
       <Name>Dev2.Intellisense</Name>
@@ -458,6 +491,18 @@
       <Project>{8FD23CE0-02BB-48E1-A914-BA467938CE78}</Project>
       <Name>Warewolf.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Launcher\Warewolf.Launcher.csproj">
+      <Project>{9B669D51-14CE-44A3-9407-8251BA3BAD19}</Project>
+      <Name>Warewolf.Launcher</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.MergeParser.Tests\Warewolf.MergeParser.Tests.csproj">
+      <Project>{240C477A-DD4C-4604-A6E9-43024257104E}</Project>
+      <Name>Warewolf.MergeParser.Tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.MergeParser\Warewolf.MergeParser.csproj">
+      <Project>{01b6f143-3f8c-4545-b06f-57d2c5ae7c9c}</Project>
+      <Name>Warewolf.MergeParser</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Resource\Warewolf.Resource.csproj">
       <Project>{dff93ecb-fdd1-405e-ae02-9f4bc7571c1b}</Project>
       <Name>Warewolf.Resource</Name>
@@ -482,8 +527,15 @@
       <Project>{C52B12C2-6A1D-4C4F-A878-CF283662A226}</Project>
       <Name>Warewolf.Studio.ViewModels</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Testing\Warewolf.Testing.csproj">
+      <Project>{1AD4F06F-BC1C-4C9E-8184-67EAE81C2279}</Project>
+      <Name>Warewolf.Testing</Name>
+    </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="XML\Utility - Assign.xml" />
+    <EmbeddedResource Include="XML\Utility - Assign_Confilct.xml" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="..\Dev2.Studio\App.config">
       <Link>App.config</Link>
@@ -493,6 +545,12 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="XML\ResourceWithErrors.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML\Loop Constructs - For Each.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="XML\AssignOutput.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
@@ -507,10 +565,10 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.props'))" />
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props'))" />
+    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets'))" />
   </Target>
-  <Import Project="..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.1.18\build\net45\MSTest.TestAdapter.targets')" />
+  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" />
   <!--<PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
     <PreBuildEvent>"$(DevEnvDir)tf" get /recursive $(ProjectDir)</PreBuildEvent>
   </PropertyGroup>-->

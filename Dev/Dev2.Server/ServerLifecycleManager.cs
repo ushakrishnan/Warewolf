@@ -1,7 +1,7 @@
 
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,11 +23,13 @@ using System.Security.Principal;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
+using System.Xml;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Monitoring;
+using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Common.Wrappers;
 using Dev2.Data;
 using Dev2.Diagnostics.Debug;
@@ -49,7 +51,7 @@ namespace Dev2
     sealed class ServerLifecycleManager : IDisposable
     {
         static ServerLifecycleManager _singleton;
-        
+
         static int Main(string[] arguments)
         {
             try
@@ -73,7 +75,7 @@ namespace Dev2
             {
                 Dev2Logger.Fatal("Server has crashed!!!", args.ExceptionObject as Exception, "Warewolf Fatal");
             };
-            if (Environment.UserInteractive)
+            if (Environment.UserInteractive || (arguments.Count() > 0 && arguments[0] == "--interactive"))
             {
                 Dev2Logger.Info("** Starting In Interactive Mode **", GlobalConstants.WarewolfInfo);
                 using (_singleton = new ServerLifecycleManager(arguments))
@@ -94,12 +96,11 @@ namespace Dev2
             return Result;
         }
 
-        
+
         public class ServerLifecycleManagerService : ServiceBase
         {
             public ServerLifecycleManagerService()
             {
-                ServiceName = ServiceName;
                 CanPauseAndContinue = false;
             }
 
@@ -121,15 +122,16 @@ namespace Dev2
         bool _isDisposed;
         bool _isWebServerEnabled;
         bool _isWebServerSslEnabled;
+
         Dev2Endpoint[] _endpoints;
         Timer _timer;
         IDisposable _owinServer;
         readonly IPulseLogger _pulseLogger;
-        private int _daysToKeepTempFiles;
-        private readonly PulseTracker _pulseTracker;
-        private IpcClient _ipcIpcClient;
-        
-        
+        int _daysToKeepTempFiles;
+        readonly PulseTracker _pulseTracker;
+        IpcClient _ipcIpcClient;
+
+
         ServerLifecycleManager(string[] arguments)
         {
             _pulseLogger = new PulseLogger(60000);
@@ -157,7 +159,7 @@ namespace Dev2
             SetupTempCleanupSetting();
         }
 
-        private static void MoveSettingsFiles()
+        static void MoveSettingsFiles()
         {
             if (File.Exists("Settings.config"))
             {
@@ -183,22 +185,18 @@ namespace Dev2
             }
         }
 
-        private void SetupTempCleanupSetting()
+        void SetupTempCleanupSetting()
         {
             var daysToKeepTempFilesValue = ConfigurationManager.AppSettings.Get("DaysToKeepTempFiles");
-            if (!string.IsNullOrEmpty(daysToKeepTempFilesValue))
+            if (!string.IsNullOrEmpty(daysToKeepTempFilesValue) && int.TryParse(daysToKeepTempFilesValue, out int daysToKeepTempFiles))
             {
-                if (int.TryParse(daysToKeepTempFilesValue, out int daysToKeepTempFiles))
-                {
-                    _daysToKeepTempFiles = daysToKeepTempFiles;
-                }
+                _daysToKeepTempFiles = daysToKeepTempFiles;
             }
+
         }
-        
+
         void Run(bool interactiveMode)
         {
-            Tracker.StartServer();
-
             // ** Perform Moq Installer Actions For Development ( DEBUG config ) **
 #if DEBUG
             try
@@ -208,7 +206,7 @@ namespace Dev2
             }
             catch (Exception e)
             {
-                throw new Exception("Ensure you are running as an Administrator. Mocking installer actions for DEBUG config failed to create Warewolf Administrators group and/or to add current user to it [ " + e.Message + " ]", e);
+                Dev2Logger.Warn("Mocking installer actions for DEBUG config failed to create Warewolf Administrators group and/or to add current user to it [ " + e.Message + " ]", GlobalConstants.WarewolfWarn);
             }
 #endif
 
@@ -220,7 +218,7 @@ namespace Dev2
                 InitializeServer();
                 LoadSettingsProvider();
                 ConfigureLoggging();
-                _ipcIpcClient = IpcClient.GetIPCExecutor();
+                OpenCOMStream();
                 var catalog = LoadResourceCatalog();
                 _timer = new Timer(PerformTimerActions, null, 1000, GlobalConstants.NetworkComputerNameQueryFreq);
                 StartPulseLogger();
@@ -233,11 +231,21 @@ namespace Dev2
             }
             catch (Exception e)
             {
+#pragma warning disable S2228 // Console logging should not be used
+#pragma warning disable S2228 // Console logging should not be used
                 Console.WriteLine(e);
+#pragma warning restore S2228 // Console logging should not be used
+#pragma warning restore S2228 // Console logging should not be used
                 Dev2Logger.Error("Error Starting Server", e, GlobalConstants.WarewolfError);
                 Stop(true, 0);
             }
+        }
 
+        void OpenCOMStream()
+        {
+            Write("Opening named pipe client stream for COM IPC... ");
+            _ipcIpcClient = IpcClient.GetIPCExecutor();
+            WriteLine("done.");
         }
 
         void StartPulseLogger()
@@ -254,7 +262,7 @@ namespace Dev2
                 DeleteTempFiles();
             }
         }
-        
+
         static void PreloadReferences()
         {
             Write("Preloading assemblies...  ");
@@ -263,7 +271,7 @@ namespace Dev2
             LoadReferences(currentAsm, inspected);
             WriteLine("done.");
         }
-        
+
         static void LoadReferences(Assembly asm, HashSet<string> inspected)
         {
             var allReferences = asm.GetReferencedAssemblies();
@@ -279,8 +287,7 @@ namespace Dev2
             }
         }
 
-
-        private void DeleteTempFiles()
+        void DeleteTempFiles()
         {
             var tempPath = Path.Combine(GlobalConstants.TempLocation, "Warewolf", "Debug");
             DeleteTempFiles(tempPath);
@@ -288,7 +295,7 @@ namespace Dev2
             DeleteTempFiles(schedulerTempPath);
         }
 
-        private void DeleteTempFiles(string tempPath)
+        void DeleteTempFiles(string tempPath)
         {
             if (Directory.Exists(tempPath))
             {
@@ -310,9 +317,6 @@ namespace Dev2
 
         void Stop(bool didBreak, int result)
         {
-
-            Tracker.Stop();
-
             if (!didBreak)
             {
                 Dispose();
@@ -323,7 +327,6 @@ namespace Dev2
 
         void ServerLoop(bool interactiveMode)
         {
-
             if (interactiveMode)
             {
                 Write("Press <ENTER> to terminate service and/or web server if started");
@@ -339,11 +342,10 @@ namespace Dev2
             }
         }
 
-        void SetWorkingDirectory()
+        static void SetWorkingDirectory()
         {
             try
             {
-                
                 Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
             }
             catch (Exception e)
@@ -351,19 +353,17 @@ namespace Dev2
                 Fail("Unable to set working directory.", e);
             }
         }
-        
         void InitializeServer()
         {
             try
             {
                 string webServerSslPort;
                 string webServerPort;
-
+                GlobalConstants.CollectUsageStats = ConfigurationManager.AppSettings["CollectUsageStats"];
                 GlobalConstants.WebServerPort = webServerPort = ConfigurationManager.AppSettings["webServerPort"];
                 GlobalConstants.WebServerSslPort = webServerSslPort = ConfigurationManager.AppSettings["webServerSslPort"];
 
                 _isWebServerEnabled = false;
-
                 bool.TryParse(ConfigurationManager.AppSettings["webServerEnabled"], out _isWebServerEnabled);
                 bool.TryParse(ConfigurationManager.AppSettings["webServerSslEnabled"], out _isWebServerSslEnabled);
 
@@ -387,7 +387,7 @@ namespace Dev2
                     endpoints.Add(new Dev2Endpoint(httpEndpoint, httpUrl));
 
                     EnvironmentVariables.WebServerUri = httpUrl.Replace("*", Environment.MachineName);
-                    EnableSSLForServer(webServerSslPort, endpoints);
+                    EnableSslForServer(webServerSslPort, endpoints);
 
                     _endpoints = endpoints.ToArray();
                 }
@@ -400,7 +400,7 @@ namespace Dev2
         }
 
 
-        private void EnableSSLForServer(string webServerSslPort, List<Dev2Endpoint> endpoints)
+        void EnableSslForServer(string webServerSslPort, List<Dev2Endpoint> endpoints)
         {
             if (!string.IsNullOrEmpty(webServerSslPort) && _isWebServerSslEnabled)
             {
@@ -425,8 +425,8 @@ namespace Dev2
                 }
             }
         }
-        
-        
+
+
         internal void CleanupServer()
         {
             try
@@ -465,12 +465,12 @@ namespace Dev2
 
             WriteLine("");
         }
-        
+
         ~ServerLifecycleManager()
         {
             Dispose(false);
         }
-        
+
         public void Dispose()
         {
             if (_isDisposed)
@@ -482,7 +482,7 @@ namespace Dev2
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
+
         void Dispose(bool disposing)
         {
 
@@ -500,7 +500,7 @@ namespace Dev2
             _owinServer = null;
         }
 
-        void LoadPerformanceCounters()
+        static void LoadPerformanceCounters()
         {
             try
             {
@@ -523,48 +523,52 @@ namespace Dev2
             }
         }
 
-        /// <summary>
-        /// </summary>
-        /// <returns></returns>
-        /// <author>Trevor.Williams-Ros</author>
-        /// <date>2013/03/13</date>
-        ResourceCatalog LoadResourceCatalog()
+        static ResourceCatalog LoadResourceCatalog()
         {
-            
+
             MigrateOldResources();
             ValidateResourceFolder();
             Write("Loading resource catalog...  ");
             var catalog = ResourceCatalog.Instance;
+            MethodsToBeDepricated();
             WriteLine("done.");
             return catalog;
         }
 
-        void LoadTestCatalog()
+        static void MethodsToBeDepricated()
         {
-            
-            Write("Loading Test catalog...  ");
+            ResourceCatalog.Instance.CleanUpOldVersionControlStructure();
+        }
+
+        static void LoadTestCatalog()
+        {
+
+            Write("Loading test catalog...  ");
             TestCatalog.Instance.Load();
             WriteLine("done.");
         }
 
-        private static void LoadActivityCache(ResourceCatalog catalog)
+        static void LoadActivityCache(ResourceCatalog catalog)
         {
             PreloadReferences();
             CustomContainer.Register<IActivityParser>(new ActivityParser());
             Write("Loading resource activity cache...  ");
             catalog.LoadServerActivityCache();
             CustomContainer.Register<IExecutionManager>(new ExecutionManager());
-            WriteLine("done.");            
-            SetStarted();
+            WriteLine("done.");
         }
-
+        public static IDirectoryHelper DirectoryHelperInstance()
+        {
+            return new DirectoryHelper();
+        }
         static void MigrateOldResources()
         {
             var serverBinResources = Path.Combine(EnvironmentVariables.ApplicationPath, "Resources");
             if (!Directory.Exists(EnvironmentVariables.ResourcePath) && Directory.Exists(serverBinResources))
             {
-                DirectoryHelper.Copy(serverBinResources, EnvironmentVariables.ResourcePath, true);
-                DirectoryHelper.CleanUp(serverBinResources);
+                var dir = DirectoryHelperInstance();
+                dir.Copy(serverBinResources, EnvironmentVariables.ResourcePath, true);
+                dir.CleanUp(serverBinResources);
             }
         }
 
@@ -573,8 +577,9 @@ namespace Dev2
             var serverBinTests = Path.Combine(EnvironmentVariables.ApplicationPath, "Tests");
             if (!Directory.Exists(EnvironmentVariables.TestPath) && Directory.Exists(serverBinTests))
             {
-                DirectoryHelper.Copy(serverBinTests, EnvironmentVariables.TestPath, true);
-                DirectoryHelper.CleanUp(serverBinTests);
+                var dir = DirectoryHelperInstance();
+                dir.Copy(serverBinTests, EnvironmentVariables.TestPath, true);
+                dir.CleanUp(serverBinTests);
             }
         }
 
@@ -587,19 +592,14 @@ namespace Dev2
             }
         }
 
-        /// <summary>
-        /// PBI 1018 - Loads the settings provider.
-        /// </summary>
-        /// <author>Trevor.Williams-Ros</author>
-        /// <date>2013/03/07</date>
-        void LoadSettingsProvider()
+        static void LoadSettingsProvider()
         {
             Write("Loading settings provider...  ");
             Runtime.Configuration.SettingsProvider.WebServerUri = EnvironmentVariables.WebServerUri;
             WriteLine("done.");
         }
 
-        void ConfigureLoggging()
+        static void ConfigureLoggging()
         {
             try
             {
@@ -618,21 +618,27 @@ namespace Dev2
             }
         }
 
-        void LoadServerWorkspace()
+        static void LoadServerWorkspace()
         {
 
             Write("Loading server workspace...  ");
-            
+
             var instance = WorkspaceRepository.Instance;
-            
-            WriteLine("done.");
+            if (instance != null)
+            {
+                WriteLine("done.");
+            }
         }
 
-        void LoadHostSecurityProvider()
+        static void LoadHostSecurityProvider()
         {
-            
+            Write("Loading security provider...  ");
             var instance = HostSecurityProvider.Instance;
-            
+            if (instance != null)
+            {
+                WriteLine("done.");
+            }
+
         }
 
         void StartWebServer()
@@ -641,33 +647,48 @@ namespace Dev2
             {
                 try
                 {
-                    try
-                    {
-                        _owinServer = WebServerStartup.Start(_endpoints);
-                        EnvironmentVariables.IsServerOnline = true;
-                        WriteLine("\r\nWeb Server Started");
-                        foreach (var endpoint in _endpoints)
-                        {
-                            WriteLine($"Web server listening at {endpoint.Url}");
-                        }                        
-                    }
-                    catch (Exception e)
-                    {
-                        LogException(e);
-                        Fail("Webserver failed to start", e);
-                        Console.ReadLine();
-                    }
+                    LogEndpoints();
                 }
                 catch (Exception e)
                 {
+                    LogException(e);
                     EnvironmentVariables.IsServerOnline = false;
                     Fail("Webserver failed to start", e);
                     Console.ReadLine();
                 }
             }
+#if DEBUG
+            SetAsStarted();
         }
 
-        
+        static void SetAsStarted()
+        {
+            try
+            {
+                if (File.Exists(".\\ServerStarted"))
+                {
+                    File.Delete(".\\ServerStarted");
+                }
+                File.WriteAllText(".\\ServerStarted", DateTime.Now.Ticks.ToString(CultureInfo.InvariantCulture));
+            }
+            catch (Exception err)
+            {
+                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
+            }
+#endif
+        }
+
+        void LogEndpoints()
+        {
+            _owinServer = WebServerStartup.Start(_endpoints);
+            EnvironmentVariables.IsServerOnline = true;
+            WriteLine("\r\nWeb Server Started");
+            foreach (var endpoint in _endpoints)
+            {
+                WriteLine($"Web server listening at {endpoint.Url}");
+            }
+        }
+
         internal static void WriteLine(string message)
         {
             if (Environment.UserInteractive)
@@ -682,7 +703,7 @@ namespace Dev2
 
         }
 
-        
+
         internal static void Write(string message)
         {
             if (Environment.UserInteractive)
@@ -696,21 +717,6 @@ namespace Dev2
             }
         }
 
-        static void SetStarted()
-        {
-            try
-            {
-                if (File.Exists(".\\ServerStarted"))
-                {
-                    File.Delete(".\\ServerStarted");
-                }
-                File.WriteAllText(".\\ServerStarted", DateTime.Now.Ticks.ToString(CultureInfo.InvariantCulture));
-            }
-            catch (Exception err)
-            {
-                Dev2Logger.Error(err, GlobalConstants.WarewolfError);
-            }
-        }
         static void LogException(Exception ex)
         {
             Dev2Logger.Error("Dev2.ServerLifecycleManager", ex, GlobalConstants.WarewolfError);

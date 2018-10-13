@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,15 +12,21 @@ using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading;
 using Dev2;
 using Dev2.Activities;
+using Dev2.Common.Interfaces.Data;
+using Dev2.Communication;
+using Dev2.Data.Interfaces.Enums;
+using Dev2.Data.TO;
+using Dev2.DataList.Contract;
+using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-
-
-
+using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
 
 namespace ActivityUnitTests.ActivityTest
 
@@ -57,7 +63,7 @@ namespace ActivityUnitTests.ActivityTest
         public void WebGetRequestActivityWhereWebRequestInvokerIsNullExpectConcreateImplementation()
         {
             //------------Setup for test--------------------------
-            var activity = GetWebGetRequestActivity();
+            var activity = GetWebGetRequestWithTimeoutActivity();
             //------------Execute Test---------------------------
             var requestInvoker = activity.WebRequestInvoker;
             //------------Assert Results-------------------------
@@ -69,7 +75,7 @@ namespace ActivityUnitTests.ActivityTest
         {
             //------------Setup for test--------------------------
             //------------Execute Test---------------------------
-            var activity = GetWebGetRequestActivity();
+            var activity = GetWebGetRequestWithTimeoutActivity();
             //------------Assert Results-------------------------
             Assert.IsInstanceOfType(activity, typeof(DsfActivityAbstract<string>));
             Assert.AreEqual(100, activity.TimeoutSeconds);
@@ -79,7 +85,7 @@ namespace ActivityUnitTests.ActivityTest
         public void WebGetRequestWhereGivenAnIWebRequestInvokerExpectGetGivenValue()
         {
             //------------Setup for test--------------------------
-            var activity = GetWebGetRequestActivity();
+            var activity = GetWebGetRequestWithTimeoutActivity();
             var webRequestInvoker = new Mock<IWebRequestInvoker>().Object;
             activity.WebRequestInvoker = webRequestInvoker;
             //------------Execute Test---------------------------
@@ -94,7 +100,7 @@ namespace ActivityUnitTests.ActivityTest
         public void GetFindMissingTypeExpectStaticActivityType()
         {
             //------------Setup for test--------------------------
-            var activity = GetWebGetRequestActivity();
+            var activity = GetWebGetRequestWithTimeoutActivity();
             //------------Execute Test---------------------------
             var findMissingType = activity.GetFindMissingType();
             //------------Assert Results-------------------------
@@ -107,7 +113,7 @@ namespace ActivityUnitTests.ActivityTest
         {
             //------------Setup for test--------------------------
             var mock = new Mock<IWebRequestInvoker>();
-            var activity = GetWebGetRequestActivity(mock);
+            var activity = GetWebGetRequestWithTimeoutActivity(mock);
             activity.Method = "GET";
             activity.Url = "BodyValue";
             TestStartNode = new FlowStep
@@ -130,7 +136,7 @@ namespace ActivityUnitTests.ActivityTest
             var mock = new Mock<IWebRequestInvoker>();
             const string Message = "This is a forced exception";
             mock.Setup(invoker => invoker.ExecuteRequest(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<List<Tuple<string, string>>>(), It.IsAny<int>())).Throws(new InvalidDataException(Message));
-            var activity = GetWebGetRequestActivity(mock);
+            var activity = GetWebGetRequestWithTimeoutActivity(mock);
             activity.Method = "GET";
             activity.Url = "BodyValue";
             TestStartNode = new FlowStep
@@ -142,7 +148,7 @@ namespace ActivityUnitTests.ActivityTest
             ExecuteProcess();
             //------------Assert Results-------------------------
             mock.Verify(sender => sender.ExecuteRequest(activity.Method, activity.Url, It.IsAny<List<Tuple<string, string>>>(), It.IsAny<int>()), Times.Once());
-            string errorString = DataObject.Environment.FetchErrors();
+            var errorString = DataObject.Environment.FetchErrors();
             StringAssert.Contains(errorString, Message);
         }
 
@@ -156,7 +162,7 @@ namespace ActivityUnitTests.ActivityTest
             const string Url = "http://localhost";
             const string ExpectedResult = "Request Made";
             mock.Setup(invoker => invoker.ExecuteRequest("GET", Url, It.IsAny<List<Tuple<string, string>>>(), It.IsAny<int>())).Returns(ExpectedResult);
-            var activity = GetWebGetRequestActivity(mock);
+            var activity = GetWebGetRequestWithTimeoutActivity(mock);
             activity.Method = "GET";
             activity.Url = "[[Url]]";
             activity.Result = "[[Res]]";
@@ -185,7 +191,7 @@ namespace ActivityUnitTests.ActivityTest
             const string Url = "http://localhost";
             const string ExpectedResult = "Request Made";
             mock.Setup(invoker => invoker.ExecuteRequest("GET", Url, It.IsAny<List<Tuple<string, string>>>(), It.IsAny<int>())).Returns(ExpectedResult);
-            var activity = GetWebGetRequestActivity(mock);
+            var activity = GetWebGetRequestWithTimeoutActivity(mock);
             activity.Method = "GET";
             activity.Url = "[[Url]]";
             activity.Result = "[[Res]]";
@@ -340,20 +346,136 @@ namespace ActivityUnitTests.ActivityTest
             Assert.AreEqual(result, dsfForEachItems[0].Name);
             Assert.AreEqual(result, dsfForEachItems[0].Value);
         }
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("DsfWebGetRequestActivity_Execute")]
+        public void WebGetRequestExecuteWithHeaders()
+        {
+            const string response = "[\"value1\",\"value2\"]";
+            var dsfWebGetActivity = new DsfWebGetRequestActivity
+            {
+                Url = "[[URL]]",
+                Result = "[[Response]]",
+                Headers = "Authorization: Basic 321654987"
+            };
+            var environment = new ExecutionEnvironment();
+            environment.Assign("[[URL]]", "http://rsaklfsvrtfsbld:9910/api/values", 0);
+            var dataObjectMock = new Mock<IDSFDataObject>();
+            dataObjectMock.Setup(o => o.Environment).Returns(environment);
+            dataObjectMock.Setup(o => o.IsDebugMode()).Returns(true);
+            dataObjectMock.Setup(o => o.EsbChannel).Returns(new MockEsb());
+            //------------Execute Test---------------------------
+            dsfWebGetActivity.Execute(dataObjectMock.Object, 0);
+            //------------Assert Results-------------------------
+            Assert.AreEqual(response, ExecutionEnvironment.WarewolfEvalResultToString(environment.Eval("[[Response]]", 0)));
+        }
 
-
-        static DsfWebGetRequestWithTimeoutActivity GetWebGetRequestActivity(Mock<IWebRequestInvoker> mockWebRequestInvoker)
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory("DsfWebGetRequestActivity_Execute")]
+        public void WebGetRequestWithTimeoutActivity_ExecuteWithHeaders()
+        {
+            var dsfWebGetActivity = new DsfWebGetRequestWithTimeoutActivity
+            {
+                Url = "[[URL]]",
+                Result = "[[Response]]",
+                TimeOutText = "hhh",
+                Headers = "Authorization: Basic 321654987"
+            };
+            var environment = new ExecutionEnvironment();
+            environment.Assign("[[URL]]", "http://rsaklfsvrtfsbld:9910/api/values", 0);
+            var dataObjectMock = new Mock<IDSFDataObject>();
+            dataObjectMock.Setup(o => o.Environment).Returns(environment);
+            dataObjectMock.Setup(o => o.IsDebugMode()).Returns(true);
+            dataObjectMock.Setup(o => o.EsbChannel).Returns(new MockEsb());
+            //------------Execute Test---------------------------
+            dsfWebGetActivity.Execute(dataObjectMock.Object, 0);
+            //------------Assert Results-------------------------
+            Assert.AreEqual("Value hhh for TimeoutSecondsText could not be interpreted as a numeric value.\r\nExecution aborted - see error messages.", environment.FetchErrors().ToString());
+        }
+        static DsfWebGetRequestWithTimeoutActivity GetWebGetRequestWithTimeoutActivity(Mock<IWebRequestInvoker> mockWebRequestInvoker)
         {
             var webRequestInvoker = mockWebRequestInvoker.Object;
-            var activity = GetWebGetRequestActivity();
+            var activity = GetWebGetRequestWithTimeoutActivity();
             activity.WebRequestInvoker = webRequestInvoker;
             return activity;
         }
 
-        static DsfWebGetRequestWithTimeoutActivity GetWebGetRequestActivity()
+        static DsfWebGetRequestWithTimeoutActivity GetWebGetRequestWithTimeoutActivity()
         {
             var activity = new DsfWebGetRequestWithTimeoutActivity();
             return activity;
+        }
+        
+    }
+    public class MockEsb : IEsbChannel
+    {
+
+        #region Not Implemented
+
+        public Guid ExecuteRequest(IDSFDataObject dataObject, EsbExecuteRequest request, Guid workspaceID,
+                                   out ErrorResultTO errors)
+        {
+            errors = new ErrorResultTO();
+            return Guid.NewGuid();
+        }
+
+        public T FetchServerModel<T>(IDSFDataObject dataObject, Guid workspaceID, out ErrorResultTO errors, int update)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string FindServiceShape(Guid workspaceID, string serviceName, int update)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Finds the service shape.
+        /// </summary>
+        /// <param name="workspaceID">The workspace unique identifier.</param>
+        /// <param name="resourceID">Name of the service.</param>
+        /// <returns></returns>
+        public StringBuilder FindServiceShape(Guid workspaceID, Guid resourceID)
+        {
+            return null;
+        }
+
+        public IList<KeyValuePair<enDev2ArgumentType, IList<IDev2Definition>>> ShapeForSubRequest(
+            IDSFDataObject dataObject, string inputDefs, string outputDefs, out ErrorResultTO errors)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Guid CorrectDataList(IDSFDataObject dataObject, Guid workspaceID, out ErrorResultTO errors,
+                                    IDataListCompiler compiler)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ExecuteLogErrorRequest(IDSFDataObject dataObject, Guid workspaceID, string uri,
+                                           out ErrorResultTO errors, int update)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IExecutionEnvironment UpdatePreviousEnvironmentWithSubExecutionResultUsingOutputMappings(IDSFDataObject dataObject, string outputDefs, int update, bool handleErrors, ErrorResultTO errors)
+        {
+            return null;
+        }
+
+        public void CreateNewEnvironmentFromInputMappings(IDSFDataObject dataObject, string inputDefs, int update)
+        {
+        }
+
+        #endregion
+
+        public IExecutionEnvironment ExecuteSubRequest(IDSFDataObject dataObject, Guid workspaceID, string inputDefs, string outputDefs,
+                                      out ErrorResultTO errors, int update, bool b)
+        {
+
+            errors = new ErrorResultTO();
+            return dataObject.Environment;
         }
     }
 }

@@ -1,26 +1,13 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Security;
-using System.Network;
-using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Principal;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Windows;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Explorer;
@@ -43,19 +30,27 @@ using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Microsoft.AspNet.SignalR.Client;
 using ServiceStack.Messaging.Rcon;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Security;
+using System.Network;
+using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Windows;
 using Warewolf.Resource.Errors;
-
-
-
-
-
 
 namespace Dev2.Network
 {
-    public class ServerProxyWithoutChunking : IEnvironmentConnection
+    public class ServerProxyWithoutChunking : IEnvironmentConnection, IDisposable
     {
         System.Timers.Timer _reconnectHeartbeat;
-        private const int MillisecondsTimeout = 10000;
+        const int MillisecondsTimeout = 10000;
         readonly Dev2JsonSerializer _serializer = new Dev2JsonSerializer();
 
         public ServerProxyWithoutChunking(Uri serverUri)
@@ -64,7 +59,7 @@ namespace Dev2.Network
             AuthenticationType = AuthenticationType.Windows;
         }
 
-        private static bool IsShuttingDown { get; set; }
+        static bool IsShuttingDown { get; set; }
 
         public ServerProxyWithoutChunking(string serverUri, ICredentials credentials, IAsyncWorker worker)
         {
@@ -88,7 +83,6 @@ namespace Dev2.Network
             HubConnection.StateChanged += HubConnectionStateChanged;
             InitializeEsbProxy();
             AsyncWorker = worker;
-
         }
 
         public IPrincipal Principal { get; private set; }
@@ -119,7 +113,7 @@ namespace Dev2.Network
             }
         }
 
-        private void InitializeEsbProxy()
+        void InitializeEsbProxy()
         {
             if (EsbProxy == null)
             {
@@ -141,22 +135,26 @@ namespace Dev2.Network
         {
             if (ReceivedResourceAffectedMessage != null)
             {
-                var result = Task.Run(async () => await EsbProxy.Invoke<string>("FetchResourcesAffectedMemo", resourceId)).ConfigureAwait(false).GetAwaiter().GetResult();
+                var result = Task.Run(async () => await EsbProxy.Invoke<string>("FetchResourcesAffectedMemo", resourceId).ConfigureAwait(true)).GetAwaiter().GetResult();
                 if (!string.IsNullOrWhiteSpace(result))
                 {
-                    var obj = _serializer.Deserialize<CompileMessageList>(result);
-                    if (obj != null)
-                    {
-                        ReceivedResourceAffectedMessage.Invoke(obj.ServiceID, obj);
-                        var shellViewModel = CustomContainer.Get<IShellViewModel>();
-                        if (shellViewModel != null)
-                        {
-                            shellViewModel.ResourceCalled = false;
-                        }
-                    }
+                    FetchResourcesAffectedMemo(result);
                 }
             }
-            
+        }
+
+        void FetchResourcesAffectedMemo(string result)
+        {
+            var obj = _serializer.Deserialize<CompileMessageList>(result);
+            if (obj != null)
+            {
+                ReceivedResourceAffectedMessage.Invoke(obj.ServiceID, obj);
+                var shellViewModel = CustomContainer.Get<IShellViewModel>();
+                if (shellViewModel != null)
+                {
+                    shellViewModel.ResourceCalled = false;
+                }
+            }
         }
 
         void HubConnectionOnClosed()
@@ -193,7 +191,6 @@ namespace Dev2.Network
 
         void OnDebugStateReceived(string objString)
         {
-
             var obj = _serializer.Deserialize<DebugState>(objString);
             ServerEvents.Publish(new DebugWriterWriteMessage { DebugState = obj });
         }
@@ -208,6 +205,7 @@ namespace Dev2.Network
                     UpdateIsAuthorized(true);
                     OnNetworkStateChanged(new NetworkStateEventArgs(NetworkState.Offline, NetworkState.Online));
                     break;
+
                 case ConnectionStateWrapped.Connecting:
                 case ConnectionStateWrapped.Reconnecting:
                     IsConnected = false;
@@ -215,11 +213,11 @@ namespace Dev2.Network
                     UpdateIsAuthorized(false);
                     OnNetworkStateChanged(new NetworkStateEventArgs(NetworkState.Online, NetworkState.Offline));
                     break;
+
+                default:
                 case ConnectionStateWrapped.Disconnected:
                     OnNetworkStateChanged(new NetworkStateEventArgs(NetworkState.Online, NetworkState.Offline));
                     HasDisconnected();
-                    break;
-                default:
                     break;
             }
         }
@@ -234,24 +232,20 @@ namespace Dev2.Network
             ID = id;
             try
             {
-                if (!IsLocalHost)
+                if (!IsLocalHost && HubConnection.State == (ConnectionStateWrapped)ConnectionState.Reconnecting)
                 {
-                    if (HubConnection.State == (ConnectionStateWrapped)ConnectionState.Reconnecting)
-                    {
-                        HubConnection.Stop(new TimeSpan(0, 0, 0, 10));
-                    }
+                    HubConnection.Stop(new TimeSpan(0, 0, 0, 10));
                 }
+
 
                 if (HubConnection.State == (ConnectionStateWrapped)ConnectionState.Disconnected)
                 {
                     ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
-                    if (!HubConnection.Start().Wait(GlobalConstants.NetworkTimeOut))
+                    if (!HubConnection.Start().Wait(GlobalConstants.NetworkTimeOut) && !IsLocalHost)
                     {
-                        if (!IsLocalHost)
-                        {
-                            ConnectionRetry();
-                        }
+                        ConnectionRetry();
                     }
+
                 }
             }
             catch (AggregateException aex)
@@ -260,97 +254,10 @@ namespace Dev2.Network
                 aex.Handle(ex =>
                 {
                     Dev2Logger.Error(this, aex, "Warewolf Error");
-                    if (ex is HttpClientException hex)
+                    if (ex is HttpClientException hex && (hex.Response.StatusCode == HttpStatusCode.Unauthorized || hex.Response.StatusCode == HttpStatusCode.Forbidden))
                     {
-                        switch (hex.Response.StatusCode)
-                        {
-                            case HttpStatusCode.Unauthorized:
-                            case HttpStatusCode.Forbidden:
-                                UpdateIsAuthorized(false);
-                                throw new UnauthorizedAccessException();
-                            case HttpStatusCode.Continue:
-                                break;
-                            case HttpStatusCode.SwitchingProtocols:
-                                break;
-                            case HttpStatusCode.OK:
-                                break;
-                            case HttpStatusCode.Created:
-                                break;
-                            case HttpStatusCode.Accepted:
-                                break;
-                            case HttpStatusCode.NonAuthoritativeInformation:
-                                break;
-                            case HttpStatusCode.NoContent:
-                                break;
-                            case HttpStatusCode.ResetContent:
-                                break;
-                            case HttpStatusCode.PartialContent:
-                                break;
-                            case HttpStatusCode.MultipleChoices:
-                                break;
-                            case HttpStatusCode.MovedPermanently:
-                                break;
-                            case HttpStatusCode.Found:
-                                break;
-                            case HttpStatusCode.SeeOther:
-                                break;
-                            case HttpStatusCode.NotModified:
-                                break;
-                            case HttpStatusCode.UseProxy:
-                                break;
-                            case HttpStatusCode.Unused:
-                                break;
-                            case HttpStatusCode.TemporaryRedirect:
-                                break;
-                            case HttpStatusCode.BadRequest:
-                                break;
-                            case HttpStatusCode.PaymentRequired:
-                                break;
-                            case HttpStatusCode.NotFound:
-                                break;
-                            case HttpStatusCode.MethodNotAllowed:
-                                break;
-                            case HttpStatusCode.NotAcceptable:
-                                break;
-                            case HttpStatusCode.ProxyAuthenticationRequired:
-                                break;
-                            case HttpStatusCode.RequestTimeout:
-                                break;
-                            case HttpStatusCode.Conflict:
-                                break;
-                            case HttpStatusCode.Gone:
-                                break;
-                            case HttpStatusCode.LengthRequired:
-                                break;
-                            case HttpStatusCode.PreconditionFailed:
-                                break;
-                            case HttpStatusCode.RequestEntityTooLarge:
-                                break;
-                            case HttpStatusCode.RequestUriTooLong:
-                                break;
-                            case HttpStatusCode.UnsupportedMediaType:
-                                break;
-                            case HttpStatusCode.RequestedRangeNotSatisfiable:
-                                break;
-                            case HttpStatusCode.ExpectationFailed:
-                                break;
-                            case HttpStatusCode.UpgradeRequired:
-                                break;
-                            case HttpStatusCode.InternalServerError:
-                                break;
-                            case HttpStatusCode.NotImplemented:
-                                break;
-                            case HttpStatusCode.BadGateway:
-                                break;
-                            case HttpStatusCode.ServiceUnavailable:
-                                break;
-                            case HttpStatusCode.GatewayTimeout:
-                                break;
-                            case HttpStatusCode.HttpVersionNotSupported:
-                                break;
-                            default:
-                                break;
-                        }
+                        UpdateIsAuthorized(false);
+                        throw new UnauthorizedAccessException();
                     }
                     throw ex;
                 });
@@ -366,39 +273,32 @@ namespace Dev2.Network
             ID = id;
             try
             {
-                if (!IsLocalHost)
+                if (!IsLocalHost && HubConnection.State == (ConnectionStateWrapped)ConnectionState.Reconnecting)
                 {
-                    if (HubConnection.State == (ConnectionStateWrapped)ConnectionState.Reconnecting)
-                    {
-                        HubConnection.Stop(new TimeSpan(0, 0, 0, 1));
-                    }
+                    HubConnection.Stop(new TimeSpan(0, 0, 0, 1));
                 }
+
 
                 if (HubConnection.State == (ConnectionStateWrapped)ConnectionState.Disconnected)
                 {
                     ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
-                    await HubConnection.Start();
-                    if (HubConnection.State == ConnectionStateWrapped.Disconnected)
+                    await HubConnection.Start().ConfigureAwait(true);
+                    if (HubConnection.State == ConnectionStateWrapped.Disconnected && !IsLocalHost)
                     {
-                        if (!IsLocalHost)
-                        {
-                            ConnectionRetry();
-                        }
+                        ConnectionRetry();
                     }
+
                 }
                 if (HubConnection.State == (ConnectionStateWrapped)ConnectionState.Connecting)
                 {
-
                     ServicePointManager.ServerCertificateValidationCallback = ValidateServerCertificate;
-                    await HubConnection.Start();
-                    if (HubConnection.State == ConnectionStateWrapped.Disconnected)
+                    await HubConnection.Start().ConfigureAwait(true);
+                    if (HubConnection.State == ConnectionStateWrapped.Disconnected && !IsLocalHost)
                     {
-                        if (!IsLocalHost)
-                        {
-                            ConnectionRetry();
-                        }
+                        ConnectionRetry();
                     }
-                    IPopupController popup = CustomContainer.Get<IPopupController>();
+
+                    var popup = CustomContainer.Get<IPopupController>();
                     popup.Show(ErrorResource.ErrorConnectingToServer + Environment.NewLine + ErrorResource.EnsureConnectionToServerWorking
                         , ErrorResource.UnableToContactServer, MessageBoxButton.OK, MessageBoxImage.Information, "", false, false, true, false, false, false);
                 }
@@ -414,97 +314,10 @@ namespace Dev2.Network
                     }
 
                     Dev2Logger.Error(this, aex, "Warewolf Error");
-                    if (ex is HttpClientException hex)
+                    if (ex is HttpClientException hex && (hex.Response.StatusCode == HttpStatusCode.Unauthorized || hex.Response.StatusCode == HttpStatusCode.Forbidden))
                     {
-                        switch (hex.Response.StatusCode)
-                        {
-                            case HttpStatusCode.Unauthorized:
-                            case HttpStatusCode.Forbidden:
-                                UpdateIsAuthorized(false);
-                                throw new UnauthorizedAccessException();
-                            case HttpStatusCode.Continue:
-                                break;
-                            case HttpStatusCode.SwitchingProtocols:
-                                break;
-                            case HttpStatusCode.OK:
-                                break;
-                            case HttpStatusCode.Created:
-                                break;
-                            case HttpStatusCode.Accepted:
-                                break;
-                            case HttpStatusCode.NonAuthoritativeInformation:
-                                break;
-                            case HttpStatusCode.NoContent:
-                                break;
-                            case HttpStatusCode.ResetContent:
-                                break;
-                            case HttpStatusCode.PartialContent:
-                                break;
-                            case HttpStatusCode.MultipleChoices:
-                                break;
-                            case HttpStatusCode.MovedPermanently:
-                                break;
-                            case HttpStatusCode.Found:
-                                break;
-                            case HttpStatusCode.SeeOther:
-                                break;
-                            case HttpStatusCode.NotModified:
-                                break;
-                            case HttpStatusCode.UseProxy:
-                                break;
-                            case HttpStatusCode.Unused:
-                                break;
-                            case HttpStatusCode.TemporaryRedirect:
-                                break;
-                            case HttpStatusCode.BadRequest:
-                                break;
-                            case HttpStatusCode.PaymentRequired:
-                                break;
-                            case HttpStatusCode.NotFound:
-                                break;
-                            case HttpStatusCode.MethodNotAllowed:
-                                break;
-                            case HttpStatusCode.NotAcceptable:
-                                break;
-                            case HttpStatusCode.ProxyAuthenticationRequired:
-                                break;
-                            case HttpStatusCode.RequestTimeout:
-                                break;
-                            case HttpStatusCode.Conflict:
-                                break;
-                            case HttpStatusCode.Gone:
-                                break;
-                            case HttpStatusCode.LengthRequired:
-                                break;
-                            case HttpStatusCode.PreconditionFailed:
-                                break;
-                            case HttpStatusCode.RequestEntityTooLarge:
-                                break;
-                            case HttpStatusCode.RequestUriTooLong:
-                                break;
-                            case HttpStatusCode.UnsupportedMediaType:
-                                break;
-                            case HttpStatusCode.RequestedRangeNotSatisfiable:
-                                break;
-                            case HttpStatusCode.ExpectationFailed:
-                                break;
-                            case HttpStatusCode.UpgradeRequired:
-                                break;
-                            case HttpStatusCode.InternalServerError:
-                                break;
-                            case HttpStatusCode.NotImplemented:
-                                break;
-                            case HttpStatusCode.BadGateway:
-                                break;
-                            case HttpStatusCode.ServiceUnavailable:
-                                break;
-                            case HttpStatusCode.GatewayTimeout:
-                                break;
-                            case HttpStatusCode.HttpVersionNotSupported:
-                                break;
-                            default:
-                                break;
-                        }
+                        UpdateIsAuthorized(false);
+                        throw new UnauthorizedAccessException();
                     }
                     throw new NotConnectedException();
                 });
@@ -515,7 +328,7 @@ namespace Dev2.Network
             }
             catch (Exception e)
             {
-                IPopupController popup = CustomContainer.Get<IPopupController>();
+                var popup = CustomContainer.Get<IPopupController>();
                 popup.Show(ErrorResource.ErrorConnectingToServer + Environment.NewLine + ErrorResource.EnsureConnectionToServerWorking
                         , ErrorResource.UnableToContactServer, MessageBoxButton.OK, MessageBoxImage.Information, "", false, false, true, false, false, false);
                 HandleConnectError(e);
@@ -524,10 +337,10 @@ namespace Dev2.Network
             return true;
         }
 
-        private void ConnectionRetry()
+        void ConnectionRetry()
         {
             HubConnection.Stop(new TimeSpan(0, 0, 0, 10));
-            IPopupController popup = CustomContainer.Get<IPopupController>();
+            var popup = CustomContainer.Get<IPopupController>();
 
             var application = Application.Current;
             MessageBoxResult res;
@@ -548,10 +361,7 @@ namespace Dev2.Network
             });
         }
 
-        bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors)
-        {
-            return true;
-        }
+        bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslpolicyerrors) => true;
 
         void HandleConnectError(Exception e)
         {
@@ -561,17 +371,15 @@ namespace Dev2.Network
 
         protected void StartReconnectTimer()
         {
-            if (IsLocalHost)
+            if (IsLocalHost && _reconnectHeartbeat == null)
             {
-                if (_reconnectHeartbeat == null)
-                {
-                    _reconnectHeartbeat = new System.Timers.Timer();
-                    _reconnectHeartbeat.Elapsed += OnReconnectHeartbeatElapsed;
-                    _reconnectHeartbeat.Interval = 1000;
-                    _reconnectHeartbeat.AutoReset = true;
-                    _reconnectHeartbeat.Start();
-                }
+                _reconnectHeartbeat = new System.Timers.Timer();
+                _reconnectHeartbeat.Elapsed += OnReconnectHeartbeatElapsed;
+                _reconnectHeartbeat.Interval = 1000;
+                _reconnectHeartbeat.AutoReset = true;
+                _reconnectHeartbeat.Start();
             }
+
         }
 
         protected void StopReconnectHeartbeat()
@@ -583,7 +391,6 @@ namespace Dev2.Network
                 _reconnectHeartbeat = null;
             }
         }
-
 
         void OnReconnectHeartbeatElapsed(object sender, ElapsedEventArgs args)
         {
@@ -689,14 +496,14 @@ namespace Dev2.Network
             if (wait)
             {
                 HubConnection.Start().Wait(MillisecondsTimeout);
-                callback(HubConnection.State == (ConnectionStateWrapped)ConnectionState.Connected
+                callback?.Invoke(HubConnection.State == (ConnectionStateWrapped)ConnectionState.Connected
                              ? ConnectResult.Success
                              : ConnectResult.ConnectFailed);
             }
             else
             {
                 HubConnection.Start();
-                AsyncWorker.Start(() => Thread.Sleep(MillisecondsTimeout), () => callback(HubConnection.State == (ConnectionStateWrapped)ConnectionState.Connected
+                AsyncWorker.Start(() => Thread.Sleep(MillisecondsTimeout), () => callback?.Invoke(HubConnection.State == (ConnectionStateWrapped)ConnectionState.Connected
                                      ? ConnectResult.Success
                                      : ConnectResult.ConnectFailed));
             }
@@ -752,6 +559,7 @@ namespace Dev2.Network
         }
 
         public Action<IExplorerItem> ItemItemDeletedMessageAction { get; set; }
+
         void OnItemDeletedMessageReceived(string obj)
         {
             var serverExplorerItem = _serializer.Deserialize<ServerExplorerItem>(obj);
@@ -760,6 +568,7 @@ namespace Dev2.Network
         }
 
         public Action<IExplorerItem> ItemItemUpdatedMessageAction { get; set; }
+
         void OnItemUpdatedMessageReceived(string obj)
         {
             var serverExplorerItem = _serializer.Deserialize<ServerExplorerItem>(obj);
@@ -774,13 +583,11 @@ namespace Dev2.Network
         public string UserName { get; }
         public string Password { get; }
 
-        /// <summary>
-        /// <code>True</code> unless server returns Unauthorized or Forbidden status.
-        /// </summary>
         public bool IsAuthorized { get; set; }
         public IAsyncWorker AsyncWorker { get; }
 
         public event EventHandler<NetworkStateEventArgs> NetworkStateChanged;
+
         public event EventHandler PermissionsChanged;
 
         void RaisePermissionsChanged()
@@ -810,53 +617,55 @@ namespace Dev2.Network
             handler?.Invoke(this, e);
         }
 
-        public StringBuilder ExecuteCommand(StringBuilder payload, Guid workspaceId)
+        public StringBuilder ExecuteCommand(StringBuilder xmlRequest, Guid workspaceId)
         {
-            if (payload == null || payload.Length == 0)
+            if (xmlRequest == null || xmlRequest.Length == 0)
             {
-                throw new ArgumentNullException(nameof(payload));
+                throw new ArgumentNullException(nameof(xmlRequest));
             }
-
-            var result = Task.Run(async () => await ExecuteCommandAsync(payload, workspaceId)).Result;
-            return result;
-
+            
+            var executeRequestAsync = Task.Run(async () => await ExecuteCommandAsync(xmlRequest, workspaceId).ConfigureAwait(true));
+            if (executeRequestAsync.Wait(120000))
+            {
+                return executeRequestAsync.Result;
+            }
+            return null;
         }
-        public async Task<StringBuilder> ExecuteCommandAsync(StringBuilder payload, Guid workspaceId)
+
+        public async Task<StringBuilder> ExecuteCommandAsync(StringBuilder xmlRequest, Guid workspaceId)
         {
-            if (payload == null || payload.Length == 0)
+            if (xmlRequest == null || xmlRequest.Length == 0)
             {
-                throw new ArgumentNullException(nameof(payload));
+                throw new ArgumentNullException(nameof(xmlRequest));
             }
 
-            Dev2Logger.Debug("Execute Command Payload [ " + payload + " ]", "Warewolf Debug");
+            Dev2Logger.Debug("Execute Command Payload [ " + xmlRequest + " ]", "Warewolf Debug");
 
             var messageId = Guid.NewGuid();
             var envelope = new Envelope
             {
                 PartID = 0,
                 Type = typeof(Envelope),
-                Content = payload.ToString()
+                Content = xmlRequest.ToString()
             };
 
             var result = new StringBuilder();
             try
             {
-                await EsbProxy.Invoke<Receipt>("ExecuteCommand", envelope, true, workspaceId, Guid.Empty, messageId);
+                await EsbProxy.Invoke<Receipt>("ExecuteCommand", envelope, true, workspaceId, Guid.Empty, messageId).ConfigureAwait(true);
                 var fragmentInvoke = await EsbProxy.Invoke<string>("FetchExecutePayloadFragment", new FutureReceipt { PartID = 0, RequestID = messageId }).ConfigureAwait(false);
                 result.Append(fragmentInvoke);
 
                 if (result.Length > 0)
                 {
                     var start = result.LastIndexOf("<" + GlobalConstants.ManagementServicePayload + ">", false);
-                    if (start > 0)
+                    var end = result.LastIndexOf("</" + GlobalConstants.ManagementServicePayload + ">", false);
+                    if (start > 0 && start < end && end - start > 1)
                     {
-                        var end = result.LastIndexOf("</" + GlobalConstants.ManagementServicePayload + ">", false);
-                        if (start < end && end - start > 1)
-                        {
-                            start += GlobalConstants.ManagementServicePayload.Length + 2;
-                            return new StringBuilder(result.Substring(start, end - start));
-                        }
+                        start += GlobalConstants.ManagementServicePayload.Length + 2;
+                        return new StringBuilder(result.Substring(start, end - start));
                     }
+
                 }
             }
             catch (Exception e)
@@ -877,39 +686,25 @@ namespace Dev2.Network
             task.Wait(100);
         }
 
-        #region Implementation of IDisposable
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
-        public void Dispose()
-        {
-        }
-
-        #endregion
-
-        
         public Guid ID { get; private set; }
 
-        public bool Equals(IEnvironmentConnection other)
+        bool _disposedValue;
+
+        protected virtual void Dispose(bool disposing)
         {
-            if (other == null)
+            if (!_disposedValue)
             {
-                return false;
+                if (disposing)
+                {
+                    _reconnectHeartbeat.Dispose();
+                }
+                _disposedValue = true;
             }
-            var isEqual = other.ID == ID && other.AuthenticationType == AuthenticationType &&
-                          other.AppServerUri.Equals(AppServerUri) && other.WebServerUri.Equals(WebServerUri);
-            return isEqual;
         }
 
-        public override bool Equals(object obj)
+        public void Dispose()
         {
-            return Equals(obj as IEnvironmentConnection);
-        }
-
-        public override int GetHashCode()
-        {
-            return ID.GetHashCode();
+            Dispose(true);
         }
     }
 

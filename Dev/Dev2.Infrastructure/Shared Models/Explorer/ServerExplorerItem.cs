@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -94,19 +94,10 @@ namespace Dev2.Explorer
         }
 
 
-        protected bool Equals(ServerExplorerItem other)
-        {
-            return ResourceId.Equals(other.ResourceId);
-        }
+        protected bool Equals(ServerExplorerItem other) => ResourceId.Equals(other.ResourceId);
 
-        public override int GetHashCode()
-        {
-            return ResourceId.GetHashCode();
-        }
+        public override int GetHashCode() => ResourceId.GetHashCode();
 
-        public override string ToString()
-        {
-            return $"Name:{DisplayName} Path:{ResourcePath} Id:{ResourceId}";
-        }
+        public override string ToString() => $"Name:{DisplayName} Path:{ResourcePath} Id:{ResourceId}";
     }
 }

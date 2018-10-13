@@ -99,7 +99,7 @@ namespace Warewolf.UIBindingTests.SqlDatabaseSource
             {
                 Name = name,
                 Id = Guid.NewGuid(),
-                ServerName = "RSAKLFSVRDEV",
+                ServerName = "TEST-MSSQL",
                 AuthenticationType = AuthenticationType.Windows
             };
             FeatureContext.Current["dbsrc"] = dbsrc;
@@ -434,7 +434,7 @@ namespace Warewolf.UIBindingTests.SqlDatabaseSource
             CleanupResources();
         }
 
-        private static void CleanupResources()
+        static void CleanupResources()
         {
             var mockUpdateManager = ScenarioContext.Current.Get<Mock<IManageDatabaseSourceModel>>("updateManager");
             var mockRequestServiceNameViewModel =

@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2</RootNamespace>
     <AssemblyName>Warewolf Studio</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -54,6 +54,7 @@
     <CodeAnalysisRuleSet>Dev2.Studio.ruleset</CodeAnalysisRuleSet>
     <DefineConstants>DEBUG</DefineConstants>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
@@ -61,6 +62,10 @@
     <CodeAnalysisRuleSet>Dev2.Studio.ruleset</CodeAnalysisRuleSet>
     <DefineConstants>DEBUG</DefineConstants>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>Dev2.Startup</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AdornedControl">
@@ -234,6 +239,9 @@
     <Reference Include="RibbonControlsLibrary, Version=4.0.0.11019, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\Binaries\RibbonControlsLibrary.dll</HintPath>
     </Reference>
+    <Reference Include="ruiSDKDotNet_5.3.1">
+      <HintPath>..\Binaries\ruiSDKDotNet_5.3.1.dll</HintPath>
+    </Reference>
     <Reference Include="ServiceStack.Common, Version=3.9.37.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\ServiceStack.Common.dll</HintPath>
@@ -246,6 +254,9 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Data.SQLite, Version=1.0.108.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.108.0\lib\net46\System.Data.SQLite.dll</HintPath>
+    </Reference>
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
@@ -294,37 +305,45 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="..\AssemblyCommonInfo.cs">
+    <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
-    <None Include="..\Run Tests.ps1">
+    <Compile Include="ResourceExtensionHelper.cs" />
+    <Compile Include="CustomControls\ActivityTemplateSelector.cs" />
+    <Compile Include="CustomControls\TemplateGenerator.cs" />
+    <Compile Include="DesignerAttributeMap.cs" />
+    <Compile Include="Factory\IMergeFactory.cs" />
+    <Compile Include="Factory\CustomGit.cs" />
+    <Compile Include="Factory\MergeFactory.cs" />
+    <Compile Include="Properties\Annotations.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" Condition="!Exists('..\AssemblyCommonInfo.cs')" />
+    <Compile Include="ViewModels\Merge\ConflictItem.cs" />
+    <Compile Include="ViewModels\Merge\ConflictRow.cs" />
+    <Compile Include="ViewModels\Merge\Utils\ConflictListStateApplier.cs" />
+    <Compile Include="ViewModels\Merge\Utils\ConflictRowList.cs" />
+    <Compile Include="ViewModels\Merge\Utils\ConflictRowListBuilder.cs" />
+    <Compile Include="ViewModels\Merge\Utils\MergePreviewWorkflowStateApplier.cs" />
+    <Compile Include="ViewModels\SearchModel.cs" />
+    <Compile Include="ViewModels\Workflow\MergePreviewWorkflowDesignerViewModel.cs" />
+    <Compile Include="WorkflowDesignerWrapper.cs" />
+    <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
       <Visible>False</Visible>
-      <Link>Run Tests.ps1</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </AdditionalFiles>
     <Compile Include="ActivityDesigners\ActivityDesignerHelper.cs" />
     <Compile Include="AppResources\AttachedProperties\FocusAttachedProperty.cs" />
-    <Compile Include="AppResources\Behaviors\ButtonPopupWorkaroundBehavior.cs" />
     <Compile Include="AppResources\Behaviors\PopupBuildVisualTreeOnLoad.cs" />
     <Compile Include="AppResources\Behaviors\TabGroupPaneBindingBehavior.cs" />
     <Compile Include="AppResources\Behaviors\TextboxSelectAllOnFocusBehavior.cs" />
-    <Compile Include="AppResources\Behaviors\TreeviewScrollToEndOnNewContent.cs" />
-    <Compile Include="AppResources\Behaviors\UserControlFocusNextAndPreviousBehaviour.cs" />
     <Compile Include="AppResources\Behaviors\WindowCloseBehviour.cs" />
     <Compile Include="AppResources\Behaviors\WorkflowDesignerLinkBehaviours.cs" />
     <Compile Include="AppResources\Comparers\WorkSurfaceKeyEqualityComparerWithContextKey.cs" />
-    <Compile Include="AppResources\Converters\ExplorerItemModelToIconConverter.cs" />
     <Compile Include="AppResources\Converters\InverseScheduleStatusConverter.cs" />
-    <Compile Include="AppResources\Converters\NavigationViewModelPermissionToBooleanConverter.cs" />
     <Compile Include="AppResources\Converters\CustomIcons.cs" />
-    <Compile Include="AppResources\Converters\EmailSourceToDisplayTextConverter.cs" />
     <Compile Include="AppResources\Converters\MessageBoxButtonToVisibilityConverter.cs" />
     <Compile Include="AppResources\Converters\MessageBoxImageToSystemIconConverter.cs" />
     <Compile Include="AppResources\Comparers\WorkSurfaceKey.cs" />
     <Compile Include="AppResources\Comparers\WorkSurfaceKeyEqualityComparer.cs" />
     <Compile Include="AppResources\Converters\NavigationViewModelPersmissionVisibilityConverter.cs" />
-    <Compile Include="AppResources\Converters\NullToDebugImageConverter.cs" />
-    <Compile Include="AppResources\Converters\NullToDebugRibbonButtonTextConverter.cs" />
     <Compile Include="AppResources\Converters\SchedulerStatusToCheckedConverter.cs" />
     <Compile Include="AppResources\ExtensionMethods\StringExtensions.cs" />
     <Compile Include="ClassRoutedEventHandlers.cs" />
@@ -396,6 +415,7 @@
       <DependentUpon>SettingsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Settings\SettingsViewModel.cs" />
+    <Compile Include="Startup.cs" />
     <Compile Include="Utils\OpeningWorkflowsHelper.cs" />
     <Compile Include="Utils\ResourceChangeHandler.cs" />
     <Compile Include="ViewFactory.cs" />
@@ -406,6 +426,13 @@
     <Compile Include="ViewModels\Diagnostics\IDebugOutputViewModelUtil.cs" />
     <Compile Include="ViewModels\Help\IHelpViewWrapper.cs" />
     <Compile Include="ViewModels\Help\HelpViewWrapper.cs" />
+    <Compile Include="ViewModels\MergeViewModel.cs" />
+    <Compile Include="ViewModels\Merge\ConnectorConflictRow.cs" />
+    <Compile Include="ViewModels\Merge\ConflictModelFactory.cs" />
+    <Compile Include="ViewModels\Merge\ConnectorConflictItem.cs" />
+    <Compile Include="ViewModels\Merge\ToolConflictItem.cs" />
+    <Compile Include="ViewModels\Merge\MergeWorkflowViewModel.cs" />
+    <Compile Include="ViewModels\Merge\ToolConflictRow.cs" />
     <Compile Include="ViewModels\SourceViewModel.cs" />
     <Compile Include="ViewModels\StudioTestViewModel.cs" />
     <Compile Include="ViewModels\Workflow\WorkflowDesignerDataPartUtils.cs" />
@@ -425,15 +452,11 @@
     <Compile Include="ViewModels\Dialogs\Dev2MessageBoxViewModel.cs" />
     <Compile Include="ViewModels\QuickVariableInput\QuickVariableInputViewModel.cs" />
     <Compile Include="ViewModels\WorkSurface\IWorkSurfaceViewModel.cs" />
-    <Compile Include="Views\Diagnostics\ReportsViewerView.xaml.cs">
-      <DependentUpon>ReportsViewerView.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Views\Help\HelpView.xaml.cs">
       <DependentUpon>HelpView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ImageWindow.xaml.cs">
-      <DependentUpon>ImageWindow.xaml</DependentUpon>
+    <Compile Include="Views\Merge\MergeWorkflowView.xaml.cs">
+      <DependentUpon>MergeWorkflowView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ResourceManagement\RenameResourceDialog.xaml.cs">
       <DependentUpon>RenameResourceDialog.xaml</DependentUpon>
@@ -457,7 +480,6 @@
       <DependentUpon>WorkflowInputDataView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Webs\Callbacks\IShowDependencyProvider.cs" />
-    <Compile Include="Webs\Callbacks\NetworkHelper.cs" />
     <Compile Include="Webs\Callbacks\SaveNewWorkflowCallbackHandler.cs" />
     <Compile Include="Webs\Callbacks\WebsiteCallbackHandler.cs" />
     <Compile Include="Webs\SaveDialogHelper.cs" />
@@ -480,42 +502,15 @@
     <Compile Include="Views\Diagnostics\ExceptionView.xaml.cs">
       <DependentUpon>ExceptionView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\Help\FeedbackView.xaml.cs">
-      <DependentUpon>FeedbackView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Administration\DialogueView.xaml.cs">
-      <DependentUpon>DialogueView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Administration\DsfAdminWindow.xaml.cs">
-      <DependentUpon>DsfAdminWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Administration\StartPageWindow.xaml.cs">
-      <DependentUpon>StartPageWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\DataMapping\DataMapping.xaml.cs">
-      <DependentUpon>DataMapping.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\Diagnostics\DebugOutputView.xaml.cs">
       <DependentUpon>DebugOutputView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ViewModels\Diagnostics\DebugOutputViewModel.cs" />
-    <Compile Include="Views\Global\GetStringValueWindow.xaml.cs">
-      <DependentUpon>GetStringValueWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Global\SearchWindow.xaml.cs">
-      <DependentUpon>SearchWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Views\ShellView.xaml.cs">
       <DependentUpon>ShellView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ResourceManagement\DeleteResourceDialog.xaml.cs">
       <DependentUpon>DeleteResourceDialog.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Wizards\DataListChangeNotificationView.xaml.cs">
-      <DependentUpon>DataListChangeNotificationView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Workflow\ConfigureDecisionWindow.xaml.cs">
-      <DependentUpon>ConfigureDecisionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Workflow\WorkflowDesignerView.xaml.cs">
       <DependentUpon>WorkflowDesignerView.xaml</DependentUpon>
@@ -612,11 +607,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\Diagnostics\ReportsViewerView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ImageWindow.xaml">
+    <Page Include="Views\Merge\MergeWorkflowView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -644,39 +635,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\Help\FeedbackView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\Administration\DialogueView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\Administration\DsfAdminWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\Administration\StartPageWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\DataMapping\DataMapping.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Views\Diagnostics\DebugOutputView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\Global\GetStringValueWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Views\Help\HelpView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\Global\SearchWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -691,14 +654,6 @@
     <Page Include="Views\ResourceManagement\DeleteResourceDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\Wizards\DataListChangeNotificationView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\Workflow\ConfigureDecisionWindow.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\Workflow\DsfActivityDropWindow.xaml">
       <SubType>Designer</SubType>
@@ -730,6 +685,9 @@
     </None>
     <None Include="app.manifest" />
     <None Include="Dev2.Studio.ruleset" />
+    <None Include="MergePowershellScript\customMerge.sh">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
@@ -790,7 +748,7 @@
       <Name>Dev2.Activities</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Common.Interfaces\Dev2.Common.Interfaces.csproj">
-      <Project>{13C0C6E9-7DC3-4DC3-8535-031C263CEE0B}</Project>
+      <Project>{13c0c6e9-7dc3-4dc3-8535-031c263cee0b}</Project>
       <Name>Dev2.Common.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Core\Dev2.Core.csproj">
@@ -869,6 +827,10 @@
       <Project>{1990550d-ea6f-4dac-9b5e-8571e86923ed}</Project>
       <Name>Dev2.Util</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.MergeParser\Warewolf.MergeParser.csproj">
+      <Project>{01B6F143-3F8C-4545-B06F-57D2C5AE7C9C}</Project>
+      <Name>Warewolf.MergeParser</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Security\Warewolf.Security.csproj">
       <Project>{ca5e9373-46fe-41b9-ab2e-bd637f48b456}</Project>
       <Name>Warewolf.Security</Name>
@@ -921,15 +883,6 @@
       <Project>{F0D6A8C9-FF25-40C9-99DB-CCBC21ABDC36}</Project>
       <Name>Warewolf.Studio.Views</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WarewolfParserInterop\WarewolfParserInterop.csproj">
-      <Project>{6eb59eee-4e16-4f29-b1b0-715e56e9139d}</Project>
-      <Name>WarewolfParserInterop</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\Google.Protobuf.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.CSharp.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.5.11.0.1761\analyzers\SonarAnalyzer.dll" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Help\PageNotAvailable.htm">
@@ -938,6 +891,22 @@
     <Content Include="Help\PageNotAvailable.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="RUISDK_5_3_1.x64.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="RUISDK_5_3_1.x86.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Wizards\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.Common.dll" />
+    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\Google.Protobuf.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.CSharp.dll" />
+    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition="'$(BuildingInsideVisualStudio)'=='true'">
@@ -958,9 +927,17 @@ if %25rce%25==16 or %25rce%25==8 exit %25rce%25 else exit 0
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>copy "$(SolutionDir)Binaries\Trackerbird.x64.dll" "$(TargetDir)"
-copy "$(SolutionDir)Binaries\Trackerbird.x86.dll" "$(TargetDir)"</PostBuildEvent>
+    <PostBuildEvent>if not exist "$(TargetDir)Trackerbird.x64.dll" copy /Y "$(SolutionDir)Binaries\Trackerbird.x64.dll" "$(TargetDir)"
+if not exist "$(TargetDir)Trackerbird.x86.dll" copy /Y "$(SolutionDir)Binaries\Trackerbird.x86.dll" "$(TargetDir)"
+if not exist "$(TargetDir)Trackerbird.Tracker.dll" copy /Y "$(SolutionDir)Binaries\Trackerbird.Tracker.dll" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -9,7 +9,7 @@ namespace Warewolf.UI.Tests.Tools
     [CodedUITest]
     public class HttpWebPost
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("HTTP Tools")]
         public void HTTPWebPOSTTool_Small_And_LargeView_UITest()
         {
@@ -33,7 +33,7 @@ namespace Warewolf.UI.Tests.Tools
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.DefaultQueryTextBox.Enabled, "Default Query Textbox is not enabled");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("HTTP Tools")]
         public void HTTPWebPOSTTool_GenerateOutputs_And_TestInputs_UITest()
         {
@@ -46,6 +46,21 @@ namespace Warewolf.UI.Tests.Tools
             Assert.IsTrue(HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.PasteButton.Exists, "Web POST tool large view generate outputs paste button does not exist.");
             HTTPToolsUIMap.Click_POSTWebTool_TestInputsButton();
             HTTPToolsUIMap.Click_POSTWebTool_Outputs_DoneButton();
+        }
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("HTTP Tools")]
+        public void HTTPWebPOSTTool_Intellisense_UITest()
+        {
+            HTTPToolsUIMap.Select_POSTWebTool_Source_From_SourceCombobox();
+            Assert.IsTrue(HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.GenerateOutputsButton.Enabled, "Web POST tool large view generate outPOSTs button is not enabled after selecting a source.");
+            HTTPToolsUIMap.Click_POSTWebTool_GenerateOutputsButton();
+            Assert.IsTrue(HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.TestButton.Exists, "Web POST large view generate outPOSTs test button does not exist.");
+            HTTPToolsUIMap.Click_POSTWebTool_TestInputsButton();
+            HTTPToolsUIMap.Click_POSTWebTool_Outputs_DoneButton();
+            Assert.IsTrue(HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.OutputsGridTable.UIItemRow.UIItemWarewolfCoreServCell.UIThedefaultvaluetobeuComboBox.Enabled, "Web POST large view MappedTo is not enabled.");
+            HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.OutputsGridTable.UIItemRow.UIItemWarewolfCoreServCell.UIThedefaultvaluetobeuComboBox.UITextEdit.Text = "Output";
+            Mouse.Click(HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.RecordSetTextBox);
+            Assert.AreEqual("[[Output]]", HTTPToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.WebPost.LargeView.OutputsGridTable.UIItemRow.UIItemWarewolfCoreServCell.UIThedefaultvaluetobeuComboBox.UITextEdit.Text);
         }
 
         #region Additional test attributes

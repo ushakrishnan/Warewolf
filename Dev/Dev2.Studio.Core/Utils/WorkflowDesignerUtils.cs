@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -23,16 +23,8 @@ using Dev2.Data.Interfaces;
 
 namespace Dev2.Utils
 {
-    /// <summary>
-    /// Utilities for the workflow designer view model
-    /// </summary>
     public class WorkflowDesignerUtils
     {
-        /// <summary>
-        /// Is the list.
-        /// </summary>
-        /// <param name="activityField">The activity field.</param>
-        /// <returns></returns>
         public IList<string> FormatDsfActivityField(string activityField)
         {
             IList<string> result = new List<string>();
@@ -43,59 +35,34 @@ namespace Dev2.Utils
                 // Sashen: 09-10-2012 : Using the new parser
                 var intellisenseParser = new SyntaxTreeBuilder();
 
-                Node[] nodes = intellisenseParser.Build(region);
+                var nodes = intellisenseParser.Build(region);
 
                 // No point in continuing ;)
-                if(nodes == null)
+                if (nodes == null)
                 {
                     return result;
                 }
 
-                if(intellisenseParser.EventLog.HasEventLogs)
+                if (intellisenseParser.EventLog.HasEventLogs)
                 {
-                    IDev2StudioDataLanguageParser languageParser = DataListFactory.CreateStudioLanguageParser();
+                    var languageParser = DataListFactory.CreateStudioLanguageParser();
 
                     try
                     {
                         result = languageParser.ParseForActivityDataItems(region);
                     }
-                    catch(Dev2DataLanguageParseError)
+                    catch (Dev2DataLanguageParseError)
                     {
                         return new List<string>();
                     }
-                    catch(NullReferenceException)
+                    catch (NullReferenceException)
                     {
                         return new List<string>();
                     }
 
                 }
                 var allNodes = new List<Node>();
-
-
-                if(nodes.Any() && !intellisenseParser.EventLog.HasEventLogs)
-                {
-                    nodes[0].CollectNodes(allNodes);
-
-                    
-                    for(int i = 0; i < allNodes.Count; i++)
-                    {
-                        if(allNodes[i] is DatalistRecordSetNode)
-                        {
-                            var refNode = allNodes[i] as DatalistRecordSetNode;
-                            string nodeName = refNode.GetRepresentationForEvaluation();
-                            nodeName = nodeName.Substring(2, nodeName.Length - 4);
-                            result.Add(nodeName);
-                        }
-                        else if(allNodes[i] is DatalistReferenceNode)
-                        {
-                            var refNode = allNodes[i] as DatalistReferenceNode;
-                            string nodeName = refNode.GetRepresentationForEvaluation();
-                            nodeName = nodeName.Substring(2, nodeName.Length - 4);
-                            result.Add(nodeName);
-                        }
-
-                    }
-                }
+                result = FormatDsfActivityField(result, intellisenseParser, nodes, allNodes);
             }
             try
             {
@@ -109,6 +76,41 @@ namespace Dev2.Utils
             return result;
         }
 
+        static IList<string> FormatDsfActivityField(IList<string> result, SyntaxTreeBuilder intellisenseParser, Node[] nodes, List<Node> allNodes)
+        {
+            if (nodes.Any() && !intellisenseParser.EventLog.HasEventLogs)
+            {
+                nodes[0].CollectNodes(allNodes);
+
+                for (int i = 0; i < allNodes.Count; i++)
+                {
+                    result = FormatDsfActivityField(result, allNodes, i);
+                }
+            }
+            return result;
+        }
+
+        static IList<string> FormatDsfActivityField(IList<string> result, List<Node> allNodes, int i)
+        {
+            if (allNodes[i] is DatalistRecordSetNode)
+            {
+                var refNode = allNodes[i] as DatalistRecordSetNode;
+                var nodeName = refNode.GetRepresentationForEvaluation();
+                nodeName = nodeName.Substring(2, nodeName.Length - 4);
+                result.Add(nodeName);
+            }
+            else
+            {
+                if (allNodes[i] is DatalistReferenceNode)
+                {
+                    var refNode = allNodes[i] as DatalistReferenceNode;
+                    var nodeName = refNode.GetRepresentationForEvaluation();
+                    nodeName = nodeName.Substring(2, nodeName.Length - 4);
+                    result.Add(nodeName);
+                }
+            }
+            return result;
+        }
 
         protected static IServer ActiveEnvironment { get; set; }
 

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,7 +15,7 @@ namespace Dev2.Data.Decisions.Operations
 {
     public class Dev2DecisionFactory : SpookyAction<IDecisionOperation, Enum>
     {
-        private static Dev2DecisionFactory _inst;
+        static Dev2DecisionFactory _inst;
 
         public static Dev2DecisionFactory Instance()
         {
@@ -27,10 +27,6 @@ namespace Dev2.Data.Decisions.Operations
             return _inst;
         }
 
-        public IDecisionOperation FetchDecisionFunction(enDecisionType typeOf)
-        {
-            return FindMatch(typeOf);
-        }
-
+        public IDecisionOperation FetchDecisionFunction(enDecisionType typeOf) => FindMatch(typeOf);
     }
 }

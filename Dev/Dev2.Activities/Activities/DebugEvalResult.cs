@@ -16,9 +16,9 @@ namespace Dev2.Activities
     public class DebugEvalResult : DebugOutputBase
     {
         string _inputVariable;
-        private readonly string _operand;
+        readonly string _operand;
         CommonFunctions.WarewolfEvalResult _evalResult;
-        private readonly bool _isCalculate;
+        readonly bool _isCalculate;
 
         public DebugEvalResult(string inputVariable, string label, IExecutionEnvironment environment, int update, string operand)
             : this(inputVariable, label, environment, update, operand, false, false, false)
@@ -54,14 +54,12 @@ namespace Dev2.Activities
             MockSelected = mockSelected;
             try
             {
-                if (ExecutionEnvironment.IsRecordsetIdentifier(_inputVariable) && DataListUtil.IsEvaluated(_inputVariable))
+                if (ExecutionEnvironment.IsRecordsetIdentifier(_inputVariable) && DataListUtil.IsEvaluated(_inputVariable) && DataListUtil.GetRecordsetIndexType(_inputVariable) == enRecordsetIndexType.Blank)
                 {
-                    if (DataListUtil.GetRecordsetIndexType(_inputVariable) == enRecordsetIndexType.Blank)
-                    {
-                        var length = environment.GetLength(DataListUtil.ExtractRecordsetNameFromValue(_inputVariable));
-                        _inputVariable = DataListUtil.ReplaceRecordsetBlankWithIndex(_inputVariable, length);
-                    }
+                    var length = environment.GetLength(DataListUtil.ExtractRecordsetNameFromValue(_inputVariable));
+                    _inputVariable = DataListUtil.ReplaceRecordsetBlankWithIndex(_inputVariable, length);
                 }
+
                 if (isDataMerge)
                 {
                     DataMergeItem(environment, update);
@@ -81,7 +79,7 @@ namespace Dev2.Activities
 
         }
 
-        private void RegularItem(IExecutionEnvironment environment, int update, bool isCalculate)
+        void RegularItem(IExecutionEnvironment environment, int update, bool isCalculate)
         {
             var evalToExpression = environment.EvalToExpression(_inputVariable, update);
             if (DataListUtil.IsEvaluated(evalToExpression))
@@ -92,20 +90,18 @@ namespace Dev2.Activities
             var isCalcExpression = DataListUtil.IsCalcEvaluation(_inputVariable, out string cleanExpression);
             if (isCalcExpression && !isCalculate)
             {
-                if (_evalResult.IsWarewolfAtomResult)
+                if (_evalResult.IsWarewolfAtomResult && _evalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atomResult)
                 {
-                    if (_evalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomResult atomResult)
-                    {
-                        var res = atomResult.Item.ToString();
-                        DataListUtil.IsCalcEvaluation(res, out string resValue);
-                        _evalResult = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.NewDataString(resValue));
-                    }
+                    var res = atomResult.Item.ToString();
+                    DataListUtil.IsCalcEvaluation(res, out string resValue);
+                    _evalResult = CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.NewDataString(resValue));
                 }
+
                 _inputVariable = cleanExpression;
             }
         }
 
-        private void DataMergeItem(IExecutionEnvironment environment, int update)
+        void DataMergeItem(IExecutionEnvironment environment, int update)
         {
             var evalForDataMerge = environment.EvalForDataMerge(_inputVariable, update);
             var innerIterator = new WarewolfListIterator();
@@ -120,7 +116,7 @@ namespace Dev2.Activities
             while (innerIterator.HasMoreData())
             {
                 var stringToUse = "";
-                
+
                 foreach (var warewolfIterator in innerListOfIters)
                 {
                     stringToUse += warewolfIterator.GetNextValue();
@@ -143,7 +139,7 @@ namespace Dev2.Activities
                 }
             }
         }
-        
+
         public override string LabelText { get; }
         public bool MockSelected { get; }
 
@@ -165,20 +161,18 @@ namespace Dev2.Activities
                     return new DebugItemWarewolfAtomResult(warewolfAtomToString, _inputVariable, LabelText, _operand, MockSelected).GetDebugItemResult();
                 }
             }
-            else if (_evalResult.IsWarewolfAtomListresult)
+            else if (_evalResult.IsWarewolfAtomListresult && _evalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult atomListResult)
             {
-                if (_evalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult listResult)
-                {
-                    return new DebugItemWarewolfAtomListResult(listResult, "", "", _inputVariable, LabelText, "", "=", _isCalculate, MockSelected).GetDebugItemResult();
-                }
+                return new DebugItemWarewolfAtomListResult(atomListResult, "", "", _inputVariable, LabelText, "", "=", _isCalculate, MockSelected).GetDebugItemResult();
             }
-            else if (_evalResult.IsWarewolfRecordSetResult)
+            else if (_evalResult.IsWarewolfRecordSetResult && _evalResult is CommonFunctions.WarewolfEvalResult.WarewolfRecordSetResult recordsetResult)
             {
-                if (_evalResult is CommonFunctions.WarewolfEvalResult.WarewolfRecordSetResult listResult)
-                {
-                    return new DebugItemWarewolfRecordset(listResult.Item, _inputVariable, LabelText, "=", MockSelected).GetDebugItemResult();
-                }
-            } else { return new DebugItemStaticDataParams("", _inputVariable, LabelText, MockSelected).GetDebugItemResult(); }
+                return new DebugItemWarewolfRecordset(recordsetResult.Item, _inputVariable, LabelText, "=", MockSelected).GetDebugItemResult();
+            }
+            else
+            {
+                return new DebugItemStaticDataParams("", _inputVariable, LabelText, MockSelected).GetDebugItemResult();
+            }
 
             return new DebugItemStaticDataParams("", _inputVariable, LabelText, MockSelected).GetDebugItemResult();
         }        

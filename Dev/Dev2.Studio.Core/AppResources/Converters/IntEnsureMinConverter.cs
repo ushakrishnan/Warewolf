@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,12 +17,7 @@ namespace Dev2.Studio.Core.AppResources.Converters
 {
     public class IntEnsureMinConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            // Convert from view model int property to text
-
-            return value; // nothing to be done - this convert is about ensuring valid min input - see ConvertBack
-        }
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -36,13 +31,11 @@ namespace Dev2.Studio.Core.AppResources.Converters
 
         static int GetInt(object value)
         {
-            if(value != null)
+            if (value != null && int.TryParse(value.ToString(), out int intVal))
             {
-                if (int.TryParse(value.ToString(), out int intVal))
-                {
-                    return intVal;
-                }
+                return intVal;
             }
+
             return 0;
         }
     }

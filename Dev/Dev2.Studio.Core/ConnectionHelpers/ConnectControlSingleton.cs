@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,13 +28,7 @@ namespace Dev2.ConnectionHelpers
         public event EventHandler<ConnectionStatusChangedEventArg> ConnectedStatusChanged;
         public event EventHandler<ConnectedServerChangedEvent> ConnectedServerChanged;
         public event EventHandler<ConnectedServerChangedEvent> AfterReload;
-        public static IConnectControlSingleton Instance
-        {
-            get
-            {
-                return _instance ?? (_instance = new ConnectControlSingleton(ServerProvider.Instance, CustomContainer.Get<IServerRepository>()));
-            }
-        }
+        public static IConnectControlSingleton Instance => _instance ?? (_instance = new ConnectControlSingleton(ServerProvider.Instance, CustomContainer.Get<IServerRepository>()));
 
         public ConnectControlSingleton(IEnvironmentModelProvider serverProvider, IServerRepository serverRepository)
         {
@@ -64,7 +58,7 @@ namespace Dev2.ConnectionHelpers
                 if (ConnectedServerChanged != null)
                 {
                     var localhost = Servers.FirstOrDefault(s => s.Server.IsLocalHost);
-                    Guid localhostId = localhost?.Server.EnvironmentID ?? Guid.Empty;
+                    var localhostId = localhost?.Server.EnvironmentID ?? Guid.Empty;
                     ConnectedServerChanged(this, new ConnectedServerChangedEvent(localhostId));
                 }
             }
@@ -81,7 +75,7 @@ namespace Dev2.ConnectionHelpers
                 {
                     var serverUri = environmentModel.Connection.AppServerUri;
                     var auth = environmentModel.Connection.AuthenticationType;
-                    openWizard(selectedIndex);
+                    openWizard?.Invoke(selectedIndex);
                     var updatedServer = _serverRepository.All().FirstOrDefault(e => e.EnvironmentID == environmentModel.EnvironmentID);
                     if (updatedServer != null && (!serverUri.Equals(updatedServer.Connection.AppServerUri) || auth != updatedServer.Connection.AuthenticationType))
                     {
@@ -142,25 +136,22 @@ namespace Dev2.ConnectionHelpers
             ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(connectedState, environmentId, false));
         }
 
-        private void Disconnect(IServer environment)
+        void Disconnect(IServer environment)
         {
             ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environment.EnvironmentID, false));
             ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Disconnected, environment.EnvironmentID, true));
         }
 
-        private void Connect(IConnectControlEnvironment selectedServer)
+        void Connect(IConnectControlEnvironment selectedServer)
         {
             var environmentId = selectedServer.Server.EnvironmentID;
             ConnectedStatusChanged?.Invoke(this, new ConnectionStatusChangedEventArg(ConnectionEnumerations.ConnectedState.Busy, environmentId, false));
         }
 
-        ConnectControlEnvironment CreateNewRemoteServerEnvironment()
+        ConnectControlEnvironment CreateNewRemoteServerEnvironment() => new ConnectControlEnvironment
         {
-            return new ConnectControlEnvironment
-            {
-                Server = new Server(Guid.NewGuid(), new ServerProxy(new Uri("http://localhost:3142"))) { Name = NewServerText }
-            };
-        }
+            Server = new Server(Guid.NewGuid(), new ServerProxy(new Uri("http://localhost:3142"))) { Name = NewServerText }
+        };
 
         public void ReloadServer()
         {

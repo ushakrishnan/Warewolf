@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -16,13 +17,14 @@ using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Activities
 {
-    [ToolDescriptorInfo("MicrosoftSQL", "SQL Server", ToolType.Native, "8999E59B-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Database", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Database_SQL_Server")]
-    public class DsfSqlServerDatabaseActivity : DsfActivity
+    [ToolDescriptorInfo("MicrosoftSQL", "SQL Server", ToolType.Native, "8999E59B-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Database", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Database_SQL_Server")]
+    public class DsfSqlServerDatabaseActivity : DsfActivity,IEquatable<DsfSqlServerDatabaseActivity>
     {
 
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public IServiceExecution ServiceExecution { get; protected set; }
         public string ProcedureName { get; set; }
+        public int? CommandTimeout { get; set; }
 
         public string ExecuteActionString { get; set; }
         public DsfSqlServerDatabaseActivity()
@@ -30,30 +32,34 @@ namespace Dev2.Activities
             Type = "SQL Server Database";
             DisplayName = "SQL Server Database";
         }
-        
-        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO errors, int update)
+
+        protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
         {
             var execErrors = new ErrorResultTO();
 
-            errors = new ErrorResultTO();
-            errors.MergeErrors(execErrors);
+            tmpErrors = new ErrorResultTO();
+            tmpErrors.MergeErrors(execErrors);
             if (string.IsNullOrEmpty(ProcedureName))
             {
-                errors.AddError(ErrorResource.NoActionsInSelectedDB);
+                tmpErrors.AddError(ErrorResource.NoActionsInSelectedDB);
                 return;
             }
             if (ServiceExecution is DatabaseServiceExecution databaseServiceExecution)
             {
+                if (databaseServiceExecution.SourceIsNull())
+                {
+                    databaseServiceExecution.GetSource(SourceId);
+                }
                 databaseServiceExecution.Inputs = Inputs.Select(a => new ServiceInput { EmptyIsNull = a.EmptyIsNull, Name = a.Name, RequiredField = a.RequiredField, Value = a.Value, TypeName = a.TypeName } as IServiceInput).ToList();
                 databaseServiceExecution.Outputs = Outputs;
             }
             ServiceExecution.Execute(out execErrors, update);
             var fetchErrors = execErrors.FetchErrors();
-            foreach(var error in fetchErrors)
+            foreach (var error in fetchErrors)
             {
                 dataObject.Environment.Errors.Add(error);
             }
-            errors.MergeErrors(execErrors);
+            tmpErrors.MergeErrors(execErrors);
         }
 
         public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
@@ -68,7 +74,7 @@ namespace Dev2.Activities
             {
                 foreach (var serviceInput in Inputs)
                 {
-                    DebugItem debugItem = new DebugItem();
+                    var debugItem = new DebugItem();
                     AddDebugItem(new DebugEvalResult(serviceInput.Value, serviceInput.Name, env, update), debugItem);
                     _debugInputs.Add(debugItem);
                 }
@@ -77,32 +83,77 @@ namespace Dev2.Activities
         }
 
         protected override void BeforeExecutionStart(IDSFDataObject dataObject, ErrorResultTO tmpErrors)
-        {            
+        {
             base.BeforeExecutionStart(dataObject, tmpErrors);
-            ServiceExecution = new DatabaseServiceExecution(dataObject);
-            var databaseServiceExecution = ServiceExecution as DatabaseServiceExecution;
-            databaseServiceExecution.ProcedureName = ProcedureName;
+            var databaseServiceExecution = new DatabaseServiceExecution(dataObject)
+            {
+                ProcedureName = ProcedureName,
+            };
+            if (CommandTimeout != null)
+            {
+                databaseServiceExecution.CommandTimeout = CommandTimeout.Value;
+            }
             if (!string.IsNullOrEmpty(ExecuteActionString))
             {
                 databaseServiceExecution.ProcedureName = ExecuteActionString;
             }
-            
+            ServiceExecution = databaseServiceExecution;
             ServiceExecution.GetSource(SourceId);
-            ServiceExecution.SetSourceId(SourceId);
             ServiceExecution.BeforeExecution(tmpErrors);
         }
 
-        protected override void AfterExecutionCompleted(ErrorResultTO tmpErrors)
+
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
+
+        public bool Equals(DsfSqlServerDatabaseActivity other)
         {
-            base.AfterExecutionCompleted(tmpErrors);
-            ServiceExecution.AfterExecution(tmpErrors);
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var eq = base.Equals(other);
+            eq &= string.Equals(SourceId.ToString(), other.SourceId.ToString());
+            eq &= string.Equals(ProcedureName, other.ProcedureName);            
+            eq &= CommandTimeout == other.CommandTimeout;
+            eq &= string.Equals(ExecuteActionString, other.ExecuteActionString);
+            return eq;
         }
 
-
-        public override enFindMissingType GetFindMissingType()
+        public override bool Equals(object obj)
         {
-            return enFindMissingType.DataGridActivity;
+            if (obj is DsfSqlServerDatabaseActivity instance)
+            {
+                return Equals(instance);
+            }
+            return false;
         }
 
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SourceId.GetHashCode());
+                if (ProcedureName != null)
+                {
+                    hashCode = (hashCode * 397) ^ (ProcedureName.GetHashCode());
+                }
+                if (CommandTimeout != null)
+                {
+                    hashCode = (hashCode * 397) ^ CommandTimeout.Value;
+                }                
+                if (ExecuteActionString != null)
+                {
+                    hashCode = (hashCode * 397) ^ (ExecuteActionString.GetHashCode());
+                }
+                return hashCode;
+            }
+        }
     }
 }

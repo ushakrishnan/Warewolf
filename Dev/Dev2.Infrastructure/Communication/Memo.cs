@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -41,15 +41,9 @@ namespace Dev2.Communication
             return InstanceID == other.InstanceID;
         }
 
-        public override bool Equals(object obj)
-        {
-            return Equals(obj as IMemo);
-        }
+        public override bool Equals(object obj) => Equals(obj as IMemo);
 
-        public override int GetHashCode()
-        {
-            return InstanceID.GetHashCode();
-        }
+        public override int GetHashCode() => InstanceID.GetHashCode();
 
         #endregion
     }

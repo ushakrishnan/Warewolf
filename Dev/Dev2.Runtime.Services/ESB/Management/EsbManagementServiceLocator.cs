@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -27,20 +27,14 @@ namespace Dev2.Runtime.ESB.Management
         /// Loads the managment services.
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<IEsbManagementEndpoint> FetchManagmentServices()
-        {
-            return FindAll();
-        }
+        public IEnumerable<IEsbManagementEndpoint> FetchManagmentServices() => FindAll();
 
         /// <summary>
         /// Locates the management service.
         /// </summary>
         /// <param name="serviceName">Name of the service.</param>
         /// <returns></returns>
-        public IEsbManagementEndpoint LocateManagementService(string serviceName)
-        {
-            return FindMatch(serviceName);
-        }
+        public IEsbManagementEndpoint LocateManagementService(string serviceName) => FindMatch(serviceName);
 
         public static IEnumerable<DynamicService> GetServices()
         {

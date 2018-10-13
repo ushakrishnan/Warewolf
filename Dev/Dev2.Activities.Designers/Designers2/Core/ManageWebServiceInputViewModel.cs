@@ -25,12 +25,12 @@ namespace Dev2.Activities.Designers2.Core
 {
     public class ManageWebServiceInputViewModel : IManageWebServiceInputViewModel
     {
-        private string _testResults;
-        private bool _testResultsAvailable;
-        private bool _isTestResultsEmptyRows;
-        private bool _isTesting;
-        private bool _okSelected;
-        private IWebService _model;
+        string _testResults;
+        bool _testResultsAvailable;
+        bool _isTestResultsEmptyRows;
+        bool _isTesting;
+        bool _okSelected;
+        IWebService _model;
         bool _pasteResponseVisible;
         bool _pasteResponseAvailable;
         readonly IGenerateOutputArea _generateOutputArea;
@@ -39,12 +39,12 @@ namespace Dev2.Activities.Designers2.Core
         readonly IWebServiceBaseViewModel _viewmodel;
         readonly IWebServiceModel _serverModel;
         bool _isGenerateInputsEmptyRows;
-        private RecordsetList _recordsetList;
-        private bool _outputCountExpandAllowed;
-        private bool _inputCountExpandAllowed;
-        private bool _testPassed;
-        private bool _testFailed;
-        private readonly IWebServiceHeaderBuilder _serviceHeaderBuilder;
+        RecordsetList _recordsetList;
+        bool _outputCountExpandAllowed;
+        bool _inputCountExpandAllowed;
+        bool _testPassed;
+        bool _testFailed;
+        readonly IWebServiceHeaderBuilder _serviceHeaderBuilder;
 
         public ManageWebServiceInputViewModel(IWebServiceHeaderBuilder serviceHeaderBuilder)
         {
@@ -99,9 +99,9 @@ namespace Dev2.Activities.Designers2.Core
             {
                 _serviceHeaderBuilder.BuildHeader(_viewmodel.GetHeaderRegion(), requestpayLoad);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // 
+                Console.Write(e.Message);
             }
         }
         public void ExecuteTest()
@@ -112,7 +112,6 @@ namespace Dev2.Activities.Designers2.Core
             TestResults = null;
             IsTesting = true;
 
-           
             try
             {
                 var testResult = _serverModel.TestService(Model);
@@ -184,7 +183,7 @@ namespace Dev2.Activities.Designers2.Core
                 _viewmodel.OutputsRegion.Outputs.Clear();
                 if (OutputArea != null)
                 {
-                    _viewmodel.OutputsRegion.Outputs = new ObservableCollection<IServiceOutputMapping>(OutputArea.Outputs);
+                    _viewmodel.OutputsRegion.ResetOutputs(OutputArea.Outputs);
                     var recSet = _recordsetList.FirstOrDefault(recordset => !string.IsNullOrEmpty(recordset.Name));
                     if (recSet != null)
                     {
@@ -239,13 +238,7 @@ namespace Dev2.Activities.Designers2.Core
             ResetOutputsView();
         }
 
-        public IGenerateInputArea InputArea
-        {
-            get
-            {
-                return _generateInputArea;
-            }
-        }
+        public IGenerateInputArea InputArea => _generateInputArea;
 
         public string TestResults
         {
@@ -373,13 +366,7 @@ namespace Dev2.Activities.Designers2.Core
             }
         }
 
-        public ImageSource TestIconImageSource
-        {
-            get
-            {
-                return Application.Current.TryFindResource("Explorer-WebService-White") as DrawingImage;
-            }
-        }
+        public ImageSource TestIconImageSource => Application.Current.TryFindResource("Explorer-WebService-White") as DrawingImage;
 
         public ICommand CloseCommand { get; private set; }
         public ICommand OkCommand { get; private set; }
@@ -402,13 +389,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public Action OkAction { get; set; }
         public ICommand PasteResponseCommand { get; private set; }
-        public IGenerateOutputArea OutputArea
-        {
-            get
-            {
-                return _generateOutputArea;
-            }
-        }
+        public IGenerateOutputArea OutputArea => _generateOutputArea;
+
         public IOutputDescription Description { get; set; }
 
 
@@ -431,10 +413,7 @@ namespace Dev2.Activities.Designers2.Core
         public IList<IToolRegion> Dependants { get; set; }
         public IList<string> Errors { get; private set; }
 
-        public IToolRegion CloneRegion()
-        {
-            return this;
-        }
+        public IToolRegion CloneRegion() => this;
 
         public void RestoreRegion(IToolRegion toRestore)
         {

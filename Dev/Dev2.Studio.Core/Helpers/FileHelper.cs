@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,18 +14,15 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using Dev2.Common;
-using Ionic.Zip;
 using Warewolf.Resource.Errors;
-
 
 namespace Dev2.Studio.Core.Helpers
 {
     public static class FileHelper
     {
         // Used to migrate Dev2 -> Warewolf 
-        private const string NewPath = @"Warewolf\";
-        private const string OldPath = @"Dev2\";
-
+        const string NewPath = @"Warewolf\";
+        const string OldPath = @"Dev2\";
 
         /// <summary>
         /// Gets the ouput path.
@@ -43,51 +40,30 @@ namespace Dev2.Studio.Core.Helpers
 
         public static void CreateTextFile(StringBuilder outputTxt, string outputPath)
         {
-            Dev2Logger.Info("", "Warewolf Info");
+            Dev2Logger.Info("Create Text File for output path: " + outputPath, GlobalConstants.WarewolfInfo);
+
             EnsurePathIsvalid(outputPath, ".txt");
-            var fs = File.Open(outputPath,
-                                      FileMode.OpenOrCreate,
-                                      FileAccess.Write);
+            var fs = File.Open(outputPath, FileMode.OpenOrCreate, FileAccess.Write);
             using (var writer = new StreamWriter(fs, Encoding.UTF8))
             {
-                Dev2Logger.Info("Writing a text file", "Warewolf Info");
+                Dev2Logger.Info("Writing a text file", GlobalConstants.WarewolfInfo);
                 writer.Write(outputTxt);
             }
         }
 
         public static string GetDebugItemTempFilePath(string uri)
         {
-            Dev2Logger.Info("", "Warewolf Info");
+            Dev2Logger.Info("Get Debug Item Temp File Path for uri: " + uri, GlobalConstants.WarewolfInfo);
 
             using (var client = new WebClient { Credentials = CredentialCache.DefaultCredentials })
             {
-                string serverLogData = client.UploadString(uri, "");
-                string value = serverLogData.Replace("<DataList><Dev2System.ManagmentServicePayload>", "").Replace("</Dev2System.ManagmentServicePayload></DataList>", "");
-                string uniqueOutputPath = GetUniqueOutputPath(".txt");
+                var serverLogData = client.UploadString(uri, "");
+                var value = serverLogData.Replace("<DataList><Dev2System.ManagmentServicePayload>", "").Replace("</Dev2System.ManagmentServicePayload></DataList>", "");
+                var uniqueOutputPath = GetUniqueOutputPath(".txt");
                 CreateTextFile(new StringBuilder(value), uniqueOutputPath);
                 return uniqueOutputPath;
             }
         }
-
-    
-        public static string CreateATemporaryFile(StringBuilder fileContent, string uniqueOutputPath)
-        {
-            CreateTextFile(fileContent, uniqueOutputPath);
-            string sourceDirectoryName = Path.GetDirectoryName(uniqueOutputPath);
-            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(uniqueOutputPath);
-            if (sourceDirectoryName != null)
-            {
-                string destinationArchiveFileName = Path.Combine(sourceDirectoryName, fileNameWithoutExtension + ".zip");
-                using (var zip = new ZipFile())
-                {
-                    zip.AddFile(uniqueOutputPath, ".");
-                    zip.Save(destinationArchiveFileName);
-                }
-                return destinationArchiveFileName;
-            }
-            return null;
-        }
-
 
         /// <summary>
         /// Ensures the path isvalid.
@@ -141,11 +117,10 @@ namespace Dev2.Studio.Core.Helpers
 
         public static void MigrateTempData(string rootPath)
         {
+            var fullNewPath = Path.Combine(rootPath, NewPath);
+            var fullOldPath = Path.Combine(rootPath, OldPath);
 
-            string fullNewPath = Path.Combine(rootPath, NewPath);
-            string fullOldPath = Path.Combine(rootPath, OldPath);
-
-            if(!Directory.Exists(fullOldPath))
+            if (!Directory.Exists(fullOldPath))
             {
                 return;//no old data to migrate
             }

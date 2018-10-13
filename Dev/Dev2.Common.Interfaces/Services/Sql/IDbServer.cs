@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,8 @@ namespace Dev2.Common.Interfaces.Services.Sql
         bool IsConnected { get; }
         string ConnectionString { get; }
 
-        bool Connect(string connectionString);
+        int? CommandTimeout { get; set; }
+        void Connect(string connectionString);
 
         void BeginTransaction();
 
@@ -27,7 +28,13 @@ namespace Dev2.Common.Interfaces.Services.Sql
 
         DataTable FetchDataTable(IDbCommand command);
 
-        List<string> FetchDatabases();
+		DataSet FetchDataSet(IDbCommand command);
+
+		int ExecuteNonQuery(IDbCommand command);
+
+		int ExecuteScalar(IDbCommand command);
+
+		List<string> FetchDatabases();
 
         void FetchStoredProcedures(Func<IDbCommand, List<IDbDataParameter>, string, string, bool> procedureProcessor,
             Func<IDbCommand, List<IDbDataParameter>, string, string, bool> functionProcessor);

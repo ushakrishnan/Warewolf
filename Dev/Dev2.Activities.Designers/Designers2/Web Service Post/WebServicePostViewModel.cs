@@ -29,11 +29,11 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
 {
     public class WebServicePostViewModel : CustomToolWithRegionBase, IWebServicePostViewModel
     {
-        private IOutputsToolRegion _outputsRegion;
-        private IWebPostInputArea _inputArea;
-        private ISourceToolRegion<IWebServiceSource> _sourceRegion;
-        private readonly ServiceInputBuilder _builder;
-        private IErrorInfo _worstDesignError;
+        IOutputsToolRegion _outputsRegion;
+        IWebPostInputArea _inputArea;
+        ISourceToolRegion<IWebServiceSource> _sourceRegion;
+        readonly ServiceInputBuilder _builder;
+        IErrorInfo _worstDesignError;
 
         const string DoneText = "Done";
         const string FixText = "Fix";
@@ -55,7 +55,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
         }
         Guid UniqueID => GetProperty<Guid>();
 
-        private void SetupCommonProperties()
+        void SetupCommonProperties()
         {
             AddTitleBarMappingToggle();
             InitialiseViewModel(new ManageWebServiceInputViewModel(this, Model));
@@ -167,23 +167,20 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
                     break;
                 }
             }
-            WorstDesignError = worstError[0];
+            SetWorstDesignError(worstError[0]);
         }
 
-        IErrorInfo WorstDesignError
+        void SetWorstDesignError(IErrorInfo value)
         {
-            set
+            if (_worstDesignError != value)
             {
-                if (_worstDesignError != value)
-                {
-                    _worstDesignError = value;
-                    IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value?.ErrorType ?? ErrorType.None;
-                }
+                _worstDesignError = value;
+                IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
+                WorstError = value?.ErrorType ?? ErrorType.None;
             }
         }
 
-        private void InitialiseViewModel(IManageWebServiceInputViewModel manageServiceInputViewModel)
+        void InitialiseViewModel(IManageWebServiceInputViewModel manageServiceInputViewModel)
         {
             ManageServiceInputViewModel = manageServiceInputViewModel;
 
@@ -255,7 +252,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
             }
         }
 
-        private IErrorInfo NoError { get; set; }
+        IErrorInfo NoError { get; set; }
 
         public bool IsWorstErrorReadOnly
         {
@@ -281,7 +278,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
 
         public DelegateCommand TestInputCommand { get; set; }
 
-        private string Type => GetProperty<string>();
+        string Type => GetProperty<string>();
 
 
         void AddTitleBarMappingToggle()
@@ -289,7 +286,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
             HasLargeView = true;
         }
 
-        public void SetDisplayName(string outputFieldName)
+        public void SetDisplayName(string displayName)
         {
             var index = DisplayName.IndexOf(" -", StringComparison.Ordinal);
 
@@ -298,22 +295,19 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
                 DisplayName = DisplayName.Remove(index);
             }
 
-            var displayName = DisplayName;
+            var displayName2 = DisplayName;
 
-            if (!string.IsNullOrEmpty(displayName) && displayName.Contains("Dsf"))
+            if (!string.IsNullOrEmpty(displayName2) && displayName2.Contains("Dsf"))
             {
-                DisplayName = displayName;
+                DisplayName = displayName2;
             }
-            if (!string.IsNullOrWhiteSpace(outputFieldName))
+            if (!string.IsNullOrWhiteSpace(displayName))
             {
-                DisplayName = displayName + outputFieldName;
+                DisplayName = displayName2 + displayName;
             }
         }
 
-        public IHeaderRegion GetHeaderRegion()
-        {
-            return InputArea;
-        }
+        public IHeaderRegion GetHeaderRegion() => InputArea;
 
         public Runtime.Configuration.ViewModels.Base.DelegateCommand FixErrorsCommand { get; set; }
 
@@ -341,13 +335,11 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
                 InputArea = new WebPostInputRegion(ModelItem, SourceRegion);
                 InputArea.PropertyChanged += (sender, args) =>
                 {
-                    if (args.PropertyName == "PostData")
+                    if (args.PropertyName == "PostData" && InputArea.Headers.All(value => string.IsNullOrEmpty(value.Name)))
                     {
-                        if (InputArea.Headers.All(value => string.IsNullOrEmpty(value.Name)))
-                        {
-                            ((ManageWebServiceInputViewModel)ManageServiceInputViewModel).BuidHeaders(InputArea.PostData);
-                        }
+                        ((ManageWebServiceInputViewModel)ManageServiceInputViewModel).BuidHeaders(InputArea.PostData);
                     }
+
                 };
                 regions.Add(InputArea);
                 OutputsRegion = new OutputsRegion(ModelItem, true);
@@ -445,11 +437,11 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
             return webServiceDefinition;
         }
 
-        private IList<IServiceInput> InputsFromModel()
+        IList<IServiceInput> InputsFromModel()
         {
             var dt = new List<IServiceInput>();
-            string s = InputArea.QueryString;
-            string postValue = InputArea.PostData;
+            var s = InputArea.QueryString;
+            var postValue = InputArea.PostData;
 
             _builder.GetValue(s, dt);
             _builder.GetValue(postValue, dt);
@@ -461,7 +453,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Post
             return dt;
         }
 
-        private IWebServiceModel Model { get; set; }
+        IWebServiceModel Model { get; set; }
         public bool GenerateOutputsVisible
         {
             get

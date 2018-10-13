@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,7 @@ namespace Dev2.SignalR.Wrappers.New
 
         public ISubscriptionWrapper Subscribe(string sendmemo)
         {
-            Subscription s = _hubProxy.Subscribe(sendmemo);
+            var s = _hubProxy.Subscribe(sendmemo);
             return new SubscriptionWrapper(s);
         }
 
@@ -40,10 +40,7 @@ namespace Dev2.SignalR.Wrappers.New
         /// <param name="method">The name of the method.</param>
         /// <param name="args">The arguments</param>
         /// <returns>A task that represents when invocation returned.</returns>
-        public Task Invoke(string method, params object[] args)
-        {
-            return _hubProxy.Invoke(method,args);
-        }
+        public Task Invoke(string method, params object[] args) => _hubProxy.Invoke(method, args);
 
         /// <summary>
         /// Executes a method on the server side hub asynchronously.
@@ -52,20 +49,11 @@ namespace Dev2.SignalR.Wrappers.New
         /// <param name="method">The name of the method.</param>
         /// <param name="args">The arguments</param>
         /// <returns>A task that represents when invocation returned.</returns>
-        public Task<T> Invoke<T>(string method, params object[] args)
-        {
-            return _hubProxy.Invoke<T>(method, args);
-        }
+        public Task<T> Invoke<T>(string method, params object[] args) => _hubProxy.Invoke<T>(method, args);
 
-        public object Object()
-        {
-            return _hubProxy;
-        }
+        public object Object() => _hubProxy;
 
-        public  IDisposable On<T>( string eventName, Action<T> onData)
-        {
-            return ((IHubProxy)Object()).On(eventName, onData);
-        }
+        public IDisposable On<T>(string eventName, Action<T> onData) => ((IHubProxy)Object()).On(eventName, onData);
 
         #endregion
     }

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Dev2.Runtime.WebServer
 {
-    internal static class ServiceTestModelJObjectResultBuilder
+    static class ServiceTestModelJObjectResultBuilder
     {
         public static JObject BuildTestResultJSONForWebRequest(this IServiceTestModelTO result)
         {
@@ -44,11 +44,13 @@ namespace Dev2.Runtime.WebServer
                 resObj.Add("Result", Warewolf.Resource.Messages.Messages.Test_ResourcpathUpdatedResult);
                 resObj.Add("Message", result.Result.Message.Replace(Environment.NewLine, ""));
             }
-
-            else if (result.Result.RunTestResult == RunResult.TestPending)
+            else
             {
-                resObj.Add("Result", Warewolf.Resource.Messages.Messages.Test_PendingResult);
-                resObj.Add("Message", result.Result.Message);
+                if (result.Result.RunTestResult == RunResult.TestPending)
+                {
+                    resObj.Add("Result", Warewolf.Resource.Messages.Messages.Test_PendingResult);
+                    resObj.Add("Message", result.Result.Message);
+                }
             }
             return resObj;
         }

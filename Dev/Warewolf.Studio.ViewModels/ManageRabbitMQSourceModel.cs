@@ -9,12 +9,11 @@ using Dev2.Studio.Interfaces;
 
 namespace Warewolf.Studio.ViewModels
 {
-    
     public class ManageRabbitMQSourceModel : IRabbitMQSourceModel
     {
-        private readonly IStudioUpdateManager _updateManager;
-        private readonly IQueryManager _queryManager;
-        private readonly IShellViewModel _shellViewModel;
+        readonly IStudioUpdateManager _updateManager;
+        readonly IQueryManager _queryManager;
+        readonly IShellViewModel _shellViewModel;
 
         public ManageRabbitMQSourceModel(IStudioUpdateManager updateManager, IQueryManager queryManager, IShellViewModel shellViewModel)
         {
@@ -25,32 +24,16 @@ namespace Warewolf.Studio.ViewModels
 
         #region Implementation of IRabbitMQSourceModel
 
-        public ICollection<IRabbitMQServiceSourceDefinition> RetrieveSources()
-        {
-            return new List<IRabbitMQServiceSourceDefinition>(_queryManager.FetchRabbitMQServiceSources());
-        }
+        public ICollection<IRabbitMQServiceSourceDefinition> RetrieveSources() => new List<IRabbitMQServiceSourceDefinition>(_queryManager.FetchRabbitMQServiceSources());
 
-        public void CreateNewSource()
-        {
-            _shellViewModel.NewRabbitMQSource(string.Empty);
-        }
+        public void CreateNewSource() => _shellViewModel.NewRabbitMQSource(string.Empty);
 
-        public void EditSource(IRabbitMQServiceSourceDefinition selectedSource)
-        {
-            _shellViewModel.EditResource(selectedSource);
-        }
+        public void EditSource(IRabbitMQServiceSourceDefinition source) => _shellViewModel.EditResource(source);
 
-        public string TestSource(IRabbitMQServiceSourceDefinition source)
-        {
-            return _updateManager.TestConnection(source);
-        }
+        public string TestSource(IRabbitMQServiceSourceDefinition source) => _updateManager.TestConnection(source);
 
-        public void SaveSource(IRabbitMQServiceSourceDefinition source)
-        {
-            _updateManager.Save(source);
-        }
-
-
+        public void SaveSource(IRabbitMQServiceSourceDefinition source) => _updateManager.Save(source);
+        
         public IRabbitMQServiceSourceDefinition FetchSource(Guid resourceID)
         {
             var xaml = _queryManager.FetchResourceXaml(resourceID);

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,9 +11,9 @@
 using System;
 using System.Runtime.Serialization;
 using Caliburn.Micro;
+using Dev2.Common.Interfaces;
 using Dev2.Messages;
 using Dev2.Security;
-using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Core.Messages;
 using Dev2.Studio.Core.ViewModels.Base;
 using Dev2.Studio.Interfaces;
@@ -22,11 +22,10 @@ using Dev2.Studio.ViewModels.Diagnostics;
 
 
 namespace Dev2.Studio.ViewModels.WorkSurface
-
 {
-    public interface IWorkSurfaceContextViewModel
+    public interface IWorkSurfaceContextViewModel : IDisposable, IScreen
     {
-        WorkSurfaceKey WorkSurfaceKey { get; }
+        IWorkSurfaceKey WorkSurfaceKey { get; }
         IServer Environment { get; }
         DebugOutputViewModel DebugOutputViewModel { get; set; }
         bool DeleteRequested { get; set; }
@@ -41,24 +40,16 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         AuthorizeCommand QuickDebugCommand { get; }
         IEventAggregator EventPublisher { get; }
         ValidationController ValidationController { get; set; }
-        /// <summary>
-        /// Indicates if a close has been requested
-        /// </summary>
         bool CloseRequested { get; }
         ViewModelDialogResults DialogResult { get; set; }
         object Parent { get; set; }
         string DisplayName { get; set; }
         bool IsNotifying { get; set; }
 
-        void Handle(DebugResourceMessage message);
-
-        void Handle(ExecuteResourceMessage message);
-
         void Handle(SaveResourceMessage message);
 
         void Handle(UpdateWorksurfaceDisplayName message);
-
-
+        
         void SetDebugStatus(DebugStatus debugStatus);
 
         void Debug(IContextualResourceModel resourceModel, bool isDebug);
@@ -75,6 +66,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
 
         void ShowSaveDialog(IContextualResourceModel resourceModel, bool addToTabManager);
 
+        bool Save();
         bool Save(bool isLocalSave, bool isStudioShutdown);
 
         bool IsEnvironmentConnected();
@@ -82,19 +74,12 @@ namespace Dev2.Studio.ViewModels.WorkSurface
         void FindMissing();
 
         void Debug();
-
-        void Dispose();
-
-        /// <summary>
-        /// Requests tha the view bound to this view model closes
-        /// </summary>
+        
         void RequestClose();
-
-        /// <summary>
-        /// Requests tha the view bound to this view model closes
-        /// </summary>
+        
         void RequestClose(ViewModelDialogResults dialogResult);
 
+        bool CanSave();
         void CanClose(Action<bool> callback);
 
         void TryClose();

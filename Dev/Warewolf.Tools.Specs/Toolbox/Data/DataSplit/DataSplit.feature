@@ -1,4 +1,6 @@
 ﻿@Data
+@MSTest:DeploymentItem:EnableDocker.txt
+@MSTest:DeploymentItem:x86\SQLite.Interop.dll
 Feature: DataSplit
 	In order to split data
 	As a Warewolf user
@@ -409,14 +411,15 @@ Scenario: Split text using Index where index > provided
      And the execution has "NO" error
 
 Scenario: Sending Error in error variable and calling webservice
-    Given A string to split with value "@!?><":}{+_)(*&^~"
+    Given remote server container has started
+    And A string to split with value "@!?><":}{+_)(*&^~"
 	And assign to variable "[[vowels(*).chars]]" split type "Index" at "*" and Include "unselected" without escaping
 	And the direction is "Backward"
     And assign error to variable "[[error]]"
-    And call the web service "http://TST-CI-REMOTE:3142/services/ONERROR/OnError_WriteToFile.xml?errorLog=[[error]]"
+    And call the web service "http://tst-ci-remote:3142/services/ONERROR/OnError_WriteToFile.xml?errorLog=[[error]]"
     When the data split tool is executed
     Then the execution has "AN" error
-    And the result from the web service "http://TST-CI-REMOTE:3142/services/ONERROR/OnError_ReadFromFile.xml" will have the same data as variable "[[error]]"
+    And the result from the web service "http://tst-ci-remote:3142/services/ONERROR/OnError_ReadFromFile.xml" will have the same data as variable "[[error]]"
     And the debug inputs as
 	| String to Split   | Process Direction | Skip blank rows | # |                       | With  | Using | Include | Escape |
 	| @!?><":}{+_)(*&^~ | Backward          | No              | 1 | [[vowels(*).chars]] = | Index | *     | No      |        |
@@ -444,20 +447,6 @@ Scenario: Split text into negative recordset index
 	| abcd            | Forward           | No              | 1 | [[vowels(-1).letters]] = | Index | 5     | Yes     |        |
 	And the debug output as
 	| # |                          |
-	
-Scenario Outline: Split Text by using two variables in one row
-	Given A string to split with value "abcd"
-	And assign to variable "<variables>" split type "Index" at "4" and Include "Selected" and Escape ""	
-	When the data split tool is executed
-	Then the execution has "AN" error	 
-	And the debug inputs as  
-	| String to Split | Process Direction | Skip blank rows | # |               | With  | Using | Include | Escape |
-	| abcd            | Forward           | No              | 1 | <variables> = | Index | 4     | Yes     |        |
-	And the debug output as
-	| #               |                   |
-	| 1               | <variables> =     |
-Examples: 
-	| No | varaibles                  |
 
 
 Scenario Outline: Split Text using type Index but Index is invalid

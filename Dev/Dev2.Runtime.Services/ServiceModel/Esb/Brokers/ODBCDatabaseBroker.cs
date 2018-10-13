@@ -40,9 +40,12 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
             {
                 res = "<FromXMLPayloads>" + res + "</FromXMLPayloads>";
             }
-            else if (foundXMLFrags == 0)
+            else
             {
-                res = payload;
+                if (foundXMLFrags == 0)
+                {
+                    res = payload;
+                }
             }
 
             return base.NormalizeXmlPayload(res);
@@ -64,13 +67,11 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
 
             // Check the cache for a value ;)
             ServiceMethodList cacheResult;
-            if (!dbSource.ReloadActions)
+            if (!dbSource.ReloadActions && GetCachedResult(dbSource, out cacheResult))
             {
-                if (GetCachedResult(dbSource, out cacheResult))
-                {
-                    return cacheResult;
-                }
+                return cacheResult;
             }
+
             // else reload actions ;)
 
             var serviceMethods = new ServiceMethodList();
@@ -92,10 +93,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers
 
         #region Overrides of AbstractDatabaseBroker<ODBCServer>
 
-        protected override ODBCServer CreateDbServer(DbSource dbSource)
-        {
-            return new ODBCServer();
-        }
+        protected override ODBCServer CreateDbServer(DbSource dbSource) => new ODBCServer();
 
         #endregion
 

@@ -22,19 +22,19 @@ namespace Dev2.Activities.Designers2.Core.Source
 {
     public class WebSourceRegion : ISourceToolRegion<IWebServiceSource>
     {
-        private IWebServiceSource _selectedSource;
-        private ICollection<IWebServiceSource> _sources;
-        private readonly ModelItem _modelItem;
+        IWebServiceSource _selectedSource;
+        ICollection<IWebServiceSource> _sources;
+        readonly ModelItem _modelItem;
         readonly Dictionary<Guid, IList<IToolRegion>> _previousRegions = new Dictionary<Guid, IList<IToolRegion>>();
-        private Guid _sourceId;
-        private Action _sourceChangedAction;
-        private double _labelWidth;
-        private string _newSourceHelpText;
-        private string _editSourceHelpText;
-        private string _sourcesHelpText;
-        private string _newSourceToolText;
-        private string _editSourceToolText;
-        private string _sourcesToolText;
+        Guid _sourceId;
+        Action _sourceChangedAction;
+        double _labelWidth;
+        string _newSourceHelpText;
+        string _editSourceHelpText;
+        string _sourcesHelpText;
+        string _newSourceToolText;
+        string _editSourceToolText;
+        string _sourcesToolText;
 
         public WebSourceRegion(IWebServiceModel model, ModelItem modelItem)
         {
@@ -155,10 +155,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             }
         }
 
-        public bool CanEditSource()
-        {
-            return SelectedSource != null;
-        }
+        public bool CanEditSource() => SelectedSource != null;
 
         public ICommand EditSourceCommand { get; set; }
 
@@ -194,13 +191,10 @@ namespace Dev2.Activities.Designers2.Core.Source
         public bool IsEnabled { get; set; }
         public IList<IToolRegion> Dependants { get; set; }
 
-        public IToolRegion CloneRegion()
+        public IToolRegion CloneRegion() => new WebSourceRegion
         {
-            return new WebSourceRegion
-            {
-                SelectedSource = SelectedSource
-            };
-        }
+            SelectedSource = SelectedSource
+        };
 
         public void RestoreRegion(IToolRegion toRestore)
         {
@@ -228,13 +222,11 @@ namespace Dev2.Activities.Designers2.Core.Source
             }
             set
             {
-                if (!Equals(value, _selectedSource) && _selectedSource != null)
+                if (!Equals(value, _selectedSource) && _selectedSource != null && !string.IsNullOrEmpty(_selectedSource.HostName))
                 {
-                    if (!string.IsNullOrEmpty(_selectedSource.HostName))
-                    {
-                        StorePreviousValues(_selectedSource.Id);
-                    }
+                    StorePreviousValues(_selectedSource.Id);
                 }
+
                 if (Dependants != null)
                 {
                     var outputs = Dependants.FirstOrDefault(a => a is IOutputsToolRegion);
@@ -245,6 +237,7 @@ namespace Dev2.Activities.Designers2.Core.Source
                         region.ObjectResult = string.Empty;
                         region.IsObject = false;
                         region.ObjectName = string.Empty;
+                        
                     }
                 }
                 RestoreIfPrevious(value);
@@ -252,7 +245,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             }
         }
 
-        private void RestoreIfPrevious(IWebServiceSource value)
+        void RestoreIfPrevious(IWebServiceSource value)
         {
             if (IsAPreviousValue(value) && _selectedSource != null)
             {
@@ -262,7 +255,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             else
             {
                 SetSelectedSource(value);
-                SourceChangedAction();
+                SourceChangedAction?.Invoke();
                 OnSomethingChanged(this);
             }
             var delegateCommand = EditSourceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
@@ -271,7 +264,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             _selectedSource = value;
         }
 
-        private void SetSelectedSource(IWebServiceSource value)
+        void SetSelectedSource(IWebServiceSource value)
         {
             if (value != null)
             {
@@ -282,13 +275,13 @@ namespace Dev2.Activities.Designers2.Core.Source
             OnPropertyChanged("SelectedSource");
         }
 
-        private void StorePreviousValues(Guid id)
+        void StorePreviousValues(Guid id)
         {
             _previousRegions.Remove(id);
             _previousRegions[id] = new List<IToolRegion>(Dependants.Select(a => a.CloneRegion()));
         }
 
-        private void RestorePreviousValues(IWebServiceSource value)
+        void RestorePreviousValues(IWebServiceSource value)
         {
             var toRestore = _previousRegions[value.Id];
             foreach (var toolRegion in Dependants.Zip(toRestore, (a, b) => new Tuple<IToolRegion, IToolRegion>(a, b)))
@@ -297,10 +290,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             }
         }
 
-        private bool IsAPreviousValue(IWebServiceSource value)
-        {
-            return _previousRegions.Keys.Any(a => a == value.Id);
-        }
+        bool IsAPreviousValue(IWebServiceSource value) => _previousRegions.Keys.Any(a => a == value.Id);
 
         public ICollection<IWebServiceSource> Sources
         {

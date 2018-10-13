@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,6 +32,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyVersion("0.0.*")]
 [assembly: InternalsVisibleTo("Dev2.Activities.Tests")]
 [assembly: InternalsVisibleTo("Dev2.Activities.Designers.Tests")]
+[assembly: InternalsVisibleTo("Dev2.CustomControls.Tests")]
 [assembly: InternalsVisibleTo("Warewolf.Studio.ViewModels.Tests")]
 [assembly: InternalsVisibleTo("Dev2.Activities.Specs")]
 [assembly: InternalsVisibleTo("Dev2.Runtime.Tests")]
@@ -40,6 +41,9 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Dev2.Integration.Tests")]
 [assembly: InternalsVisibleTo("Dev2.TaskScheduler.Wrappers")]
 [assembly: InternalsVisibleTo("Dev2.Infrastructure.Tests")]
-[assembly: InternalsVisibleTo("Warewolf.UIBindingTests.ComDll")]
 [assembly: InternalsVisibleTo("Warewolf.Studio.ViewModels.Tests")]
 [assembly: InternalsVisibleTo("Dev2.Data.Tests")]
+[assembly: InternalsVisibleTo("Warewolf.Tools.Specs")]
+[assembly: InternalsVisibleTo("Warewolf.UIBindingTests.ComDll")]
+[assembly: InternalsVisibleTo("Warewolf.UIBindingTests.PluginSource")]
+

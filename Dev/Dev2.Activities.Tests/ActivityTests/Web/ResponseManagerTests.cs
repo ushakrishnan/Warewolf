@@ -49,7 +49,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
                     ,
                 Outputs = It.IsAny<ICollection<IServiceOutputMapping>>()
             };
-            StringBuilder value = new StringBuilder("&lt;x&gt;this &quot; is&apos; &amp; neat&lt;/x&gt;");
+            var value = new StringBuilder("&lt;x&gt;this &quot; is&apos; &amp; neat&lt;/x&gt;");
             //---------------Assert Precondition----------------
             Assert.IsNotNull(value.ToString());
             Assert.IsNotNull(responseManager);
@@ -70,7 +70,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
                     ,
                 Outputs = It.IsAny<ICollection<IServiceOutputMapping>>()
             };
-            StringBuilder value = new StringBuilder("x&gt;this &quot; is&apos; &amp; neat&lt;/x&gt;");
+            var value = new StringBuilder("x&gt;this &quot; is&apos; &amp; neat&lt;/x&gt;");
             //---------------Assert Precondition----------------
             Assert.IsNotNull(value.ToString());
             Assert.IsNotNull(responseManager);
@@ -350,6 +350,51 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             //---------------Test Result -----------------------
             env.Verify(environment => environment.Assign(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()), Times.Never);
             env.Verify(environment => environment.AddError(It.IsAny<string>()), Times.Never);
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        public void PushResponseIntoEnvironment_GivenEmptyMappedTo_ShouldNotAddPath()
+        {
+            //---------------Set up test pack-------------------
+            const string response = "<CurrentWeather>" +
+                                   "<Location>&lt;Paris&gt;</Location>" +
+                                   "<Time>May 29, 2013 - 09:00 AM EDT / 2013.05.29 1300 UTC</Time>" +
+                                   "</CurrentWeather>";
+            var environment = new ExecutionEnvironment();
+            var serviceOutputs = new List<IServiceOutputMapping>
+            {
+                new ServiceOutputMapping("Location", "", "weather"),
+                new ServiceOutputMapping("Time", "[[weather().Time]]", "weather")
+            };
+
+            var serviceXml = XmlResource.Fetch("WebService");
+            using (var service = new WebService(serviceXml) { RequestResponse = response })
+            {
+                var outPutDesc = service.GetOutputDescription();
+                var responseManager = new ResponseManager
+                {
+                    OutputDescription = outPutDesc,
+                    Outputs = serviceOutputs
+                };
+                var dataObjectMock = new Mock<IDSFDataObject>();
+                dataObjectMock.Setup(o => o.Environment).Returns(environment);
+                //---------------Assert Precondition----------------
+                //---------------Execute Test ----------------------
+                try
+                {
+                    responseManager.PushResponseIntoEnvironment(response, 0, dataObjectMock.Object);
+                }
+                catch (Exception e)
+                {
+                    Assert.Fail(e.Message);
+                }
+                Assert.IsTrue(string.IsNullOrEmpty(responseManager.OutputDescription.DataSourceShapes[0].Paths[0].OutputExpression));
+                Assert.IsTrue(environment.HasRecordSet("[[weather()]]"));
+                Assert.AreEqual(1, environment.GetLength("weather"));
+            }
+            //---------------Test Result -----------------------
+
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +22,7 @@ namespace Dev2.Tests.Runtime.WebServer
     [TestClass]
     public class GetLogFileServiceHandlerTest
     {
-        private NameValueCollection LocalQueryString => new NameValueCollection
+        NameValueCollection LocalQueryString => new NameValueCollection
         {
             { "Name", "the_name" },
             { "numLines", "5" },
@@ -30,7 +30,7 @@ namespace Dev2.Tests.Runtime.WebServer
             { "rid", "resourceid" }
         };
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void ProcessRequest_GiveQueryStrignHasNoKeys()
         {
@@ -45,7 +45,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void ProcessRequest_GiveQueryStrignHasKeys()
         {

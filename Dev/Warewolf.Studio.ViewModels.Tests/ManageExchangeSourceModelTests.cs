@@ -11,12 +11,12 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private Mock<IStudioUpdateManager> _updateRepositoryMock;
-        private Mock<IQueryManager> _queryProxyMock;
+        Mock<IStudioUpdateManager> _updateRepositoryMock;
+        Mock<IQueryManager> _queryProxyMock;
 
-        private string _serverName;
+        string _serverName;
 
-        private ManageExchangeSourceModel _target;
+        ManageExchangeSourceModel _target;
 
         #endregion Fields
 
@@ -35,7 +35,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test methods
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestTestConnection()
         {
             //arrange
@@ -48,7 +48,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _updateRepositoryMock.Verify(it => it.TestConnection(resourceMock.Object));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSave()
         {
             //arrange
@@ -65,7 +65,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestServerName()
         {
             //act
@@ -75,7 +75,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.AreEqual(_serverName, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestEmailSourceServerNameBrackets()
         {
             //arrange  

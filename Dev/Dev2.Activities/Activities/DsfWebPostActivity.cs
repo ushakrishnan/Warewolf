@@ -10,6 +10,7 @@ using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.TO;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
+using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
@@ -19,7 +20,7 @@ using Warewolf.Storage.Interfaces;
 namespace Dev2.Activities
 {
     [ToolDescriptorInfo("WebMethods", "POST", ToolType.Native, "6AEB1038-6332-46F9-8BDD-752DE4EA038E", "Dev2.Activities", "1.0.0.0", "Legacy", "HTTP Web Methods", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_WebMethod_Post")]
-    public class DsfWebPostActivity:DsfActivity
+    public class DsfWebPostActivity:DsfActivity,IEquatable<DsfWebPostActivity>
     {
         public IList<INameValue> Headers { get; set; }
         public string QueryString { get; set; }
@@ -32,10 +33,7 @@ namespace Dev2.Activities
             DisplayName = "POST Web Method";
         }
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.DataGridActivity;
-        }
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
 
         public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
@@ -53,13 +51,13 @@ namespace Dev2.Activities
             }
 
             var url = ResourceCatalog.GetResource<WebSource>(Guid.Empty, SourceId);
-            string headerString=string.Empty;
+            var headerString=string.Empty;
             if (head != null)
             {
                 headerString = string.Join(" ", head.Select(a => a.Name + " : " + a.Value));
             }
 
-            DebugItem debugItem = new DebugItem();
+            var debugItem = new DebugItem();
             AddDebugItem(new DebugItemStaticDataParams("", "URL"), debugItem);
             AddDebugItem(new DebugEvalResult(url.Address, "", env, update), debugItem);
             _debugInputs.Add(debugItem);
@@ -116,17 +114,7 @@ namespace Dev2.Activities
 
         protected virtual string PerformWebPostRequest(IEnumerable<NameValue> head, string query, WebSource source, string postData)
         {
-            var webclient = CreateClient(head, query, source);
-            if (webclient != null)
-            {
-                var address = source.Address;
-                if (query != null)
-                {
-                    address = address + query;
-                }
-                return webclient.UploadString(address, postData);
-            }
-            return null;
+            return WebSources.Execute(source, WebRequestMethod.Post, query, postData, true, out _errorsTo, head.Select(h => h.Name + ":" + h.Value).ToArray());
         }
 
         public WebClient CreateClient(IEnumerable<NameValue> head, string query, WebSource source)
@@ -160,5 +148,53 @@ namespace Dev2.Activities
         }
 
         #endregion
+
+        public bool Equals(DsfWebPostActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && Equals(Headers, other.Headers) && string.Equals(QueryString, other.QueryString) && Equals(OutputDescription, other.OutputDescription) && string.Equals(PostData, other.PostData);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfWebPostActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Headers != null ? Headers.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (QueryString != null ? QueryString.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (OutputDescription != null ? OutputDescription.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (PostData != null ? PostData.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

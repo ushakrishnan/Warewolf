@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,30 +29,21 @@ namespace Dev2.DataList.Contract
         /// Creates the language parser. 
         /// </summary>
         /// <returns></returns>
-        public static IDev2DataLanguageParser CreateLanguageParser()
-        {
-            return new Dev2DataLanguageParser();
-        }
+        public static IDev2DataLanguageParser CreateLanguageParser() => new Dev2DataLanguageParser();
 
         /// <summary>
         /// Creates the studio language parser.
         /// </summary>
         /// <returns></returns>
-        public static IDev2StudioDataLanguageParser CreateStudioLanguageParser()
-        {
-            return new Dev2DataLanguageParser();
-        }
+        public static IDev2StudioDataLanguageParser CreateStudioLanguageParser() => new Dev2DataLanguageParser();
 
         public static string GenerateMapping(IList<IDev2Definition> defs, enDev2ArgumentType typeOf)
         {
-            DefinitionBuilder b = new DefinitionBuilder { ArgumentType = typeOf, Definitions = defs };
+            var b = new DefinitionBuilder { ArgumentType = typeOf, Definitions = defs };
 
             return b.Generate();
         }
-        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue)
-        {
-            return new Dev2Definition(name, mapsTo, value, isEval, defaultValue, isRequired, rawValue);
-        }
+        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue) => new Dev2Definition(name, mapsTo, value, isEval, defaultValue, isRequired, rawValue);
 
         public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull, bool isArray)
         {
@@ -61,29 +52,20 @@ namespace Dev2.DataList.Contract
             return dev2Definition;
         }
 
-        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull)
-        {
-            return new Dev2Definition(name, mapsTo, value, string.Empty, isEval, defaultValue, isRequired, rawValue, emptyToNull);
-        }
+        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull) => new Dev2Definition(name, mapsTo, value, string.Empty, isEval, defaultValue, isRequired, rawValue, emptyToNull);
 
-        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, string recordSet, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull)
-        {
-            return new Dev2Definition(name, mapsTo, value, recordSet, isEval, defaultValue, isRequired, rawValue, emptyToNull);
-        }
+        public static IDev2Definition CreateDefinition(string name, string mapsTo, string value, string recordSet, bool isEval, string defaultValue, bool isRequired, string rawValue, bool emptyToNull) => new Dev2Definition(name, mapsTo, value, recordSet, isEval, defaultValue, isRequired, rawValue, emptyToNull);
 
-        public static IRecordSetCollection CreateRecordSetCollection(IList<IDev2Definition> parsedOutput, bool isOutput)
-        {
-            return RecordSetCollection(parsedOutput, isOutput, false);
-        }
+        public static IRecordSetCollection CreateRecordSetCollection(IList<IDev2Definition> parsedOutput, bool isOutput) => RecordSetCollection(parsedOutput, isOutput, false);
 
         static IRecordSetCollection RecordSetCollection(IList<IDev2Definition> parsedOutput, bool isOutput, bool isDbService)
         {
-            RecordSetCollectionBuilder b = new RecordSetCollectionBuilder();
+            var b = new RecordSetCollectionBuilder();
 
             b.SetParsedOutput(parsedOutput);
             b.IsOutput = isOutput;
             b.IsDbService = isDbService;
-            IRecordSetCollection result = b.Generate();
+            var result = b.Generate();
 
             return result;
         }
@@ -117,62 +99,34 @@ namespace Dev2.DataList.Contract
         }
 
 
-        public static IEnumerable<IDev2Definition> CreateObjectList(IEnumerable<IDev2Definition> parsedOutput)
-        {
-            return parsedOutput.Where(def => def.IsObject).ToList();
-        }
-        public static IDev2LanguageParser CreateOutputParser()
-        {
-            return new OutputLanguageParser();
-        }
+        public static IEnumerable<IDev2Definition> CreateObjectList(IEnumerable<IDev2Definition> parsedOutput) => parsedOutput.Where(def => def.IsObject).ToList();
 
-        public static IDev2LanguageParser CreateInputParser()
-        {
-            return new InputLanguageParser();
-        }
+        public static IDev2LanguageParser CreateOutputParser() => new OutputLanguageParser();
 
+        public static IDev2LanguageParser CreateInputParser() => new InputLanguageParser();
 
         public static IList<IDev2DataLanguageIntellisensePart> GenerateIntellisensePartsFromDataList(string dataList, IIntellisenseFilterOpsTO fiterTo)
         {
-            DataListIntellisenseBuilder dlib = new DataListIntellisenseBuilder { FilterTO = fiterTo, DataList = dataList };
+            var dlib = new DataListIntellisenseBuilder { FilterTO = fiterTo, DataList = dataList };
 
-            IList<IDev2DataLanguageIntellisensePart> result = dlib.Generate();
+            var result = dlib.Generate();
 
             return result;
         }
 
-        public static IDev2DataLanguageIntellisensePart CreateIntellisensePart(string name, string desc, IList<IDev2DataLanguageIntellisensePart> children)
-        {
-            return new Dev2DataLanguageIntellisensePart(name, desc, children);
-        }
+        public static IDev2DataLanguageIntellisensePart CreateIntellisensePart(string name, string desc, IList<IDev2DataLanguageIntellisensePart> children) => new Dev2DataLanguageIntellisensePart(name, desc, children);
 
-        public static IDev2DataLanguageIntellisensePart CreateIntellisensePart(string name, string desc)
-        {
-            return new Dev2DataLanguageIntellisensePart(name, desc, null);
-        }
+        public static IDev2DataLanguageIntellisensePart CreateIntellisensePart(string name, string desc) => new Dev2DataLanguageIntellisensePart(name, desc, null);
 
-        public static OutputTO CreateOutputTO(string outputDescription)
-        {
-            return new OutputTO(outputDescription);
-        }
+        public static OutputTO CreateOutputTO(string outputDescription) => new OutputTO(outputDescription);
 
-        public static OutputTO CreateOutputTO(string outputDescription, IList<string> outputStrings)
-        {
-            return new OutputTO(outputDescription, outputStrings);
-        }
+        public static OutputTO CreateOutputTO(string outputDescription, IList<string> outputStrings) => new OutputTO(outputDescription, outputStrings);
 
-        public static OutputTO CreateOutputTO(string outputDescription, string outputString)
-        {
-            return new OutputTO(outputDescription, new List<string> { outputString });
-        }
+        public static OutputTO CreateOutputTO(string outputDescription, string outputString) => new OutputTO(outputDescription, new List<string> { outputString });
 
         /// <summary>
         /// Creates a new Dev2Column object for a recordset
         /// </summary>
-        public static Dev2Column CreateDev2Column(string columnName, string columnDescription, bool isEditable, enDev2ColumnArgumentDirection colIODir)
-        {
-            return new Dev2Column(columnName, columnDescription, isEditable, colIODir);
-        }
-      
+        public static Dev2Column CreateDev2Column(string columnName, string columnDescription, bool isEditable, enDev2ColumnArgumentDirection colIODir) => new Dev2Column(columnName, columnDescription, isEditable, colIODir);
     }
 }

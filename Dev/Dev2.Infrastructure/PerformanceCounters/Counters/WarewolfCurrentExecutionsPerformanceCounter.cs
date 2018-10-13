@@ -9,9 +9,9 @@ namespace Dev2.PerformanceCounters.Counters
     public class WarewolfCurrentExecutionsPerformanceCounter : IPerformanceCounter, IDisposable
     {
 
-        private PerformanceCounter _counter;
-        private bool _started;
-        private readonly WarewolfPerfCounterType _perfCounterType;
+        PerformanceCounter _counter;
+        bool _started;
+        readonly WarewolfPerfCounterType _perfCounterType;
 
         public WarewolfCurrentExecutionsPerformanceCounter()
         {
@@ -25,7 +25,7 @@ namespace Dev2.PerformanceCounters.Counters
         public IList<CounterCreationData> CreationData()
         {
 
-            CounterCreationData totalOps = new CounterCreationData
+            var totalOps = new CounterCreationData
             {
                 CounterName = Name,
                 CounterHelp = Name,
@@ -80,14 +80,12 @@ namespace Dev2.PerformanceCounters.Counters
         public void Decrement()
         {
 
-            if (IsActive)
+            if (IsActive && _counter.RawValue > 0)
             {
-                if (_counter.RawValue > 0)
-                        {
-                          
-                            _counter.Decrement();
-                        }
+
+                _counter.Decrement();
             }
+
         }
 
         public void Dispose()

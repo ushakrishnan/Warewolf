@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,23 +20,8 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Common
 {
-
-    /// <summary>
-    /// Used to generate dependency graphs.
-    /// Extracted From View Model ;)
-    /// </summary>
     public class DependencyGraphGenerator : IDependencyGraphGenerator
     {
-        /// <summary>
-        /// Builds the graph.
-        /// </summary>
-        /// <param name="xmlData">The XML data.</param>
-        /// <param name="modelName">Name of the model.</param>
-        /// <param name="width">The width.</param>
-        /// <param name="height">The height.</param>
-        /// <param name="nestingLevel">How deep should the graph show.</param>
-        /// <returns></returns>
-
         public IGraph BuildGraph(StringBuilder xmlData, string modelName, double width, double height, int nestingLevel)
         {
             if (xmlData == null || xmlData.Length == 0)
@@ -64,71 +49,81 @@ namespace Dev2.Common
                 // Create all of the nodes and add them to the graph.
                 foreach (var nodeElem in nodeElems)
                 {
-                    // build the graph position data
-                    var id = nodeElem.Attribute("id").Value;
-                    var node = CreateNode(nodeElem, modelName, width, height, ref count);
-
-                    var alreadyAdded = false;
-                    foreach (var n in graph.Nodes)
-                    {
-                        if (n.ID == id)
-                        {
-                            alreadyAdded = true;
-                        }
-                    }
-
-                    if (!alreadyAdded)
-                    {
-                        graph.Nodes.Add(node);
-                    }
+                    count = BuildGraphPositionData(modelName, width, height, graph, count, nodeElem);
                 }
 
                 // Associate each node with its dependencies.
-                var graphCount = graph.Nodes.Count - 1;
-                if (nestingLevel > 0)
-                {
-                    for (var i = 0; i <= nestingLevel; i++)
-                    {
-                        if (nestingLevel < graphCount)
-                        {
-                            graph.Nodes.RemoveAt(graphCount);
-                            graphCount = graph.Nodes.Count - 1;
-                        }
-                    }
-                }
-                foreach (var node in graph.Nodes)
-                {
-                    var nodeElem = nodeElems.First(elem => elem.Attribute("id").Value == node.ID);
-                    var dependencyElems = nodeElem.Elements("dependency");
-                    foreach (var dependencyElem in dependencyElems)
-                    {
-                        var depID = dependencyElem.Attribute("id").Value;
-
-                        var dependency = graph.Nodes.FirstOrDefault(n => n.ID == depID);
-                        if (dependency != null)
-                        {
-                            node.NodeDependencies.Add(dependency);
-                        }
-                    }
-
-                    //Now adjust position according to nodesize
-                    node.LocationX = node.LocationX - node.NodeWidth;
-                    node.LocationY = node.LocationY - node.NodeHeight / 2;
-                }
+                AssociateEachNodeWithItsDependencies(nestingLevel, graph, nodeElems);
 
                 // Tell the graph to inspect itself for circular dependencies.
                 graph.CheckForCircularDependencies();
 
                 return graph;
             }
-            catch
+            catch (Exception ex)
             {
                 return new Graph(ErrorResource.DependencyInormationMalformed);
             }
         }
 
+        private static void AssociateEachNodeWithItsDependencies(int nestingLevel, Graph graph, System.Collections.Generic.List<XElement> nodeElems)
+        {
+            var graphCount = graph.Nodes.Count - 1;
+            if (nestingLevel > 0)
+            {
+                for (var i = 0; i <= nestingLevel; i++)
+                {
+                    if (nestingLevel < graphCount)
+                    {
+                        graph.Nodes.RemoveAt(graphCount);
+                        graphCount = graph.Nodes.Count - 1;
+                    }
+                }
+            }
+            foreach (var node in graph.Nodes)
+            {
+                var nodeElem = nodeElems.First(elem => elem.Attribute("id").Value == node.ID);
+                var dependencyElems = nodeElem.Elements("dependency");
+                foreach (var dependencyElem in dependencyElems)
+                {
+                    var depID = dependencyElem.Attribute("id").Value;
 
-        private IDependencyVisualizationNode CreateNode(XElement nodeElm, string resourceName, double width, double height, ref double count)
+                    var dependency = graph.Nodes.FirstOrDefault(n => n.ID == depID);
+                    if (dependency != null)
+                    {
+                        node.NodeDependencies.Add(dependency);
+                    }
+                }
+
+                //Now adjust position according to nodesize
+                node.LocationX = node.LocationX - node.NodeWidth;
+                node.LocationY = node.LocationY - node.NodeHeight / 2;
+            }
+        }
+
+        private double BuildGraphPositionData(string modelName, double width, double height, Graph graph, double count, XElement nodeElem)
+        {
+            var id = nodeElem.Attribute("id").Value;
+            var node = CreateNode(nodeElem, modelName, width, height, ref count);
+
+            var alreadyAdded = false;
+            foreach (var n in graph.Nodes)
+            {
+                if (n.ID == id)
+                {
+                    alreadyAdded = true;
+                }
+            }
+
+            if (!alreadyAdded)
+            {
+                graph.Nodes.Add(node);
+            }
+
+            return count;
+        }
+
+        IDependencyVisualizationNode CreateNode(XElement nodeElm, string resourceName, double width, double height, ref double count)
         {
             var screenWidth = width;
             var screenHeight = height - 150;
@@ -144,10 +139,10 @@ namespace Dev2.Common
             double.TryParse(tmpX, out double x);
             double.TryParse(tmpY, out double y);
 
-            
+
             var id = nodeElm.Attribute("id").Value;
             var isTarget = id == resourceName;
-            
+
             var broken = string.Equals(nodeElm.Attribute("broken").Value, "true", StringComparison.OrdinalIgnoreCase);
 
             if (isTarget)

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +10,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ActivityUnitTests;
+using Dev2.Common.State;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
@@ -173,5 +175,74 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(result, dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DsfPathCreate_GetState")]
+        public void DsfPathCreate_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfPathCreate
+            {
+                OutputPath = "[[OutputPath]]",
+                Overwrite = false,
+                Username = "Bob",
+                PrivateKeyFile = "abcde",
+                Result = "[[res]]"
+            };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(5, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "OutputPath",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[OutputPath]]"
+                },
+                new StateVariable
+                {
+                    Name = "Overwrite",
+                    Type = StateVariable.StateType.Input,
+                    Value = "False"
+                },
+                new StateVariable
+                {
+                    Name = "Username",
+                    Type = StateVariable.StateType.Input,
+                    Value = "Bob"
+                },
+                new StateVariable
+                {
+                    Name = "PrivateKeyFile",
+                    Type = StateVariable.StateType.Input,
+                    Value = "abcde"
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[res]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+        }
     }
 }

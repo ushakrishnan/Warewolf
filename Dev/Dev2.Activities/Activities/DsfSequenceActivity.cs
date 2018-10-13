@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,20 +24,17 @@ using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Core;
 using Warewolf.Resource.Messages;
 using Warewolf.Storage.Interfaces;
-
-
-
-
+using Dev2.Comparer;
+using Dev2.Common.State;
 
 namespace Dev2.Activities
 {
-
-    [ToolDescriptorInfo("ControlFlow-Sequence", "Sequence", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Control Flow", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Flow_Sequence")]
-    public class DsfSequenceActivity : DsfActivityAbstract<string>
+    [ToolDescriptorInfo("ControlFlow-Sequence", "Sequence", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "Control Flow", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Flow_Sequence")]
+    public class DsfSequenceActivity : DsfActivityAbstract<string>,IEquatable<DsfSequenceActivity>
     {
-        private readonly Sequence _innerSequence = new Sequence();
+        readonly Sequence _innerSequence = new Sequence();
         string _previousParentID;
-        private Guid _originalUniqueID;
+        Guid _originalUniqueID;
 
         public DsfSequenceActivity()
         {
@@ -51,6 +48,23 @@ namespace Dev2.Activities
             metadata.AddChild(_innerSequence);
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
+        }
+
+        public override IEnumerable<IDev2Activity> GetChildrenNodes()
+        {
+            var nextNodes = new List<IDev2Activity>();
+            foreach (var activity in Activities)
+            {
+                if (activity is IDev2Activity act)
+                {
+                    nextNodes.Add(act);
+                }
+            }
+            return nextNodes;
+        }
 
         public Collection<Activity> Activities
         {
@@ -58,16 +72,11 @@ namespace Dev2.Activities
             set;
         }
 
-        public override List<string> GetOutputs()
-        {
-            return new List<string>();
-        }
+        public override List<string> GetOutputs() => new List<string>();
+
         #region Get Debug Inputs/Outputs
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
-        {
-            return DebugItem.EmptyList;
-        }
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update) => DebugItem.EmptyList;
 
         #endregion Get Inputs/Outputs
 
@@ -148,13 +157,10 @@ namespace Dev2.Activities
             WorkSurfaceMappingId = Guid.Parse(UniqueID);
             UniqueID = isNestedForEach ? Guid.NewGuid().ToString() : UniqueID;
         }
-        /// <summary>
-        /// When overridden runs the activity's execution logic 
-        /// </summary>
-        /// <param name="context">The context to be used.</param>
+
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             dataObject.ForEachNestingLevel++;
             InitializeDebug(dataObject);
             if (dataObject.IsDebugMode())
@@ -190,43 +196,27 @@ namespace Dev2.Activities
             {
                 DispatchDebugState(dataObject, StateType.After, update);
             }
-            if (dataObject.IsServiceTestExecution)
+            if (dataObject.IsServiceTestExecution && _originalUniqueID == Guid.Empty)
             {
-                if (_originalUniqueID == Guid.Empty)
-                {
-                    _originalUniqueID = Guid.Parse(UniqueID);
-                }
+                _originalUniqueID = Guid.Parse(UniqueID);
             }
+
             var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
             var serviceTestSteps = serviceTestStep?.Children;
             foreach (var dsfActivity in Activities)
             {
                 if (dsfActivity is IDev2Activity act)
                 {
-                    act.Execute(dataObject, update);
-                    if (dataObject.IsServiceTestExecution)
-                    {
-                        var contentId = Guid.Parse(act.UniqueID);
-                        if (dsfActivity.GetType().Name == "DsfActivity")
-                        {
-                            if (dsfActivity is DsfActivity newAct)
-                            {
-                                contentId = newAct.GetWorkSurfaceMappingId();
-                            }
-                        }
-                        UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList(), contentId);
-                    }
+                    ExecuteActivity(dataObject, update, serviceTestSteps, dsfActivity, act);
                 }
             }
-            if (dataObject.IsServiceTestExecution)
+            if (dataObject.IsServiceTestExecution && serviceTestStep != null)
             {
-                if (serviceTestStep != null)
-                {
-                    var testRunResult = new TestRunResult();
-                    GetFinalTestRunResult(serviceTestStep, testRunResult);
-                    serviceTestStep.Result = testRunResult;
-                }
+                var testRunResult = new TestRunResult();
+                GetFinalTestRunResult(serviceTestStep, testRunResult);
+                serviceTestStep.Result = testRunResult;
             }
+
             OnCompleted(dataObject);
             if (dataObject.IsDebugMode())
             {
@@ -235,9 +225,24 @@ namespace Dev2.Activities
             }
         }
 
-        private static void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult)
+        private void ExecuteActivity(IDSFDataObject dataObject, int update, ObservableCollection<IServiceTestStep> serviceTestSteps, Activity dsfActivity, IDev2Activity act)
         {
-            ObservableCollection<TestRunResult> resultList = new ObservableCollection<TestRunResult>();
+            act.Execute(dataObject, update);
+            if (dataObject.IsServiceTestExecution)
+            {
+                var contentId = Guid.Parse(act.UniqueID);
+                if (dsfActivity.GetType().Name == "DsfActivity" && dsfActivity is DsfActivity newAct)
+                {
+                    contentId = newAct.GetWorkSurfaceMappingId();
+                }
+
+                UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList(), contentId);
+            }
+        }
+
+        static void GetFinalTestRunResult(IServiceTestStep serviceTestStep, TestRunResult testRunResult)
+        {
+            var resultList = new ObservableCollection<TestRunResult>();
             foreach (var testStep in serviceTestStep.Children)
             {
                 if (testStep.Result != null)
@@ -255,7 +260,7 @@ namespace Dev2.Activities
                 testRunResult.RunTestResult = RunResult.TestInvalid;
 
                 var testRunResults = resultList.Where(runResult => runResult.RunTestResult == RunResult.TestInvalid).ToList();
-                if (testRunResults.Count>0)
+                if (testRunResults.Count > 0)
                 {
                     testRunResult.Message = string.Join(Environment.NewLine, testRunResults.Select(result => result.Message));
                     testRunResult.RunTestResult = RunResult.TestInvalid;
@@ -284,17 +289,63 @@ namespace Dev2.Activities
             dataObject.ForEachNestingLevel--;
         }
 
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.Sequence;
-        }
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.Sequence;
 
         #endregion
 
-        private void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps, Guid childId)
+        void UpdateDebugStateWithAssertions(IDSFDataObject dataObject, List<IServiceTestStep> serviceTestTestSteps, Guid childId)
         {
             ServiceTestHelper.UpdateDebugStateWithAssertions(dataObject, serviceTestTestSteps, childId.ToString());
             
-        }   
+        }
+
+        public bool Equals(DsfSequenceActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) 
+                && CommonEqualityOps.CollectionEquals(Activities, other.Activities, new ActivityComparer());
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfSequenceActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (_innerSequence != null ? _innerSequence.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (_previousParentID != null ? _previousParentID.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ _originalUniqueID.GetHashCode();
+                hashCode = (hashCode * 397) ^ (Activities != null ? Activities.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

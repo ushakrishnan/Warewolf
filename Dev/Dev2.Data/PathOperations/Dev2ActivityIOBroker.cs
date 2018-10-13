@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dev2.Common;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Common.Interfaces.Wrappers;
 using Dev2.Common.Wrappers;
 using Dev2.Data.Interfaces;
@@ -26,15 +27,15 @@ using Ionic.Zip;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.PathOperations
-{    
-    internal class Dev2ActivityIOBroker : IActivityOperationsBroker
+{
+    class Dev2ActivityIOBroker : IActivityOperationsBroker
     {
-        private readonly IFile _fileWrapper;
-        private readonly ICommon _common;
-        private static readonly ReaderWriterLockSlim FileLock = new ReaderWriterLockSlim();
-        private const string ResultOk = @"Success";
-        private const string ResultBad = @"Failure";
-        private readonly List<string> _filesToDelete;
+        readonly IFile _fileWrapper;
+        readonly ICommon _common;
+        static readonly ReaderWriterLockSlim FileLock = new ReaderWriterLockSlim();
+        const string ResultOk = @"Success";
+        const string ResultBad = @"Failure";
+        readonly List<string> _filesToDelete;
 
         public Dev2ActivityIOBroker()
             : this(new FileWrapper(), new Data.Util.CommonDataUtils())
@@ -49,7 +50,8 @@ namespace Dev2.PathOperations
             _filesToDelete = new List<string>();
         }
 
-        public string Get(IActivityIOOperationsEndPoint path, bool deferredRead = false)
+        public string Get(IActivityIOOperationsEndPoint path) => Get(path, false);
+        public string Get(IActivityIOOperationsEndPoint path, bool deferredRead)
         {
             try
             {
@@ -80,62 +82,22 @@ namespace Dev2.PathOperations
                 if (dst.RequiresLocalTmpStorage())
                 {
                     var tmp = CreateTmpFile();
-                    switch (args.WriteType)
-                    {
-                        case WriteType.AppendBottom:
-                            using (var s = dst.Get(dst.IOPath, _filesToDelete))
-                            {
-                                _fileWrapper.WriteAllBytes(tmp, s.ToByteArray());
-                                _fileWrapper.AppendAllText(tmp, args.FileContents);
-                            }
-                            break;
-                        case WriteType.AppendTop:
-                            using (var s = dst.Get(dst.IOPath, _filesToDelete))
-                            {
-                                _fileWrapper.WriteAllText(tmp, args.FileContents);
-                                _common.AppendToTemp(s, tmp);
-                            }
-                            break;
-                        default:
-                            WriteDataToFile(args, tmp);
-                            break;
-                    }
+                    WriteToLocalTempStorage(dst, args, tmp);
                     result = MoveTmpFileToDestination(dst, tmp, result);
                 }
                 else
                 {
-                    if (_fileWrapper.Exists(dst.IOPath.Path))
+                    if (dst.PathExist(dst.IOPath))
                     {
                         var tmp = CreateTmpFile();
-                        switch (args.WriteType)
-                        {
-                            case WriteType.AppendBottom:
-                                _fileWrapper.AppendAllText(dst.IOPath.Path, args.FileContents);
-                                result = ResultOk;
-                                break;
-                            case WriteType.AppendTop:
-                                using (var s = dst.Get(dst.IOPath, _filesToDelete))
-                                {
-                                    _fileWrapper.WriteAllText(tmp, args.FileContents);
-                                    _common.AppendToTemp(s, tmp);
-                                    result = MoveTmpFileToDestination(dst, tmp, result);
-                                }
-                                break;
-                            case WriteType.Overwrite:
-                                break;
-                            default:
-                                WriteDataToFile(args, tmp);
-                                result = MoveTmpFileToDestination(dst, tmp, result);
-                                break;
-                        }
+                        result = WriteToRemoteTempStorage(dst, args, result, tmp);
                         RemoveTmpFile(tmp);
                     }
                     else
                     {
-                        Dev2CRUDOperationTO newArgs = new Dev2CRUDOperationTO(true);
+                        var newArgs = new Dev2CRUDOperationTO(true);
                         CreateEndPoint(dst, newArgs, true);
-                        var path = dst.IOPath.Path;
-                        WriteDataToFile(args, path);                       
+                        WriteDataToFile(args, dst);
                     }
                 }
             }
@@ -151,58 +113,24 @@ namespace Dev2.PathOperations
             return result;
         }
 
-        private void WriteDataToFile(IDev2PutRawOperationTO args, string path)
-        {
-            if(IsBase64(args.FileContents))
-            {
-                var data = GetBytesFromBase64String(args);
-                _fileWrapper.WriteAllBytes(path, data);
-            }
-            else
-            {
-                _fileWrapper.WriteAllText(path, args.FileContents);
-            }
-        }
-
-        private static byte[] GetBytesFromBase64String(IDev2PutRawOperationTO args)
-        {
-            var data = Convert.FromBase64String(args.FileContents.Replace(@"Content-Type:BASE64", @""));
-            return data;
-        }
-
-        private string MoveTmpFileToDestination(IActivityIOOperationsEndPoint dst, string tmp, string result)
-        {
-            using (Stream s = new MemoryStream(_fileWrapper.ReadAllBytes(tmp)))
-            {
-                Dev2CRUDOperationTO newArgs = new Dev2CRUDOperationTO(true);
-
-                if (!dst.PathExist(dst.IOPath))
-                {
-                    CreateEndPoint(dst, newArgs, true);
-                }
-                if (dst.Put(s, dst.IOPath, newArgs, null, _filesToDelete) < 0)
-                {
-                    result = ResultBad;
-                }
-            }
-            return result;
-        }
-
         public string Delete(IActivityIOOperationsEndPoint src)
         {
-            var result = ResultOk;
             try
             {
                 if (!src.Delete(src.IOPath))
                 {
-                    result = ResultBad;
+                    return ResultBad;
                 }
+            }
+            catch
+            {
+                return ResultBad;
             }
             finally
             {
                 _filesToDelete.ForEach(RemoveTmpFile);
             }
-            return result;
+            return ResultOk;
         }
 
         public IList<IActivityIOPath> ListDirectory(IActivityIOOperationsEndPoint src, ReadTypes readTypes)
@@ -216,31 +144,27 @@ namespace Dev2.PathOperations
 
         public string Create(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, bool createToFile)
         {
-            string result;
             try
             {
                 _common.ValidateEndPoint(dst, args);
-                result = CreateEndPoint(dst, args, createToFile);
+                return CreateEndPoint(dst, args, createToFile);
             }
             finally
             {
                 _filesToDelete.ForEach(RemoveTmpFile);
             }
-            return result;
         }
 
         public string Rename(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
         {
-            string result;
             try
             {
-                result = ValidateRenameSourceAndDesinationTypes(src, dst, args);
+                return ValidateRenameSourceAndDesinationTypes(src, dst, args);
             }
             finally
             {
                 _filesToDelete.ForEach(RemoveTmpFile);
             }
-            return result;
         }
 
         public string Copy(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
@@ -249,39 +173,39 @@ namespace Dev2.PathOperations
             try
             {
                 status = ValidateCopySourceDestinationFileOperation(src, dst, args, () =>
+                {
+                    var result = -1;
+                    if (src.RequiresLocalTmpStorage())
                     {
-                        if (src.RequiresLocalTmpStorage())
+                        if (dst.PathIs(dst.IOPath) == enPathType.Directory)
                         {
-                            if (dst.PathIs(dst.IOPath) == enPathType.Directory)
-                            {
-                                dst.IOPath.Path = dst.Combine(GetFileNameFromEndPoint(src));
-                            }
+                            dst.IOPath.Path = dst.Combine(GetFileNameFromEndPoint(src));
+                        }
 
-                            using (var s = src.Get(src.IOPath, _filesToDelete))
+                        using (var s = src.Get(src.IOPath, _filesToDelete))
+                        {
+                            result = dst.Put(s, dst.IOPath, args, Path.IsPathRooted(src.IOPath.Path) ? Path.GetDirectoryName(src.IOPath.Path) : null, _filesToDelete);
+                            s.Close();
+                        }
+                    }
+                    else
+                    {
+                        var sourceFile = new FileInfo(src.IOPath.Path);
+                        if (dst.PathIs(dst.IOPath) == enPathType.Directory)
+                        {
+                            dst.IOPath.Path = dst.Combine(sourceFile.Name);
+                        }
+
+                        using (var s = src.Get(src.IOPath, _filesToDelete))
+                        {
+                            if (sourceFile.Directory != null)
                             {
-                                dst.Put(s, dst.IOPath, args, Path.IsPathRooted(src.IOPath.Path) ? Path.GetDirectoryName(src.IOPath.Path) : null, _filesToDelete);
-                                s.Close();
-                                s.Dispose();
+                                result = dst.Put(s, dst.IOPath, args, sourceFile.Directory.ToString(), _filesToDelete);
                             }
                         }
-                        else
-                        {
-                            var sourceFile = new FileInfo(src.IOPath.Path);
-                            if (dst.PathIs(dst.IOPath) == enPathType.Directory)
-                            {
-                                dst.IOPath.Path = dst.Combine(sourceFile.Name);
-                            }
-
-                            using (var s = src.Get(src.IOPath, _filesToDelete))
-                            {
-                                if (sourceFile.Directory != null)
-                                {
-                                    dst.Put(s, dst.IOPath, args, sourceFile.Directory.ToString(), _filesToDelete);
-                                }
-                            }
-                        }
-                        return ResultOk;
-                    });
+                    }
+                    return result == -1 ? ResultBad : ResultOk;
+                });
             }
             finally
             {
@@ -293,11 +217,9 @@ namespace Dev2.PathOperations
         public string Move(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
         {
             string result;
-
             try
             {
                 result = Copy(src, dst, args);
-
                 if (result.Equals(ResultOk))
                 {
                     src.Delete(src.IOPath);
@@ -318,46 +240,46 @@ namespace Dev2.PathOperations
             try
             {
                 status = ValidateUnzipSourceDestinationFileOperation(src, dst, args, () =>
+                {
+                    ZipFile zip;
+                    var tempFile = string.Empty;
+
+                    if (src.RequiresLocalTmpStorage())
                     {
-                        ZipFile zip;
-                        var tempFile = string.Empty;
-
-                        if (src.RequiresLocalTmpStorage())
+                        var tmpZip = CreateTmpFile();
+                        using (var s = src.Get(src.IOPath, _filesToDelete))
                         {
-                            var tmpZip = CreateTmpFile();
-                            using (var s = src.Get(src.IOPath, _filesToDelete))
-                            {
-                                _fileWrapper.WriteAllBytes(tmpZip, s.ToByteArray());
-                            }
-
-                            tempFile = tmpZip;
-                            zip = ZipFile.Read(tempFile);
-                        }
-                        else
-                        {
-                            zip = ZipFile.Read(src.Get(src.IOPath, _filesToDelete));
+                            _fileWrapper.WriteAllBytes(tmpZip, s.ToByteArray());
                         }
 
-                        if (dst.RequiresLocalTmpStorage())
-                        {
-                            var tempPath = _common.CreateTmpDirectory();
-                            _common.ExtractFile(args, zip, tempPath);
-                            var endPointPath = ActivityIOFactory.CreatePathFromString(tempPath, string.Empty, string.Empty);
-                            var endPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(endPointPath);
-                            Move(endPoint, dst, new Dev2CRUDOperationTO(args.Overwrite));
-                        }
-                        else
-                        {
-                            _common.ExtractFile(args, zip, dst.IOPath.Path);
-                        }
+                        tempFile = tmpZip;
+                        zip = ZipFile.Read(tempFile);
+                    }
+                    else
+                    {
+                        zip = ZipFile.Read(src.Get(src.IOPath, _filesToDelete));
+                    }
 
-                        if (src.RequiresLocalTmpStorage())
-                        {
-                            _fileWrapper.Delete(tempFile);
-                        }
+                    if (dst.RequiresLocalTmpStorage())
+                    {
+                        var tempPath = _common.CreateTmpDirectory();
+                        _common.ExtractFile(args, zip, tempPath);
+                        var endPointPath = ActivityIOFactory.CreatePathFromString(tempPath, string.Empty, string.Empty);
+                        var endPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(endPointPath);
+                        Move(endPoint, dst, new Dev2CRUDOperationTO(args.Overwrite));
+                    }
+                    else
+                    {
+                        _common.ExtractFile(args, zip, dst.IOPath.Path);
+                    }
 
-                        return ResultOk;
-                    });
+                    if (src.RequiresLocalTmpStorage())
+                    {
+                        _fileWrapper.Delete(tempFile);
+                    }
+
+                    return ResultOk;
+                });
             }
             finally
             {
@@ -368,8 +290,111 @@ namespace Dev2.PathOperations
         }
 
         #region Private Methods
+        string WriteToRemoteTempStorage(IActivityIOOperationsEndPoint dst, IDev2PutRawOperationTO args, string result, string tmp)
+        {
+            switch (args.WriteType)
+            {
+                case WriteType.AppendBottom:
+                    var fileContent = Encoding.ASCII.GetBytes(args.FileContents);
+                    var putResult = PerformPut(fileContent, dst, false);
+                    result = putResult ? ResultOk : ResultBad;
+                    break;
+                case WriteType.AppendTop:
+                    using (var s = dst.Get(dst.IOPath, _filesToDelete))
+                    {
+                        _fileWrapper.WriteAllText(tmp, args.FileContents);
+                        _common.AppendToTemp(s, tmp);
+                        result = MoveTmpFileToDestination(dst, tmp, result);
+                    }
+                    break;
+                case WriteType.Overwrite:
+                default:
+                    var res = WriteDataToFile(args, dst);
+                    result = res ? ResultOk : ResultBad;
+                    break;
+            }
 
-        private string CreateEndPoint(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, bool createToFile)
+            return result;
+        }
+
+
+        void WriteToLocalTempStorage(IActivityIOOperationsEndPoint dst, IDev2PutRawOperationTO args, string tmp)
+        {
+            switch (args.WriteType)
+            {
+                case WriteType.AppendBottom:
+                    using (var s = dst.Get(dst.IOPath, _filesToDelete))
+                    {
+                        _fileWrapper.WriteAllBytes(tmp, s.ToByteArray());
+                        _fileWrapper.AppendAllText(tmp, args.FileContents);
+                    }
+                    break;
+                case WriteType.AppendTop:
+                    using (var s = dst.Get(dst.IOPath, _filesToDelete))
+                    {
+                        _fileWrapper.WriteAllText(tmp, args.FileContents);
+                        _common.AppendToTemp(s, tmp);
+                    }
+                    break;
+                default:
+                    _fileWrapper.AppendAllText(tmp, args.FileContents);
+                    break;
+            }
+        }
+
+        bool PerformPut(byte[] fileContent, IActivityIOOperationsEndPoint dst, bool overwrite)
+        {
+            var result = false;
+            using (Stream s = new MemoryStream(fileContent))
+            {
+                var putOperation = dst.Put(s, dst.IOPath, new Dev2CRUDOperationTO(overwrite), null, new List<string>());
+                if (putOperation >= 0)
+                {
+                    result = true;
+                }
+            }
+            return result;
+        }
+
+        bool WriteDataToFile(IDev2PutRawOperationTO args, IActivityIOOperationsEndPoint dst)
+        {
+            if (IsBase64(args.FileContents))
+            {
+                var data = GetBytesFromBase64String(args);
+                return PerformPut(data, dst, true);
+            }
+            else
+            {
+                var fileContent = Encoding.ASCII.GetBytes(args.FileContents);
+                return PerformPut(fileContent, dst, true);
+            }
+        }
+
+        static byte[] GetBytesFromBase64String(IDev2PutRawOperationTO args)
+        {
+            var data = Convert.FromBase64String(args.FileContents.Replace(@"Content-Type:BASE64", @""));
+            return data;
+        }
+
+        string MoveTmpFileToDestination(IActivityIOOperationsEndPoint dst, string tmp, string result)
+        {
+            using (Stream s = new MemoryStream(_fileWrapper.ReadAllBytes(tmp)))
+            {
+                var newArgs = new Dev2CRUDOperationTO(true);
+
+                if (!dst.PathExist(dst.IOPath))
+                {
+                    CreateEndPoint(dst, newArgs, true);
+                }
+                if (dst.Put(s, dst.IOPath, newArgs, null, _filesToDelete) < 0)
+                {
+                    result = ResultBad;
+                }
+            }
+            return result;
+        }
+
+        string CreateEndPoint(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, bool createToFile)
         {
             var result = ResultOk;
             var activityIOPath = dst.IOPath;
@@ -432,12 +457,12 @@ namespace Dev2.PathOperations
             return result;
         }
 
-        private bool IsBase64(string payload)
+        bool IsBase64(string payload)
         {
             return payload.StartsWith(@"Content-Type:BASE64");
         }
 
-        private IList<string> MakeDirectoryParts(IActivityIOPath path, string splitter)
+        IList<string> MakeDirectoryParts(IActivityIOPath path, string splitter)
         {
             string[] tmp;
 
@@ -457,7 +482,7 @@ namespace Dev2.PathOperations
                 var newPath = string.Join(@"/", splitValues);
                 tmp = newPath.Split(splitOn);
             }
-            
+
             var candiate = tmp[tmp.Length - 1];
             var len = tmp.Length;
             if (candiate.Contains(@"*.") || candiate.Contains(@"."))
@@ -482,24 +507,24 @@ namespace Dev2.PathOperations
             return result;
         }
 
-        private bool CreateDirectory(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
+        bool CreateDirectory(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
         {
             var result = dst.CreateDirectory(dst.IOPath, args);
             return result;
         }
 
-        private bool CreateFile(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
+        bool CreateFile(IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
         {
 
-            var result = true;
+            var result = false;
 
             var tmp = CreateTmpFile();
             using (Stream s = new MemoryStream(_fileWrapper.ReadAllBytes(tmp)))
             {
 
-                if (dst.Put(s, dst.IOPath, args, null, _filesToDelete) < 0)
+                if (dst.Put(s, dst.IOPath, args, null, _filesToDelete) >= 0)
                 {
-                    result = false;
+                    result = true;
                 }
 
                 s.Close();
@@ -507,7 +532,7 @@ namespace Dev2.PathOperations
 
             return result;
         }
-        
+
         bool TransferDirectoryContents(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
         {
             ValidateSourceAndDestinationContents(src, dst, args);
@@ -533,7 +558,7 @@ namespace Dev2.PathOperations
             return result;
         }
 
-        private bool PerformTransfer(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, string origDstPath, IActivityIOPath p, bool result)
+        bool PerformTransfer(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, string origDstPath, IActivityIOPath p, bool result)
         {
             try
             {
@@ -564,7 +589,7 @@ namespace Dev2.PathOperations
             return result;
         }
 
-        private void DoFileTransfer(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, IActivityIOPath dstPath, IActivityIOPath p, string path, ref bool result)
+        void DoFileTransfer(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, IActivityIOPath dstPath, IActivityIOPath p, string path, ref bool result)
         {
             if (args.Overwrite || !dst.PathExist(dstPath))
             {
@@ -572,7 +597,7 @@ namespace Dev2.PathOperations
             }
         }
 
-        private bool TransferFile(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, string path, IActivityIOPath p, bool result)
+        bool TransferFile(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args, string path, IActivityIOPath p, bool result)
         {
             var tmpPath = ActivityIOFactory.CreatePathFromString(path, dst.IOPath.Username, dst.IOPath.Password, true, dst.IOPath.PrivateKeyFile);
             var tmpEp = ActivityIOFactory.CreateOperationEndPointFromIOPath(tmpPath);
@@ -595,14 +620,14 @@ namespace Dev2.PathOperations
             {
                 var srcContentsFolders = src.ListFoldersInDirectory(src.IOPath);
                 Task.WaitAll(srcContentsFolders.Select(sourcePath => Task.Run(() =>
-                    {
-                        var sourceEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(sourcePath);
-                        IList<string> dirParts = sourceEndPoint.IOPath.Path.Split(sourceEndPoint.PathSeperator().ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                        var destinationPath = ActivityIOFactory.CreatePathFromString(dst.Combine(dirParts.Last()), dst.IOPath.Username, dst.IOPath.Password, true, dst.IOPath.PrivateKeyFile);
-                        var destinationEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(destinationPath);
-                        dst.CreateDirectory(destinationPath, args);
-                        TransferDirectoryContents(sourceEndPoint, destinationEndPoint, args);
-                    })).ToArray());
+                {
+                    var sourceEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(sourcePath);
+                    IList<string> dirParts = sourceEndPoint.IOPath.Path.Split(sourceEndPoint.PathSeperator().ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    var destinationPath = ActivityIOFactory.CreatePathFromString(dst.Combine(dirParts.Last()), dst.IOPath.Username, dst.IOPath.Password, true, dst.IOPath.PrivateKeyFile);
+                    var destinationEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(destinationPath);
+                    dst.CreateDirectory(destinationPath, args);
+                    TransferDirectoryContents(sourceEndPoint, destinationEndPoint, args);
+                })).ToArray());
             }
             catch (AggregateException e)
             {
@@ -610,7 +635,7 @@ namespace Dev2.PathOperations
                 throw new Exception(message, e);
             }
         }
-        
+
         void ValidateSourceAndDestinationContents(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, IDev2CRUDOperationTO args)
         {
             if (!args.Overwrite)
@@ -659,8 +684,8 @@ namespace Dev2.PathOperations
             }
             return null;
         }
-        
-        private string CreateTmpFile()
+
+        string CreateTmpFile()
         {
             try
             {
@@ -675,8 +700,8 @@ namespace Dev2.PathOperations
             }
 
         }
-        
-        private void RemoveTmpFile(string path)
+
+        void RemoveTmpFile(string path)
         {
             try
             {
@@ -689,7 +714,7 @@ namespace Dev2.PathOperations
             }
         }
 
-        private void EnsureFilesDontExists(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst)
+        void EnsureFilesDontExists(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst)
         {
             if (dst.PathExist(dst.IOPath))
             {
@@ -708,13 +733,13 @@ namespace Dev2.PathOperations
             }
         }
 
-        private string GetFileNameFromEndPoint(IActivityIOOperationsEndPoint endPoint)
+        static string GetFileNameFromEndPoint(IActivityIOOperationsEndPoint endPoint)
         {
-            string pathSeperator = endPoint.PathSeperator();
+            var pathSeperator = endPoint.PathSeperator();
             return endPoint.IOPath.Path.Split(pathSeperator.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Last();
         }
 
-        private string GetFileNameFromEndPoint(IActivityIOOperationsEndPoint endPoint, IActivityIOPath path)
+        static string GetFileNameFromEndPoint(IActivityIOOperationsEndPoint endPoint, IActivityIOPath path)
         {
             var pathSeperator = endPoint.PathSeperator();
             return path.Path.Split(pathSeperator.ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Last();
@@ -749,7 +774,7 @@ namespace Dev2.PathOperations
 
             if (src.RequiresLocalTmpStorage())
             {
-                string tempDir = _common.CreateTmpDirectory();
+                var tempDir = _common.CreateTmpDirectory();
                 var tmpFile = Path.Combine(tempDir,
                                            src.IOPath.Path.Split(src.PathSeperator().ToCharArray(),
                                                                  StringSplitOptions.RemoveEmptyEntries)
@@ -814,19 +839,19 @@ namespace Dev2.PathOperations
                 }
                 zip.Save(tempFilename);
             }
-
-            DirectoryHelper.CleanUp(tmpDir);
+            var dir = new DirectoryHelper();
+            dir.CleanUp(tmpDir);
 
             return tempFilename;
         }
-
-        string TransferTempZipFileToDestination(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst, 
+      
+        string TransferTempZipFileToDestination(IActivityIOOperationsEndPoint src, IActivityIOOperationsEndPoint dst,
             IDev2ZipOperationTO args, string tmpZip)
         {
             string result;
             using (Stream s2 = new MemoryStream(_fileWrapper.ReadAllBytes(tmpZip)))
             {
-                IActivityIOOperationsEndPoint activityIOOperationsEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(
+                var activityIOOperationsEndPoint = ActivityIOFactory.CreateOperationEndPointFromIOPath(
                         ActivityIOFactory.CreatePathFromString(dst.IOPath.Path, dst.IOPath.Username,
                                                                dst.IOPath.Password, true, dst.IOPath.PrivateKeyFile));
 
@@ -915,7 +940,7 @@ namespace Dev2.PathOperations
 
                 if (!Dev2ActivityIOPathUtils.IsStarWildCard(src.IOPath.Path))
                 {
-                    return performAfterValidation();
+                    return performAfterValidation?.Invoke();
                 }
                 if (!TransferDirectoryContents(src, dst, args))
                 {
@@ -926,7 +951,7 @@ namespace Dev2.PathOperations
             return result;
         }
 
-        private string ValidateUnzipSourceDestinationFileOperation(IActivityIOOperationsEndPoint src,
+        string ValidateUnzipSourceDestinationFileOperation(IActivityIOOperationsEndPoint src,
                                                                    IActivityIOOperationsEndPoint dst,
                                                                    IDev2UnZipOperationTO args,
                                                                    Func<string> performAfterValidation)
@@ -948,7 +973,7 @@ namespace Dev2.PathOperations
                 throw new Exception(ErrorResource.DestinationDirectoryExist);
             }
 
-            return performAfterValidation();
+            return performAfterValidation?.Invoke();
         }
 
         string ValidateZipSourceDestinationFileOperation(IActivityIOOperationsEndPoint src,
@@ -992,7 +1017,7 @@ namespace Dev2.PathOperations
             {
                 throw new Exception(string.Format(ErrorResource.RecursiveDirectoryCreateFailed, dst.IOPath.Path));
             }
-            return performAfterValidation();
+            return performAfterValidation?.Invoke();
         }
         #endregion
     }

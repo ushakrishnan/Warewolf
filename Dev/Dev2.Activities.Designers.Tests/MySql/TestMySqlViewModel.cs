@@ -304,15 +304,34 @@ namespace Dev2.Activities.Designers.Tests.MySql
             Assert.IsTrue(mySql.ManageServiceInputViewModel.InputArea.Inputs.Last().Name == "[[a]]");
         }
 
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory("MySql_MethodName")]
+        public void MySql_VerifyCommandTimeout()
+        {
+            //------------Setup for test--------------------------
+            var mod = new MySqlModel();
+            var act = new DsfMySqlDatabaseActivity();
+
+            //------------Execute Test---------------------------
+            using (var mySql = new MySqlDatabaseDesignerViewModel(ModelItemUtils.CreateModelItem(act), mod, new SynchronousAsyncWorker(), new ViewPropertyBuilder()))
+            {
+                mySql.InputArea.CommandTimeout = 321;
+                //------------Assert Results-------------------------
+                var dbService = mySql.ToModel();
+                Assert.AreEqual(321, dbService.CommandTimeout);
+            }
+        }
+
     }
 
     public class MySqlModel : IDbServiceModel
     {
 #pragma warning disable 649
-        private IStudioUpdateManager _updateRepository;
+        IStudioUpdateManager _updateRepository;
 #pragma warning restore 649
 #pragma warning disable 169
-        private IQueryManager _queryProxy;
+        IQueryManager _queryProxy;
 #pragma warning restore 169
 
         public ObservableCollection<IDbSource> _sources = new ObservableCollection<IDbSource>
@@ -396,7 +415,7 @@ namespace Dev2.Activities.Designers.Tests.MySql
             {
                 return null;
             }
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
             dt.Columns.Add("a");
             dt.Columns.Add("b");
             dt.Columns.Add("c");

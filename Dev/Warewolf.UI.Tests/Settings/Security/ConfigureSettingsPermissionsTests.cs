@@ -1,5 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Net;
+using System.Reflection;
+using Warewolf.Launcher;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.Settings.SettingsUIMapClasses;
@@ -9,7 +13,7 @@ namespace Warewolf.UI.Tests
     [CodedUITest]
     public class ConfigureSettingsPermissionsTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Settings")]
         public void Check_SettingsView_Then_SetPublicPermissions_And_SaveEnabled()
         {
@@ -77,7 +81,7 @@ namespace Warewolf.UI.Tests
             Keyboard.SendKeys(UIMap.MainStudioWindow, "^%{F4}");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Settings")]
         public void AddRemoveResourcePermission()
         {
@@ -89,10 +93,11 @@ namespace Warewolf.UI.Tests
             DialogsUIMap.Click_MessageBox_Yes();
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Explorer")]
         public void Edit_Server_Removes_Server_From_Explorer()
         {
+            _containerOps = TestLauncher.StartLocalCIRemoteContainer(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
             ExplorerUIMap.Click_Explorer_Remote_Server_Dropdown_List();
             Assert.IsTrue(UIMap.MainStudioWindow.ComboboxListItemAsRemoteConnectionIntegration.Exists);
             ExplorerUIMap.Select_Explorer_Remote_Server_Dropdown_List();
@@ -100,6 +105,55 @@ namespace Warewolf.UI.Tests
             ExplorerUIMap.Click_EditServerButton_From_ExplorerConnectControl();
             SettingsUIMap.ChangeServerAuthenticationType();
             Assert.IsFalse(UIMap.ControlExistsNow(ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer), "Remote server is still loaded in the Explorer after clicking edit in the connect control.");
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Explorer")]
+        public void Save_With_Duplicate_Server_Permission()
+        {
+            UIMap.Click_Settings_RibbonButton();
+            SettingsUIMap.Set_FirstResource_ResourcePermissions("Hello World", "", true, true, true);
+            Assert.IsTrue(DialogsUIMap.MessageBoxWindow.Exists);
+            Assert.IsTrue(DialogsUIMap.MessageBoxWindow.UITosavearesourcepersmText.Exists);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Explorer")]
+        public void PublicApisJson_Requires_ExecutePermission()
+        {
+            UIMap.Click_Settings_RibbonButton();
+            SettingsUIMap.Uncheck_Public_Administrator();
+            if (UIMap.MainStudioWindow.SideMenuBar.SaveButton.Enabled)
+            {
+                Mouse.Click(UIMap.MainStudioWindow.SideMenuBar.SaveButton);
+            }
+            using (var client = new WebClient
+            {
+                UseDefaultCredentials = true
+            })
+            {
+                try
+                {
+                    client.DownloadString(new Uri("http://localhost:3142/public/Hello%20World/apis.json"));
+                }
+                catch (WebException e)
+                {
+                    StringAssert.Contains(e.Message, "Forbidden");
+                }
+            }
+            SettingsUIMap.Check_Public_Administrator();
+            if (UIMap.MainStudioWindow.SideMenuBar.SaveButton.Enabled)
+            {
+                Mouse.Click(UIMap.MainStudioWindow.SideMenuBar.SaveButton);
+                Playback.Wait(3000);
+            }
+            using (var client = new WebClient
+            {
+                Credentials = CredentialCache.DefaultNetworkCredentials
+            })
+            {
+                StringAssert.Contains(client.DownloadString(new Uri("http://localhost:3142/public/Hello%20World/apis.json")), "/Hello World/apis.json");
+            }
         }
 
         #region Additional test attributes
@@ -110,6 +164,11 @@ namespace Warewolf.UI.Tests
             UIMap.SetPlaybackSettings();
             UIMap.AssertStudioIsRunning();
         }
+
+        static ContainerLauncher _containerOps;
+
+        [TestCleanup]
+        public void CleanupContainer() => _containerOps?.Dispose();
 
         UIMap UIMap
         {

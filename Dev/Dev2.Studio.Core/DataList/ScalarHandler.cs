@@ -10,9 +10,9 @@ using Dev2.Studio.ViewModels.DataList;
 
 namespace Dev2.Studio.Core.DataList
 {
-    internal class ScalarHandler : IScalarHandler
+    class ScalarHandler : IScalarHandler
     {
-        private readonly DataListViewModel _vm;
+        readonly DataListViewModel _vm;
 
         public ScalarHandler(DataListViewModel dataListViewModel)
         {
@@ -28,7 +28,7 @@ namespace Dev2.Studio.Core.DataList
                 return;
             }
 
-            if (_vm. ScalarCollection.Count(c => c.DisplayName == part.Field) == 0)
+            if (!_vm.ScalarCollection.Any(c => c.DisplayName == part.Field))
             {
                 missingDataParts.Add(part);
             }
@@ -46,35 +46,36 @@ namespace Dev2.Studio.Core.DataList
         {
             if (xmlNode.Attributes != null)
             {
-                IScalarItemModel scalar = DataListItemModelFactory.CreateScalarItemModel(xmlNode.Name, Common.ParseDescription(xmlNode.Attributes[Common.Description]), Common.ParseColumnIODirection(xmlNode.Attributes[GlobalConstants.DataListIoColDirection]));
+                var scalar = DataListItemModelFactory.CreateScalarItemModel(xmlNode.Name, Common.ParseDescription(xmlNode.Attributes[Common.Description]), Common.ParseColumnIODirection(xmlNode.Attributes[GlobalConstants.DataListIoColDirection]));
                 if (scalar != null)
                 {
                     scalar.IsEditable = Common.ParseIsEditable(xmlNode.Attributes[Common.IsEditable]);
-                    if (string.IsNullOrEmpty(_vm.SearchText))
-                    {
-                        _vm.ScalarCollection.Add(scalar);
-                    }
-                    else if (scalar.DisplayName.ToUpper().StartsWith(_vm.SearchText.ToUpper()))
-                    {
-                        _vm.ScalarCollection.Add(scalar);
-                    }
+                    scalar.IsVisible = _vm.IsItemVisible(scalar.Name);
+                    _vm.Add(scalar);
                 }
             }
             else
             {
-                IScalarItemModel scalar = DataListItemModelFactory.CreateScalarItemModel(xmlNode.Name, Common.ParseDescription(null), Common.ParseColumnIODirection(null));
+                var scalar = DataListItemModelFactory.CreateScalarItemModel(xmlNode.Name, Common.ParseDescription(null), Common.ParseColumnIODirection(null));
                 if (scalar != null)
                 {
                     scalar.IsEditable = Common.ParseIsEditable(null);
-                    if (string.IsNullOrEmpty(_vm.SearchText))
-                    {
-                        _vm.ScalarCollection.Add(scalar);
-                    }
-                    else if (scalar.DisplayName.ToUpper().StartsWith(_vm.SearchText.ToUpper()))
-                    {
-                        _vm.ScalarCollection.Add(scalar);
-                    }
+                    scalar.IsVisible = _vm.IsItemVisible(scalar.Name);
+                    _vm.Add(scalar);
                 }
+            }
+        }
+
+        private void UpdateScalar(IScalarItemModel scalar)
+        {
+            scalar.IsVisible = _vm.IsItemVisible(scalar.Name);
+            if (_vm.ScalarCollectionCount > 0)
+            {
+                _vm.ScalarCollection.Insert(_vm.ScalarCollectionCount - 1, scalar);
+            }
+            else
+            {
+                _vm.Add(scalar);
             }
         }
 
@@ -98,25 +99,25 @@ namespace Dev2.Studio.Core.DataList
 
         public void AddRowToScalars()
         {
-            List<IScalarItemModel> blankList = _vm.ScalarCollection.Where(c => c.IsBlank).ToList();
+            var blankList = _vm.ScalarCollection.Where(c => c.IsBlank).ToList();
             if (blankList.Count != 0)
             {
                 return;
             }
 
             var scalar = DataListItemModelFactory.CreateScalarItemModel(string.Empty);
-            _vm.ScalarCollection.Add(scalar);
+            _vm.Add(scalar);
         }
 
         public void RemoveBlankScalars()
         {
-            List<IScalarItemModel> blankList = _vm.ScalarCollection.Where(c => c.IsBlank).ToList();
+            var blankList = _vm.ScalarCollection.Where(c => c.IsBlank).ToList();
             if (blankList.Count <= 1)
             {
                 return;
             }
 
-            _vm.ScalarCollection.Remove(blankList.First());
+            _vm.Remove(blankList.First());
         }
 
         public void RemoveUnusedScalars()
@@ -126,7 +127,7 @@ namespace Dev2.Studio.Core.DataList
             {
                 foreach (var dataListItemModel in unusedScalars)
                 {
-                    _vm.ScalarCollection.Remove(dataListItemModel);
+                    _vm.Remove(dataListItemModel);
                 }
             }
         }
@@ -136,14 +137,7 @@ namespace Dev2.Studio.Core.DataList
             if (_vm.ScalarCollection.FirstOrDefault(c => c.DisplayName == part.Field) == null)
             {
                 var scalar = DataListItemModelFactory.CreateScalarItemModel(part.Field, part.Description);
-                if (_vm.ScalarCollection.Count > 0)
-                {
-                    _vm.ScalarCollection.Insert(_vm.ScalarCollection.Count - 1, scalar);
-                }
-                else
-                {
-                    _vm.ScalarCollection.Add(scalar);
-                }
+                UpdateScalar(scalar);
             }
         }
 
@@ -156,6 +150,5 @@ namespace Dev2.Studio.Core.DataList
                 recset.DisplayName = recset.DisplayName.Replace("[", "").Replace("]", "");
             }
         }
-
     }
 }

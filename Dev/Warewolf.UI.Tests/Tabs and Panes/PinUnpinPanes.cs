@@ -15,24 +15,45 @@ using Warewolf.UI.Tests.WorkflowTab.Tools.Data.DataToolsUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
 using Warewolf.UI.Tests.WebSource.WebSourceUIMapClasses;
 using Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapClasses;
+using Warewolf.UI.Tests.DialogsUIMapClasses;
 
 namespace Warewolf.UI.Tests.Tabs
 {
     [CodedUITest]
     public class PinUnpinPanes
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
-        public void UnpinAndRepinNewWorkflowWizardTabByDraggingOnly()
+        public void UnpinPutput_WorkflowDesignerPane()
         {
             UIMap.Click_NewWorkflow_RibbonButton();
-            UIMap.Unpin_Tab_With_Drag(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab);
-            UIMap.Pin_Unpinned_Pane_To_Default_Position();
-            Assert.IsFalse(UIMap.ControlExistsNow(UIMap.MainStudioWindow.UnpinnedTab), "Unpinned pane still exists after being dragged onto the central dock indicator.");
-            Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.Exists, "Workflow tab did not dock into it's default position after being dragged onto the central dock indicator.");
+            UIMap.Unpin_Pane_With_Context_Menu(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Tabs and Panes")]
+        public void UnpinPutput_SchedulerPane()
+        {
+            UIMap.Click_Scheduler_RibbonButton();
+            UIMap.Unpin_Pane_With_Context_Menu(SchedulerUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SchedulerTab.OUTPUT);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Tabs and Panes")]
+        public void UnpinPutput_TestFrameworkPane()
+        {
+            UIMap.Click_NewWorkflow_RibbonButton();
+            WorkflowTabUIMap.Drag_Toolbox_MultiAssign_Onto_DesignSurface();
+            UIMap.Save_With_Ribbon_Button_And_Dialog("UnpinTestViewOutput");
+            UIMap.Press_F6();
+            UIMap.Click_Create_Test_From_Debug();
+            UIMap.Unpin_Pane_With_Context_Menu(WorkflowServiceTestingUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab.OUTPUT);
+            ExplorerUIMap.Filter_Explorer("UnpinTestViewOutput");
+            ExplorerUIMap.Delete_FirstResource_From_ExplorerContextMenu();
+            DialogsUIMap.Click_MessageBox_Yes();
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinnedPaneContextMenuItems()
         {
@@ -47,7 +68,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.MainStudioWindow.UnpinnedTabContextMenu.TabbedDocument.Checked = true;
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinSettingsWizardTab()
         {
@@ -55,7 +76,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(SettingsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SettingsTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinServerSourceWizardTab()
         {
@@ -63,7 +84,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(ServerSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.ServerSourceTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinDBSourceWizardTab()
         {
@@ -71,7 +92,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinDotNetPluginSourceWizardTab()
         {
@@ -79,7 +100,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(DotNetPluginSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DotNetPluginSourceTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinWebSourceWizardTab()
         {
@@ -87,7 +108,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinDeployWizardTab()
         {
@@ -95,7 +116,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(DeployUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DeployTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinDependencyGraphWizardTab()
         {
@@ -103,7 +124,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(DependencyGraphUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DependencyGraphTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinTestsWizardTab()
         {
@@ -112,7 +133,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(WorkflowServiceTestingUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.TestsTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void UnpinSchedulerWizardTab()
         {
@@ -120,7 +141,7 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(SchedulerUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SchedulerTab);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void AssignToolInUnpinnedWorkflowWizardTabDebugOutputUITest()
         {
@@ -130,10 +151,10 @@ namespace Warewolf.UI.Tests.Tabs
             UIMap.Unpin_Tab_With_Drag(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab);
             UIMap.Press_F6_On_UnPinnedTab();
             Assert.AreEqual("[[SomeVariable]]", UIMap.MainStudioWindow.UnpinnedTab.SplitPane.WorkSurfaceContext.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.VariableTextbox2.DisplayText, "Variable name does not exist in unpinned debug output.");
-            Assert.AreEqual("50", UIMap.MainStudioWindow.UnpinnedTab.SplitPane.WorkSurfaceContext.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.ValueTextbox5.DisplayText, "Variable value does not exist in unpinned debug output.");
+            Assert.AreEqual("500", UIMap.MainStudioWindow.UnpinnedTab.SplitPane.WorkSurfaceContext.SplitPaneRight.DebugOutput.DebugOutputTree.Step1.ValueTextbox5.DisplayText, "Variable value does not exist in unpinned debug output.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Tabs and Panes")]
         public void AssignToolInUnpinnedWorkflowWizardTabAddVariableUITest()
         {
@@ -198,6 +219,21 @@ namespace Warewolf.UI.Tests.Tabs
         }
 
         private WorkflowServiceTestingUIMap _WorkflowServiceTestingUIMap;
+
+        DialogsUIMap DialogsUIMap
+        {
+            get
+            {
+                if (_DialogsUIMap == null)
+                {
+                    _DialogsUIMap = new DialogsUIMap();
+                }
+
+                return _DialogsUIMap;
+            }
+        }
+
+        private DialogsUIMap _DialogsUIMap;
 
         ExplorerUIMap ExplorerUIMap
         {

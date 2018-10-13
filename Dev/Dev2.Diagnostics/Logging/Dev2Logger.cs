@@ -1,7 +1,7 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -10,24 +10,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using log4net;
 using log4net.Appender;
 using log4net.Repository.Hierarchy;
 
-
-
-
 namespace Dev2.Common
 {
-    /// <summary>
-    /// A single common logging location ;)
-    /// </summary>
     public static class Dev2Logger
     {
-        private static readonly ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        static readonly ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public static void Debug(object message, string executionId)
         {
@@ -51,7 +48,6 @@ namespace Dev2.Common
         {
             var customMessage = UpdateCustomMessage(message, executionId);
             _log.Error(customMessage, exception);
-
         }
 
         public static void Warn(object message, string executionId)
@@ -64,7 +60,6 @@ namespace Dev2.Common
         {
             var customMessage = UpdateCustomMessage(message, executionId);
             _log.Warn(customMessage, exception);
-
         }
 
         public static void Fatal(object message, string executionId)
@@ -91,14 +86,10 @@ namespace Dev2.Common
             _log.Info(customMessage, exception);
         }
 
-        private static string UpdateCustomMessage(object message, string executionId)
-        {
-            return $"[{executionId}] - {message}";
-        }
+        static string UpdateCustomMessage(object message, string executionId) => $"[{executionId}] - {message}";
 
         public static void UpdateLoggingConfig(string level)
         {
-
             var repository = LogManager.GetAllRepositories().First();
             repository.Threshold = repository.LevelMap[level];
             var hier = (Hierarchy)repository;
@@ -154,7 +145,7 @@ namespace Dev2.Common
                 var fileElement = fileAppender?.Element("file");
                 if (fileElement != null)
                 {
-                    XAttribute valueAttrib = fileElement.Attribute("value");
+                    var valueAttrib = fileElement.Attribute("value");
                     if (valueAttrib != null)
                     {
                         valueAttrib.SetValue("%envFolderPath{CommonApplicationData}\\Warewolf\\Server Log\\wareWolf-Server.log");
@@ -175,12 +166,12 @@ namespace Dev2.Common
             }
         }
 
-        private static void UpdateConversionPattern(string settingsConfigFile, XDocument settingsDocument, XElement layoutElement)
+        static void UpdateConversionPattern(string settingsConfigFile, XDocument settingsDocument, XElement layoutElement)
         {
             var conversionPatternElement = layoutElement.Element("conversionPattern");
             if (conversionPatternElement != null)
             {
-                XAttribute valueAttrib = conversionPatternElement.Attribute("value");
+                var valueAttrib = conversionPatternElement.Attribute("value");
                 if (valueAttrib != null)
                 {
                     valueAttrib.SetValue("%date %-5level - %message%newline");
@@ -189,7 +180,7 @@ namespace Dev2.Common
             }
         }
 
-        public static void WriteLogSettings(string maxLogSize, string fileLogLevel, string eventLogLevel, string settingsConfigFile,string applicationNameForEventLog)
+        public static void WriteLogSettings(string maxLogSize, string fileLogLevel, string eventLogLevel, string settingsConfigFile, string applicationNameForEventLog)
         {
             var settingsDocument = XDocument.Load(settingsConfigFile);
             var log4netElement = settingsDocument.Element("log4net");
@@ -198,21 +189,19 @@ namespace Dev2.Common
                 var appenderElements = log4netElement.Elements("appender");
                 var appenders = appenderElements as IList<XElement> ?? appenderElements.ToList();
                 UpdateFileSizeForFileLogAppender(maxLogSize, appenders);
-                
+
                 var eventAppender = appenders.FirstOrDefault(element => element.Attribute("type").Value == "log4net.Appender.EventLogAppender");
                 var rootElement = log4netElement.Element("root");
                 if (eventAppender == null)
                 {
                     ConfigureEventLoggerAppender(applicationNameForEventLog, eventLogLevel, rootElement);
                 }
-
                 SetupLogLevels(fileLogLevel, eventLogLevel, rootElement, eventAppender);
                 settingsDocument.Save(settingsConfigFile);
             }
         }
 
-
-        public static void AddEventLogging(string settingsConfigFile,string applicationNameForEventLog)
+        public static void AddEventLogging(string settingsConfigFile, string applicationNameForEventLog)
         {
             var settingsDocument = XDocument.Load(settingsConfigFile);
             var log4netElement = settingsDocument.Element("log4net");
@@ -220,11 +209,10 @@ namespace Dev2.Common
             {
                 var appenderElements = log4netElement.Elements("appender");
                 var appenders = appenderElements as IList<XElement> ?? appenderElements.ToList();
-                
+
                 var eventAppender = appenders.FirstOrDefault(element => element.Attribute("type").Value == "log4net.Appender.EventLogAppender");
                 if (eventAppender == null)
                 {
-                    
                     var fileAppender = appenders.FirstOrDefault(element => element.Attribute("name").Value == "LogFileAppender");
                     ConfigureEventLoggerAppender(applicationNameForEventLog, "ERROR", fileAppender);
                     var rootElement = log4netElement.Element("root");
@@ -234,11 +222,8 @@ namespace Dev2.Common
             }
         }
 
-        
-
-        private static void UpdateFileSizeForFileLogAppender(string maxLogSize, IList<XElement> appenders)
+        static void UpdateFileSizeForFileLogAppender(string maxLogSize, IList<XElement> appenders)
         {
-            
             var fileAppender = appenders.FirstOrDefault(element => element.Attribute("name").Value == "LogFileAppender");
             var maxFileSizeElement = fileAppender?.Element("maximumFileSize");
             var maxFileSizeElementValueAttrib = maxFileSizeElement?.Attribute("value");
@@ -248,7 +233,7 @@ namespace Dev2.Common
             }
         }
 
-        private static void SetupLogLevels(string fileLogLevel, string eventLogLevel, XElement rootElement, XElement log4netElement)
+        static void SetupLogLevels(string fileLogLevel, string eventLogLevel, XElement rootElement, XElement log4netElement)
         {
             if (rootElement != null)
             {
@@ -265,9 +250,8 @@ namespace Dev2.Common
             }
         }
 
-        private static void SetLogLogLevel(string eventLogLevel, XElement eventLogElement)
+        static void SetLogLogLevel(string eventLogLevel, XElement eventLogElement)
         {
-
             var levelElement = eventLogElement.Element("level");
             var levelElementValueAttrib = levelElement?.Attribute("value");
             if (levelElementValueAttrib != null)
@@ -276,18 +260,17 @@ namespace Dev2.Common
             }
         }
 
-        private static void SetEventLogLogLevel(string eventLogLevel, XElement eventLogElement)
+        static void SetEventLogLogLevel(string eventLogLevel, XElement eventLogElement)
         {
-
             eventLogElement.SetAttributeValue("value", eventLogLevel);
         }
 
-        private static void AddEventLogLogger(XElement rootElement)
+        static void AddEventLogLogger(XElement rootElement)
         {
             rootElement.Add(new XElement("appender-ref", new XAttribute("ref", "EventLogLogger")));
         }
 
-        private static void ConfigureEventLoggerAppender(string applicationNameForEventLog, string logLevel, XElement element)
+        static void ConfigureEventLoggerAppender(string applicationNameForEventLog, string logLevel, XElement element)
         {
             var eventAppenderElement = new XElement("appender");
             eventAppenderElement.SetAttributeValue("name", "EventLogLogger");
@@ -313,7 +296,7 @@ namespace Dev2.Common
             element.AddAfterSelf(eventAppenderElement);
         }
 
-        private static XElement GetMappingElement(string levelValue, string eventLogType)
+        static XElement GetMappingElement(string levelValue, string eventLogType)
         {
             var errorMappingElement = new XElement("mapping");
             errorMappingElement.Add(new XElement("level", new XAttribute("value", levelValue)));

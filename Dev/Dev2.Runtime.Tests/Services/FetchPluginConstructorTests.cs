@@ -21,7 +21,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class FetchPluginConstructorTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -35,7 +35,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -49,7 +49,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void HandlesType_GivenPluginConstructorService_ShouldRuturnCorrectly()
         {
@@ -62,14 +62,14 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("FetchPluginConstructors", handlesType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenTestInputs_ShouldReturnConstructorList()
         {
             //---------------Set up test pack-------------------
             var type = typeof(Human);
             var assembly = type.Assembly;
-            NamespaceItem namespaceItem = new NamespaceItem()
+            var namespaceItem = new NamespaceItem()
             {
                 AssemblyLocation = assembly.Location,
                 AssemblyName = assembly.FullName,
@@ -108,14 +108,14 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(3, deserializeToObject.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenHasContructorWithInputs_ShouldReturnCorrectInputs()
         {
             //---------------Set up test pack-------------------
             var type = typeof(Human);
             var assembly = type.Assembly;
-            NamespaceItem namespaceItem = new NamespaceItem()
+            var namespaceItem = new NamespaceItem()
             {
                 AssemblyLocation = assembly.Location,
                 AssemblyName = assembly.FullName,
@@ -169,14 +169,14 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(typeof(string), Type.GetType(typeName));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenHasContructorWithInputs_ShouldReturnCorrectConstructorName()
         {
             //---------------Set up test pack-------------------
             var type = typeof(Human);
             var assembly = type.Assembly;
-            NamespaceItem namespaceItem = new NamespaceItem()
+            var namespaceItem = new NamespaceItem()
             {
                 AssemblyLocation = assembly.Location,
                 AssemblyName = assembly.FullName,
@@ -230,21 +230,21 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(expectedName2, constructorName2);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenHasError_ShouldReturnErrorState()
         {
             //---------------Set up test pack-------------------
             var type = typeof(Human);
             var assembly = type.Assembly;
-            NamespaceItem namespaceItem = new NamespaceItem()
+            var namespaceItem = new NamespaceItem()
             {
                 AssemblyLocation = assembly.Location,
                 AssemblyName = assembly.FullName,
                 FullName = type.FullName,
 
             };
-            
+
 
             var pluginSourceDefinition = new PluginSourceDefinition();
             var serializeToJson = pluginSourceDefinition.SerializeToJsonStringBuilder();

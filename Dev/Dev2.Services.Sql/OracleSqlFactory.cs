@@ -8,7 +8,7 @@ using Warewolf.Security.Encryption;
 
 namespace Dev2.Services.Sql
 {
-    internal class OracleSqlFactory : IDbFactory
+    class OracleSqlFactory : IDbFactory
     {
         #region Implementation of IDbFactory
 
@@ -22,19 +22,20 @@ namespace Dev2.Services.Sql
             return new OracleConnection(connectionString);
         }
 
-        public IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText)
+        public IDbCommand CreateCommand(IDbConnection connection, CommandType commandType, string commandText, int? commandTimeout)
         {
-            return new OracleCommand(commandText, connection as OracleConnection)
+            var command = new OracleCommand(commandText, connection as OracleConnection)
             {
-                CommandType = commandType,
-                CommandTimeout = (int)GlobalConstants.TransactionTimeout.TotalSeconds
+                CommandType = commandType,                
             };
+            if (commandTimeout != null)
+            {
+                command.CommandTimeout = commandTimeout.Value;
+            }
+            return command;
         }
 
-        public DataTable GetSchema(IDbConnection connection, string collectionName)
-        {
-            return GetOracleServerSchema(connection);
-        }
+        public DataTable GetSchema(IDbConnection connection, string collectionName) => GetOracleServerSchema(connection);
 
         DataTable GetOracleServerSchema(IDbConnection connection)
         {
@@ -48,7 +49,7 @@ namespace Dev2.Services.Sql
 
         public DataTable CreateTable(IDataAdapter reader, LoadOption overwriteChanges)
         {
-            DataSet ds = new DataSet(); //conn is opened by dataadapter
+            var ds = new DataSet(); //conn is opened by dataadapter
             reader.Fill(ds);
             var t = ds.Tables[0];
             return t;
@@ -61,16 +62,36 @@ namespace Dev2.Services.Sql
                 throw new Exception(string.Format(ErrorResource.InvalidCommand, "OracleCommand"));
             }
 
-            using (var dataSet = new DataSet())
+            var dataSet = new DataSet();
+            using (var adapter = new OracleDataAdapter(command as OracleCommand))
             {
-                using (var adapter = new OracleDataAdapter(command as OracleCommand))
-                {
-                    adapter.Fill(dataSet);
-                }
-                return dataSet;
+                adapter.Fill(dataSet);
             }
+            return dataSet;
         }
+		public int ExecuteNonQuery(IDbCommand command)
+		{
+			if (!(command is OracleCommand SqlCommand))
+			{
+				throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
+			}
 
-        #endregion
-    }
+			int retValue = 0;
+			retValue = command.ExecuteNonQuery();
+			return retValue;
+		}
+
+		public int ExecuteScalar(IDbCommand command)
+		{
+			if (!(command is OracleCommand))
+			{
+				throw new Exception(string.Format(ErrorResource.InvalidCommand, "DBCommand"));
+			}
+
+			int retValue = 0;
+			retValue = Convert.ToInt32(command.ExecuteScalar());
+			return retValue;
+		}
+		#endregion
+	}
 }

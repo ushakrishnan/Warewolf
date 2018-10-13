@@ -75,15 +75,27 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             }
         }
         
-        public RemoteConnectionItem RemoteConnectionItem
+        public ComboboxItemAsRemoteContainer ComboboxItemAsRemoteContainer
         {
             get
             {
-                if ((this.mRemoteConnectionItem == null))
+                if ((this.mComboboxItemAsRemoteContainer == null))
                 {
-                    this.mRemoteConnectionItem = new RemoteConnectionItem(this);
+                    this.mComboboxItemAsRemoteContainer = new ComboboxItemAsRemoteContainer(this);
                 }
-                return this.mRemoteConnectionItem;
+                return this.mComboboxItemAsRemoteContainer;
+            }
+        }
+        
+        public ComboboxItemAsRemoteConnectionIntegration ComboboxItemAsRemoteConnectionIntegration
+        {
+            get
+            {
+                if ((this.mComboboxItemAsRemoteConnectionIntegration == null))
+                {
+                    this.mComboboxItemAsRemoteConnectionIntegration = new ComboboxItemAsRemoteConnectionIntegration(this);
+                }
+                return this.mComboboxItemAsRemoteConnectionIntegration;
             }
         }
         
@@ -103,7 +115,9 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         #region Fields
         private DockManager mDockManager;
         
-        private RemoteConnectionItem mRemoteConnectionItem;
+        private ComboboxItemAsRemoteContainer mComboboxItemAsRemoteContainer;
+        
+        private ComboboxItemAsRemoteConnectionIntegration mComboboxItemAsRemoteConnectionIntegration;
         
         private CodedUITestServerSourceDuplicated mCodedUITestServerSourceDuplicated;
         #endregion
@@ -342,7 +356,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
                     this.mNewServerButton = new WpfButton(this);
                     #region Search Criteria
                     this.mNewServerButton.SearchProperties[WpfButton.PropertyNames.AutomationId] = "NewServerButton";
-                    this.mNewServerButton.WindowTitles.Add("Warewolf (DEV2\\PIETER.TERBLANCHE)");
+                    this.mNewServerButton.WindowTitles.Add("Warewolf");
                     #endregion
                 }
                 return this.mNewServerButton;
@@ -1003,6 +1017,18 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             }
         }
         
+        public FolderC FolderC
+        {
+            get
+            {
+                if ((this.mFolderC == null))
+                {
+                    this.mFolderC = new FolderC(this);
+                }
+                return this.mFolderC;
+            }
+        }
+        
         public WpfEdit ItemEdit
         {
             get
@@ -1052,6 +1078,8 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         
         #region Fields
         private ResourceImageImage1 mResourceImageImage;
+        
+        private FolderC mFolderC;
         
         private WpfEdit mItemEdit;
         
@@ -1115,6 +1143,148 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         private WpfButton mViewIcon;
         
         private WpfButton mExecuteIcon;
+        #endregion
+    }
+    
+    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
+    public class FolderC : WpfTreeItem
+    {
+        
+        public FolderC(UITestControl searchLimitContainer) : 
+                base(searchLimitContainer)
+        {
+            #region Search Criteria
+            this.SearchProperties[WpfTreeItem.PropertyNames.Name] = "Warewolf.Studio.ViewModels.ExplorerItemViewModel";
+            this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
+            this.SearchConfigurations.Add(SearchConfiguration.DisambiguateChild);
+            this.WindowTitles.Add("SaveDialogView");
+            #endregion
+        }
+        
+        #region Properties
+        public FolderD FolderD
+        {
+            get
+            {
+                if ((this.mFolderD == null))
+                {
+                    this.mFolderD = new FolderD(this);
+                }
+                return this.mFolderD;
+            }
+        }
+        
+        public WpfEdit UIItemEdit
+        {
+            get
+            {
+                if ((this.mUIItemEdit == null))
+                {
+                    this.mUIItemEdit = new WpfEdit(this);
+                    #region Search Criteria
+                    this.mUIItemEdit.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
+                    this.mUIItemEdit.WindowTitles.Add("SaveDialogView");
+                    #endregion
+                }
+                return this.mUIItemEdit;
+            }
+        }
+        #endregion
+        
+        #region Fields
+        private FolderD mFolderD;
+        
+        private WpfEdit mUIItemEdit;
+        #endregion
+    }
+    
+    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
+    public class FolderD : WpfTreeItem
+    {
+        
+        public FolderD(UITestControl searchLimitContainer) : 
+                base(searchLimitContainer)
+        {
+            #region Search Criteria
+            this.SearchProperties[WpfTreeItem.PropertyNames.Name] = "Warewolf.Studio.ViewModels.ExplorerItemViewModel";
+            this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
+            this.SearchConfigurations.Add(SearchConfiguration.DisambiguateChild);
+            this.WindowTitles.Add("SaveDialogView");
+            #endregion
+        }
+        
+        #region Properties
+        public SuperNestedResource SuperNestedResource
+        {
+            get
+            {
+                if ((this.mSuperNestedResource == null))
+                {
+                    this.mSuperNestedResource = new SuperNestedResource(this);
+                }
+                return this.mSuperNestedResource;
+            }
+        }
+        
+        public WpfEdit UIItemEdit
+        {
+            get
+            {
+                if ((this.mUIItemEdit == null))
+                {
+                    this.mUIItemEdit = new WpfEdit(this);
+                    #region Search Criteria
+                    this.mUIItemEdit.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
+                    this.mUIItemEdit.WindowTitles.Add("SaveDialogView");
+                    #endregion
+                }
+                return this.mUIItemEdit;
+            }
+        }
+        #endregion
+        
+        #region Fields
+        private SuperNestedResource mSuperNestedResource;
+        
+        private WpfEdit mUIItemEdit;
+        #endregion
+    }
+    
+    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
+    public class SuperNestedResource : WpfTreeItem
+    {
+        
+        public SuperNestedResource(UITestControl searchLimitContainer) : 
+                base(searchLimitContainer)
+        {
+            #region Search Criteria
+            this.SearchProperties[WpfTreeItem.PropertyNames.Name] = "Warewolf.Studio.ViewModels.ExplorerItemViewModel";
+            this.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
+            this.SearchConfigurations.Add(SearchConfiguration.DisambiguateChild);
+            this.WindowTitles.Add("SaveDialogView");
+            #endregion
+        }
+        
+        #region Properties
+        public WpfEdit UIItemEdit
+        {
+            get
+            {
+                if ((this.mUIItemEdit == null))
+                {
+                    this.mUIItemEdit = new WpfEdit(this);
+                    #region Search Criteria
+                    this.mUIItemEdit.SearchConfigurations.Add(SearchConfiguration.ExpandWhileSearching);
+                    this.mUIItemEdit.WindowTitles.Add("SaveDialogView");
+                    #endregion
+                }
+                return this.mUIItemEdit;
+            }
+        }
+        #endregion
+        
+        #region Fields
+        private WpfEdit mUIItemEdit;
         #endregion
     }
     
@@ -2289,16 +2459,16 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
     }
     
     [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
-    public class RemoteConnectionItem : WpfCustom
+    public class ComboboxItemAsRemoteContainer : WpfCustom
     {
         
-        public RemoteConnectionItem(UITestControl searchLimitContainer) : 
+        public ComboboxItemAsRemoteContainer(UITestControl searchLimitContainer) : 
                 base(searchLimitContainer)
         {
             #region Search Criteria
             this.SearchProperties[WpfControl.PropertyNames.ClassName] = "Uia.ComboEditorItemControl";
-            this.SearchProperties[WpfControl.PropertyNames.Name] = "Remote Connection Integration";
-            this.WindowTitles.Add("Warewolf (DEV2\\PIETER.TERBLANCHE)");
+            this.SearchProperties.Add(new PropertyExpression(WpfControl.PropertyNames.Name, "Remote Container", PropertyExpressionOperator.Contains));
+            this.WindowTitles.Add("Warewolf");
             #endregion
         }
         
@@ -2311,8 +2481,8 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
                 {
                     this.mRemoteConnectionItemText = new WpfText(this);
                     #region Search Criteria
-                    this.mRemoteConnectionItemText.SearchProperties[WpfText.PropertyNames.Name] = "Remote Connection Integration";
-                    this.mRemoteConnectionItemText.WindowTitles.Add("Warewolf (DEV2\\PIETER.TERBLANCHE)");
+                    this.mRemoteConnectionItemText.SearchProperties[WpfText.PropertyNames.Name] = "Remote Container";
+                    this.mRemoteConnectionItemText.WindowTitles.Add("Warewolf");
                     #endregion
                 }
                 return this.mRemoteConnectionItemText;
@@ -2322,6 +2492,43 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         
         #region Fields
         private WpfText mRemoteConnectionItemText;
+        #endregion
+    }
+    
+    [GeneratedCode("Coded UITest Builder", "15.0.26208.0")]
+    public class ComboboxItemAsRemoteConnectionIntegration : WpfCustom
+    {
+        
+        public ComboboxItemAsRemoteConnectionIntegration(UITestControl searchLimitContainer) : 
+                base(searchLimitContainer)
+        {
+            #region Search Criteria
+            this.SearchProperties[WpfControl.PropertyNames.ClassName] = "Uia.ComboEditorItemControl";
+            this.SearchProperties.Add(new PropertyExpression(WpfControl.PropertyNames.Name, "Remote Connection Integration", PropertyExpressionOperator.Contains));
+            this.WindowTitles.Add("Warewolf");
+            #endregion
+        }
+        
+        #region Properties
+        public WpfText RemoteConnectionIntegrationItemText
+        {
+            get
+            {
+                if ((this.mRemoteConnectionIntegrationItemText == null))
+                {
+                    this.mRemoteConnectionIntegrationItemText = new WpfText(this);
+                    #region Search Criteria
+                    this.mRemoteConnectionIntegrationItemText.SearchProperties[WpfText.PropertyNames.Name] = "Remote Connection Integration";
+                    this.mRemoteConnectionIntegrationItemText.WindowTitles.Add("Warewolf");
+                    #endregion
+                }
+                return this.mRemoteConnectionIntegrationItemText;
+            }
+        }
+        #endregion
+        
+        #region Fields
+        private WpfText mRemoteConnectionIntegrationItemText;
         #endregion
     }
     

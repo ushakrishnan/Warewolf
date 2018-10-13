@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,7 @@ namespace Dev2.Tests.Runtime.Services
     [ExcludeFromCodeCoverage]
     public class GetDirectoriesRelativeToServerTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -43,7 +43,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -59,7 +59,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Execute
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Huggs")]
         [ExpectedException(typeof(InvalidDataContractException))]
         public void GetDirectoriesRelativeToServer_UnitTest_ExecuteWithNullValues_ExpectedInvalidDataContractException()
@@ -69,7 +69,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(string.Empty, actual);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Huggs")]
         [ExpectedException(typeof(InvalidDataContractException))]
         public void GetDirectoriesRelativeToServer_UnitTest_ExecuteWithNoDirectoryInValues_ExpectedInvalidDataContractException()
@@ -81,7 +81,7 @@ namespace Dev2.Tests.Runtime.Services
         }
        
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Huggs")]
         [ExpectedException(typeof(InvalidDataContractException))]
         public void GetDirectoriesRelativeToServer_UnitTest_ExecuteWithBlankDirectory_ExpectInvalidDataContractException()
@@ -92,16 +92,16 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(string.Empty, actual);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Huggs")]
         public void GetDirectoriesRelativeToServer_UnitTest_ExecuteWithDirectory_ExpectDirectoryStructure()
         {
             //----------------Setup---------------------------------------------
             var esb = new GetDirectoriesRelativeToServer();
-            Mock<IExplorerServerResourceRepository> mockRepo = new Mock<IExplorerServerResourceRepository>();
-            ServerExplorerItem serverExplorerItem = new ServerExplorerItem();
+            var mockRepo = new Mock<IExplorerServerResourceRepository>();
+            var serverExplorerItem = new ServerExplorerItem();
             serverExplorerItem.ResourceType = "Server";
-            ServerExplorerItem levelOneFolder = new ServerExplorerItem();
+            var levelOneFolder = new ServerExplorerItem();
             levelOneFolder.ResourceType = "Folder";
             levelOneFolder.DisplayName = "Test1";
             levelOneFolder.ResourcePath = "Test1";
@@ -110,7 +110,7 @@ namespace Dev2.Tests.Runtime.Services
             levelOneFolderTwo.ResourceType = "Folder";
             levelOneFolderTwo.DisplayName = "Test2";
             levelOneFolderTwo.ResourcePath = "Test2";
-            ServerExplorerItem levelTwoFolderInFolderTwo = new ServerExplorerItem();
+            var levelTwoFolderInFolderTwo = new ServerExplorerItem();
             levelTwoFolderInFolderTwo.ResourceType = "Folder";
             levelTwoFolderInFolderTwo.DisplayName = "InnerTest2";
             levelTwoFolderInFolderTwo.ResourcePath = levelOneFolderTwo.ResourcePath + "\\InnerTest2";
@@ -122,7 +122,7 @@ namespace Dev2.Tests.Runtime.Services
             var actual = esb.Execute(new Dictionary<string, StringBuilder> { { "Directory", new StringBuilder("Resources") } }, null);
             //----------------Assert Results-----------------------------------------
             Assert.AreNotEqual(string.Empty, actual);
-             string expected = @"<JSON>{
+             var expected = @"<JSON>{
   ""$id"": ""1"",
   ""$type"": ""Dev2.Runtime.ESB.Management.Services.JsonTreeNode, Dev2.Runtime.Services"",
   ""title"": ""Root"",
@@ -167,7 +167,7 @@ namespace Dev2.Tests.Runtime.Services
             FixBreaks(ref expected, ref actuals);
             Assert.AreEqual(expected, actuals);
         }
-        private void FixBreaks(ref string expected, ref string actual)
+        void FixBreaks(ref string expected, ref string actual)
         {
             expected = new StringBuilder(expected).Replace(Environment.NewLine, "\n").Replace("\r", "").ToString();
             actual = new StringBuilder(actual).Replace(Environment.NewLine, "\n").Replace("\r", "").ToString();
@@ -176,7 +176,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Huggs")]
         public void GetDirectoriesRelativeToServer_UnitTest_HandlesType_ExpectedGetDirectoriesRelativeToServerService()
         {
@@ -189,7 +189,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Huggs")]
         public void GetDirectoriesRelativeToServer_UnitTest_CreateServiceEntry_ExpectedReturnsDynamicService()
         {

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -90,7 +90,7 @@ namespace Dev2.Activities.Designers2.Decision
 
         public void DeleteRow(DecisionTO row)
         {
-            if (row != Collection.Last())
+            if (!row.Equals(Collection.Last()))
             {
                 Collection.Remove(row);
                 UpdateDecisionDisplayName((DecisionTO)Tos[0]);
@@ -119,7 +119,7 @@ namespace Dev2.Activities.Designers2.Decision
             }
             else
             {
-                Dev2JsonSerializer ser = new Dev2JsonSerializer();
+                var ser = new Dev2JsonSerializer();
                 ExpressionText = ser.Serialize(ds);
             }
 
@@ -201,7 +201,8 @@ namespace Dev2.Activities.Designers2.Decision
                     FalseArmText = decisions.FalseArmText;
                     DisplayText = decisions.DisplayText;
                     RequireAllDecisionsToBeTrue = decisions.Mode == Dev2DecisionMode.AND;
-                    return new ObservableCollection<IDev2TOFn>(decisions.TheStack.Select((a, i) => new DecisionTO(a, i + 1, UpdateDecisionDisplayName, DeleteRow)));
+                    var collection = decisions.TheStack.Select((a, i) => new DecisionTO(a, i + 1, UpdateDecisionDisplayName, DeleteRow));
+                    return new ObservableCollection<IDev2TOFn>(collection);
                 }
             }
             return new ObservableCollection<IDev2TOFn> { new DecisionTO() };
@@ -233,17 +234,17 @@ namespace Dev2.Activities.Designers2.Decision
             return val;
         }
 
-        public bool IsDisplayTextFocused { get { return (bool)GetValue(IsDisplayTextFocusedProperty); } set { SetValue(IsDisplayTextFocusedProperty, value); } }
+        public bool IsDisplayTextFocused { get => (bool)GetValue(IsDisplayTextFocusedProperty); set => SetValue(IsDisplayTextFocusedProperty, value); }
         public static readonly DependencyProperty IsDisplayTextFocusedProperty = DependencyProperty.Register("IsDisplayTextFocused", typeof(bool), typeof(DecisionDesignerViewModel), new PropertyMetadata(default(bool)));
 
         public static readonly DependencyProperty DisplayTextProperty = DependencyProperty.Register("DisplayText", typeof(string), typeof(DecisionDesignerViewModel), new PropertyMetadata(default(string)));
 
-        public bool IsTrueArmFocused { get { return (bool)GetValue(IsTrueArmFocusedProperty); } set { SetValue(IsTrueArmFocusedProperty, value); } }
+        public bool IsTrueArmFocused { get => (bool)GetValue(IsTrueArmFocusedProperty); set => SetValue(IsTrueArmFocusedProperty, value); }
         public static readonly DependencyProperty IsTrueArmFocusedProperty = DependencyProperty.Register("IsTrueArmFocused", typeof(bool), typeof(DecisionDesignerViewModel), new PropertyMetadata(default(bool)));
 
-        public bool IsFalseArmFocused { get { return (bool)GetValue(IsFalseArmFocusedProperty); } set { SetValue(IsFalseArmFocusedProperty, value); } }
+        public bool IsFalseArmFocused { get => (bool)GetValue(IsFalseArmFocusedProperty); set => SetValue(IsFalseArmFocusedProperty, value); }
         public static readonly DependencyProperty IsFalseArmFocusedProperty = DependencyProperty.Register("IsFalseArmFocused", typeof(bool), typeof(DecisionDesignerViewModel), new PropertyMetadata(default(bool)));
-        private readonly bool _isInitializing;
+        readonly bool _isInitializing;
 
 
         void OnSearchTypeChanged(object indexObj)
@@ -275,31 +276,28 @@ namespace Dev2.Activities.Designers2.Decision
             }
         }
 
-        void UpdateDecisionDisplayName(DecisionTO dec)
+        protected void UpdateDecisionDisplayName(DecisionTO dec)
         {
-            if (DisplayText.StartsWith("If ") || DisplayText == "Decision")
+            var isIfOrDecision = DisplayText.StartsWith("If ") || DisplayText == "Decision";
+
+            if (isIfOrDecision && dec != null && !_isInitializing && dec.IndexNumber == 1)
             {
-                if (dec != null && !_isInitializing && dec.IndexNumber == 1)
-                {
-                    DisplayName = string.Format("If {0} {3} {1} {2}", dec.MatchValue, dec.SearchType,
-                        dec.IsBetweenCriteriaVisible
-                            ? $"{dec.From} and {dec.To}"
-                            : dec.SearchCriteria,
-                        dec.SearchType == null || dec.SearchType.ToLower().Contains("is") ? "" : "Is");
-                    DisplayText = string.Format("If {0} {3} {1} {2}", dec.MatchValue, dec.SearchType,
-                        dec.IsBetweenCriteriaVisible
-                            ? $"{dec.From} and {dec.To}"
-                            : dec.SearchCriteria,
-                        dec.SearchType == null || dec.SearchType.ToLower().Contains("is") ? "" : "Is");
-                }
+                DisplayName = string.Format("If {0} {3} {1} {2}", dec.MatchValue, dec.SearchType,
+                    dec.IsBetweenCriteriaVisible
+                        ? $"{dec.From} and {dec.To}"
+                        : dec.SearchCriteria,
+                    dec.SearchType == null || dec.SearchType.ToLower().Contains("is") ? "" : "Is");
+                DisplayText = string.Format("If {0} {3} {1} {2}", dec.MatchValue, dec.SearchType,
+                    dec.IsBetweenCriteriaVisible
+                        ? $"{dec.From} and {dec.To}"
+                        : dec.SearchCriteria,
+                    dec.SearchType == null || dec.SearchType.ToLower().Contains("is") ? "" : "Is");
             }
         }
 
         protected override IEnumerable<IActionableErrorInfo> ValidateThis()
         {
-            
-            foreach (var error in GetRuleSet("DisplayText").ValidateRules("'DisplayText'", () => IsDisplayTextFocused = true))
-            
+            foreach (var error in GetRuleSet("DisplayText").ValidateRules("'DisplayText'", () => IsDisplayTextFocused = true))            
             {
                 yield return error;
             }
@@ -322,7 +320,7 @@ namespace Dev2.Activities.Designers2.Decision
             yield break;
         }
 
-        private IRuleSet GetRuleSet(string propertyName)
+        IRuleSet GetRuleSet(string propertyName)
         {
             var ruleSet = new RuleSet();
 
@@ -330,19 +328,18 @@ namespace Dev2.Activities.Designers2.Decision
             {
                 case "DisplayText":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => DisplayText));
-                    break;
+                    return ruleSet;
 
                 case "TrueArmText":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => TrueArmText));
-                    break;
+                    return ruleSet;
 
                 case "FalseArmText":
                     ruleSet.Add(new IsStringEmptyOrWhiteSpaceRule(() => FalseArmText));
-                    break;
+                    return ruleSet;
                 default:
-                    break;
+                    return ruleSet;
             }
-            return ruleSet;
         }
 
         #region Implementation of IHandle<ConfigureDecisionExpressionMessage>

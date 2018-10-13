@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -35,18 +35,10 @@ namespace Dev2.Services.Security
             return String.IsNullOrEmpty(attribute?.Reason) ? null : attribute.Reason;
         }
 
-        public static bool IsContributor(this Permissions permissions)
-        {
-            return permissions.HasFlag(Permissions.Contribute) || permissions.HasFlag(Permissions.Administrator);
+        public static bool IsContributor(this Permissions permissions) => permissions.HasFlag(Permissions.Contribute) || permissions.HasFlag(Permissions.Administrator);
 
-        }
-
-
-        public static bool CanDebug(this Permissions permissions)
-        {
-            return permissions.IsContributor() ||
+        public static bool CanDebug(this Permissions permissions) => permissions.IsContributor() ||
                    permissions.HasFlag(Permissions.View) && permissions.HasFlag(Permissions.Execute);
-        }
 
         public static Permissions ToPermissions(this AuthorizationContext context)
         {
@@ -54,7 +46,7 @@ namespace Dev2.Services.Security
             {
                 return Permissions.None;
             }
-            Permissions permission = Permissions.Administrator;
+            var permission = Permissions.Administrator;
 
             if (context.HasFlag(AuthorizationContext.DeployTo))
             {
@@ -74,7 +66,7 @@ namespace Dev2.Services.Security
             }
             if (context.HasFlag(AuthorizationContext.View))
             {
-                permission |= Permissions.View | Permissions.Contribute;;
+                permission |= Permissions.View | Permissions.Contribute;
             }
             if (context.HasFlag(AuthorizationContext.Any))
             {

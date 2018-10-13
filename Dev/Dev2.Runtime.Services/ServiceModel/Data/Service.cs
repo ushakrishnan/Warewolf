@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,7 +26,7 @@ namespace Dev2.Runtime.ServiceModel.Data
     // DO NOT override ToXml() here!
     public class Service : Resource
     {
-        private IOutputDescription _outputDescription;
+        IOutputDescription _outputDescription;
 
         #region CTOR
 
@@ -67,6 +67,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
         protected XElement CreateXml(enActionType actionType, string actionName, Resource source, RecordsetList recordsets, params object[] actionContent)
         {
+            VerifyArgument.IsNotNull("source", source);
             var action = new XElement("Action",
                 new XAttribute("Name", actionName),
                 new XAttribute("Type", actionType),
@@ -135,17 +136,17 @@ namespace Dev2.Runtime.ServiceModel.Data
                 {
                     continue;
                 }
-                XElement validator;
                 var typeName = input.AttributeSafe("NativeType", true);
 
                 Type tmpType = string.IsNullOrEmpty(typeName) ? typeof(object) : TypeExtensions.GetTypeFromSimpleName(typeName);
 
+                XElement validator = input.Element("Validator");
                 // NOTE : Inlining causes debug issues, please avoid ;)
                 result.Parameters.Add(new MethodParameter
                 {
                     Name = input.AttributeSafe("Name"),
                     EmptyToNull = bool.TryParse(input.AttributeSafe("EmptyToNull"), out bool emptyToNull) && emptyToNull,
-                    IsRequired = (validator = input.Element("Validator")) != null && validator.AttributeSafe("Type").Equals("Required", StringComparison.InvariantCultureIgnoreCase),
+                    IsRequired = validator != null && validator.AttributeSafe("Type").Equals("Required", StringComparison.InvariantCultureIgnoreCase),
                     DefaultValue = input.AttributeSafe("DefaultValue"),
                     TypeName = tmpType.FullName
                 });
@@ -184,8 +185,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         #endregion
 
         #region CreateOutputsRecordsetList
-
-        // BUG 9626 - 2013.06.11 - TWR : refactored
+        
         protected RecordsetList CreateOutputsRecordsetList(XElement action)
         {
             var result = new RecordsetList();
@@ -199,7 +199,6 @@ namespace Dev2.Runtime.ServiceModel.Data
 
                 if(description == null)
                 {
-                    // we need to handle old plugins ;)
                     outputDescriptionStr =
                         outputDescriptionStr.Replace("<JSON />", "")
                                             .Replace("</Dev2XMLResult>", "")
@@ -209,8 +208,6 @@ namespace Dev2.Runtime.ServiceModel.Data
 
                     description = outputDescriptionSerializationService.Deserialize(outputDescriptionStr);
                 }
-
-                // TODO : Get Result Coming Back ;)
 
                 OutputDescription = description;
 
@@ -227,7 +224,7 @@ namespace Dev2.Runtime.ServiceModel.Data
             foreach(var output in action.Descendants("Output"))
             {
                 var rsName = output.AttributeSafe("RecordsetName");
-                var rsAlias = output.AttributeSafe("Recordset");  // legacy - should be RecordsetAlias
+                var rsAlias = output.AttributeSafe("Recordset");
                 var fieldName = output.AttributeSafe("OriginalName");
                 var fieldAlias = output.AttributeSafe("MapsTo");
 
@@ -267,8 +264,7 @@ namespace Dev2.Runtime.ServiceModel.Data
         #endregion
 
         #region CreateOutputsXml
-
-        // BUG 9626 - 2013.06.11 - TWR : refactored
+        
         public IEnumerable<XElement> CreateOutputsXml(IEnumerable<Recordset> recordsets)
         {
             var outputDescription = OutputDescriptionFactory.CreateOutputDescription(OutputFormats.ShapedXML);
@@ -279,54 +275,7 @@ namespace Dev2.Runtime.ServiceModel.Data
 
             if(recordsets != null)
             {
-                foreach(var recordset in recordsets)
-                {
-                    var rsName = string.IsNullOrEmpty(recordset.Name) ? "" : recordset.Name.Replace("()", "");
-
-                    foreach(var field in recordset.Fields)
-                    {
-                        if(String.IsNullOrEmpty(field.Name))
-                        {
-                            continue;
-                        }
-                        var path = field.Path;
-                        var rsAlias = string.IsNullOrEmpty(field.RecordsetAlias) ? "" : field.RecordsetAlias.Replace("()", "");
-
-                        var value = string.Empty;
-                        if(!string.IsNullOrEmpty(field.Alias))
-                        {
-                            value = string.IsNullOrEmpty(rsAlias)
-                                        ? string.Format("[[{0}]]", field.Alias)
-                                        : string.Format("[[{0}().{1}]]", rsAlias, field.Alias);
-                        }
-
-                        if(path != null)
-                        {
-                            path.OutputExpression = value;
-                            dataSourceShape.Paths.Add(path);
-                        }
-
-                        // MapsTo MUST NOT contain recordset name
-                        var mapsTo = field.Alias ?? string.Empty;
-                        var idx = mapsTo.IndexOf("().", StringComparison.InvariantCultureIgnoreCase);
-                        if(idx != -1)
-                        {
-                            mapsTo = mapsTo.Substring(idx + 3);
-                        }
-
-
-                        var output = new XElement("Output",
-                            new XAttribute("OriginalName", field.Name),
-                            new XAttribute("Name", mapsTo),  // Name MUST be same as MapsTo 
-                            new XAttribute("MapsTo", mapsTo),
-                            new XAttribute("Value", value),
-                            new XAttribute("RecordsetName", rsName),
-                            new XAttribute("RecordsetAlias", rsAlias),
-                            new XAttribute("Recordset", rsAlias)  // legacy - used by LanguageParser._recordSetAttribute and hard-coded in our tests
-                            );
-                        outputs.Add(output);
-                    }
-                }
+                outputs = CreateOutputsXml(recordsets, dataSourceShape, outputs);
             }
 
             var outputDescriptionSerializationService = OutputDescriptionSerializationServiceFactory.CreateOutputDescriptionSerializationService();
@@ -337,8 +286,59 @@ namespace Dev2.Runtime.ServiceModel.Data
             return new[] { outputs, description };
         }
 
+        static XElement CreateOutputsXml(IEnumerable<Recordset> recordsets, IDataSourceShape dataSourceShape, XElement outputs)
+        {
+            foreach (var recordset in recordsets)
+            {
+                var rsName = string.IsNullOrEmpty(recordset.Name) ? "" : recordset.Name.Replace("()", "");
+
+                foreach (var field in recordset.Fields)
+                {
+                    if (String.IsNullOrEmpty(field.Name))
+                    {
+                        continue;
+                    }
+                    var path = field.Path;
+                    var rsAlias = string.IsNullOrEmpty(field.RecordsetAlias) ? "" : field.RecordsetAlias.Replace("()", "");
+
+                    var value = string.Empty;
+                    if (!string.IsNullOrEmpty(field.Alias))
+                    {
+                        value = string.IsNullOrEmpty(rsAlias)
+                                    ? string.Format("[[{0}]]", field.Alias)
+                                    : string.Format("[[{0}().{1}]]", rsAlias, field.Alias);
+                    }
+
+                    if (path != null)
+                    {
+                        path.OutputExpression = value;
+                        dataSourceShape.Paths.Add(path);
+                    }
+
+                    // MapsTo MUST NOT contain recordset name
+                    var mapsTo = field.Alias ?? string.Empty;
+                    var idx = mapsTo.IndexOf("().", StringComparison.InvariantCultureIgnoreCase);
+                    if (idx != -1)
+                    {
+                        mapsTo = mapsTo.Substring(idx + 3);
+                    }
+
+
+                    var output = new XElement("Output",
+                        new XAttribute("OriginalName", field.Name),
+                        new XAttribute("Name", mapsTo),  // Name MUST be same as MapsTo 
+                        new XAttribute("MapsTo", mapsTo),
+                        new XAttribute("Value", value),
+                        new XAttribute("RecordsetName", rsName),
+                        new XAttribute("RecordsetAlias", rsAlias),
+                        new XAttribute("Recordset", rsAlias)  // legacy - used by LanguageParser._recordSetAttribute and hard-coded in our tests
+                        );
+                    outputs.Add(output);
+                }
+            }
+            return outputs;
+        }
+
         #endregion
-
-
     }
 }

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,6 +31,7 @@ using Dev2.Common.Interfaces.ToolBase.Database;
 using Dev2.Communication;
 using Dev2.Providers.Errors;
 using Dev2.Studio.Interfaces;
+using Dev2.Threading;
 using Microsoft.Practices.Prism.Commands;
 using Warewolf.Core;
 
@@ -41,18 +42,20 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
 {
     public class SqlServerDatabaseDesignerViewModel : CustomToolWithRegionBase, IDatabaseServiceViewModel
     {
-        private IOutputsToolRegion _outputsRegion;
-        private IDatabaseInputRegion _inputArea;
-        private ISourceToolRegion<IDbSource> _sourceRegion;
-        private IDbActionToolRegion<IDbAction> _actionRegion;
+        IOutputsToolRegion _outputsRegion;
+        IDatabaseInputRegion _inputArea;
+        ISourceToolRegion<IDbSource> _sourceRegion;
+        IDbActionToolRegion<IDbAction> _actionRegion;
 
-        private IErrorInfo _worstDesignError;
+        IErrorInfo _worstDesignError;
 
         const string DoneText = "Done";
         const string FixText = "Fix";
         const string OutputDisplayName = " - Outputs";
 
         readonly string _sourceNotFoundMessage = Warewolf.Studio.Resources.Languages.Core.DatabaseServiceSourceNotFound;
+
+        public SqlServerDatabaseDesignerViewModel(ModelItem modelItem) : this(modelItem, new AsyncWorker(), new ViewPropertyBuilder()) { }
 
         public SqlServerDatabaseDesignerViewModel(ModelItem modelItem, IAsyncWorker worker, IViewPropertyBuilder propertyBuilder)
             : base(modelItem)
@@ -71,7 +74,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
 
         Guid UniqueID => GetProperty<Guid>();
 
-        private void SetupCommonProperties()
+        void SetupCommonProperties()
         {
             AddTitleBarMappingToggle();
             InitialiseViewModel(new ManageDatabaseServiceInputViewModel(this, Model));
@@ -87,7 +90,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             UpdateWorstError();
         }
 
-        private void InitialiseViewModel(IManageDatabaseInputViewModel manageServiceInputViewModel)
+        void InitialiseViewModel(IManageDatabaseInputViewModel manageServiceInputViewModel)
         {
             ManageServiceInputViewModel = manageServiceInputViewModel;
 
@@ -218,19 +221,16 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
                     break;
                 }
             }
-            WorstDesignError = worstError[0];
+            SetWorstDesignError(worstError[0]);
         }
 
-        IErrorInfo WorstDesignError
+        void SetWorstDesignError(IErrorInfo value)
         {
-            set
+            if (_worstDesignError != value)
             {
-                if (_worstDesignError != value)
-                {
-                    _worstDesignError = value;
-                    IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
-                    WorstError = value?.ErrorType ?? ErrorType.None;
-                }
+                _worstDesignError = value;
+                IsWorstErrorReadOnly = value == null || value.ErrorType == ErrorType.None || value.FixType == FixType.None || value.FixType == FixType.Delete;
+                WorstError = value?.ErrorType ?? ErrorType.None;
             }
         }
 
@@ -257,7 +257,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             }
         }
 
-        private IErrorInfo NoError { get; set; }
+        IErrorInfo NoError { get; set; }
 
         public bool IsWorstErrorReadOnly
         {
@@ -280,12 +280,12 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
         DependencyProperty.Register("WorstError", typeof(ErrorType), typeof(SqlServerDatabaseDesignerViewModel), new PropertyMetadata(ErrorType.None));
 
         bool _generateOutputsVisible;
-        private readonly IAsyncWorker _worker;
-        private readonly IViewPropertyBuilder _propertyBuilder;
+        readonly IAsyncWorker _worker;
+        readonly IViewPropertyBuilder _propertyBuilder;
 
         public ICommand TestInputCommand { get; set; }
 
-        private string Type => GetProperty<string>();
+        string Type => GetProperty<string>();
 
 
         void AddTitleBarMappingToggle()
@@ -418,7 +418,8 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             {
                 Source = SourceRegion.SelectedSource,
                 Action = ActionRegion.SelectedAction,
-                Inputs = new List<IServiceInput>()
+                Inputs = new List<IServiceInput>(),
+                CommandTimeout = InputArea.CommandTimeout
             };
             foreach (var serviceInput in InputArea.Inputs)
             {
@@ -436,7 +437,7 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
             }
         }
 
-        public void SetDisplayName(string outputFieldName)
+        public void SetDisplayName(string displayName)
         {
             var index = DisplayName.IndexOf(" -", StringComparison.Ordinal);
 
@@ -445,15 +446,15 @@ namespace Dev2.Activities.Designers2.SqlServerDatabase
                 DisplayName = DisplayName.Remove(index);
             }
 
-            var displayName = DisplayName;
+            var displayName2 = DisplayName;
 
-            if (!string.IsNullOrEmpty(displayName) && displayName.Contains("Dsf"))
+            if (!string.IsNullOrEmpty(displayName2) && displayName2.Contains("Dsf"))
             {
-                DisplayName = displayName;
+                DisplayName = displayName2;
             }
-            if (!string.IsNullOrWhiteSpace(outputFieldName))
+            if (!string.IsNullOrWhiteSpace(displayName))
             {
-                DisplayName = displayName + outputFieldName;
+                DisplayName = displayName2 + displayName;
             }
         }
 

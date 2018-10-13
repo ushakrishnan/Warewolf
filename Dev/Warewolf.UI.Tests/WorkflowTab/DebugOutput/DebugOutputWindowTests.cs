@@ -6,6 +6,9 @@ using Warewolf.UI.Tests.WorkflowTab.Tools.StorageDropbox.DropboxToolsUIMapClasse
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.Tools.Utility.UtilityToolsUIMapClasses;
+using Warewolf.Launcher;
+using System.IO;
+using System.Reflection;
 
 namespace Warewolf.UI.Tests.DebugOutputTests
 {
@@ -15,7 +18,19 @@ namespace Warewolf.UI.Tests.DebugOutputTests
         const string SelectionHighlightWf = "SelectionHighlightWf";
         const string DropboxSelectionHighlightWf = "DropboxSelectionHighlightWf";
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Debug Input")]
+        public void Change_Value_On_HelloWorld_Assign_Marks_Workflow_As_Dirty_UITest()
+        {
+            ExplorerUIMap.Filter_Explorer("Hello World");
+            ExplorerUIMap.DoubleClick_Explorer_Localhost_First_Item();
+            DataToolsUIMap.Click_Assign_Row_1_Value_TextBox();
+            DataToolsUIMap.Add_Space_At_The_End_Of_Row1_Value();
+            Assert.IsTrue(UIMap.MainStudioWindow.SideMenuBar.SaveButton.Enabled);
+        }
+
+        
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void HelloWorld_Is_Highlighted_After_Execution_UITest()
         {
@@ -23,11 +38,12 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             ExplorerUIMap.Filter_Explorer("Hello World");
             WorkflowTabUIMap.Drag_Explorer_workflow_Onto_Workflow_Design_Surface();
             UIMap.Press_F6();
+            WorkflowTabUIMap.WaitForDebugOutput();
             var helloWorldIsHighlighted = WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.HelloWorldWorkFlow.ItemStatus.Contains("IsPrimarySelection=True IsSelection=True");
             Assert.IsTrue(helloWorldIsHighlighted, "Sub-workflow is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void WebRequestTool_Is_Highlighted_After_Execution_UITest()
         {
@@ -38,37 +54,37 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(webRequest, "Web request tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void WorkFlowSelection_Validation_UITest()
         {
             ExplorerUIMap.Filter_Explorer(SelectionHighlightWf);
             ExplorerUIMap.Open_ExplorerFirstItem_From_ExplorerContextMenu();
             UIMap.Press_F6();
-            ExplorerUIMap.Click_AssignStep_InDebugOutput();
+            WorkflowTabUIMap.Click_AssignStep_InDebugOutput();
             var assignFocus = DataToolsUIMap.MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.WorkflowDesigner_Custom.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.ItemStatus.Contains("IsPrimarySelection=True IsSelection=True");
             Assert.IsTrue(assignFocus);
-            ExplorerUIMap.Click_DesicionStep_InDebugOutput();
+            WorkflowTabUIMap.Click_DecisionStep_InDebugOutput();
             var assignHasNoFocus = DataToolsUIMap.MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.WorkflowDesigner_Custom.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.ItemStatus.Contains("IsPrimarySelection=False IsSelection=False");
             Assert.IsTrue(assignHasNoFocus, "Assign tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void DropboxWorkFlowSelection_Validation_UITest()
         {
             ExplorerUIMap.Filter_Explorer(DropboxSelectionHighlightWf);
             ExplorerUIMap.Open_ExplorerFirstItem_From_ExplorerContextMenu();
             UIMap.Press_F6();
-            ExplorerUIMap.Click_AssignStep_InDebugOutput();
+            WorkflowTabUIMap.Click_AssignStep_InDebugOutput();
             var assignFocus = DataToolsUIMap.MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.WorkflowDesigner_Custom.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.ItemStatus.Contains("IsPrimarySelection=True IsSelection=True");
             Assert.IsTrue(assignFocus);
-            ExplorerUIMap.Click_DesicionStep_InDebugOutput();
+            WorkflowTabUIMap.Click_DecisionStep_InDebugOutput();
             var assignHasNoFocus = DataToolsUIMap.MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.WorkflowDesigner_Custom.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.ItemStatus.Contains("IsPrimarySelection=False IsSelection=False");
             Assert.IsTrue(assignHasNoFocus, "Dropbox delete tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void SelectAndApplyWorkFlowSelection_Validation_UITest()
         {
@@ -79,7 +95,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(selectAndApplyFocus, "Select and Apply tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void DropboxDownloadWorkFlowSelection_Validation_UITest()
         {
@@ -90,7 +106,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxDownloadHasFocus, "Dropbox download tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void DropboxDeleteWorkFlowSelection_Validation_UITest()
         {
@@ -101,7 +117,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxDeleteHasFocus, "Dropbox delete tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void DropboxUploadWorkFlowSelection_Validation_UITest()
         {
@@ -112,7 +128,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxUploadHasFocus, "Dropbox upload tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Debug Input")]
         public void DropboxListWorkFlowSelection_Validation_UITest()
         {
@@ -121,6 +137,18 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             UIMap.Press_F6();
             var dropboxListHasFocus = DropboxToolsUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.DropboxFileList.ItemStatus.Contains("IsPrimarySelection=True IsSelection=True");
             Assert.IsTrue(dropboxListHasFocus, "Dropbox list tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("MSSql")]
+        public void Executing_Sql_Procedure_With_Errors()
+        {
+            ExplorerUIMap.Filter_Explorer("Raise_Hell_Procedure");
+            Assert.IsTrue(ExplorerUIMap.MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem.Exists, "Source did not save in the explorer UI.");
+            ExplorerUIMap.DoubleClick_Explorer_Localhost_First_Item();
+            UIMap.Press_F6();
+            Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.UISQLServerDatabaseTreeItem.UISQLErrorError15700seText.Exists);
+            Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.UISQLServerDatabaseTreeItem.UIErrorText.Exists);
         }
 
         #region Additional test attributes

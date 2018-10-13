@@ -29,7 +29,6 @@ namespace Dev2.Settings.Perfcounters
 
         public static IList<IPerformanceCountersByResource> GetResourceCountersTo(this IPerformanceCounterTo to)
         {
-
             var res = new List<IPerformanceCountersByResource>();
             var ids = to.ResourceCounters;
             foreach(var resourcePerformanceCounter in ids)
@@ -42,13 +41,17 @@ namespace Dev2.Settings.Perfcounters
                 }
                 switch (resourcePerformanceCounter.PerfCounterType)
                 {
-                    case WarewolfPerfCounterType.AverageExecutionTime: current.AverageExecutionTime = true; break;
-                    case WarewolfPerfCounterType.ExecutionErrors: current.TotalErrors = true; break;
-                    case WarewolfPerfCounterType.ConcurrentRequests: current.ConcurrentRequests = true; break;
-                    case WarewolfPerfCounterType.RequestsPerSecond: current.RequestPerSecond = true; break;
-                    case WarewolfPerfCounterType.ServicesNotFound:
+                    case WarewolfPerfCounterType.AverageExecutionTime:
+                        current.AverageExecutionTime = true;
                         break;
-                    case WarewolfPerfCounterType.NotAuthorisedErrors:
+                    case WarewolfPerfCounterType.ExecutionErrors:
+                        current.TotalErrors = true;
+                        break;
+                    case WarewolfPerfCounterType.ConcurrentRequests:
+                        current.ConcurrentRequests = true;
+                        break;
+                    case WarewolfPerfCounterType.RequestsPerSecond:
+                        current.RequestPerSecond = true;
                         break;
                     default:
                         break;
@@ -112,10 +115,7 @@ namespace Dev2.Settings.Perfcounters
         /// <returns>
         /// true if the specified objects are equal; otherwise, false.
         /// </returns>
-        public bool Equals(IResourcePerformanceCounter x, IResourcePerformanceCounter y)
-        {
-            return x.ResourceId == y.ResourceId && x.PerfCounterType == y.PerfCounterType;
-        }
+        public bool Equals(IResourcePerformanceCounter x, IResourcePerformanceCounter y) => x.ResourceId == y.ResourceId && x.PerfCounterType == y.PerfCounterType;
 
         /// <summary>
         /// Returns a hash code for the specified object.
@@ -124,10 +124,7 @@ namespace Dev2.Settings.Perfcounters
         /// A hash code for the specified object.
         /// </returns>
         /// <param name="obj">The <see cref="T:System.Object"/> for which a hash code is to be returned.</param><exception cref="T:System.ArgumentNullException">The type of <paramref name="obj"/> is a reference type and <paramref name="obj"/> is null.</exception>
-        public int GetHashCode(IResourcePerformanceCounter obj)
-        {
-            return obj.ResourceId.GetHashCode() ^obj.PerfCounterType.GetHashCode()  ;
-        }
+        public int GetHashCode(IResourcePerformanceCounter obj) => obj.ResourceId.GetHashCode() ^ obj.PerfCounterType.GetHashCode();
 
         #endregion
 

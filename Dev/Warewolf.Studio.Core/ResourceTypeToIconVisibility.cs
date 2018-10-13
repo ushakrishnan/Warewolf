@@ -20,7 +20,7 @@ namespace Warewolf.Studio.Core
         {
             if (value != null)
             {
-                string resourceType = value.ToString();
+                var resourceType = value.ToString();
                 if (resourceType != "Folder")
                 {
                     return Visibility.Visible;
@@ -30,10 +30,7 @@ namespace Warewolf.Studio.Core
         }
 
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return null;
-        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => null;
 
         #endregion
     }

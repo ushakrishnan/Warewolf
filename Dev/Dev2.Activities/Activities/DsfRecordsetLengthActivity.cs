@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using Dev2.Activities;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
 using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.Diagnostics;
@@ -29,7 +30,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 {
 
-    public class DsfRecordsetLengthActivity : DsfActivityAbstract<string>
+    public class DsfRecordsetLengthActivity : DsfActivityAbstract<string>,IEquatable<DsfRecordsetLengthActivity>
     {
         #region Fields
 
@@ -55,13 +56,26 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             DisplayName = "Length";
         }
 
-
-        public override List<string> GetOutputs()
+        public override IEnumerable<StateVariable> GetState()
         {
-            return new List<string> { RecordsLength };
+            return new[] {
+                new StateVariable
+                {
+                    Name = "RecordsetName",
+                    Value = RecordsetName,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name="RecordsLength",
+                    Value = RecordsLength,
+                    Type = StateVariable.StateType.Output
+                }
+            };
         }
 
-        
+        public override List<string> GetOutputs() => new List<string> { RecordsLength };
+
         protected override void CacheMetadata(NativeActivityMetadata metadata)
         {
             base.CacheMetadata(metadata);
@@ -71,15 +85,15 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         protected override void OnExecute(NativeActivityContext context)
         {
-            IDSFDataObject dataObject = context.GetExtension<IDSFDataObject>();
+            var dataObject = context.GetExtension<IDSFDataObject>();
             ExecuteTool(dataObject, 0);
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
 
-            ErrorResultTO allErrors = new ErrorResultTO();
-            ErrorResultTO errors = new ErrorResultTO();
+            var allErrors = new ErrorResultTO();
+            var errors = new ErrorResultTO();
             allErrors.MergeErrors(errors);
             InitializeDebug(dataObject);
             // Process if no errors
@@ -91,54 +105,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 {
                     try
                     {
-                        string rs = DataListUtil.ExtractRecordsetNameFromValue(RecordsetName);
-                        if(RecordsLength == string.Empty)
-                        {
-                            allErrors.AddError(ErrorResource.BlankResultVariable);
-                        }
-                        if(dataObject.IsDebugMode())
-                        {
-                            var warewolfEvalResult = dataObject.Environment.Eval(RecordsetName.Replace("()", "(*)"), update);
-                            if(warewolfEvalResult.IsWarewolfRecordSetResult)
-                            {
-                                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfRecordSetResult recsetResult)
-                                {
-                                    AddDebugInputItem(new DebugItemWarewolfRecordset(recsetResult.Item, RecordsetName, "Recordset", "="));
-                                }
-                            }
-                            if(warewolfEvalResult.IsWarewolfAtomListresult)
-                            {
-                                if (warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult recsetResult)
-                                {
-                                    AddDebugInputItem(new DebugEvalResult(RecordsetName, "Recordset", dataObject.Environment, update));
-                                }
-                            }
-                        }
-                        var rule = new IsSingleValueRule(() => RecordsLength);
-                        var single = rule.Check();
-                        if(single != null)
-                        {
-                            allErrors.AddError(single.Message);
-                        }
-                        else
-                        {
-                            var count = 0;
-                            if(dataObject.Environment.HasRecordSet(RecordsetName))
-                            {
-                                count = dataObject.Environment.GetLength(rs);
-                            }
-                            else
-                            {
-                                allErrors.AddError("Recordset: "+RecordsetName+" does not exist.");
-                            }
-                            var value = count.ToString();
-                            dataObject.Environment.Assign(RecordsLength, value, update);
-                            AddDebugOutputItem(new DebugItemWarewolfAtomResult(value, RecordsLength, ""));
-                        }
+                        allErrors = TryExecute(dataObject, update, allErrors);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
-                        allErrors.AddError(e.Message);
+                        allErrors.AddError(e.StackTrace);
                         dataObject.Environment.Assign(RecordsLength, "0", update);
                         AddDebugOutputItem(new DebugItemStaticDataParams("0", RecordsLength, "", "="));
                     }
@@ -162,11 +133,56 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
+        ErrorResultTO TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
+        {
+            var rs = DataListUtil.ExtractRecordsetNameFromValue(RecordsetName);
+            if (RecordsLength == string.Empty)
+            {
+                allErrors.AddError(ErrorResource.BlankResultVariable);
+            }
+            if (dataObject.IsDebugMode())
+            {
+                var warewolfEvalResult = dataObject.Environment.Eval(RecordsetName.Replace("()", "(*)"), update);
+                if (warewolfEvalResult.IsWarewolfRecordSetResult && warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfRecordSetResult recsetResult)
+                {
+                    AddDebugInputItem(new DebugItemWarewolfRecordset(recsetResult.Item, RecordsetName, "Recordset", "="));
+                }
+
+                if (warewolfEvalResult.IsWarewolfAtomListresult && warewolfEvalResult is CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult atomListResult)
+                {
+                    AddDebugInputItem(new DebugEvalResult(RecordsetName, "Recordset", dataObject.Environment, update));
+                }
+
+            }
+            var rule = new IsSingleValueRule(() => RecordsLength);
+            var single = rule.Check();
+            if (single != null)
+            {
+                allErrors.AddError(single.Message);
+            }
+            else
+            {
+                var count = 0;
+                if (dataObject.Environment.HasRecordSet(RecordsetName))
+                {
+                    count = dataObject.Environment.GetLength(rs);
+                }
+                else
+                {
+                    allErrors.AddError("Recordset: " + RecordsetName + " does not exist.");
+                }
+                var value = count.ToString();
+                dataObject.Environment.Assign(RecordsLength, value, update);
+                AddDebugOutputItem(new DebugItemWarewolfAtomResult(value, RecordsLength, ""));
+            }
+            return allErrors;
+        }
+
         #region Get Debug Inputs/Outputs
 
         #region GetDebugInputs
 
-        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugInput in _debugInputs)
             {
@@ -179,7 +195,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region GetDebugOutputs
 
-        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment dataList, int update)
+        public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update)
         {
             foreach(IDebugItem debugOutput in _debugOutputs)
             {
@@ -211,17 +227,56 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(RecordsetName);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(RecordsetName);
 
-        public override IList<DsfForEachItem> GetForEachOutputs()
-        {
-            return GetForEachItems(RecordsLength);
-        }
+        public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(RecordsLength);
 
         #endregion
 
+        public bool Equals(DsfRecordsetLengthActivity other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return base.Equals(other) && string.Equals(RecordsetName, other.RecordsetName) && string.Equals(RecordsLength, other.RecordsLength);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfRecordsetLengthActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (RecordsetName != null ? RecordsetName.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (RecordsLength != null ? RecordsLength.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

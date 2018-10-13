@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,27 +25,27 @@ namespace Dev2.Tests.Runtime.ServiceModel
     {
         #region ToString Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToStringFullySetupObjectExpectedJsonSerializedObjectReturnedAsString()
         {
-            DbSource testDbSource = SetupDefaultDbSource();
-            string actualDbSourceToString = testDbSource.ToString();
-            string expected = JsonConvert.SerializeObject(testDbSource);
+            var testDbSource = SetupDefaultDbSource();
+            var actualDbSourceToString = testDbSource.ToString();
+            var expected = JsonConvert.SerializeObject(testDbSource);
             Assert.AreEqual(expected, actualDbSourceToString);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToStringEmptyObjectExpected()
         {
             var testDbSource = new DbSource();
-            string actualSerializedDbSource = testDbSource.ToString();
-            string expected = JsonConvert.SerializeObject(testDbSource);
+            var actualSerializedDbSource = testDbSource.ToString();
+            var expected = JsonConvert.SerializeObject(testDbSource);
             Assert.AreEqual(expected, actualSerializedDbSource);
         }
 
         #endregion ToString Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DbSource_ConnectionString")]
         public void DbSource_ConnectionString_NotNamedInstance_ShouldUsePortNumber()
@@ -65,7 +65,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             StringAssert.Contains(connectionString,",1433");
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DbSource_ConnectionString")]
         public void DbSource_ConnectionString_NamedInstanceDefaultPort_ShouldNotUsePort()
@@ -86,7 +86,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsFalse(contains);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DbSource_ConnectionString")]
         public void DbSource_ConnectionString_NamedInstanceNotDefaultPort_ShouldUsePort()
@@ -109,7 +109,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region ToXml Tests
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToXmlAllPropertiesSetupExpectedXElementContainingAllObjectInformation()
         {
             var testDbSource = SetupDefaultDbSource();
@@ -128,15 +128,15 @@ namespace Dev2.Tests.Runtime.ServiceModel
             Assert.IsNull(workflowXamlDefintion);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         public void ToXmlEmptyObjectExpectedXElementContainingNoInformationRegardingSource()
         {
             var testDbSource = new DbSource();
-            XElement expectedXml = testDbSource.ToXml();
+            var expectedXml = testDbSource.ToXml();
 
-            IEnumerable<XAttribute> attrib = expectedXml.Attributes();
-            IEnumerator<XAttribute> attribEnum = attrib.GetEnumerator();
-            while(attribEnum.MoveNext())
+            var attrib = expectedXml.Attributes();
+            var attribEnum = attrib.GetEnumerator();
+            while (attribEnum.MoveNext())
             {
                 if(attribEnum.Current.Name == "Name")
                 {
@@ -150,7 +150,7 @@ namespace Dev2.Tests.Runtime.ServiceModel
 
         #region Private Test Methods
 
-        private DbSource SetupDefaultDbSource()
+        DbSource SetupDefaultDbSource()
         {
             var testDbSource = new DbSource
             {

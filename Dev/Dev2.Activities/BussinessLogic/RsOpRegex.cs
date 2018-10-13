@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,13 +21,13 @@ namespace Dev2.DataList
 
     public class RsOpRegex : AbstractRecsetSearchValidation
     {
-        public override Func<DataStorage.WarewolfAtom, bool> CreateFunc(IEnumerable<DataStorage.WarewolfAtom> values, IEnumerable<DataStorage.WarewolfAtom> warewolfAtoms, IEnumerable<DataStorage.WarewolfAtom> to, bool all)
+        public override Func<DataStorage.WarewolfAtom, bool> CreateFunc(IEnumerable<DataStorage.WarewolfAtom> values, IEnumerable<DataStorage.WarewolfAtom> from, IEnumerable<DataStorage.WarewolfAtom> to, bool all)
         {
             if (all)
             {
                 return a => values.All(x =>
                 {
-                    Regex exp = new Regex(x.ToString());
+                    var exp = new Regex(x.ToString());
                     return exp.IsMatch(a.ToString());
 
                 });
@@ -35,16 +35,14 @@ namespace Dev2.DataList
 
             return a => values.Any(x =>
             {
-                Regex exp = new Regex(x.ToString());
+                var exp = new Regex(x.ToString());
                 return exp.IsMatch(a.ToString());
 
             });
         }
 
-        public override string HandlesType()
-        {
-            return "Is Regex";
-        }
+        public override string HandlesType() => "Is Regex";
+
         public override int ArgumentCount => 2;
     }
 }

@@ -3,16 +3,10 @@ using Dev2.Common.Interfaces.DB;
 
 namespace Dev2.Activities.Designers2.Core.InputRegion
 {
-    internal class ServiceInputNameComparer : IEqualityComparer<IServiceInput>
+    class ServiceInputNameComparer : IEqualityComparer<IServiceInput>
     {
-        public bool Equals(IServiceInput x, IServiceInput y)
-        {
-            return x.Name.Equals(y.Name);
-        }
+        public bool Equals(IServiceInput x, IServiceInput y) => x.Name.Equals(y.Name);
 
-        public int GetHashCode(IServiceInput obj)
-        {
-            return obj.GetHashCode();
-        }
+        public int GetHashCode(IServiceInput obj) => obj.GetHashCode();
     }
 }

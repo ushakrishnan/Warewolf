@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,15 +31,9 @@ namespace Warewolf.Studio.ViewModels
 
         #region Implementation of ISharePointSourceModel
 
-        public void TestConnection(ISharepointServerSource resource)
-        {
-            _updateRepository.TestConnection(resource);
-        }
+        public void TestConnection(ISharepointServerSource resource) => _updateRepository.TestConnection(resource);
 
-        public void Save(ISharepointServerSource resource)
-        {
-            _updateRepository.Save(resource);
-        }
+        public void Save(ISharepointServerSource toSpSource) => _updateRepository.Save(toSpSource);
 
         public string ServerName { get; set; }
 
@@ -48,7 +42,6 @@ namespace Warewolf.Studio.ViewModels
             var xaml = _queryProxy.FetchResourceXaml(resourceID);
             var db = new SharepointSource(xaml.ToXElement());
             var def = new SharePointServiceSourceDefinition(db);
-
             return def;
         }
 

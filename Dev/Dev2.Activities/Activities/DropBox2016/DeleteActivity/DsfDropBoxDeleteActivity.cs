@@ -8,26 +8,27 @@ using Dropbox.Api;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Wrappers;
 using Dev2.Common.Wrappers;
 using Dev2.Interfaces;
 using Unlimited.Applications.BusinessDesignStudio.Activities.Utilities;
 using Warewolf.Core;
 using Warewolf.Resource.Errors;
+using Dev2.Common.State;
 
 namespace Dev2.Activities.DropBox2016.DeleteActivity
 {
-    [ToolDescriptorInfo("Dropbox", "Delete", ToolType.Native, "8AC94835-0A28-4166-A53A-D7B07730C135", "Dev2.Acitivities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Delete")]
-    public class DsfDropBoxDeleteActivity : DsfBaseActivity, IDisposable
+    [ToolDescriptorInfo("Dropbox", "Delete", ToolType.Native, "8AC94835-0A28-4166-A53A-D7B07730C135", "Dev2.Activities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_Delete")]
+    public class DsfDropBoxDeleteActivity : DsfBaseActivity, IDisposable, IEquatable<DsfDropBoxDeleteActivity>
     {
-        private DropboxClient _client;
+        DropboxClient _client;
         protected Exception Exception;
         protected IDropboxSingleExecutor<IDropboxResult> DropboxSingleExecutor;
-        private IDropboxClientWrapper _dropboxClientWrapper;
+        IDropboxClientWrapper _dropboxClientWrapper;
 
         public DsfDropBoxDeleteActivity()
         {
-            
             DisplayName = "Delete from Dropbox";
         }
 
@@ -79,16 +80,7 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
             _client.Dispose();
         }
 
-        #region Overrides of DsfNativeActivity<string>
-
-        public override enFindMissingType GetFindMissingType()
-        {
-            return enFindMissingType.StaticActivity;
-        }
-
-        #endregion Overrides of DsfNativeActivity<string>
-
-        #region Overrides of DsfBaseActivity
+        public override enFindMissingType GetFindMissingType() => enFindMissingType.StaticActivity;
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
         {
@@ -99,6 +91,79 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
             base.ExecuteTool(dataObject, update);
         }
 
-        #endregion Overrides of DsfBaseActivity
+        public bool Equals(DsfDropBoxDeleteActivity other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var isSourceEqual = CommonEqualityOps.AreObjectsEqual<IResource>(SelectedSource, other.SelectedSource);
+            return base.Equals(other) 
+                && isSourceEqual
+                && string.Equals(DisplayName, other.DisplayName)
+                && string.Equals(DeletePath, other.DeletePath);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfDropBoxDeleteActivity) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (SelectedSource != null ? SelectedSource.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (DeletePath != null ? DeletePath.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
+
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[]
+            {
+                new StateVariable
+                {
+                    Name = "SelectedSource.ResourceID",
+                    Type = StateVariable.StateType.Input,
+                    Value = SelectedSource.ResourceID.ToString()
+                },
+                new StateVariable
+                {
+                    Name = "DeletePath",
+                    Type = StateVariable.StateType.Input,
+                    Value = DeletePath
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = Result
+                }
+            };
+        }
     }
 }

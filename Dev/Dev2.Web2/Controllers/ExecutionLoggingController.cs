@@ -63,7 +63,7 @@ namespace Dev2.Web2.Controllers
 
                     return PartialView("ExecutionList", model.Item1);
                 }
-                catch
+                catch (Exception ex)
                 {
                     return PartialView("ExecutionList", emptyModel);
                 }
@@ -71,7 +71,7 @@ namespace Dev2.Web2.Controllers
             return PartialView("ExecutionList", emptyModel);
         }
 
-        private ExecutionLoggingRequestViewModel CheckRequest(ExecutionLoggingRequestViewModel Request)
+        ExecutionLoggingRequestViewModel CheckRequest(ExecutionLoggingRequestViewModel Request)
         {
             ExecutionLoggingRequestViewModel toReturn;
             if (Request != null)
@@ -89,10 +89,7 @@ namespace Dev2.Web2.Controllers
         }
 
         // GET: ExecutionLogging/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
+        public ActionResult Create() => View();
 
         // POST: ExecutionLogging/Create
         [HttpPost]
@@ -104,17 +101,14 @@ namespace Dev2.Web2.Controllers
 
                 return RedirectToAction("Index");
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }
         }
 
         // GET: ExecutionLogging/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
+        public ActionResult Edit(int id) => View();
 
         // POST: ExecutionLogging/Edit/5
         [HttpPost]
@@ -126,17 +120,14 @@ namespace Dev2.Web2.Controllers
 
                 return RedirectToAction("Index");
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }
         }
 
         // GET: ExecutionLogging/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
+        public ActionResult Delete(int id) => View();
 
         // POST: ExecutionLogging/Delete/5
         [HttpPost]
@@ -148,7 +139,7 @@ namespace Dev2.Web2.Controllers
 
                 return RedirectToAction("Index");
             }
-            catch
+            catch (Exception ex)
             {
                 return View();
             }

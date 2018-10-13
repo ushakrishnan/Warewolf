@@ -35,7 +35,7 @@ namespace Dev2.Tests.Runtime.WebServer
     [TestClass]
     public class AbstractWebRequestHandlerTests
     {
-        private NameValueCollection LocalBoundVariables => new NameValueCollection
+        NameValueCollection LocalBoundVariables => new NameValueCollection
         {
             { "Bookmark", "the_bookmark" },
             { "Instanceid", "the_instanceid" },
@@ -46,13 +46,15 @@ namespace Dev2.Tests.Runtime.WebServer
             { "Servicename", "the_servicename" },
             { "wid", "the_workflowid" }
         };
+        public TestContext TestContext { get; set; }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateFormGivenValidArgsShouldreturnWriter()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var mock = new Mock<IDSFDataObject>();
@@ -61,9 +63,12 @@ namespace Dev2.Tests.Runtime.WebServer
             env.SetupAllProperties();
             mock.SetupGet(o => o.Environment).Returns(env.Object);
             mock.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            mock.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
-            var wRepo = new Mock<IWorkspaceRepository>(); wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty)); var handlerMock = new AbstractWebRequestHandlerMock(mock.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
+            var wRepo = new Mock<IWorkspaceRepository>();
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            var handlerMock = new AbstractWebRequestHandlerMock(mock.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
             var webRequestTO = new WebRequestTO
             {
                 WebServerUrl = "http://localhost:3142/secure/Hello%20World.tests/Blank%20Input"
@@ -75,12 +80,13 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsNotNull(responseWriter);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsDebug_ShouldSetDataObjectAsDebug()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -89,9 +95,12 @@ namespace Dev2.Tests.Runtime.WebServer
             env.SetupAllProperties();
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
-            var wRepo = new Mock<IWorkspaceRepository>(); wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty)); wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            var wRepo = new Mock<IWorkspaceRepository>();
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
             var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -111,12 +120,20 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.VerifySet(o => o.DebugSessionID = It.IsAny<Guid>(), Times.Once);
         }
 
-        [TestMethod]
+        static void GetExecutingUser(Mock<IPrincipal> principal)
+        {
+            var identity = new Mock<IIdentity>();
+            identity.Setup(p => p.Name).Returns("User1");
+            principal.Setup(p => p.Identity).Returns(identity.Object);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsServiceTes_ShouldSetDataObjectAsTest()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -126,6 +143,8 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.IsServiceTestExecution).Returns(true);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
             var wRepo = new Mock<IWorkspaceRepository>();
@@ -148,12 +167,13 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsServiceSwagger_ShouldSetDataObjectAsSwagger()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -163,6 +183,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.IsServiceTestExecution).Returns(false);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var resource = new Mock<IResource>();
             resource.SetupGet(a => a.DataList).Returns(new StringBuilder("<DataList></DataList>"));
@@ -189,12 +210,13 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.SWAGGER, Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsServiceJson_ShouldSetDataObjectAsJson()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -205,6 +227,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.ExecutionID).Returns(new Guid());
             dataObject.SetupGet(o => o.IsServiceTestExecution).Returns(false);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var resource = new Mock<IResource>();
             resource.SetupGet(a => a.DataList).Returns(new StringBuilder("<DataList></DataList>"));
@@ -231,12 +254,13 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.JSON, Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsServiceXMl_ShouldSetDataObjectAsXml()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -246,6 +270,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.IsServiceTestExecution).Returns(false);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var resource = new Mock<IResource>();
             resource.SetupGet(a => a.DataList).Returns(new StringBuilder("<DataList><Message>Hello World.</Message></DataList>"));
@@ -271,12 +296,13 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(2));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsServiceXMlWithErrors_ShouldCheckReturnTypeOfError()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -287,8 +313,10 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.IsServiceTestExecution).Returns(false);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var resource = new Mock<IResource>();
+
             resource.SetupGet(a => a.DataList).Returns(new StringBuilder("<DataList><Message>Hello World.</Message></DataList>"));
             resourceCatalog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(resource.Object);
@@ -309,15 +337,16 @@ namespace Dev2.Tests.Runtime.WebServer
             var responseWriter = handlerMock.CreateFromMock(webRequestTO, "Hello World.XML", string.Empty, new NameValueCollection(), principal.Object);
             //---------------Test Result -----------------------
             Assert.IsNotNull(responseWriter);
-            dataObject.VerifyGet(o => o.ReturnType, Times.Exactly(4));
+            dataObject.VerifyGet(o => o.ReturnType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenValidArgsContainsIsServiceJsonWithErrors_ShouldCheckReturnTypeOfError()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -328,6 +357,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.IsServiceTestExecution).Returns(false);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var resource = new Mock<IResource>();
             resource.SetupGet(a => a.DataList).Returns(new StringBuilder("<DataList><Message>Hello World.</Message></DataList>"));
@@ -350,12 +380,51 @@ namespace Dev2.Tests.Runtime.WebServer
             var responseWriter = handlerMock.CreateFromMock(webRequestTO, "Hello World.JSON", string.Empty, new NameValueCollection(), principal.Object);
             //---------------Test Result -----------------------
             Assert.IsNotNull(responseWriter);
-            dataObject.VerifyGet(o => o.ReturnType, Times.Exactly(4));
+            dataObject.VerifyGet(o => o.ReturnType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenWebRequestHasStartServiceNameRequestEndsWithTests_ShouldSetDataobjectsTestsOptions()
+        {
+            //---------------Set up test pack-------------------
+            var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
+            var authorizationService = new Mock<IAuthorizationService>();
+            authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
+            var dataObject = new Mock<IDSFDataObject>();
+            dataObject.SetupAllProperties();
+            var env = new Mock<IExecutionEnvironment>();
+            env.SetupAllProperties();
+            dataObject.SetupGet(o => o.Environment).Returns(env.Object);
+            dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
+            var resourceCatalog = new Mock<IResourceCatalog>();
+            var testCatalog = new Mock<ITestCatalog>();
+            testCatalog.Setup(catalog => catalog.Fetch(It.IsAny<Guid>())).Returns(new List<IServiceTestModelTO>());
+            var wRepo = new Mock<IWorkspaceRepository>();
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var webRequestTO = new WebRequestTO()
+            {
+                Variables = new NameValueCollection()
+                {
+                },
+                WebServerUrl = "http://rsaklfnkosinath:3142/secure/Home/HelloWorld/.tests"
+            };
+            var responseWriter = handlerMock.CreateFromMock(webRequestTO, "*", string.Empty, new NameValueCollection(), principal.Object);
+            //---------------Test Result -----------------------
+            Assert.IsNotNull(responseWriter);
+            dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TEST, Times.Once);
+            dataObject.VerifySet(o => o.IsServiceTestExecution = true, Times.Once);
+            dataObject.VerifySet(o => o.TestName = "*", Times.Once);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void CreateForm_GivenWebRequestHasStartServiceNameRequestEndsWithTestsTRX_ShouldSetDataobjectsTRXOptions()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
@@ -380,23 +449,24 @@ namespace Dev2.Tests.Runtime.WebServer
                 Variables = new NameValueCollection()
                 {
                 },
-                WebServerUrl = "http://rsaklfnkosinath:3142/secure/Home/HelloWorld/.tests"
+                WebServerUrl = "http://rsaklfnkosinath:3142/secure/Home/HelloWorld/.tests.trx"
             };
+            Common.Utilities.ServerUser = principal.Object;
             var responseWriter = handlerMock.CreateFromMock(webRequestTO, "*", string.Empty, new NameValueCollection(), principal.Object);
             //---------------Test Result -----------------------
             Assert.IsNotNull(responseWriter);
-            dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TEST, Times.Once);
+            dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TRX, Times.Once);
             dataObject.VerifySet(o => o.IsServiceTestExecution = true, Times.Once);
             dataObject.VerifySet(o => o.TestName = "*", Times.Once);
-
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenServiceNameIsGuid_ShouldLoadresourceAndSetDataobjectPropertiesFromResource()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -405,6 +475,7 @@ namespace Dev2.Tests.Runtime.WebServer
             env.SetupAllProperties();
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(o => o.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
             testCatalog.Setup(catalog => catalog.Fetch(It.IsAny<Guid>())).Returns(new List<IServiceTestModelTO>());
@@ -435,12 +506,13 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenServiceNameIsText_ShouldLoadresourceAndSetDataobjectPropertiesFromResource()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -449,6 +521,7 @@ namespace Dev2.Tests.Runtime.WebServer
             env.SetupAllProperties();
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
             testCatalog.Setup(catalog => catalog.Fetch(It.IsAny<Guid>())).Returns(new List<IServiceTestModelTO>());
@@ -458,7 +531,9 @@ namespace Dev2.Tests.Runtime.WebServer
             resource.Setup(resource1 => resource1.ResourceID).Returns(resourceId);
             resource.Setup(resource1 => resource1.ResourceName).Returns("a");
             resourceCatalog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), "a")).Returns(resource.Object);
-            var wRepo = new Mock<IWorkspaceRepository>(); wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty)); var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
+            var wRepo = new Mock<IWorkspaceRepository>();
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             var webRequestTO = new WebRequestTO()
@@ -476,14 +551,15 @@ namespace Dev2.Tests.Runtime.WebServer
 
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenHasTestResourcesIds_ShouldRunAllTests()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
-            authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
+            authorizationService.Setup(service => service.IsAuthorized(principal.Object, It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupAllProperties();
             var env = new Mock<IExecutionEnvironment>();
@@ -502,6 +578,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.Setup(o => o.Clone()).Returns(clodeDsf.Object).Verifiable();
             dataObject.Setup(o => o.ReturnType).Returns(EmitionTypes.TEST);
             dataObject.Setup(o => o.TestName).Returns("*");
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
             var serviceTestModelTos = new List<IServiceTestModelTO>()
@@ -540,14 +617,13 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsInstanceOfType(responseWriter, typeof(StringResponseWriter));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenEmitionTypeTEST_ShouldFetchTest()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
-            var authorizationService = new Mock<IAuthorizationService>();
-            authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
+            GetExecutingUser(principal);
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupAllProperties();
             var env = new Mock<IExecutionEnvironment>();
@@ -556,12 +632,15 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
             dataObject.SetupGet(o => o.ReturnType).Returns(EmitionTypes.TEST);
             dataObject.SetupGet(o => o.TestName).Returns("*");
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             dataObject.Setup(o => o.Clone()).Returns(dataObject.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
             var serviceTestModelTO = new Mock<IServiceTestModelTO>();
             serviceTestModelTO.Setup(to => to.Enabled).Returns(true);
             serviceTestModelTO.Setup(to => to.TestName).Returns("Test1");
+            var authorizationService = new Mock<IAuthorizationService>();
+            authorizationService.Setup(service => service.IsAuthorized(principal.Object, It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var tests = new List<IServiceTestModelTO>
             {
                 serviceTestModelTO.Object
@@ -577,7 +656,8 @@ namespace Dev2.Tests.Runtime.WebServer
                 Variables = new NameValueCollection()
                 {
                     {"IsDebug","true"}
-                }
+                },
+                WebServerUrl = ""
             };
             var responseWriter = handlerMock.CreateFromMock(webRequestTO, "Hello World", null, new NameValueCollection(), principal.Object);
             //---------------Test Result -----------------------
@@ -585,14 +665,15 @@ namespace Dev2.Tests.Runtime.WebServer
             testCatalog.Verify(o => o.Fetch(Guid.Empty), Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateForm_GivenEmitionTypeTESTAndIsRunAllTestsRequestTrue_ShouldFetchTests()
         {
             //---------------Set up test pack-------------------
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
-            authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
+            authorizationService.Setup(service => service.IsAuthorized(principal.Object,It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupAllProperties();
             var env = new Mock<IExecutionEnvironment>();
@@ -601,8 +682,18 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
             dataObject.SetupGet(o => o.ReturnType).Returns(EmitionTypes.TEST);
             dataObject.SetupGet(o => o.TestName).Returns("*");
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             dataObject.Setup(o => o.Clone()).Returns(dataObject.Object);
+            var resource = new Mock<IResource>();
+            var resourceId = Guid.NewGuid();
+            resource.SetupGet(resource1 => resource1.ResourceID).Returns(resourceId);
+            resource.Setup(resource1 => resource1.GetResourcePath(It.IsAny<Guid>())).Returns(@"Home\HelloWorld");
             var resourceCatalog = new Mock<IResourceCatalog>();
+            resourceCatalog.Setup(catalog => catalog.GetResources(It.IsAny<Guid>()))
+                .Returns(new List<IResource>()
+                {
+                   resource.Object
+                });
             var testCatalog = new Mock<ITestCatalog>();
             var serviceTestModelTO = new Mock<IServiceTestModelTO>();
             serviceTestModelTO.Setup(to => to.Enabled).Returns(true);
@@ -622,7 +713,8 @@ namespace Dev2.Tests.Runtime.WebServer
                 Variables = new NameValueCollection()
                 {
                     {"IsDebug","true"}
-                }
+                },
+                WebServerUrl = ""
             };
             var responseWriter = handlerMock.CreateFromMock(webRequestTO, "Hello World", null, new NameValueCollection(), principal.Object);
             //---------------Test Result -----------------------
@@ -630,7 +722,7 @@ namespace Dev2.Tests.Runtime.WebServer
             testCatalog.Verify(o => o.Fetch(Guid.Empty), Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void BindRequestVariablesToDataObjectGivenHasBookMarkShouldSetDataObjectBookmark()
         {
@@ -664,14 +756,14 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.VerifySet(o => o.ServiceName = "a", Times.Once);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostDataGivenUrlWithGetJsonDataShouldReturnPostData()
         {
             //---------------Set up test pack-------------------
             var communicationContext = new Mock<ICommunicationContext>();
-            string payLoad = this.SerializeToJsonString(new DefaultSerializationBinder());
-            string uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?{payLoad}";
+            var payLoad = this.SerializeToJsonString(new DefaultSerializationBinder());
+            var uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?{payLoad}";
             communicationContext.SetupGet(context => context.Request.Uri)
                 .Returns(new Uri(uriString));
             communicationContext.Setup(context => context.Request.Method).Returns("GET");
@@ -683,7 +775,16 @@ namespace Dev2.Tests.Runtime.WebServer
             communicationContext.Setup(context => context.Request.QueryString).Returns(new NameValueCollection());
             var dataObject = new Mock<IDSFDataObject>();
             var authorizationService = new Mock<IAuthorizationService>();
+            var resource = new Mock<IResource>();
+            var resourceId = Guid.NewGuid();
+            resource.SetupGet(resource1 => resource1.ResourceID).Returns(resourceId);
+            resource.Setup(resource1 => resource1.GetResourcePath(It.IsAny<Guid>())).Returns(@"Home\HelloWorld");
             var resourceCatalog = new Mock<IResourceCatalog>();
+            resourceCatalog.Setup(catalog => catalog.GetResources(It.IsAny<Guid>()))
+                .Returns(new List<IResource>()
+                {
+                   resource.Object
+                });
             var testCatalog = new Mock<ITestCatalog>();
             var wRepo = new Mock<IWorkspaceRepository>();
             wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
@@ -696,14 +797,14 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(payLoad, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostDataGivenUrlWithJsonPostDataShouldReturnPostData()
         {
             //---------------Set up test pack-------------------
             var communicationContext = new Mock<ICommunicationContext>();
-            string payLoad = this.SerializeToJsonString(new DefaultSerializationBinder());
-            string uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?{payLoad}";
+            var payLoad = this.SerializeToJsonString(new DefaultSerializationBinder());
+            var uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?{payLoad}";
             communicationContext.SetupGet(context => context.Request.Uri)
                 .Returns(new Uri(uriString));
             communicationContext.Setup(context => context.Request.Method).Returns("POST");
@@ -728,7 +829,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(payLoad, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenPostDataInContext_ShouldReturnEmpty()
         {
@@ -757,7 +858,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual("", postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenPostJsonDataInContextThrowsException_ShouldSwallowException()
         {
@@ -787,7 +888,7 @@ namespace Dev2.Tests.Runtime.WebServer
             handlerMock.GetPostDataMock(communicationContext.Object);
 
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenPostJsonDataInContext_ShouldReturnJsonData()
         {
@@ -819,7 +920,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(data, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenJsonDataInContextAndUnknownWebMethod_ShouldReturnEmpty()
         {
@@ -849,7 +950,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(string.Empty, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenPostXmlDataInContext_ShouldReturnXmlData()
         {
@@ -882,7 +983,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(xmlData, postDataMock);
         }
 
-        private static string ConvertJsonToXml(string data)
+        static string ConvertJsonToXml(string data)
         {
             var xml =
                 XDocument.Load(JsonReaderWriterFactory.CreateJsonReader(Encoding.ASCII.GetBytes(data),
@@ -891,14 +992,14 @@ namespace Dev2.Tests.Runtime.WebServer
             return xmlData;
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenGetJsonDataInContext_ShouldReturnJsonData()
         {
             //---------------Set up test pack-------------------
             var communicationContext = new Mock<ICommunicationContext>();
             var data = this.SerializeToJsonString(new DefaultSerializationBinder());
-            string uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?&{data}";
+            var uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?&{data}";
             communicationContext.SetupGet(context => context.Request.Uri).Returns(new Uri(uriString));
             communicationContext.Setup(context => context.Request.Method).Returns("GET");
             communicationContext.Setup(context => context.Request.ContentEncoding).Returns(Encoding.Default);
@@ -922,7 +1023,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(data, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenGetXmlDataInContext_ShouldReturnXmlData()
         {
@@ -930,7 +1031,7 @@ namespace Dev2.Tests.Runtime.WebServer
             var communicationContext = new Mock<ICommunicationContext>();
             var data = this.SerializeToJsonString(new DefaultSerializationBinder());
             var xmlData = ConvertJsonToXml(data);
-            string uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?&{xmlData}";
+            var uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?&{xmlData}";
             communicationContext.SetupGet(context => context.Request.Uri).Returns(new Uri(uriString));
             communicationContext.Setup(context => context.Request.Method).Returns("GET");
             communicationContext.Setup(context => context.Request.ContentEncoding).Returns(Encoding.Default);
@@ -954,16 +1055,16 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(xmlData, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void GetPostData_GivenGetDataListXmlDataInContext_ShouldReturnXmlData()
         {
             //---------------Set up test pack-------------------
             var communicationContext = new Mock<ICommunicationContext>();
             var data = this.SerializeToJsonString(new DefaultSerializationBinder());
-            XmlDocument myXmlNode = JsonConvert.DeserializeXmlNode(data, "DataList");
+            var myXmlNode = JsonConvert.DeserializeXmlNode(data, "DataList");
             var xmlData = myXmlNode.InnerXml;
-            string uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?&{xmlData}";
+            var uriString = $"https://warewolf.atlassian.net/secure/RapidBoard.jspa?&{xmlData}";
             communicationContext.SetupGet(context => context.Request.Uri).Returns(new Uri(uriString));
             communicationContext.Setup(context => context.Request.Method).Returns("GET");
             communicationContext.Setup(context => context.Request.ContentEncoding).Returns(Encoding.Default);
@@ -987,7 +1088,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(xmlData, postDataMock);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void LocationGivenReturnsCorrectly()
         {
@@ -1010,10 +1111,11 @@ namespace Dev2.Tests.Runtime.WebServer
             var location = handlerMock.Location;
             //---------------Test Result -----------------------
             var locationCurrent = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            Assert.AreEqual(locationCurrent, location);
+            string currentLocation = Path.GetDirectoryName(Path.GetDirectoryName(TestContext.TestRunDirectory));
+            Assert.IsTrue(location == locationCurrent || location == currentLocation, location + " does not equal " + locationCurrent + " or " + currentLocation);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void RemoteInove_GivenServerInvoke_ShouldSetRemoteIdOnTheDataObjectAndRemoteInvokeTo_True()
         {
@@ -1042,7 +1144,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(Someremoteid, dataObject.Object.RemoteInvokerID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void RemoteInvoke_GivenRemoteDebugInvoke_ShouldSetRemoteIdOnTheDataObjectAndRemoteInvokeTo_True()
         {
@@ -1072,7 +1174,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(Someremoteid, dataObject.Object.RemoteInvokerID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetBookmark_GivenBoundVariables_ShouldReturnBookmark()
         {
@@ -1089,7 +1191,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetClassName_GivenBoundVariables_ShouldReturnName()
         {
@@ -1106,7 +1208,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetMethodName_GivenBoundVariables_ShouldReturnMethodName()
         {
@@ -1123,7 +1225,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetPath_GivenBoundVariables_ShouldReturnPath()
         {
@@ -1140,7 +1242,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetWebsite_GivenBoundVariables_ShouldReturnWebsite()
         {
@@ -1157,7 +1259,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetInstanceID_GivenBoundVariables_ShouldReturnInstanceId()
         {
@@ -1174,7 +1276,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetServiceName_GivenBoundVariables_ShouldReturnServiceName()
         {
@@ -1190,7 +1292,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(ExpectedResult, serviceName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetWorkspaceID_GivenQueryString_ShouldReturnId()
         {
@@ -1205,7 +1307,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(ExpectedResult, workspaceID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetDataListID_GivenQueryString_ShouldReturnDatalsi()
         {
@@ -1223,7 +1325,7 @@ namespace Dev2.Tests.Runtime.WebServer
 
         #region ServiceTestModelJObjectResultBuilder
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void BuildTestResultJSONForWebRequest_GivenTestResultPassed_ShouldSetMessage()
         {
@@ -1240,7 +1342,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(result.ToString().Contains("\"Result\": \"Passed\""));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void BuildTestResultJSONForWebRequest_GivenTestResultFailed_ShouldSetMessage()
         {
@@ -1257,7 +1359,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
             Assert.IsTrue(result.ToString().Contains("\"Result\": \"Failed\""));
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void BuildTestResultJSONForWebRequest_GivenTestResultInvalid_ShouldSetMessage()
         {
@@ -1274,7 +1376,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
             Assert.IsTrue(result.ToString().Contains("\"Result\": \"Invalid\""));
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void BuildTestResultJSONForWebRequest_GivenTestResultTestResourceDeleted_ShouldSetMessage()
         {
@@ -1291,7 +1393,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
             Assert.IsTrue(result.ToString().Contains("\"Result\": \"ResourceDelete\""));
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void BuildTestResultJSONForWebRequest_GivenTestResultTestResourcePathUpdated_ShouldSetMessage()
         {
@@ -1308,7 +1410,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
             Assert.IsTrue(result.ToString().Contains("\"Result\": \"ResourcpathUpdated\""));
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void BuildTestResultJSONForWebRequest_GivenTestResultTestPending_ShouldSetMessage()
         {
@@ -1330,12 +1432,12 @@ namespace Dev2.Tests.Runtime.WebServer
 
         #region ServiceTestModelTRXResultBuilder
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Ashley Lewis")]
         public void BuildTestResultTRXForWebRequest_GivenTestResultPassed_ShouldSetMessage()
         {
             //------------Setup for test-------------------------
-            List<IServiceTestModelTO> toList = new List<IServiceTestModelTO>();
+            var toList = new List<IServiceTestModelTO>();
             IServiceTestModelTO to = new ServiceTestModelTO();
             to.TestName = "Test 1";
             to.Result = new TestRunResult
@@ -1350,12 +1452,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(result.ToString().Contains("outcome=\"Passed\""));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Ashley Lewis")]
         public void BuildTestResultTRXForWebRequest_GivenTestResultFailed_ShouldSetMessage()
         {
             //------------Setup for test-------------------------
-            List<IServiceTestModelTO> toList = new List<IServiceTestModelTO>();
+            var toList = new List<IServiceTestModelTO>();
             IServiceTestModelTO to = new ServiceTestModelTO();
             to.TestName = "Test 1";
             to.Result = new TestRunResult
@@ -1371,12 +1473,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(result.ToString().Contains("outcome=\"Failed\""));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Ashley Lewis")]
         public void BuildTestResultTRXForWebRequest_GivenTestResultInvalid_ShouldSetMessage()
         {
             //------------Setup for test-------------------------
-            List<IServiceTestModelTO> toList = new List<IServiceTestModelTO>();
+            var toList = new List<IServiceTestModelTO>();
             IServiceTestModelTO to = new ServiceTestModelTO();
             to.TestName = "Test 1";
             to.Result = new TestRunResult
@@ -1392,12 +1494,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(result.ToString().Contains("outcome=\"Invalid\""));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Ashley Lewis")]
         public void BuildTestResultTRXForWebRequest_GivenTestResultTestResourceDeleted_ShouldSetMessage()
         {
             //------------Setup for test-------------------------
-            List<IServiceTestModelTO> toList = new List<IServiceTestModelTO>();
+            var toList = new List<IServiceTestModelTO>();
             IServiceTestModelTO to = new ServiceTestModelTO();
             to.TestName = "Test 1";
             to.Result = new TestRunResult
@@ -1413,12 +1515,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(result.ToString().Contains("outcome=\"ResourceDeleted\""));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Ashley Lewis")]
         public void BuildTestResultTRXForWebRequest_GivenTestResultTestResourcePathUpdated_ShouldSetMessage()
         {
             //------------Setup for test-------------------------
-            List<IServiceTestModelTO> toList = new List<IServiceTestModelTO>();
+            var toList = new List<IServiceTestModelTO>();
             IServiceTestModelTO to = new ServiceTestModelTO();
             to.TestName = "Test 1";
             to.Result = new TestRunResult
@@ -1434,12 +1536,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(result.ToString().Contains("outcome=\"ResourcePathUpdated\""));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Ashley Lewis")]
         public void BuildTestResultTRXForWebRequest_GivenTestResultTestPending_ShouldSetMessage()
         {
             //------------Setup for test-------------------------
-            List<IServiceTestModelTO> toList = new List<IServiceTestModelTO>();
+            var toList = new List<IServiceTestModelTO>();
             IServiceTestModelTO to = new ServiceTestModelTO();
             to.TestName = "Test 1";
             to.Result = new TestRunResult
@@ -1457,7 +1559,7 @@ namespace Dev2.Tests.Runtime.WebServer
 
         #endregion
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void ExtractKeyValuePairs_GivenKeyvaluePairs_ShouldCloneKeyValuePair()
         {
@@ -1471,7 +1573,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(LocalBoundVariables.Count - 1, boundVariables.Count);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void CleanupXml_GivenXml_ShouldAppendXmlCorrectly()
         {
@@ -1488,7 +1590,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(startsWith);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void ExtractKeyValuePairForGetMethod_GivenEmptyPayload_ShouldUseContextQueryString()
         {
@@ -1497,9 +1599,9 @@ namespace Dev2.Tests.Runtime.WebServer
             var mock = new Mock<ICommunicationContext>();
             mock.Setup(communicationContext => communicationContext.Request.QueryString)
                 .Returns(new NameValueCollection());
-            ICommunicationContext context = mock.Object;
+            var context = mock.Object;
             //------------Execute Test---------------------------            
-            privateObject.InvokeStatic("ExtractKeyValuePairForGetMethod", context,"");
+            privateObject.InvokeStatic("ExtractKeyValuePairForGetMethod", context, "");
             //------------Assert Results-------------------------
             mock.VerifyGet(communicationContext => communicationContext.Request.QueryString, Times.Once);
 
@@ -1507,11 +1609,12 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void SetContentType_GivenJsonType_ShouldSetDataObjectReturnType()
         {
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -1520,9 +1623,12 @@ namespace Dev2.Tests.Runtime.WebServer
             env.SetupAllProperties();
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
-            var wRepo = new Mock<IWorkspaceRepository>(); wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty)); var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
+            var wRepo = new Mock<IWorkspaceRepository>();
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
             //---------------Assert Precondition----------------
             var headers = new Mock<NameValueCollection>();
             headers.Setup(collection => collection.Get("Content-Type")).Returns("application/json");
@@ -1533,11 +1639,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(EmitionTypes.JSON, dataObject.Object.ReturnType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void SetContentType_GivenXMLType_ShouldSetDataObjectReturnType()
         {
             var principal = new Mock<IPrincipal>();
+            GetExecutingUser(principal);
             var authorizationService = new Mock<IAuthorizationService>();
             authorizationService.Setup(service => service.IsAuthorized(It.IsAny<AuthorizationContext>(), It.IsAny<string>())).Returns(true);
             var dataObject = new Mock<IDSFDataObject>();
@@ -1546,9 +1653,12 @@ namespace Dev2.Tests.Runtime.WebServer
             env.SetupAllProperties();
             dataObject.SetupGet(o => o.Environment).Returns(env.Object);
             dataObject.SetupGet(o => o.RawPayload).Returns(new StringBuilder("<raw>SomeData</raw>"));
+            dataObject.Setup(p => p.ExecutingUser).Returns(principal.Object);
             var resourceCatalog = new Mock<IResourceCatalog>();
             var testCatalog = new Mock<ITestCatalog>();
-            var wRepo = new Mock<IWorkspaceRepository>(); wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty)); var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
+            var wRepo = new Mock<IWorkspaceRepository>();
+            wRepo.SetupGet(repository => repository.ServerWorkspace).Returns(new Workspace(Guid.Empty));
+            var handlerMock = new AbstractWebRequestHandlerMock(dataObject.Object, authorizationService.Object, resourceCatalog.Object, testCatalog.Object, wRepo.Object);
             //---------------Assert Precondition----------------
             var headers = new Mock<NameValueCollection>();
             headers.Setup(collection => collection.Get("Content-Type")).Returns("application/xml");
@@ -1559,13 +1669,13 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual(EmitionTypes.XML, dataObject.Object.ReturnType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenHeaderContentTypeJson_ShouldSetDataObjectContentTypeJson()
         {
             //---------------Set up test pack-------------------
             const string ServiceName = "hello World";
-            NameValueCollection collection = new NameValueCollection
+            var collection = new NameValueCollection
             {
                 {"Content-Type", "Json"}
             };
@@ -1573,19 +1683,19 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupProperty(o => o.ReturnType);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var invoke = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var invoke = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.JSON, Times.Exactly(1));
             Assert.AreEqual(ServiceName, invoke);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenHeaderContentTypeXml_ShouldSetDataObjectContentTypeXml()
         {
             //---------------Set up test pack-------------------
             const string ServiceName = "hello World";
-            NameValueCollection collection = new NameValueCollection
+            var collection = new NameValueCollection
             {
                 {"Content-Type", "xml"}
             };
@@ -1593,13 +1703,13 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupProperty(o => o.ReturnType);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(1));
             Assert.AreEqual(ServiceName, emitionType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenNoHeaders_ShouldSetDataObjectContentTypeXml()
         {
@@ -1609,26 +1719,26 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupProperty(o => o.ReturnType);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, null);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, null);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(1));
             Assert.AreEqual(ServiceName, emitionType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenServiceNameEndsWithapi_ShouldSetDataObjectContentTypeSwagger()
         {
             //---------------Set up test pack-------------------
             const string ServiceName = "hello World.api";
-            NameValueCollection collection = new NameValueCollection();
+            var collection = new NameValueCollection();
 
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ReturnType);
             dataObject.SetupProperty(o => o.ServiceName);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.SWAGGER, Times.Exactly(1));
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(1));
@@ -1636,40 +1746,61 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual("hello World", dataObject.Object.ServiceName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenServiceNameEndsWithtests_ShouldSetDataObjectContentTypeTests()
         {
             //---------------Set up test pack-------------------
             const string ServiceName = "hello World.tests";
-            NameValueCollection collection = new NameValueCollection();
+            var collection = new NameValueCollection();
 
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ReturnType);
             dataObject.SetupProperty(o => o.ServiceName);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TEST, Times.Exactly(1));
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(1));
             Assert.AreEqual("hello World", emitionType);
             Assert.AreEqual("hello World", dataObject.Object.ServiceName);
         }
-        [TestMethod]
-        [Owner("Nkosinathi Sangweni")]
-        public void SetEmitionType_GivenServiceNameEndsWithJson_ShouldSetDataObjectContentTypeJson()
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Ashley Lewis")]
+        public void SetEmitionType_GivenServiceNameEndsWithteststrx_ShouldSetDataObjectContentTypeTRX()
         {
             //---------------Set up test pack-------------------
-            const string ServiceName = "hello World.JSON";
-            NameValueCollection collection = new NameValueCollection();
+            const string ServiceName = "hello World.tests";
+            var collection = new NameValueCollection();
 
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ReturnType);
             dataObject.SetupProperty(o => o.ServiceName);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
+            //---------------Test Result -----------------------
+            dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TEST, Times.Exactly(1));
+            Assert.AreEqual("hello World", emitionType);
+            Assert.AreEqual("hello World", dataObject.Object.ServiceName);
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [Owner("Nkosinathi Sangweni")]
+        public void SetEmitionType_GivenServiceNameEndsWithJson_ShouldSetDataObjectContentTypeJson()
+        {
+            //---------------Set up test pack-------------------
+            const string ServiceName = "hello World.JSON";
+            var collection = new NameValueCollection();
+
+            var dataObject = new Mock<IDSFDataObject>();
+            dataObject.SetupProperty(o => o.ReturnType);
+            dataObject.SetupProperty(o => o.ServiceName);
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.JSON, Times.Exactly(1));
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(1));
@@ -1677,13 +1808,13 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual("hello World", dataObject.Object.ServiceName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenTestsInFolder_ShouldSetDataObjectContentTypeTests()
         {
             //---------------Set up test pack-------------------
             const string ServiceName = "hello World.tests/";
-            NameValueCollection collection = new NameValueCollection();
+            var collection = new NameValueCollection();
 
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ReturnType);
@@ -1691,7 +1822,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupProperty(o => o.TestName);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TEST, Times.Exactly(1));
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.XML, Times.Exactly(1));
@@ -1700,13 +1831,13 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual("*", dataObject.Object.TestName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetEmitionType_GivenServiceNameEndsWithtests_ShouldSetDataObjectIsTestExecution()
         {
             //---------------Set up test pack-------------------
             const string ServiceName = "hello World.tests";
-            NameValueCollection collection = new NameValueCollection();
+            var collection = new NameValueCollection();
 
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ReturnType);
@@ -1714,7 +1845,7 @@ namespace Dev2.Tests.Runtime.WebServer
             dataObject.SetupProperty(o => o.ServiceName);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var emitionType = dataObject.Object.SetEmitionType(ServiceName, collection);
+            var emitionType = dataObject.Object.SetEmitionType(new WebRequestTO(), ServiceName, collection);
             //---------------Test Result -----------------------
             dataObject.VerifySet(o => o.ReturnType = EmitionTypes.TEST, Times.Exactly(1));
             dataObject.VerifySet(o => o.IsServiceTestExecution = true, Times.Exactly(1));
@@ -1723,13 +1854,12 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.AreEqual("hello World", dataObject.Object.ServiceName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetTestResourceIds_GivenRequestForAllTestsInAFolder_ShouldSetDataObjectTestResourceIds()
         {
             //---------------Set up test pack-------------------
             //http://rsaklfnkosinath:3142/secure/Hello%20World.debug?Name=&wid=540beccb-b4f5-4b34-bc37-aa24b26370e2
-            //const string serviceName = "hello World./tests";
             var webRequestTO = new WebRequestTO()
             {
                 Variables = new NameValueCollection() { { "isPublic", "true" } },
@@ -1747,7 +1877,9 @@ namespace Dev2.Tests.Runtime.WebServer
                 });
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ResourceID);
+            dataObject.Setup(o => o.TestName).Returns("*");
             dataObject.SetupProperty(o => o.TestsResourceIds);
+            dataObject.Setup(o => o.ReturnType).Returns(EmitionTypes.TEST);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             dataObject.Object.SetTestResourceIds(resourceCatalog.Object, webRequestTO, "*");
@@ -1758,7 +1890,7 @@ namespace Dev2.Tests.Runtime.WebServer
             Assert.IsTrue(contains);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void SetTestResourceIds_GivenRequestForAllTests_ShouldSetDataObjectTestResourceIds()
         {
@@ -1773,7 +1905,9 @@ namespace Dev2.Tests.Runtime.WebServer
                 .Returns(new List<IResource>());
             var dataObject = new Mock<IDSFDataObject>();
             dataObject.SetupProperty(o => o.ResourceID);
+            dataObject.Setup(o => o.TestName).Returns("*");
             dataObject.SetupProperty(o => o.TestsResourceIds);
+            dataObject.Setup(o => o.ReturnType).Returns(EmitionTypes.TEST);
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
             dataObject.Object.SetTestResourceIds(resourceCatalog.Object, webRequestTO, "*");
@@ -1785,12 +1919,11 @@ namespace Dev2.Tests.Runtime.WebServer
 
     #region AbstractWebRequestHandlerMock
 
-    internal class AbstractWebRequestHandlerMock : AbstractWebRequestHandler
+    class AbstractWebRequestHandlerMock : AbstractWebRequestHandler
     {
         public AbstractWebRequestHandlerMock(IDSFDataObject dataObject, IAuthorizationService service, IResourceCatalog catalog, ITestCatalog testCatalog, IWorkspaceRepository repository)
             : base(catalog, testCatalog, dataObject, service, repository)
         {
-
         }
 
         public AbstractWebRequestHandlerMock()

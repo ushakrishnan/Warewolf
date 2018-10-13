@@ -23,7 +23,7 @@ namespace Dev2.Activities.Designers2.Switch
         void Initialize(string display)
         {
             var expressionText = ModelItem.Properties[GlobalConstants.SwitchExpressionTextPropertyText];
-            ModelProperty switchCaseValue = ModelItem.Properties["Case"];
+            var switchCaseValue = ModelItem.Properties["Case"];
             Dev2Switch ds;
             if (expressionText?.Value != null)
             {
@@ -52,7 +52,7 @@ namespace Dev2.Activities.Designers2.Switch
             }
             if (switchCaseValue != null)
             {
-                string val = switchCaseValue.ComputedValue.ToString();
+                var val = switchCaseValue.ComputedValue.ToString();
                 ds.SwitchExpression = val;
             }
           
@@ -75,15 +75,18 @@ namespace Dev2.Activities.Designers2.Switch
             set
             {
                 _switchVariable = value;
-                if(string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     DisplayText = "Switch";
                     DisplayName = "Switch";
                 }
-                else if(!_hascustomeDisplayText ||string.IsNullOrEmpty(DisplayText) )
+                else
                 {
-                    DisplayText = value;
-                    DisplayName = value;
+                    if (!_hascustomeDisplayText || string.IsNullOrEmpty(DisplayText))
+                    {
+                        DisplayText = value;
+                        DisplayName = value;
+                    }
                 }
             }
         }
@@ -124,51 +127,50 @@ namespace Dev2.Activities.Designers2.Switch
             ValidExpression = true;
             if (ModelItem?.Parent?.Source?.Collection != null)
             {
-                ValidateProperties();
+                ValidateParentProperties();
             }
             else
             {
-                if (ModelItem != null)
+                if (ModelItem != null && ModelItem.Properties.Any())
                 {
-                    if (ModelItem.Properties.Any())
-                    {
-                        foreach (var property in ModelItem.Properties)
-                        {
-                            if (property?.Name == "Case")
-                            {
-                                var modelItem = property.ComputedValue;
-                                if (modelItem?.ToString() == SwitchExpression)
-                                {
-                                    ValidExpression = false;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    ValidateProperties();
                 }
             }
         }
 
-        private void ValidateProperties()
+        void ValidateProperties()
         {
-            if (ModelItem?.Parent?.Source?.Collection != null)
+            foreach (var property in ModelItem.Properties)
             {
-                foreach (var value in ModelItem.Parent.Source.Collection)
+                if (property?.Name == "Case")
                 {
-                    if (value?.Properties.Any(property => property.Name == "Key") ?? false)
+                    var modelItem = property.ComputedValue;
+                    if (modelItem?.ToString() == SwitchExpression)
                     {
-                        var modelItem = value.Properties["Key"]?.ComputedValue;
-                        if (modelItem?.ToString() == SwitchExpression)
-                        {
-                            ValidExpression = false;
-                            break;
-                        }
+                        ValidExpression = false;
+                        break;
                     }
                 }
             }
         }
 
-        private bool validExpression;
+        void ValidateParentProperties()
+        {
+            foreach (var value in ModelItem.Parent.Source.Collection)
+            {
+                if (value?.Properties.Any(property => property.Name == "Key") ?? false)
+                {
+                    var modelItem = value.Properties["Key"]?.ComputedValue;
+                    if (modelItem?.ToString() == SwitchExpression)
+                    {
+                        ValidExpression = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        bool validExpression;
 
         public override void UpdateHelpDescriptor(string helpText)
         {

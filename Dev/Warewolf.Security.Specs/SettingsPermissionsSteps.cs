@@ -27,7 +27,7 @@ namespace Dev2.Activities.Specs.Permissions
     [Binding]
     public class SettingsPermissionsSteps
     {
-        private readonly ScenarioContext scenarioContext;
+        readonly ScenarioContext scenarioContext;
 
         public SettingsPermissionsSteps(ScenarioContext scenarioContext)
         {
@@ -47,7 +47,7 @@ namespace Dev2.Activities.Specs.Permissions
             var securitySpecsUser = GetSecuritySpecsUser();
             var securitySpecsPassword = GetSecuritySpecsPassword();
             var userGroup = GetUserGroup();
-            AppSettings.LocalHost = $"http://{Environment.MachineName.ToLowerInvariant()}:3142";
+            AppUsageStats.LocalHost = $"http://{Environment.MachineName.ToLowerInvariant()}:3142";
             var environmentModel = ServerRepository.Instance.Source;
             environmentModel.Connect();
             while (!environmentModel.IsConnected)
@@ -57,7 +57,7 @@ namespace Dev2.Activities.Specs.Permissions
 
             var currentSettings = environmentModel.ResourceRepository.ReadSettings(environmentModel);
             FeatureContext.Current.Add("initialSettings", currentSettings);
-            Data.Settings.Settings settings = new Data.Settings.Settings
+            var settings = new Data.Settings.Settings
             {
                 Security = new SecuritySettingsTO(new List<WindowsGroupPermission>())
             };
@@ -66,7 +66,7 @@ namespace Dev2.Activities.Specs.Permissions
             environmentModel.Disconnect();
             FeatureContext.Current.Add("environment", environmentModel);
 
-            var reconnectModel = new Server(Guid.NewGuid(), new ServerProxy(AppSettings.LocalHost, securitySpecsUser, securitySpecsPassword)) { Name = "Other Connection" };
+            var reconnectModel = new Server(Guid.NewGuid(), new ServerProxy(AppUsageStats.LocalHost, securitySpecsUser, securitySpecsPassword)) { Name = "Other Connection" };
             try
             {
                 reconnectModel.Connect();
@@ -79,20 +79,11 @@ namespace Dev2.Activities.Specs.Permissions
 
         }
 
-        private static string GetUserGroup()
-        {
-            return ConfigurationManager.AppSettings["userGroup"];
-        }
+        static string GetUserGroup() => ConfigurationManager.AppSettings["userGroup"];
 
-        private static string GetSecuritySpecsPassword()
-        {
-            return ConfigurationManager.AppSettings["SecuritySpecsPassword"];
-        }
+        static string GetSecuritySpecsPassword() => ConfigurationManager.AppSettings["SecuritySpecsPassword"];
 
-        private static string GetSecuritySpecsUser()
-        {
-            return ConfigurationManager.AppSettings["SecuritySpecsUser"];
-        }
+        static string GetSecuritySpecsUser() => ConfigurationManager.AppSettings["SecuritySpecsUser"];
 
         [Given(@"it has ""(.*)"" with ""(.*)""")]
         public void GivenItHasWith(string groupName, string groupRights)
@@ -111,11 +102,11 @@ namespace Dev2.Activities.Specs.Permissions
                     groupPermssions.Permissions |= permission;
                 }
             }
-            Data.Settings.Settings settings = new Data.Settings.Settings
+            var settings = new Data.Settings.Settings
             {
                 Security = new SecuritySettingsTO(new List<WindowsGroupPermission> { groupPermssions })
             };
-            
+
             var environmentModel = FeatureContext.Current.Get<IServer>("environment");
             EnsureEnvironmentConnected(environmentModel);
             environmentModel.ResourceRepository.WriteSettings(environmentModel, settings);
@@ -138,7 +129,7 @@ namespace Dev2.Activities.Specs.Permissions
                     groupPermssions.Permissions |= permission;
                 }
             }
-            Data.Settings.Settings settings = new Data.Settings.Settings
+            var settings = new Data.Settings.Settings
             {
                 Security = new SecuritySettingsTO(new List<WindowsGroupPermission> { groupPermssions })
             };
@@ -166,7 +157,7 @@ namespace Dev2.Activities.Specs.Permissions
                     groupPermssions.Permissions |= permission;
                 }
             }
-            Data.Settings.Settings settings = new Data.Settings.Settings
+            var settings = new Data.Settings.Settings
             {
                 Security = new SecuritySettingsTO(new List<WindowsGroupPermission> { groupPermssions })
             };
@@ -209,7 +200,7 @@ namespace Dev2.Activities.Specs.Permissions
         {
             var securitySpecsUser = GetSecuritySpecsUser();
 
-            var reconnectModel = new Server(Guid.NewGuid(), new ServerProxy(AppSettings.LocalHost, securitySpecsUser, GetSecuritySpecsPassword())) { Name = "Other Connection" };
+            var reconnectModel = new Server(Guid.NewGuid(), new ServerProxy(AppUsageStats.LocalHost, securitySpecsUser, GetSecuritySpecsPassword())) { Name = "Other Connection" };
             try
             {
                 
@@ -226,13 +217,11 @@ namespace Dev2.Activities.Specs.Permissions
         {
             var environmentModel = FeatureContext.Current.Get<IServer>("currentEnvironment");
             EnsureEnvironmentConnected(environmentModel);
-            if (environmentModel.IsConnected)
+            if (environmentModel.IsConnected && !environmentModel.HasLoadedResources)
             {
-                if (!environmentModel.HasLoadedResources)
-                {
-                    environmentModel.ForceLoadResources();
-                }
+                environmentModel.ForceLoadResources();
             }
+
             return environmentModel;
         }
 
@@ -240,7 +229,7 @@ namespace Dev2.Activities.Specs.Permissions
         public void ThenResourcesShouldHave(string resourcePerms)
         {
             var environmentModel = LoadResources();
-            SecPermissions resourcePermissions = SecPermissions.None;
+            var resourcePermissions = SecPermissions.None;
             var permissionsStrings = resourcePerms.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var permissionsString in permissionsStrings)
             {
@@ -260,7 +249,7 @@ namespace Dev2.Activities.Specs.Permissions
         public void ThenResourcesShouldNotHave(string resourcePerms)
         {
             var environmentModel = LoadResources();
-            SecPermissions resourcePermissions = SecPermissions.None;
+            var resourcePermissions = SecPermissions.None;
             var permissionsStrings = resourcePerms.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var permissionsString in permissionsStrings)
             {
@@ -287,7 +276,7 @@ namespace Dev2.Activities.Specs.Permissions
 
             var resourceModel = resourceRepository.FindSingle(model => model.Category.Equals(resourceName, StringComparison.InvariantCultureIgnoreCase));
             Assert.IsNotNull(resourceModel, "Did not find: " + resourceName);
-            SecPermissions resourcePermissions = SecPermissions.None;
+            var resourcePermissions = SecPermissions.None;
             var permissionsStrings = resourceRights.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var permissionsString in permissionsStrings)
             {
@@ -313,7 +302,7 @@ namespace Dev2.Activities.Specs.Permissions
 
             var resourceModel = resourceRepository.FindSingle(model => model.Category.Equals(resourceName, StringComparison.InvariantCultureIgnoreCase));
             Assert.IsNotNull(resourceModel);
-            SecPermissions resourcePermissions = SecPermissions.None;
+            var resourcePermissions = SecPermissions.None;
             var permissionsStrings = resourcePerms.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var permissionsString in permissionsStrings)
             {
@@ -352,7 +341,7 @@ namespace Dev2.Activities.Specs.Permissions
         [Given(@"I have a server ""(.*)""")]
         public void GivenIHaveAServer(string serverName)
         {
-            AppSettings.LocalHost = string.Format("http://{0}:3142", Environment.MachineName.ToLowerInvariant());
+            AppUsageStats.LocalHost = string.Format("http://{0}:3142", Environment.MachineName.ToLowerInvariant());
             var environmentModel = ServerRepository.Instance.Source;
             scenarioContext.Add("environment", environmentModel);
         }

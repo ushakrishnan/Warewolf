@@ -5,13 +5,13 @@ namespace Warewolf.Studio.Core
 {
     public class CookieHelper
     {
-        public static void Clear()
+        public const int InternetOptionEndBrowserSession = 42;
+
+        protected CookieHelper()
         {
-            InternetSetOption(IntPtr.Zero, InternetOptionEndBrowserSession, IntPtr.Zero, 0);
         }
-        private const int InternetOptionEndBrowserSession = 42;
 
         [DllImport("wininet.dll", SetLastError = true)]
-        private static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int lpdwBufferLength);
+        public static extern bool InternetSetOption(IntPtr hInternet, int dwOption, IntPtr lpBuffer, int lpdwBufferLength);
     }
 }

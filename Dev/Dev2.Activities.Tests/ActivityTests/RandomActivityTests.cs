@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,10 +12,12 @@ using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using ActivityUnitTests;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums;
+using Dev2.Common.State;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -42,7 +44,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             const int End = 20;
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, Start.ToString(CultureInfo.InvariantCulture), End.ToString(CultureInfo.InvariantCulture), string.Empty, "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
             int.TryParse(actual, out int actualNum);
 
@@ -63,7 +65,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "[[recset2(*).field2]]", "[[recset1(*).field1]]", string.Empty, "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetRecordSetFieldValueFromDataList(result.Environment, "recset2", "field2", out IList<string> dataListItems, out string error);
 
             // remove test datalist ;)
@@ -93,7 +95,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "", "[[recset1(1).field1]]", string.Empty, "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -113,7 +115,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "[[recset2(1).field2]]", "", string.Empty, "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -134,7 +136,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "[[recset1(1).field1]]", "[[recset2(1).field2]]", string.Empty, "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
             // remove test datalist ;)
@@ -156,7 +158,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "", "[[recset2(1).field2]]", string.Empty, "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -176,7 +178,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "[[recset1(1).field1]]", "", string.Empty, "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -196,9 +198,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "[[recset1(1).field1]]", "letters", "", "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
-            string expected = string.Format(Warewolf.Resource.Errors.ErrorResource.RandomIntegerForEndErrorTest, double.MinValue, double.MaxValue);
+            var expected = string.Format(Warewolf.Resource.Errors.ErrorResource.RandomIntegerForEndErrorTest, double.MinValue, double.MaxValue);
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -218,9 +220,9 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Numbers, "letters", "[[recset1(1).field1]]", string.Empty, "[[recset2().field2]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
-            string expected = string.Format(Warewolf.Resource.Errors.ErrorResource.RandomIntegerForStartErrorTest, double.MinValue, double.MaxValue);
+            var expected = string.Format(Warewolf.Resource.Errors.ErrorResource.RandomIntegerForStartErrorTest, double.MinValue, double.MaxValue);
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -245,7 +247,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             const int Length = 10;
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Letters, string.Empty, string.Empty, Length.ToString(CultureInfo.InvariantCulture), "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
             // remove test datalist ;)
@@ -265,7 +267,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Letters, string.Empty, string.Empty, "[[recset1(1).field1]]", "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "OutVar1", out string actual, out string error);
 
             // remove test datalist ;)
@@ -285,7 +287,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Letters, string.Empty, string.Empty, "[[recset2(1).field2]]", "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string Expected = "Please enter a positive integer for the Length.";
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
@@ -307,7 +309,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Letters, string.Empty, string.Empty, "letters", "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
 
             const string Expected = "Please ensure that the Length is an integer value.";
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
@@ -329,7 +331,7 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             SetupArguments(ActivityStrings.RandomActivityDataListWithData, ActivityStrings.RandomActivityDataListShape, enRandomType.Letters, string.Empty, string.Empty, "", "[[OutVar1]]");
 
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, GlobalConstants.ErrorPayload, out string actual, out string error);
 
             // remove test datalist ;)
@@ -508,6 +510,69 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(1, dsfForEachItems.Count);
             Assert.AreEqual(Result, dsfForEachItems[0].Name);
             Assert.AreEqual(Result, dsfForEachItems[0].Value);
+        }
+
+        [TestMethod]
+        [Owner("Hagashen Naidu")]
+        [TestCategory("DsfRandomActivity_GetState")]
+        public void DsfRandomActivity_GetState_ReturnsStateVariable()
+        {
+            //---------------Set up test pack-------------------
+            //------------Setup for test--------------------------
+            var act = new DsfRandomActivity { RandomType=enRandomType.LetterAndNumbers,From="1",To="5",Length="2",Result="[[rand]]"};
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            Assert.AreEqual(5, stateItems.Count());
+
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name = "RandomType",
+                    Type = StateVariable.StateType.Input,
+                    Value = "LetterAndNumbers"
+                },
+                new StateVariable
+                {
+                    Name = "From",
+                    Type = StateVariable.StateType.Input,
+                    Value = "1"
+                },
+                new StateVariable
+                {
+                    Name = "To",
+                    Type = StateVariable.StateType.Input,
+                    Value = "5"
+                },
+                new StateVariable
+                {
+                    Name = "Length",
+                    Type = StateVariable.StateType.Input,
+                    Value = "2"
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type = StateVariable.StateType.Output,
+                    Value = "[[rand]]"
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
         }
 
         #region Private Test Methods

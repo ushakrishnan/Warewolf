@@ -10,12 +10,12 @@ namespace Warewolf.Studio.ViewModels.Tests
     {
         #region Fields
 
-        private SingleEnvironmentExplorerViewModel _target;
+        SingleEnvironmentExplorerViewModel _target;
 
-        private Mock<IEnvironmentViewModel> _environmentViewModelMock;
-        private Mock<IExplorerItemViewModel> _explorerItemViewModelMock;
-        private Guid _selectedId;
-        private bool _filterByType;
+        Mock<IEnvironmentViewModel> _environmentViewModelMock;
+        Mock<IExplorerItemViewModel> _explorerItemViewModelMock;
+        Guid _selectedId;
+        bool _filterByType;
 
         #endregion Fields
 
@@ -39,7 +39,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSearchTextUnchanged()
         {
             //arrange
@@ -48,7 +48,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             {
                 isSearchTextChanged = isSearchTextChanged || e.PropertyName == "SearchText";
             };
-           
+
             //act
             _target.SearchText = _target.SearchText;
 
@@ -58,7 +58,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsFalse(isSearchTextChanged);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestSearchText()
         {
             //arrange
@@ -74,7 +74,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.SearchText = searchTextValue;
 
             //assert
-            _environmentViewModelMock.Verify(it=>it.Filter(It.IsAny<Func<IExplorerItemViewModel, bool>>()));
+            _environmentViewModelMock.Verify(it => it.Filter(It.IsAny<Func<IExplorerItemViewModel, bool>>()));
             Assert.AreEqual(searchTextValue, _target.SearchText);
             Assert.IsTrue(isSearchTextChanged);
         }
@@ -83,7 +83,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test commands
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommand()
         {
             //arrange
@@ -94,11 +94,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.RefreshCommand.Execute(null);
 
             //assert
-            _environmentViewModelMock.Verify(it => it.LoadDialog(_selectedId));
+            _environmentViewModelMock.Verify(it => it.LoadDialogAsync(_selectedId));
             _environmentViewModelMock.Verify(it => it.Filter(It.IsAny<Func<IExplorerItemViewModel, bool>>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommandFilterByTypeFalse()
         {
             //arrange
@@ -110,11 +110,11 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.RefreshCommand.Execute(null);
 
             //assert
-            _environmentViewModelMock.Verify(it => it.LoadDialog(_selectedId));
+            _environmentViewModelMock.Verify(it => it.LoadDialogAsync(_selectedId));
             _environmentViewModelMock.Verify(it => it.Filter(It.IsAny<Func<IExplorerItemViewModel, bool>>()));
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestRefreshCommandEmptySearch()
         {
             //arrange
@@ -125,7 +125,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _target.RefreshCommand.Execute(null);
 
             //assert
-            _environmentViewModelMock.Verify(it => it.LoadDialog(_selectedId));
+            _environmentViewModelMock.Verify(it => it.LoadDialogAsync(_selectedId));
             _environmentViewModelMock.Verify(it => it.Filter(It.IsAny<Func<IExplorerItemViewModel, bool>>()));
         }
 

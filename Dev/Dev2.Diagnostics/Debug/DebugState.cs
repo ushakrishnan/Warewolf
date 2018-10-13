@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,8 +8,6 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-
-#region
 
 using System;
 using System.Collections.Generic;
@@ -24,26 +22,22 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-#endregion
 
 namespace Dev2.Diagnostics.Debug
 {
-    /// <summary>
-    ///     A default debug state
-    /// </summary>
     [Serializable]
     public class DebugState : IDebugState, INotifyPropertyChanged
     {
-        private DateTime _startTime;
-        private String _durationString;
-        private DateTime _endTime;
+        DateTime _startTime;
+        String _durationString;
+        DateTime _endTime;
         string _errorMessage;
         bool _isDurationVisible;
         string _server;
         Guid _environmentID;
         Guid _disconnectedID;
-        private Guid? _parentID;
-        private Guid _id;
+        Guid? _parentID;
+        Guid _id;
 
         #region Ctor
 
@@ -61,14 +55,8 @@ namespace Dev2.Diagnostics.Debug
 
         public Guid DisconnectedID
         {
-            get
-            {
-                return _disconnectedID;
-            }
-            set
-            {
-                _disconnectedID = value;
-            }
+            get => _disconnectedID;
+            set => _disconnectedID = value;
         }
 
         static DebugState()
@@ -79,6 +67,7 @@ namespace Dev2.Diagnostics.Debug
                 Directory.CreateDirectory(tempPath);
             }
         }
+
         #endregion
 
         #region IDebugState - Properties
@@ -401,11 +390,11 @@ namespace Dev2.Diagnostics.Debug
 
         #region IDebugItem serialization helper methods
 
-        private void Serialize(IByteWriterBase writer, IList<IDebugItem> items)
+        void Serialize(IByteWriterBase writer, IList<IDebugItem> items)
         {
 
             writer.Write(items.Count);
-            
+
             for (var i = 0; i < items.Count; i++)
             {
                 writer.Write(items[i].FetchResultsList().Count);
@@ -421,10 +410,10 @@ namespace Dev2.Diagnostics.Debug
                     writer.Write(itemResult.MoreLink);
                 }
             }
-            
+
         }
 
-        private static void Deserialize(IByteReaderBase reader, ICollection<IDebugItem> items)
+        static void Deserialize(IByteReaderBase reader, ICollection<IDebugItem> items)
         {
             var count = reader.ReadInt32();
             for (var i = 0; i < count; i++)
@@ -450,17 +439,11 @@ namespace Dev2.Diagnostics.Debug
 
         #endregion
 
-        
-        public bool IsFinalStep()
-        {
-            return StateType == StateType.End && OriginalInstanceID == ID && (!ParentID.HasValue || ParentID == Guid.Empty);
-        }
 
-        public bool IsFirstStep()
-        {
-            return StateType == StateType.Start &&
+        public bool IsFinalStep() => StateType == StateType.End && OriginalInstanceID == ID && (!ParentID.HasValue || ParentID == Guid.Empty);
+
+        public bool IsFirstStep() => StateType == StateType.Start &&
                    OriginalInstanceID == ID;
-        }
 
         public bool IsDurationVisible
         {
@@ -541,15 +524,9 @@ namespace Dev2.Diagnostics.Debug
             }
         }
 
-        public static bool operator ==(DebugState left, DebugState right)
-        {
-            return Equals(left, right);
-        }
+        public static bool operator ==(DebugState left, DebugState right) => Equals(left, right);
 
-        public static bool operator !=(DebugState left, DebugState right)
-        {
-            return !Equals(left, right);
-        }
+        public static bool operator !=(DebugState left, DebugState right) => !Equals(left, right);
 
         #endregion
 
@@ -561,12 +538,9 @@ namespace Dev2.Diagnostics.Debug
         {
             var handler = PropertyChanged;
             handler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            if (propertyName?.Equals("ParentID") ?? false)
+            if (propertyName?.Equals("ParentID") != null && ParentID == Guid.Empty)
             {
-                if (ParentID == Guid.Empty)
-                {
-                    ParentID = null;
-                }
+                ParentID = null;
             }
         }
     }

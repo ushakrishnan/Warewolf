@@ -4,15 +4,13 @@ using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Studio.Core
 {
-    internal static class Common
+    static class Common
     {
         public const string RootTag = "DataList";
         public const string Description = "Description";
         public const string IsEditable = "IsEditable";
-        public static bool ParseIsEditable(XmlAttribute attr)
-        {
-            return ParseBoolAttribute(attr);
-        }
+        public static bool ParseIsEditable(XmlAttribute attr) => ParseBoolAttribute(attr);
+
         public static string ParseDescription(XmlAttribute attr)
         {
             var result = string.Empty;
@@ -36,7 +34,7 @@ namespace Dev2.Studio.Core
         public static enDev2ColumnArgumentDirection ParseColumnIODirection(XmlAttribute attr)
     
         {
-            enDev2ColumnArgumentDirection result = enDev2ColumnArgumentDirection.None;
+            var result = enDev2ColumnArgumentDirection.None;
 
             if (attr == null)
             {

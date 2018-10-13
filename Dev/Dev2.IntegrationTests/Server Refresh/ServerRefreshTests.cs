@@ -15,27 +15,39 @@ namespace Dev2.Integration.Tests.Server_Refresh
     [TestClass]
     public class ServerRefreshTests
     {
-        private const string PassResult = @"C:\ProgramData\Warewolf\Resources\PassResult.xml";
+        const string PassResult = @"C:\ProgramData\Warewolf\Resources\PassResult.bite";
+        const string PassResultOld = @"C:\ProgramData\Warewolf\Resources\PassResult.xml";
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            TryUndoMoveFileTemporarily(PassResult);
+        }
+
         [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
         public void Run_a_workflow_to_test_server_refresh()
         {
+            Assert.IsTrue(File.Exists(PassResult));
+            Assert.IsFalse(File.Exists(PassResultOld));
+
             SetupPermissions();
             var url1 = $"http://localhost:3142/secure/RefreshWorkflow1.json";
-            var passRequest1 = ExececuteRequest(new Uri(url1));
+            var passRequest1 = ExecuteRequest(new Uri(url1));
             //Delete this workflow and continue making requests
-            FileIsDeleted(PassResult);
-            var passRequest2 = ExececuteRequest(new Uri(url1));
-            var passRequest3 = ExececuteRequest(new Uri(url1));
-            var passRequest4 = ExececuteRequest(new Uri(url1));
+            MoveFileTemporarily(PassResult);
+            var passRequest2 = ExecuteRequest(new Uri(url1));
+            var passRequest3 = ExecuteRequest(new Uri(url1));
+            var passRequest4 = ExecuteRequest(new Uri(url1));
             //wait for all requests to finish running they should all pass 
             Task.WaitAll(passRequest1, passRequest2, passRequest3, passRequest4);
             //refresh the server and wait fot it to finish
-            var explorerRefresh = ExececuteRequest(new Uri("http://localhost:3142/services/FetchExplorerItemsService.json?ReloadResourceCatalogue=true"));
+            var explorerRefresh = ExecuteRequest(new Uri("http://localhost:3142/services/FetchExplorerItemsService.json?ReloadResourceCatalogue=true"));
             explorerRefresh.Wait();
             //execute this workflow after the refresh, we should get failures based on the fact that the refresh has finish executing
-            var failRequest1 = ExececuteRequest(new Uri(url1));
-            var failRequest2 = ExececuteRequest(new Uri(url1));
-            var failRequest3 = ExececuteRequest(new Uri(url1));
+            var failRequest1 = ExecuteRequest(new Uri(url1));
+            var failRequest2 = ExecuteRequest(new Uri(url1));
+            var failRequest3 = ExecuteRequest(new Uri(url1));
             Task.WaitAll(failRequest1, failRequest2, failRequest3);
             var failRequest1Result = failRequest1.Result;
             var failRequest2Result = failRequest2.Result;
@@ -53,38 +65,37 @@ namespace Dev2.Integration.Tests.Server_Refresh
             StringAssert.Contains(passRequest4Result, "Pass");
         }
 
-        private class PatientWebClient : WebClient
+        class PatientWebClient : WebClient
         {
             protected override WebRequest GetWebRequest(Uri uri)
             {
-                WebRequest w = base.GetWebRequest(uri);
-                // ReSharper disable once PossibleNullReferenceException
+                var w = base.GetWebRequest(uri);
                 w.Timeout = 20 * 60 * 1000;
                 return w;
             }
         }
 
-        private void FileIsDeleted(string fileToDelete)
+        void MoveFileTemporarily(string fileName)
         {
-            try
+            File.Move(fileName, $"{fileName}.Moved");
+        }
+        void TryUndoMoveFileTemporarily(string fileName)
+        {
+            var tmpName = $"{fileName}.Moved";
+            if (File.Exists(tmpName))
             {
-                File.Delete(fileToDelete);
-            }
-            catch (Exception e)
-            {
-                Dev2Logger.Error(e, "Warewolf Error");
+                File.Move(tmpName, fileName);
             }
         }
 
-        private Task<string> ExececuteRequest(Uri url)
+        public Task<string> ExecuteRequest(Uri url)
         {
             try
             {
                 var client = new PatientWebClient { Credentials = CredentialCache.DefaultNetworkCredentials };
                 using (client)
                 {
-                    var task = Task.Run(() => client.DownloadString(url));
-                    return task;
+                    return Task.Run(() => client.DownloadString(url));
                 }
 
             }
@@ -95,9 +106,9 @@ namespace Dev2.Integration.Tests.Server_Refresh
             }
         }
 
-        private static void SetupPermissions()
+        static void SetupPermissions()
         {
-            string groupRights = "View, Execute, Contribute, Deploy To, Deploy From, Administrator";
+            var groupRights = "View, Execute, Contribute, Deploy To, Deploy From, Administrator";
             var groupPermssions = new WindowsGroupPermission
             {
                 WindowsGroup = "Public",
@@ -113,11 +124,11 @@ namespace Dev2.Integration.Tests.Server_Refresh
                     groupPermssions.Permissions |= permission;
                 }
             }
-            Data.Settings.Settings settings = new Data.Settings.Settings
+            var settings = new Data.Settings.Settings
             {
                 Security = new SecuritySettingsTO(new List<WindowsGroupPermission> { groupPermssions })
             };
-            AppSettings.LocalHost = "http://localhost:3142";
+            AppUsageStats.LocalHost = "http://localhost:3142";
             var environmentModel = ServerRepository.Instance.Source;
             environmentModel.Connect();
             environmentModel.ResourceRepository.WriteSettings(environmentModel, settings);

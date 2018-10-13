@@ -22,16 +22,12 @@ namespace Dev2.Runtime.Hosting
             _tools.AddRange(searchFolders.SelectMany(CreateToolsFromFolders));
         }
 
-        IEnumerable<IToolDescriptor> CreateToolsFromFolders(string path)
-        {
-            return Directory.GetFiles(path, "*.dll").SelectMany(CreateTools);
-         
-        }
+        IEnumerable<IToolDescriptor> CreateToolsFromFolders(string path) => Directory.GetFiles(path, "*.dll").SelectMany(CreateTools);
 
-        private IEnumerable<IToolDescriptor> CreateTools(string path)
+        IEnumerable<IToolDescriptor> CreateTools(string path)
         {
             var assembly = Assembly.LoadFile(path);
-            Type basetype = typeof(IDev2Activity);
+            var basetype = typeof(IDev2Activity);
             var types = assembly.ExportedTypes.Where(basetype.IsAssignableFrom);
             return types.Select(CreateTool);
         }
@@ -65,12 +61,7 @@ namespace Dev2.Runtime.Hosting
 
         #region Implementation of IToolManager
 
-        public IList<IToolDescriptor> LoadTools()
-        {
-            
-            return _tools.Where(a => a != null).OrderBy(a => a.Category.ToLower() == "connectors" ?"zzzzzzz":a.Category ).ToList();
-            
-        }
+        public IList<IToolDescriptor> LoadTools() => _tools.Where(a => a != null).OrderBy(a => a.Category.ToLower() == "connectors" ? "zzzzzzz" : a.Category).ToList();
 
         #endregion
     }

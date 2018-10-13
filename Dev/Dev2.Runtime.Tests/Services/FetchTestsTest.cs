@@ -17,7 +17,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class FetchTestsTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_GivenArgsWithResourceId_ShouldReturnResourceId()
@@ -38,7 +38,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(resId, resourceID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -52,7 +52,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -66,7 +66,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Contribute, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("FetchTests_HandlesType")]
         public void FetchTests_HandlesType_ExpectName()
@@ -81,7 +81,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("FetchTests", fetchTests.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_NullValues_ErrorResult()
@@ -90,13 +90,13 @@ namespace Dev2.Tests.Runtime.Services
             var fetchTests = new FetchTests();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchTests.Execute(null, null);
+            var jsonResult = fetchTests.Execute(null, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_ResourceIDNotPresent_ErrorResult()
@@ -106,13 +106,13 @@ namespace Dev2.Tests.Runtime.Services
             var fetchTests = new FetchTests();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchTests.Execute(values, null);
+            var jsonResult = fetchTests.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_ResourceIDNotGuid_ErrorResult()
@@ -122,14 +122,14 @@ namespace Dev2.Tests.Runtime.Services
             var fetchTests = new FetchTests();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = fetchTests.Execute(values, null);
+            var jsonResult = fetchTests.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
-        
 
-        [TestMethod]
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("FetchTests_Execute")]
         public void FetchTests_Execute_ExpectTestList()
@@ -149,7 +149,7 @@ namespace Dev2.Tests.Runtime.Services
             var repo = new Mock<ITestCatalog>();
             var ws = new Mock<IWorkspace>();
             var resID = Guid.Empty;
-            repo.Setup(a => a.Fetch(It.IsAny<Guid>())).Callback((Guid id)=>
+            repo.Setup(a => a.Fetch(It.IsAny<Guid>())).Callback((Guid id) =>
             {
                 resID = id;
             }).Returns(listOfTests).Verifiable();
@@ -157,7 +157,7 @@ namespace Dev2.Tests.Runtime.Services
             var serializer = new Dev2JsonSerializer();
             var inputs = new Dictionary<string, StringBuilder>();
             var resourceID = Guid.NewGuid();
-            inputs.Add("resourceID", new StringBuilder(resourceID.ToString()));            
+            inputs.Add("resourceID", new StringBuilder(resourceID.ToString()));
             fetchTests.TestCatalog = repo.Object;
             //------------Execute Test---------------------------
             var res = fetchTests.Execute(inputs, ws.Object);
@@ -165,9 +165,9 @@ namespace Dev2.Tests.Runtime.Services
             var testModels = serializer.Deserialize<List<IServiceTestModelTO>>(msg.GetDecompressedMessage());
             //------------Assert Results-------------------------
             repo.Verify(a => a.Fetch(It.IsAny<Guid>()));
-            Assert.AreEqual(listOfTests.Count,testModels.Count);
-            Assert.AreEqual(listOfTests[0].TestName,testModels[0].TestName);
-            Assert.AreEqual(resourceID,resID);
-        }        
+            Assert.AreEqual(listOfTests.Count, testModels.Count);
+            Assert.AreEqual(listOfTests[0].TestName, testModels[0].TestName);
+            Assert.AreEqual(resourceID, resID);
+        }
     }
 }

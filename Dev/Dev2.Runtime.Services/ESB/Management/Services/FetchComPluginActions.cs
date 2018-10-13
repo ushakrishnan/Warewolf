@@ -5,12 +5,9 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Common.Interfaces.DB;
-using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel;
 using Dev2.Runtime.ServiceModel.Data;
@@ -20,14 +17,9 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    public class FetchComPluginActions : IEsbManagementEndpoint
+    public class FetchComPluginActions : DefaultEsbManagementEndpoint
     {
-        public string HandlesType()
-        {
-            return "FetchComPluginActions";
-        }
-
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             var serializer = new Dev2JsonSerializer();
             try
@@ -35,12 +27,13 @@ namespace Dev2.Runtime.ESB.Management.Services
                 var pluginSource = serializer.Deserialize<ComPluginSourceDefinition>(values["source"]);
                 var ns = serializer.Deserialize<INamespaceItem>(values["namespace"]);
 
-                ComPluginServices services = new ComPluginServices();
+                var services = new ComPluginServices();
                 var src = ResourceCatalog.Instance.GetResource<ComPluginSource>(GlobalConstants.ServerWorkspaceID, pluginSource.Id);
-                ComPluginService svc = new ComPluginService();
+                var svc = new ComPluginService();
                 if (ns != null)
                 {
-                    svc.Namespace = ns.FullName; svc.Source = src;
+                    svc.Namespace = ns.FullName;
+                    svc.Source = src;
                 }
                 else
                 {
@@ -98,7 +91,7 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        private string BuildServiceInputName(string name, string typeName)
+        string BuildServiceInputName(string name, string typeName)
         {
             try
             {
@@ -118,32 +111,13 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     return name;
                 }
-
             }
-
-        }
-
-        public DynamicService CreateServiceEntry()
-        {
-            var findServices = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
-
-            var fetchItemsAction = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-
-            findServices.Actions.Add(fetchItemsAction);
-
-            return findServices;
         }
 
         public ResourceCatalog Resources => ResourceCatalog.Instance;
 
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
+        public override string HandlesType() => "FetchComPluginActions";
     }
 }

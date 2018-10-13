@@ -13,7 +13,7 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Data.Util
 {
-    internal class ParserHelperUtil : IParserHelper
+    class ParserHelperUtil : IParserHelper
     {
         #region Implementation of IParserHelper
 
@@ -33,7 +33,7 @@ namespace Dev2.Data.Util
             return openRegion;
         }
 
-        private bool CloseNode(IParseTO currentNode, int i, StringBuilder region)
+        bool CloseNode(IParseTO currentNode, int i, StringBuilder region)
         {
             const bool OpenRegion = false;
             currentNode.EndIndex = i;
@@ -58,7 +58,7 @@ namespace Dev2.Data.Util
             return currentNode;
         }
 
-        private IParseTO ProcessNode(string payload, IParseTO currentNode, ref StringBuilder region, ref bool openRegion)
+        IParseTO ProcessNode(string payload, IParseTO currentNode, ref StringBuilder region, ref bool openRegion)
         {
             if (!currentNode.IsRoot)
             {
@@ -66,9 +66,12 @@ namespace Dev2.Data.Util
                 region = new StringBuilder(currentNode.Payload);
                 openRegion = true;
             }
-            else if (currentNode.IsRoot && !currentNode.IsLeaf && currentNode.Child.HangingOpen)
+            else
             {
-                throw new Dev2DataLanguageParseError(ErrorResource.InvalidSyntaxCreatingVariable, 0, payload.Length, enIntellisenseErrorCode.SyntaxError);
+                if (currentNode.IsRoot && !currentNode.IsLeaf && currentNode.Child.HangingOpen)
+                {
+                    throw new Dev2DataLanguageParseError(ErrorResource.InvalidSyntaxCreatingVariable, 0, payload.Length, enIntellisenseErrorCode.SyntaxError);
+                }
             }
             return currentNode;
         }
@@ -78,13 +81,11 @@ namespace Dev2.Data.Util
             if (cur == charToCheck && prev != charToCheck)
             {
                 var checkIndex = i + 1;
-                if (checkIndex < payload.Length)
+                if (checkIndex < payload.Length && payload[checkIndex] == charToCheck)
                 {
-                    if (payload[checkIndex] == charToCheck)
-                    {
-                        shouldAddToRegion = false;
-                    }
+                    shouldAddToRegion = false;
                 }
+
             }
             return shouldAddToRegion;
         }
@@ -100,7 +101,7 @@ namespace Dev2.Data.Util
             }
             else
             {
-                string message = "Recordset index (" + part + ") contains invalid character(s)";
+                var message = "Recordset index (" + part + ") contains invalid character(s)";
                 throw new Dev2DataLanguageParseError(message, to.StartIndex + start, to.EndIndex + end, enIntellisenseErrorCode.NonNumericRecordsetIndex);
             }
             return true;
@@ -109,7 +110,7 @@ namespace Dev2.Data.Util
         public bool CheckCurrentIndex(IParseTO to, int start, string raw, int end)
         {
             start += 1;
-            string part = raw.Substring(start, raw.Length - (start + 1));
+            var part = raw.Substring(start, raw.Length - (start + 1));
 
             if (!part.Contains(DataListUtil.OpeningSquareBrackets) && part != "*")
             {
@@ -122,7 +123,7 @@ namespace Dev2.Data.Util
                 }
                 else
                 {
-                    string message = string.Format(ErrorResource.RecordsetIndexContainsInvalidCharecters, part);
+                    var message = string.Format(ErrorResource.RecordsetIndexContainsInvalidCharecters, part);
                     throw new Dev2DataLanguageParseError(message, to.StartIndex + start, to.EndIndex + end, enIntellisenseErrorCode.NonNumericRecordsetIndex);
                 }
             }
@@ -143,6 +144,7 @@ namespace Dev2.Data.Util
                 {
                     if (!string.IsNullOrEmpty(name))
                     {
+#pragma warning disable S134 // Control flow statements "if", "switch", "for", "foreach", "while", "do"  and "try" should not be nested too deeply
                         if (Char.IsNumber(name[0]))
                         {
                             return IntellisenseFactory.CreateErrorResult(1, 1, dataListVerifyPart, displayString + " name " + displayName + " begins with a number", enIntellisenseErrorCode.SyntaxError, true);
@@ -163,11 +165,11 @@ namespace Dev2.Data.Util
                         {
                             return intellisenseResult;
                         }
+#pragma warning restore S134 // Control flow statements "if", "switch", "for", "foreach", "while", "do"  and "try" should not be nested too deeply
                         XmlConvert.VerifyName(name);
-
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
                     return intellisenseResult;
                 }
@@ -182,7 +184,7 @@ namespace Dev2.Data.Util
             if (parts[0].IndexOf(DataListUtil.RecordsetIndexClosingBracket, StringComparison.Ordinal) <= 0)
             {
                 // its an error ;)
-                IDataListVerifyPart part = IntellisenseFactory.CreateDataListValidationRecordsetPart(parts[0], "." + parts[1], true);
+                var part = IntellisenseFactory.CreateDataListValidationRecordsetPart(parts[0], "." + parts[1], true);
                 result.Add(IntellisenseFactory.CreateErrorResult(payload.StartIndex, payload.EndIndex, part, " [[" + display + "]] is a malformed recordset", enIntellisenseErrorCode.InvalidRecordsetNotation, !payload.HangingOpen));
             }
             else
@@ -196,26 +198,34 @@ namespace Dev2.Data.Util
                 }
                 foreach (IDev2DataLanguageIntellisensePart t in recordsetPart.Children)
                 {
-                    string match = t.Name.ToLower();
+                    var match = t.Name.ToLower();
                     if (match.Contains(search) && ((match != search) || (match == search && addCompleteParts)))
                     {
-                        string index = payload.Child != null ? payload.Child.Payload : DataListUtil.ExtractIndexRegionFromRecordset(parts[0]);
+                        var index = payload.Child != null ? payload.Child.Payload : DataListUtil.ExtractIndexRegionFromRecordset(parts[0]);
 
-                        IDataListVerifyPart part = IntellisenseFactory.CreateDataListValidationRecordsetPart(partName, t.Name, t.Description, index);
+                        var part = IntellisenseFactory.CreateDataListValidationRecordsetPart(partName, t.Name, t.Description, index);
                         result.Add(IntellisenseFactory.CreateSelectableResult(parts[0].Length, payload.EndIndex, part, part.Description));
                     }
-                    else if (match == search)
+                    else
                     {
-                        emptyOk = true;
+                        ShouldUpdateEmptyOk(search, ref emptyOk, match);
                     }
                 }
             }
             return false;
         }
 
+        private static void ShouldUpdateEmptyOk(string search,ref bool emptyOk, string match)
+        {
+            if (match == search)
+            {
+                emptyOk = true;
+            }
+        }
+
         public void ProcessResults(IList<IIntellisenseResult> realResults, IIntellisenseResult intellisenseResult)
         {
-            bool addToFinal = true;
+            var addToFinal = true;
 
             realResults
                 .ToList()
@@ -264,16 +274,12 @@ namespace Dev2.Data.Util
 
         public bool IsValidIndex(IParseTO to)
         {
-            bool result = false;
-            string raw = to.Payload;
-            int start = raw.IndexOf(DataListUtil.RecordsetIndexOpeningBracket, StringComparison.Ordinal);
-            int end = raw.LastIndexOf(DataListUtil.RecordsetIndexClosingBracket, StringComparison.Ordinal);
-            
-            if (end - start == 1)
-            {
-                result = true;
-            }
-            else if (start > 0 && end < 0 && (raw.Length - 1 == start))
+            var result = false;
+            var raw = to.Payload;
+            var start = raw.IndexOf(DataListUtil.RecordsetIndexOpeningBracket, StringComparison.Ordinal);
+            var end = raw.LastIndexOf(DataListUtil.RecordsetIndexClosingBracket, StringComparison.Ordinal);
+
+            if (end - start == 1 || (start > 0 && end < 0 && (raw.Length - 1 == start)))
             {
                 result = true;
             }
@@ -281,32 +287,35 @@ namespace Dev2.Data.Util
             {
                 if (start > 0 && end < 0)
                 {
-                    string part = raw.Substring(start + 1, raw.Length - (start + 1));
+                    var part = raw.Substring(start + 1, raw.Length - (start + 1));
 
                     result = part.Contains(DataListUtil.OpeningSquareBrackets) || CheckValidIndex(to, part, start, end);
                     if (end < 0)
                     {
-                        string message = "Recordset [ " + raw + " ] does not contain a matching ')'";
+                        var message = "Recordset [ " + raw + " ] does not contain a matching ')'";
                         throw new Dev2DataLanguageParseError(message, to.StartIndex + start, to.EndIndex + end, enIntellisenseErrorCode.InvalidRecordsetNotation);
                     }
                 }
-                else if (start > 0 && end > start)
+                else
                 {
-                    result = CheckCurrentIndex(to, start, raw, end);
+                    if (start > 0 && end > start)
+                    {
+                        result = CheckCurrentIndex(to, start, raw, end);
+                    }
                 }
             }
 
             return result;
         }
 
-        public IIntellisenseResult AddErrorToResults(bool isRs, string part, IDev2DataLangaugeParseError e, bool isOpen)
+        public IIntellisenseResult AddErrorToResults(bool isRs, string part, IDev2DataLangaugeParseError dev2DataLanguageParseError, bool isOpen)
         {
             // add error
             IDataListVerifyPart pTo;
             if (isRs)
             {
-                int start = part.IndexOf(DataListUtil.RecordsetIndexOpeningBracket, StringComparison.Ordinal);
-                string rs = part;
+                var start = part.IndexOf(DataListUtil.RecordsetIndexOpeningBracket, StringComparison.Ordinal);
+                var rs = part;
                 if (start >= 0)
                 {
                     rs = rs.Substring(0, start);
@@ -318,7 +327,7 @@ namespace Dev2.Data.Util
                 pTo = IntellisenseFactory.CreateDataListValidationScalarPart(part.Replace("]", ""));
             }
 
-            return IntellisenseFactory.CreateErrorResult(e.StartIndex, e.EndIndex, pTo, e.Message, e.ErrorCode, isOpen);
+            return IntellisenseFactory.CreateErrorResult(dev2DataLanguageParseError.StartIndex, dev2DataLanguageParseError.EndIndex, pTo, dev2DataLanguageParseError.Message, dev2DataLanguageParseError.ErrorCode, isOpen);
         }
 
         #endregion

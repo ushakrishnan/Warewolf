@@ -1168,6 +1168,22 @@
                   <SupportLevel>0</SupportLevel>
                   <Descendants />
                 </UIObject>
+                <UIObject ControlType="MenuItem" Id="Merge" FriendlyName="Merge" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf (DEV2\PIETER.TERBLANCHE)</WindowTitle>
+                  </WindowTitles>
+                  <SearchConfigurations>
+                    <SearchConfiguration>Expand</SearchConfiguration>
+                  </SearchConfigurations>
+                  <AndCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="ControlType">MenuItem</PropertyCondition>
+                    <PropertyCondition Name="AutomationId">MergeItem</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
+                </UIObject>
               </Descendants>
             </UIObject>
             <UIObject ControlType="Menu" Id="DesignSurfaceContextMenu" FriendlyName="" SpecialControlType="None">
@@ -1478,9 +1494,9 @@
                 <WindowTitle>Warewolf</WindowTitle>
               </WindowTitles>
               <AndCondition>
-                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
                 <PropertyCondition Name="ControlType">Custom</PropertyCondition>
-                <PropertyCondition Name="ClassName">Uia.MenuView</PropertyCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ClassName" Operator="Contains">MenuView</PropertyCondition>
               </AndCondition>
               <SupportLevel>0</SupportLevel>
               <Descendants>
@@ -1668,6 +1684,19 @@
                       <Descendants />
                     </UIObject>
                   </Descendants>
+                </UIObject>
+                <UIObject ControlType="Button" Id="SearchButton" FriendlyName="Search in Warewolf" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf (DEV2\SANELE.MTHEMBU)</WindowTitle>
+                  </WindowTitles>
+                  <AndCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="ControlType">Button</PropertyCondition>
+                    <PropertyCondition Name="HelpText">Search in Warewolf</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
                 </UIObject>
               </Descendants>
             </UIObject>
@@ -3018,6 +3047,19 @@
                                       <Descendants />
                                     </UIObject>
                                   </Descendants>
+                                </UIObject>
+                                <UIObject ControlType="ListItem" Id="AdvancedRecordset" FriendlyName="Warewolf.Studio.ViewModels.ToolBox.ToolDescriptorV..." SpecialControlType="None">
+                                  <TechnologyName>UIA</TechnologyName>
+                                  <WindowTitles>
+                                    <WindowTitle>Warewolf (DEV2\SANELE.MTHEMBU)</WindowTitle>
+                                  </WindowTitles>
+                                  <AndCondition>
+                                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                                    <PropertyCondition Name="ControlType">ListItem</PropertyCondition>
+                                    <PropertyCondition Name="AutomationId">Advanced Recordset</PropertyCondition>
+                                  </AndCondition>
+                                  <SupportLevel>0</SupportLevel>
+                                  <Descendants />
                                 </UIObject>
                               </Descendants>
                             </UIObject>
@@ -5950,11 +5992,10 @@
                                 <WindowTitle>Warewolf</WindowTitle>
                               </WindowTitles>
                               <AndCondition>
-                                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
                                 <PropertyCondition Name="ControlType">Pane</PropertyCondition>
+                                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
                                 <PropertyCondition Name="ClassName">Uia.CellsPanel</PropertyCondition>
-                                <PropertyCondition Name="Name">0</PropertyCondition>
-                                <PropertyCondition Name="Instance">2</PropertyCondition>
+                                <PropertyCondition Name="Name">1</PropertyCondition>
                               </AndCondition>
                               <SupportLevel>0</SupportLevel>
                               <Descendants>
@@ -6267,7 +6308,7 @@
               <AndCondition>
                 <PropertyCondition Name="ControlType">Custom</PropertyCondition>
                 <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
-                <PropertyCondition Name="Name">{"ServerType":"SqlDatabase","Server":"RSAKLFSVRDEV","DatabaseName":"Dev2TestingDB","Port":1433,"AuthenticationType":"User","UserID":"testuser","Password":"test123","DataList":"","ConnectionString":"Data Source=RSAKLFSVRDEV,1433;Initial Catalog=Dev2TestingDB;User ID=testuser;Password=test123;","IsSource":true,"IsService":false,"IsFolder":false,"IsReservedService":false,"IsServer":false,"IsResourceVersion":false,"Version":null,"ResourceID":"ffa6880d-3b24-4d34-b829-a2db45e1c664","ResourceType":"SqlDatabase","ResourceName":"TestingDb","IsValid":false,"Errors":[],"ReloadActions":false,"UserPermissions":0,"VersionInfo":{"DateTimeStamp":"2017-01-12T08:28:31.4692206+02:00","Reason":"Save","User":"Unknown","VersionNumber":"1","ResourceId":"ffa6880d-3b24-4d34-b829-a2db45e1c664","VersionId":"47f2ec5f-a20a-41de-bbea-5653cb87b60c"}}</PropertyCondition>
+                <PropertyCondition Name="Name">{"ServerType":"SqlDatabase","Server":"rsaklfsvrdev.dev2.local","DatabaseName":"Dev2TestingDB","Port":1433,"AuthenticationType":"User","UserID":"testuser","Password":"test123","DataList":"","ConnectionString":"Data Source=rsaklfsvrdev.dev2.local,1433;Initial Catalog=Dev2TestingDB;User ID=testuser;Password=test123;","IsSource":true,"IsService":false,"IsFolder":false,"IsReservedService":false,"IsServer":false,"IsResourceVersion":false,"Version":null,"ResourceID":"ffa6880d-3b24-4d34-b829-a2db45e1c664","ResourceType":"SqlDatabase","ResourceName":"TestingDb","IsValid":false,"Errors":[],"ReloadActions":false,"UserPermissions":0,"VersionInfo":{"DateTimeStamp":"2017-01-12T08:28:31.4692206+02:00","Reason":"Save","User":"Unknown","VersionNumber":"1","ResourceId":"ffa6880d-3b24-4d34-b829-a2db45e1c664","VersionId":"47f2ec5f-a20a-41de-bbea-5653cb87b60c"}}</PropertyCondition>
               </AndCondition>
               <SupportLevel>0</SupportLevel>
               <Descendants />
@@ -10961,6 +11002,33 @@
                     </UIObject>
                   </Descendants>
                 </UIObject>
+                <UIObject ControlType="TabPage" Id="UnpinnedUnsaved2" FriendlyName="Dev2.Studio.ViewModels.Workflow.WorkflowDesignerVi..." SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf (DEV2\CANDICE.DANIEL)</WindowTitle>
+                  </WindowTitles>
+                  <AndCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="ControlType">TabPage</PropertyCondition>
+                    <PropertyCondition Name="Name">Dev2.Studio.ViewModels.Workflow.WorkflowDesignerViewModel</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
+                </UIObject>
+                <UIObject ControlType="TabPage" Id="UnpinnedUsaved1" FriendlyName="Dev2.Studio.ViewModels.Workflow.WorkflowDesignerVi..." SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf (DEV2\CANDICE.DANIEL)</WindowTitle>
+                  </WindowTitles>
+                  <AndCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="ControlType">TabPage</PropertyCondition>
+                    <PropertyCondition Name="Name">Dev2.Studio.ViewModels.Workflow.WorkflowDesignerViewModel</PropertyCondition>
+                    <PropertyCondition Name="Instance">2</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
+                </UIObject>
               </Descendants>
             </UIObject>
             <UIObject ControlType="Menu" Id="UnpinnedTabContextMenu" FriendlyName="" SpecialControlType="None">
@@ -11054,6 +11122,34 @@
                     <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
                     <PropertyCondition Name="ControlType">MenuItem</PropertyCondition>
                     <PropertyCondition Name="Name">Hide</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
+                </UIObject>
+              </Descendants>
+            </UIObject>
+            <UIObject ControlType="Custom" Id="ComboboxListItemAsRemoteContainer" FriendlyName="Remote Container" SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
+              <WindowTitles>
+                <WindowTitle>Warewolf</WindowTitle>
+              </WindowTitles>
+              <AndCondition>
+                <PropertyCondition Name="ControlType">Custom</PropertyCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ClassName">Uia.ComboEditorItemControl</PropertyCondition>
+                <PropertyCondition Name="Name" Operator="Contains">Remote Container</PropertyCondition>
+              </AndCondition>
+              <SupportLevel>0</SupportLevel>
+              <Descendants>
+                <UIObject ControlType="Text" Id="Text" FriendlyName="Remote Container" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf</WindowTitle>
+                  </WindowTitles>
+                  <AndCondition>
+                    <PropertyCondition Name="ControlType">Text</PropertyCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="Name" Operator="Contains">Remote Container</PropertyCondition>
                   </AndCondition>
                   <SupportLevel>0</SupportLevel>
                   <Descendants />
@@ -11528,64 +11624,115 @@
               <SupportLevel>0</SupportLevel>
               <Descendants />
             </UIObject>
-          </Descendants>
-        </TopLevelWindow>
-        <TopLevelWindow ControlType="Window" Id="ScriptErrorMessagebox" FriendlyName="Script Error" SpecialControlType="BrowserWindow" SessionId="4395060">
-          <TechnologyName>MSAA</TechnologyName>
-          <WindowTitles>
-            <WindowTitle>Script Error</WindowTitle>
-          </WindowTitles>
-          <SearchConfigurations>
-            <SearchConfiguration>VisibleOnly</SearchConfiguration>
-          </SearchConfigurations>
-          <AndCondition Id="SearchCondition">
-            <PropertyCondition Name="Name">Script Error</PropertyCondition>
-            <PropertyCondition Name="ClassName">Internet Explorer_TridentDlgFrame</PropertyCondition>
-            <PropertyCondition Name="ControlType">Window</PropertyCondition>
-          </AndCondition>
-          <SupportLevel>0</SupportLevel>
-          <Descendants>
-            <UIObject ControlType="Document" Id="ScriptErrorBody" FriendlyName="Script Error" SpecialControlType="None">
-              <TechnologyName>Web</TechnologyName>
+            <UIObject ControlType="Custom" Id="ComboboxListItemAsLocalServerSource" FriendlyName="Local Server Source" SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
               <WindowTitles>
-                <WindowTitle>Script Error</WindowTitle>
+                <WindowTitle>Warewolf</WindowTitle>
               </WindowTitles>
-              <AndCondition Id="SearchCondition">
-                <AndCondition Id="Primary">
-                  <PropertyCondition Name="ControlType">Document</PropertyCondition>
-                  <PropertyCondition Name="TagName">BODY</PropertyCondition>
-                  <PropertyCondition Name="Id">bdy</PropertyCondition>
-                  <PropertyCondition Name="RedirectingPage">False</PropertyCondition>
-                  <PropertyCondition Name="FrameDocument">False</PropertyCondition>
-                </AndCondition>
-                <FilterCondition Id="Secondary">
-                  <PropertyCondition Name="Title">Script Error</PropertyCondition>
-                  <PropertyCondition Name="AbsolutePath">/error.dlg</PropertyCondition>
-                  <PropertyCondition Name="PageUrl">res://ieframe.dll/error.dlg</PropertyCondition>
-                </FilterCondition>
+              <AndCondition>
+                <PropertyCondition Name="ControlType">Custom</PropertyCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ClassName">Uia.ComboEditorItemControl</PropertyCondition>
+                <PropertyCondition Name="Name" Operator="Contains">Local Server Source</PropertyCondition>
               </AndCondition>
               <SupportLevel>0</SupportLevel>
               <Descendants>
-                <UIObject ControlType="Button" Id="NOButton" FriendlyName="No" SpecialControlType="None">
-                  <TechnologyName>Web</TechnologyName>
+                <UIObject ControlType="Text" Id="Text" FriendlyName="Local Server Source" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
                   <WindowTitles>
-                    <WindowTitle>Script Error</WindowTitle>
+                    <WindowTitle>Warewolf</WindowTitle>
                   </WindowTitles>
-                  <AndCondition Id="SearchCondition">
-                    <AndCondition Id="Primary">
-                      <PropertyCondition Name="ControlType">Button</PropertyCondition>
-                      <PropertyCondition Name="TagName">BUTTON</PropertyCondition>
-                      <PropertyCondition Name="Id">btnNo</PropertyCondition>
-                      <PropertyCondition Name="Name" />
-                      <PropertyCondition Name="DisplayText">No</PropertyCondition>
-                      <PropertyCondition Name="Type">reset</PropertyCondition>
-                    </AndCondition>
-                    <FilterCondition Id="Secondary">
-                      <PropertyCondition Name="Title" />
-                      <PropertyCondition Name="Class" />
-                      <PropertyCondition Name="ControlDefinition">id=btnNo style="FONT-SIZE: 8pt; HEIGHT: </PropertyCondition>
-                      <PropertyCondition Name="TagInstance">2</PropertyCondition>
-                    </FilterCondition>
+                  <AndCondition>
+                    <PropertyCondition Name="ControlType">Text</PropertyCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="Name" Operator="Contains">Local Server Source</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
+                </UIObject>
+              </Descendants>
+            </UIObject>
+            <UIObject ControlType="List" Id="IntellisenseOptionsList" FriendlyName="Selector" SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
+              <WindowTitles>
+                <WindowTitle>Warewolf (DEV2\ASHLEY.LEWIS)</WindowTitle>
+              </WindowTitles>
+              <AndCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ControlType">List</PropertyCondition>
+                <PropertyCondition Name="AutomationId">Selector</PropertyCondition>
+              </AndCondition>
+              <SupportLevel>0</SupportLevel>
+              <Descendants>
+                <UIObject ControlType="ListItem" Id="FirstOption" FriendlyName="[[val]]" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf (DEV2\ASHLEY.LEWIS)</WindowTitle>
+                  </WindowTitles>
+                  <AndCondition>
+                    <PropertyCondition Name="ControlType">ListItem</PropertyCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="Instance">1</PropertyCondition>
+                  </AndCondition>
+                  <SupportLevel>0</SupportLevel>
+                  <Descendants />
+                </UIObject>
+              </Descendants>
+            </UIObject>
+            <UIObject ControlType="ListItem" Id="ComboboxListItemAsSharepointTestServer" FriendlyName="{&quot;Server&quot;:&quot;http://rsaklfsvrdev/&quot;,&quot;AuthenticationTy..." SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
+              <WindowTitles>
+                <WindowTitle>Warewolf (DEV2\ASHLEY.LEWIS)</WindowTitle>
+              </WindowTitles>
+              <AndCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ControlType">ListItem</PropertyCondition>
+                <PropertyCondition Name="Name">{"Server":"http://rsaklfsvrdev/","AuthenticationType":"Windows","UserName":"","Password":"","IsSource":true,"IsService":false,"IsFolder":false,"IsReservedService":false,"IsServer":false,"IsResourceVersion":false,"IsSharepointOnline":false,"Version":null,"ResourceID":"94d4b4ca-31e1-494d-886b-cd94224c9a8b","ResourceType":"SharepointServerSource","ResourceName":"SharePoint Test Server","IsValid":false,"Errors":[],"ReloadActions":false,"UserPermissions":0,"VersionInfo":{"DateTimeStamp":"2015-07-07T09:49:43.2102319+02:00","Reason":"Save","User":"Unknown","VersionNumber":"1","ResourceId":"94d4b4ca-31e1-494d-886b-cd94224c9a8b","VersionId":"6d47f370-c0d3-4b96-89d7-52090a38331a"}}</PropertyCondition>
+              </AndCondition>
+              <SupportLevel>0</SupportLevel>
+              <Descendants />
+            </UIObject>
+            <UIObject ControlType="Custom" Id="UnpinnedTab2" FriendlyName="FloatingWindow" SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
+              <WindowTitles>
+                <WindowTitle>Warewolf (DEV2\CANDICE.DANIEL)</WindowTitle>
+              </WindowTitles>
+              <AndCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ControlType">Custom</PropertyCondition>
+                <PropertyCondition Name="ClassName">Uia.ToolWindow</PropertyCondition>
+                <PropertyCondition Name="AutomationId">FloatingWindow</PropertyCondition>
+              </AndCondition>
+              <SupportLevel>0</SupportLevel>
+              <Descendants />
+            </UIObject>
+            <UIObject ControlType="Menu" Id="PaneContextItem" FriendlyName="" SpecialControlType="None">
+              <TechnologyName>UIA</TechnologyName>
+              <WindowTitles>
+                <WindowTitle>Warewolf (DEV2\PIETER.TERBLANCHE)</WindowTitle>
+              </WindowTitles>
+              <SearchConfigurations>
+                <SearchConfiguration>Expand</SearchConfiguration>
+              </SearchConfigurations>
+              <AndCondition>
+                <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                <PropertyCondition Name="ControlType">Menu</PropertyCondition>
+                <PropertyCondition Name="ClassName">Uia.ContextMenu</PropertyCondition>
+              </AndCondition>
+              <SupportLevel>0</SupportLevel>
+              <Descendants>
+                <UIObject ControlType="MenuItem" Id="FloatingMenuItem" FriendlyName="Floating" SpecialControlType="None">
+                  <TechnologyName>UIA</TechnologyName>
+                  <WindowTitles>
+                    <WindowTitle>Warewolf (DEV2\PIETER.TERBLANCHE)</WindowTitle>
+                  </WindowTitles>
+                  <SearchConfigurations>
+                    <SearchConfiguration>Expand</SearchConfiguration>
+                  </SearchConfigurations>
+                  <AndCondition>
+                    <PropertyCondition Name="FrameworkId">WPF</PropertyCondition>
+                    <PropertyCondition Name="ControlType">MenuItem</PropertyCondition>
+                    <PropertyCondition Name="Name">Floating</PropertyCondition>
                   </AndCondition>
                   <SupportLevel>0</SupportLevel>
                   <Descendants />

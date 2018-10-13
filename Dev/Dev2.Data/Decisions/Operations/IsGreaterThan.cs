@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,10 +14,7 @@ namespace Dev2.Data.Decisions.Operations
 {
     public class IsGreaterThan : IDecisionOperation
     {
-        public Enum HandlesType()
-        {
-            return enDecisionType.IsGreaterThan;
-        }
+        public Enum HandlesType() => enDecisionType.IsGreaterThan;
 
         public bool Invoke(string[] cols)
         {

@@ -29,14 +29,14 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var act = new DsfPluginActivity() { SourceId = id };
             var src = new Mock<IPluginServiceModel>();
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>());
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
             dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
 
             //------------Assert Results-------------------------
             Assert.AreEqual(0, dotNetActionRegion.Errors.Count);
@@ -56,15 +56,17 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var action = new PluginAction { FullName = "bravo", Method = "bravo", ReturnType = typeof(string), Variables = new List<INameValue>()};
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>() { dotNetsrc });
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
             sourceRegion.SelectedSource = dotNetsrc;
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
-            dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion)
+            {
+                SelectedNamespace = namespaceItem
+            };
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
             dotNetActionRegion.SelectedAction = action;
 
             //------------Assert Results-------------------------
@@ -73,7 +75,6 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             Assert.AreEqual(action.Method, dotNetActionRegion.SelectedAction.Method);
             Assert.AreEqual(typeof(string), dotNetActionRegion.SelectedAction.ReturnType);
             Assert.AreEqual(0, dotNetActionRegion.SelectedAction.Variables.Count);
-            Assert.IsTrue(dotNetActionRegion.CanRefresh());
         }
 
         [TestMethod]
@@ -91,14 +92,14 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var action = new PluginAction { FullName = "bravo" };
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>() { dotNetsrc, s2 });
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
             dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
             dotNetActionRegion.SomethingChanged += (a, b) => { evt = true; };
             dotNetActionRegion.SelectedAction = action;
 
@@ -122,14 +123,14 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var action1 = new PluginAction { FullName = "bravo" };
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>() { dotNetsrc, s2 });
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
             dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
 
             var clone1 = new Mock<IToolRegion>();
             var clone2 = new Mock<IToolRegion>();
@@ -163,14 +164,14 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var action1 = new PluginAction { FullName = "bravo1" };
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>() { dotNetsrc, s2 });
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
             dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
 
             var clone1 = new Mock<IToolRegion>();
             var clone2 = new Mock<IToolRegion>();
@@ -201,14 +202,14 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var s2 = new PluginSourceDefinition { Id = Guid.NewGuid() };
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>() { dotNetsrc, s2 });
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
             dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
             var cloned = dotNetActionRegion.CloneRegion();
 
             //------------Assert Results-------------------------
@@ -230,16 +231,16 @@ namespace Dev2.Activities.Designers.Tests.Core.DotNet
             var action = new PluginAction { FullName = "bravo" };
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IPluginSource>() { dotNetsrc, s2 });
 
-            DotNetSourceRegion sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
+            var sourceRegion = new DotNetSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfPluginActivity()));
 
             var namespaceItem = new NamespaceItem { FullName = "johnny" };
-            DotNetNamespaceRegion dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
+            var dotNetNamespaceRegion = new DotNetNamespaceRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion);
             dotNetNamespaceRegion.SelectedNamespace = namespaceItem;
 
             //------------Execute Test---------------------------
-            DotNetActionRegion dotNetActionRegion = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
-            
-            DotNetActionRegion dotNetActionRegionToRestore = new DotNetActionRegion(src.Object, ModelItemUtils.CreateModelItem(act), sourceRegion, dotNetNamespaceRegion);
+            var dotNetActionRegion = new DotNetActionRegion();
+
+            var dotNetActionRegionToRestore = new DotNetActionRegion();
             dotNetActionRegionToRestore.IsEnabled = false;
             dotNetActionRegionToRestore.SelectedAction = action;
 

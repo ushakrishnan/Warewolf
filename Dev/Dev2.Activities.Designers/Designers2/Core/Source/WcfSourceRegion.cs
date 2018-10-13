@@ -15,19 +15,19 @@ namespace Dev2.Activities.Designers2.Core.Source
 {
     public class WcfSourceRegion : ISourceToolRegion<IWcfServerSource>
     {
-        private IWcfServerSource _selectedSource;
-        private ICollection<IWcfServerSource> _sources;
-        private readonly ModelItem _modelItem;
+        IWcfServerSource _selectedSource;
+        ICollection<IWcfServerSource> _sources;
+        readonly ModelItem _modelItem;
 
-        private Guid _sourceId;
-        private Action _sourceChangedAction;
-        private double _labelWidth;
-        private string _newSourceHelpText;
-        private string _editSourceHelpText;
-        private string _sourcesHelpText;
-        private string _newSourceToolText;
-        private string _editSourceToolText;
-        private string _sourcesToolText;
+        Guid _sourceId;
+        Action _sourceChangedAction;
+        double _labelWidth;
+        string _newSourceHelpText;
+        string _editSourceHelpText;
+        string _sourcesHelpText;
+        string _newSourceToolText;
+        string _editSourceToolText;
+        string _sourcesToolText;
 
         public WcfSourceRegion(IWcfServiceModel model, ModelItem modelItem)
         {
@@ -148,10 +148,7 @@ namespace Dev2.Activities.Designers2.Core.Source
             }
         }
 
-        public bool CanEditSource()
-        {
-            return SelectedSource != null;
-        }
+        public bool CanEditSource() => SelectedSource != null;
 
         public ICommand EditSourceCommand { get; set; }
 
@@ -187,13 +184,10 @@ namespace Dev2.Activities.Designers2.Core.Source
         public bool IsEnabled { get; set; }
         public IList<IToolRegion> Dependants { get; set; }
 
-        public IToolRegion CloneRegion()
+        public IToolRegion CloneRegion() => new WcfSourceRegion()
         {
-            return new WcfSourceRegion()
-            {
-                SelectedSource = SelectedSource
-            };
-        }
+            SelectedSource = SelectedSource
+        };
 
         public void RestoreRegion(IToolRegion toRestore)
         {
@@ -222,14 +216,14 @@ namespace Dev2.Activities.Designers2.Core.Source
             set
             {
                 SetSelectedSource(value);
-                SourceChangedAction();
+                SourceChangedAction?.Invoke();
                 OnSomethingChanged(this);
                 var delegateCommand = EditSourceCommand as Microsoft.Practices.Prism.Commands.DelegateCommand;
                 delegateCommand?.RaiseCanExecuteChanged();
             }
         }
 
-        private void SetSelectedSource(IWcfServerSource value)
+        void SetSelectedSource(IWcfServerSource value)
         {
             if (value != null)
             {

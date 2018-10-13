@@ -21,7 +21,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class FetchPluginActionsWithReturnsTypesTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -35,7 +35,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void GetAuthorizationContextForService_ShouldReturnAuthorizationContext_Any()
         {
@@ -47,7 +47,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, authorizationContext);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void Execute_GivenNoNamespace_ShouldReturnEmpyt()
         {
@@ -84,7 +84,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("[]", results.Message.ToString());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         public void Execute_GivenSourceAndNamespace_ShouldReturnStringBuilder()
         {
@@ -132,7 +132,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsTrue(pluginActions.Any(action => action.FullName == personObject.FullName));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenSourceAndNamespaceWithVoidActions_ShouldReturnAVoidFunction()
         {
@@ -179,7 +179,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsTrue(pluginActions.Any(action => action.IsVoid));
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenSourceAndNamespaceWithStringActions_ShouldReturnAStringFunction()
         {
@@ -229,7 +229,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenSourceAndNamespaceWithActionsTakingObject_ShouldObjectParameters()
         {
@@ -274,7 +274,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsFalse(results.HasError);
             var pluginActions = jsonSerializer.Deserialize<List<IPluginAction>>(results.Message);
             Assert.IsTrue(pluginActions.Any(action => action.IsVoid));
-            IEnumerable<IList<IServiceInput>> parameters= pluginActions.Select(action => action.Inputs);
+            var parameters= pluginActions.Select(action => action.Inputs);
             var enumerable = parameters as IList<IServiceInput>[] ?? parameters.ToArray();
             var containsObjectParameters = enumerable.Any(list => list.Any(input => input.IsObject));
             var shortTypeName = enumerable.All(list => list.All(input => !string.IsNullOrEmpty(input.ShortTypeName)));
@@ -284,7 +284,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsTrue(dev2ReturnType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenSourceAndNamespace_ShouldPropertyMethods()
         {

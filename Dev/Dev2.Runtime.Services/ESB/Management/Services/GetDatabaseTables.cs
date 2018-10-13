@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,11 +16,9 @@ using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Hosting;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Workspaces;
@@ -29,39 +27,13 @@ using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    // NOTE: Only use for design time in studio as errors will NOT be forwarded!
-    public class GetDatabaseTables : IEsbManagementEndpoint
+    public class GetDatabaseTables : DefaultEsbManagementEndpoint
     {
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        #region Implementation of DefaultEsbManagementEndpoint
+        
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            return Guid.Empty;
-        }
-
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
-
-        #region Implementation of ISpookyLoadable<string>
-
-        public string HandlesType()
-        {
-            return "GetDatabaseTablesService";
-        }
-
-        #endregion
-
-        #region Implementation of IEsbManagementEndpoint
-
-        /// <summary>
-        /// Executes the service
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <param name="theWorkspace">The workspace.</param>
-        /// <returns></returns>
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
-        {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
 
             if (values == null)
             {
@@ -113,12 +85,24 @@ namespace Dev2.Runtime.ESB.Management.Services
 
             try
             {
-                Dev2Logger.Info("Get Database Tables. " + dbSource.DatabaseName, GlobalConstants.WarewolfInfo);
-                var tables = new DbTableList();
-                DataTable columnInfo;
+                return serializer.SerializeToBuilder(TryExecute(dbSource));
+            }
+            catch (Exception ex)
+            {
+                var tables = new DbTableList(ex);
+                return serializer.SerializeToBuilder(tables);
+            }
+        }
+
+        static DbTableList TryExecute(DbSource dbSource)
+        {
+            Dev2Logger.Info("Get Database Tables. " + dbSource.DatabaseName, GlobalConstants.WarewolfInfo);
+            var tables = new DbTableList();
+            Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.OrginalExecutingUser, () =>
+            {
+                DataTable columnInfo = null;
                 switch (dbSource.ServerType)
                 {
-
                     case enSourceType.SqlDatabase:
                         {
                             using (var connection = new SqlConnection(dbSource.ConnectionString))
@@ -172,39 +156,14 @@ namespace Dev2.Runtime.ESB.Management.Services
                         tables.Errors = string.Format(ErrorFormat, "Windows Authentication", "", "");
                     }
                 }
-                return serializer.SerializeToBuilder(tables);
-            }
-            catch (Exception ex)
-            {
-                var tables = new DbTableList(ex);
-                return serializer.SerializeToBuilder(tables);
-            }
-        }
-
-        /// <summary>
-        /// Creates the service entry.
-        /// </summary>
-        /// <returns></returns>
-        public DynamicService CreateServiceEntry()
-        {
-            var ds = new DynamicService
-            {
-                Name = HandlesType(),
-                DataListSpecification = new StringBuilder("<DataList><Database ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>")
-            };
-
-            var sa = new ServiceAction
-            {
-                Name = HandlesType(),
-                ActionType = enActionType.InvokeManagementDynamicService,
-                SourceMethod = HandlesType()
-            };
-
-            ds.Actions.Add(sa);
-
-            return ds;
+            });
+            return tables;
         }
 
         #endregion
+
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Database ColumnIODirection=\"Input\"/><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
+
+        public override string HandlesType() => "GetDatabaseTablesService";
     }
 }

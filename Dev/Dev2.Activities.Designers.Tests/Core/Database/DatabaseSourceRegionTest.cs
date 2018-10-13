@@ -28,7 +28,7 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>());
 
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfSqlServerDatabaseActivity()), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(new DsfSqlServerDatabaseActivity()), enSourceType.SqlDatabase);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(1, region.Errors.Count);
@@ -48,7 +48,7 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>() { dbsrc });
 
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(dbsrc, region.SelectedSource);
@@ -70,7 +70,7 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>() { dbsrc, s2 });
             
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
             region.SomethingChanged += (a, b) => { evt = true; };
             region.SelectedSource = s2;
 
@@ -93,7 +93,7 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>() { dbsrc, s2 });
 
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
 
             var clone1 = new Mock<IToolRegion>();
             var clone2 = new Mock<IToolRegion>();
@@ -126,7 +126,7 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>() { dbsrc, s2 });
             
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
 
             var clone1 = new Mock<IToolRegion>();
             var clone2 = new Mock<IToolRegion>();
@@ -158,7 +158,7 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>() { dbsrc, s2 });
             
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
             var cloned = region.CloneRegion();
 
             //------------Assert Results-------------------------
@@ -179,15 +179,42 @@ namespace Dev2.Activities.Designers.Tests.Core.Database
             src.Setup(a => a.RetrieveSources()).Returns(new ObservableCollection<IDbSource>() { dbsrc, s2 });
             
             //------------Execute Test---------------------------
-            DatabaseSourceRegion region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
-            
-            DatabaseSourceRegion regionToRestore = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+            var region = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
+
+            var regionToRestore = new DatabaseSourceRegion(src.Object, ModelItemUtils.CreateModelItem(act), enSourceType.SqlDatabase);
             regionToRestore.SelectedSource = s2;
 
             region.RestoreRegion(regionToRestore);
 
             //------------Assert Results-------------------------
             Assert.AreEqual(region.SelectedSource, s2);
+        }
+
+        [TestMethod]
+        public void DbSource_Equals_WithOperator_ShouldBeEqual()
+        {
+            var id = Guid.NewGuid();
+            //---------------Set up test pack-------------------
+            var firstObject = new DbSourceDefinition() { Id = id };
+            var secondObject = new DbSourceDefinition() { Id = id };
+
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            //---------------Test Result -----------------------
+            Assert.IsTrue(firstObject == secondObject, "DbSourceDefinition object equals operator broken.");
+        }
+
+        [TestMethod]
+        public void DbSource_Equals_WithNotEqualOperator_ShouldNotBeEqual()
+        {
+            //---------------Set up test pack-------------------
+            var firstObject = new DbSourceDefinition() { Id = Guid.NewGuid() };
+            var secondObject = new DbSourceDefinition() { Id = Guid.NewGuid() };
+
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            //---------------Test Result -----------------------
+            Assert.IsTrue(firstObject != secondObject, "DbSourceDefinition object not equals operator broken.");
         }
     }
 }

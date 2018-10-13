@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,6 +9,7 @@
 */
 
 using System;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using Dev2.CustomControls;
@@ -55,6 +56,7 @@ namespace Dev2.ViewModels.Help
 
         public void Navigate(string uri)
         {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
             HelpView.WebBrowserHost.Source = new Uri(uri, UriKind.Absolute);
         }
     }

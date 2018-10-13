@@ -14,11 +14,11 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
     {
         #region Fields
 
-        private Mock<IHelpDescriptor> _descriptorMock;
+        Mock<IHelpDescriptor> _descriptorMock;
 
-        private List<string> _changedProperties;
+        List<string> _changedProperties;
 
-        private HelpDescriptorViewModel _target;
+        HelpDescriptorViewModel _target;
 
         #endregion Fields
 
@@ -37,7 +37,7 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
 
         #region Test construction
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         [ExpectedException(typeof(ArgumentNullException))]
         public void TestHelpDescriptorViewModel()
         {
@@ -48,7 +48,7 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
 
         #region Test properties
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestName()
         {
             //arrange
@@ -62,7 +62,7 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
             Assert.AreEqual(nameText, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestDescription()
         {
             //arrange
@@ -76,7 +76,7 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
             Assert.AreEqual(descriptionText, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIcon()
         {
             //arrange
@@ -90,7 +90,7 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
             Assert.AreSame(expectedIcon, value);
         }
 
-        [TestMethod]
+        [TestMethod,Timeout(60000)]
         public void TestIsEnabled()
         {
             //arrange
@@ -110,7 +110,7 @@ namespace Warewolf.Studio.ViewModels.Help.Tests
 
         #region Private helper methods
 
-        private void _target_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        void _target_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             _changedProperties.Add(e.PropertyName);
         }

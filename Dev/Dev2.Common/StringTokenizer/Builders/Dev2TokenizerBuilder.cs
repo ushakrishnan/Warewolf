@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,6 +10,7 @@
 
 using Dev2.Common.Interfaces.StringTokenizer.Interfaces;
 using System.Collections.Generic;
+using System.Text;
 using Warewolf.Resource.Errors;
 
 
@@ -18,8 +19,8 @@ namespace Dev2.Common
 {
     public class Dev2TokenizerBuilder
     {
-        private readonly IList<IDev2SplitOp> _ops = new List<IDev2SplitOp>();
-        public string ToTokenize { get; set; }
+        readonly IList<IDev2SplitOp> _ops = new List<IDev2SplitOp>();
+        public StringBuilder ToTokenize { get; set; }
 
         public bool ReverseOrder { get; set; }
 
@@ -40,7 +41,7 @@ namespace Dev2.Common
 
         public IDev2Tokenizer Generate()
         {
-            if (string.IsNullOrEmpty(ToTokenize))
+            if (ToTokenize.Length == 0)
             {
                 throw new TokenizeError(ErrorResource.NullTokenzeString);
             }

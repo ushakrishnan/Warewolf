@@ -12,22 +12,18 @@ using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Adds a resource
-    /// </summary>
-
-    public class ReloadAllTests : IEsbManagementEndpoint
+    public class ReloadAllTests : DefaultEsbManagementEndpoint
     {
-        private ITestCatalog _testCatalog;
+        ITestCatalog _testCatalog;
 
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             try
             {
                 Dev2Logger.Info("Reload All Tests", GlobalConstants.WarewolfInfo);
                 TestCatalog.ReloadAllTests();
-                CompressedExecuteMessage message = new CompressedExecuteMessage { HasError = false };
+                var message = new CompressedExecuteMessage { HasError = false };
                 return serializer.SerializeToBuilder(message);
             }
             catch (Exception err)
@@ -50,28 +46,19 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        public DynamicService CreateServiceEntry()
+        public override DynamicService CreateServiceEntry()
         {
-            DynamicService newDs = new DynamicService { Name = HandlesType() };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
+            var newDs = new DynamicService { Name = HandlesType() };
+            var sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
             newDs.Actions.Add(sa);
 
             return newDs;
         }
 
-        public string HandlesType()
-        {
-            return "ReloadAllTests";
-        }
+        public override string HandlesType() => "ReloadAllTests";
 
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
+        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs) => Guid.Empty;
 
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
+        public AuthorizationContext GetAuthorizationContextForService() => AuthorizationContext.Any;
     }
 }

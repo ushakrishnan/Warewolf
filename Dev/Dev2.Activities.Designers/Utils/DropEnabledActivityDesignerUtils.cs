@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,13 +36,11 @@ namespace Dev2.Activities.Utils
             if(!string.IsNullOrEmpty(modelItemString))
             {
                 var innnerObjectData = data.GetData(modelItemString);
-                if (innnerObjectData is List<ModelItem> modelList && modelList.Count > 1)
+                if (innnerObjectData is List<ModelItem> modelList && modelList.Count > 1 && modelList.FirstOrDefault(c => c.ItemType == typeof(FlowDecision) || c.ItemType == typeof(FlowSwitch<string>)) != null)
                 {
-                    if (modelList.FirstOrDefault(c => c.ItemType == typeof(FlowDecision) || c.ItemType == typeof(FlowSwitch<string>)) != null)
-                    {
-                        return false;
-                    }
+                    return false;
                 }
+
             }
 
             modelItemString = formats.FirstOrDefault(s => s.IndexOf("ModelItemFormat", StringComparison.Ordinal) >= 0);
@@ -86,7 +84,7 @@ namespace Dev2.Activities.Utils
             return true;
         }
 
-        private bool ValidateDecision(object objectData, ModelItem data, bool dropEnabled)
+        bool ValidateDecision(object objectData, ModelItem data, bool dropEnabled)
         {
             var stringValue = objectData as string;
             if ((data != null && data.ItemType.Name == "FlowDecision") || (stringValue != null && stringValue.Contains("Decision")))
@@ -101,7 +99,7 @@ namespace Dev2.Activities.Utils
             return dropEnabled;
         }
 
-        private bool ValidateSwitch(object objectData, ModelItem data, bool dropEnabled)
+        bool ValidateSwitch(object objectData, ModelItem data, bool dropEnabled)
         {
             var stringValue = objectData as string;
             if ((data != null && data.ItemType.Name == "FlowSwitch`1") || (stringValue != null && stringValue.Contains("Switch")))
@@ -117,7 +115,7 @@ namespace Dev2.Activities.Utils
             return dropEnabled;
         }
 
-        private bool ValidateSelectAndApply(object objectData, ModelItem data, bool dropEnabled)
+        bool ValidateSelectAndApply(object objectData, ModelItem data, bool dropEnabled)
         {
             var stringValue = objectData as string;
             if ((data != null && data.ItemType.Name == "DsfSelectAndApplyActivity") || (stringValue != null && stringValue.Contains("SelectAndApply")))
@@ -135,7 +133,7 @@ namespace Dev2.Activities.Utils
 
         #endregion
 
-        private void ShowErrorMessage(string errorMessage, string header)
+        void ShowErrorMessage(string errorMessage, string header)
         {
             var a = new PopupMessage
             {

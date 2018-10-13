@@ -11,14 +11,14 @@ namespace Dev2.Common.DependencyVisualization
         #region Class Members
 
 
-        private const string _errorImagePath = "/Images/Close_Box_Red.png";
+        const string _errorImagePath = "/Images/Close_Box_Red.png";
 
         #endregion Class Members
 
         #region Fields
 
-        private double _locationX, _locationY;
-        private readonly bool _isBroken;
+        double _locationX, _locationY;
+        readonly bool _isBroken;
 
         #endregion Fields
 
@@ -63,15 +63,8 @@ namespace Dev2.Common.DependencyVisualization
         {
             get { return _locationX; }
             set
-            {
-                
-                if (value == _locationX)
-                {
-                    return;
-                }
-
+            {                
                 _locationX = value;
-
                 OnPropertyChanged("LocationX");
             }
         }
@@ -80,15 +73,8 @@ namespace Dev2.Common.DependencyVisualization
         {
             get { return _locationY; }
             set
-            {
-                
-                if (value == _locationY)
-                {
-                    return;
-                }
-
+            {                
                 _locationY = value;
-
                 OnPropertyChanged("LocationY");
             }
         }
@@ -113,7 +99,7 @@ namespace Dev2.Common.DependencyVisualization
         /// </returns>
         public new string ToString()
         {
-            StringBuilder result = new StringBuilder(
+            var result = new StringBuilder(
                 $"<node id=\"{ID}\" x=\"{LocationX}\" y=\"{LocationY}\" broken=\"{IsBroken}\">");
 
             foreach (var nodeDependency in NodeDependencies)
@@ -143,19 +129,7 @@ namespace Dev2.Common.DependencyVisualization
                 var current = stack.Peek().GetNextDependency();
                 if (current != null)
                 {
-                    if (current.Node == this)
-                    {
-                        var nodes = stack.Select(info => info.Node);
-                        circularDependencies.Add(new CircularDependency(nodes));
-                    }
-                    else
-                    {
-                        bool visited = stack.Any(info => info.Node == current.Node);
-                        if (!visited)
-                        {
-                            stack.Push(current);
-                        }
-                    }
+                    PushNodeToStack(circularDependencies, stack, current);
                 }
                 else
                 {
@@ -166,7 +140,24 @@ namespace Dev2.Common.DependencyVisualization
             return circularDependencies;
         }
 
-        private class NodeInfo
+        private void PushNodeToStack(List<ICircularDependency> circularDependencies, Stack<NodeInfo> stack, NodeInfo current)
+        {
+            if (current.Node == this)
+            {
+                var nodes = stack.Select(info => info.Node);
+                circularDependencies.Add(new CircularDependency(nodes));
+            }
+            else
+            {
+                var visited = stack.Any(info => info.Node == current.Node);
+                if (!visited)
+                {
+                    stack.Push(current);
+                }
+            }
+        }
+
+        class NodeInfo
         {
             public NodeInfo(IDependencyVisualizationNode node)
             {
@@ -187,7 +178,7 @@ namespace Dev2.Common.DependencyVisualization
                 return null;
             }
 
-            private int _index;
+            int _index;
         }
 
         #endregion Methods

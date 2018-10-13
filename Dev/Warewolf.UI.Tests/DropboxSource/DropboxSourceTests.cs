@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests
     [CodedUITest]
     public class DropboxSourceTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Source Wizards")]
         // ReSharper disable once InconsistentNaming
         public void Create_DropboxSource_From_ExplorerContextMenu_UITests()
@@ -19,7 +19,7 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(DropboxSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.OAuthSourceWizardTab.WorkSurfaceContext.ServerTypeComboBox.Enabled, "Server Type Combobox is not enabled");
             Assert.IsTrue(DropboxSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.OAuthSourceWizardTab.WorkSurfaceContext.OAuthKeyTextBox.Enabled, "OAuth Key Textbox is not enabled");
             DropboxSourceUIMap.Enter_TextIntoOAuthKey_On_OAuthSourceTab();
-            DropboxSourceUIMap.Click_OAuthSource_CloseTabButton();
+            DropboxSourceUIMap.Click_OAuthSource_AuthoriseButton();
         }
 
         #region Additional test attributes

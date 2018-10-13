@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class ToolboxSearchTags {
@@ -57,6 +57,15 @@ namespace Warewolf.Studio.Resources.Languages {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to execute SQL command on a recordset data source.
+        /// </summary>
+        public static string Tool_AdvancedRecordset {
+            get {
+                return ResourceManager.GetString("Tool_AdvancedRecordset", resourceCulture);
             }
         }
         
@@ -718,7 +727,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to source connector.
+        ///   Looks up a localized string similar to source connector web delete.
         /// </summary>
         public static string Tool_WebMethod_Delete {
             get {
@@ -727,7 +736,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to source connector.
+        ///   Looks up a localized string similar to source connector web get.
         /// </summary>
         public static string Tool_WebMethod_Get {
             get {
@@ -736,7 +745,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to source connector.
+        ///   Looks up a localized string similar to source connector web post.
         /// </summary>
         public static string Tool_WebMethod_Post {
             get {
@@ -745,7 +754,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to source connector.
+        ///   Looks up a localized string similar to source connector web put.
         /// </summary>
         public static string Tool_WebMethod_Put {
             get {

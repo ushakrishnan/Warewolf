@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -31,13 +31,13 @@ namespace Dev2.Tests.Runtime.ServiceModel.Esb.Brokers
 
         #region Implementation of IDbServer
 
+        public int? CommandTimeout { get; set; }
         public virtual bool IsConnected => true;
         public virtual string ConnectionString { get; private set; }
 
-        public virtual bool Connect(string connectionString)
+        public virtual void Connect(string connectionString)
         {
             ConnectionString = connectionString;
-            return true;
         }
 
         public virtual void BeginTransaction()
@@ -53,13 +53,27 @@ namespace Dev2.Tests.Runtime.ServiceModel.Esb.Brokers
             var dataTable = new DataTable();
             return dataTable;
         }
-
-        public virtual List<string> FetchDatabases()
+		public virtual DataSet FetchDataSet(IDbCommand command)
+		{
+			var dataSet = new DataSet();
+			return dataSet;
+		}
+		public virtual List<string> FetchDatabases()
         {
             return new List<string>();
         }
+		public int ExecuteNonQuery(IDbCommand command)
+		{
 
-        public virtual void FetchStoredProcedures(Func<IDbCommand, List<IDbDataParameter>, string, string, bool> procedureProcessor, Func<IDbCommand, List<IDbDataParameter>, string, string, bool> functionProcessor)
+
+			return  0;
+		}
+
+		public int ExecuteScalar(IDbCommand command)
+		{
+			return 0;
+		}
+		public virtual void FetchStoredProcedures(Func<IDbCommand, List<IDbDataParameter>, string, string, bool> procedureProcessor, Func<IDbCommand, List<IDbDataParameter>, string, string, bool> functionProcessor)
         {
         }
 

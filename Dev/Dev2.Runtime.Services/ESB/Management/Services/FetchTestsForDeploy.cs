@@ -5,37 +5,20 @@ using System.Runtime.Serialization;
 using System.Text;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Workspaces;
-
 
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Adds a resource
-    /// </summary>
-
-    public class FetchTestsForDeploy : IEsbManagementEndpoint
+    public class FetchTestsForDeploy : DefaultEsbManagementEndpoint
     {
-        private ITestCatalog _testCatalog;
+        ITestCatalog _testCatalog;
 
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
-            return Guid.Empty;
-        }
-
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
-        {
-            Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+            var serializer = new Dev2JsonSerializer();
             try
             {
                 Dev2Logger.Info("Fetch Tests for deploy Service", GlobalConstants.WarewolfInfo);
@@ -54,7 +37,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                 {
                     serviceTestModelTO.Password = SecurityEncryption.Encrypt(serviceTestModelTO.Password);
                 }
-                CompressedExecuteMessage message = new CompressedExecuteMessage();
+                var message = new CompressedExecuteMessage();
                 message.SetMessage(serializer.Serialize(tests));
                 message.HasError = false;
                 
@@ -80,18 +63,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService newDs = new DynamicService { Name = HandlesType() };
-            ServiceAction sa = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceMethod = HandlesType() };
-            newDs.Actions.Add(sa);
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), null);
 
-            return newDs;
-        }
-
-        public string HandlesType()
-        {
-            return "FetchTestsForDeploy";
-        }
+        public override string HandlesType() => "FetchTestsForDeploy";
     }
 }

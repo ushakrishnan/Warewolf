@@ -3,33 +3,16 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Dev2.Common;
-using Dev2.Common.Interfaces.Core.DynamicServices;
-using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.DynamicServices;
-using Dev2.DynamicServices.Objects;
 using Dev2.Runtime.Security;
 using Dev2.Workspaces;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
-    /// <summary>
-    /// Find Server Username
-    /// </summary>
-
-    public class FetchServerPermissions : IEsbManagementEndpoint
+    public class FetchServerPermissions : DefaultEsbManagementEndpoint
     {
-        public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs)
-        {
-            return Guid.Empty;
-        }
-
-        public AuthorizationContext GetAuthorizationContextForService()
-        {
-            return AuthorizationContext.Any;
-        }
-        
-        public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
+        public override StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
             try
             {
@@ -40,7 +23,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     ModifiedPermissions = ServerAuthorizationService.Instance.GetPermissions(user),
                     ServerID = HostSecurityProvider.Instance.ServerID
                 };
-                Dev2JsonSerializer serializer = new Dev2JsonSerializer();
+                var serializer = new Dev2JsonSerializer();
                 return serializer.SerializeToBuilder(permissionsMemo);
             }
             catch (Exception err)
@@ -50,20 +33,8 @@ namespace Dev2.Runtime.ESB.Management.Services
             }
         }
 
-        public DynamicService CreateServiceEntry()
-        {
-            DynamicService findServerUsernameService = new DynamicService { Name = HandlesType(), DataListSpecification = new StringBuilder("<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>") };
+        public override DynamicService CreateServiceEntry() => EsbManagementServiceEntry.CreateESBManagementServiceEntry(HandlesType(), "<DataList><Dev2System.ManagmentServicePayload ColumnIODirection=\"Both\"></Dev2System.ManagmentServicePayload></DataList>");
 
-            ServiceAction findServerUsernameServiceAction = new ServiceAction { Name = HandlesType(), ActionType = enActionType.InvokeManagementDynamicService, SourceName = HandlesType(), SourceMethod = HandlesType() };
-
-            findServerUsernameService.Actions.Add(findServerUsernameServiceAction);
-
-            return findServerUsernameService;
-        }
-
-        public string HandlesType()
-        {
-            return "FetchServerPermissions";
-        }
+        public override string HandlesType() => "FetchServerPermissions";
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,8 +14,10 @@ using System.ComponentModel;
 using System.Linq;
 using Dev2.Activities;
 using Dev2.Activities.PathOperations;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Common.State;
 using Dev2.Data;
 using Dev2.Data.Interfaces;
 using Dev2.Data.Util;
@@ -36,11 +38,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
     /// Status : New 
     /// Purpose : To provide an activity that can zip the contents of a file/folder from FTP, FTPS and file system
     /// </summary>
-    [ToolDescriptorInfo("FileFolder-Zip", "Zip", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Acitivities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Zip")]
+    [ToolDescriptorInfo("FileFolder-Zip", "Zip", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090C5C9EA1E", "Dev2.Activities", "1.0.0.0", "Legacy", "File, FTP, FTPS & SFTP", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_File_Zip")]
     public class DsfZip : DsfAbstractMultipleFilesActivity, IZip, IPathInput, IPathOutput, IPathOverwrite,
-                          IDestinationUsernamePassword
+                          IDestinationUsernamePassword, IEquatable<DsfZip>
     {
-        private string _compressionRatio;
+        string _compressionRatio;
 
         public DsfZip()
             : base("Zip")
@@ -49,7 +51,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             CompressionRatio = string.Empty;
             ArchivePassword = string.Empty;
         }
-
+        protected override bool AssignEmptyOutputsToRecordSet => true;
         IWarewolfIterator _archPassItr;
         IWarewolfIterator _compresItr;
         IWarewolfIterator _archNameItr;
@@ -63,7 +65,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         [FindMissing]
         public string ArchivePassword
         {
-            get { return _archivePassword; }
+            get => _archivePassword;
             set
             {
                 if (DataListUtil.ShouldEncrypt(value))
@@ -87,7 +89,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        
+
         protected string DecryptedArchivePassword => DataListUtil.NotEncrypted(ArchivePassword) ? ArchivePassword : DpapiWrapper.Decrypt(ArchivePassword);
 
 
@@ -104,14 +106,78 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         [Inputs("Compession Ratio"), FindMissing]
         public string CompressionRatio
         {
-            get { return _compressionRatio; }
-            set { _compressionRatio = string.IsNullOrEmpty(value) ? value : value.Replace(" ", ""); }
+            get => _compressionRatio;
+            set => _compressionRatio = string.IsNullOrEmpty(value) ? value : value.Replace(" ", "");
         }
         #endregion Properties
-
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new[] {
+                new StateVariable
+                {
+                    Name = nameof(InputPath),
+                    Value = InputPath,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(Username),
+                    Value = Username,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(PrivateKeyFile),
+                    Value = PrivateKeyFile,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(OutputPath),
+                    Value = OutputPath,
+                    Type = StateVariable.StateType.Output
+                },
+                new StateVariable
+                {
+                    Name = nameof(DestinationUsername),
+                    Value = DestinationUsername,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(DestinationPrivateKeyFile),
+                    Value = DestinationPrivateKeyFile,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(Overwrite),
+                    Value = Overwrite.ToString(),
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(ArchiveName),
+                    Value = ArchiveName,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(CompressionRatio),
+                    Value = CompressionRatio,
+                    Type = StateVariable.StateType.Input
+                },
+                new StateVariable
+                {
+                    Name = nameof(Result),
+                    Value = Result,
+                    Type = StateVariable.StateType.Output
+                }
+            };
+        }
         protected override void AddDebugInputItems(IExecutionEnvironment environment, int update)
         {
-            AddDebugInputItem(CompressionRatio, "Compression Ratio",environment, update);
+            AddDebugInputItem(CompressionRatio, "Compression Ratio", environment, update);
         }
 
         protected override void AddItemsToIterator(IExecutionEnvironment environment, int update)
@@ -122,7 +188,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             _archNameItr = new WarewolfIterator(environment.Eval(ArchiveName, update));
             ColItr.AddVariableToIterateOn(_archNameItr);
 
-            _archPassItr = new WarewolfIterator(environment.Eval(DecryptedArchivePassword,update));
+            _archPassItr = new WarewolfIterator(environment.Eval(DecryptedArchivePassword, update));
             ColItr.AddVariableToIterateOn(_archPassItr);
 
         }
@@ -130,7 +196,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         protected override string ExecuteBroker(IActivityOperationsBroker broker, IActivityIOOperationsEndPoint scrEndPoint, IActivityIOOperationsEndPoint dstEndPoint)
         {
 
-            Dev2ZipOperationTO zipTo = ActivityIOFactory.CreateZipTO(ColItr.FetchNextValue(_compresItr),
+            var zipTo = ActivityIOFactory.CreateZipTO(ColItr.FetchNextValue(_compresItr),
                                                                          ColItr.FetchNextValue(_archPassItr),
                                                                          ColItr.FetchNextValue(_archNameItr),
                                                                          Overwrite);
@@ -147,29 +213,29 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
         {
-            foreach(Tuple<string, string> t in updates)
+            foreach (Tuple<string, string> t in updates)
             {
-                if(t.Item1 == ArchiveName)
+                if (t.Item1 == ArchiveName)
                 {
                     ArchiveName = t.Item2;
                 }
 
-                if(t.Item1 == ArchivePassword)
+                if (t.Item1 == ArchivePassword)
                 {
                     ArchivePassword = t.Item2;
                 }
 
-                if(t.Item1 == CompressionRatio)
+                if (t.Item1 == CompressionRatio)
                 {
                     CompressionRatio = t.Item2;
                 }
 
-                if(t.Item1 == InputPath)
+                if (t.Item1 == InputPath)
                 {
                     InputPath = t.Item2;
                 }
 
-                if(t.Item1 == OutputPath)
+                if (t.Item1 == OutputPath)
                 {
                     OutputPath = t.Item2;
                 }
@@ -179,7 +245,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         public override void UpdateForEachOutputs(IList<Tuple<string, string>> updates)
         {
             var itemUpdate = updates?.FirstOrDefault(tuple => tuple.Item1 == Result);
-            if(itemUpdate != null)
+            if (itemUpdate != null)
             {
                 Result = itemUpdate.Item2;
             }
@@ -187,10 +253,58 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         #region GetForEachInputs/Outputs
 
-        public override IList<DsfForEachItem> GetForEachInputs()
-        {
-            return GetForEachItems(ArchiveName, ArchivePassword, CompressionRatio, InputPath, OutputPath);
-        }
+        public override IList<DsfForEachItem> GetForEachInputs() => GetForEachItems(ArchiveName, ArchivePassword, CompressionRatio, InputPath, OutputPath);
         #endregion
+
+        public bool Equals(DsfZip other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            var passWordsCompare = CommonEqualityOps.PassWordsCompare(ArchivePassword, other.ArchivePassword);
+            return base.Equals(other)
+                && string.Equals(CompressionRatio, other.CompressionRatio)
+                && passWordsCompare
+                && string.Equals(ArchiveName, other.ArchiveName);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((DsfZip)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = base.GetHashCode();
+                hashCode = (hashCode * 397) ^ (CompressionRatio != null ? CompressionRatio.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ArchivePassword != null ? ArchivePassword.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (ArchiveName != null ? ArchiveName.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

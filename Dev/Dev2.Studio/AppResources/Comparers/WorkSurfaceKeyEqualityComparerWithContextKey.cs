@@ -1,3 +1,4 @@
+using Dev2.Common.Interfaces;
 using System;
 using System.Collections.Generic;
 
@@ -11,10 +12,10 @@ namespace Dev2.Studio.AppResources.Comparers
     public class WorkSurfaceKeyEqualityComparerWithContextKey : IEqualityComparer<WorkSurfaceKey>
     {
 
-        private static readonly Lazy<WorkSurfaceKeyEqualityComparerWithContextKey> _current
+        static readonly Lazy<WorkSurfaceKeyEqualityComparerWithContextKey> _current
             = new Lazy<WorkSurfaceKeyEqualityComparerWithContextKey>(() => new WorkSurfaceKeyEqualityComparerWithContextKey());
 
-        private WorkSurfaceKeyEqualityComparerWithContextKey()
+        WorkSurfaceKeyEqualityComparerWithContextKey()
         {
 
         }
@@ -23,7 +24,7 @@ namespace Dev2.Studio.AppResources.Comparers
 
         public bool Equals(WorkSurfaceKey x, WorkSurfaceKey y)
         {
-            bool res = false;
+            var res = false;
             if (x.EnvironmentID != null && y.EnvironmentID != null)
             {
                 if (x.ResourceID == y.ResourceID
@@ -44,12 +45,33 @@ namespace Dev2.Studio.AppResources.Comparers
                 }
             }
             return res;
-
         }
 
-        public int GetHashCode(WorkSurfaceKey obj)
+        public bool Equals(IWorkSurfaceKey x, IWorkSurfaceKey y)
         {
-            return obj.GetHashCode();
+            var res = false;
+            if (x.EnvironmentID != null && y.EnvironmentID != null)
+            {
+                if (x.ResourceID == y.ResourceID
+                    && x.ServerID == y.ServerID
+                    && x.EnvironmentID == y.EnvironmentID
+                    && x.WorkSurfaceContext == y.WorkSurfaceContext)
+                {
+                    res = true;
+                }
+            }
+            else
+            {
+                if (x.ResourceID == y.ResourceID
+                    && x.ServerID == y.ServerID
+                    && x.WorkSurfaceContext == y.WorkSurfaceContext)
+                {
+                    res = true;
+                }
+            }
+            return res;
         }
+
+        public int GetHashCode(WorkSurfaceKey obj) => obj.GetHashCode();
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,8 +10,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ActivityUnitTests;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
 using Dev2.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -63,7 +65,7 @@ namespace Dev2.Tests.Activities.ActivityTests
 
             Assert.AreEqual(0, inRes.Count);
             Assert.AreEqual(1, outRes.Count);
-            IList<IDebugItemResult> debugOutput = outRes[0].FetchResultsList();
+            var debugOutput = outRes[0].FetchResultsList();
             Assert.AreEqual(1, debugOutput.Count);
             Assert.AreEqual("SomeText", debugOutput[0].Value);
             Assert.AreEqual(DebugItemResultType.Value, debugOutput[0].Type);
@@ -151,6 +153,22 @@ namespace Dev2.Tests.Activities.ActivityTests
             Assert.AreEqual(1, dsfForEachItems.Count);
             Assert.AreEqual("SomeText", dsfForEachItems[0].Name);
             Assert.AreEqual("SomeText", dsfForEachItems[0].Value);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("DsfCommentActivity_GetState")]
+        public void DsfCommentActivity_GetState_ReturnsStateVariable()
+        {
+            //------------Setup for test--------------------------
+            var act = new DsfCommentActivity { Text = "SomeText" };
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(1, stateItems.Count());
+            Assert.AreEqual("Text", stateItems.ToList()[0].Name);
+            Assert.AreEqual(StateVariable.StateType.InputOutput, stateItems.ToList()[0].Type);
+            Assert.AreEqual("SomeText", stateItems.ToList()[0].Value);
         }
     }
 }

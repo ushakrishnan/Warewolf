@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,6 +18,7 @@ namespace Dev2.Common.Interfaces.Studio
         ICommand DeployCommand { get; set; }
         ICommand SaveCommand { get; set; }
         ICommand OpenSettingsCommand { get; set; }
+        ICommand OpenSearchCommand { get; set; }
         ICommand OpenSchedulerCommand { get; set; }
         ICommand ExecuteServiceCommand { get; set; }
         ICommand CheckForNewVersionCommand { get; set; }
@@ -30,6 +31,7 @@ namespace Dev2.Common.Interfaces.Studio
         string NewLabel { get; }
         string SaveLabel { get; }
         string DeployLabel { get; }
+        string SearchLabel { get; }
         string TaskLabel { get; }
         string DebugLabel { get; }
         string SettingsLabel { get; }

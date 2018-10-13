@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +13,7 @@ using System.Activities;
 using System.Collections.Generic;
 using Dev2.Activities;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.State;
 using Dev2.Factories;
 using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -56,6 +57,11 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         {
         }
 
+        public override IEnumerable<StateVariable> GetState()
+        {
+            return new StateVariable[0];
+        }
+
         public override List<string> GetOutputs()
         {
             return new List<string>();
@@ -94,5 +100,19 @@ namespace Dev2.Tests.Activities.FindMissingStrategyTest
         }
 
         #endregion
+
+
+        public bool Equals(TestDsfNativeActivity other)
+        {
+            return ReferenceEquals(this, other);
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is TestDsfNativeActivity instance)
+            {
+                return Equals(instance);
+            }
+            return false;
+        }
     }
 }

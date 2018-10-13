@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,9 +26,6 @@ namespace Dev2.Studio.Diagnostics
             _environment = environment;
         }
 
-        protected override Task<IExceptionViewModel> CreateExceptionViewModel(Exception ex, ErrorSeverity severity)
-        {
-            return ExceptionFactory.CreateViewModel(ex, _environment, severity);
-        }
+        protected override Task<IExceptionViewModel> CreateExceptionViewModel(Exception exception, ErrorSeverity severity) => ExceptionFactory.CreateViewModel(exception, _environment, severity);
     }
 }

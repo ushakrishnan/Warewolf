@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,27 +29,10 @@ namespace Dev2.DataList.Contract
         #endregion
 
         #region Methods
-        /// <summary>
-        /// Parses the specified input definition.
-        /// </summary>
-        /// <param name="InputDefinition">The input definition.</param>
-        /// <returns></returns>
-        public IList<IDev2Definition> Parse(string InputDefinition)
-        {
-            return base.Parse(InputDefinition);
-        }
 
-        /// <summary>
-        /// Parses the and allow blanks.
-        /// </summary>
-        /// <param name="InputDefinition">The input definition.</param>
-        /// <returns></returns>
-        public IList<IDev2Definition> ParseAndAllowBlanks(string InputDefinition)
-        {
-            
-            return base.Parse(InputDefinition, false);
-            
-        }
+        public IList<IDev2Definition> Parse(string OutputDefinition) => base.Parse(OutputDefinition);        
+        public IList<IDev2Definition> ParseAndAllowBlanks(string OutputDefinition) => base.Parse(OutputDefinition, false);
+
         #endregion
     }
 }

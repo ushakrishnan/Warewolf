@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -19,7 +19,6 @@ namespace Dev2.Infrastructure.Tests
     [TestClass]
     public class VerifyArgumentsTest
     {
-
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("VerifyArgumentsTest_AreNotNull")]
@@ -47,10 +46,9 @@ namespace Dev2.Infrastructure.Tests
                 Assert.AreEqual(expected, message);
                 throw;
             }
-
         }
 
-        private void FixBreaks(ref string expected, ref string actual)
+        void FixBreaks(ref string expected, ref string actual)
         {
             expected = new StringBuilder(expected).Replace(Environment.NewLine, "").Replace("\r", "").ToString();
             actual = new StringBuilder(actual).Replace(Environment.NewLine, "").Replace("\r", "").ToString();
@@ -61,7 +59,6 @@ namespace Dev2.Infrastructure.Tests
         [TestCategory("VerifyArgumentsTest_AreNotNull")]
         public void VerifyArgumentsTest_AreNotNull_DoesNotThrows()
         {
-
             VerifyArgument.AreNotNull(new Dictionary<string, object>
                 {
                     {"a", new object()},
@@ -71,9 +68,6 @@ namespace Dev2.Infrastructure.Tests
                     {"e", ""},
                     {"f", ""}
                 });
-
-
-
         }
     }
 }

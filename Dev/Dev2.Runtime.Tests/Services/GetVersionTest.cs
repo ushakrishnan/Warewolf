@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -29,7 +29,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class GetVersionTest
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -43,7 +43,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -57,7 +57,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Any, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_HandlesType")]
 
@@ -75,33 +75,33 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_Execute_InvalidDictionary")]
         public void GetVersions_Execute_ExpectException()
         {
             //------------Setup for test--------------------------
             var getVersions = new GetVersion();
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
+            var serialiser = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
             var ax = getVersions.Execute(null, new Workspace(Guid.NewGuid()));
             Assert.AreEqual(ExecStatus.Fail, serialiser.Deserialize<ExplorerRepositoryResult>(ax).Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_Execute_InvalidDictionary")]
         public void GetVersions_Execute_ExpectException_NoArgs()
         {
             //------------Setup for test--------------------------
             var getVersions = new GetVersion();
-            Dev2JsonSerializer serialiser = new Dev2JsonSerializer();
+            var serialiser = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
             var ax = getVersions.Execute(new Dictionary<string, StringBuilder>(), new Workspace(Guid.NewGuid()));
             Assert.AreEqual(ExecStatus.Fail, serialiser.Deserialize<ExplorerRepositoryResult>(ax).Status);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_Execute_InvalidDictionary")]
         public void GetVersions_Execute_ExpectSuccess_DbType()
@@ -112,7 +112,7 @@ namespace Dev2.Tests.Runtime.Services
             var versionId = Guid.NewGuid();
             //var wsId = Guid.NewGuid();
             var ws = new Mock<IWorkspace>();
-            VersionInfo version = new VersionInfo(DateTime.Now,"bob","dave","2",resourceId,versionId);
+            var version = new VersionInfo(DateTime.Now,"bob","dave","2",resourceId,versionId);
             var mockRes = new Mock<IResource>();
             var servVer = new Mock<IServerVersionRepository>();
             servVer.Setup(a => a.GetVersion(It.IsAny<VersionInfo>(), It.IsAny<string>())).Returns(new StringBuilder(resourceOne));
@@ -124,7 +124,7 @@ namespace Dev2.Tests.Runtime.Services
             ws.Setup(a => a.ID).Returns(Guid.Empty);
             getVersions.ServerVersionRepo = servVer.Object;
             getVersions.ResourceCatalog = cat.Object;
-            Dev2JsonSerializer serialisr = new Dev2JsonSerializer();
+            var serialisr = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
             var ax = getVersions.Execute(new Dictionary<string, StringBuilder> { { "versionInfo", serialisr.SerializeToBuilder(version) } }, ws.Object);
 
@@ -135,7 +135,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_Execute_InvalidDictionary")]
         public void GetVersions_Execute_ExpectSuccess_NonDbType()
@@ -146,7 +146,7 @@ namespace Dev2.Tests.Runtime.Services
             var versionId = Guid.NewGuid();
             //var wsId = Guid.NewGuid();
             var ws = new Mock<IWorkspace>();
-            VersionInfo version = new VersionInfo(DateTime.Now, "bob", "dave", "2", resourceId, versionId);
+            var version = new VersionInfo(DateTime.Now, "bob", "dave", "2", resourceId, versionId);
             var mockRes = new Mock<IResource>();
             var servVer = new Mock<IServerVersionRepository>();
             servVer.Setup(a => a.GetVersion(It.IsAny<VersionInfo>(), It.IsAny<string>())).Returns(new StringBuilder(resourceOne));
@@ -158,7 +158,7 @@ namespace Dev2.Tests.Runtime.Services
             ws.Setup(a => a.ID).Returns(Guid.Empty);
             getVersions.ServerVersionRepo = servVer.Object;
             getVersions.ResourceCatalog = cat.Object;
-            Dev2JsonSerializer serialisr = new Dev2JsonSerializer();
+            var serialisr = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
             var ax = getVersions.Execute(new Dictionary<string, StringBuilder> { { "versionInfo", serialisr.SerializeToBuilder(version) } }, ws.Object);
 
@@ -169,7 +169,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Leon Rajindrapersadh")]
         [TestCategory("GetVersions_HandlesType")]
         public void GetVersions_CreateServiceEntry_ExpectProperlyFormedDynamicService()

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,34 +11,27 @@
 using System;
 using System.Activities.Statements;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using ActivityUnitTests;
-using Dev2.Interfaces;
+using Dev2.Common.State;
+using Dev2.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
-    /// <summary>
-    /// Summary description for DataSplitActivityTest
-    /// </summary>
     [TestClass]
-    
     public class DataMergeActivityTest : BaseActivityUnitTest
     {
         IList<DataMergeDTO> _mergeCollection = new List<DataMergeDTO>();
 
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext { get; set; }
-
         #region Additional test attributes
+
         [TestInitialize]
         public void MyTestInitialize()
         {
-            if(_mergeCollection == null)
+            if (_mergeCollection == null)
             {
                 _mergeCollection = new List<DataMergeDTO>();
             }
@@ -55,10 +48,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[CompanyTelNo]]", "None", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
-
-            // remove test datalist ;)
 
             Assert.AreEqual("Dev2,0317641234", actual);
         }
@@ -68,23 +59,19 @@ namespace Dev2.Tests.Activities.ActivityTests
         {
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Chars", ",", 1, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
-            // remove test datalist ;)
 
             Assert.AreEqual("Wallis,Barney,Trevor,Travis,Jurie,Brendon,Massimo,Ashley,Sashen,Wallis,", actual);
         }
 
-        // SN: 16-01-2012 - Added to test with merge character being the last character of an entry in 
-        //                  DataList
         [TestMethod]
         public void Merge_RecordsetWithStarCharMerge_Given_CharSameAsLastCharacterInEntry_Expected_DataMergedTogether()
         {
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Chars", "s", 1, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
-            // remove test datalist ;)
 
             Assert.AreEqual("WallissBarneysTrevorsTravissJuriesBrendonsMassimosAshleysSashensWalliss", actual);
         }
@@ -95,9 +82,8 @@ namespace Dev2.Tests.Activities.ActivityTests
             _mergeCollection.Add(new DataMergeDTO("[[Customers(4).FirstName]]", "Chars", " works at ", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ".", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
-            // remove test datalist ;)
 
             Assert.AreEqual("Travis works at Dev2.", actual);
         }
@@ -108,7 +94,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Chars", "'s phone number is ", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[TelNumbers(*).number]]", "Chars", ".", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
@@ -125,11 +111,11 @@ namespace Dev2.Tests.Activities.ActivityTests
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Chars", ",", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).LastName]]", "New Line", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, @"res", out string actual, out string error);
             // remove test datalist ;)
 
-            string expected = @"Wallis,Buchan
+            var expected = @"Wallis,Buchan
 Barney,Buchan
 Trevor,Williams-Ros
 Travis,Frisigner
@@ -154,7 +140,7 @@ Wallis,Buchan
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Chars", ",", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).LastName]]", "Tab", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
@@ -162,6 +148,19 @@ Wallis,Buchan
         }
 
         #endregion Tab Merge Tests
+
+        #region No Merge Collection Tests
+
+        [TestMethod]
+        public void Merge_With_No_Merge_Collection_Expected_Blank_Result()
+        {
+            SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
+            var result = ExecuteProcess();
+            GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
+            Assert.AreEqual(string.Empty, actual);
+        }
+
+        #endregion
 
         #region Index Tests
 
@@ -171,11 +170,11 @@ Wallis,Buchan
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Index", "1", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).LastName]]", "New Line", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
-            string expected = @"WBuchan
+            var expected = @"WBuchan
 BBuchan
 TWilliams-Ros
 TFrisigner
@@ -197,11 +196,11 @@ WBuchan
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Index", "10", 1, "0", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).LastName]]", "New Line", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
-            string expected = @"Wallis0000Buchan
+            var expected = @"Wallis0000Buchan
 Barney0000Buchan
 Trevor0000Williams-Ros
 Travis0000Frisigner
@@ -212,11 +211,11 @@ Ashley0000Lewis
 Sashen0000Naidoo
 Wallis0000Buchan
 ";
-           
+
             FixBreaks(ref expected, ref actual);
             Assert.AreEqual(expected, actual);
         }
-        private void FixBreaks(ref string expected, ref string actual)
+        void FixBreaks(ref string expected, ref string actual)
         {
             expected = new StringBuilder(expected).Replace(Environment.NewLine, "\n").Replace("\r", "").ToString();
             actual = new StringBuilder(actual).Replace(Environment.NewLine, "\n").Replace("\r", "").ToString();
@@ -227,11 +226,11 @@ Wallis0000Buchan
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Index", "10", 1, "0", "Right"));
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).LastName]]", "New Line", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
-            string expected = @"0000WallisBuchan
+            var expected = @"0000WallisBuchan
 0000BarneyBuchan
 0000TrevorWilliams-Ros
 0000TravisFrisigner
@@ -246,18 +245,18 @@ Wallis0000Buchan
             FixBreaks(ref expected, ref actual);
             Assert.AreEqual(expected, actual);
         }
-        
+
         [TestMethod]
         public void MergeTwoFieldsInRecordsetsIndexWithIndexEqualToDataLengthExpectedNoDataLoss()
         {
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Index", "6", 1, "", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).LastName]]", "New Line", "", 2, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             GetScalarValueFromEnvironment(result.Environment, "res", out string actual, out string error);
             // remove test datalist ;)
 
-            string expected = "WallisBuchan\nBarneyBuchan\nTrevorWilliams-Ros\nTravisFrisigner\nJurie Smit\nBrendoPage\nMassimGuerrera\nAshleyLewis\nSashenNaidoo\nWallisBuchan\n";
+            var expected = "WallisBuchan\nBarneyBuchan\nTrevorWilliams-Ros\nTravisFrisigner\nJurie Smit\nBrendoPage\nMassimGuerrera\nAshleyLewis\nSashenNaidoo\nWallisBuchan\n";
 
             FixBreaks(ref expected, ref actual);
             Assert.AreEqual(expected, actual);
@@ -272,9 +271,9 @@ Wallis0000Buchan
             _mergeCollection.Add(new DataMergeDTO("[[Customers(*).FirstName]]", "Index", "-6", 1, "", "Left"));
             SetupArguments(ActivityStrings.DataMergeDataListWithData, ActivityStrings.DataMergeDataListShape, "[[res]]", _mergeCollection);
             //------------Execute Test---------------------------
-            IDSFDataObject result = ExecuteProcess();
+            var result = ExecuteProcess();
             //------------Assert Results-------------------------
-            string actual = result.Environment.FetchErrors();
+            var actual = result.Environment.FetchErrors();
             StringAssert.Contains(actual, "The 'Using' value must be a real number.");
         }
 
@@ -342,7 +341,7 @@ Wallis0000Buchan
             //------------Setup for test--------------------------
             _mergeCollection.Clear();
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, " ", "Left"));
-            DsfDataMergeActivity act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
+            var act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
 
             //------------Execute Test---------------------------
             act.UpdateForEachOutputs(null);
@@ -358,7 +357,7 @@ Wallis0000Buchan
             //------------Setup for test--------------------------
             _mergeCollection.Clear();
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, " ", "Left"));
-            DsfDataMergeActivity act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
+            var act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
 
             var tuple1 = new Tuple<string, string>("Test", "Test");
             var tuple2 = new Tuple<string, string>("Test2", "Test2");
@@ -376,7 +375,7 @@ Wallis0000Buchan
             //------------Setup for test--------------------------
             _mergeCollection.Clear();
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, " ", "Left"));
-            DsfDataMergeActivity act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
+            var act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
 
             var tuple1 = new Tuple<string, string>("[[res]]", "Test");
             //------------Execute Test---------------------------
@@ -394,7 +393,7 @@ Wallis0000Buchan
             _mergeCollection.Clear();
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, " ", "Left"));
             _mergeCollection.Add(new DataMergeDTO("[[CompanyNumber]]", "Chars", ",", 2, " ", "Left"));
-            DsfDataMergeActivity act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
+            var act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
 
             //------------Execute Test---------------------------
             var dsfForEachItems = act.GetForEachInputs();
@@ -414,7 +413,7 @@ Wallis0000Buchan
             //------------Setup for test--------------------------
             _mergeCollection.Clear();
             _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, " ", "Left"));
-            DsfDataMergeActivity act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
+            var act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
 
             //------------Execute Test---------------------------
             var dsfForEachItems = act.GetForEachOutputs();
@@ -424,9 +423,56 @@ Wallis0000Buchan
             Assert.AreEqual("[[res]]", dsfForEachItems[0].Value);
         }
 
+        [TestMethod]
+        [Owner("Sanele Mthembu")]
+        [TestCategory("DsfDataMergeActivity_GetForEachOutputs")]
+        public void DsfDataMergeActivity_GetState_Returns_Inputs_And_Outputs()
+        {
+            //------------Setup for test--------------------------
+            _mergeCollection.Clear();
+            _mergeCollection.Add(new DataMergeDTO("[[CompanyName]]", "Chars", ",", 1, " ", "Left"));
+            var act = new DsfDataMergeActivity { Result = "[[res]]", MergeCollection = _mergeCollection };
+
+            //------------Execute Test---------------------------
+            var stateItems = act.GetState();
+            //------------Assert Results-------------------------
+            Assert.AreEqual(2, stateItems.Count());
+            var expectedResults = new[]
+            {
+                new StateVariable
+                {
+                    Name="Merge Collection",
+                    Type=StateVariable.StateType.Input,
+                    Value= ActivityHelper.GetSerializedStateValueFromCollection(_mergeCollection)
+                },
+                new StateVariable
+                {
+                    Name="Result",
+                    Type=StateVariable.StateType.Output,
+                    Value=act.Result
+                }
+            };
+
+            var iter = act.GetState().Select(
+                (item, index) => new
+                {
+                    value = item,
+                    expectValue = expectedResults[index]
+                }
+                );
+
+            //------------Assert Results-------------------------
+            foreach (var entry in iter)
+            {
+                Assert.AreEqual(entry.expectValue.Name, entry.value.Name);
+                Assert.AreEqual(entry.expectValue.Type, entry.value.Type);
+                Assert.AreEqual(entry.expectValue.Value, entry.value.Value);
+            }
+
+        }
         #region Private Test Methods
 
-        private void SetupArguments(string currentDL, string testData, string result, IList<DataMergeDTO> mergeCollection)
+        void SetupArguments(string currentDL, string testData, string result, IList<DataMergeDTO> mergeCollection)
         {
             TestStartNode = new FlowStep
             {

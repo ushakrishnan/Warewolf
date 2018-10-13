@@ -18,15 +18,15 @@ using Warewolf.Studio.ViewModels;
 
 namespace Dev2.Settings.Scheduler
 {
-    internal class SchedulerTaskManager
+    class SchedulerTaskManager
     {
-        private readonly SchedulerViewModel _schedulerViewModel;
-        private int _newTaskCounter = 1;
-        private IResourcePickerDialog _currentResourcePicker;
-        private TriggerEditDialog _triggerEditDialog;
+        readonly SchedulerViewModel _schedulerViewModel;
+        int _newTaskCounter = 1;
+        IResourcePickerDialog _currentResourcePicker;
+        TriggerEditDialog _triggerEditDialog;
         readonly Dev2JsonSerializer _ser = new Dev2JsonSerializer();
-        private readonly Task<IResourcePickerDialog> _resourcePickerDialogTask;
-        private EnvironmentViewModel _source;
+        readonly Task<IResourcePickerDialog> _resourcePickerDialogTask;
+        EnvironmentViewModel _source;
 
         internal SchedulerTaskManager(SchedulerViewModel schedulerViewModel, Task<IResourcePickerDialog> getResourcePicker)
         {
@@ -36,14 +36,14 @@ namespace Dev2.Settings.Scheduler
             SchedulerFactory = new ClientSchedulerFactory(new Dev2TaskService(taskServiceConvertorFactory), taskServiceConvertorFactory);
         }
 
-        private IResourcePickerDialog CreateResourcePickerDialog()
+        IResourcePickerDialog CreateResourcePickerDialog()
         {
             var res = new ResourcePickerDialog(enDsfActivityType.All, _source);
             ResourcePickerDialog.CreateAsync(enDsfActivityType.Workflow, _source).ContinueWith(a => _currentResourcePicker = a.Result);
             return res;
         }
 
-        private Task<IResourcePickerDialog> GetResourcePickerDialog => _resourcePickerDialogTask ?? ResourcePickerDialog.CreateAsync(enDsfActivityType.Workflow, _source);
+        Task<IResourcePickerDialog> GetResourcePickerDialog => _resourcePickerDialogTask ?? ResourcePickerDialog.CreateAsync(enDsfActivityType.Workflow, _source);
 
         public IResourcePickerDialog CurrentResourcePickerDialog
         {
@@ -60,10 +60,7 @@ namespace Dev2.Settings.Scheduler
         protected IClientSchedulerFactory SchedulerFactory { get; }
         public TriggerEditDialog TriggerEditDialog
         {
-            get
-            {
-                return _triggerEditDialog;
-            }
+            get => _triggerEditDialog;
             private set
             {
                 _triggerEditDialog = value;
@@ -72,23 +69,19 @@ namespace Dev2.Settings.Scheduler
         }
         public EnvironmentViewModel Source
         {
-            set
-            {
-                _source = value;
-            }
+            set => _source = value;
+            get => _source;
         }
 
         [ExcludeFromCodeCoverage]
         protected virtual IScheduleTrigger ShowEditTriggerDialog()
         {
             var tmpTrigger = _schedulerViewModel.SelectedTask.Trigger.Trigger.Instance;
-            if (TriggerEditDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (TriggerEditDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK && !TriggerEquals(TriggerEditDialog.Trigger, tmpTrigger))
             {
-                if (!TriggerEquals(TriggerEditDialog.Trigger, tmpTrigger))
-                {
-                    return SchedulerFactory.CreateTrigger(TaskState.Disabled, new Dev2Trigger(null, TriggerEditDialog.Trigger));
-                }
+                return SchedulerFactory.CreateTrigger(TaskState.Disabled, new Dev2Trigger(null, TriggerEditDialog.Trigger));
             }
+
             return null;
         }
 
@@ -111,10 +104,7 @@ namespace Dev2.Settings.Scheduler
             }
         }
 
-        public bool CanSelectWorkflow()
-        {
-            return CurrentResourcePickerDialog != null;
-        }
+        public bool CanSelectWorkflow() => CurrentResourcePickerDialog != null;
 
         public bool SaveTasks()
         {
@@ -161,7 +151,7 @@ namespace Dev2.Settings.Scheduler
             return false;
         }
 
-        private bool ValidateSelectedTask()
+        bool ValidateSelectedTask()
         {
             if (!_schedulerViewModel.SelectedTask.IsDirty)
             {
@@ -200,7 +190,7 @@ namespace Dev2.Settings.Scheduler
             return true;
         }
 
-        private void ShowServerDisconnectedPopup()
+        void ShowServerDisconnectedPopup()
         {
             _schedulerViewModel.PopupController?.Show(string.Format(Core.ServerDisconnected, _schedulerViewModel.CurrentEnvironment.Connection.DisplayName.Replace("(Connected)", "")) + Environment.NewLine +
                              Core.ServerReconnectForActions, Core.ServerDisconnectedHeader, MessageBoxButton.OK,
@@ -223,7 +213,7 @@ namespace Dev2.Settings.Scheduler
 
             var dev2DailyTrigger = new Dev2DailyTrigger(new TaskServiceConvertorFactory(), new DailyTrigger());
             var scheduleTrigger = SchedulerFactory.CreateTrigger(TaskState.Ready, dev2DailyTrigger);
-            ScheduledResource scheduledResource = new ScheduledResource(Core.SchedulerNewTaskName + _newTaskCounter, SchedulerStatus.Enabled, scheduleTrigger.Trigger.Instance.StartBoundary, scheduleTrigger, string.Empty, Guid.NewGuid().ToString());
+            var scheduledResource = new ScheduledResource(Core.SchedulerNewTaskName + _newTaskCounter, SchedulerStatus.Enabled, scheduleTrigger.Trigger.Instance.StartBoundary, scheduleTrigger, string.Empty, Guid.NewGuid().ToString());
             scheduledResource.OldName = scheduledResource.Name;
             var newres = _schedulerViewModel.ScheduledResourceModel.ScheduledResources[_schedulerViewModel.ScheduledResourceModel.ScheduledResources.Count == 1 ? 0 : _schedulerViewModel.ScheduledResourceModel.ScheduledResources.Count - 1];
             _schedulerViewModel.ScheduledResourceModel.ScheduledResources[_schedulerViewModel.ScheduledResourceModel.ScheduledResources.Count == 1 ? 0 : _schedulerViewModel.ScheduledResourceModel.ScheduledResources.Count - 1] = scheduledResource;
@@ -238,7 +228,7 @@ namespace Dev2.Settings.Scheduler
             ViewModelUtils.RaiseCanExecuteChanged(_schedulerViewModel.NewCommand);
         }
 
-        public void DeleteTask()
+        public void TryDeleteTask()
         {
             if (_schedulerViewModel.SelectedTask != null && _schedulerViewModel.CurrentEnvironment != null)
             {
@@ -246,33 +236,7 @@ namespace Dev2.Settings.Scheduler
                 {
                     if (_schedulerViewModel.CurrentEnvironment.AuthorizationService.IsAuthorized(AuthorizationContext.Administrator, null))
                     {
-                        if (_schedulerViewModel.PopupController.ShowDeleteConfirmation(_schedulerViewModel.SelectedTask.Name) == MessageBoxResult.Yes)
-                        {
-                            int index = _schedulerViewModel.ScheduledResourceModel.ScheduledResources
-                                .ToList()
-                                .FindIndex(resource => resource.ResourceId == _schedulerViewModel.SelectedTask.ResourceId);
-                            int indexInFilteredList = _schedulerViewModel.TaskList
-                                .ToList()
-                                .FindIndex(resource => resource.ResourceId == _schedulerViewModel.SelectedTask.ResourceId);
-                            if (index != -1)
-                            {
-                                Dev2Logger.Info($"Delete Schedule Name: {_schedulerViewModel.SelectedTask.Name} Resource:{_schedulerViewModel.SelectedTask.ResourceId} Env:{_schedulerViewModel.CurrentEnvironment.Name}", "Warewolf Info");
-
-                                _schedulerViewModel.ScheduledResourceModel.DeleteSchedule(_schedulerViewModel.SelectedTask);
-                                //if delete is successfull then do the code below
-                                _schedulerViewModel.ScheduledResourceModel.ScheduledResources.RemoveAt(index);
-                                _schedulerViewModel.NotifyOfPropertyChange(() => _schedulerViewModel.TaskList);
-                                if (indexInFilteredList <= _schedulerViewModel.TaskList.Count && indexInFilteredList > 0)
-                                {
-                                    _schedulerViewModel.SelectedTask = _schedulerViewModel.TaskList[indexInFilteredList - 1];
-                                }
-                                else if (indexInFilteredList == 0 && _schedulerViewModel.TaskList.Count > 0)
-                                {
-                                    _schedulerViewModel.SelectedTask = _schedulerViewModel.TaskList[0];
-                                }
-                            }
-                            _schedulerViewModel.NotifyOfPropertyChange(() => _schedulerViewModel.History);
-                        }
+                        DeleteTask();
                     }
                     else
                     {
@@ -282,6 +246,45 @@ namespace Dev2.Settings.Scheduler
                 else
                 {
                     _schedulerViewModel.ShowError(Core.SchedulerNotConnectedErrorMessage);
+                }
+            }
+        }
+
+        void DeleteTask()
+        {
+            if (_schedulerViewModel.PopupController.ShowDeleteConfirmation(_schedulerViewModel.SelectedTask.Name) == MessageBoxResult.Yes)
+            {
+                var index = _schedulerViewModel.ScheduledResourceModel.ScheduledResources
+                    .ToList()
+                    .FindIndex(resource => resource.ResourceId == _schedulerViewModel.SelectedTask.ResourceId);
+                var indexInFilteredList = _schedulerViewModel.TaskList
+                    .ToList()
+                    .FindIndex(resource => resource.ResourceId == _schedulerViewModel.SelectedTask.ResourceId);
+                if (index != -1)
+                {
+                    DeleteTask(index, indexInFilteredList);
+                }
+                _schedulerViewModel.NotifyOfPropertyChange(() => _schedulerViewModel.History);
+            }
+        }
+
+        void DeleteTask(int index, int indexInFilteredList)
+        {
+            Dev2Logger.Info($"Delete Schedule Name: {_schedulerViewModel.SelectedTask.Name} Resource:{_schedulerViewModel.SelectedTask.ResourceId} Env:{_schedulerViewModel.CurrentEnvironment.Name}", "Warewolf Info");
+
+            _schedulerViewModel.ScheduledResourceModel.DeleteSchedule(_schedulerViewModel.SelectedTask);
+            //if delete is successfull then do the code below
+            _schedulerViewModel.ScheduledResourceModel.ScheduledResources.RemoveAt(index);
+            _schedulerViewModel.NotifyOfPropertyChange(() => _schedulerViewModel.TaskList);
+            if (indexInFilteredList <= _schedulerViewModel.TaskList.Count && indexInFilteredList > 0)
+            {
+                _schedulerViewModel.SelectedTask = _schedulerViewModel.TaskList[indexInFilteredList - 1];
+            }
+            else
+            {
+                if (indexInFilteredList == 0 && _schedulerViewModel.TaskList.Count > 0)
+                {
+                    _schedulerViewModel.SelectedTask = _schedulerViewModel.TaskList[0];
                 }
             }
         }
@@ -305,17 +308,15 @@ namespace Dev2.Settings.Scheduler
         {
             if (_schedulerViewModel.SelectedTask != null && _schedulerViewModel.CurrentEnvironment != null)
             {
-                if (CurrentResourcePickerDialog == null)
+                if (CurrentResourcePickerDialog == null && GetResourcePickerDialog?.Status == TaskStatus.Running)
                 {
-                    if (GetResourcePickerDialog?.Status == TaskStatus.Running)
+                    GetResourcePickerDialog.Wait();
+                    if (!GetResourcePickerDialog.IsFaulted)
                     {
-                        GetResourcePickerDialog.Wait();
-                        if (!GetResourcePickerDialog.IsFaulted)
-                        {
-                            CurrentResourcePickerDialog = GetResourcePickerDialog.Result;
-                        }
+                        CurrentResourcePickerDialog = GetResourcePickerDialog.Result;
                     }
                 }
+
 
                 if (!string.IsNullOrEmpty(_schedulerViewModel.WorkflowName) && _schedulerViewModel.CurrentEnvironment.ResourceRepository != null)
                 {
@@ -350,9 +351,6 @@ namespace Dev2.Settings.Scheduler
             _schedulerViewModel.NotifyOfPropertyChange(() => _schedulerViewModel.TaskList);
         }
 
-        public static bool TriggerEquals(Microsoft.Win32.TaskScheduler.Trigger a, Microsoft.Win32.TaskScheduler.Trigger b)
-        {
-            return a.ToString() == b.ToString() && a.StartBoundary == b.StartBoundary && a.EndBoundary == b.EndBoundary && a.ExecutionTimeLimit == b.ExecutionTimeLimit;
-        }
+        public static bool TriggerEquals(Microsoft.Win32.TaskScheduler.Trigger a, Microsoft.Win32.TaskScheduler.Trigger b) => a.ToString() == b.ToString() && a.StartBoundary == b.StartBoundary && a.EndBoundary == b.EndBoundary && a.ExecutionTimeLimit == b.ExecutionTimeLimit;
     }
 }

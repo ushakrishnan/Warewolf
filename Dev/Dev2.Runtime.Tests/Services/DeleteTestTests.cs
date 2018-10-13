@@ -15,7 +15,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DeleteTestTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Sanele Mthembu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_GivenArgsWithResourceId_ShouldReturnResourceIdFromArgs()
@@ -36,7 +36,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(resId, resourceID);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -50,7 +50,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -63,7 +63,7 @@ namespace Dev2.Tests.Runtime.Services
             //------------Assert Results-------------------------
             Assert.AreEqual(AuthorizationContext.Contribute, resId);
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestHandlesType")]
         public void DeleteTestHandlesType_ExpectName()
@@ -78,7 +78,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("DeleteTest", deleteTest.HandlesType());
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestExecute")]
         public void DeleteTestExecute_NullValues_ErrorResult()
@@ -87,13 +87,13 @@ namespace Dev2.Tests.Runtime.Services
             var deleteTest = new DeleteTest();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = deleteTest.Execute(null, null);
+            var jsonResult = deleteTest.Execute(null, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestExecute")]
         public void DeleteTestExecute_ResourceIDNotPresent_ErrorResult()
@@ -103,13 +103,13 @@ namespace Dev2.Tests.Runtime.Services
             var deleteTest = new DeleteTest();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = deleteTest.Execute(values, null);
+            var jsonResult = deleteTest.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestExecute")]
         public void DeleteTestExecute_ResourceIDNotGuid_ErrorResult()
@@ -119,13 +119,13 @@ namespace Dev2.Tests.Runtime.Services
             var deleteTest = new DeleteTest();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = deleteTest.Execute(values, null);
+            var jsonResult = deleteTest.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestExecute")]
         public void DeleteTestExecute_TestNameNotPresent_ErrorResult()
@@ -135,14 +135,14 @@ namespace Dev2.Tests.Runtime.Services
             var deleteTest = new DeleteTest();
             var serializer = new Dev2JsonSerializer();
             //------------Execute Test---------------------------
-            StringBuilder jsonResult = deleteTest.Execute(values, null);
+            var jsonResult = deleteTest.Execute(values, null);
             var result = serializer.Deserialize<CompressedExecuteMessage>(jsonResult);
             //------------Assert Results-------------------------
             Assert.IsTrue(result.HasError);
         }
         
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestExecute")]
         public void DeleteTestExecute__ValidArgs_ExpectDeleteTestCalled()
@@ -173,7 +173,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("TestToDelete",testName);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("DeleteTestExecute")]
         public void DeleteTestExecute__ValidArgsPermitted_ExpectDeleteTestCalled()

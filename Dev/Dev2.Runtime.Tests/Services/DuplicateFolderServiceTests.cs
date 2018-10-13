@@ -20,7 +20,7 @@ namespace Dev2.Tests.Runtime.Services
     [TestClass]
     public class DuplicateFolderServiceTests
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -34,7 +34,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Hagashen Naidu")]
         [TestCategory("GetResourceID")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -48,12 +48,12 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(AuthorizationContext.Contribute, resId);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void HandlesType_GivenServiceIsCreated_ShouldHandleCorrectly()
         {
             //---------------Set up test pack-------------------
-            DuplicateFolderService resourceService = new DuplicateFolderService();
+            var resourceService = new DuplicateFolderService();
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -62,12 +62,12 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("DuplicateFolderService", handlesType);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void CreateServiceEntry_GivenServiceIsCreated_ShouldCreateCorrectDynamicService()
         {
             //---------------Set up test pack-------------------
-            DuplicateFolderService resourceService = new DuplicateFolderService();
+            var resourceService = new DuplicateFolderService();
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -75,7 +75,7 @@ namespace Dev2.Tests.Runtime.Services
             //---------------Test Result -----------------------
             Assert.AreEqual(1, handlesType.Actions.Count);
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenNullSourcePath_ReturnsException()
         {
@@ -86,7 +86,7 @@ namespace Dev2.Tests.Runtime.Services
                 .Returns(new ResourceCatalogDuplicateResult { Message = "Hi",DuplicatedItems = duplicatedItems });
             var workScpace = new Mock<IWorkspace>();
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DuplicateFolderService resourceService = new DuplicateFolderService(resourceCatalog.Object);
+            var resourceService = new DuplicateFolderService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -103,7 +103,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.IsNotNull(executeMessage);
             Assert.IsTrue(executeMessage.HasError);
         }
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenResourcePayLoad_ShouldExctactPayLoad()
         {
@@ -114,7 +114,7 @@ namespace Dev2.Tests.Runtime.Services
                 .Returns(new ResourceCatalogDuplicateResult { Message = "Hi",DuplicatedItems = duplicatedItems });
             var workScpace = new Mock<IWorkspace>();
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DuplicateFolderService resourceService = new DuplicateFolderService(resourceCatalog.Object);
+            var resourceService = new DuplicateFolderService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -135,7 +135,7 @@ namespace Dev2.Tests.Runtime.Services
             CollectionAssert.AreEqual(duplicatedItems,executeMessage.DuplicatedItems);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenResourcePayLoad_ShouldDuplicateTests()
         {
@@ -146,7 +146,7 @@ namespace Dev2.Tests.Runtime.Services
                 .Returns(new ResourceCatalogDuplicateResult { Message = "Hi", DuplicatedItems = duplicatedItems });
             var workScpace = new Mock<IWorkspace>();
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DuplicateFolderService resourceService = new DuplicateFolderService(resourceCatalog.Object);
+            var resourceService = new DuplicateFolderService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
@@ -167,7 +167,7 @@ namespace Dev2.Tests.Runtime.Services
             CollectionAssert.AreEqual(duplicatedItems, executeMessage.DuplicatedItems);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenMissingDestinationPath_ShouldReturnFailure()
         {
@@ -176,11 +176,11 @@ namespace Dev2.Tests.Runtime.Services
             resourceCatalog.Setup(catalog => catalog.DuplicateFolder(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
                 .Returns(new ResourceCatalogDuplicateResult() { Message = "Hi" });
             var workScpace = new Mock<IWorkspace>();
-            DuplicateFolderService resourceService = new DuplicateFolderService(resourceCatalog.Object);
+            var resourceService = new DuplicateFolderService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             try
             {
                 stringBuilder = resourceService.Execute(new Dictionary<string, StringBuilder>
@@ -200,7 +200,7 @@ namespace Dev2.Tests.Runtime.Services
         }
        
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [Owner("Nkosinathi Sangweni")]
         public void Execute_GivenCatalogThrowsException_ShouldReturnFailureAndCatalogException()
         {
@@ -210,11 +210,11 @@ namespace Dev2.Tests.Runtime.Services
                 .Throws(new Exception("Catalog Error"));
             var workScpace = new Mock<IWorkspace>();
             const string guid = "7B71D6B8-3E11-4726-A7A0-AC924977D6E5";
-            DuplicateFolderService resourceService = new DuplicateFolderService(resourceCatalog.Object);
+            var resourceService = new DuplicateFolderService(resourceCatalog.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(resourceService);
             //---------------Execute Test ----------------------
-            StringBuilder stringBuilder = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             try
             {
                 stringBuilder = resourceService.Execute(new Dictionary<string, StringBuilder>

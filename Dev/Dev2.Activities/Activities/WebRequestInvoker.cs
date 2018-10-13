@@ -1,13 +1,14 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -18,16 +19,9 @@ namespace Dev2.Activities
 {
     public class WebRequestInvoker : IWebRequestInvoker
     {
-        public string ExecuteRequest(string method, string url, List<Tuple<string, string>> headers)
-        {
-            return ExecuteRequest(method, url, null, headers);
-        }
+        public string ExecuteRequest(string method, string url, List<Tuple<string, string>> headers) => ExecuteRequest(method, url, null, headers);
 
-        public string ExecuteRequest(string method, string url, List<Tuple<string, string>> headers, int timeoutMilliseconds)
-        {
-            return ExecuteRequest(timeoutMilliseconds, method, url, null, headers);
-        }
-
+        public string ExecuteRequest(string method, string url, List<Tuple<string, string>> headers, int timeoutMilliseconds) => ExecuteRequest(timeoutMilliseconds, method, url, null, headers);
         public string ExecuteRequest(string method, string url, string data) => ExecuteRequest(method, url, data, null, null);
 
         public string ExecuteRequest(string method, string url, string data, List<Tuple<string, string>> headers) => ExecuteRequest(method, url, data, headers, null);
@@ -55,7 +49,7 @@ namespace Dev2.Activities
                         {
                             return webClient.DownloadString(uri);
                         }
-                        webClient.DownloadStringCompleted += (sender, args) => asyncCallback(args.Result);
+                        webClient.DownloadStringCompleted += (sender, args) => asyncCallback?.Invoke(args.Result);
                         webClient.DownloadStringAsync(uri, null);
                         break;
                     case "POST":
@@ -63,11 +57,12 @@ namespace Dev2.Activities
                         {
                             return webClient.UploadString(uri, data);
                         }
-                        webClient.UploadStringCompleted += (sender, args) => asyncCallback(args.Result);
+                        webClient.UploadStringCompleted += (sender, args) => asyncCallback?.Invoke(args.Result);
                         webClient.UploadStringAsync(uri, data);
                         break;
                     default:
-                        return string.Empty;
+                        Dev2Logger.Info("No Web method for the Web Request Property Name: " + method, GlobalConstants.WarewolfInfo);
+                        break;
                 }
             }
             return string.Empty;
@@ -76,7 +71,7 @@ namespace Dev2.Activities
         public string ExecuteRequest(int timeoutMilliseconds, string method, string url, string data) => ExecuteRequest(timeoutMilliseconds, method, url, data, null, null);
 
         public string ExecuteRequest(int timeoutMilliseconds, string method, string url, string data, List<Tuple<string, string>> headers) => ExecuteRequest(timeoutMilliseconds, method, url, data, headers, null);
-        
+
         public string ExecuteRequest(int timeoutMilliseconds, string method, string url, string data, List<Tuple<string, string>> headers, Action<string> asyncCallback)
         {
             using (var webClient = new WebClientWithTimeout(timeoutMilliseconds))
@@ -100,7 +95,7 @@ namespace Dev2.Activities
                         {
                             return webClient.DownloadString(uri);
                         }
-                        webClient.DownloadStringCompleted += (sender, args) => asyncCallback(args.Result);
+                        webClient.DownloadStringCompleted += (sender, args) => asyncCallback?.Invoke(args.Result);
                         webClient.DownloadStringAsync(uri, null);
                         break;
                     case "POST":
@@ -108,11 +103,11 @@ namespace Dev2.Activities
                         {
                             return webClient.UploadString(uri, data);
                         }
-                        webClient.UploadStringCompleted += (sender, args) => asyncCallback(args.Result);
+                        webClient.UploadStringCompleted += (sender, args) => asyncCallback?.Invoke(args.Result);
                         webClient.UploadStringAsync(uri, data);
                         break;
                     default:
-                        throw new ArgumentException("Unrecognized request method: " + method);
+                        return string.Empty;
                 }
             }
             return string.Empty;
@@ -129,7 +124,7 @@ namespace Dev2.Activities
             protected override WebRequest GetWebRequest(Uri address)
             {
                 var webRequest = base.GetWebRequest(address);
-                if(webRequest == null)
+                if (webRequest == null)
                 {
                     throw new Exception(ErrorResource.WebRequestError);
                 }

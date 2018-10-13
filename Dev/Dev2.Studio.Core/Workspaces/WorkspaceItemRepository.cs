@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,8 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Dev2.Communication;
-using Dev2.Controller;
 using Dev2.Studio.Core.Workspaces;
 using Dev2.Studio.Core;
 using Dev2.Studio.Interfaces;
@@ -26,16 +24,7 @@ namespace Dev2.Workspaces
     public class WorkspaceItemRepository : IWorkspaceItemRepository
     {
         #region Singleton Instance
-
-        //
-        // Multi-threaded implementation - see http://msdn.microsoft.com/en-us/library/ff650316.aspx
-        //
-        // This approach ensures that only one instance is created and only when the instance is needed. 
-        // Also, the variable is declared to be volatile to ensure that assignment to the instance variable
-        // completes before the instance variable can be accessed. Lastly, this approach uses a syncRoot 
-        // instance to lock on, rather than locking on the type itself, to avoid deadlocks.
-        //
-
+        
         static volatile IWorkspaceItemRepository _instance;
         static readonly object SyncRoot = new Object();
 
@@ -60,7 +49,7 @@ namespace Dev2.Workspaces
 
         #endregion
 
-        private IList<IWorkspaceItem> _workspaceItems;
+        IList<IWorkspaceItem> _workspaceItems;
 
         public IList<IWorkspaceItem> WorkspaceItems => _workspaceItems ?? (_workspaceItems = Read());
 
@@ -78,7 +67,9 @@ namespace Dev2.Workspaces
 
         public WorkspaceItemRepository(IWorkspaceItemRepository workspaceItemRepository)
         {
+#pragma warning disable S3010 // For testing
             _instance = workspaceItemRepository;
+#pragma warning restore S3010
         }
 
         #endregion
@@ -110,19 +101,19 @@ namespace Dev2.Workspaces
 
         #region Read
 
-        private IList<IWorkspaceItem> Read()
+        IList<IWorkspaceItem> Read()
         {
             var result = new List<IWorkspaceItem>();
-            if(File.Exists(RepositoryPath))
+            if (File.Exists(RepositoryPath))
             {
                 try
                 {
                     var xml = XElement.Parse(File.ReadAllText(RepositoryPath));
                     result.AddRange(xml.Elements().Select(x => new WorkspaceItem(x)));
                 }
-                
+
                 catch
-                
+
                 {
                     // corrupt so ignore
                 }
@@ -145,12 +136,12 @@ namespace Dev2.Workspaces
 
             if(!File.Exists(RepositoryPath))
             {
-                FileInfo fileInfo = new FileInfo(RepositoryPath);
-                if(fileInfo.Directory != null)
+                var fileInfo = new FileInfo(RepositoryPath);
+                if (fileInfo.Directory != null)
                 {
-                    string finalDirectoryPath = fileInfo.Directory.FullName;
+                    var finalDirectoryPath = fileInfo.Directory.FullName;
 
-                    if(!Directory.Exists(finalDirectoryPath))
+                    if (!Directory.Exists(finalDirectoryPath))
                     {
                         Directory.CreateDirectory(finalDirectoryPath);
                     }
@@ -208,38 +199,6 @@ namespace Dev2.Workspaces
             workspaceItem.IsWorkflowSaved = resourceModel.IsWorkflowSaved;
         }
 
-        public ExecuteMessage UpdateWorkspaceItem(IContextualResourceModel resource, bool isLocalSave)
-        {
-            if(resource == null)
-            {
-                throw new ArgumentNullException("resource");
-            }
-            var workspaceItem = WorkspaceItems.FirstOrDefault(wi => wi.ID == resource.ID && wi.EnvironmentID == resource.Environment.EnvironmentID);
-
-            if(workspaceItem == null)
-            {
-                var msg = new ExecuteMessage { HasError = false };
-                msg.SetMessage(string.Empty);
-                return msg;
-            }
-
-
-            workspaceItem.Action = WorkspaceItemAction.Commit;
-
-            var comsController = new CommunicationController { ServiceName = "UpdateWorkspaceItemService" };
-            comsController.AddPayloadArgument("Roles", String.Join(",", "Test"));
-            var xml = workspaceItem.ToXml();
-
-            comsController.AddPayloadArgument("ItemXml", xml.ToString(SaveOptions.DisableFormatting));
-            comsController.AddPayloadArgument("IsLocalSave", isLocalSave.ToString());
-
-            var con = resource.Environment.Connection;
-
-            var result = comsController.ExecuteCommand<ExecuteMessage>(con, con.WorkspaceID);
-
-            return result;
-        }
-
         #endregion
 
         #region Remove
@@ -258,7 +217,10 @@ namespace Dev2.Workspaces
 
             WorkspaceItems.Remove(itemToRemove);
             Write();
-            resourceModel.Environment.ResourceRepository.DeleteResourceFromWorkspaceAsync(resourceModel);
+            if (!resourceModel.IsNotWarewolfPath)
+            {
+                resourceModel.Environment.ResourceRepository.DeleteResourceFromWorkspaceAsync(resourceModel);
+            }
         }
 
         public void ClearWorkspaceItems(IContextualResourceModel resourceModel)

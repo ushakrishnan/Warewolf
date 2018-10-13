@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json.Linq;
 using WarewolfParserInterop;
-
+using Dev2.Data.Util;
 
 namespace Warewolf.Storage.Tests
 {
@@ -16,16 +16,16 @@ namespace Warewolf.Storage.Tests
     [TestClass]
     public class ExecutionEnvironmentTest
     {
-        private ExecutionEnvironment _environment;
+        ExecutionEnvironment _environment;
 
-        private const string OutOfBoundExpression = "[[rec(0).a]]";
-        private const string InvalidScalar = "[[rec(0).a]";
-        private const string PersonNameExpression = "[[@Person().Name]]";
-        private const string ChildNameExpression = "[[@Person.Child().Name]]";
-        private const string VariableA = "[[a]]";
+        const string OutOfBoundExpression = "[[rec(0).a]]";
+        const string InvalidScalar = "[[rec(0).a]";
+        const string PersonNameExpression = "[[@Person().Name]]";
+        const string ChildNameExpression = "[[@Person.Child().Name]]";
+        const string VariableA = "[[a]]";
 
 
-        private readonly CommonFunctions.WarewolfEvalResult _warewolfEvalNothingResult =
+        readonly CommonFunctions.WarewolfEvalResult _warewolfEvalNothingResult =
             CommonFunctions.WarewolfEvalResult.NewWarewolfAtomResult(DataStorage.WarewolfAtom.Nothing);
 
         [TestInitialize]
@@ -66,6 +66,55 @@ namespace Warewolf.Storage.Tests
         }
 
         [TestMethod]
+        [Owner("Rory McGuire")]
+        public void GivenRecSet_ExecutionEnvironmentEvalAssignFromNestedLast_TwoColumn_Should()
+        {
+            Assert.IsNotNull(_environment);
+            var evalMultiAssign = EvalMultiAssignTwoColumn();
+            var items = PublicFunctions.EvalEnvExpression("[[rec(*).a]]", 0, false, evalMultiAssign);
+            var warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+            _environment.EvalAssignFromNestedLast("[[rec().a]]", warewolfAtomListresult, 0);
+            items = PublicFunctions.EvalEnvExpression("[[rec(*).b]]", 0, false, evalMultiAssign);
+            warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+            _environment.EvalAssignFromNestedLast("[[rec().b]]", warewolfAtomListresult, 0);
+            items = PublicFunctions.EvalEnvExpression("[[rec(*).c]]", 0, false, evalMultiAssign);
+            warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+            _environment.EvalAssignFromNestedLast("[[rec().c]]", warewolfAtomListresult, 0);
+            evalMultiAssign = EvalMultiAssignTwoColumn();
+            items = PublicFunctions.EvalEnvExpression("[[rec(*).a]]", 0, false, evalMultiAssign);
+            warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+            _environment.EvalAssignFromNestedLast("[[rec().a]]", warewolfAtomListresult, 0);
+            items = PublicFunctions.EvalEnvExpression("[[rec(*).b]]", 0, false, evalMultiAssign);
+            warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+            _environment.EvalAssignFromNestedLast("[[rec().b]]", warewolfAtomListresult, 0);
+            items = PublicFunctions.EvalEnvExpression("[[rec(*).c]]", 0, false, evalMultiAssign);
+            warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
+            _environment.EvalAssignFromNestedLast("[[rec().c]]", warewolfAtomListresult, 0);
+
+            var list_a = _environment.EvalAsListOfStrings("[[rec(*).a]]", 0);
+            var list_b = _environment.EvalAsListOfStrings("[[rec(*).b]]", 0);
+            var list_c = _environment.EvalAsListOfStrings("[[rec(*).c]]", 0);
+            Assert.AreEqual(list_a.Count, 4);
+            Assert.AreEqual(list_b.Count, 4);
+            Assert.AreEqual(list_c.Count, 4);
+
+            Assert.IsTrue(list_a[0].Equals("a11"));
+            Assert.IsTrue(list_a[1].Equals("ayy"));
+            Assert.IsTrue(list_a[2].Equals("a11"));
+            Assert.IsTrue(list_a[3].Equals("ayy"));
+
+            Assert.IsTrue(list_b[0].Equals(""));
+            Assert.IsTrue(list_b[1].Equals("b33"));
+            Assert.IsTrue(list_b[2].Equals(""));
+            Assert.IsTrue(list_b[3].Equals("b33"));
+
+            Assert.IsTrue(list_c[0].Equals("c22"));
+            Assert.IsTrue(list_c[1].Equals("czz"));
+            Assert.IsTrue(list_c[2].Equals("c22"));
+            Assert.IsTrue(list_c[3].Equals("czz"));
+        }
+
+        [TestMethod]
         [Owner("Sanele Mthembu")]
         public void GivenNonExistingRec_ExecutionEnvironmentEvalAssignFromNestedLast_ShouldAddStar()
         {
@@ -75,6 +124,38 @@ namespace Warewolf.Storage.Tests
             var items = PublicFunctions.EvalEnvExpression("[[rec(*).a]]", 0, false, evalMultiAssign);
             var warewolfAtomListresult = items as CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult;
             _environment.EvalAssignFromNestedLast("[[recs().a]]", warewolfAtomListresult, 0);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        public void ExecutionEnvironmentGetLengthOfJson_ShouldThrow()
+        {
+            Assert.IsNotNull(_environment);
+            string msg = null;
+            try
+            {
+                _environment.GetLength("@obj.people");
+            } catch (Exception e)
+            {
+                msg = e.Message;
+            }
+            Assert.AreEqual("not a recordset", msg);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        public void ExecutionEnvironmentGetObjectLengthOfJson_ShouldThrow()
+        {
+            Assert.IsNotNull(_environment);
+            string msg = null;
+            try
+            {
+                _environment.GetObjectLength("@obj.people");
+            } catch (Exception e)
+            {
+                msg = e.Message;
+            }
+            Assert.AreEqual("not a json array", msg);
         }
 
         [TestMethod]
@@ -100,13 +181,28 @@ namespace Warewolf.Storage.Tests
             _environment.SortRecordSet("[[rec().a]]", true, 0);
         }
 
-        private static DataStorage.WarewolfEnvironment EvalMultiAssign()
+        static DataStorage.WarewolfEnvironment EvalMultiAssign()
         {
             var assigns = new List<IAssignValue>
             {
                 new AssignValue("[[rec(1).a]]", "27"),
                 new AssignValue("[[rec(3).a]]", "33"),
                 new AssignValue("[[rec(2).a]]", "25")
+            };
+            var envEmpty = WarewolfTestData.CreateTestEnvEmpty("");
+            var evalMultiAssign = PublicFunctions.EvalMultiAssign(assigns, 0, envEmpty);
+            return evalMultiAssign;
+        }
+        static DataStorage.WarewolfEnvironment EvalMultiAssignTwoColumn()
+        {
+            var assigns = new List<IAssignValue>
+            {
+                new AssignValue("[[rec().a]]", "a11"),
+                new AssignValue("[[rec().b]]", ""),
+                new AssignValue("[[rec().c]]", "c22"),
+                new AssignValue("[[rec().a]]", "ayy"),
+                new AssignValue("[[rec().b]]", "b33"),
+                new AssignValue("[[rec().c]]", "czz")
             };
             var envEmpty = WarewolfTestData.CreateTestEnvEmpty("");
             var evalMultiAssign = PublicFunctions.EvalMultiAssign(assigns, 0, envEmpty);
@@ -375,6 +471,17 @@ namespace Warewolf.Storage.Tests
         }
 
         [TestMethod]
+        [Owner("Hagashen Naidu")]
+        public void ExecutionEnvironmentEvalComplexCalcExpression_ShouldNotReplaceSpaces()
+        {
+            Assert.IsNotNull(_environment);
+            _environment.Assign("[[FirstNames]]", "Bob", 0);
+            var calcExpr = "!~calculation~!FIND(\" \",[[FirstNames]],1)!~~calculation~!";
+            var evalResult = _environment.Eval(calcExpr, 0);
+            Assert.AreEqual("!~calculation~!FIND(\" \",\"Bob\",1)!~~calculation~!", ExecutionEnvironment.WarewolfEvalResultToString(evalResult));
+        }
+
+        [TestMethod]
         [Owner("Sanele Mthembu")]
         public void GivenRecSet_ExecutionEnvironmentGetPositionColumnExpression_ShouldReturn()
         {
@@ -509,11 +616,13 @@ namespace Warewolf.Storage.Tests
 
         [TestMethod]
         [Owner("Sanele Mthembu")]
-        public void ExecutionEnvironmentEvalDelete_Should()
+        public void ExecutionEnvironmentEvalDelete_Should_Clear_RecordSet()
         {
             Assert.IsNotNull(_environment);
             _environment.Assign("[[rec().a]]", "Some Value", 0);
             _environment.EvalDelete("[[rec()]]", 0);
+            var result = _environment.Eval("[[rec().a]]", 0);
+            Assert.IsTrue(WarewolfDataEvaluationCommon.isNothing(result));
         }
 
         [TestMethod]
@@ -822,11 +931,13 @@ namespace Warewolf.Storage.Tests
             Assert.IsTrue(envWithErrors.HasErrors());
             var expected = $"AnotherError{Environment.NewLine}SomeError";
             Assert.AreEqual(expected, envWithErrors.FetchErrors());
+            expected = "{\"Environment\":{\"scalars\":{},\"record_sets\":{},\"json_objects\":{}},\"Errors\":[\"SomeError\"],\"AllErrors\":[\"AnotherError\"]}";
+            Assert.AreEqual(expected, envWithErrors.ToJson());
         }
 
         #region Private Methods
 
-        private ExecutionEnvironment CreateEnvironmentWithErrors()
+        ExecutionEnvironment CreateEnvironmentWithErrors()
         {
             _environment.Errors.Add("SomeError");
             return _environment;

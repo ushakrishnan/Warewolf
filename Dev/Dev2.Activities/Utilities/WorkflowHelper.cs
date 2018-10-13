@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Xaml;
+using System.Xml;
 using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Data.Decision;
@@ -51,7 +52,7 @@ namespace Dev2.Utilities
 
         public StringBuilder GetXamlDefinition(ActivityBuilder builder)
         {
-            StringBuilder text = new StringBuilder();
+            var text = new StringBuilder();
             try
             {
                 if(builder != null)
@@ -131,9 +132,9 @@ namespace Dev2.Utilities
             return builder;
         }
 
-        private static ActivityBuilder GetActivityBuilder(ModelService modelService)
+        public static ActivityBuilder GetActivityBuilder(ModelService modelService)
         {
-            if(modelService?.Root == null)
+            if (modelService?.Root == null)
             {
                 return null;
             }
@@ -151,9 +152,10 @@ namespace Dev2.Utilities
             SetNamespaces(builder);
         }
 
-        public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache = GlobalConstants.Resultscache;
+        public static ConcurrentDictionary<Guid, TextExpressionCompilerResults> Resultscache { get => resultscache; set => resultscache = value; }
+        static ConcurrentDictionary<Guid, TextExpressionCompilerResults> resultscache = GlobalConstants.Resultscache;
 
-        private void SetNamespaces(object target)
+        void SetNamespaces(object target)
         {
             var dev2ActivitiesAssembly = typeof(WorkflowHelper).Assembly;
             var dev2CommonAssembly = typeof(GlobalConstants).Assembly;
@@ -208,11 +210,7 @@ namespace Dev2.Utilities
             }
         }
 
-        public StringBuilder SanitizeXaml(StringBuilder workflowXaml)
-        {
-            // Clearing the following element resolves the issue
-            return RemoveNodeValue(workflowXaml, "<sads:DebugSymbol.Symbol>");
-        }
+        public StringBuilder SanitizeXaml(StringBuilder workflowXaml) => RemoveNodeValue(workflowXaml, "<sads:DebugSymbol.Symbol>");
 
         StringBuilder RemoveNodeValue(StringBuilder xml, string nodeName)
         {
@@ -233,7 +231,7 @@ namespace Dev2.Utilities
             return length > 0 ? xml.Remove(startIdx, length) : xml;
         }
 
-        private void SetVariables(Collection<Variable> variables)
+        void SetVariables(Collection<Variable> variables)
         {
             try
             {
@@ -251,11 +249,81 @@ namespace Dev2.Utilities
                 variables.Add(new Variable<Unlimited.Applications.BusinessDesignStudio.Activities.Util> { Name = "t" });
                 variables.Add(new Variable<Dev2DataListDecisionHandler> { Name = "Dev2DecisionHandler" });
             }
-            catch(Exception)
+            catch (Exception)
             {
                 variables = new Collection<Variable>();
                 variables.Clear();
             }
+        }
+
+
+        public static bool AreWorkflowsEqual(string left, string right)
+        {
+            if (left != "")
+            {
+                var xmlDoc_Left = new XmlDocument();
+                xmlDoc_Left.LoadXml(left);
+                var xmlDoc_Right = new XmlDocument();
+                xmlDoc_Right.LoadXml(right);
+                return CompareWorkflows(xmlDoc_Left, xmlDoc_Right);
+            }
+            return false;
+        }
+        private static bool CompareWorkflows(XmlNode lnode, XmlNode rnode)
+        {
+            if (lnode is null || rnode is null)
+            {
+                return lnode == rnode;
+            }
+            if (lnode.Name.Equals("av:Size"))
+            {
+                return true;
+            }
+
+            bool result = lnode.Name.Equals(rnode.Name);
+            if (!result)
+            {
+                return result;
+            }
+            if (lnode.Name.Equals("#text"))
+            {
+                result = lnode.InnerText.Equals(rnode.InnerText);
+                if (!result)
+                {
+                    return result;
+                }
+            }
+            if (lnode.HasChildNodes)
+            {
+                for (var i = 0; i < lnode.ChildNodes.Count; i++)
+                {
+                    var eq = CompareWorkflows(lnode.ChildNodes[i], rnode.ChildNodes[i]);
+                    if (!eq)
+                    {
+                        return eq;
+                    }
+                }
+            }
+
+            if (!(lnode.Attributes is null))
+            {
+                result = CompareAttributes(lnode, rnode);
+            }
+
+            return result;
+        }
+        private static bool CompareAttributes(XmlNode lnode, XmlNode rnode)
+        {
+            for (int i = 0; i < lnode.Attributes.Count; i++)
+            {
+                var eq = lnode.Attributes[i].Name.Equals(rnode.Attributes[i].Name);
+                eq &= lnode.Attributes[i].Value.Equals(rnode.Attributes[i].Value);
+                if (!eq)
+                {
+                    return eq;
+                }
+            }
+            return true;
         }
     }
 }

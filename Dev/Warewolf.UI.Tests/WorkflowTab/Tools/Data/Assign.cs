@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Windows.Forms;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.Tools.Data.DataToolsUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
@@ -9,7 +10,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
     [CodedUITest]
     public class Assign
     {
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_Small_And_LargeView_Resize_UITest()
         {
@@ -35,7 +36,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
             Assert.IsTrue(DataToolsUIMap.MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.WorkflowDesigner_Custom.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.Height > heightBefore);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_ClickDoneButton_Then_DeleteTool_UITest()
         {
@@ -45,7 +46,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
             DataToolsUIMap.Delete_Assign_With_Context_Menu();
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_ClickTextboxTwice_Then_HelpText_DoesNotChanging_UITest()
         {
@@ -58,14 +59,14 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
             DataToolsUIMap.Delete_Assign_With_Context_Menu();
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_Url_UITest()
         {
             DialogsUIMap.Click_Assign_Tool_url();
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_QuickVariableInput_FromList_UITest()
         {
@@ -77,7 +78,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
             Assert.IsTrue(DataToolsUIMap.MainStudioWindow.TabManSplitPane.TabMan.WorkflowTab.WorkSurfaceContext.WorkflowDesignerView.WorkflowDesigner_Custom.DesignerView.ScrollViewerPane.ActivityTypeDesigner.WorkflowItemPresenter.Flowchart.MultiAssign.QuickVariableInputContent.PrefixEdit.HasFocus);
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_DebugOutput_UITest()
         {
@@ -87,34 +88,44 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
             WorkflowTabUIMap.Click_Debug_Output_Assign_Cell();             
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_AddRemoveVariables_UITest()
         {
             const string Variable1Name = "SomeVariable";
             const string Variable1Value = "50";
-            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign("[[" + Variable1Name + "]]", Variable1Value, 1);
+            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign_Small_View("[[" + Variable1Name + "]]", Variable1Value, 1);
             Assert.AreEqual(Variable1Name, WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem1.ScrollViewerPane.NameTextbox.Text, "Scalar variable not found in variable list after adding to assign tool row 1.");
             const string Variable2Name = "SomeOtherVariable";
             const string Variable2Value = "100";
-            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign("[[" + Variable2Name + "]]", Variable2Value, 2);
+            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign_Small_View("[[" + Variable2Name + "]]", Variable2Value, 2);
             Assert.AreEqual(Variable2Name, WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem2.ScrollViewerPane.NameTextbox.Text, "Scalar variable not found in variable list after adding to assign tool row 2.");
             DataToolsUIMap.Remove_Assign_Row_1_With_Context_Menu();
         }
 
-        [TestMethod]
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
         [TestCategory("Assign Tool")]
         public void AssignTool_AddVariablesInsertRow_UITest()
         {
             const string Variable1Name = "SomeVariable";
             const string Variable1Value = "50";
-            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign("[[" + Variable1Name + "]]", Variable1Value, 1);
+            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign_Small_View("[[" + Variable1Name + "]]", Variable1Value, 1);
             Assert.AreEqual(Variable1Name, WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem1.ScrollViewerPane.NameTextbox.Text, "Scalar variable not found in variable list after adding to assign tool row 1.");
             const string Variable2Name = "SomeOtherVariable";
             const string Variable2Value = "100";
-            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign("[[" + Variable2Name + "]]", Variable2Value, 2);
+            DataToolsUIMap.Enter_Variable_And_Value_Into_Assign_Small_View("[[" + Variable2Name + "]]", Variable2Value, 2);
             Assert.AreEqual(Variable2Name, WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem2.ScrollViewerPane.NameTextbox.Text, "Scalar variable not found in variable list after adding to assign tool row 2.");
             DataToolsUIMap.Insert_Assign_Row_2_With_Context_Menu();
+        }
+
+        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestCategory("Assign Tool")]
+        public void AssignTool_PasteTabValue_ShowTabInsertDialog_UITest()
+        {
+            Clipboard.SetData(DataFormats.Text, "	");
+            DataToolsUIMap.Click_Assign_tool_ValueTextbox();
+            Keyboard.SendKeys("^V");
+            Assert.IsTrue(DialogsUIMap.MessageBoxWindow.Exists, "Tab insert dialog not displayed after pasting a tab.");
         }
 
         #region Additional test attributes

@@ -1,7 +1,7 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -27,17 +27,11 @@ using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
 using Dev2.Runtime.Configuration.ViewModels.Base;
 using Dev2.Studio.Core.Activities.Utils;
-
+using Dev2.Common;
 
 namespace Dev2.Activities.Designers2.Core
 {
-    /// <summary>
-    /// <remarks>
-    /// <strong>DO NOT</strong> bind to properties that use <see cref="GetProperty{T}"/> and <see cref="SetProperty{T}"/>.
-    /// Rather bind to <see cref="ModelItem"/>.PropertyName - this will ensure that the built-in undo/redo framework just works.
-    /// </remarks>
-    /// </summary>
-    public abstract class ActivityDesignerViewModel : DependencyObject, IClosable, IHelpSource, IValidator, IErrorsSource,IDisposable,IUpdatesHelp
+    public abstract class ActivityDesignerViewModel : DependencyObject, IClosable, IHelpSource, IValidator, IErrorsSource, IDisposable, IUpdatesHelp
     {
         readonly ModelItem _modelItem;
         Action _setInitialFocus;
@@ -88,8 +82,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public bool IsClosed
         {
-            get { return (bool)GetValue(IsClosedProperty); }
-            set { SetValue(IsClosedProperty, value); }
+            get => (bool)GetValue(IsClosedProperty);
+            set => SetValue(IsClosedProperty, value);
         }
 
         public static readonly DependencyProperty IsClosedProperty =
@@ -97,8 +91,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public List<IActionableErrorInfo> Errors
         {
-            get { return (List<IActionableErrorInfo>)GetValue(ErrorsProperty); }
-            set { SetValue(ErrorsProperty, value); }
+            get => (List<IActionableErrorInfo>)GetValue(ErrorsProperty);
+            set => SetValue(ErrorsProperty, value);
         }
 
         public static readonly DependencyProperty ErrorsProperty =
@@ -111,7 +105,7 @@ namespace Dev2.Activities.Designers2.Core
             var isValid = errors == null || errors.Count == 0;
             viewModel.IsValid = isValid;
             viewModel.ShowErrors = !isValid;
-            if(viewModel.ShowErrors)
+            if (viewModel.ShowErrors)
             {
                 viewModel.ShowHelp = false;
             }
@@ -119,33 +113,36 @@ namespace Dev2.Activities.Designers2.Core
 
         public bool ShowLarge
         {
-            get
-            {
-                return (bool)GetValue(ShowLargeProperty);
-            }
-            set
-            {
-                SetValue(ShowLargeProperty, value);
-            }
+            get => (bool)GetValue(ShowLargeProperty);
+            set => SetValue(ShowLargeProperty, value);
+        }
+
+        public bool IsMerge
+        {
+            get => (bool)GetValue(IsMergeProperty);
+            set => SetValue(IsMergeProperty, value);
         }
 
         protected void RemoveHelpToggle()
         {
-            ActivityDesignerToggle activityDesignerToggle = TitleBarToggles.FirstOrDefault(c => c.AutomationID == "HelpToggle");
-            if(activityDesignerToggle != null)
+            var activityDesignerToggle = TitleBarToggles.FirstOrDefault(c => c.AutomationID == "HelpToggle");
+            if (activityDesignerToggle != null)
             {
                 TitleBarToggles.Remove(activityDesignerToggle);
                 ShowHelp = false;
             }
         }
 
+        public static readonly DependencyProperty IsMergeProperty =
+            DependencyProperty.Register("IsMerge", typeof(bool), typeof(ActivityDesignerViewModel), new PropertyMetadata(false));
+
         public static readonly DependencyProperty ShowLargeProperty =
             DependencyProperty.Register("ShowLarge", typeof(bool), typeof(ActivityDesignerViewModel), new PropertyMetadata(false, OnTitleBarToggleChanged));
 
         public bool ShowErrors
         {
-            get { return (bool)GetValue(ShowErrorsProperty); }
-            private set { SetValue(ShowErrorsProperty, value); }
+            get => (bool)GetValue(ShowErrorsProperty);
+            private set => SetValue(ShowErrorsProperty, value);
         }
 
         public static readonly DependencyProperty ShowErrorsProperty =
@@ -153,8 +150,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public bool ShowHelp
         {
-            get { return (bool)GetValue(ShowHelpProperty); }
-            set { SetValue(ShowHelpProperty, value); }
+            get => (bool)GetValue(ShowHelpProperty);
+            set => SetValue(ShowHelpProperty, value);
         }
 
         public static readonly DependencyProperty ShowHelpProperty =
@@ -162,7 +159,6 @@ namespace Dev2.Activities.Designers2.Core
 
         static void OnShowHelp(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-
             if (d is ActivityDesignerViewModel vm && (bool)e.NewValue)
             {
                 vm._setInitialFocus?.Invoke();
@@ -171,8 +167,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public string HelpText
         {
-            get { return (string)GetValue(HelpTextProperty); }
-            set { SetValue(HelpTextProperty, value); }
+            get => (string)GetValue(HelpTextProperty);
+            set => SetValue(HelpTextProperty, value);
         }
 
         public static readonly DependencyProperty HelpTextProperty =
@@ -180,8 +176,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public ZIndexPosition ZIndexPosition
         {
-            get { return (ZIndexPosition)GetValue(ZIndexPositionProperty); }
-            set { SetValue(ZIndexPositionProperty, value); }
+            get => (ZIndexPosition)GetValue(ZIndexPositionProperty);
+            set => SetValue(ZIndexPositionProperty, value);
         }
 
         public static readonly DependencyProperty ZIndexPositionProperty =
@@ -189,8 +185,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public Visibility ConnectorVisibility
         {
-            get { return (Visibility)GetValue(ConnectorVisibilityProperty); }
-            set { SetValue(ConnectorVisibilityProperty, value); }
+            get => (Visibility)GetValue(ConnectorVisibilityProperty);
+            set => SetValue(ConnectorVisibilityProperty, value);
         }
 
         public static readonly DependencyProperty ConnectorVisibilityProperty =
@@ -198,8 +194,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public Visibility TitleBarTogglesVisibility
         {
-            get { return (Visibility)GetValue(TitleBarTogglesVisibilityProperty); }
-            set { SetValue(TitleBarTogglesVisibilityProperty, value); }
+            get => (Visibility)GetValue(TitleBarTogglesVisibilityProperty);
+            set => SetValue(TitleBarTogglesVisibilityProperty, value);
         }
 
         public static readonly DependencyProperty TitleBarTogglesVisibilityProperty =
@@ -207,8 +203,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public Visibility ThumbVisibility
         {
-            get { return (Visibility)GetValue(ThumbVisibilityProperty); }
-            set { SetValue(ThumbVisibilityProperty, value); }
+            get => (Visibility)GetValue(ThumbVisibilityProperty);
+            set => SetValue(ThumbVisibilityProperty, value);
         }
 
         public static readonly DependencyProperty ThumbVisibilityProperty =
@@ -216,8 +212,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public bool IsSelected
         {
-            get { return (bool)GetValue(IsSelectedProperty); }
-            set { SetValue(IsSelectedProperty, value); }
+            get => (bool)GetValue(IsSelectedProperty);
+            set => SetValue(IsSelectedProperty, value);
         }
 
         public static readonly DependencyProperty IsSelectedProperty =
@@ -231,8 +227,8 @@ namespace Dev2.Activities.Designers2.Core
 
         public bool IsMouseOver
         {
-            get { return (bool)GetValue(IsMouseOverProperty); }
-            set { SetValue(IsMouseOverProperty, value); }
+            get => (bool)GetValue(IsMouseOverProperty);
+            set => SetValue(IsMouseOverProperty, value);
         }
 
         public static readonly DependencyProperty IsMouseOverProperty =
@@ -260,27 +256,11 @@ namespace Dev2.Activities.Designers2.Core
             ShowLargeChanged = ShowLarge;
         }
 
-        public virtual void Restore()
-        {
-            ShowLarge = PreviousView == ShowLargeProperty.Name && ShowLargeChanged != ShowLarge;
-        }
+        public virtual void Restore() => ShowLarge = PreviousView == ShowLargeProperty.Name && ShowLargeChanged != ShowLarge;
 
         protected virtual void OnModelItemPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (sender is ModelItem item)
-            {
-                switch (e.PropertyName)
-                {
-                    case "IsSelection":
-
-                        break;
-                    case "IsPrimarySelection":
-
-                        break;
-                    default:
-                        break;
-                }
-            }
+            Dev2Logger.Info(sender.GetType() + " " + e.PropertyName + " changed", GlobalConstants.WarewolfInfo);
         }
 
         protected void AddTitleBarLargeToggle()
@@ -303,11 +283,11 @@ namespace Dev2.Activities.Designers2.Core
 
         protected virtual void OnToggleCheckedChanged(string propertyName, bool isChecked)
         {
-            if(this is ServiceDesignerViewModel && propertyName == "ShowLarge")
+            if (this is ServiceDesignerViewModel && propertyName == "ShowLarge")
             {
-                if(isChecked)
+                if (isChecked)
                 {
-                    ActivityDesignerToggle activityDesignerToggle = TitleBarToggles.FirstOrDefault(c => c.AutomationID == "HelpToggle");
+                    var activityDesignerToggle = TitleBarToggles.FirstOrDefault(c => c.AutomationID == "HelpToggle");
                 }
                 else
                 {
@@ -321,7 +301,7 @@ namespace Dev2.Activities.Designers2.Core
             ThumbVisibility = isSelectedOrMouseOver && !showSmall ? Visibility.Visible : Visibility.Collapsed;
             ConnectorVisibility = isSelectedOrMouseOver && showSmall ? Visibility.Visible : Visibility.Collapsed;
 
-            if(!isChecked)
+            if (!isChecked)
             {
                 PreviousView = propertyName;
             }
@@ -330,10 +310,10 @@ namespace Dev2.Activities.Designers2.Core
 
         void ToggleTitleBarVisibility()
         {
-            DesignerView parentContentPane = FindDependencyParent.FindParent<DesignerView>(ModelItem.View);
+            var parentContentPane = FindDependencyParent.FindParent<DesignerView>(ModelItem.View);
             var dataContext = parentContentPane?.DataContext;
             var isSelectedOrMouseOver = IsSelectedOrMouseOver;
-            if (dataContext != null && dataContext.GetType().Name == "ServiceTestViewModel")
+            if (dataContext != null && (dataContext.GetType().Name == "ServiceTestViewModel"))
             {
                 TitleBarTogglesVisibility = Visibility.Collapsed;
             }
@@ -351,10 +331,7 @@ namespace Dev2.Activities.Designers2.Core
         /// <summary>
         /// <remarks><strong>DO NOT</strong> bind to properties that use this - use <see cref="ModelItem"/>.PropertyName instead!</remarks>
         /// </summary>
-        protected T GetProperty<T>([CallerMemberName] string propertyName = null)
-        {
-            return _modelItem.GetProperty<T>(propertyName);
-        }
+        protected T GetProperty<T>([CallerMemberName] string propertyName = null) => _modelItem.GetProperty<T>(propertyName);
 
         /// <summary>
         /// <remarks><strong>DO NOT</strong> bind to properties that use this - use <see cref="ModelItem"/>.PropertyName instead!</remarks>
@@ -387,21 +364,20 @@ namespace Dev2.Activities.Designers2.Core
             Errors = null;
         }
 
-       
         public void Dispose()
         {
             TitleBarToggles.Clear();
 
             _modelItem.PropertyChanged -= OnModelItemPropertyChanged;
-           
+
             OnDispose();
             CEventHelper.RemoveAllEventHandlers(this);
             CEventHelper.RemoveAllEventHandlers(TitleBarToggles);
             CEventHelper.RemoveAllEventHandlers(ModelItem);
-           GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
 
-        protected virtual void OnDispose(){}
+        protected virtual void OnDispose() { }
 
         #region Implementation of IUpdatesHelp
 

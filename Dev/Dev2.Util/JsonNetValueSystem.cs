@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -26,7 +26,7 @@ namespace Dev2.Util
 
             if (value is JArray)
             {
-                int index = ParseInt(member, -1);
+                var index = ParseInt(member, -1);
                 return index >= 0 && index < (value as JArray).Count;
             }
             return false;
@@ -36,12 +36,12 @@ namespace Dev2.Util
         {
             if (value is JObject)
             {
-                JToken memberValue = (value as JObject)[member];
+                var memberValue = (value as JObject)[member];
                 return memberValue;
             }
             if (value is JArray)
             {
-                int index = ParseInt(member, -1);
+                var index = ParseInt(member, -1);
                 return (value as JArray)[index];
             }
             return null;
@@ -53,15 +53,9 @@ namespace Dev2.Util
             return jobject?.Properties().Select(property => property.Name);
         }
 
-        public bool IsObject(object value)
-        {
-            return value is JObject;
-        }
+        public bool IsObject(object value) => value is JObject;
 
-        public bool IsArray(object value)
-        {
-            return value is JArray;
-        }
+        public bool IsArray(object value) => value is JArray;
 
         public bool IsPrimitive(object value)
         {
@@ -73,9 +67,6 @@ namespace Dev2.Util
             return !(value is JObject) && !(value is JArray);
         }
 
-        private int ParseInt(string s, int defaultValue)
-        {
-            return int.TryParse(s, out int result) ? result : defaultValue;
-        }
+        int ParseInt(string s, int defaultValue) => int.TryParse(s, out int result) ? result : defaultValue;
     }
 }
