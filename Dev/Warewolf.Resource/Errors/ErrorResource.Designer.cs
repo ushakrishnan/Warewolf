@@ -1033,6 +1033,15 @@ namespace Warewolf.Resource.Errors {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to failed creating directory &apos;{0}&apos; : {1}.
+        /// </summary>
+        public static string ErrorCreatingDirectory {
+            get {
+                return ResourceManager.GetString("ErrorCreatingDirectory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The following error occurred while executing the cancel callback &apos;{0}&apos;..
         /// </summary>
         public static string ErrorDuringCancelCallback {
@@ -2777,7 +2786,16 @@ namespace Warewolf.Resource.Errors {
                 return ResourceManager.GetString("RabbitSourceHasBeenDeleted", resourceCulture);
             }
         }
-        
+        /// <summary>
+        ///   Looks up a localized string similar to Failure: Source has been deleted..
+        /// </summary>
+        public static string RedisSourceHasBeenRemoved
+        {
+            get
+            {
+                return ResourceManager.GetString("RedisSourceHasBeenRemoved", resourceCulture);
+            }
+        }
         /// <summary>
         ///   Looks up a localized string similar to Please ensure that you have entered an integer or decimal number for End from {0} to {1}..
         /// </summary>

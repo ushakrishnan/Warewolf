@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -262,7 +263,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 return;
             }
-            var isAuthorized = AuthorizationService.IsAuthorized(dataObject.ExecutingUser, AuthorizationContext.Execute, resourceId.ToString());
+
+            var key = (dataObject.ExecutingUser, AuthorizationContext.Execute, resourceId.ToString());
+            var isAuthorized = dataObject.AuthCache.GetOrAdd(key, (requestedKey) => AuthorizationService.IsAuthorized(dataObject.ExecutingUser, AuthorizationContext.Execute, resourceId.ToString()));
             if (!isAuthorized)
             {
                 
@@ -288,7 +291,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public override enFindMissingType GetFindMissingType() => enFindMissingType.DsfActivity;
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var allErrors = new ErrorResultTO();
 
@@ -318,11 +323,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
 
                 dataObject.RunWorkflowAsync = RunWorkflowAsync;
-                var resourceId = dataObject.ResourceID;
-                if (resourceId != Guid.Empty)
-                {
-                    dataObject.ResourceID = resourceId;
-                }
+
                 parentServiceName = dataObject.ParentServiceName;
                 serviceName = dataObject.ServiceName;
                 dataObject.ParentServiceName = serviceName;
@@ -437,7 +438,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return GetDebugInputs(env, parser, update).Select(a => (DebugItem)a).ToList();
 
         }
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         public List<IDebugItem> GetDebugInputs(IExecutionEnvironment env, IDev2LanguageParser parser, int update)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
         {
             var results = new List<IDebugItem>();
             if (Inputs != null && Inputs.Count > 0)

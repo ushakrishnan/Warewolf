@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -69,6 +70,12 @@ using Dev2.Common.Interfaces.Data;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Common.Common;
 using Dev2.Instrumentation;
+using Dev2.Triggers;
+using Dev2.Dialogs;
+using Dev2.Studio.Enums;
+using Warewolf.Data;
+using Dev2.Data;
+using Warewolf.Core;
 
 namespace Dev2.Studio.ViewModels
 {
@@ -92,6 +99,7 @@ namespace Dev2.Studio.ViewModels
         private AuthorizeCommand<string> _newOracleSourceCommand;
         private AuthorizeCommand<string> _newOdbcSourceCommand;
         private AuthorizeCommand<string> _newWebSourceCommand;
+        private AuthorizeCommand<string> _newRedisSourceCommand;
         private AuthorizeCommand<string> _newServerSourceCommand;
         private AuthorizeCommand<string> _newEmailSourceCommand;
         private AuthorizeCommand<string> _newExchangeSourceCommand;
@@ -103,9 +111,13 @@ namespace Dev2.Studio.ViewModels
         private ICommand _mergeCommand;
         private ICommand _exitCommand;
         private AuthorizeCommand _settingsCommand;
+        //TODO: Remove
         private AuthorizeCommand _schedulerCommand;
+        private AuthorizeCommand _queueEventsCommand;
+        private AuthorizeCommand _tasksCommand;
         private ICommand _searchCommand;
         private ICommand _showCommunityPageCommand;
+        private ICommand _addWorkflowCommand;
         readonly IAsyncWorker _asyncWorker;
         readonly IViewFactory _factory;
         readonly IFile _file;
@@ -227,6 +239,7 @@ namespace Dev2.Studio.ViewModels
             NewExchangeSourceCommand.UpdateContext(ActiveServer);
             SettingsCommand.UpdateContext(ActiveServer);
             SchedulerCommand.UpdateContext(ActiveServer);
+            TasksCommand.UpdateContext(ActiveServer);
             DebugCommand.UpdateContext(ActiveServer);
             SaveCommand.UpdateContext(ActiveServer);
         }
@@ -288,9 +301,102 @@ namespace Dev2.Studio.ViewModels
             }
         }
 
+        IResourcePickerDialog _currentResourcePicker;
+
+        public ICommand AddWorkflowCommand
+        {
+            get => _addWorkflowCommand ?? (_addWorkflowCommand = new DelegateCommand(param => OpenResourcePicker(param)));
+        }
+
+        private void OpenResourcePicker(object item)
+        {
+            if (_currentResourcePicker is null)
+            {
+                return;
+            }
+            
+            if (_currentResourcePicker.ShowDialog(ServerRepository.ActiveServer))
+            {
+                var optionView = item as Warewolf.UI.OptionView;
+                var selectedResource = _currentResourcePicker.SelectedResource;
+
+                if (optionView.DataContext is Warewolf.Options.OptionWorkflow optionWorkflow)
+                {
+                    optionWorkflow.Workflow = new WorkflowWithInputs
+                    {
+                        Name = selectedResource.ResourcePath,
+                        Value = selectedResource.ResourceId,
+                        Inputs = GetInputsFromWorkflow(selectedResource.ResourceId)
+                    };
+                }
+            }
+        }
+
+        public List<IServiceInputBase> GetInputsFromWorkflow(Guid resourceId)
+        {
+            var inputs = new List<IServiceInputBase>();
+            var contextualResourceModel = ServerRepository.ActiveServer.ResourceRepository.LoadContextualResourceModel(resourceId);
+            var dataList = new DataListModel();
+            var dataListConversionUtils = new DataListConversionUtils();
+            dataList.Create(contextualResourceModel.DataList, contextualResourceModel.DataList);
+            var inputList = dataListConversionUtils.GetInputs(dataList);
+            inputs = inputList.Select(sca =>
+            {
+                var serviceTestInput = new ServiceInput(sca.DisplayValue, "");
+                return serviceTestInput.As<IServiceInputBase>();
+
+            }).ToList();
+            return inputs;
+        }
+
+        IResourcePickerDialog CreateResourcePickerDialog()
+        {
+            if (_currentResourcePicker == null)
+            {
+                var environmentViewModels = ExplorerViewModel?.Environments;
+                if (environmentViewModels != null)
+                {
+                    var environmentViewModel = environmentViewModels.FirstOrDefault(model => model.ResourceId == _activeServer.EnvironmentID);
+                    var res = new ResourcePickerDialog(enDsfActivityType.All, environmentViewModel);
+                    ResourcePickerDialog.CreateAsync(enDsfActivityType.Workflow, environmentViewModel).ContinueWith(a => _currentResourcePicker = a.Result);
+                    return res;
+                }
+            }
+            return _currentResourcePicker;
+        }
+
+        public IResource GetResource(string resourceId)
+        {
+            try
+            {
+                var explorerItem = ExplorerViewModel.Environments[0].AsList().First(o => o.ResourceId == Guid.Parse(resourceId));
+
+                IResource resource = new Resource
+                {
+                    ResourceID = explorerItem.ResourceId,
+                    ResourceName = explorerItem.ResourceName
+                };
+
+                return resource;
+            }
+            finally
+            {
+                Dev2Logger.Error($"Could not find resource for - { resourceId }", GlobalConstants.WarewolfError);
+            }
+            return null;
+        }
+
         public IAuthorizeCommand SchedulerCommand
         {
             get => _schedulerCommand ?? (_schedulerCommand = new AuthorizeCommand(AuthorizationContext.Administrator, param => _worksurfaceContextManager.AddSchedulerWorkSurface(), param => IsActiveServerConnected()));
+        }
+        public IAuthorizeCommand QueueEventsCommand
+        {
+            get => _queueEventsCommand ?? (_queueEventsCommand = new AuthorizeCommand(AuthorizationContext.Administrator, param => _worksurfaceContextManager.AddQueuesWorkSurface(), param => IsActiveServerConnected()));
+        }
+        public IAuthorizeCommand TasksCommand
+        {
+            get => _tasksCommand ?? (_tasksCommand = new AuthorizeCommand(AuthorizationContext.Administrator, param => _worksurfaceContextManager.AddTriggersWorkSurface(), param => IsActiveServerConnected()));
         }
         public IAuthorizeCommand<string> NewServiceCommand
         {
@@ -323,6 +429,10 @@ namespace Dev2.Studio.ViewModels
         public IAuthorizeCommand<string> NewWebSourceCommand
         {
             get => _newWebSourceCommand ?? (_newWebSourceCommand = new AuthorizeCommand<string>(AuthorizationContext.Contribute, param => NewWebSource(@""), param => IsActiveServerConnected()));
+        }
+        public IAuthorizeCommand<string> NewRedisSourceCommand
+        {
+            get => _newRedisSourceCommand ?? (_newRedisSourceCommand = new AuthorizeCommand<string>(AuthorizationContext.Contribute, param => NewRedisSource(@""), param => IsActiveServerConnected()));
         }
         public IAuthorizeCommand<string> NewServerSourceCommand
         {
@@ -379,31 +489,31 @@ namespace Dev2.Studio.ViewModels
 
         public ShellViewModel(IEventAggregator eventPublisher, IAsyncWorker asyncWorker, IServerRepository serverRepository,
             IVersionChecker versionChecker, IViewFactory factory)
-            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, true, null, null, null)
+            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, true, null, null, null, null)
         {
         }
 
         public ShellViewModel(IEventAggregator eventPublisher, IAsyncWorker asyncWorker, IServerRepository serverRepository,
             IVersionChecker versionChecker, IViewFactory factory, bool createDesigners)
-            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, createDesigners, null, null, null)
+            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, createDesigners, null, null, null, null)
         {
         }
 
         public ShellViewModel(IEventAggregator eventPublisher, IAsyncWorker asyncWorker, IServerRepository serverRepository,
             IVersionChecker versionChecker, IViewFactory factory, bool createDesigners, IBrowserPopupController browserPopupController)
-            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, createDesigners, browserPopupController, null, null)
+            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, createDesigners, browserPopupController, null, null, null)
         {
         }
 
         public ShellViewModel(IEventAggregator eventPublisher, IAsyncWorker asyncWorker, IServerRepository serverRepository,
             IVersionChecker versionChecker, IViewFactory factory, bool createDesigners, IBrowserPopupController browserPopupController, IPopupController popupController)
-            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, createDesigners, browserPopupController, popupController, null)
+            : this(eventPublisher, asyncWorker, serverRepository, versionChecker, factory, createDesigners, browserPopupController, popupController, null, null)
         {
         }
 
         public ShellViewModel(IEventAggregator eventPublisher, IAsyncWorker asyncWorker, IServerRepository serverRepository,
             IVersionChecker versionChecker, IViewFactory factory, bool createDesigners, IBrowserPopupController browserPopupController,
-            IPopupController popupController, IExplorerViewModel explorer)
+            IPopupController popupController, IExplorerViewModel explorer, IResourcePickerDialog currentResourcePicker)
             : base(eventPublisher)
         {
             _file = new FileWrapper();
@@ -431,6 +541,11 @@ namespace Dev2.Studio.ViewModels
             DisplayName = @"Warewolf" + $" ({ClaimsPrincipal.Current.Identity.Name})".ToUpperInvariant();
             _applicationTracker = CustomContainer.Get<IApplicationTracker>();
 
+            _currentResourcePicker = currentResourcePicker;
+            if (_currentResourcePicker == null)
+            {
+                _currentResourcePicker = CreateResourcePickerDialog();
+            }
         }
 
         public void Handle(ShowReverseDependencyVisualizer message)
@@ -576,6 +691,11 @@ namespace Dev2.Studio.ViewModels
         public void NewSchedule(Guid resourceId)
         {
             CreateNewSchedule(resourceId);
+        }
+
+        public void NewQueueEvent(Guid resourceId)
+        {
+            CreateNewQueueEvent(resourceId);
         }
 
         public void BrowserDebug(Guid resourceId, IServer server)
@@ -740,8 +860,12 @@ namespace Dev2.Studio.ViewModels
                         _worksurfaceContextManager.DisplayResourceWizard(ProcessEmailSource(_contextualResourceModel, workSurfaceKey));
                         break;
                     case "WebSource":
-                        workSurfaceKey.WorkSurfaceContext = WorkSurfaceContext.EmailSource;
+                        workSurfaceKey.WorkSurfaceContext = WorkSurfaceContext.WebSource;
                         _worksurfaceContextManager.DisplayResourceWizard(ProcessWebSource(_contextualResourceModel, workSurfaceKey));
+                        break;
+                    case "RedisSource":
+                        workSurfaceKey.WorkSurfaceContext = WorkSurfaceContext.RedisSource;
+                        _worksurfaceContextManager.DisplayResourceWizard(ProcessRedisSource(_contextualResourceModel, workSurfaceKey));
                         break;
                     case "ComPluginSource":
                         workSurfaceKey.WorkSurfaceContext = WorkSurfaceContext.ComPluginSource;
@@ -915,6 +1039,19 @@ namespace Dev2.Studio.ViewModels
             return workSurfaceContextViewModel;
         }
 
+        WorkSurfaceContextViewModel ProcessRedisSource(IContextualResourceModel contextualResourceModel, WorkSurfaceKey workSurfaceKey)
+        {
+            var def = new RedisSourceDefinition { Id = contextualResourceModel.ID, Path = contextualResourceModel.GetSavePath() };
+
+            var viewModel = new RedisSourceViewModel(
+                new RedisSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveServer.DisplayName),
+                new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), def, AsyncWorker, new ExternalProcessExecutor());
+            var vm = new SourceViewModel<IRedisServiceSource>(EventPublisher, viewModel, PopupProvider, new RedisSourceControl(), ActiveServer);
+
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(workSurfaceKey, vm);
+            return workSurfaceContextViewModel;
+        }
+
         ManageMySqlSourceViewModel ProcessMySQLDBSource(IDbSource def) => new ManageMySqlSourceViewModel(
                 new ManageDatabaseSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveServer.DisplayName),
                 new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), def, AsyncWorker);
@@ -985,7 +1122,7 @@ namespace Dev2.Studio.ViewModels
         {
             var environmentModel = ServerRepository.Get(environmentId);
             var contextualResourceModel = environmentModel?.ResourceRepository?.LoadContextualResourceModel(resourceId);
-            var workflowUri = WebServer.GetWorkflowUri(contextualResourceModel, "", UrlType.Json, false);
+            var workflowUri = contextualResourceModel.GetWorkflowUri("", UrlType.Json, false);
             if (workflowUri != null)
             {
                 Clipboard.SetText(workflowUri.ToString());
@@ -1001,7 +1138,7 @@ namespace Dev2.Studio.ViewModels
         {
             var environmentModel = ServerRepository.Get(environmentId);
             var contextualResourceModel = environmentModel?.ResourceRepository?.LoadContextualResourceModel(resourceId);
-            var workflowUri = WebServer.GetWorkflowUri(contextualResourceModel, "", UrlType.API);
+            var workflowUri = contextualResourceModel.GetWorkflowUri("", UrlType.API);
             if (workflowUri != null)
             {
                 BrowserPopupController.ShowPopup(workflowUri.ToString());
@@ -1028,6 +1165,13 @@ namespace Dev2.Studio.ViewModels
             var environmentModel = ServerRepository.Get(ActiveServer.EnvironmentID);
             var contextualResourceModel = environmentModel?.ResourceRepository?.LoadContextualResourceModel(resourceId);
             _worksurfaceContextManager.TryCreateNewScheduleWorkSurface(contextualResourceModel);
+        }
+
+        public void CreateNewQueueEvent(Guid resourceId)
+        {
+            var environmentModel = ServerRepository.Get(ActiveServer.EnvironmentID);
+            var contextualResourceModel = environmentModel?.ResourceRepository?.LoadContextualResourceModel(resourceId);
+            _worksurfaceContextManager.TryCreateNewQueueEventWorkSurface(contextualResourceModel);
         }
 
         public void CreateTest(Guid resourceId)
@@ -1074,7 +1218,12 @@ namespace Dev2.Studio.ViewModels
             }
         }
 
+
         public void RunAllTests(string ResourcePath, Guid resourceId)
+        {
+            RunAllTests(ResourcePath, resourceId, new ExternalProcessExecutor());
+        }
+        public void RunAllTests(string ResourcePath, Guid resourceId, IExternalProcessExecutor ProcessExecutor)
         {
             var environmentModel = ServerRepository.Get(ActiveServer.EnvironmentID);
             var contextualResourceModel = environmentModel?.ResourceRepository?.LoadContextualResourceModel(resourceId);
@@ -1088,7 +1237,7 @@ namespace Dev2.Studio.ViewModels
                 var resourcePath = environmentModel?.Connection.WebServerUri + "secure/" + ResourcePath;
                 if (resourcePath != null)
                 {
-                    _worksurfaceContextManager.RunAllTestsForFolder(resourcePath);
+                    _worksurfaceContextManager.RunAllTestsForFolder(resourcePath, ProcessExecutor);
                 }
             }
         }
@@ -1289,6 +1438,8 @@ namespace Dev2.Studio.ViewModels
         public void NewOdbcSource(string resourcePath) => _worksurfaceContextManager.NewOdbcSource(resourcePath);
 
         public void NewWebSource(string resourcePath) => _worksurfaceContextManager.NewWebSource(resourcePath);
+
+        public void NewRedisSource(string resourcePath) => _worksurfaceContextManager.NewRedisSource(resourcePath);
 
         public void NewPluginSource(string resourcePath) => _worksurfaceContextManager.NewPluginSource(resourcePath);
 
@@ -1815,9 +1966,9 @@ namespace Dev2.Studio.ViewModels
                         break;
                     }
                 }
-                else if (vm.WorkSurfaceContext == WorkSurfaceContext.Scheduler)
+                else if (vm.WorkSurfaceContext == WorkSurfaceContext.Triggers)
                 {
-                    if (vm is Settings.Scheduler.SchedulerViewModel schedulerViewModel && schedulerViewModel?.SelectedTask != null && schedulerViewModel.SelectedTask.IsDirty)
+                    if (vm is TriggersViewModel tasksViewModel && tasksViewModel.IsDirty)
                     {
                         closeStudio = CallSaveDialog(closeStudio);
                         break;

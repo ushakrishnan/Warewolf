@@ -1,3 +1,13 @@
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +32,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         Mock<ICommand> _deployCommandMock;
         AuthorizeCommand _saveCommand;
         AuthorizeCommand _openSchedulerCommand;
+        AuthorizeCommand _openTasksCommand;
         AuthorizeCommand _openSearchCommand;
         AuthorizeCommand _openSettingsCommand;
         AuthorizeCommand _executeServiceCommand;
@@ -43,6 +54,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _saveCommand = new AuthorizeCommand(new AuthorizationContext(), obj => { }, obj => true);
             _openSearchCommand = new AuthorizeCommand(new AuthorizationContext(), obj => { }, obj => true);
             _openSchedulerCommand = new AuthorizeCommand(new AuthorizationContext(), obj => { }, obj => true);
+            _openTasksCommand = new AuthorizeCommand(new AuthorizationContext(), obj => { }, obj => true);
             _openSettingsCommand = new AuthorizeCommand(new AuthorizationContext(), obj => { }, obj => true);
             _executeServiceCommand = new AuthorizeCommand(new AuthorizationContext(), obj => { }, obj => true);
             _startPageCommandMock = new Mock<ICommand>();
@@ -53,6 +65,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             _mainViewModelMock.SetupGet(it => it.SaveCommand).Returns(_saveCommand);
             _mainViewModelMock.SetupGet(it => it.SearchCommand).Returns(_openSearchCommand);
             _mainViewModelMock.SetupGet(it => it.SchedulerCommand).Returns(_openSchedulerCommand);
+            _mainViewModelMock.SetupGet(it => it.TasksCommand).Returns(_openTasksCommand);
             _mainViewModelMock.SetupGet(it => it.SettingsCommand).Returns(_openSettingsCommand);
             _mainViewModelMock.SetupGet(it => it.DebugCommand).Returns(_executeServiceCommand);
             _mainViewModelMock.SetupGet(it => it.ShowStartPageCommand).Returns(_startPageCommandMock.Object);
@@ -125,6 +138,12 @@ namespace Warewolf.Studio.ViewModels.Tests
         public void TestOpenSchedulerCommand()
         {
             Assert.AreSame(_openSchedulerCommand, _target.OpenSchedulerCommand);
+        }
+
+        [TestMethod, Timeout(60000)]
+        public void TestOpenTasksCommand()
+        {
+            Assert.AreSame(_openTasksCommand, _target.OpenTasksCommand);
         }
 
         [TestMethod,Timeout(60000)]
@@ -310,7 +329,26 @@ namespace Warewolf.Studio.ViewModels.Tests
             //assert
             VerifyUpdateProperties();
             _mainViewModelMock.VerifySet(it=>it.MenuExpanded = true);
-            Assert.AreEqual(35, _target.ButtonWidth);
+            Assert.AreEqual(125, _target.ButtonWidth);
+            Assert.IsTrue(_target.IsPanelOpen);
+        }
+
+        [TestMethod, Timeout(60000)]
+        public void TestSlideClosedCommandIsPopoutViewOpenTrue()
+        {
+            //arrange
+            Assert.IsFalse(_target.IsPopoutViewOpen);
+            _target.IsPopoutViewOpen = true;
+            _mainViewModelMock.SetupGet(it => it.MenuPanelWidth).Returns(81);
+            _target.IsNotOverLockCommand.Execute(null);
+            _changedProperties.Clear();
+
+            //act
+            _target.SlideClosedCommand.Execute(null);
+            Assert.IsTrue(_target.SlideClosedCommand.CanExecute(null));
+
+            //assert
+            Assert.AreEqual(125, _target.ButtonWidth);
             Assert.IsTrue(_target.IsPanelOpen);
         }
 
@@ -359,7 +397,7 @@ namespace Warewolf.Studio.ViewModels.Tests
         [TestMethod,Timeout(60000)]
         public void TestDebugIcon_Default()
         {
-            Assert.AreEqual(FontAwesome.WPF.FontAwesomeIcon.Play, _target.DebugIcon);
+            Assert.AreEqual(FontAwesome.WPF.FontAwesomeIcon.Bug, _target.DebugIcon);
         }
 
         [TestMethod,Timeout(60000)]
@@ -571,6 +609,60 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(string.IsNullOrEmpty(value));
         }
 
+        [TestMethod, Timeout(60000)]
+        public void TestSchedulerLabelNotNullOrEmpty()
+        {
+            //arrange
+            _target.ButtonWidth = 125;
+
+            //act
+            var value = _target.SchedulerLabel;
+
+            //assert
+            Assert.IsFalse(string.IsNullOrEmpty(value));
+        }
+
+        [TestMethod, Timeout(60000)]
+        public void TestSchedulerLabelNullOrEmpty()
+        {
+            //arrange
+            _target.ButtonWidth = 1;
+
+            //act
+            var value = _target.SchedulerLabel;
+
+            //assert
+            Assert.IsTrue(string.IsNullOrEmpty(value));
+        }
+
+
+
+        [TestMethod, Timeout(60000)]
+        public void TestQueueEventsLabelNotNullOrEmpty()
+        {
+            //arrange
+            _target.ButtonWidth = 125;
+
+            //act
+            var value = _target.QueueEventsLabel;
+
+            //assert
+            Assert.IsFalse(string.IsNullOrEmpty(value));
+        }
+
+        [TestMethod, Timeout(60000)]
+        public void TestQueueEventsLabelNullOrEmpty()
+        {
+            //arrange
+            _target.ButtonWidth = 1;
+
+            //act
+            var value = _target.QueueEventsLabel;
+
+            //assert
+            Assert.IsTrue(string.IsNullOrEmpty(value));
+        }
+
         [TestMethod,Timeout(60000)]
         public void TestSettingsLabelNotNullOrEmpty()
         {
@@ -664,7 +756,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             //assert
             Assert.IsFalse(value);
             Assert.IsTrue(_changedProperties.Contains("DebugLabel"));
-            Assert.AreEqual(FontAwesome.WPF.FontAwesomeIcon.Play, _target.DebugIcon);
+            Assert.AreEqual(FontAwesome.WPF.FontAwesomeIcon.Bug, _target.DebugIcon);
         }
 
         [TestMethod,Timeout(60000)]

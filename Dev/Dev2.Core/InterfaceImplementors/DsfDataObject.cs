@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +21,9 @@ using System.Xml.Linq;
 
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
+using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
 using Dev2.Data.Interfaces.Enums;
-using Dev2.Diagnostics.Logging;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
 using Dev2.Web;
@@ -66,6 +66,7 @@ namespace Dev2.DynamicServices
             Environment = new ExecutionEnvironment();
             _environments = new ConcurrentStack<IExecutionEnvironment>();
             ThreadsToDispose = new Dictionary<int, List<Guid>>();
+            AuthCache = new ConcurrentDictionary<(IPrincipal, AuthorizationContext, string), bool>();
 
             if (xmldata != null)
             {
@@ -102,7 +103,7 @@ namespace Dev2.DynamicServices
 
         void ExtractXmlValues(XElement xe)
         {
-            bool isDebug;           
+            bool isDebug;
             var debugString = ExtractValue(xe, "IsDebug");
             if (!string.IsNullOrEmpty(debugString))
             {
@@ -114,6 +115,10 @@ namespace Dev2.DynamicServices
                 bool.TryParse(debugString, out isDebug);
             }
             IsDebug = isDebug;
+
+            Int32.TryParse(ExtractValue(xe, "VersionNumber"), out int versionNumber);
+            VersionNumber = versionNumber;
+
 
             Guid.TryParse(ExtractValue(xe, "DebugSessionID"), out Guid debugSessionId);
             DebugSessionID = debugSessionId;
@@ -146,7 +151,7 @@ namespace Dev2.DynamicServices
                 BookmarkExecutionCallbackID = ExecutionCallbackID;
             }
 
-            Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out Guid parentInstanceId);
+            Guid.TryParse(ExtractValue(xe, "BookmarkExecutionCallbackID"), out var _);
 
             ParentInstanceID = ExtractValue(xe, "ParentInstanceID");
 
@@ -193,6 +198,7 @@ namespace Dev2.DynamicServices
         public string ParentWorkflowXmlData { get; set; }
         public Guid DebugSessionID { get; set; }
         public Guid ParentID { get; set; }
+        public int VersionNumber { get; set; }
         public bool RunWorkflowAsync { get; set; }
         public bool IsDebugNested { get; set; }
         public List<Guid> TestsResourceIds { get; set; }
@@ -315,9 +321,15 @@ namespace Dev2.DynamicServices
         public IServiceTestModelTO ServiceTest { get; set; }
 
         public Guid? ExecutionID { get; set; }
+        public string CustomTransactionID { get; set; } = "";
         public string WebUrl { get; set; }
         public IStateNotifier StateNotifier { get; set; }
         public IDev2WorkflowSettings Settings { get; set; }
+        public ConcurrentDictionary<(IPrincipal, AuthorizationContext, string), bool> AuthCache { get; set; }
+        public Exception ExecutionException { get; set; }
+        //public IList<IDev2Activity> Gates { get; } = new List<IDev2Activity>();
+        public IDictionary<IDev2Activity, (RetryState, IEnumerator<bool>)> Gates { get; } = new Dictionary<IDev2Activity, (RetryState, IEnumerator<bool>)>();
+
 
         #endregion Properties
 
@@ -376,6 +388,7 @@ namespace Dev2.DynamicServices
             result.WorkspaceID = WorkspaceID;
             result.ThreadsToDispose = ThreadsToDispose;
             result.ParentID = ParentID;
+            result.VersionNumber = VersionNumber;
             result.RunWorkflowAsync = RunWorkflowAsync;
             result.IsDebugNested = IsDebugNested;
             result.ForEachNestingLevel = ForEachNestingLevel;
@@ -388,11 +401,15 @@ namespace Dev2.DynamicServices
             result.IsServiceTestExecution = IsServiceTestExecution;
             result.IsDebugFromWeb = IsDebugFromWeb;
             result.ExecutionID = ExecutionID;
+            result.CustomTransactionID = CustomTransactionID;
             result.WebUrl = WebUrl;
             result.IsSubExecution = IsSubExecution;
             result.QueryString = QueryString;
             result.ExecutingUser = ExecutingUser;
             result.StateNotifier = StateNotifier;
+            result.AuthCache = new ConcurrentDictionary<(IPrincipal, AuthorizationContext, string), bool>(AuthCache);
+            result.ExecutionException = ExecutionException;
+
             if (ServiceTest != null)
             {
                 var serializer = new Dev2JsonSerializer();
@@ -408,7 +425,8 @@ namespace Dev2.DynamicServices
             return result;
         }
 
-        public bool IsDebugMode() => (IsDebug || WorkflowLoggger.ShouldLog(ResourceID) || RemoteInvoke) && !RunWorkflowAsync;
+        // TODO: move WorkflowLogger.ShouldLog configuration to Config.ServerSettings? This does not seem to be used
+        public bool IsDebugMode() => (IsDebug || RemoteInvoke) && !RunWorkflowAsync;
 
         #endregion
 

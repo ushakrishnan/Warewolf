@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,15 +19,9 @@ namespace Dev2.Diagnostics
 {
     public class DebugOutputFilterStrategy : IDebugOutputFilterStrategy
     {
-        #region Class Members
-
         readonly DateTimeToStringConverter _dateTimeToStringConverter;
         readonly TimeSpanToStringConverter _timeSpanToStringConverter;
         readonly EnumToStringConverter _enumToStringConverter;
-
-        #endregion Class Members
-
-        #region Constructor
 
         public DebugOutputFilterStrategy()
         {
@@ -53,15 +48,7 @@ namespace Dev2.Diagnostics
             }
         }
 
-        #endregion Constructor
 
-        #region Methods
-
-        /// <summary>
-        /// Filters the specified content.
-        /// </summary>
-        /// <param name="content">The content.</param>
-        /// <param name="filterText"></param>
         public bool Filter(object content, string filterText)
         {
             if(filterText == null)
@@ -148,7 +135,5 @@ namespace Dev2.Diagnostics
 
             return false;
         }
-
-        #endregion Methods
     }
 }

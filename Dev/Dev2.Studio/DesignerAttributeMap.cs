@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -104,6 +104,15 @@ using Dev2.Activities.DateAndTime;
 using Dev2.Activities.Designers2.ExchangeNewEmail;
 using Dev2.Activities.Designers2.ReadFolderNew;
 using Dev2.Activities.Designers2.AdvancedRecordset;
+using Dev2.Activities.Designers2.DeleteRecords;
+using Dev2.Activities.RedisCache;
+using Dev2.Activities.Designers2.RedisCache;
+using Dev2.Activities.RedisRemove;
+using Dev2.Activities.Designers2.RedisRemove;
+using Dev2.Activities.Designers2.RedisCounter;
+using Dev2.Activities.RedisCounter;
+using Dev2.Activities.Designers2.Gate;
+using Dev2.Activities.Designers2.RabbitMQ.Publish2;
 
 namespace Dev2
 {
@@ -126,7 +135,7 @@ namespace Dev2
                 { typeof(DsfCountRecordsetActivity), typeof(CountRecordsDesignerViewModel) },
                 { typeof(DsfRecordsetLengthActivity), typeof(RecordsLengthDesignerViewModel) },
                 { typeof(DsfRecordsetNullhandlerLengthActivity), typeof(RecordsLengthDesignerViewModel) },
-                { typeof(DsfDeleteRecordNullHandlerActivity), typeof(DeleteRecordsDesignerViewModel) },
+                { typeof(DsfDeleteRecordNullHandlerActivity), typeof(DeleteRecordsNullHandlerDesignerViewModel) },
                 { typeof(DsfDeleteRecordActivity), typeof(DeleteRecordsDesignerViewModel) },
                 { typeof(DsfUniqueActivity), typeof(UniqueRecordsDesignerViewModel) },
                 { typeof(DsfCalculateActivity), typeof(CalculateDesignerViewModel) },
@@ -197,12 +206,17 @@ namespace Dev2
                 { typeof(SharepointDeleteFileActivity), typeof(SharePointDeleteFileDesignerViewModel) },
                 { typeof(SharepointMoveFileActivity), typeof(SharePointMoveFileDesignerViewModel) },
                 { typeof(DsfWcfEndPointActivity),typeof(WcfEndPointViewModel)},
+                { typeof(PublishRabbitMQActivity), typeof(RabbitMQPublishDesignerViewModel2) },
                 { typeof(DsfPublishRabbitMQActivity), typeof(RabbitMQPublishDesignerViewModel) },
                 { typeof(DsfSelectAndApplyActivity), typeof(SelectAndApplyDesignerViewModel) },
                 { typeof(DsfConsumeRabbitMQActivity), typeof(RabbitMQConsumeDesignerViewModel) },
                 { typeof(DsfDecision), typeof(DecisionDesignerViewModel) },
                 { typeof(DsfSwitch), typeof(SwitchDesignerViewModel) },
                 { typeof(AdvancedRecordsetActivity), typeof(AdvancedRecordsetDesignerViewModel) },
+                { typeof(RedisCacheActivity), typeof(RedisCacheDesigner) },
+                { typeof(RedisRemoveActivity), typeof(RedisRemoveDesigner) },
+                { typeof(RedisCounterActivity), typeof(RedisCounterDesigner) },
+                { typeof(GateActivity), typeof(GateDesignerViewModel) }
             };
     }
 }

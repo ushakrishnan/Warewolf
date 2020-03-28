@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,8 +18,7 @@ using Dev2.Utils;
 using System.Xml.Linq;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Data;
-using Dev2.Common;
-using System.IO;
+using Dev2.Common.Interfaces.Studio.Controller;
 
 namespace Dev2.Studio.Core.Factories
 {
@@ -59,12 +59,14 @@ namespace Dev2.Studio.Core.Factories
             }
             catch (SystemException exception)
             {
-                HelperUtils.ShowTrustRelationshipError(exception);
+                HelperUtils.ShowTrustRelationshipError(CustomContainer.Get<IPopupController>(), exception);
             }
             return null;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         static IContextualResourceModel SetResourceProperties(string resourceType, string resourceName, string displayName, IContextualResourceModel resource)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             switch (resourceType)
             {

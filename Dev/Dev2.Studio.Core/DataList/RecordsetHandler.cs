@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -66,10 +67,6 @@ namespace Dev2.Studio.Core.DataList
                     var recsetName = child.DisplayName.Substring(0, indexOfDot + 1);
                     child.DisplayName = child.DisplayName.Replace(recsetName, child.Parent.DisplayName + ".");
                 }
-                else
-                {
-                    child.DisplayName = string.Concat(child.Parent.DisplayName, ".", child.DisplayName);
-                }
                 FixCommonNamingProblems(child);
             }
         }
@@ -99,26 +96,15 @@ namespace Dev2.Studio.Core.DataList
             }
         }
 
-        public void ValidateRecordsetChildren(IRecordSetItemModel recset)
-        {
-            CheckForEmptyRecordset();
-            if (recset != null)
-            {
-                CheckDataListItemsForDuplicates(recset.Children);
-            }
-            CheckForFixedEmptyRecordsets();
-        }
-
         public void ValidateRecordset()
         {
-            CheckForEmptyRecordset();
-            CheckDataListItemsForDuplicates(_vm.DataList);
-            CheckForFixedEmptyRecordsets();
+            MarkEmptyRecordsetErrors();
+            ClearEmptyRecordsetErrors();
         }
 
         bool RecordSetHasChildren(IRecordSetItemModel model) => model.Children != null && model.Children.Count > 0;
 
-        void CheckForEmptyRecordset()
+        void MarkEmptyRecordsetErrors()
         {
             foreach (var recordset in _vm.RecsetCollection.Where(c => c.Children.Count == 0 || c.Children.Count == 1 && string.IsNullOrEmpty(c.Children[0].DisplayName) && !string.IsNullOrEmpty(c.DisplayName)))
             {
@@ -126,7 +112,7 @@ namespace Dev2.Studio.Core.DataList
             }
         }
 
-        void CheckForFixedEmptyRecordsets()
+        void ClearEmptyRecordsetErrors()
         {
             foreach (var recset in _vm.RecsetCollection.Where(c => c.ErrorMessage == StringResources.ErrorMessageEmptyRecordSet && c.Children.Count >= 1 && !string.IsNullOrEmpty(c.Children[0].DisplayName)))
             {
@@ -159,27 +145,7 @@ namespace Dev2.Studio.Core.DataList
                 {
                     newChild.Parent = recset;
                     recset.Children.Add(newChild);
-                }
-            }
-        }
-        void CheckDataListItemsForDuplicates(IEnumerable<IDataListItemModel> itemsToCheck)
-        {
-            var duplicates = itemsToCheck.ToLookup(x => x.DisplayName).ToList();
-            foreach (var duplicate in duplicates)
-            {
-                if (duplicate.Count() > 1 && !String.IsNullOrEmpty(duplicate.Key))
-                {
-                    duplicate.ForEach(model => model.SetError(StringResources.ErrorMessageDuplicateValue));
-                }
-                else
-                {
-                    duplicate.ForEach(model =>
-                    {
-                        if (model.ErrorMessage != null && model.ErrorMessage.Contains(StringResources.ErrorMessageDuplicateValue))
-                        {
-                            model.RemoveError();
-                        }
-                    });
+                    newChild.OnDeleted += (item) => _vm.RemoveDataListItem(item);
                 }
             }
         }
@@ -196,18 +162,21 @@ namespace Dev2.Studio.Core.DataList
         public void AddRecordSet()
         {
             var recset = DataListItemModelFactory.CreateRecordSetItemModel(string.Empty);
-            var childItem = DataListItemModelFactory.CreateRecordSetFieldItemModel(string.Empty);
             if (recset != null)
             {
                 recset.IsComplexObject = false;
                 recset.AllowNotes = false;
                 recset.IsExpanded = false;
+                recset.OnDeleted += (item) => _vm.RemoveDataListItem(item);
+
+                var childItem = DataListItemModelFactory.CreateRecordSetFieldItemModel(string.Empty);
                 if (childItem != null)
                 {
                     childItem.IsComplexObject = false;
                     childItem.AllowNotes = false;
                     childItem.Parent = recset;
                     recset.Children.Add(childItem);
+                    childItem.OnDeleted += (item) => _vm.RemoveDataListItem(item);
                 }
                 _vm.Add(recset);
             }
@@ -221,6 +190,7 @@ namespace Dev2.Studio.Core.DataList
                 var recordSetItemModel = newRecsetCollection[i];
                 IList<IRecordSetFieldItemModel> recSetChildrenSorted = ascending ? recordSetItemModel.Children.Where(model => !model.IsBlank).OrderBy(c => c.DisplayName).ToList() : recordSetItemModel.Children.Where(model => !model.IsBlank).OrderByDescending(c => c.DisplayName).ToList();
                 recordSetItemModel.Children = new ObservableCollection<IRecordSetFieldItemModel>(recSetChildrenSorted);
+                recordSetItemModel.Children.CollectionChanged += (item, ev) => { };
                 _vm.RecsetCollection.Move(_vm.RecsetCollection.IndexOf(recordSetItemModel), i);
             }
         }
@@ -244,6 +214,7 @@ namespace Dev2.Studio.Core.DataList
                 if (recset != null)
                 {
                     recset.IsEditable = Common.ParseIsEditable(xmlNode.Attributes[Common.IsEditable]);
+                    recset.OnDeleted += (item) => _vm.RemoveDataListItem(item);
                     _vm.Add(recset);
                 }
             }
@@ -253,6 +224,7 @@ namespace Dev2.Studio.Core.DataList
                 if (recset != null)
                 {
                     recset.IsEditable = Common.ParseIsEditable(null);
+                    recset.OnDeleted += (item) => _vm.RemoveDataListItem(item);
 
                     _vm.Add(recset);
                 }
@@ -346,6 +318,7 @@ namespace Dev2.Studio.Core.DataList
             if (child != null)
             {
                 child.DisplayName = part.Recordset + "()." + part.Field;
+                child.OnDeleted += (item) => _vm.RemoveDataListItem(item);
                 tmpRecset.Children.Add(child);
             }
         }
@@ -355,6 +328,7 @@ namespace Dev2.Studio.Core.DataList
             if (recsetToAddTo.Children.FirstOrDefault(c => c.DisplayName == part.Field) == null)
             {
                 var child = DataListItemModelFactory.CreateRecordSetFieldItemModel(part.Field, part.Description, recsetToAddTo);
+                child.OnDeleted += (item) => _vm.RemoveDataListItem(item);
                 child.IsVisible = _vm.IsItemVisible(child.Name);
                 if (recsetToAddTo.Children.Count > 0)
                 {

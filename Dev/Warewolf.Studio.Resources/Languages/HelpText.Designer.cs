@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class HelpText {
@@ -207,7 +207,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select the type of conversion you would like to make..
+        ///   Looks up a localized string similar to Select the type of conversion you would like to make. &lt;br /&gt;&lt;br /&gt; NOTE: Title Case does not alter capitalised words such as BLT or CEO..
         /// </summary>
         public static string CaseConversionHelpConvertToCaseType {
             get {
@@ -904,6 +904,24 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The name of the queue you want to post the dead-letter onto.
+        /// </summary>
+        public static string DeadLetterQueueHelp {
+            get {
+                return ResourceManager.GetString("DeadLetterQueueHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the source message dead-letter Queue.
+        /// </summary>
+        public static string DeadLetterQueueSourceHelp {
+            get {
+                return ResourceManager.GetString("DeadLetterQueueSourceHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create a test for the current workflow.
         /// </summary>
         public static string DebugOutputViewAddNewTestHelp {
@@ -1368,6 +1386,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ExchangeUserNameAuthenticationHelp {
             get {
                 return ResourceManager.GetString("ExchangeUserNameAuthenticationHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to If the gate conditions fail and &quot;Continue&quot; has been selected, then select an existing gate to roll back to..
+        /// </summary>
+        public static string ExistingGatesHelp {
+            get {
+                return ResourceManager.GetString("ExistingGatesHelp", resourceCulture);
             }
         }
         
@@ -2048,6 +2075,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create Queue events.
+        /// </summary>
+        public static string MenuQueueEventsHelp {
+            get {
+                return ResourceManager.GetString("MenuQueueEventsHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Saves the active tab in the studio.
         /// </summary>
         public static string MenuSaveTabHelp {
@@ -2088,6 +2124,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string MenuSettingsHelp {
             get {
                 return ResourceManager.GetString("MenuSettingsHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Opens Triggers so you can create a listener to a queue..
+        /// </summary>
+        public static string MenuTasksHelp {
+            get {
+                return ResourceManager.GetString("MenuTasksHelp", resourceCulture);
             }
         }
         
@@ -2276,6 +2321,177 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to OptionAutocompleteHelpText.
+        /// </summary>
+        public static string OptionAutocompleteHelpText {
+            get {
+                return ResourceManager.GetString("OptionAutocompleteHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionBoolHelpText.
+        /// </summary>
+        public static string OptionBoolHelpText {
+            get {
+                return ResourceManager.GetString("OptionBoolHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionComboboxHelpText.
+        /// </summary>
+        public static string OptionComboboxHelpText {
+            get {
+                return ResourceManager.GetString("OptionComboboxHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionConditionHelpText.
+        /// </summary>
+        public static string OptionConditionHelpText {
+            get {
+                return ResourceManager.GetString("OptionConditionHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionConditionLeftHelpText.
+        /// </summary>
+        public static string OptionConditionLeftHelpText {
+            get {
+                return ResourceManager.GetString("OptionConditionLeftHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionConditionRightHelpText.
+        /// </summary>
+        public static string OptionConditionRightHelpText {
+            get {
+                return ResourceManager.GetString("OptionConditionRightHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionEnumGenHelpText.
+        /// </summary>
+        public static string OptionEnumGenHelpText {
+            get {
+                return ResourceManager.GetString("OptionEnumGenHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionEnumHelpText.
+        /// </summary>
+        public static string OptionEnumHelpText {
+            get {
+                return ResourceManager.GetString("OptionEnumHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the retry count. .
+        /// </summary>
+        public static string OptionGateCountHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateCountHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the delay increment between every retry attempt.
+        /// </summary>
+        public static string OptionGateIncrementHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateIncrementHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set maximum retries. The tool will keep retrying until the maximum retry count is hit.
+        /// </summary>
+        public static string OptionGateMaxRetriesHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateMaxRetriesHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the resume workflow or API that will be executed on retry.
+        /// </summary>
+        public static string OptionGateResumeEndpointHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateResumeEndpointHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select whether the Gate Tool will continue on error or end the workflow.
+        /// </summary>
+        public static string OptionGateResumeHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateResumeHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Retry strategy that will be actioned &lt;br/&gt;&lt;br/&gt;&lt;b&gt;NoBackoff: &lt;/b&gt;On Error Retry Immediately&lt;br/&gt;&lt;br/&gt;&lt;b&gt;LinearBackoff:&lt;/b&gt; Delay increases along with every attempt on Linear curve.
+        /// </summary>
+        public static string OptionGateStrategyHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateStrategyHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the Timeout of each retry.
+        /// </summary>
+        public static string OptionGateTimeoutHelpText {
+            get {
+                return ResourceManager.GetString("OptionGateTimeoutHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionIntHelpText.
+        /// </summary>
+        public static string OptionIntHelpText {
+            get {
+                return ResourceManager.GetString("OptionIntHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set if the queue is durable.
+        /// </summary>
+        public static string OptionRabbitMqDurableHelpText {
+            get {
+                return ResourceManager.GetString("OptionRabbitMqDurableHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionRadioButtonHelpText.
+        /// </summary>
+        public static string OptionRadioButtonHelpText {
+            get {
+                return ResourceManager.GetString("OptionRadioButtonHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionWorkflowHelpText.
+        /// </summary>
+        public static string OptionWorkflowHelpText {
+            get {
+                return ResourceManager.GetString("OptionWorkflowHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter the password for the account you want to use for authenticating..
         /// </summary>
         public static string PasswordAuthenticationHelp {
@@ -2429,6 +2645,114 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select the workflow you want to execute..
+        /// </summary>
+        public static string QueueAddWorkflowCommandHelpText {
+            get {
+                return ResourceManager.GetString("QueueAddWorkflowCommandHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the concurrency of the Queue. This is the number of workflows that can execute in parallel limited by the number of threads available at run time..
+        /// </summary>
+        public static string QueueConcurrencyHelp {
+            get {
+                return ResourceManager.GetString("QueueConcurrencyHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Delete this Queue.
+        /// </summary>
+        public static string QueueDeleteHelpTextTrigger {
+            get {
+                return ResourceManager.GetString("QueueDeleteHelpTextTrigger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Map the entire message. This will put the full response from the queue into one variable for you to unpack in your workflow..
+        /// </summary>
+        public static string QueueMapEntireMessageHelpTextTrigger {
+            get {
+                return ResourceManager.GetString("QueueMapEntireMessageHelpTextTrigger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The name you want to use to refer to this Queue trigger..
+        /// </summary>
+        public static string QueueNameHelp {
+            get {
+                return ResourceManager.GetString("QueueNameHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Paste the XML, JSON or plain text message received from the queue here..
+        /// </summary>
+        public static string QueuePasteInputHelp {
+            get {
+                return ResourceManager.GetString("QueuePasteInputHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Each workflow must be executed with the correct security context. The account details entered here will be passed to the server and execute the workflow as that user..
+        /// </summary>
+        public static string QueueSettingsHelpTextPassword {
+            get {
+                return ResourceManager.GetString("QueueSettingsHelpTextPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Each workflow must be executed with the correct security context. The account details entered here will be passed to the server and execute the workflow as that user..
+        /// </summary>
+        public static string QueueSettingsHelpTextUsername {
+            get {
+                return ResourceManager.GetString("QueueSettingsHelpTextUsername", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to To run a workflow in a queue select the Trigger above and then click … to choose the workflow you want to execute..
+        /// </summary>
+        public static string QueueSettingsHelpTextWorkFlow {
+            get {
+                return ResourceManager.GetString("QueueSettingsHelpTextWorkFlow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the Source of the queue you want to listen to.
+        /// </summary>
+        public static string QueueSourceHelp {
+            get {
+                return ResourceManager.GetString("QueueSourceHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enables or Disables the Queue. Disabled queues will not execute when their trigger is valid..
+        /// </summary>
+        public static string QueueStatusAltHelpTextTrigger {
+            get {
+                return ResourceManager.GetString("QueueStatusAltHelpTextTrigger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select to view Queue Stats.
+        /// </summary>
+        public static string QueueViewStatsHelpText {
+            get {
+                return ResourceManager.GetString("QueueViewStatsHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Append will add the variables onto the list of variables already in the input grid. The values of the last row will be repeated for all of these additional values..
         /// </summary>
         public static string QuickVariableAppendHelpText {
@@ -2492,7 +2816,34 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to If set, the queue is deleted when all consumers have 	finished using it. The last consumer can be cancelled either 	explicitly or because its channel is closed. If there was no 	consumer ever on the queue, it won&apos;t be deleted. Applications 	can explicitly delete auto-delete queues using the Delete method as normal.&lt;br/&gt;.
+        ///   Looks up a localized string similar to Use ExecutionID or CustomTransactionID from Header as CorrelationID of the Queue you want to consume from. When we receive a message in the callback queue we&apos;ll look at this property, and based on that we&apos;ll be able to match a response with a request.
+        /// </summary>
+        public static string RabbitMQHelpAutoCorrelationID {
+            get {
+                return ResourceManager.GetString("RabbitMQHelpAutoCorrelationID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use CustomTransactionID from Header as CorrelationID of the Queue you want to consume from. When we receive a message in the callback queue we&apos;ll look at this property, and based on that we&apos;ll be able to match a response with a request.
+        /// </summary>
+        public static string RabbitMQHelpAutoCustomTransactionIDCorrelationID {
+            get {
+                return ResourceManager.GetString("RabbitMQHelpAutoCustomTransactionIDCorrelationID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Provide a CorrelationID of the Queue you want to consume from. When we receive a message in the callback queue we&apos;ll look at this property, and based on that we&apos;ll be able to match a response with a request.
+        /// </summary>
+        public static string RabbitMQHelpCorrelationID {
+            get {
+                return ResourceManager.GetString("RabbitMQHelpCorrelationID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to If set, the Queue is deleted when all consumers have 	finished using it. The last consumer can be cancelled either 	explicitly or because its channel is closed. If there was no 	consumer ever on the queue, it won&apos;t be deleted. Applications 	can explicitly delete auto-delete queues using the Delete method as normal.&lt;br/&gt;.
         /// </summary>
         public static string RabbitMQHelpIsAutoDelete {
             get {
@@ -2537,7 +2888,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Provide a name of the Queue you want to consume from. 	The Queue should already be in the RabbitMQ Source in your server.	Note: The Queue name is case sensitive.&lt;br /&gt;	&lt;br /&gt;	Allowed:&lt;br /&gt;	Data   	&lt;ol&gt;	&lt;li&gt;[[Scalar]]&lt;/li&gt;	&lt;li&gt;[[Recordset(n).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset(*).Field]]&lt;/li&gt;	&lt;li&gt;[[Recordset().Field]]&lt;/li&gt;	&lt;/ol&gt;.
+        ///   Looks up a localized string similar to The name of the queue as it appears on the server of the source provided.
         /// </summary>
         public static string RabbitMQHelpQueueName {
             get {
@@ -2546,7 +2897,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Marking this as True will leave the	message you consumed in the queue.	Leaving it UnChecked will remove it from the Queue after it has bee consumed.&lt;br/&gt;.
+        ///   Looks up a localized string similar to Marking this as True will leave the	message you consumed in the Queue.	Leaving it UnChecked will remove it from the Queue after it has bee consumed.&lt;br/&gt;.
         /// </summary>
         public static string RabbitMQHelpRequeue {
             get {
@@ -2573,7 +2924,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to  The Queue might be empty when the 	Consumer makes the initial attempt to Consume the message.	Put the number of seconds you want the consumer to delay when attempting to 	consume messages from the queue.	After the specified time (in seconds) has elapsed, the  consumer will retire.&lt;br /&gt;	&lt;br /&gt;	Allowed:&lt;br /&gt;	Data   	&lt;ol&gt;	&lt;li&gt;Interger Value&lt;/li&gt;            	&lt;li&gt;[[Scalar]]&lt;/li&gt;	&lt;/ol&gt;.
+        ///   Looks up a localized string similar to  The Queue might be empty when the Consumer makes the initial attempt to Consume the message.	Put the number of seconds you want the consumer to delay when attempting to 	consume messages from the Queue.	After the specified time (in seconds) has elapsed, the  consumer will retire.&lt;br /&gt;	&lt;br /&gt;	Allowed:&lt;br /&gt;	Data   	&lt;ol&gt;	&lt;li&gt;Interger Value&lt;/li&gt;            	&lt;li&gt;[[Scalar]]&lt;/li&gt;	&lt;/ol&gt;.
         /// </summary>
         public static string RabbitMQHelpTimeOut {
             get {
@@ -2767,6 +3118,123 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ReadLocalHelpFolder {
             get {
                 return ResourceManager.GetString("ReadLocalHelpFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Key to create a counter.
+        /// </summary>
+        public static string RedisCounterKeyHelp {
+            get {
+                return ResourceManager.GetString("RedisCounterKeyHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Step Size to increment or decrement a counter.
+        /// </summary>
+        public static string RedisCounterStepSizeHelp {
+            get {
+                return ResourceManager.GetString("RedisCounterStepSizeHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Decrement counter.
+        /// </summary>
+        public static string RedisCounterTypeDecrementHelpText {
+            get {
+                return ResourceManager.GetString("RedisCounterTypeDecrementHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Increment counter.
+        /// </summary>
+        public static string RedisCounterTypeIncrementHelpText {
+            get {
+                return ResourceManager.GetString("RedisCounterTypeIncrementHelpText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit the selected redis connection properties.
+        /// </summary>
+        public static string RedisEditSourceHelp {
+            get {
+                return ResourceManager.GetString("RedisEditSourceHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Key used to store and retrieve data from the Redis cache.
+        /// </summary>
+        public static string RedisKeyHelp {
+            get {
+                return ResourceManager.GetString("RedisKeyHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a new redis connection.
+        /// </summary>
+        public static string RedisNewSourceHelp {
+            get {
+                return ResourceManager.GetString("RedisNewSourceHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Key to remove cache data with specified key.
+        /// </summary>
+        public static string RedisRemoveKeyHelp {
+            get {
+                return ResourceManager.GetString("RedisRemoveKeyHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only variables go in here.	Returns Success if the key to remove was found and removed or Failure otherwise..
+        /// </summary>
+        public static string RedisRemoveResultHelp {
+            get {
+                return ResourceManager.GetString("RedisRemoveResultHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a preconfigured redis source..
+        /// </summary>
+        public static string RedisSourceHelp {
+            get {
+                return ResourceManager.GetString("RedisSourceHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Redis server name to connect to..
+        /// </summary>
+        public static string RedisSourceHostNameHelp {
+            get {
+                return ResourceManager.GetString("RedisSourceHostNameHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The default port on which Redis listens is 6379..
+        /// </summary>
+        public static string RedisSourcePortHelp {
+            get {
+                return ResourceManager.GetString("RedisSourcePortHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time To Live is set on the given Key to dispose of data cached until the Time To Live has elapsed.&lt;br/&gt;The default is 5 Seconds. &lt;br/&gt;&lt;br/&gt;If the Time To Live is set to 0, the data will remain cached until this key is removed using the Redis Remove Tool..
+        /// </summary>
+        public static string RedisTTLHelp {
+            get {
+                return ResourceManager.GetString("RedisTTLHelp", resourceCulture);
             }
         }
         
@@ -3558,6 +4026,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Verify the mapped data against the inputs of the selected workflow..
+        /// </summary>
+        public static string ServiceVerifyHelp {
+            get {
+                return ResourceManager.GetString("ServiceVerifyHelp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Removes the performance counters for this specific resource.
         /// </summary>
         public static string SettingsPerfCounterRemoveResourceHelpText {
@@ -4238,6 +4715,33 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use the Redis Cache tool to store data by key in the cache..
+        /// </summary>
+        public static string Tool_Database_RedisCache {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the Redis Counter tool to increment or decrement values in the cache..
+        /// </summary>
+        public static string Tool_Database_RedisCounter {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisCounter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the Redis Remove tool to remove existing key with data from cache..
+        /// </summary>
+        public static string Tool_Database_RedisRemove {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisRemove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use the Bulk Insert tool to move more than one record at a time into Microsoft SQL Server. This tool exposes the built-in functionality options and is highly performant when used exclusively with the Recordset data going in..
         /// </summary>
         public static string Tool_Database_SQL_Bulk_Insert {
@@ -4405,6 +4909,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string Tool_Flow_Decision {
             get {
                 return ResourceManager.GetString("Tool_Flow_Decision", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use the Gate tool when you need to stop, retry, rollback to previous gates on error..
+        /// </summary>
+        public static string Tool_Flow_Gate {
+            get {
+                return ResourceManager.GetString("Tool_Flow_Gate", resourceCulture);
             }
         }
         
@@ -4733,7 +5246,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Use the Rabbit MQ Consume tool to read messages off a Rabbit MQ server’s queue..
+        ///   Looks up a localized string similar to Use the Rabbit MQ Consume tool to read messages off a Rabbit MQ server’s Queue..
         /// </summary>
         public static string Tool_Utility_Rabbit_MQ_Consume {
             get {
@@ -4742,7 +5255,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Use the Rabbit MQ Publish tool to publish messages to a Rabbit MQ queue. The queue will be created if it does not exist..
+        ///   Looks up a localized string similar to Use the Rabbit MQ Publish tool to publish messages to a Rabbit MQ Queue. The Queue will be created if it does not exist..
         /// </summary>
         public static string Tool_Utility_Rabbit_MQ_Publish {
             get {

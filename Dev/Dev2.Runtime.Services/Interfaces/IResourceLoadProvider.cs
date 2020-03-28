@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,8 +23,13 @@ using Dev2.Runtime.ServiceModel.Data;
 
 namespace Dev2.Runtime.Interfaces
 {
+    public interface IResourceProvider
+    {
+        List<IResource> GetResources(Guid workspaceID);
+    }
+
     // PBI 953 - 2013.05.16 - TWR - Created
-    public interface IResourceLoadProvider
+    public interface IResourceLoadProvider : IResourceProvider
     {
         T GetResource<T>(Guid workspaceID, Guid serviceID) where T : Resource, new();
         T GetResource<T>(Guid workspaceID, string resourceName) where T : Resource, new();
@@ -39,12 +45,16 @@ namespace Dev2.Runtime.Interfaces
         IList<IResource> GetResourceList(Guid workspaceId);
         int GetResourceCount(Guid workspaceID);
         IResource GetResource(Guid workspaceID, string resourceName);
+        IResource GetResource(Guid workspaceID, Guid resourceId, string resourceType, string version);
         IResource GetResource(Guid workspaceID, string resourceName, string resourceType, string version);
+        IResource GetResource(Guid workspaceID, Guid resourceID, string version);
         IResource GetResource(Guid workspaceID, Guid resourceID);
         StringBuilder GetResourceContents(Guid workspaceID, Guid resourceID);
         StringBuilder GetResourceContents(IResource resource);
         List<IResource> GetResources(Guid workspaceID);
         IEnumerable GetModels(Guid workspaceID, enSourceType sourceType);
+        T[] FindByType<T>();
+        object[] FindByType(string typeName);
         List<TServiceType> GetDynamicObjects<TServiceType>(Guid workspaceID, Guid resourceID) where TServiceType : DynamicServiceObjectBase;
         ConcurrentDictionary<Guid, ManagementServiceResource> ManagementServices { get; }
         ConcurrentDictionary<Guid, object> WorkspaceLocks { get; }

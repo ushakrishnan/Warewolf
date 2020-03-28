@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,15 +9,15 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Linq;
-using System.Xml.Linq;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.DynamicServices;
 using Dev2.Runtime.ServiceModel.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System;
+using System.Linq;
+using System.Xml.Linq;
 using Warewolf.Security.Encryption;
 
 namespace Dev2.Data.ServiceModel
@@ -44,8 +45,6 @@ namespace Dev2.Data.ServiceModel
         public string Password { get; set; }
         public int WebServerPort { get; set; }
 
-        #region CTOR
-
         public Connection()
         {
             ResourceType = enSourceType.Dev2Server.ToString();
@@ -54,13 +53,13 @@ namespace Dev2.Data.ServiceModel
 
         public Connection(XElement xml)
             : base(xml)
-         {
-             ResourceType = enSourceType.Dev2Server.ToString();
+        {
+            ResourceType = enSourceType.Dev2Server.ToString();
 
             var conString = xml.AttributeSafe("ConnectionString");
-            var connectionString = conString.CanBeDecrypted() ? DpapiWrapper.Decrypt(conString):conString;
+            var connectionString = conString.CanBeDecrypted() ? DpapiWrapper.Decrypt(conString) : conString;
             var props = connectionString.Split(';');
-            foreach(var p in props.Select(prop => prop.Split('=')).Where(p => p.Length >= 1))
+            foreach (var p in props.Select(prop => prop.Split('=')).Where(p => p.Length >= 1))
             {
                 switch (p[0].ToLowerInvariant())
                 {
@@ -87,16 +86,11 @@ namespace Dev2.Data.ServiceModel
             }
         }
 
-        #endregion
-
-        /// <summary>
-        /// Fetches the test connection address.
-        /// </summary>
         public String FetchTestConnectionAddress()
         {
             var result = Address;
 
-            if(result?.IndexOf("dsf", StringComparison.Ordinal) < 0)
+            if (result?.IndexOf("dsf", StringComparison.Ordinal) < 0)
             {
                 result += result.EndsWith("/") ? "dsf" : "/dsf";
 
@@ -104,8 +98,6 @@ namespace Dev2.Data.ServiceModel
 
             return result;
         }
-
-        #region ToXml
 
         public override XElement ToXml()
         {
@@ -115,7 +107,7 @@ namespace Dev2.Data.ServiceModel
                 $"WebServerPort={WebServerPort}",
                 $"AuthenticationType={AuthenticationType}"
                 );
-            if(AuthenticationType == AuthenticationType.User)
+            if (AuthenticationType == AuthenticationType.User)
             {
                 connectionString = string.Join(";",
                     connectionString,
@@ -134,35 +126,30 @@ namespace Dev2.Data.ServiceModel
         }
 
         public override bool IsSource => false;
-
         public override bool IsService => false;
         public override bool IsFolder => false;
         public override bool IsReservedService => false;
         public override bool IsServer => true;
         public override bool IsResourceVersion => false;
 
-        #endregion
-
-        protected bool Equals(Connection other) => base.Equals(other) && string.Equals(Address, other.Address) && AuthenticationType == other.AuthenticationType && string.Equals(UserName, other.UserName) && string.Equals(Password, other.Password) && WebServerPort == other.WebServerPort;
+        protected bool Equals(Connection other)
+        {
+            return base.Equals(other) &&
+                 string.Equals(Address, other.Address) &&
+                 AuthenticationType == other.AuthenticationType &&
+                 string.Equals(UserName, other.UserName) &&
+                 string.Equals(Password, other.Password) &&
+                 WebServerPort == other.WebServerPort;
+        }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is Connection connection)
             {
-                return false;
-            }
+                return this.Equals(connection);
 
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
             }
-
-            if (obj.GetType() != this.GetType())
-            {
-                return false;
-            }
-
-            return Equals((Connection) obj);
+            return false;
         }
 
         public override int GetHashCode()
@@ -171,7 +158,7 @@ namespace Dev2.Data.ServiceModel
             {
                 var hashCode = base.GetHashCode();
                 hashCode = (hashCode * 397) ^ (Address != null ? Address.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (int) AuthenticationType;
+                hashCode = (hashCode * 397) ^ (int)AuthenticationType;
                 hashCode = (hashCode * 397) ^ (UserName != null ? UserName.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (Password != null ? Password.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ WebServerPort;

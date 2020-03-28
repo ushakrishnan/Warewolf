@@ -2,6 +2,7 @@
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
+    <DependsOnNETStandard>true</DependsOnNETStandard>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>
@@ -12,7 +13,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Warewolf.UI.Tests</RootNamespace>
     <AssemblyName>Warewolf.UI.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -31,6 +33,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -39,8 +44,19 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc">
+      <HintPath>..\packages\Castle.Core.4.3.1\lib\net45\Castle.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Interop.UIAutomationClient, Version=12.0.21213.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <HintPath>..\packages\UIAComWrapperX.1.1.0.16\lib\net452\Interop.UIAutomationClient.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>False</Private>
@@ -48,13 +64,18 @@
     <Reference Include="Microsoft.Win32.TaskScheduler, Version=2.8.1.0, Culture=neutral, PublicKeyToken=c416bc1b32d97233, processorArchitecture=MSIL">
       <HintPath>..\packages\TaskScheduler.2.8.1\lib\net452\Microsoft.Win32.TaskScheduler.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\WindowsPowerShell\3.0\System.Management.Automation.dll</HintPath>
+    </Reference>
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ValueTuple, Version=4.0.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.3.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
@@ -62,6 +83,14 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="TechTalk.SpecFlow, Version=2.3.2.0, Culture=neutral, PublicKeyToken=0778194805d6db41, processorArchitecture=MSIL">
       <HintPath>..\packages\SpecFlow.2.3.2\lib\net45\TechTalk.SpecFlow.dll</HintPath>
+    </Reference>
+    <Reference Include="TestStack.White, Version=1.0.0.0, Culture=neutral, PublicKeyToken=2672efbf3e161801">
+      <HintPath>..\packages\TestStack.WhiteX.0.13.6\lib\net452\TestStack.White.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="UIAComWrapperX, Version=1.1.0.16, Culture=neutral, PublicKeyToken=78cbcf77433a85e5">
+      <HintPath>..\packages\UIAComWrapperX.1.1.0.16\lib\net452\UIAComWrapperX.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="WindowsBase" />
   </ItemGroup>
@@ -89,7 +118,6 @@
     <Compile Include="DBSource\OracleSource\OracleSourceTests.cs" />
     <Compile Include="DBSource\PostgreSQLSource\PostgreSQLSourceTests.cs" />
     <Compile Include="DBSource\SQLServerSource\SQLServerSourceTests.cs" />
-    <Compile Include="Debug Output\Debug Output.cs" />
     <Compile Include="DebugInputWindow\DebugInputWindowTests.cs" />
     <Compile Include="DebugInputWindow\SaveDebugInputs.cs" />
     <Compile Include="DebugInputWindow\TextboxHeightChanges.cs" />
@@ -101,6 +129,7 @@
       <DependentUpon>DependencyGraphUIMap.uitest</DependentUpon>
     </Compile>
     <Compile Include="DependencyGraph\ShowDependencyTests.cs" />
+    <Compile Include="Depends.cs" />
     <Compile Include="Deploy\Deploy From Explorer.cs" />
     <Compile Include="Deploy\DeployTests.cs" />
     <Compile Include="Deploy\DeployUIMap.cs">
@@ -159,12 +188,6 @@
     <Compile Include="Explorer\ShowServerVersion.cs" />
     <Compile Include="Explorer\View Swagger.cs" />
     <Compile Include="Explorer\VersionHistory.cs" />
-    <None Include="..\Warewolf.Launcher\EnableDocker.txt">
-      <Visible>False</Visible>
-      <Link>EnableDocker.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="BuildConfig.cs" />
     <Compile Include="Merge\MergeAllToolsConflictsTest.cs" />
     <Compile Include="Merge\MergeAssignConflictsTest.cs" />
     <Compile Include="Merge\MergeDialogUIMap.cs">
@@ -436,7 +459,7 @@
     </Compile>
     <Compile Include="WorkflowTab\Tools\Utility\Web Request.cs" />
     <Compile Include="WorkflowTab\Tools\Utility\Xpath.cs" />
-    <Compile Include="Debug Output\Recordset.cs" />
+    <Compile Include="WorkflowTab\Tools\Recordset\Advanced Recordset.cs" />
     <Compile Include="WorkflowTab\Variables\Variables.cs" />
     <Compile Include="WorkflowTab\WorkflowTabUIMap.cs">
       <DependentUpon>WorkflowTabUIMap.uitest</DependentUpon>
@@ -495,30 +518,6 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Warewolf.Launcher\Warewolf.Launcher.csproj">
-      <Project>{9B669D51-14CE-44A3-9407-8251BA3BAD19}</Project>
-      <Name>Warewolf.Launcher</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <Choose>
-    <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
-      <ItemGroup>
-        <Reference Include="Microsoft.VisualStudio.QualityTools.CodedUITestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Extension, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' Or '$(VisualStudioVersion)' == '11.0') And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

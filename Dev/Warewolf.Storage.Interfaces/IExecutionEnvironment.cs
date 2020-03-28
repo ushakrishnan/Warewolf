@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using Dev2.Common.Interfaces;
@@ -7,6 +8,8 @@ namespace Warewolf.Storage.Interfaces
 {
     public interface IExecutionEnvironment
     {
+        Guid Id { get; }
+        Guid ParentId { get; }
         CommonFunctions.WarewolfEvalResult Eval(string exp, int update);
 
         CommonFunctions.WarewolfEvalResult Eval(string exp, int update, bool throwsifnotexists);
@@ -16,6 +19,7 @@ namespace Warewolf.Storage.Interfaces
         CommonFunctions.WarewolfEvalResult EvalStrict(string exp, int update);
 
         void Assign(string exp, string value, int update);
+        void AssignString(string exp, string value, int update);
 
         void AssignStrict(string exp, string value, int update);
 		void AssignWithFrame(IEnumerable<IAssignValue> values, int update);
@@ -88,5 +92,7 @@ namespace Warewolf.Storage.Interfaces
         int GetObjectLength(string recordSetName);
 
         string ToJson();
+        void FromJson(string serializedEnv);
+        IExecutionEnvironment Snapshot();
     }
 }

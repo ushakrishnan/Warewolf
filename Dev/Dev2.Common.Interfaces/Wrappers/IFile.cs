@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,18 +10,18 @@
 
 using System;
 using System.IO;
+using Warewolf.VirtualFileSystem;
 
 namespace Dev2.Common.Interfaces.Wrappers
 {
-    public interface IFile
-    {
-        string ReadAllText(string fileName);
-        void Move(string source, string destination);
+    public enum FileOverwrite {
+        No,
+        Yes
+    }
 
-        bool Exists(string path);
-        void Delete(string tmpFileName);
-        void WriteAllText(string p1, string p2);
-        void Copy(string source, string destination);
+    public interface IFile : IFileBase
+    {
+        void Move(string source, string destination);
 
         void WriteAllBytes(string path, byte[] contents);
         void AppendAllText(string path, string contents);
@@ -35,6 +35,9 @@ namespace Dev2.Common.Interfaces.Wrappers
         IDev2StreamWriter AppendText(string filePath);
 
         DateTime GetLastWriteTime(string filePath);
+        void Copy(string src, string dst, bool overwrite);
+        string DirectoryName(string path);
+        IFileInfo Info(string path);
     }
 
     public interface IDev2StreamWriter : IDisposable

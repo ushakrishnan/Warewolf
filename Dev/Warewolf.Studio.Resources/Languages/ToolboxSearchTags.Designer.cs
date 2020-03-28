@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class ToolboxSearchTags {
@@ -174,6 +174,33 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string Tool_Database_PostgreSQL {
             get {
                 return ResourceManager.GetString("Tool_Database_PostgreSQL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to cache data under a specified key.
+        /// </summary>
+        public static string Tool_Database_RedisCache {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to increment/decrement the number stored at key by one.
+        /// </summary>
+        public static string Tool_Database_RedisCounter {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisCounter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to removes the specified key from cache.
+        /// </summary>
+        public static string Tool_Database_RedisRemove {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisRemove", resourceCulture);
             }
         }
         
@@ -345,6 +372,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string Tool_Flow_Decision {
             get {
                 return ResourceManager.GetString("Tool_Flow_Decision", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to gate retry stop end.
+        /// </summary>
+        public static string Tool_Flow_Gate {
+            get {
+                return ResourceManager.GetString("Tool_Flow_Gate", resourceCulture);
             }
         }
         

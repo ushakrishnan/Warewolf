@@ -5,17 +5,18 @@ using System.Threading.Tasks;
 using System.Windows;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.RabbitMQ;
-using Dev2.Common.Interfaces.SaveDialog;
+using Dev2.Common.SaveDialog;
 using Dev2.Studio.Core;
 using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using TechTalk.SpecFlow;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
 using Warewolf.Studio.Core.Infragistics_Prism_Region_Adapter;
 using Warewolf.Studio.ViewModels;
 using Warewolf.Studio.Views;
 using Warewolf.UIBindingTests.Core;
+using Warewolf.UnitTestAttributes;
 
 
 namespace Warewolf.UIBindingTests.RabbitMqSource
@@ -24,7 +25,7 @@ namespace Warewolf.UIBindingTests.RabbitMqSource
     public class RabbitMqSourceSteps
     {
         string failedNoneOfTheSpecifiedEndpointsWereReachable = "Failed: None of the specified endpoints were reachable";
-        public static ContainerLauncher _containerOps;
+        public static Depends _containerOps;
 
         [BeforeFeature("RabbitMqSource")]
         public static void SetupForSystem()
@@ -100,7 +101,7 @@ namespace Warewolf.UIBindingTests.RabbitMqSource
         {
             if (hostname == "test-rabbitmq")
             {
-                _containerOps = TestLauncher.StartLocalRabbitMQContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
+                _containerOps = new Depends(Depends.ContainerType.RabbitMQ);
             }
             var manageRabbitMqSourceControl = ScenarioContext.Current.Get<ManageRabbitMQSourceControl>(Utils.ViewNameKey);
             manageRabbitMqSourceControl.EnterHostName(hostname);

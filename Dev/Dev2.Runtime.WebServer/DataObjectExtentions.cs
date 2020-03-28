@@ -1,4 +1,15 @@
-﻿using System;
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
@@ -115,7 +126,26 @@ namespace Dev2.Runtime.WebServer
                 dataObject.ReturnType = EmitionTypes.XML;
             }
         }
-
+        public static void SetHeaders(this IDSFDataObject dataObject, NameValueCollection headers)
+        {
+            if (headers != null)
+            {
+                var customTransactionId = headers.Get("Warewolf-Custom-Transaction-Id");
+                if (!string.IsNullOrEmpty(customTransactionId))
+                {
+                    dataObject.CustomTransactionID = customTransactionId;
+                }
+                var executionID = headers.Get("Warewolf-Execution-Id");
+                if (!string.IsNullOrEmpty(executionID))
+                {
+                    dataObject.ExecutionID = Guid.Parse(executionID);
+                }
+                else
+                {
+                    dataObject.ExecutionID = Guid.NewGuid();
+                }
+            }
+        }
         public static void SetupForWebDebug(this IDSFDataObject dataObject, WebRequestTO webRequest)
         {
             var contains = webRequest?.Variables?.AllKeys.Contains("IsDebug");
@@ -224,8 +254,12 @@ namespace Dev2.Runtime.WebServer
                         MapServiceToDataObjects(dataObject, localResource);
                     }
                 }
-
+                if (localResource == null)
+                {
+                    dataObject.Environment.AddError($"Service {serviceName} not found.");
+                }
             }
+                
             resource = localResource;
         }
 
@@ -238,6 +272,10 @@ namespace Dev2.Runtime.WebServer
 
         public static bool CanExecuteCurrentResource(this IDSFDataObject dataObject, IResource resource, IAuthorizationService service)
         {
+            if (resource is null)
+            {
+                return false;
+            }
             var canExecute = true;
             if (service != null && dataObject.ReturnType != EmitionTypes.TRX)
             {

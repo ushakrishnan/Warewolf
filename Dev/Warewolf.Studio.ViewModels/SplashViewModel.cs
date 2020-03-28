@@ -1,3 +1,14 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Input;
@@ -111,8 +122,10 @@ namespace Warewolf.Studio.ViewModels
                 }
             });
         }
-        [ExcludeFromCodeCoverage]
+
+#pragma warning disable S1541 // Methods and properties should not be too complex
         static string GetInformalDate(DateTime d)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var sinceThen = DateTime.Now.Subtract(d);
             var totalDays = (int)sinceThen.TotalDays;

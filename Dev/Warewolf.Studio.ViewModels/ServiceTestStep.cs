@@ -1,3 +1,14 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -47,7 +58,7 @@ namespace Warewolf.Studio.ViewModels
 
         public Guid UniqueId
         {
-            get { return _uniqueId; }
+            get => _uniqueId;
             set
             {
                 _uniqueId = value;
@@ -58,7 +69,7 @@ namespace Warewolf.Studio.ViewModels
         [JsonIgnore]
         public ImageSource StepIcon
         {
-            get { return _stepIcon; }
+            get => _stepIcon;
             set
             {
                 _stepIcon = value;
@@ -68,7 +79,7 @@ namespace Warewolf.Studio.ViewModels
 
         public string ActivityType
         {
-            get { return _activityType; }
+            get => _activityType;
             set
             {
                 _activityType = value;
@@ -78,7 +89,7 @@ namespace Warewolf.Studio.ViewModels
 
         public StepType Type
         {
-            get { return _type; }
+            get => _type;
             set
             {
                 _type = value;
@@ -88,7 +99,7 @@ namespace Warewolf.Studio.ViewModels
 
         public ObservableCollection<IServiceTestOutput> StepOutputs
         {
-            get { return _stepOutputs; }
+            get => _stepOutputs;
             set
             {
                 _stepOutputs = value;
@@ -136,7 +147,7 @@ namespace Warewolf.Studio.ViewModels
 
         public IServiceTestStep Parent
         {
-            get { return _parent; }
+            get => _parent;
             set
             {
                 _parent = value;
@@ -146,7 +157,7 @@ namespace Warewolf.Studio.ViewModels
 
         public ObservableCollection<IServiceTestStep> Children
         {
-            get { return _children; }
+            get => _children;
             set
             {
                 _children = value;
@@ -156,7 +167,7 @@ namespace Warewolf.Studio.ViewModels
 
         public string StepDescription
         {
-            get { return _stepDescription; }
+            get => _stepDescription;
             set
             {
                 _stepDescription = value;
@@ -166,7 +177,7 @@ namespace Warewolf.Studio.ViewModels
 
         public TestRunResult Result
         {
-            get { return _result; }
+            get => _result;
             set
             {
                 _result = value;
@@ -205,18 +216,18 @@ namespace Warewolf.Studio.ViewModels
 
         void UpdateTestPending()
         {
-            var testPending = _result.RunTestResult != RunResult.TestFailed &&
-                                  _result.RunTestResult != RunResult.TestPassed &&
-                                  _result.RunTestResult != RunResult.TestInvalid &&
-                                  _result.RunTestResult != RunResult.TestResourceDeleted &&
-                                  _result.RunTestResult != RunResult.TestResourcePathUpdated;
+            var testPending = _result.RunTestResult != RunResult.TestFailed;
+            testPending &= _result.RunTestResult != RunResult.TestPassed;
+            testPending &= _result.RunTestResult != RunResult.TestInvalid;
+            testPending &= _result.RunTestResult != RunResult.TestResourceDeleted;
+            testPending &= _result.RunTestResult != RunResult.TestResourcePathUpdated;
 
             TestPending = !MockSelected && testPending;
         }
 
         public bool TestPassed
         {
-            get { return _testPassed; }
+            get => _testPassed;
             set
             {
                 _testPassed = value;
@@ -232,7 +243,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool TestFailing
         {
-            get { return _testFailing; }
+            get => _testFailing;
             set
             {
                 _testFailing = value;
@@ -248,7 +259,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool TestInvalid
         {
-            get { return _testInvalid; }
+            get => _testInvalid;
             set
             {
                 _testInvalid = value;
@@ -264,7 +275,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool TestPending
         {
-            get { return _testPending; }
+            get => _testPending;
             set
             {
                 _testPending = value;
@@ -280,7 +291,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool IsTestStepExpanded
         {
-            get { return _isTestStepExpanded; }
+            get => _isTestStepExpanded;
             set
             {
                 _isTestStepExpanded = value;
@@ -290,7 +301,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool IsTestStepExpanderEnabled
         {
-            get { return _isTestStepExpanderEnabled; }
+            get => _isTestStepExpanderEnabled;
             set
             {
                 _isTestStepExpanderEnabled = value;
@@ -302,7 +313,7 @@ namespace Warewolf.Studio.ViewModels
 
         public bool AssertSelected
         {
-            get { return _assertSelected; }
+            get => _assertSelected;
             set
             {
                 _assertSelected = value;
@@ -313,8 +324,7 @@ namespace Warewolf.Studio.ViewModels
                     {
                         foreach (var serviceTestOutput in StepOutputs)
                         {
-                            var item = serviceTestOutput as ServiceTestOutput;
-                            item?.OnSearchTypeChanged();
+                            serviceTestOutput?.OnSearchTypeChanged();
                         }
                     }
                 }
@@ -455,5 +465,7 @@ namespace Warewolf.Studio.ViewModels
 
             return intIndex;
         }
+
+        T IServiceTestStep.As<T>() => this as T;
     }
 }

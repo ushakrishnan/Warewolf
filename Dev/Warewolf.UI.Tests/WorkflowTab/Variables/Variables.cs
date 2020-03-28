@@ -10,7 +10,7 @@ namespace Warewolf.UI.Tests
     [CodedUITest]
     public class VariablesTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Sort_Variable_List_Aphalbetivally()
         {
@@ -30,7 +30,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("Surname", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem4.ScrollViewerPane.NameTextbox.Text);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Sort_RecordsetFields_List_Aphalbetivally()
         {
@@ -57,7 +57,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("Surname", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.RecordsetTreeItem.TreeItem1.Field4.ScrollViewerPane.NameTextbox.Text);
         }
         
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Row1_Variable_Textbox_in_Debug_Input()
         {
@@ -69,7 +69,7 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(UIMap.MainStudioWindow.DebugInputDialog.TabItemsTabList.InputDataTab.InputsTable.Row1.Variable.Text.Exists, "Row 1 variable textbox does not exist.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void VariableList_DeleteAColumnOffARecorset_DeleteAllButtonIsEnbaled_UITest()
         {
@@ -83,7 +83,7 @@ namespace Warewolf.UI.Tests
             Assert.IsFalse(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem2.TryGetClickablePoint(out newPoint));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Fileter_Then_Clear_VariableList_Returns_All_Variables()
         {
@@ -114,7 +114,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("negnumbers", WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.Variables.DatalistView.VariableTree.VariableTreeItem.TreeItem4.ScrollViewerPane.NameTextbox.Text);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Fileter_Then_Clear_VariableList_Returns_All_Variables_CaseInsensitiveUpper()
         {
@@ -146,7 +146,7 @@ namespace Warewolf.UI.Tests
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Filter_Then_Clear_VariableList_Returns_All_Variables_CaseInsensitiveLower()
         {
@@ -178,7 +178,7 @@ namespace Warewolf.UI.Tests
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Variables")]
         public void Show_JSON_Edit_Dialog()
         {
@@ -187,6 +187,16 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("Object", DialogsUIMap.EditObjectDialog.TitleText.DisplayText, "Edit Object Dialog Title is Wrong");
             Assert.IsTrue(DialogsUIMap.EditObjectDialog.ResponseTextbox.Exists, "Edit Object Textbox Does Not Exist on the Edit Object Dialog");
             Assert.IsTrue(DialogsUIMap.EditObjectDialog.CloseButton.Exists, "Close Button does not exist on Edit Object Dialog");
+        }
+
+        [TestMethod]
+        [TestCategory("Variables")]
+        public void Special_Characters_Should_Keep_Studio_Responsive()
+        {
+            WorkflowTabUIMap.Add_Variable("Person1@");
+            WorkflowTabUIMap.Add_Recordset("Person1@");
+            Keyboard.SendKeys("{TAB}");
+            WorkflowTabUIMap.Add_Recordsets_Fields("Name,Surname,Age,Race,Gender");
         }
 
         #region Additional test attributes

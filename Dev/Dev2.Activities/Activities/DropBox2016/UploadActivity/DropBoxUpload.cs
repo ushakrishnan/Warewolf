@@ -1,3 +1,4 @@
+#pragma warning disable
 using Dev2.Activities.DropBox2016.Result;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
@@ -27,11 +28,11 @@ namespace Dev2.Activities.DropBox2016.UploadActivity
             _validator = validator;
         }
 
-        public DropBoxUpload(WriteMode writeMode, string dropboxPath, string fromPath)
+        public DropBoxUpload(bool overWriteMode, string dropboxPath, string fromPath)
             : this(new DropboxSoureFileValidator(fromPath))
         {
             _validator.Validate();
-            _writeMode = writeMode;
+            _writeMode = GetWriteMode(overWriteMode);
             if (!string.IsNullOrWhiteSpace(dropboxPath) && !dropboxPath.StartsWith(@"/"))
             {
                 dropboxPath = string.Concat(@"/", dropboxPath);
@@ -47,10 +48,20 @@ namespace Dev2.Activities.DropBox2016.UploadActivity
             _fromPath = fromPath;
             InitializeCertPinning();
         }
+        private WriteMode GetWriteMode(bool overWriteMode)
+        {
+            if (overWriteMode)
+            {
+                return WriteMode.Overwrite.Instance;
+            }
+            return WriteMode.Add.Instance;
+
+
+        }
 
         #region Implementation of IDropboxSingleExecutor
 
-        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
+        public IDropboxResult ExecuteTask(IDropboxClient client)
         {
             try
             {

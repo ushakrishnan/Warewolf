@@ -1,7 +1,8 @@
-﻿/*
+#pragma warning disable
+ /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -39,7 +40,9 @@ using Warewolf.Storage.Interfaces;
 using Warewolf.Studio.Core.Infragistics_Prism_Region_Adapter;
 using System.Reflection;
 using Dev2.Activities.Designers2.AdvancedRecordset;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
+using System.Threading;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.BaseTypes
 {
@@ -108,6 +111,7 @@ namespace Dev2.Activities.Specs.BaseTypes
         public void ThenTheExecutionHasError(string anError)
         {
             var expectedError = anError.Equals("AN", StringComparison.OrdinalIgnoreCase);
+            var expectedNoError = anError.Equals("NO", StringComparison.OrdinalIgnoreCase);
             var result = _scenarioContext.Get<IDSFDataObject>("result");
 
             var fetchErrors = result.Environment.FetchErrors();
@@ -191,6 +195,81 @@ namespace Dev2.Activities.Specs.BaseTypes
             }
         }
 
+
+        [Given(@"the debug inputs with errors as")]
+        [When(@"the debug inputs with errors as")]
+        [Then(@"the debug inputs with errors as")]
+        public void ThenTheDebugInputsWithErrorsAs(Table table)
+        {
+            var containsInnerActivity = _scenarioContext.ContainsKey("innerActivity");
+            var containsKey = _scenarioContext.ContainsKey("activity");
+
+            if (containsInnerActivity)
+            {
+                _scenarioContext.TryGetValue("innerActivity", out DsfNativeActivity<string> selectAndAppltTool);
+                var result = _scenarioContext.Get<IDSFDataObject>("result");
+                if (result.Environment.HasErrors())
+                {
+                    var inputDebugItems = GetInputDebugItems(selectAndAppltTool, result.Environment);
+                    ThenTheDebugInputsAs(table, inputDebugItems);
+                }
+                else
+                {
+                    Assert.Fail("expected errors");
+                }
+            }
+            else if (containsKey)
+            {
+                _scenarioContext.TryGetValue("activity", out object baseAct);
+                var stringAct = baseAct as DsfFlowNodeActivity<string>;
+                var boolAct = baseAct as DsfFlowNodeActivity<bool>;
+                var baseBoolAct = baseAct as DsfActivityAbstract<bool>;
+                var multipleFilesActivity = baseAct as DsfAbstractMultipleFilesActivity;
+                if (stringAct != null)
+                {
+                    var dsfActivityAbstract = containsKey ? _scenarioContext.Get<DsfActivityAbstract<string>>("activity") : null;
+                    var result = _scenarioContext.Get<IDSFDataObject>("result");
+                    if (result.Environment.HasErrors())
+                    {
+                        var inputDebugItems = GetInputDebugItems(dsfActivityAbstract, result.Environment);
+                        ThenTheDebugInputsAs(table, inputDebugItems);
+                    }
+                    else
+                    {
+                        Assert.Fail("expected errors");
+                    }
+                }
+                else if (boolAct != null || baseBoolAct != null)
+                {
+                    var dsfActivityAbstract = containsKey ? _scenarioContext.Get<DsfActivityAbstract<bool>>("activity") : null;
+                    var result = _scenarioContext.Get<IDSFDataObject>("result");
+                    if (result.Environment.HasErrors())
+                    {
+                        var inputDebugItems = GetInputDebugItems(dsfActivityAbstract, result.Environment);
+                        ThenTheDebugInputsAs(table, inputDebugItems);
+                    }
+                    else
+                    {
+                        Assert.Fail("expected errors");
+                    }
+                }
+                else if (multipleFilesActivity != null)
+                {
+                    var dsfActivityAbstract = containsKey ? _scenarioContext.Get<DsfAbstractMultipleFilesActivity>("activity") : null;
+                    var result = _scenarioContext.Get<IDSFDataObject>("result");
+                    if (result.Environment.HasErrors())
+                    {
+                        var inputDebugItems = GetInputDebugItems(dsfActivityAbstract, result.Environment);
+                        ThenTheDebugInputsAs(table, inputDebugItems);
+                    }
+                    else
+                    {
+                        Assert.Fail("expected errors");
+                    }
+                }
+            }
+        }
+
         public void ThenTheDebugInputsAs(Table table, List<IDebugItemResult> inputDebugItems)
         {
             var expectedDebugItems = BuildExpectedDebugItems(table);
@@ -209,11 +288,27 @@ namespace Dev2.Activities.Specs.BaseTypes
             }
         }
 
+        [Then(@"the debug output with errors as")]
+        [When(@"the debug output with errors as")]
+        public void ThenTheDebugOutputWithErrorsAs(Table table)
+        {
+            var result = _scenarioContext.Get<IDSFDataObject>("result");
+            if (result.Environment.HasErrors())
+            {
+                var outputDebugItems = GetOutputDebugItems(null, result.Environment);
+                ThenTheDebugOutputAs(table, outputDebugItems);
+            }
+        }
+
         public void ThenTheDebugOutputAs(Table table, List<IDebugItemResult> outputDebugItems)
         {
             ThenTheDebugOutputAs(table, outputDebugItems, false);
         }
         public void ThenTheDebugOutputAs(Table table, List<IDebugItemResult> outputDebugItems, bool isDataMerge)
+        {
+            ThenTheDebugOutputAs(table, outputDebugItems, isDataMerge, false);
+        }
+        public void ThenTheDebugOutputAs(Table table, List<IDebugItemResult> outputDebugItems, bool isDataMerge, bool sortItemsFirst)
         {
             var expectedDebugItems = BuildExpectedDebugItems(table);
 
@@ -222,6 +317,12 @@ namespace Dev2.Activities.Specs.BaseTypes
             {
                 // chop the first one off ;)
                 expectedDebugItems.RemoveAt(0);
+            }
+
+            if (sortItemsFirst)
+            {
+                expectedDebugItems.Sort((x, y) => x.Value.CompareTo(y.Value));
+                outputDebugItems.Sort((x, y) => x.Value.CompareTo(y.Value));
             }
 
             CollectionsAssert(expectedDebugItems, outputDebugItems);
@@ -238,10 +339,20 @@ namespace Dev2.Activities.Specs.BaseTypes
                 _scenarioContext.Add("variableList", variableList);
             }
 
-            variableList.Add(new Tuple<string, string>(pathVariable, location));
+            variableList.Add(new Tuple<string, string>(pathVariable, FixBrokenHostname(location)));
 
             _scenarioContext.Add(SourceHolder, string.IsNullOrEmpty(pathVariable) ? location : pathVariable);
             _scenarioContext.Add(ActualSourceHolder, location);
+        }
+
+        string FixBrokenHostname(string location)
+        {
+            var brokenHostname = "SVRPDC.premier.local";
+            if (location.Contains(brokenHostname) && location.IndexOf(brokenHostname) >= 6 && location.Substring(location.IndexOf(brokenHostname)-6,6) == "ftp://")
+            {
+                location = location.Replace(brokenHostname, Depends.GetIPAddress(brokenHostname));
+            }
+            return location;
         }
 
         public static string GetGuid()
@@ -264,14 +375,19 @@ namespace Dev2.Activities.Specs.BaseTypes
             {
                 return location.Replace(getExtention, GetGuid + getExtention);
             }
+            else if (location.EndsWith(@"\\"))
+            {
+                return location.TrimEnd('\\') + GetGuid + @"\\";
+            }
+            else if (location.EndsWith("\\"))
+            {
+                return location.TrimEnd('\\') + GetGuid + "\\";
+            }
             return location + GetGuid;
         }
 
         [Given(@"use private public key for source is ""(.*)""")]
-        public void GivenUsePrivatePublicKeyForSourceIs(string sourceKey)
-        {
-            _scenarioContext.Add(SourcePrivatePublicKeyFile, sourceKey);
-        }
+        public void GivenUsePrivatePublicKeyForSourceIs(string sourceKey) => _scenarioContext.Add(SourcePrivatePublicKeyFile, sourceKey);
 
         [Given(@"assign error to variable ""(.*)""")]
         public void GivenAssignErrorToVariable(string errorVariable)
@@ -291,6 +407,10 @@ namespace Dev2.Activities.Specs.BaseTypes
         [Given(@"call the web service ""(.*)""")]
         public void GivenCallTheWebService(string onErrorWebserviceToCall)
         {
+            if (Dev2.Activities.Specs.Toolbox.Data.DataSplit.DataSplitSteps._containerOps != null)
+            {
+                onErrorWebserviceToCall = onErrorWebserviceToCall.Replace("tst-ci-remote:3142", Toolbox.Data.DataSplit.DataSplitSteps._containerOps.Container.IP + ":" + Toolbox.Data.DataSplit.DataSplitSteps._containerOps.Container.Port);
+            }
             _scenarioContext.Add("webserviceToCall", onErrorWebserviceToCall);
         }
 
@@ -328,6 +448,7 @@ namespace Dev2.Activities.Specs.BaseTypes
             catch (Exception e)
             {
                 Dev2Logger.Debug("Create Source File for file op test error", e, "Warewolf Debug");
+                //throw
             }
         }
 
@@ -358,7 +479,7 @@ namespace Dev2.Activities.Specs.BaseTypes
                 _scenarioContext.Add("variableList", variableList);
             }
 
-            variableList.Add(new Tuple<string, string>(pathVariable, location));
+            variableList.Add(new Tuple<string, string>(pathVariable, FixBrokenHostname(location)));
 
             _scenarioContext.Add(DestinationHolder, string.IsNullOrEmpty(pathVariable) ? location : pathVariable);
             _scenarioContext.Add(ActualDestinationHolder, location);
@@ -452,6 +573,10 @@ namespace Dev2.Activities.Specs.BaseTypes
         [Then(@"the result from the web service ""(.*)"" will have the same data as variable ""(.*)""")]
         public void ThenTheResultFromTheWebServiceWillHaveTheSameDataAsVariable(string webservice, string errorVariable)
         {
+            if (Toolbox.Data.DataSplit.DataSplitSteps._containerOps != null)
+            {
+                webservice = webservice.Replace("tst-ci-remote:3142", Toolbox.Data.DataSplit.DataSplitSteps._containerOps.Container.IP + ":" + Toolbox.Data.DataSplit.DataSplitSteps._containerOps.Container.Port);
+            }
             var result = _scenarioContext.Get<IDSFDataObject>("result");
 
             //Get the error value
@@ -461,11 +586,11 @@ namespace Dev2.Activities.Specs.BaseTypes
 
             //Send the error in error variable
             var onErrorWebserviceToCall = _scenarioContext.Get<string>("webserviceToCall").Replace("[[error]]", errorValue);
-            using (var webClient = new WebClient())
-            {
-                webClient.Credentials = CredentialCache.DefaultNetworkCredentials;
-                webClient.DownloadString(onErrorWebserviceToCall);
-            }
+            var webClient = WebRequest.Create(onErrorWebserviceToCall);
+            webClient.Credentials = new NetworkCredential("WarewolfAdmin", "W@rEw0lf@dm1n");
+            ServicePointManager.DefaultConnectionLimit = 100;
+            webClient.Timeout = Timeout.Infinite;
+            webClient.GetResponse();
 
             var retryCount = 0;
             string webCallResult;
@@ -474,16 +599,23 @@ namespace Dev2.Activities.Specs.BaseTypes
             {
                 retryCount++;
                 //Call the service and get the error back
-                using (var webClient = new WebClient())
+                webClient = WebRequest.Create(webservice);
+                webClient.Credentials = new NetworkCredential("WarewolfAdmin", "W@rEw0lf@dm1n");
+                webClient.Timeout = Timeout.Infinite;
+                using (WebResponse response = (HttpWebResponse)webClient.GetResponse())
                 {
-                    webClient.Credentials = CredentialCache.DefaultNetworkCredentials;
-                    webCallResult = webClient.DownloadString(webservice);
+                    using (Stream stream = response.GetResponseStream())
+                    {
+                        using (StreamReader reader = new StreamReader(stream))
+                        {
+                            webCallResult = reader.ReadToEnd();
+                        }
+                    }
                 }
             }
             while (webCallResult.Contains("<FatalError>") && retryCount < 10);
             StringAssert.Contains(webCallResult, errorValue);
         }
-
 
         [Then(@"the result variable ""(.*)"" will be ""(.*)""")]
         public void ThenTheResultVariableWillBe(string variable, string expectedValue)
@@ -788,6 +920,11 @@ namespace Dev2.Activities.Specs.BaseTypes
                     return;
                 }
 
+                if (columnHeader == "Source Path" || columnHeader == "Destination Path")
+                {
+                    rowValue = FixBrokenHostname(rowValue);
+                }
+
                 if (rowValue.Contains(" ="))
                 {
                     string[] multipleVarsOneLine;
@@ -908,9 +1045,7 @@ namespace Dev2.Activities.Specs.BaseTypes
                     Assert.IsTrue(inputDebugItems[i].Value.Contains("."));
                     Assert.IsTrue(int.TryParse(dt[6], out int val));
                     Assert.IsTrue(dt.Last().EndsWith("AM") || dt.Last().EndsWith("PM"));
-
                 }
-                //2016/01/06 08:00:01.68
                 else
                 {
                     Verify(expectedDebugItems[i].Value ?? "", inputDebugItems[i].Value ?? "", "Values", i, inputDebugItems[i].Variable);
@@ -978,13 +1113,13 @@ namespace Dev2.Activities.Specs.BaseTypes
                     }
                     catch (Exception ex)
                     {
-                        Assert.Fail("Value is not expected type");
+                        Assert.Fail("Value is not expected type: "+ ex.Message);
                     }
                 }
             }
         }
 
-        void RemoveTralingAndLeadingSpaces(List<IDebugItemResult> expectedDebugItems, List<IDebugItemResult> inputDebugItems)
+        static void RemoveTralingAndLeadingSpaces(List<IDebugItemResult> expectedDebugItems, List<IDebugItemResult> inputDebugItems)
         {
             for (int i = 0; i < expectedDebugItems.Count; i++)
             {

@@ -94,26 +94,28 @@ namespace Dev2.Activities.Specs.Search
 #line 7
 this.ScenarioSetup(scenarioInfo);
 #line 8
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line 9
- testRunner.And("I check the \"IsWorkflowNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line 10
+ testRunner.And("I check the \"IsWorkflowNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 11
  testRunner.When("I search for \"SearchWorkflowForSpecs\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table1 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table921 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table1.AddRow(new string[] {
+            table921.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "WorkflowName",
                         "SearchWorkflowForSpecs"});
-#line 11
- testRunner.Then("the search result contains", ((string)(null)), table1, "Then ");
+#line 12
+ testRunner.Then("the search result contains", ((string)(null)), table921, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -125,29 +127,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchTestNameName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search TestName Name", ((string[])(null)));
-#line 15
-this.ScenarioSetup(scenarioInfo);
 #line 16
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+this.ScenarioSetup(scenarioInfo);
 #line 17
- testRunner.And("I check the \"IsTestNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line 18
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 19
+ testRunner.And("I check the \"IsTestNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 20
  testRunner.When("I search for \"TestForSearchSpecs\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table922 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table2.AddRow(new string[] {
+            table922.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "TestName",
                         "TestForSearchSpecs"});
-#line 19
- testRunner.Then("the search result contains", ((string)(null)), table2, "Then ");
+#line 21
+ testRunner.Then("the search result contains", ((string)(null)), table922, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -159,29 +163,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchScalarNameName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search ScalarName Name", ((string[])(null)));
-#line 23
-this.ScenarioSetup(scenarioInfo);
-#line 24
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
 #line 25
- testRunner.And("I check the \"IsScalarNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+this.ScenarioSetup(scenarioInfo);
 #line 26
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 27
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 28
+ testRunner.And("I check the \"IsScalarNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 29
  testRunner.When("I search for \"SearchVar\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table923 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table3.AddRow(new string[] {
+            table923.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "Scalar",
                         "SearchVar"});
-#line 27
- testRunner.Then("the search result contains", ((string)(null)), table3, "Then ");
+#line 30
+ testRunner.Then("the search result contains", ((string)(null)), table923, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -193,29 +199,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchObjectNameName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search ObjectName Name", ((string[])(null)));
-#line 31
-this.ScenarioSetup(scenarioInfo);
-#line 32
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 33
- testRunner.And("I check the \"IsObjectNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line 34
+this.ScenarioSetup(scenarioInfo);
+#line 35
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 36
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 37
+ testRunner.And("I check the \"IsObjectNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 38
  testRunner.When("I search for \"SearchObject\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table924 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table4.AddRow(new string[] {
+            table924.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "Object",
                         "@SearchObject"});
-#line 35
- testRunner.Then("the search result contains", ((string)(null)), table4, "Then ");
+#line 39
+ testRunner.Then("the search result contains", ((string)(null)), table924, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -227,29 +235,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchRecSetNameName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search RecSetName Name", ((string[])(null)));
-#line 39
+#line 43
 this.ScenarioSetup(scenarioInfo);
-#line 40
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 41
+#line 44
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 45
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 46
  testRunner.And("I check the \"IsRecSetNameSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line 42
+#line 47
  testRunner.When("I search for \"SearchRec\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table5 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table925 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table5.AddRow(new string[] {
+            table925.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "RecordSet",
                         "SearchRec"});
-#line 43
- testRunner.Then("the search result contains", ((string)(null)), table5, "Then ");
+#line 48
+ testRunner.Then("the search result contains", ((string)(null)), table925, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -261,29 +271,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchToolTitleName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search ToolTitle Name", ((string[])(null)));
-#line 47
+#line 52
 this.ScenarioSetup(scenarioInfo);
-#line 48
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 49
+#line 53
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 54
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 55
  testRunner.And("I check the \"IsToolTitleSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line 50
+#line 56
  testRunner.When("I search for \"Search Tool\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table6 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table926 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table6.AddRow(new string[] {
+            table926.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "ToolTitle",
                         "Search Tool"});
-#line 51
- testRunner.Then("the search result contains", ((string)(null)), table6, "Then ");
+#line 57
+ testRunner.Then("the search result contains", ((string)(null)), table926, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -295,29 +307,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchInputVariableName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search InputVariable Name", ((string[])(null)));
-#line 55
+#line 61
 this.ScenarioSetup(scenarioInfo);
-#line 56
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 57
+#line 62
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 63
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 64
  testRunner.And("I check the \"IsInputVariableSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line 58
+#line 65
  testRunner.When("I search for \"SearchVar\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table7 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table927 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table7.AddRow(new string[] {
+            table927.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "ScalarInput",
                         "SearchVar"});
-#line 59
- testRunner.Then("the search result contains", ((string)(null)), table7, "Then ");
+#line 66
+ testRunner.Then("the search result contains", ((string)(null)), table927, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }
@@ -329,29 +343,31 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void SearchOutputVariableName()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Search OutputVariable Name", ((string[])(null)));
-#line 63
+#line 70
 this.ScenarioSetup(scenarioInfo);
-#line 64
- testRunner.Given("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
-#line 65
+#line 71
+ testRunner.Given("I have a localhost server", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Given ");
+#line 72
+ testRunner.And("I have the Search View open", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 73
  testRunner.And("I check the \"IsOutputVariableSelected\" checkbox", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
-#line 66
+#line 74
  testRunner.When("I search for \"SearchRec\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
 #line hidden
-            TechTalk.SpecFlow.Table table8 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table928 = new TechTalk.SpecFlow.Table(new string[] {
                         "ResourceId",
                         "Name",
                         "Path",
                         "Type",
                         "Match"});
-            table8.AddRow(new string[] {
+            table928.AddRow(new string[] {
                         "c494711c-c6a4-44d5-abb9-c0339cd88bae",
                         "SearchWorkflowForSpecs",
                         "SearchFolderForSpecs\\SearchWorkflowForSpecs",
                         "RecordSetOutput",
                         "SearchRec"});
-#line 67
- testRunner.Then("the search result contains", ((string)(null)), table8, "Then ");
+#line 75
+ testRunner.Then("the search result contains", ((string)(null)), table928, "Then ");
 #line hidden
             this.ScenarioCleanup();
         }

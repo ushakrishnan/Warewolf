@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,8 +18,8 @@ namespace Dev2.Communication
     {
         readonly ConcurrentDictionary<string, string> _resultCache = new ConcurrentDictionary<string, string>();
 
-        static ResultsCache _instance;
-        public static ResultsCache Instance => _instance ?? (_instance = new ResultsCache());
+        private readonly static ResultsCache _instance = new ResultsCache();
+        public static ResultsCache Instance { get => _instance; }
 
         ResultsCache() { }
 
@@ -27,12 +27,12 @@ namespace Dev2.Communication
         {
             if(string.IsNullOrEmpty(payload))
             {
-                throw new ArgumentNullException("payload");
+                throw new ArgumentNullException(nameof(payload));
             }
 
             if(receipt == null)
             {
-                throw new ArgumentNullException("receipt");
+                throw new ArgumentNullException(nameof(receipt));
             }
 
             return _resultCache.TryAdd(receipt.ToKey(), payload);
@@ -42,7 +42,7 @@ namespace Dev2.Communication
         {
             if(receipt == null)
             {
-                throw new ArgumentNullException("receipt");
+                throw new ArgumentNullException(nameof(receipt));
             }
 
             if (!_resultCache.TryRemove(receipt.ToKey(), out string result))
@@ -56,7 +56,7 @@ namespace Dev2.Communication
         {
             if(string.IsNullOrEmpty(user))
             {
-                throw new ArgumentNullException("user");
+                throw new ArgumentNullException(nameof(user));
             }
 
             var hasResults = _resultCache.Keys.Any(c => c.Contains(user + "!"));

@@ -1,18 +1,25 @@
-﻿using Dev2.Activities.DropBox2016.Result;
+﻿#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using Dev2.Activities.DropBox2016.Result;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Dropbox;
 using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Data.ServiceModel;
-using Dev2.Factories;
 using Dev2.Util;
-using Dropbox.Api;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dev2.Activities.Debug;
 using Dev2.Common.Interfaces.Data;
-using Dev2.Common.Interfaces.Wrappers;
 using Dev2.Common.Wrappers;
 using Dev2.Diagnostics;
 using Dev2.Interfaces;
@@ -24,15 +31,11 @@ using Dev2.Common.State;
 namespace Dev2.Activities.DropBox2016.DropboxFileActivity
 {
     [ToolDescriptorInfo("Dropbox", "List Contents", ToolType.Native, "8999E59A-38A3-43BB-A98F-6090D8C8EA3E", "Dev2.Activities", "1.0.0.0", "Legacy", "Storage: Dropbox", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Dropbox_List_Contents")]
-    public class DsfDropboxFileListActivity : DsfBaseActivity,IEquatable<DsfDropboxFileListActivity>
+    public class DsfDropboxFileListActivity : DsfDropBoxBaseActivity, IEquatable<DsfDropboxFileListActivity>
     {
-        public IDropboxFactory DropboxFactory { get; set; }
-        
         public OauthSource SelectedSource { get; set; }
 
         public List<string> Files { get; set; }
-        DropboxClient _dropboxClient;
-        IDropboxClientWrapper _dropboxClientWrapper;
         public Exception Exception { get; set; }
 
         [FindMissing]
@@ -56,11 +59,10 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
 
         [FindMissing]
         public bool IsFilesAndFoldersSelected { get; set; }
-
-        DsfDropboxFileListActivity(IDropboxFactory dropboxFactory)
+        
+        public DsfDropboxFileListActivity(IDropboxClientFactory dropboxClientFactory)
+            :base(dropboxClientFactory)
         {
-            DropboxFactory = dropboxFactory;
-
             DisplayName = "List Dropbox Contents";
             Files = new List<string>();
             IsFilesSelected = true;
@@ -70,23 +72,8 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
         }
 
         public DsfDropboxFileListActivity()
-            : this(new DropboxFactory())
+            : this(new DropboxClientWrapperFactory())
         {
-        }
-
-        protected DsfDropboxFileListActivity(IDropboxClientWrapper dropboxClientWrapper)
-            :this()
-        {
-            _dropboxClientWrapper = dropboxClientWrapper;
-        }
-        public DropboxClient GetDropboxClient()
-        {
-            if (_dropboxClient != null)
-            {
-                return _dropboxClient;
-            }
-            _dropboxClient = DropboxFactory.CreateWithSecret(SelectedSource.AccessToken);
-            return _dropboxClient;
         }
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
@@ -106,11 +93,11 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
 
             IDropboxSingleExecutor<IDropboxResult> dropboxFileRead = new DropboxFileRead(IsRecursive, toPath, IncludeMediaInfo, IncludeDeleted);
             var dropboxSingleExecutor = GetDropboxSingleExecutor(dropboxFileRead);
-            _dropboxClientWrapper = _dropboxClientWrapper ?? new DropboxClientWrapper(GetDropboxClient());
-            var dropboxExecutionResult = dropboxSingleExecutor.ExecuteTask(_dropboxClientWrapper);
+            SetupDropboxClient(SelectedSource.AccessToken);
+            var dropboxExecutionResult = dropboxSingleExecutor.ExecuteTask(_dropboxClient);
             if (dropboxExecutionResult is DropboxListFolderSuccesResult dropboxSuccessResult)
             {
-                var listFolderResult = dropboxSuccessResult.GetListFolderResulResult();
+                var listFolderResult = dropboxSuccessResult.GetListFolderResult();
                 var metadatas = listFolderResult.Entries;
                 if (IncludeDeleted)
                 {
@@ -200,37 +187,27 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
             }
 
             var isSourceEqual = CommonEqualityOps.AreObjectsEqual<IResource>(SelectedSource, other.SelectedSource);
-            return base.Equals(other) 
-                && isSourceEqual
-                && Files.SequenceEqual(other.Files, StringComparer.Ordinal) 
-                && IncludeMediaInfo == other.IncludeMediaInfo
-                && IsRecursive == other.IsRecursive
-                && IncludeDeleted == other.IncludeDeleted 
-                && string.Equals(ToPath, other.ToPath) 
-                && string.Equals(DisplayName, other.DisplayName) 
-                && IsFilesSelected == other.IsFilesSelected
-                && IsFoldersSelected == other.IsFoldersSelected
-                && IsFilesAndFoldersSelected == other.IsFilesAndFoldersSelected;
+            var eq = base.Equals(other);
+            eq &= isSourceEqual;
+            eq &= Files.SequenceEqual(other.Files, StringComparer.Ordinal);
+            eq &= IncludeMediaInfo == other.IncludeMediaInfo;
+            eq &= IsRecursive == other.IsRecursive;
+            eq &= IncludeDeleted == other.IncludeDeleted;
+            eq &= string.Equals(ToPath, other.ToPath);
+            eq &= string.Equals(DisplayName, other.DisplayName);
+            eq &= IsFilesSelected == other.IsFilesSelected;
+            eq &= IsFoldersSelected == other.IsFoldersSelected;
+            eq &= IsFilesAndFoldersSelected == other.IsFilesAndFoldersSelected;
+            return eq;
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is null)
+            if (obj is DsfDropboxFileListActivity)
             {
-                return false;
+                return Equals((DsfDropboxFileListActivity)obj);
             }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != this.GetType())
-            {
-                return false;
-            }
-
-            return Equals((DsfDropboxFileListActivity) obj);
+            return false;
         }
 
         public override int GetHashCode()

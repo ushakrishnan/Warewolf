@@ -1,6 +1,18 @@
-﻿using System;
+#pragma warning disable
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using Dev2.Common;
 using Dev2.Util;
 using RUISDK_5_3_1;
@@ -37,6 +49,8 @@ namespace Dev2.Instrumentation
 
         public string ProductVersion { get; set; }
 
+        public string InformationalVersion { get; set; }
+
         public RUIResult EnableApplicationResultStatus { get; set; }
 
         public RevulyticsTracker()
@@ -49,9 +63,10 @@ namespace Dev2.Instrumentation
             AesHexKey = AppUsageStats.AesHexKey;
         }
 
-        public void EnableApplicationTracker(string productVersion, string username)
+        public void EnableApplicationTracker(string productVersion, string informationalVersion, string username)
         {
             ProductVersion = productVersion;
+            InformationalVersion = informationalVersion;
             Username = username;
             try
             {
@@ -66,6 +81,7 @@ namespace Dev2.Instrumentation
                     if (sdkResult == RUIResult.ok)
                     {
                         LogErrorResult("EnableApplicationTracker",SetProductVersion());
+                        LogErrorResult("EnableApplicationTracker",SetInformationalVersion());
                         LogErrorResult("EnableApplicationTracker",StartSession());
                     }
                     else
@@ -150,7 +166,16 @@ namespace Dev2.Instrumentation
                 RuiSdk = new RUISDK(true, SdkFilePath,"RUISDK_5_3_1");
                 if (RuiSdk != null)
                 {
+                    if (!Directory.Exists(ConfigFilePath) && !File.Exists(ConfigFilePath))
+                    {
+                        Directory.CreateDirectory(ConfigFilePath);
+                    }
                     result = RuiSdk.CreateConfig(ConfigFilePath, ProductId, AppName, ProductUrl, Protocol, AesHexKey, MultiSessionEnabled, ReachOutOnAutoSync);
+                    int timeout = 10;
+                    while (RuiSdk.GetState() == RUIState.startedNewRegRunning && timeout > 0)
+                    {
+                        Thread.Sleep(100);
+                    }
                 }
                 return result;
             }
@@ -242,6 +267,32 @@ namespace Dev2.Instrumentation
             catch (Exception e)
             {
                 Dev2Logger.Error("Error in SetProductVersion method", e, Core.RevulyticsSdkError);
+                return result;
+            }
+        }
+
+        public RUIResult SetInformationalVersion()
+        {
+            var result = RUIResult.sdkSuspended;
+            try
+            {
+                Dev2Logger.Warn($"Revulytics.SetInformationalVersion: {InformationalVersion}", "");
+                result = RuiSdk.SetProductBuildNumber(InformationalVersion);
+                return result;
+            }
+            catch (RUISDKCreationException ex)
+            {
+                Dev2Logger.Error("Error in SetInformationalVersion method (RUISDKCreationException)", ex, Core.RevulyticsSdkError);
+                return result;
+            }
+            catch (ArgumentNullException e)
+            {
+                Dev2Logger.Error("Error in SetInformationalVersion method (ArgumentNullException)", e, Core.RevulyticsSdkError);
+                return result;
+            }
+            catch (Exception e)
+            {
+                Dev2Logger.Error("Error in SetInformationalVersion method", e, Core.RevulyticsSdkError);
                 return result;
             }
         }

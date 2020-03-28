@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,78 +9,81 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
+using Dev2.Common.Common;
+using Dev2.Common.Interfaces.Scheduler.Interfaces;
+using Dev2.Common.Interfaces.Studio.Controller;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using System;
 using System.IO;
 using System.Windows;
-using Dev2.Common.Interfaces.Studio.Controller;
 
 namespace Dev2.Utils
 {
     public static class HelperUtils
     {
+       
         public static string GetStudioLogSettingsConfigFile()
         {
             var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var studioFolder = Path.Combine(localAppDataFolder, "Warewolf", "Studio");
-            if (!Directory.Exists(studioFolder))
-            {
-                Directory.CreateDirectory(studioFolder);
-            }
+
+            IDirectory directory = new DirectoryWrapper();
+            directory.CreateIfNotExists(studioFolder);
+            
             var settingsConfigFile = Path.Combine(studioFolder, "Settings.config");
             return settingsConfigFile;
         }
-        public static void ShowTrustRelationshipError(SystemException exception)
+        public static void ShowTrustRelationshipError(IPopupController popupController, SystemException exception)
         {
-            if(exception.Message.Contains("The trust relationship between this workstation and the primary domain failed"))
+            if (exception.Message.Contains("The trust relationship between this workstation and the primary domain failed"))
             {
-                                var popup = CustomContainer.Get<IPopupController>();
-                                popup.Header = "Error connecting to server";
-                                popup.Description = "This computer cannot contact the Domain Controller."
-                                                    + Environment.NewLine + "If it does not belong to a domain, please ensure it is removed from the domain in computer management.";
-                                popup.Buttons = MessageBoxButton.OK;
-                                popup.ImageType = MessageBoxImage.Error;
-                                popup.Show();
+                var popup = popupController;
+                popup.Header = "Error connecting to server";
+                popup.Description = "This computer cannot contact the Domain Controller."
+                                    + Environment.NewLine + "If it does not belong to a domain, please ensure it is removed from the domain in computer management.";
+                popup.Buttons = MessageBoxButton.OK;
+                popup.ImageType = MessageBoxImage.Error;
+                popup.Show();
             }
         }
 
-        public static string SanitizePath(string path) => SanitizePath(path, "");
-
         public static string SanitizePath(string path, string resourceName)
         {
-            if (String.IsNullOrEmpty(path))
+            var newPath = path;
+            if (String.IsNullOrEmpty(newPath))
             {
                 return "";
             }
 
-            if (path.ToLower().StartsWith("root\\\\"))
+            if (newPath.ToLower().StartsWith("root\\\\"))
             {
-                path = path.Remove(0, 6);
+                newPath = newPath.Remove(0, 6);
             }
 
-            if (path.ToLower().Equals("root"))
+            if (newPath.ToLower().Equals("root"))
             {
-                path = path.Remove(0, 4);
+                newPath = newPath.Remove(0, 4);
             }
 
-            if (path.StartsWith("\\"))
+            if (newPath.StartsWith("\\"))
             {
-                path = path.Remove(0, 1);
+                newPath = newPath.Remove(0, 1);
             }
 
-            path = String.IsNullOrEmpty(path) ? resourceName : path + "\\" + resourceName;
+            newPath = String.IsNullOrEmpty(newPath) ? resourceName : newPath + "\\" + resourceName;
 
-            return path.Replace("\\\\", "\\")
-                .Replace("\\\\", "\\");
+            return newPath.Replace("\\\\", "\\").Replace("\\\\", "\\");
         }
 
         public static string GetServerLogSettingsConfigFile()
         {
             var localAppDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
             var serverLogFolder = Path.Combine(localAppDataFolder, "Warewolf", "Server Log");
-            if (!Directory.Exists(serverLogFolder))
-            {
-                Directory.CreateDirectory(serverLogFolder);
-            }
+
+            IDirectory directory = new DirectoryWrapper();
+            directory.CreateIfNotExists(serverLogFolder);
+
             var serverLogFile = Path.Combine(serverLogFolder, "warewolf-Server.log");
             return serverLogFile;
         }

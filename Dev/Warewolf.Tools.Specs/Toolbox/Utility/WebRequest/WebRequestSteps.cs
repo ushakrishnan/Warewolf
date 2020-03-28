@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +16,7 @@ using Dev2.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechTalk.SpecFlow;
 using Warewolf.Tools.Specs.BaseTypes;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.Toolbox.Utility.WebRequest
 {
@@ -72,10 +73,7 @@ namespace Dev2.Activities.Specs.Toolbox.Utility.WebRequest
         }
 
         [Given(@"I have the url ""(.*)"" without timeout")]
-        public void GivenIHaveTheUrl(string url)
-        {
-            scenarioContext.Add("url", url);
-        }
+        public void GivenIHaveTheUrl(string url) => scenarioContext.Add("url", ResolveTFSBLDDependancy(url));
 
         [When(@"the web request tool is executed")]
         public void WhenTheWebRequestToolIsExecuted()
@@ -95,15 +93,21 @@ namespace Dev2.Activities.Specs.Toolbox.Utility.WebRequest
                 variableList = new List<Tuple<string, string>>();
                 scenarioContext.Add("variableList", variableList);
             }
-            variableList.Add(new Tuple<string, string>(variable, value));
+            variableList.Add(new Tuple<string, string>(variable, ResolveTFSBLDDependancy(value)));
         }
 
         [Given(@"I have the Header ""(.*)""")]
-        public void GivenIHaveTheHeader(string header)
-        {
-            scenarioContext.Add("header", header);
-        }
+        public void GivenIHaveTheHeader(string header) => scenarioContext.Add("header", header);
 
+        string ResolveTFSBLDDependancy(string addressContainer)
+        {
+            var TFSBLDAddress = "TFSBLD.premier.local";
+            if (addressContainer.Contains(TFSBLDAddress) && string.IsNullOrEmpty(Depends.GetIPAddress(TFSBLDAddress)))
+            {
+                return addressContainer.Replace("TFSBLD.premier.local", Depends.TFSBLDIP);
+            }
+            return addressContainer;
+        }
 
         [Then(@"the result should contain the string ""(.*)""")]
         public void ThenTheResultShouldContainTheString(string expectedResult)

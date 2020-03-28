@@ -12,7 +12,7 @@ namespace Warewolf.UI.Tests
     [CodedUITest]
     public class ViewSwagger
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Explorer")]
         public void ShowSwagger_ForResource()
         {

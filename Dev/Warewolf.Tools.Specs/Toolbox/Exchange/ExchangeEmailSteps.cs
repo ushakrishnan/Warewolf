@@ -1,7 +1,6 @@
 ﻿using Dev2.Activities.Exchange;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
 using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.Interfaces;
@@ -22,17 +21,10 @@ namespace Warewolf.Tools.Specs.Toolbox.Exchange
     public class ExchangeEmailSteps : RecordSetBases
     {
         readonly ScenarioContext scenarioContext;
+        delegate void myDelegate(IExchange source, IWarewolfListIterator listIterator, IWarewolfIterator i1, IWarewolfIterator i2, IWarewolfIterator i3, IWarewolfIterator i4, IWarewolfIterator i5, IWarewolfIterator i6, out ErrorResultTO errors, bool _isHtml);
 
         public ExchangeEmailSteps(ScenarioContext scenarioContext)
-            : base(scenarioContext)
-        {
-            if (scenarioContext == null)
-            {
-                throw new ArgumentNullException(nameof(scenarioContext));
-            }
-
-            this.scenarioContext = scenarioContext;
-        }
+            : base(scenarioContext) => this.scenarioContext = scenarioContext ?? throw new ArgumentNullException(nameof(scenarioContext));
 
         protected override void BuildDataList()
         {
@@ -84,7 +76,7 @@ namespace Warewolf.Tools.Specs.Toolbox.Exchange
             emailSender
                 .Setup(sender => sender.SendEmail(It.IsAny<IExchange>(), It.IsAny<IWarewolfListIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), out eR, It.IsAny<bool>()))
                 .Returns("Success")
-                .Callback((IExchange source, IWarewolfListIterator listIterator, IWarewolfIterator i1, IWarewolfIterator i2, IWarewolfIterator i3, IWarewolfIterator i4, IWarewolfIterator i5, IWarewolfIterator i6, ErrorResultTO errors, bool _isHtml) =>
+                .Callback(new myDelegate((IExchange source, IWarewolfListIterator listIterator, IWarewolfIterator i1, IWarewolfIterator i2, IWarewolfIterator i3, IWarewolfIterator i4, IWarewolfIterator i5, IWarewolfIterator i6, out ErrorResultTO errors, bool _isHtml) =>
                 {
                     listIterator.FetchNextValue(i1);
                     listIterator.FetchNextValue(i2);
@@ -93,7 +85,8 @@ namespace Warewolf.Tools.Specs.Toolbox.Exchange
                     listIterator.FetchNextValue(i5);
                     listIterator.FetchNextValue(i6);
                     isHtml = _isHtml ? "true" : "false";
-                });
+                    errors = null;
+                }));
             var sendEmail = new DsfExchangeEmailNewActivity(emailSender.Object)
             {
                 Result = ResultVariable,
@@ -169,8 +162,7 @@ namespace Warewolf.Tools.Specs.Toolbox.Exchange
             var eR = new ErrorResultTO();
             emailSender
                 .Setup(sender => sender.SendEmail(It.IsAny<IExchange>(), It.IsAny<IWarewolfListIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), It.IsAny<IWarewolfIterator>(), out eR, It.IsAny<bool>()))
-                .Returns(result)
-                .Callback((IExchangeSource source, IWarewolfListIterator listIterator, IWarewolfIterator i1, IWarewolfIterator i2, IWarewolfIterator i3, IWarewolfIterator i4, IWarewolfIterator i5, IWarewolfIterator i6, ErrorResultTO errors) =>
+                .Callback(new myDelegate((IExchange source, IWarewolfListIterator listIterator, IWarewolfIterator i1, IWarewolfIterator i2, IWarewolfIterator i3, IWarewolfIterator i4, IWarewolfIterator i5, IWarewolfIterator i6, out ErrorResultTO errors, bool _isHtml) =>
                 {
                     listIterator.FetchNextValue(i1);
                     listIterator.FetchNextValue(i2);
@@ -178,8 +170,9 @@ namespace Warewolf.Tools.Specs.Toolbox.Exchange
                     listIterator.FetchNextValue(i4);
                     listIterator.FetchNextValue(i5);
                     listIterator.FetchNextValue(i6);
-
-                });
+                    errors = null;
+                }))
+                .Returns(result);
             var sendEmail = new DsfExchangeEmailNewActivity(emailSender.Object)
             {
                 Result = ResultVariable,

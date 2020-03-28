@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ using System.Windows;
 using Dev2.Activities.Designers2.Core;
 using Dev2.Activities.Designers2.Core.Extensions;
 using Dev2.Activities.Designers2.Core.Source;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
@@ -423,7 +425,7 @@ namespace Dev2.Activities.Designers2.Web_Service_Get
                 Path = "",
                 Id = Guid.NewGuid(),
                 PostData = "",
-                Headers = InputArea.Headers.Select(value => new NameValue { Name = value.Name, Value = value.Value }).ToList(),
+                Headers = InputArea.Headers.Select(value => new NameValue { Name = value.Name, Value = value.Value } as INameValue).ToList(),
                 QueryString = InputArea.QueryString,
                 RequestUrl = SourceRegion.SelectedSource.HostName,
                 Response = "",

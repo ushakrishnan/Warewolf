@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -319,63 +319,6 @@ namespace Dev2.Data.Tests.Operations
             Assert.IsFalse(actual, "IsLessThanOrEqual returned the wrong result when comparing integers");
         }
 
-
-        #endregion
-        
-        #region NotBetween
-
-        [TestMethod]
-        [Owner("Massimo Guerrera")]
-        [TestCategory("NotBetween_Invoke")]
-        public void NotBetween_Invoke_NotBetween_ReturnsFalse()
-        {
-            //------------Setup for test--------------------------
-            var notBetween = new NotBetween();
-            var cols = new string[3];
-            cols[0] = "15";
-            cols[1] = "10";
-            cols[2] = "20";
-
-            //------------Execute Test---------------------------
-
-            var result = notBetween.Invoke(cols);
-
-            //------------Assert Results-------------------------
-            Assert.IsFalse(result);
-        }
-
-        [TestMethod]
-        [Owner("Massimo Guerrera")]
-        [TestCategory("NotBetween_Invoke")]
-        public void NotBetween_Invoke_NotBetween_ReturnsTrue()
-        {
-            //------------Setup for test--------------------------
-            var notBetween = new NotBetween();
-            var cols = new string[3];
-            cols[0] = "30";
-            cols[1] = "10";
-            cols[2] = "20";
-
-            //------------Execute Test---------------------------
-
-            var result = notBetween.Invoke(cols);
-
-            //------------Assert Results-------------------------
-            Assert.IsTrue(result);
-        }
-        
-        [TestMethod]
-        [Owner("Sanele Mthmembu")]
-        [TestCategory("NotBetween_HandlesType")]
-        public void NotBetween_HandlesType_ReturnsNotBetweenType()
-        {
-            var decisionType = enDecisionType.NotBetween;
-            //------------Setup for test--------------------------
-            var notBetween = new NotBetween();
-            //------------Execute Test---------------------------
-            //------------Assert Results-------------------------
-            Assert.AreEqual(decisionType, notBetween.HandlesType());
-        }
 
         #endregion
 

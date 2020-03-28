@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Security.Claims;
 using System.Security.Principal;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Monitoring;
 using Dev2.PerformanceCounters.Counters;
 using Dev2.Runtime.Interfaces;
@@ -25,6 +26,7 @@ using Moq;
 namespace Dev2.Tests.Runtime.WebServer
 {
     [TestClass]
+    [TestCategory("Runtime WebServer")]
     public class WebGetRequestHandlerTest
     {
         [ClassInitialize]
@@ -37,7 +39,7 @@ namespace Dev2.Tests.Runtime.WebServer
             CustomContainer.Register(pCounter.Object);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("WebGetRequestHandler_ProcessRequest")]
         public void WebGetRequestHandler_ProcessRequest_WhenValidUserContext_ExpectExecution()
@@ -47,6 +49,9 @@ namespace Dev2.Tests.Runtime.WebServer
             var principle = new Mock<IPrincipal>();
             var mockIdentity = new Mock<IIdentity>();
             var resourceCatalog = new Mock<IResourceCatalog>();
+            var mockResource = new Mock<IResource>();
+            var resource = mockResource.Object;
+            resourceCatalog.Setup(o => o.GetResource(Guid.Empty, "ping")).Returns(resource);
             var testCatalog = new Mock<ITestCatalog>();
             mockIdentity.Setup(identity => identity.Name).Returns("FakeUser");
             principle.Setup(p => p.Identity.Name).Returns("FakeUser");
@@ -80,7 +85,7 @@ namespace Dev2.Tests.Runtime.WebServer
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Travis Frisinger")]
         [TestCategory("WebGetRequestHandler_ProcessRequest")]
         public void WebGetRequestHandler_ProcessRequest_WhenValidUserContextWhenNullDataListID_ExpectExecution()

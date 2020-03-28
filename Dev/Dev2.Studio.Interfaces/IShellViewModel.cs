@@ -1,3 +1,15 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,6 +22,8 @@ using Dev2.Common.Interfaces.Toolbox;
 using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
 using Dev2.Common.Interfaces.Versioning;
 using Dev2.Common.Interfaces.Data;
+using Warewolf.Data;
+using Dev2.Common.Interfaces.Studio.Controller;
 
 namespace Dev2.Studio.Interfaces
 {
@@ -52,6 +66,7 @@ namespace Dev2.Studio.Interfaces
         void NewOdbcSource(string resourcePath);
         void NewPluginSource(string resourcePath);
         void NewWebSource(string resourcePath);
+        void NewRedisSource(string resourcePath);
         void NewEmailSource(string resourcePath);
         void NewExchangeSource(string resourcePath);
         void NewRabbitMQSource(string resourcePath);
@@ -96,6 +111,7 @@ namespace Dev2.Studio.Interfaces
         void StudioDebug(Guid resourceId, IServer server);
         void CopyUrlLink(Guid resourceId, IServer server);
         void NewSchedule(Guid resourceId);
+        void NewQueueEvent(Guid resourceId);
         void SetRefreshExplorerState(bool refresh);
         void ResetMainView();
         void OnActiveServerChanged();
@@ -111,7 +127,10 @@ namespace Dev2.Studio.Interfaces
         IAuthorizeCommand DebugCommand { get; }
         IAuthorizeCommand SettingsCommand { get; }
         ICommand SearchCommand { get; }
+        ICommand AddWorkflowCommand { get; }
         IAuthorizeCommand SchedulerCommand { get; }
+        IAuthorizeCommand QueueEventsCommand { get; }
+        IAuthorizeCommand TasksCommand { get; }
         IToolboxViewModel ToolboxViewModel { get; }
         IHelpWindowViewModel HelpViewModel { get; }
         ICommand ShowStartPageCommand { get; }
@@ -131,6 +150,7 @@ namespace Dev2.Studio.Interfaces
         IAuthorizeCommand<string> NewDropboxSourceCommand { get; }
         IAuthorizeCommand<string> NewWcfSourceCommand { get; }
         IExplorerViewModel ExplorerViewModel { get; set; }
+        IPopupController PopupProvider { get; set; }
         IServer LocalhostServer { get; }
         bool ResourceCalled { get; set; }
 
@@ -143,5 +163,7 @@ namespace Dev2.Studio.Interfaces
         void OpenMergeDialogView(IExplorerItemViewModel currentResource);
         void UpdateExplorerWorkflowChanges(Guid resourceId);
         IResource CreateResourceFromStreamContent(string resourceContent);
+        IResource GetResource(string resourceId);
+        List<IServiceInputBase> GetInputsFromWorkflow(Guid resourceId);
     }
 }

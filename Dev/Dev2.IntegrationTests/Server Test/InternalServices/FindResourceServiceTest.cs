@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,11 +8,14 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Xml;
 using Dev2.Common;
-using Dev2.Integration.Tests.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.Net;
+using System.Web;
+using TestBase;
 
 namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
 {
@@ -48,14 +51,12 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
         public void ExecutionWithStar_ExpectedValidXML()
         {
 
-            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=*&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourceService?ResourceName=*&ResourceType=*&Roles=*";
 
             var result = TestHelper.PostDataToWebserver(path);
 
-            var xDoc = new XmlDocument();
-            xDoc.LoadXml(result);
-            // 1 == 1, else an error will be thrown
-            Assert.IsTrue(true);
+            var json = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(result);
+            Assert.IsNotNull(json);
         }
 
         [TestMethod]
@@ -64,9 +65,17 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
 
             var path = "http://localhost:3142/services/" + "Acceptance%20Testing%20Resources/WorkflowWithNoStartNodeConnected";
 
-            var result = TestHelper.PostDataToWebserver(path);
+            string result = "";
+            try
+            {
+                result = TestHelper.PostDataToWebserver(path);
+            } catch (WebException e)
+            {
+                var errorContent = new StreamReader(e.Response.GetResponseStream());
+                result = errorContent.ReadToEnd();
+            }
 
-            Assert.IsTrue(result.Contains("An internal error occurred while executing the service request"));
+            Assert.IsTrue(result.Contains("The workflow must have at least one service or activity connected to the Start Node."));
             Assert.IsTrue(result.Contains(GlobalConstants.NoStartNodeError));
         }
 
@@ -74,42 +83,36 @@ namespace Dev2.Integration.Tests.Dev2.Application.Server.Tests.InternalServices
         public void ExecutionWithSource_ExpectedValidXML()
         {
 
-            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=Source&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourceService?ResourceName=*&ResourceType=Source&Roles=*";
 
             var result = TestHelper.PostDataToWebserver(path);
 
-            var xDoc = new XmlDocument();
-            xDoc.LoadXml(result);
-            // 1 == 1, else an error will be thrown
-            Assert.IsTrue(true);
+            var json = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(result);
+            Assert.IsNotNull(json);
         }
 
         [TestMethod]
         public void ExecutionWithWorkflowService_ExpectedValidXML()
         {
 
-            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=WorkflowService&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourceService?ResourceName=*&ResourceType=WorkflowService&Roles=*";
 
             var result = TestHelper.PostDataToWebserver(path);
 
-            var xDoc = new XmlDocument();
-            xDoc.LoadXml(result);
-            // 1 == 1, else an error will be thrown
-            Assert.IsTrue(true);
+            var json = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(result);
+            Assert.IsNotNull(json);
         }
 
         [TestMethod]
         public void ExecutionWithActivity_ExpectedValidXML()
         {
 
-            var path = "http://localhost:3142/services/" + "FindResourcesService?ResourceName=*&ResourceType=Activity&Roles=*";
+            var path = "http://localhost:3142/services/" + "FindResourceService?ResourceName=*&ResourceType=Activity&Roles=*";
 
             var result = TestHelper.PostDataToWebserver(path);
 
-            var xDoc = new XmlDocument();
-            xDoc.LoadXml(result);
-            // 1 == 1, else an error will be thrown
-            Assert.IsTrue(true);
+            var json = Newtonsoft.Json.JsonConvert.DeserializeObject<JArray>(result);
+            Assert.IsNotNull(json);
         }
     }
 }

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -404,7 +405,9 @@ namespace Dev2.Activities.Designers2.Email
             Errors = result.Count == 0 ? null : result;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         IEnumerable<IActionableErrorInfo> ValidateThis()
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             foreach(var error in GetRuleSet("EmailSource", GetDatalistString?.Invoke()).ValidateRules("'Email Source'", () => IsEmailSourceFocused = true))
             {

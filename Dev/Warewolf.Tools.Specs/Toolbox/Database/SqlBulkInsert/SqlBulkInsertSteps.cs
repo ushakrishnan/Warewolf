@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,7 +28,8 @@ using WarewolfParserInterop;
 using Dev2.Activities.Specs.BaseTypes;
 using System.Reflection;
 using System.IO;
-using Warewolf.Launcher;
+using System.Net.Sockets;
+using Warewolf.UnitTestAttributes;
 
 namespace Warewolf.ToolsSpecs.Toolbox.Recordset.SqlBulkInsert
 {
@@ -36,7 +37,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Recordset.SqlBulkInsert
     public class SqlBulkInsertSteps : BaseActivityUnitTest
     {
         readonly ScenarioContext scenarioContext;
-        public static ContainerLauncher _containerOps;
+        public static Depends _containerOps;
 
         public SqlBulkInsertSteps(ScenarioContext scenarioContext)
         {
@@ -50,8 +51,8 @@ namespace Warewolf.ToolsSpecs.Toolbox.Recordset.SqlBulkInsert
 
         public void SetupScenerio()
         {
-            _containerOps = TestLauncher.StartLocalMSSQLContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
-            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
+            _containerOps = new Depends(Depends.ContainerType.MSSQL);
+            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port));
             ResourceCatalog.Instance.SaveResource(Guid.Empty, dbSource, "");
             scenarioContext.Add("dbSource", dbSource);
 
@@ -181,6 +182,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Recordset.SqlBulkInsert
             var dbSource = scenarioContext.Get<DbSource>("dbSource");
             using (var connection = new SqlConnection(dbSource.ConnectionString))
             {
+                Console.WriteLine("Connecting to " + dbSource.ConnectionString);
                 connection.Open();
                 var q2 = "update SqlBulkInsertSpecFlowTestTableForeign_for_" + scenarioContext.ScenarioInfo.Title.Replace(' ', '_');
                 if (scenarioContext.ScenarioInfo.Title.Replace(' ', '_') == "Import_data_into_Table_Batch_size_is_1")
@@ -251,6 +253,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Recordset.SqlBulkInsert
             sqlBulkInsert.Result = "[[result]]";
             var result = ExecuteProcess(isDebug: true, throwException: false);
             scenarioContext.Add("result", result);
+            Console.WriteLine("Sql Bulk Insert Tool Result: "  + result);
         }
 
         [Then(@"the new table will have")]

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,7 +25,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Core.Tests.IntellisenseProvider
 {
     [TestClass]
-    
+    [TestCategory("Intellisense Provider Core")]
     public class FileSystemIntellisenseProviderTest
     {
         IResourceModel _resourceModel;
@@ -35,12 +35,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
         [TestInitialize]
         public void Init()
         {
-            Monitor.Enter(DataListSingletonTest.DataListSingletonTestGuard);
-
-
             var testEnvironmentModel = ResourceModelTest.CreateMockEnvironment();
-
-
 
             _resourceModel = new ResourceModel(testEnvironmentModel.Object)
             {
@@ -62,12 +57,6 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             IDataListViewModel setupDatalist = new DataListViewModel();
             DataListSingleton.SetDataList(setupDatalist);
             DataListSingleton.ActiveDataList.InitializeDataListViewModel(_resourceModel);
-        }
-
-        [TestCleanup]
-        public void Cleanup()
-        {
-            Monitor.Exit(DataListSingletonTest.DataListSingletonTestGuard);
         }
 
         #endregion Test Initialization
@@ -193,7 +182,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var context = new IntellisenseProviderContext
             {
                 CaretPosition = 18,
-                InputText = @"\\RSAKLFSVRTFSBLD\",
+                InputText = @"\\TFSBLD.premier.local\",
                 IsInCalculateMode = false,
                 DesiredResultSet = IntellisenseDesiredResultSet.ClosestMatch
             };
@@ -212,7 +201,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var context = new IntellisenseProviderContext
             {
                 CaretPosition = 36,
-                InputText = @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff",
+                InputText = @"\\TFSBLD.premier.local\DevelopmentDropOff",
                 IsInCalculateMode = false,
                 DesiredResultSet = IntellisenseDesiredResultSet.ClosestMatch
             };
@@ -232,7 +221,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var context = new IntellisenseProviderContext
             {
                 CaretPosition = 41,
-                InputText = @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\_Arch",
+                InputText = @"\\TFSBLD.premier.local\DevelopmentDropOff\_Arch",
                 IsInCalculateMode = false,
                 DesiredResultSet = IntellisenseDesiredResultSet.ClosestMatch
             };
@@ -251,7 +240,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var context = new IntellisenseProviderContext
             {
                 CaretPosition = 44,
-                InputText = @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\LoadTest",
+                InputText = @"\\TFSBLD.premier.local\DevelopmentDropOff\LoadTest",
                 IsInCalculateMode = false,
                 DesiredResultSet = IntellisenseDesiredResultSet.ClosestMatch
             };
@@ -270,7 +259,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var context = new IntellisenseProviderContext
             {
                 CaretPosition = 39,
-                InputText = @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\Runt",
+                InputText = @"\\TFSBLD.premier.local\DevelopmentDropOff\Runt",
                 IsInCalculateMode = false,
                 DesiredResultSet = IntellisenseDesiredResultSet.ClosestMatch
             };
@@ -292,7 +281,7 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var context = new IntellisenseProviderContext
             {
                 CaretPosition = 39,
-                InputText = @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\Runt",
+                InputText = @"\\TFSBLD.premier.local\DevelopmentDropOff\Runt",
                 IsInCalculateMode = false,
                 DesiredResultSet = IntellisenseDesiredResultSet.EntireSet
             };
@@ -419,19 +408,19 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             QueryCollection = new List<string>();
             switch (searchPath)
             {
-                case @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\Runt":
+                case @"\\TFSBLD.premier.local\DevelopmentDropOff\Runt":
                     AddToList(1);
                     break;
-                case @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\LoadTest":
+                case @"\\TFSBLD.premier.local\DevelopmentDropOff\LoadTest":
                     AddToList(1);
                     break;
-                case @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff\_Arch":
+                case @"\\TFSBLD.premier.local\DevelopmentDropOff\_Arch":
                     AddToList(1);
                     break;
-                case @"\\RSAKLFSVRTFSBLD\DevelopmentDropOff":
+                case @"\\TFSBLD.premier.local\DevelopmentDropOff":
                     AddToList(16);
                     break;
-                case @"\\RSAKLFSVRTFSBLD\":
+                case @"\\TFSBLD.premier.local\":
                     AddToList(6);
                     break;
                 case @"\\":

@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.Tools
     [CodedUITest]
     public class Delete
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
 		[TestCategory("File Tools")]
         public void PathDeleteTool_Small_And_LargeView_UITest()
         {

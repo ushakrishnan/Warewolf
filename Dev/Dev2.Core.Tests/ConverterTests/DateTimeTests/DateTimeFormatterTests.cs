@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,23 +13,26 @@ using Dev2.Common.DateAndTime;
 using Dev2.Common.DateAndTime.TO;
 using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Dev2.Common;
 
 namespace Dev2.Tests.ConverterTests.DateTimeTests
 {
-    /// <summary>
-    /// Summary description for DateTimeFormatterTests
-    /// </summary>
     [TestClass]
     public class DateTimeFormatterTests
     {
-        static IDateTimeFormatter formatter;
 
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
+        static IDateTimeFormatter _formatter;
+
         public TestContext TestContext { get; set; }
+
+        [TestInitialize]
+        public void PreConditions()
+        {
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-ZA");
+            System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en-ZA");
+
+            Assert.AreEqual("en-ZA", System.Threading.Thread.CurrentThread.CurrentCulture.Name);
+            Assert.AreEqual("en-ZA", System.Threading.Thread.CurrentThread.CurrentUICulture.Name);
+        }
 
         #region Additional test attributes
         //
@@ -39,7 +42,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
         [ClassInitialize]
         public static void MyClassInitialize(TestContext testContext)
         {
-            formatter = DateTimeConverterFactory.CreateFormatter();
+            _formatter = DateTimeConverterFactory.CreateFormatter();
         }
 
         // Use ClassCleanup to run code after all tests in a class have run
@@ -70,7 +73,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             const string expected = "2011/10/14";
             Assert.AreEqual(expected, result);
         }
@@ -87,7 +90,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd' 'ZZZ";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             const string expected = "2011/10/14 Greenwich Mean Time";
             Assert.AreEqual(expected, result);
         }
@@ -104,7 +107,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            var isFormatCorrect = formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            var isFormatCorrect = _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             if (isFormatCorrect)
             {
                 Assert.Fail("Incorrect ouput format should not work correctly.");
@@ -128,7 +131,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "WrongType";
             dateTimeTO.TimeModifierAmount = 23;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
 
             Assert.IsTrue(result == "1988/10/14");
 
@@ -143,7 +146,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = "sp";
             dateTimeTO.TimeModifierType = "Milliseconds";
             dateTimeTO.TimeModifierAmount = -53;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
 
             Assert.AreEqual("900", result);
         }
@@ -156,7 +159,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
 
             Assert.AreEqual("2011/10/14", result);
         }
@@ -173,7 +176,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            var isFormatCorrect = formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            var isFormatCorrect = _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             if (isFormatCorrect)
             {
                 Assert.Fail("Incorrect ouput format should not work correctly.");
@@ -196,7 +199,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            var isFormatCorrect = formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            var isFormatCorrect = _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             if (isFormatCorrect)
             {
                 Assert.Fail("Incorrect ouput format should not work correctly.");
@@ -219,7 +222,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = @"yyyy'/'mm'/'dd";
             dateTimeTO.TimeModifierType = "";
             dateTimeTO.TimeModifierAmount = 0;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             const string expected = "1988/10/14";
 
             Assert.AreEqual(expected, result);
@@ -239,7 +242,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = "";
             dateTimeTO.TimeModifierType = "Years";
             dateTimeTO.TimeModifierAmount = 23;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             const string expected = "14102011";
 
             Assert.AreEqual(expected, result);
@@ -257,7 +260,7 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             dateTimeTO.OutputFormat = "";
             dateTimeTO.TimeModifierType = "";
             dateTimeTO.TimeModifierAmount = 0;
-            formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
+            _formatter.TryFormat(dateTimeTO, out string result, out string errorMsg);
             const string expected = "2012/8/20";
 
             Assert.AreEqual(expected, result);
@@ -645,7 +648,6 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
 
         #region Milliseconds Tests
 
-        //28.09.2012: massimo.guerrera - Added after bug was found
         [TestMethod]
         public void TimeModifiers_Split_Secs_Positive_Expected_Correct_Addition()
         {
@@ -658,7 +660,6 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             Assert.IsTrue(result == "2025/02/15 11:21:52 AM");
         }
 
-        //28.09.2012: massimo.guerrera - Added after bug was found
         [TestMethod]
         public void TimeModifiers_Split_Secs_Negative_Expected_Correct_Subtraction()
         {
@@ -671,7 +672,6 @@ namespace Dev2.Tests.ConverterTests.DateTimeTests
             Assert.IsTrue(result == "2025/02/15 11:21:50 AM");
         }
 
-        //28.09.2012: massimo.guerrera - Added after bug was found
         [TestMethod]
         public void TimeModifiers_Split_Secs_Zero_Expected_No_Change()
         {

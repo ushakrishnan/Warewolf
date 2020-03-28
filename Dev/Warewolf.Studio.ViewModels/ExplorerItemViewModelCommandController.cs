@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -94,6 +95,11 @@ namespace Warewolf.Studio.ViewModels
             _shellViewModel.NewSchedule(resourceId);
         }
 
+        public void QueueEventCommand(Guid resourceId)
+        {
+            _shellViewModel.NewQueueEvent(resourceId);
+        }
+
         public void RunAllTestsCommand(string ResourcePath, Guid resourceId)
         {
             _shellViewModel.RunAllTests(ResourcePath, resourceId);
@@ -133,6 +139,11 @@ namespace Warewolf.Studio.ViewModels
         {
             SetActiveStates(_shellViewModel, server);
             _shellViewModel.NewWebSource(resourcePath);
+        }
+        public void NewRedisSourceCommand(string resourcePath, IServer server)
+        {
+            SetActiveStates(_shellViewModel, server);
+            _shellViewModel.NewRedisSource(resourcePath);
         }
         public void NewPluginSourceCommand(string resourcePath, IServer server)
         {

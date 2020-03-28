@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +18,6 @@ using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
-using Dev2.Data.TO;
 using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Control;
@@ -34,12 +34,14 @@ namespace Dev2.Runtime.WebServer.Handlers
     {
         readonly IResourceCatalog _catalog;
         readonly IAuthorizationService _authorizationService;
+        IDSFDataObject DsfDataObject { get; set; }
         public IPrincipal ExecutingUser { private get; set; }
 
         public InternalServiceRequestHandler()
             : this(ResourceCatalog.Instance, ServerAuthorizationService.Instance)
         {
         }
+
         public InternalServiceRequestHandler(IResourceCatalog catalog, IAuthorizationService authorizationService)
         {
             _catalog = catalog;
@@ -48,14 +50,14 @@ namespace Dev2.Runtime.WebServer.Handlers
 
         public override void ProcessRequest(ICommunicationContext ctx)
         {
-            var serviceName = GetServiceName(ctx);
-            var instanceId = GetInstanceID(ctx);
-            var bookmark = GetBookmark(ctx);
-            GetDataListID(ctx);
-            var workspaceId = GetWorkspaceID(ctx);
+            var serviceName = ctx.GetServiceName();
+            var instanceId = ctx.GetInstanceID();
+            var bookmark = ctx.GetBookmark();
+            ctx.GetDataListID();
+            var workspaceId = ctx.GetWorkspaceID();
             var formData = new WebRequestTO();
 
-            var xml = GetPostData(ctx);
+            var xml = SubmittedData.GetPostData(ctx);
 
             if (!string.IsNullOrEmpty(xml))
             {
@@ -75,7 +77,7 @@ namespace Dev2.Runtime.WebServer.Handlers
 
             try
             {
-                // Execute in its own thread to give proper context ;)
+                // Execute in its own thread to give proper context
                 var t = new Thread(() =>
                 {
                     Thread.CurrentPrincipal = ExecutingUser;
@@ -85,7 +87,6 @@ namespace Dev2.Runtime.WebServer.Handlers
                 });
 
                 t.Start();
-
                 t.Join();
             }
             catch (Exception e)
@@ -94,7 +95,7 @@ namespace Dev2.Runtime.WebServer.Handlers
             }
         }
 
-        string BuildStudioUrl(string payLoad)
+        static string BuildStudioUrl(string payLoad)
         {
             try
             {
@@ -109,12 +110,27 @@ namespace Dev2.Runtime.WebServer.Handlers
                 Dev2Logger.Error(e, "BuildStudioUrl(string payLoad)");
                 return string.Empty;
             }
-
         }
 
         public StringBuilder ProcessRequest(EsbExecuteRequest request, Guid workspaceId, Guid dataListId, string connectionId)
         {
             var channel = new EsbServicesEndpoint();
+
+            var isManagementResource = ProcessDsfDataObject(request, workspaceId, dataListId, connectionId, channel);
+            if (!DsfDataObject.Environment.HasErrors())
+            {
+                return ProcessRequest(request, workspaceId, channel, DsfDataObject, isManagementResource);
+            }
+
+            var msg = new ExecuteMessage { HasError = true };
+            msg.SetMessage(string.Join(Environment.NewLine, DsfDataObject.Environment.Errors));
+
+            var serializer = new Dev2JsonSerializer();
+            return serializer.SerializeToBuilder(msg);
+        }
+
+        private static (string xmlData, string queryString) FormatXmlData(EsbExecuteRequest request)
+        {
             var xmlData = string.Empty;
             var queryString = "";
             if (request.Args != null && request.Args.ContainsKey("DebugPayload"))
@@ -128,6 +144,57 @@ namespace Dev2.Runtime.WebServer.Handlers
             {
                 xmlData = "<DataList></DataList>";
             }
+            return (xmlData, queryString);
+        }
+
+        private bool ProcessDsfDataObject(EsbExecuteRequest request, Guid workspaceId, Guid dataListId, string connectionId, EsbServicesEndpoint channel)
+        {
+            var (xmlData, queryString) = FormatXmlData(request);
+
+            DsfDataObject = new DsfDataObject(xmlData, dataListId);
+            if (!DsfDataObject.ExecutionID.HasValue)
+            {
+                DsfDataObject.ExecutionID = Guid.NewGuid();
+            }
+            DsfDataObject.QueryString = queryString;
+
+            if (IsDebugRequest(request))
+            {
+                DsfDataObject.IsDebug = true;
+            }
+            DsfDataObject.StartTime = DateTime.Now;
+            DsfDataObject.EsbChannel = channel;
+            DsfDataObject.ServiceName = request.ServiceName;
+
+            var resource = request.ResourceID != Guid.Empty ? _catalog.GetResource(workspaceId, request.ResourceID) : _catalog.GetResource(workspaceId, request.ServiceName);
+            var isManagementResource = false;
+            if (!string.IsNullOrEmpty(request.TestName))
+            {
+                DsfDataObject.TestName = request.TestName;
+                DsfDataObject.IsServiceTestExecution = true;
+            }
+            if (resource != null)
+            {
+                DsfDataObject.ResourceID = resource.ResourceID;
+                DsfDataObject.SourceResourceID = resource.ResourceID;
+                isManagementResource = _catalog.ManagementServices.ContainsKey(resource.ResourceID);
+            }
+            else
+            {
+                if (request.ResourceID != Guid.Empty)
+                {
+                    DsfDataObject.ResourceID = request.ResourceID;
+                }
+            }
+
+            DsfDataObject.ClientID = Guid.Parse(connectionId);
+            Common.Utilities.OrginalExecutingUser = ExecutingUser;
+            DsfDataObject.ExecutingUser = ExecutingUser;
+            return isManagementResource;
+        }
+
+        private static bool IsDebugRequest(EsbExecuteRequest request)
+        {
             var isDebug = false;
             if (request.Args != null && request.Args.ContainsKey("IsDebug"))
             {
@@ -137,55 +204,8 @@ namespace Dev2.Runtime.WebServer.Handlers
                     isDebug = false;
                 }
             }
-            var serializer = new Dev2JsonSerializer();
-            IDSFDataObject dataObject = new DsfDataObject(xmlData, dataListId);
-            if (!dataObject.ExecutionID.HasValue)
-            {
-                dataObject.ExecutionID = Guid.NewGuid();
-            }
-            dataObject.QueryString = queryString;
 
-            if (isDebug)
-            {
-                dataObject.IsDebug = true;
-            }
-            dataObject.StartTime = DateTime.Now;
-            dataObject.EsbChannel = channel;
-            dataObject.ServiceName = request.ServiceName;
-
-            var resource = request.ResourceID != Guid.Empty ? _catalog.GetResource(workspaceId, request.ResourceID) : _catalog.GetResource(workspaceId, request.ServiceName);
-            var isManagementResource = false;
-            if (!string.IsNullOrEmpty(request.TestName))
-            {
-                dataObject.TestName = request.TestName;
-                dataObject.IsServiceTestExecution = true;
-            }
-            if (resource != null)
-            {
-                dataObject.ResourceID = resource.ResourceID;
-                dataObject.SourceResourceID = resource.ResourceID;
-                isManagementResource = _catalog.ManagementServices.ContainsKey(resource.ResourceID);
-            }
-            else
-            {
-                if (request.ResourceID != Guid.Empty)
-                {
-                    dataObject.ResourceID = request.ResourceID;
-                }
-            }
-
-            dataObject.ClientID = Guid.Parse(connectionId);
-            Common.Utilities.OrginalExecutingUser = ExecutingUser;
-            dataObject.ExecutingUser = ExecutingUser;
-            if (!dataObject.Environment.HasErrors())
-            {
-                return ProcessRequest(request, workspaceId, channel, dataObject, isManagementResource);
-            }
-
-            var msg = new ExecuteMessage { HasError = true };
-            msg.SetMessage(string.Join(Environment.NewLine, dataObject.Environment.Errors));
-
-            return serializer.SerializeToBuilder(msg);
+            return isDebug;
         }
 
         private StringBuilder ProcessRequest(EsbExecuteRequest request, Guid workspaceId, EsbServicesEndpoint channel, IDSFDataObject dataObject, bool isManagementResource)
@@ -196,20 +216,38 @@ namespace Dev2.Runtime.WebServer.Handlers
             }
             try
             {
+                // Execute in its own thread to give proper context
                 var t = new Thread(() =>
                 {
-                    TryExecuteRequest(request, workspaceId, channel, dataObject, isManagementResource);
+                    try
+                    {
+                        Thread.CurrentPrincipal = ExecutingUser;
+                        if (isManagementResource)
+                        {
+                            Thread.CurrentPrincipal = Common.Utilities.ServerUser;
+                            ExecutingUser = Common.Utilities.ServerUser;
+                            dataObject.ExecutingUser = Common.Utilities.ServerUser;
+                        }
+                        else
+                        {
+                            IsAuthorizedForServiceTestRun(dataObject);
+                        }
+
+                        channel.ExecuteRequest(dataObject, request, workspaceId, out var errors);
+                    }
+                    catch (Exception e)
+                    {
+                        Dev2Logger.Error(e.Message, e, GlobalConstants.WarewolfError);
+                    }
                 });
 
                 t.Start();
-
                 t.Join();
             }
             catch (Exception e)
             {
                 Dev2Logger.Error(e.Message, e, GlobalConstants.WarewolfError);
             }
-
 
             if (request.ExecuteResult.Length > 0)
             {
@@ -219,35 +257,17 @@ namespace Dev2.Runtime.WebServer.Handlers
             return new StringBuilder();
         }
 
-        private void TryExecuteRequest(EsbExecuteRequest request, Guid workspaceId, EsbServicesEndpoint channel, IDSFDataObject dataObject, bool isManagementResource)
-        {
-            Thread.CurrentPrincipal = ExecutingUser;
-            if (isManagementResource)
-            {
-                Thread.CurrentPrincipal = Common.Utilities.ServerUser;
-                ExecutingUser = Common.Utilities.ServerUser;
-                dataObject.ExecutingUser = Common.Utilities.ServerUser;
-            }
-            else
-            {
-                IsAuthorizedForServiceTestRun(dataObject);
-            }
-
-            channel.ExecuteRequest(dataObject, request, workspaceId, out ErrorResultTO errors);
-        }
-
         void IsAuthorizedForServiceTestRun(IDSFDataObject dataObject)
         {
-            if (dataObject.IsServiceTestExecution && _authorizationService != null)
+            var isAuthorized = dataObject.IsServiceTestExecution;
+            isAuthorized &= _authorizationService != null;
+            if (isAuthorized)
             {
                 var authorizationService = _authorizationService;
-                var hasContribute =
-                    authorizationService.IsAuthorized(AuthorizationContext.Contribute,
-                        Guid.Empty.ToString());
+                var hasContribute = authorizationService.IsAuthorized(AuthorizationContext.Contribute, Guid.Empty.ToString());
                 if (!hasContribute)
                 {
-                    throw new UnauthorizedAccessException(
-                        "The user does not have permission to execute tests.");
+                    throw new UnauthorizedAccessException("The user does not have permission to execute tests.");
                 }
             }
         }

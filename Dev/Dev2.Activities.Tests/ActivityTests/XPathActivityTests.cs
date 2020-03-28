@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -295,8 +295,8 @@ namespace Dev2.Tests.Activities.ActivityTests
                                                     "string()","Unlimited.Applications.WebServer.Responses.CommunicationResponseWriter(object, string, string)"
                                                         
             };
-            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "rec1", out string error);
-            actual.AddRange(RetrieveAllRecordSetFieldValues(result.Environment, "recset1", "field1", out error));
+            var actual = RetrieveAllRecordSetFieldValuesSkipEmpty(result.Environment, "recset1", "rec1", out string error);
+            actual.AddRange(RetrieveAllRecordSetFieldValuesSkipEmpty(result.Environment, "recset1", "field1", out error));
 
             // remove test datalist ;)
 

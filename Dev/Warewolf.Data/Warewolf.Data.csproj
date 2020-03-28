@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Warewolf.Interfaces\Warewolf.Interfaces.csproj" />
+    <ProjectReference Include="..\Warewolf.Studio.Resources\Warewolf.Studio.Resources.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\AssemblyCommonInfo.cs" Link="Properties\AssemblyCommonInfo.cs" />
+  </ItemGroup>
+</Project>

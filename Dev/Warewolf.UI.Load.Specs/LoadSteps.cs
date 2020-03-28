@@ -44,7 +44,7 @@ namespace Warewolf.UI.Load.Specs
         [AfterFeature]
         public static void RemoveScheduledTasks()
         {
-            if (ScenarioContext.Current.ContainsKey("localTaskService"))
+            if (ScenarioContext.Current != null && ScenarioContext.Current.ContainsKey("localTaskService"))
             {
                 var localTaskService = ScenarioContext.Current.Get<TaskService>("localTaskService");
                 var numberOfTasks = ScenarioContext.Current.Get<String>("numberOfTasks");
@@ -99,9 +99,9 @@ namespace Warewolf.UI.Load.Specs
         [When(@"I open ""(.*)"" All Tools workflows tabs")]
         public void OpenManyNewWorkflowTabs(string numberOfTabs)
         {
-            for(var i = int.Parse(numberOfTabs); i > 0; i--)
+            ExplorerUIMap.Filter_Explorer("All Tools");
+            for (var i = int.Parse(numberOfTabs); i > 0; i--)
             {
-                ExplorerUIMap.Filter_Explorer("All Tools " + i.ToString());
                 ExplorerUIMap.Open_Explorer_First_Item_With_Double_Click();
             }
         }
@@ -149,7 +149,13 @@ namespace Warewolf.UI.Load.Specs
         [Then("I wait for Studio to release its Mutex")]
         public void WaitForStudioMutex()
         {
-            Playback.Wait(60000);
+            Process[] studioProcess;
+            do
+            {
+                Playback.Wait(100);
+                studioProcess = Process.GetProcessesByName("Warewolf Studio");
+            }
+            while (studioProcess != null && studioProcess.Length > 0); 
         }
 
         [When("I start the Studio")]

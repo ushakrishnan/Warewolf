@@ -1,7 +1,7 @@
 ﻿// 
 // /*
 // *  Warewolf - Once bitten, there's no going back
-// *  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+// *  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 // *  Licensed under GNU Affero General Public License 3.0 or later. 
 // *  Some rights reserved.
 // *  Visit our website for more information <http://warewolf.io/>
@@ -57,8 +57,7 @@ namespace Dev2.Diagnostics.Test
         public string Category { get; private set; }
         public string Name { get; private set; }
         public WarewolfPerfCounterType PerfCounterType { get; private set; }
-
-        public IList<CounterCreationData> CreationData()
+        public IEnumerable<(string CounterName, string CounterHelp, Common.Interfaces.Monitoring.PerformanceCounterType CounterType)> CreationData()
         {
             return null;
         }
@@ -73,6 +72,10 @@ namespace Dev2.Diagnostics.Test
 
         public void Reset()
         {            
+        }
+
+        public void Dispose()
+        {
         }
     }
 

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -89,6 +90,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                 OnPropertyChanged("SkipBlankRows");
             }
         }
+        private string NewLineFormat { get; set; } = "\r\n";
+
 
         protected override bool CanInduceIdle => true;
 
@@ -141,7 +144,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             ExecuteTool(dataObject, 0);
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             _indexCounter = 1;
 
@@ -160,7 +165,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     AddDebugInputItem(new DebugItemStaticDataParams(SkipBlankRows ? "Yes" : "No", "Skip blank rows"));
                     AddDebug(ResultsCollection, dataObject.Environment, update);
                 }
-                var res = new WarewolfIterator(env.Eval(sourceString, update));
+                var sourceStringValue = env.Eval(sourceString, update);
+                var res = new WarewolfIterator(sourceStringValue);
+                NewLineFormat = res.NewLineFormat;
+
+
                 iter.AddVariableToIterateOn(res);
                 IDictionary<string, int> positions = new Dictionary<string, int>();
                 CleanArguments(ResultsCollection);
@@ -219,14 +228,15 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
                 if (!allErrors.HasErrors() && tokenizer != null)
                 {
-                    AddToDebugDictionary(dataObject, update, env, positions, singleInnerIteration, resultsEnumerator, debugDictionary, tokenizer);
+                    ProcessTokenizerItems(dataObject, update, env, positions, singleInnerIteration, resultsEnumerator, debugDictionary, tokenizer);
                 }
             }
             env.CommitAssign();
         }
 
-        void AddToDebugDictionary(IDSFDataObject dataObject, int update, IExecutionEnvironment env, IDictionary<string, int> positions, bool singleInnerIteration, IEnumerator<DataSplitDTO> resultsEnumerator, List<string> debugDictionary, IDev2Tokenizer tokenizer)
+        void ProcessTokenizerItems(IDSFDataObject dataObject, int update, IExecutionEnvironment env, IDictionary<string, int> positions, bool singleInnerIteration, IEnumerator<DataSplitDTO> resultsEnumerator, List<string> debugDictionary, IDev2Tokenizer tokenizer)
         {
+            var lastItemEndedInNewLine = false;
             while (tokenizer.HasMoreOps())
             {
                 var currentval = resultsEnumerator.MoveNext();
@@ -240,7 +250,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     resultsEnumerator.MoveNext();
                 }
                 var tmp = tokenizer.NextToken();
-                if (tmp.StartsWith(Environment.NewLine) && !SkipBlankRows)
+                if (tmp.StartsWith(NewLineFormat) && !SkipBlankRows)
                 {
                     resultsEnumerator.Reset();
                     while (resultsEnumerator.MoveNext())
@@ -251,19 +261,37 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     resultsEnumerator.MoveNext();
                 }
                 var outputVar = resultsEnumerator.Current.OutputVariable;
-                if (!IsNullEmptyOrNewLine(tmp))
+                if (!NewLine(tmp))
                 {
-                    if (!String.IsNullOrEmpty(outputVar))
-                    {
-                        var assignVar = ExecutionEnvironment.ConvertToIndex(outputVar, positions[outputVar]);
-                        env.AssignWithFrame(new AssignValue(assignVar, tmp), update);
-                        positions[outputVar] = positions[outputVar] + 1;
-                    }
+                    lastItemEndedInNewLine = tmp.EndsWith(NewLineFormat);
+                    AssignItem(update, env, positions, ref tmp, outputVar);
                     if (dataObject.IsDebugMode())
                     {
                         AddOutputToDebugOutput(update, env, resultsEnumerator, debugDictionary);
                     }
                 }
+            }
+
+            if (lastItemEndedInNewLine)
+            {
+                var tovar = resultsEnumerator.Current.OutputVariable;
+                var assignToVar = ExecutionEnvironment.ConvertToIndex(tovar, positions[tovar]);
+                env.AssignWithFrame(new AssignValue(assignToVar, ""), update);
+                positions[tovar] = positions[tovar] + 1;
+            }
+        }
+
+        private void AssignItem(int update, IExecutionEnvironment env, IDictionary<string, int> positions, ref string tmp, string outputVar)
+        {
+            if (!String.IsNullOrEmpty(outputVar))
+            {
+                var assignVar = ExecutionEnvironment.ConvertToIndex(outputVar, positions[outputVar]);
+                if (!SkipBlankRows)
+                {
+                    tmp = tmp.Replace(NewLineFormat, "");
+                }
+                env.AssignWithFrame(new AssignValue(assignVar, tmp), update);
+                positions[outputVar] = positions[outputVar] + 1;
             }
         }
 
@@ -289,7 +317,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        private static bool IsNullEmptyOrNewLine(string tmp) => String.IsNullOrEmpty(tmp) || tmp == "\r" || tmp == "\n" || tmp == Environment.NewLine;
+        private static bool NewLine(string tmp) => tmp == "\r" || tmp == "\n" || tmp == Environment.NewLine;
 
         void HandleErrors(IDSFDataObject dataObject, int update, ErrorResultTO allErrors)
         {
@@ -429,6 +457,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     dtb.AddTokenOp("\t", t.Include);
                     break;
                 case "New Line":
+                    t.Include |= !SkipBlankRows;
                     AddLineBreakTokenOp(stringToSplit, dtb, t);
                     break;
                 case "Chars":

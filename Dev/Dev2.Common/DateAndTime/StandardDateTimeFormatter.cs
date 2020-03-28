@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,12 +19,12 @@ namespace Dev2.Common.DateAndTime
     {
         public override bool TryFormat(IDateTimeOperationTO dateTimeTO, out string result, out string error)
         {
-
             if (string.IsNullOrEmpty(dateTimeTO.DateTime))
             {
                 dateTimeTO.DateTime = DateTime.Now.ToString(GlobalConstants.Dev2DotNetDefaultDateTimeFormat, CultureInfo.InvariantCulture);
             }
-            var internallyParsedValue = DateTime.TryParseExact(dateTimeTO.DateTime?.Trim(), dateTimeTO.InputFormat, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dateResult);
+
+            var internallyParsedValue = DateTime.TryParseExact(dateTimeTO.DateTime.Trim(), dateTimeTO.InputFormat, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var dateResult);
             if (internallyParsedValue)
             {
                 var tmpDateTime = PerformDateTimeModification(dateTimeTO, dateResult);
@@ -32,27 +33,27 @@ namespace Dev2.Common.DateAndTime
             }
             else
             {
-                var secondResult = DateTime.Parse(dateTimeTO.DateTime?.Trim(), CultureInfo.InvariantCulture);
+                var secondResult = DateTime.Parse(dateTimeTO.DateTime.Trim(), CultureInfo.InvariantCulture);
                 var tmpDateTime = PerformDateTimeModification(dateTimeTO, secondResult);
                 result = tmpDateTime.ToString(dateTimeTO.OutputFormat, CultureInfo.InvariantCulture);
                 error = "";
-
             }
-            return true;
 
+            return true;
         }
 
         DateTime PerformDateTimeModification(IDateTimeOperationTO dateTimeTO, DateTime tmpDateTime)
         {
             var dateTime = tmpDateTime;
-            if (!string.IsNullOrWhiteSpace(dateTimeTO.TimeModifierType))
+
+            if (string.IsNullOrWhiteSpace(dateTimeTO.TimeModifierType))
             {
-                Func<DateTime, int, DateTime> funcToExecute;
-                if (TimeModifiers.TryGetValue(dateTimeTO.TimeModifierType, out funcToExecute) &&
-                    funcToExecute != null)
-                {
-                    dateTime = funcToExecute(dateTime, dateTimeTO.TimeModifierAmount);
-                }
+                return dateTime;
+            }
+
+            if (TimeModifiers.TryGetValue(dateTimeTO.TimeModifierType, out var funcToExecute))
+            {
+                dateTime = funcToExecute(dateTime, dateTimeTO.TimeModifierAmount);
             }
 
             return dateTime;

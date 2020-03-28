@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,6 +14,8 @@ using Dev2.Data.Interfaces.Enums;
 
 namespace Dev2.Studio.Interfaces.DataList
 {
+    public delegate void DataListItemDeletedEventHandler(IDataListItemModel dataListItemModel);
+
     public interface IDataListItemModel : IEquatable<IDataListItemModel>
     {
         string DisplayName { get; set; }
@@ -33,5 +36,6 @@ namespace Dev2.Studio.Interfaces.DataList
         void SetError(string errorMessage);
         void RemoveError();
         string Name { get; set; }
+        event DataListItemDeletedEventHandler OnDeleted;
     }
 }

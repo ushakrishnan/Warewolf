@@ -10,7 +10,7 @@ namespace Warewolf.UI.Tests.WebSource
     {
         const string SourceName = "CodedUITestWebServiceSource";
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Web Sources")]
         public void Create_Save_And_Edit_WebServiceSource_From_ExplorerContextMenu_UITests()
         {
@@ -24,7 +24,7 @@ namespace Warewolf.UI.Tests.WebSource
             WebSourceUIMap.Click_UserButton_On_WebServiceSourceTab();
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.UserNameTextBox.Enabled, "Username Textbox not enabled");
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.PasswordTextBox.Enabled, "Password Textbox not enabled");
-            WebSourceUIMap.Enter_TextIntoAddress_On_WebServiceSourceTab("http://RSAKLFSVRTFSBLD:9810");
+            WebSourceUIMap.Enter_TextIntoAddress_On_WebServiceSourceTab("http://TFSBLD.premier.local:9810");
             WebSourceUIMap.Enter_RunAsUser_On_WebServiceSourceTab();
             WebSourceUIMap.Enter_DefaultQuery_On_WebServiceSourceTab("");
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection button not enabled");
@@ -46,7 +46,7 @@ namespace Warewolf.UI.Tests.WebSource
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.AnonymousRadioButton.Selected);
         }
         
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Web Sources")]     
         public void Test_WebServiceSource_DefaulQuery_UITests()
         {
@@ -61,7 +61,7 @@ namespace Warewolf.UI.Tests.WebSource
             Assert.IsTrue(WebSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WebSourceTab.WorkSurfaceContext.DefaultQueryTextBox.TestPassedImage.Exists, "Expected Test to Pass, but got different results after clicking test button.");
         }
         
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Web Sources")]       
         public void Test_WebServiceSource_ValidateDefaultHttps_AddedOnMissingText_UITests()
         {

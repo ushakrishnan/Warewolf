@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -11,9 +10,9 @@ namespace Warewolf.UI.Tests.Workflow
     [CodedUITest]
     public class Default_LayoutTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Default Layout")]
-        public void Studio_Default_Layout_UITest()
+        public void StudioLayout_ChangesSaved_UITest()
         {
             Process studio = Process.GetProcesses().FirstOrDefault(process => process.ProcessName == "Warewolf Studio");
             var fileName = studio?.MainModule.FileName;
@@ -22,20 +21,10 @@ namespace Warewolf.UI.Tests.Workflow
             UIMap.Close_And_Lock_Side_Menu_Bar();
             var dockWidthBefore = UIMap.MainStudioWindow.DockManager.Width;
             Mouse.Click(UIMap.MainStudioWindow.CloseStudioButton);
-            string path = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).FullName;
-            path = Directory.GetParent(path).ToString();
-            Console.WriteLine("Layout file Path: " + path);
-            var layOutFile = Environment.ExpandEnvironmentVariables(path + @"\AppData\Local\Warewolf\UserInterfaceLayouts\WorkspaceLayout.xml");
-            if(File.Exists(layOutFile))
-            {
-                Console.WriteLine("Actual Layout file: " + fileName);
-                File.Delete(layOutFile);
-            }
             Playback.Wait(2000);
             ExecuteCommand(fileName);
             Playback.Wait(2000);
-            UIMap.SetPlaybackSettings();
-            UIMap.AssertStudioIsRunning();
+            Assert.IsTrue(UIMap.MainStudioWindow.Exists, "Warewolf studio is not running. You are expected to run \"Dev\\Warewolf.Launcher\\bin\\Debug\\Warewolf.Launcher.exe\" as an administrator and wait for it to complete before running any coded UI tests");
             UIMap.WaitForControlVisible(UIMap.MainStudioWindow.DockManager);
             var dockWidthAfter = UIMap.MainStudioWindow.DockManager.Width;
             Assert.IsTrue(dockWidthBefore > dockWidthAfter, "Then Menu Bar did not Open/Close");

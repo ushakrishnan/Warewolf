@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -340,6 +341,7 @@ namespace Warewolf.Studio.ViewModels
 
         async void ConnectControlViewModelOnSelectedEnvironmentChanged(object sender, Guid environmentId)
         {
+            SearchText = string.Empty;
             var environmentViewModel = CreateEnvironmentViewModelAsync(sender, environmentId, true);
             SelectedEnvironment = await environmentViewModel.ConfigureAwait(true);
         }
@@ -350,7 +352,7 @@ namespace Warewolf.Studio.ViewModels
             var environmentViewModel = _environments.FirstOrDefault(a => a.Server.EnvironmentID == environmentId);
             if (environmentViewModel == null)
             {
-                var connectControlViewModel = sender as ConnectControlViewModel;
+                var connectControlViewModel = sender as IConnectControlViewModel;
                 var selectedConnection = connectControlViewModel?.SelectedConnection;
                 var environmentConnection = selectedConnection?.Connection;
                 if (environmentConnection != null)

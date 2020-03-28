@@ -1,4 +1,5 @@
-﻿Feature: BrowserDebug
+﻿@ExecuteInBrowser
+Feature: BrowserDebug
 	In order to debug a workflow in Browser
 	As a Warewolf user
 	I want to be able to View full debug content in browser
@@ -120,11 +121,11 @@ Scenario: Executing Hello world in browser
 	Then Browser content is "Hello World."
 
 Scenario: Executing Workflow with empty Json Assign in browser 
-	Given I Debug "http://localhost:3142/secure/Merge Acceptance Tests/AssignOnlyWithNoOutput.json" in Browser
+	Given I Debug "http://localhost:3142/secure/AssignOnlyWithNoOutput.json" in Browser
 	Then Browser content is "{}"
 
 Scenario: Executing Workflow with empty Xml Assign in browser 
-	Given I Debug "http://localhost:3142/secure/Merge Acceptance Tests/AssignOnlyWithNoOutput.xml" in Browser
+	Given I Debug "http://localhost:3142/secure/AssignOnlyWithNoOutput.xml" in Browser
 	Then Browser content is "<DataList />"
 
 Scenario: Executing Workflow with Execute Permissions and Nested Workflow With No Execute Permissions
@@ -148,4 +149,9 @@ Scenario: Executing a workflow should not error for logging
 		And I Execute "http://localhost:3142/secure/Acceptance%20Tests/AssignedWF.json" in Browser
 		Then Browser content is not "FatalError"
 
+Scenario: Executing a workflow always returns outputs even when error
+		Given I have a workflow "ErrorWebResponse"
+		And I Debug "http://localhost:3142/secure/ErrorWebResponse.json" in Browser		
+		Then Browser content is ""Message": null"
+		Then Browser content is not "FatalError"
 	

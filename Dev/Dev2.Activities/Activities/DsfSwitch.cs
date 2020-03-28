@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +25,7 @@ using Dev2.Common;
 using System.Activities.Statements;
 using Dev2.Common.State;
 using Dev2.Communication;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Activities
 {
@@ -200,7 +202,7 @@ namespace Dev2.Activities
             {
                 if (Default == null)
                 {
-                    dataObject.Environment.Errors.Add(Warewolf.Resource.Errors.ErrorResource.SwitchNoDefaultError);
+                    dataObject.Environment.Errors.Add(ErrorResource.SwitchNoDefaultError);
                 }
                 else
                 {

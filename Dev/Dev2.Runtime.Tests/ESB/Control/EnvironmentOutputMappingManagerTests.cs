@@ -1,25 +1,30 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Dev2.Common.Interfaces.Data;
 using Dev2.Data.Builders;
+using Dev2.Data.Interfaces;
+using Dev2.Data.Parsers;
 using Dev2.Data.TO;
 using Dev2.DataList.Contract;
+using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.Runtime.ESB.Control;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json.Linq;
+using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
 using WarewolfParserInterop;
-
-
 
 namespace Dev2.Tests.Runtime.ESB.Control
 {
     [TestClass]
+    [TestCategory("Runtime ESB")]
     public class EnvironmentOutputMappingManagerTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void UpdatePreviousEnvironmentWithSubExecutionResultUsingOutputMappings_GivenValidArgs_ShouldNotThrowException()
         {
@@ -39,7 +44,7 @@ namespace Dev2.Tests.Runtime.ESB.Control
             Assert.IsNotNull(executionEnvironment);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void UpdatePreviousEnvironmentWithSubExecutionResultUsingOutputMappings_GivenEnvHasErrors_ShouldAddErrorsToResultTo()
         {
@@ -64,7 +69,7 @@ namespace Dev2.Tests.Runtime.ESB.Control
             Assert.IsNotNull(executionEnvironment);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void EvalAssignRecordSets_GivenValidArgs_ShouldEvaluateCorrectlyAndAssignCorrectly()
         {
@@ -95,7 +100,7 @@ namespace Dev2.Tests.Runtime.ESB.Control
             environment.Verify(executionEnvironment => executionEnvironment.EvalAssignFromNestedNumeric(It.IsAny<string>(), It.IsAny<CommonFunctions.WarewolfEvalResult.WarewolfAtomListresult>(), It.IsAny<int>()));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         public void EvalAssignScalars_GivenRecordsetWithoutItems_ShouldEvaluate()
         {
             //---------------Set up test pack-------------------
@@ -111,7 +116,7 @@ namespace Dev2.Tests.Runtime.ESB.Control
             innerEnvironment.Verify(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>()));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void EvalAssignScalars_GivenValidArgs_ShouldEvaluateCorrectlyAndAssignCorrectly()
         {
@@ -139,7 +144,7 @@ namespace Dev2.Tests.Runtime.ESB.Control
             innerEnvironment.Verify(executionEnvironment => executionEnvironment.Eval(It.IsAny<string>(), It.IsAny<int>()));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void EvalAssignComplexObjects_GivenValidArgs_ShouldEvaluateCorrectlyAndAssignCorrectly()
         {

@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -261,7 +271,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //act
             _target.NewPluginSourceCommand.Execute(null);
-            Assert.IsTrue(_target.NewServerCommand.CanExecute(null));
+            Assert.IsTrue(_target.NewPluginSourceCommand.CanExecute(null));
 
             //assert
             _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
@@ -278,11 +288,28 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //act
             _target.NewWebSourceSourceCommand.Execute(null);
-            Assert.IsTrue(_target.NewServerCommand.CanExecute(null));
+            Assert.IsTrue(_target.NewWebSourceSourceCommand.CanExecute(null));
 
             //assert
             _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
             _shellViewModelMock.Verify(it => it.NewWebSource(_target.ResourcePath));
+        }
+
+        [TestMethod, Timeout(60000)]
+        public void TestNewRedisSourceCommand()
+        {
+            //arrange
+            _target.ResourceType = "RedisSource";
+            _target.ResourceId = Guid.NewGuid();
+            _serverMock.SetupGet(it => it.EnvironmentID).Returns(Guid.NewGuid());
+
+            //act
+            _target.NewRedisSourceCommand.Execute(null);
+            Assert.IsTrue(_target.NewRedisSourceCommand.CanExecute(null));
+
+            //assert
+            _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
+            _shellViewModelMock.Verify(it => it.NewRedisSource(_target.ResourcePath));
         }
 
         [TestMethod,Timeout(60000)]
@@ -295,7 +322,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //act
             _target.NewEmailSourceSourceCommand.Execute(null);
-            Assert.IsTrue(_target.NewServerCommand.CanExecute(null));
+            Assert.IsTrue(_target.NewEmailSourceSourceCommand.CanExecute(null));
 
             //assert
             _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
@@ -312,7 +339,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //act
             _target.NewExchangeSourceSourceCommand.Execute(null);
-            Assert.IsTrue(_target.NewServerCommand.CanExecute(null));
+            Assert.IsTrue(_target.NewExchangeSourceSourceCommand.CanExecute(null));
 
             //assert
             _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
@@ -329,7 +356,7 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //act
             _target.NewRabbitMqSourceSourceCommand.Execute(null);
-            Assert.IsTrue(_target.NewServerCommand.CanExecute(null));
+            Assert.IsTrue(_target.NewRabbitMqSourceSourceCommand.CanExecute(null));
 
             //assert
             _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
@@ -466,6 +493,22 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //assert
             _shellViewModelMock.Verify(it => it.NewSchedule(_target.ResourceId));
+        }
+
+        [TestMethod, Timeout(60000)]
+        public void ExplorerItemViewModel_QueueEventCommand()
+        {
+            //arrange
+            _target.ResourceType = "WorkflowService";
+            _target.ResourceId = Guid.NewGuid();
+            _serverMock.SetupGet(it => it.EnvironmentID).Returns(Guid.NewGuid());
+
+            //act
+            _target.QueueEventCommand.Execute(null);
+            Assert.IsTrue(_target.QueueEventCommand.CanExecute(null));
+
+            //assert
+            _shellViewModelMock.Verify(it => it.NewQueueEvent(_target.ResourceId));
         }
 
         [TestMethod,Timeout(60000)]
@@ -1125,6 +1168,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var canCreateNewOdbcSourceCommand = _target.NewOdbcSourceCommand.CanExecute(null);
             var canCreateNewPluginSourceCommand = _target.NewPluginSourceCommand.CanExecute(null);
             var canCreateNewWebSourceSourceCommand = _target.NewWebSourceSourceCommand.CanExecute(null);
+            var canCreateNewRedisSourceCommand = _target.NewRedisSourceCommand.CanExecute(null);
             var canCreateNewEmailSourceSourceCommand = _target.NewEmailSourceSourceCommand.CanExecute(null);
             var canCreateNewExchangeSourceSourceCommand = _target.NewExchangeSourceSourceCommand.CanExecute(null);
             var canCreateNewSharepointSourceSourceCommand = _target.NewSharepointSourceSourceCommand.CanExecute(null);
@@ -1145,6 +1189,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(canCreateNewOdbcSourceCommand);
             Assert.IsTrue(canCreateNewPluginSourceCommand);
             Assert.IsTrue(canCreateNewWebSourceSourceCommand);
+            Assert.IsTrue(canCreateNewRedisSourceCommand);
             Assert.IsTrue(canCreateNewEmailSourceSourceCommand);
             Assert.IsTrue(canCreateNewExchangeSourceSourceCommand);
             Assert.IsTrue(canCreateNewSharepointSourceSourceCommand);

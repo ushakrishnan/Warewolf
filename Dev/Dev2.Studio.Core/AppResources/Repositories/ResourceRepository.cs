@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,6 +22,7 @@ using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Common.Interfaces.Search;
 using Dev2.Common.Interfaces.Studio.Controller;
@@ -37,7 +39,12 @@ using Dev2.Studio.Core.Utils;
 using Dev2.Studio.Interfaces;
 using Dev2.Studio.Interfaces.Enums;
 using Dev2.Utils;
+using Warewolf.Auditing;
+using Warewolf.Configuration;
+using Warewolf.Options;
 using Warewolf.Resource.Errors;
+using Warewolf.Service;
+using Warewolf.Triggers;
 
 namespace Dev2.Studio.Core.AppResources.Repositories
 {
@@ -224,6 +231,12 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             {
                 return null;
             }
+
+            if (!IsLoaded)
+            {
+                Load(false);
+            }
+
             var result = _resourceModels.Find(func.Invoke);
 
             if (result != null && fetchDefinition)
@@ -590,6 +603,52 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             {
                 throw new NullReferenceException("Cannot save resource. Cannot get Communication Controller.");
             }
+        }
+
+        public List<IExecutionHistory> GetTriggerQueueHistory(Guid resourceId)
+        {
+            if (GetCommunicationController == null)
+            {
+                throw new NullReferenceException("Cannot get Queue history. Cannot get Communication Controller.");
+            }
+            var serializer = new Dev2JsonSerializer();
+            var comsController = GetCommunicationController.Invoke("GetExecutionHistoryService");
+            comsController.AddPayloadArgument("ResourceId", resourceId.ToString());
+            var message = new CompressedExecuteMessage();
+            message.SetMessage(serializer.Serialize(resourceId.ToString()));
+            var result = comsController.ExecuteCommand<List<IExecutionHistory>>(_server.Connection, GlobalConstants.ServerWorkspaceID);
+            return result;
+        }
+
+        public List<ITriggerQueue> FetchTriggerQueues()
+        {
+            var comsController = new CommunicationController { ServiceName = "FetchTriggerQueues" };
+            var serializer = new Dev2JsonSerializer();
+            var result = comsController.ExecuteCompressedCommand<List<ITriggerQueue>>(_server.Connection, GlobalConstants.ServerWorkspaceID);
+            return result;
+        }
+
+        public Guid SaveQueue(ITriggerQueue triggerQueue)
+        {
+            if (GetCommunicationController == null)
+            {
+                throw new NullReferenceException("Cannot save Queue. Cannot get Communication Controller.");
+            }
+
+            var comsController = GetCommunicationController.Invoke("SaveTriggerQueueService");
+            var serializer = new Dev2JsonSerializer();
+            comsController.AddPayloadArgument("TriggerQueue", serializer.SerializeToBuilder(triggerQueue));
+            var result = comsController.ExecuteCommand<ExecuteMessage>(_server.Connection, GlobalConstants.ServerWorkspaceID);
+            return Guid.Parse(result.Message.ToString());
+        }
+
+        public ExecuteMessage DeleteQueue(ITriggerQueue triggerQueue)
+        {
+            var comsController = new CommunicationController { ServiceName = "DeleteTriggerQueueService" };
+            var serializer = new Dev2JsonSerializer();
+            comsController.AddPayloadArgument("TriggerQueue", serializer.SerializeToBuilder(triggerQueue));
+            var result = comsController.ExecuteCommand<ExecuteMessage>(_server.Connection, GlobalConstants.ServerWorkspaceID);
+            return result;
         }
 
         public TestSaveResult SaveTests(IResourceModel resourceId, List<IServiceTestModelTO> tests)
@@ -992,6 +1051,65 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             return result;
         }
 
+        public List<IResource> FindResourcesByType<T>(IServer targetEnvironment)
+        {
+            var result = new List<IResource>();
+            if (targetEnvironment == null)
+            {
+                return result;
+            }
+            var comsController = new CommunicationController { ServiceName = "FindResourcesByType" };
+            comsController.AddPayloadArgument("Type", typeof(T).FullName);
+            result = comsController.ExecuteCommand<List<IResource>>(targetEnvironment.Connection, GlobalConstants.ServerWorkspaceID);
+            return result;
+        }
+
+        public Dictionary<string, string[]> FindAutocompleteOptions(IServer targetEnvironment, IResource selectedSource)
+        {
+            var result = new Dictionary<string, string[]>();
+            if (targetEnvironment == null)
+            {
+                return result;
+            }
+            var comsController = new CommunicationController { ServiceName = "FindAutocompleteOptions" };
+            comsController.AddPayloadArgument("SelectedSource", selectedSource.ToString());
+            result = comsController.ExecuteCommand<Dictionary<string, string[]>>(targetEnvironment.Connection, GlobalConstants.ServerWorkspaceID);
+            return result;
+        }
+
+        public List<IOption> FindOptions(IServer targetEnvironment, IResource selectedSource)
+        {
+            var result = new List<IOption>();
+            if (targetEnvironment == null)
+            {
+                return result;
+            }
+            var comsController = new CommunicationController { ServiceName = "FindOptions" };
+            comsController.AddPayloadArgument("SelectedSourceId", selectedSource.ResourceID.ToString());
+            result = comsController.ExecuteCommand<List<IOption>>(targetEnvironment.Connection, GlobalConstants.ServerWorkspaceID);
+            return result;
+        }
+
+        public List<IOption> FindOptionsBy(IServer targetEnvironment, string name)
+        {
+            if (GetCommunicationController != null)
+            {
+                var result = new List<IOption>();
+                if (targetEnvironment == null)
+                {
+                    return result;
+                }
+                var comsController = GetCommunicationController.Invoke("FindOptionsBy");
+                comsController.AddPayloadArgument(OptionsService.ParameterName, name);
+                result = comsController.ExecuteCommand<List<IOption>>(targetEnvironment.Connection, GlobalConstants.ServerWorkspaceID);
+                return result;
+            }
+            else
+            {
+                throw new NullReferenceException("Cannot Find Options By. Cannot get Communication Controller.");
+            }
+        }
+
         public ExecuteMessage FetchResourceDefinition(IServer targetEnv, Guid workspaceId, Guid resourceModelId, bool prepaireForDeployment)
         {
             var comsController = new CommunicationController { ServiceName = "FetchResourceDefinitionService" };
@@ -1091,7 +1209,7 @@ namespace Dev2.Studio.Core.AppResources.Repositories
                     }
                     catch (SystemException exception)
                     {
-                        HelperUtils.ShowTrustRelationshipError(exception);
+                        HelperUtils.ShowTrustRelationshipError(CustomContainer.Get<IPopupController>(), exception);
                     }
                 }
             }
@@ -1103,6 +1221,16 @@ namespace Dev2.Studio.Core.AppResources.Repositories
             comController.AddPayloadArgument("Search", _serializer.Serialize(searchValue));
             var lists = comController.ExecuteCommand<List<ISearchResult>>(_server.Connection, GlobalConstants.ServerWorkspaceID);
             return lists;
+        }
+
+        public ExecuteMessage ResumeWorkflowExecution(IResourceModel resource,string environment,Guid startActivityId, string versionNumber)
+        {
+            var comController = new CommunicationController { ServiceName = "WorkflowResume" };
+            comController.AddPayloadArgument("resourceID", resource.ID.ToString());
+            comController.AddPayloadArgument("environment", environment);
+            comController.AddPayloadArgument("startActivityId", startActivityId.ToString());
+            comController.AddPayloadArgument("versionNumber", versionNumber);
+            return comController.ExecuteCommand<ExecuteMessage>(_server.Connection, GlobalConstants.ServerWorkspaceID);
         }
     }
 }

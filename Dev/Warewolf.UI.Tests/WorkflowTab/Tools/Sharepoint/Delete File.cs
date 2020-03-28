@@ -9,7 +9,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Sharepoint
     [CodedUITest]
     public class Delete_File
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Sharepoint Tools")]
         public void SharepointDeleteFileTool_Small_And_LargeView_Then_NewSource_UITest()
         {
@@ -36,8 +36,9 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Sharepoint
             Assert.IsFalse(SharepointSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.SharepointServerSourceTab.SharepointServerSourceView.SharepointView.CancelTestButton.Enabled, "Cancel Test button is  enabled.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Sharepoint Tools")]
+        [Ignore]//TODO: Re-introduce this test once the move to the new domain (premier.local) is done
         public void SharepointDeleteFileTool_LargeView_DoneButton_UITest()
         {
             SharepointToolsUIMap.Open_SharepointDeleteFileTool_LargeView();

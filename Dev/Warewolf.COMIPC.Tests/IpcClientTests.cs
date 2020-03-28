@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -14,29 +24,29 @@ namespace WarewolfCOMIPC.Test
     {
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void Constructo_GivenPipeStream_ShouldResult()
+        public void IpcClient_Constructor_GivenPipeStream_ShouldResult()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
 
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
-            var client = new IpcClient(pipeMock.Object);
+            var client = new IpcClientImpl(pipeMock.Object);
             //---------------Test Result -----------------------
             Assert.IsNotNull(client);
         }
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void GetIPCExecutor_GivenPipeStream_ShouldResult()
+        public void IpcClient_GetIPCExecutor_GivenPipeStream_ShouldResult()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
-            var client = new IpcClient(pipeMock.Object);
+            var client = new IpcClientImpl(pipeMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(client);
             //---------------Execute Test ----------------------
-            var ipcExecutor = IpcClient.GetIPCExecutor(pipeMock.Object);
+            var ipcExecutor = IpcClient.GetIpcExecutor(pipeMock.Object);
             //---------------Test Result -----------------------
             Assert.IsNotNull(ipcExecutor);
             Assert.IsFalse(ReferenceEquals(client,ipcExecutor));
@@ -47,7 +57,7 @@ namespace WarewolfCOMIPC.Test
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void Invoke_GivenGetType_ShouldReturnResult()
+        public void IpcClientHelper_Invoke_GivenGetType_ShouldReturnResult()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
@@ -55,7 +65,7 @@ namespace WarewolfCOMIPC.Test
             var serializeObject = JsonConvert.SerializeObject(GetType());
             memoryStream.WriteByte(Encoding.ASCII.GetBytes(serializeObject)[0]);
             pipeMock.Setup(wrapper => wrapper.GetInternalStream()).Returns(memoryStream);
-            var client = IpcClient.GetIPCExecutor(pipeMock.Object);
+            var client = IpcClient.GetIpcExecutor(pipeMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(client);
             //---------------Execute Test ----------------------
@@ -66,7 +76,7 @@ namespace WarewolfCOMIPC.Test
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void Invoke_GivenGetMethods_ShouldReturnResult()
+        public void IpcClientHelper_Invoke_GivenGetMethods_ShouldReturnResult()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
@@ -74,7 +84,7 @@ namespace WarewolfCOMIPC.Test
             var serializeObject = JsonConvert.SerializeObject(GetType().GetMethods()[0]);
             memoryStream.WriteByte(Encoding.ASCII.GetBytes(serializeObject)[0]);
             pipeMock.Setup(wrapper => wrapper.GetInternalStream()).Returns(memoryStream);
-            var client = IpcClient.GetIPCExecutor(pipeMock.Object);
+            var client = IpcClient.GetIpcExecutor(pipeMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(client);
             //---------------Execute Test ----------------------
@@ -86,7 +96,7 @@ namespace WarewolfCOMIPC.Test
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void Invoke_GivenExecuteSpecifiedMethod_ShouldReturnResult()
+        public void IpcClientHelper_Invoke_GivenExecuteSpecifiedMethod_ShouldReturnResult()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
@@ -95,7 +105,7 @@ namespace WarewolfCOMIPC.Test
             var buffer = Encoding.ASCII.GetBytes(serializeObject);
             memoryStream.Write(buffer,0,buffer.Length);
             pipeMock.Setup(wrapper => wrapper.GetInternalStream()).Returns(memoryStream);
-            var client = IpcClient.GetIPCExecutor(pipeMock.Object);
+            var client = IpcClient.GetIpcExecutor(pipeMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(client);
             //---------------Execute Test ----------------------
@@ -106,7 +116,7 @@ namespace WarewolfCOMIPC.Test
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void Invoke_GivenGetNamespaces_ShouldReturnResult()
+        public void IpcClientHelper_Invoke_GivenGetNamespaces_ShouldReturnResult()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
@@ -114,7 +124,7 @@ namespace WarewolfCOMIPC.Test
             var serializeObject = JsonConvert.SerializeObject(GetType());
             memoryStream.WriteByte(Encoding.ASCII.GetBytes(serializeObject)[0]);
             pipeMock.Setup(wrapper => wrapper.GetInternalStream()).Returns(memoryStream);
-            var client = IpcClient.GetIPCExecutor(pipeMock.Object);
+            var client = IpcClient.GetIpcExecutor(pipeMock.Object);
             //---------------Assert Precondition----------------
             Assert.IsNotNull(client);
             //---------------Execute Test ----------------------
@@ -127,7 +137,7 @@ namespace WarewolfCOMIPC.Test
 
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void Dispose_PassThrough()
+        public void IpcClient_Dispose_PassThrough()
         {
             //---------------Set up test pack-------------------
             var pipeMock = new Mock<INamedPipeClientStreamWrapper>();
@@ -137,7 +147,7 @@ namespace WarewolfCOMIPC.Test
             //---------------Assert Precondition----------------
          
             //---------------Execute Test ----------------------
-            using (var client = IpcClient.GetIPCExecutor(pipeMock.Object))
+            using (var client = IpcClient.GetIpcExecutor(pipeMock.Object))
             {
                 Assert.IsNotNull(client);
             }

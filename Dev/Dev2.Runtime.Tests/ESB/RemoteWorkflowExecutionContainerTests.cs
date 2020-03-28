@@ -1,7 +1,7 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -9,17 +9,17 @@
 */
 
 using System;
-using System.Linq;
+using System.IO;
+using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Linq;
-using Castle.Core.Resource;
 using Dev2.Common;
 using Dev2.Data.ServiceModel;
 using Dev2.Data.TO;
 using Dev2.DynamicServices;
 using Dev2.DynamicServices.Objects;
 using Dev2.Interfaces;
-using Dev2.Runtime.ESB.Control;
 using Dev2.Runtime.ESB.Execution;
 using Dev2.Runtime.Interfaces;
 using Dev2.Tests.Runtime.XML;
@@ -32,6 +32,7 @@ using Warewolf.Storage;
 namespace Dev2.Tests.Runtime.ESB
 {
     [TestClass]
+    [TestCategory("Runtime ESB")]
     public class RemoteWorkflowExecutionContainerTests
     {
         static XElement _connectionXml;
@@ -44,9 +45,7 @@ namespace Dev2.Tests.Runtime.ESB
             _connection = new Connection(_connectionXml);
         }
 
-        #region CTOR
-
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("RemoteWorkflowExecutionContainer_Constructor")]
         [Description("RemoteWorkflowExecutionContainer cannot be constructed without a resource catalog.")]
         [Owner("Trevor Williams-Ros")]
@@ -57,92 +56,10 @@ namespace Dev2.Tests.Runtime.ESB
             var dataObj = new Mock<IDSFDataObject>();
             var workspace = new Mock<IWorkspace>();
             var esbChannel = new Mock<IEsbChannel>();
-            new RemoteWorkflowExecutionContainerMock(sa, dataObj.Object, workspace.Object, esbChannel.Object, null);
+            new RemoteWorkflowExecutionContainerMock(sa, dataObj.Object, workspace.Object, esbChannel.Object, null, new WebRequestFactory());
         }
 
-        #endregion
-
-        #region Execute
-
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
-        [Owner("Candice Daniel")]
-        public void RemoteWorkflowExecutionContainer_UnitTest_ServerIsUp_PongNotReturned_ShouldError()
-        {
-            //---------------Set up test pack-------------------
-            var dataObj = new Mock<IDSFDataObject>();
-            var dataObjClon = new Mock<IDSFDataObject>();
-            dataObjClon.Setup(o => o.ServiceName).Returns("Service Name");
-            var mock = new Mock<IResource>();
-            var workRepo = new Mock<IWorkspaceRepository>();
-            workRepo.Setup(repository => repository.Get(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<bool>())).Returns(new Workspace(Guid.NewGuid()));
-            dataObj.SetupAllProperties();
-            dataObj.Setup(o => o.Environment).Returns(new ExecutionEnvironment());
-            dataObj.Setup(o => o.EnvironmentID).Returns(_connection.ResourceID);
-            dataObj.Setup(o => o.IsRemoteWorkflow());
-            dataObj.Setup(o => o.RunWorkflowAsync).Returns(true);
-            dataObj.Setup(o => o.Clone()).Returns(dataObjClon.Object);
-            var mapManager = new Mock<IEnvironmentOutputMappingManager>();
-            var esbServicesEndpoint = new EsbServicesEndpoint();
-            var privateObject = new PrivateObject(esbServicesEndpoint);
-            var invokerMock = new Mock<IEsbServiceInvoker>();
-            var resourceCatalog = new Mock<IResourceCatalog>();
-            resourceCatalog.Setup(c => c.GetResourceContents(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(new StringBuilder(_connectionXml.ToString()));
-            var container = CreateExecutionContainer(resourceCatalog.Object, "<DataList><Errors><Err></Err></Errors></DataList>", "<root><ADL><Errors><Err>Error Message</Err></Errors></ADL></root>");
-            invokerMock.Setup(invoker => invoker.GenerateInvokeContainer(It.IsAny<IDSFDataObject>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Guid>())).Returns(container);
-            var err = new ErrorResultTO();
-            //---------------Assert Precondition----------------
-            //---------------Execute Test ----------------------
-            object[] args = { dataObj.Object, "inputs", invokerMock.Object, false, Guid.Empty, err, 0 };
-            privateObject.Invoke("ExecuteRequestAsync", args);
-            Assert.IsNotNull(esbServicesEndpoint);
-            var errorResultTO = args[5] as ErrorResultTO;
-            //---------------Test Result -----------------------
-            var errors = errorResultTO?.FetchErrors();
-            Assert.IsNotNull(errors);
-            Assert.IsTrue(errors.Count > 0);
-            Assert.IsTrue(errors.Any(p => p.Contains("Asynchronous execution failed: Remote server unreachable")));
-        }
-
-
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
-        [Owner("Candice Daniel")]
-        public void RemoteWorkflowExecutionContainer_UnitTest_ServerIsUp_PongReturned_ShouldNotError()
-        {
-            //---------------Set up test pack-------------------
-            var dataObj = new Mock<IDSFDataObject>();
-            var dataObjClon = new Mock<IDSFDataObject>();
-            dataObjClon.Setup(o => o.ServiceName).Returns("Service Name");
-            var mock = new Mock<IResource>();
-            var workRepo = new Mock<IWorkspaceRepository>();
-            workRepo.Setup(repository => repository.Get(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<bool>())).Returns(new Workspace(Guid.NewGuid()));
-            dataObj.SetupAllProperties();
-            dataObj.Setup(o => o.Environment).Returns(new ExecutionEnvironment());
-            dataObj.Setup(o => o.EnvironmentID).Returns(_connection.ResourceID);
-            dataObj.Setup(o => o.IsRemoteWorkflow());
-            dataObj.Setup(o => o.RunWorkflowAsync).Returns(true);
-            dataObj.Setup(o => o.Clone()).Returns(dataObjClon.Object);
-            var mapManager = new Mock<IEnvironmentOutputMappingManager>();
-            var esbServicesEndpoint = new EsbServicesEndpoint();
-            var privateObject = new PrivateObject(esbServicesEndpoint);
-            var invokerMock = new Mock<IEsbServiceInvoker>();
-            var resourceCatalog = new Mock<IResourceCatalog>();
-            resourceCatalog.Setup(c => c.GetResourceContents(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(new StringBuilder(_connectionXml.ToString()));
-            var container = CreateExecutionContainer(resourceCatalog.Object, "<DataList><Errors><Err></Err></Errors></DataList>", "<root><ADL><Errors><Err>Error Message</Err></Errors></ADL></root>","<DataList><Message>Pong</Message></DataList>");
-            invokerMock.Setup(invoker => invoker.GenerateInvokeContainer(It.IsAny<IDSFDataObject>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<Guid>())).Returns(container);
-            var err = new ErrorResultTO();
-            //---------------Assert Precondition----------------
-            //---------------Execute Test ----------------------
-            object[] args = { dataObj.Object, "inputs", invokerMock.Object, false, Guid.Empty, err, 0 };
-            privateObject.Invoke("ExecuteRequestAsync", args);
-            Assert.IsNotNull(esbServicesEndpoint);
-            var errorResultTO = args[5] as ErrorResultTO;
-            //---------------Test Result -----------------------
-            var errors = errorResultTO?.FetchErrors();
-            Assert.IsNotNull(errors);
-            Assert.IsTrue(errors.Any(p => !p.Contains("Asynchronous execution failed: Remote server unreachable")));
-        }
-
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("RemoteWorkflowExecutionContainer_Execute")]
         [Description("RemoteWorkflowExecutionContainer execute must return an error when the connection cannot be retrieved from the resource catalog.")]
         [Owner("Trevor Williams-Ros")]
@@ -158,7 +75,85 @@ namespace Dev2.Tests.Runtime.ESB
             Assert.AreEqual("Service not found", errors.MakeDisplayReady(), "Execute did not return an error for a non-existent resource catalog connection.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        class TestWebResponse : WebResponse
+        {
+        }
+
+        class TestWebRequest : IWebRequest
+        {
+            public string Method { get; set; }
+            public string ContentType { get; set; }
+            public long ContentLength { get; set; }
+            public bool UseDefaultCredentials { get; set; }
+            public WebHeaderCollection Headers { get; set; } = new WebHeaderCollection();
+            public ICredentials Credentials { get; set; }
+            public Uri RequestUri { get; set; }
+            public int GetResponseCallCount { get; private set; }
+
+            public Stream GetRequestStream()
+            {
+                return new MemoryStream();
+            }
+
+            public WebResponse GetResponse()
+            {
+                GetResponseCallCount++;
+                return new TestWebResponse();
+            }
+
+            public Task<WebResponse> GetResponseAsync()
+            {
+                return new Task<WebResponse>(GetResponse);
+            }
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RemoteWorkflowExecutionContainer))]
+        public void RemoteWorkflowExecutionContainer_Execute()
+        {
+            var expectedExecutionID = Guid.NewGuid();
+            var resourceCatalog = new Mock<IResourceCatalog>();
+            resourceCatalog.Setup(c => c.GetResourceContents(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(new StringBuilder(_connectionXml.ToString()));
+            var mockWebRequestFactory = new Mock<IWebRequestFactory>();
+            var testWebRequest = new TestWebRequest();
+            mockWebRequestFactory.Setup(o => o.New(It.IsAny<string>())).Returns(testWebRequest);
+            var webRequestFactory = mockWebRequestFactory.Object;
+            var dataListShape = "<DataList></DataList>";
+            var webResponse = "<DataList><NumericGUID>74272317-2264-4564-3988-700350008298</NumericGUID></DataList>";
+            var dataObj = new DsfDataObject(dataListShape, Guid.NewGuid())
+            {
+                ExecutionID = expectedExecutionID,
+                EnvironmentID = _connection.ResourceID,
+                ServiceName = "Test",
+                RemoteInvokeResultShape = new StringBuilder("<ADL><NumericGUID></NumericGUID></ADL>"),
+                Environment = new ExecutionEnvironment(),
+                IsDebug = true
+            };
+
+            var container = CreateExecutionContainer(resourceCatalog.Object, dataListShape, "", webResponse, webRequestFactory, dataObj);
+
+            container.Execute(out ErrorResultTO errors, 0);
+
+            Assert.AreEqual(testWebRequest.Method, "POST");
+            Assert.AreEqual(testWebRequest.UseDefaultCredentials, false);
+            if (testWebRequest.Credentials is NetworkCredential credentials)
+            {
+                Assert.AreEqual(credentials.UserName, "Dev2");
+                Assert.AreEqual(credentials.Password, "Dev2");
+            }
+            else
+            {
+                Assert.Fail("expected credentials to be set");
+            }
+
+            Assert.AreEqual(1, testWebRequest.GetResponseCallCount);
+            Assert.AreEqual("", testWebRequest.Headers.Get("From"));
+            Assert.AreEqual("RemoteWarewolfServer", testWebRequest.Headers.Get("Cookie"));
+            Assert.AreEqual(expectedExecutionID.ToString(), testWebRequest.Headers.Get("Warewolf-Execution-Id"));
+        }
+
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RemoteWorkflowExecutionContainer_PerformLogExecution")]
         public void RemoteWorkflowExecutionContainer_PerformLogExecution_WhenNoDataListFragments_HasProvidedUriToExecute()
@@ -174,7 +169,7 @@ namespace Dev2.Tests.Runtime.ESB
             Assert.AreEqual(LogUri, container.LogExecutionUrl);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RemoteWorkflowExecutionContainer_PerformLogExecution")]
         public void RemoteWorkflowExecutionContainer_PerformLogExecution_WhenScalarDataListFragments_HasEvaluatedUriToExecute()
@@ -192,7 +187,7 @@ namespace Dev2.Tests.Runtime.ESB
 
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("RemoteWorkflowExecutionContainer_PerformLogExecution")]
         public void RemoteWorkflowExecutionContainer_PerformLogExecution_WhenRecordsetDataListFragments_HasEvaluatedUriToExecute()
@@ -209,31 +204,31 @@ namespace Dev2.Tests.Runtime.ESB
             //------------Assert Results-------------------------
             Assert.AreEqual(ExpectedLogUri, container.LogExecutionUrl);
         }
-        #endregion
 
-        #region CreateExecutionContainer
-
-        static RemoteWorkflowExecutionContainerMock CreateExecutionContainer(IResourceCatalog resourceCatalog, string dataListShape = "<DataList></DataList>", string dataListData = "",string webResponse= "<DataList><NumericGUID>74272317-2264-4564-3988-700350008298</NumericGUID></DataList>")
+        static RemoteWorkflowExecutionContainerMock CreateExecutionContainer(IResourceCatalog resourceCatalog, string dataListShape = "<DataList></DataList>", string dataListData = "", string webResponse = "<DataList><NumericGUID>74272317-2264-4564-3988-700350008298</NumericGUID></DataList>")
         {
-
             var dataObj = new Mock<IDSFDataObject>();
             dataObj.Setup(d => d.EnvironmentID).Returns(_connection.ResourceID);
             dataObj.Setup(d => d.ServiceName).Returns("Test");
             dataObj.Setup(d => d.RemoteInvokeResultShape).Returns(new StringBuilder("<ADL><NumericGUID></NumericGUID></ADL>"));
             dataObj.Setup(d => d.Environment).Returns(new ExecutionEnvironment());
             dataObj.Setup(d => d.IsDebug).Returns(true);
-            ExecutionEnvironmentUtils.UpdateEnvironmentFromXmlPayload(dataObj.Object,new StringBuilder(dataListData),dataListShape, 0);
+            return CreateExecutionContainer(resourceCatalog, dataListShape, dataListData, webResponse, new WebRequestFactory(), dataObj.Object);
+        }
+
+        private static RemoteWorkflowExecutionContainerMock CreateExecutionContainer(IResourceCatalog resourceCatalog, string dataListShape, string dataListData, string webResponse, IWebRequestFactory webRequestFactory, IDSFDataObject dataObj)
+        {
+            ExecutionEnvironmentUtils.UpdateEnvironmentFromXmlPayload(dataObj, new StringBuilder(dataListData), dataListShape, 0);
             var sa = new ServiceAction();
             var workspace = new Mock<IWorkspace>();
             var esbChannel = new Mock<IEsbChannel>();
 
-            var container = new RemoteWorkflowExecutionContainerMock(sa, dataObj.Object, workspace.Object, esbChannel.Object, resourceCatalog)
+            var container = new RemoteWorkflowExecutionContainerMock(sa, dataObj, workspace.Object, esbChannel.Object,
+                resourceCatalog, webRequestFactory)
             {
                 GetRequestRespsonse = webResponse
             };
             return container;
         }
-
-        #endregion
     }
 }

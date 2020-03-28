@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TestStack.White.UIItems.WindowItems;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.Tools.Data.DataToolsUIMapClasses;
@@ -10,7 +11,9 @@ namespace Warewolf.UI.Tests.ContextMenu
     [CodedUITest]
     public class StartNodeContextMenuTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        private Window _studioWindow;
+        
+        [TestMethod]
         public void CodedUIShowStartNodeContextMenuItems()
         {
             UIMap.Click_NewWorkflow_RibbonButton();
@@ -28,7 +31,7 @@ namespace Warewolf.UI.Tests.ContextMenu
             Assert.IsFalse(DialogsUIMap.StartNodePopupWindow.CustomWindow.StartNodeItemMenu.CopyURLtoClipboardMenuItem.Enabled, "Copy Url to Clipboard must be disabled on a new workflow");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         public void CodedUIShowStartNodeContextMenuItems_For_Version()
         {
             ExplorerUIMap.Filter_Explorer("ContextMenuVersion");
@@ -54,7 +57,7 @@ namespace Warewolf.UI.Tests.ContextMenu
         public void MyTestInitialize()
         {
             UIMap.SetPlaybackSettings();
-            UIMap.AssertStudioIsRunning();
+            _studioWindow = UIMap.AssertStudioIsRunning();
         }
 
         UIMap UIMap

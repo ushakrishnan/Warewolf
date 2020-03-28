@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +12,7 @@
 using Dev2.Common.Interfaces.Core.Convertors.DateAndTime;
 using System;
 using System.Globalization;
+using Warewolf.Resource.Errors;
 
 namespace Dev2.Common.DateAndTime
 {
@@ -43,7 +45,7 @@ namespace Dev2.Common.DateAndTime
 
                 return parsedCorreclty;
             }
-            error = Warewolf.Resource.Errors.ErrorResource.CannorParseInputDateTimeWithGivenFormat;
+            error = ErrorResource.CannorParseInputDateTimeWithGivenFormat;
             return parsedCorreclty;
         }
     }

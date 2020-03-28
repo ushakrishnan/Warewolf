@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +16,7 @@ using System.Text;
 using Dev2.DataList.Contract;
 using Dev2.Interfaces;
 using Dev2.Runtime.WebServer;
+using Dev2.Runtime.WebServer.Responses;
 using Dev2.Web;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -24,9 +25,10 @@ using Warewolf.Storage;
 namespace Dev2.Tests.Runtime.WebServer
 {
     [TestClass]
+    [TestCategory("Runtime WebServer")]
     public class WebServerRequestTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Rory McGuire")]
         [TestCategory("WebServerRequest")]
         public void WebServerRequest_CreateResponseWriter()
@@ -45,11 +47,12 @@ namespace Dev2.Tests.Runtime.WebServer
             executionDto.Request = new Communication.EsbExecuteRequest();
             executionDto.Request.WasInternalService = false;
 
-            executionDto.CreateResponseWriter();
+            var executionDtoExtentions = new ExecutionDtoExtentions(executionDto);
+            executionDtoExtentions.CreateResponseWriter(new StringResponseWriterFactory());
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("WebServerRequest")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -66,7 +69,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("WebServerRequest")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -82,7 +85,7 @@ namespace Dev2.Tests.Runtime.WebServer
             //------------Assert Results-------------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("WebServerRequest")]
         public void WebServerRequest_Constructor_PropertiesInitialized()
@@ -96,7 +99,7 @@ namespace Dev2.Tests.Runtime.WebServer
             VerifyProperties(request, webServerRequest, content, queryStr, boundVars);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Ashley Lewis")]
         [TestCategory("WebServerRequest")]
         public void WebServerRequest_GetContentEncoding_ParseSimpleEncoding()

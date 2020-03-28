@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using System;
 using System.Net;
 using Dev2.Activities.DropBox2016.Result;
@@ -34,7 +35,7 @@ namespace Dev2.Activities.DropBox2016.DeleteActivity
         }
 
         #region Implementation of IDropboxSingleExecutor<IDropboxResult>
-        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
+        public IDropboxResult ExecuteTask(IDropboxClient client)
         {
             try
             {

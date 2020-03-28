@@ -22,10 +22,11 @@ using Warewolf.Tools.Specs.Toolbox.Database;
 using Warewolf.Studio.ViewModels;
 using Dev2.Activities.Specs.BaseTypes;
 using Dev2.Studio.Core;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using Warewolf.UnitTestAttributes;
 
 namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
 {
@@ -38,7 +39,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
         Mock<IServiceOutputMapping> _outputMapping;
         readonly ScenarioContext _scenarioContext;
         readonly CommonSteps _commonSteps;
-        static ContainerLauncher _containerOps;
+        static Depends _containerOps;
 
         public MySqlConnectorSteps(ScenarioContext scenarioContext)
             : base(scenarioContext)
@@ -480,7 +481,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
         [Then(@"Mysql Server Recordset Name equals ""(.*)""")]
         public void ThenMysqlServerRecordsetNameEquals(string recsetName)
         {
-            Assert.IsTrue(string.Equals(recsetName, GetViewModel().OutputsRegion.RecordsetName));
+            Assert.IsTrue(string.Equals(recsetName, GetViewModel().OutputsRegion.RecordsetName), $"Actual recordset name {GetViewModel().OutputsRegion.RecordsetName} does not equal expected recordset name {recsetName}.");
         }
 
         [Then(@"Mysql Server Outputs appear as")]
@@ -526,7 +527,7 @@ namespace Warewolf.ToolsSpecs.Toolbox.Resources.MySQL
         {
             var environmentModel = _scenarioContext.Get<IServer>("server");
             environmentModel.Connect();
-            _containerOps = TestLauncher.StartLocalMySQLContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
+            _containerOps = new Depends(Depends.ContainerType.MySQL);
             CreateNewResourceModel(workflowName, environmentModel);
             CreateDBServiceModel(environmentModel);
 

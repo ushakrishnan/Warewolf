@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Globalization;
 using System.Windows;
@@ -22,8 +23,10 @@ namespace Warewolf.Studio.Core
             
             _brush = new SolidColorBrush(Color.FromArgb(255, 51, 51, 51));
         }
-        
+
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (value != null)
             {
@@ -52,6 +55,8 @@ namespace Warewolf.Studio.Core
                         return _dict["PostgreSource"] as DrawingImage;
                     case "ODBC":
                         return _dict["OdbcSource"] as DrawingImage;
+                    case "RedisSource":
+                        return _dict[CustomMenuIcons.RedisSource] as DrawingImage;
                     case "WebSource":
                         return _dict[CustomMenuIcons.WebSource] as DrawingImage;
                     case "SharepointServerSource":
@@ -67,8 +72,11 @@ namespace Warewolf.Studio.Core
                     case "OauthSource":
                     case "DropBoxSource":
                         return Application.Current.Resources["DropboxSource"];
+                        //TODO: Remove
                     case "Scheduler":
                         return ImageAwesome.CreateImageSource(FontAwesomeIcon.History, _brush);
+                    case "Triggers":
+                        return ImageAwesome.CreateImageSource(FontAwesomeIcon.Play, _brush);
                     case "ServiceTestsViewer":
                         return ImageAwesome.CreateImageSource(FontAwesomeIcon.Flask, _brush);
                     case "MergeConflicts":

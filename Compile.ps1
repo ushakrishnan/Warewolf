@@ -1,5 +1,5 @@
 Param(
-  [string]$MSBuildPath="C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe",
+  [string]$MSBuildPath="C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
   [string]$Target="",
   [string]$CustomVersion="",
   [string]$NuGet="",
@@ -64,11 +64,20 @@ if (!(Test-Path "$MSBuildPath" -ErrorAction SilentlyContinue)) {
     if (Test-Path $MSBuildPath.Replace("Enterprise", "BuildTools")) {
         $MSBuildPath = $MSBuildPath.Replace("Enterprise", "BuildTools")
     }
+	if ("$env:MSBuildPath" -ne "" -and (Test-Path "$env:MSBuildPath")) {
+		$MSBuildPath = $env:MSBuildPath
+	}
 }
 if (!(Test-Path "$MSBuildPath" -ErrorAction SilentlyContinue)) {
-	Write-Host MSBuild not found. Download from: https://aka.ms/vs/15/release/vs_buildtools.exe
-    sleep 10
-    exit 1
+	$env:MSBuildPath = Read-Host 'Please enter the path to MSBuild.exe. For example: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe. Or change the value of the MSBuildPath environment variable to be the path to MSBuild.exe'
+	if ("$env:MSBuildPath" -ne "" -and (Test-Path "$env:MSBuildPath")) {
+		$MSBuildPath = $env:MSBuildPath
+        [System.Environment]::SetEnvironmentVariable("MSBuildPath", $MSBuildPath, "Machine")
+	} else {
+		Write-Host MSBuild not found. Download from: https://aka.ms/vs/15/release/vs_buildtools.exe
+		sleep 10
+		exit 1
+	}
 }
 
 #Find NuGet
@@ -94,7 +103,7 @@ if ($AutoVersion.IsPresent -or $CustomVersion -ne "") {
     Write-Host Writing C# and F# versioning files...
 
     # Get all the latest version tags from server repo.
-    git -C "$PSScriptRoot" fetch --all --tags
+    git -C "$PSScriptRoot" fetch --all --tags -f
 
     # Generate informational version.
     # (from git commit id and time)
@@ -143,7 +152,14 @@ if ($AutoVersion.IsPresent -or $CustomVersion -ne "") {
 			    do {
 				    # Increment build number.
 				    [int]$NewBuildNumber = $FullVersionString.Split(".")[3]
-				    $NewBuildNumber++
+                    if ($NewBuildNumber -eq $null) 
+                    {
+                        $NewBuildNumber = 0
+                    }
+                    else
+                    {
+                        $NewBuildNumber++
+                    }
 				    $FullVersionString = $FullVersionString.Split(".")[0] + "." + $FullVersionString.Split(".")[1] + "." + $FullVersionString.Split(".")[2] + "." + $NewBuildNumber
 				    Write-Host Next version would be `"$FullVersionString`". Checking against Origin repo...
 				    # Check tag against origin
@@ -153,7 +169,7 @@ if ($AutoVersion.IsPresent -or $CustomVersion -ne "") {
 				    } else {
 					    Write-Host Double checking with hard coded integration manager repo...
 					    # Check tag against hard coded integration manager repo
-					    $originTag = git -C "$PSScriptRoot" ls-remote --tags "file:////rsaklfsvrdev/Git-Repositories/Warewolf" $FullVersionString
+					    $originTag = git -C "$PSScriptRoot" ls-remote --tags "https://gitlab.com/warewolfdevelopers/warewolf" $FullVersionString
 					    if ($originTag.length -ne 0) {
 						    Write-Host Hard coded integration manager repo has tag `"$originTag`".
 					    } else {
@@ -177,32 +193,39 @@ if ($AutoVersion.IsPresent -or $CustomVersion -ne "") {
     $CSharpVersionFileContents = @"
 using System.Reflection;
 using System.Runtime.CompilerServices;
-[assembly: AssemblyCompany("Warewolf")]
-[assembly: AssemblyProduct("Warewolf")]
-[assembly: AssemblyCopyright("Copyright Warewolf 
+#pragma warning disable CC0021 // Use nameof
+[assembly: AssemblyCompany(@"Warewolf")]
+[assembly: AssemblyProduct(@"Warewolf")]
+#pragma warning restore CC0021 // Use nameof
+[assembly: AssemblyCopyright(@"Copyright Warewolf 
 "@ + (Get-Date).year + @"
 ")]
-[assembly: AssemblyVersion("
+[assembly: AssemblyVersion(@"
 "@ + $FullVersionString + @"
 ")]
-[assembly: AssemblyInformationalVersion("
+[assembly: AssemblyInformationalVersion(@"
 "@ + $GitCommitTime + " " + $GitCommitID + " " + $GitBranchName + @"
 ")]
-[assembly: InternalsVisibleTo("Dev2.Activities.Tests")]
-[assembly: InternalsVisibleTo("Dev2.Activities.Designers.Tests")]
-[assembly: InternalsVisibleTo("Warewolf.Studio.ViewModels.Tests")]
-[assembly: InternalsVisibleTo("Dev2.Activities.Specs")]
 [assembly: InternalsVisibleTo("Dev2.Runtime.Tests")]
 [assembly: InternalsVisibleTo("Dev2.Studio.Core.Tests")]
-[assembly: InternalsVisibleTo("Dev2.Core.Tests")]
-[assembly: InternalsVisibleTo("Dev2.Integration.Tests")]
 [assembly: InternalsVisibleTo("Dev2.TaskScheduler.Wrappers")]
 [assembly: InternalsVisibleTo("Dev2.Infrastructure.Tests")]
-[assembly: InternalsVisibleTo("Warewolf.UIBindingTests.ComDll")]
 [assembly: InternalsVisibleTo("Warewolf.Studio.ViewModels.Tests")]
+[assembly: InternalsVisibleTo("Warewolf.QueueWorker.Tests")]
 [assembly: InternalsVisibleTo("Dev2.Data.Tests")]
 [assembly: InternalsVisibleTo("Warewolf.Tools.Specs")]
+[assembly: InternalsVisibleTo("Warewolf.Common.Framework48.Tests")]
+[assembly: InternalsVisibleTo("Warewolf.Storage.Tests")]
+[assembly: InternalsVisibleTo("Warewolf.UIBindingTests.ComDll")]
 [assembly: InternalsVisibleTo("Warewolf.UIBindingTests.PluginSource")]
+[assembly: InternalsVisibleTo("Dev2.Utils.Tests")]
+[assembly: InternalsVisibleTo("Dev2.Core.Tests")]
+[assembly: InternalsVisibleTo("Dev2.Common.Tests")]
+[assembly: InternalsVisibleTo("Dev2.Activities.Tests")]
+[assembly: InternalsVisibleTo("Dev2.Activities.Designers.Tests")]
+[assembly: InternalsVisibleTo("Dev2.CustomControls.Tests")]
+[assembly: InternalsVisibleTo("Dev2.Activities.Specs")]
+[assembly: InternalsVisibleTo("Dev2.Integration.Tests")]
 "@
     Write-Host $CSharpVersionFileContents
     $CSharpVersionFileContents | Out-File -LiteralPath $CSharpVersionFile -Encoding utf8 -Force
@@ -214,12 +237,14 @@ using System.Runtime.CompilerServices;
 namespace Warewolf.FSharp
 namespace Warewolf.FSharp
 open System.Reflection;
-[<assembly: AssemblyCompany("Warewolf")>]
-[<assembly: AssemblyProduct("Warewolf")>]
-[<assembly: AssemblyCopyright("Copyright Warewolf 
+#nowarn
+[<assembly: AssemblyCompany(@"Warewolf")>]
+[<assembly: AssemblyProduct(@"Warewolf")>]
+
+[<assembly: AssemblyCopyright(@"Copyright Warewolf 
 "@ + (Get-Date).year + @"
 ")>]
-[<assembly: AssemblyVersion("
+[<assembly: AssemblyVersion(@"
 "@ + $FullVersionString + @"
 ")>]
 do()
@@ -263,16 +288,39 @@ foreach ($SolutionFile in $KnownSolutionFiles) {
             $SolutionParameterIsPresent = (Get-Variable "$OutputFolderName*" -ValueOnly).IsPresent
         }
         if ($SolutionParameterIsPresent -or $NoSolutionParametersPresent) {
+			if ($OutputFolderName -eq "Webs") {
+				npm install --add-python-to-path='true' --global --production windows-build-tools
+			}
+
             if ($SolutionWideOutputs.IsPresent) {
                 $OutputProperty = "/property:OutDir=$PSScriptRoot\Bin\$OutputFolderName"
             } else {
                 $OutputProperty = ""
             }
             &"$NuGet" "restore" "$SolutionFile"
-            &"$MSBuildPath" "$SolutionFile" "/p:Platform=`"Any CPU`";Configuration=`"$Config`"" "/maxcpucount" $OutputProperty $Target "/nodeReuse:false"
+            Write-Host `nDotNet Restore:
+            dotnet restore "$SolutionFile"
+            &"$MSBuildPath" "$SolutionFile" "/p:Platform=`"Any CPU`";Configuration=`"$Config`"" "/maxcpucount" "/nodeReuse:false" $OutputProperty $Target
             if ($LASTEXITCODE -ne 0) {
-				Write-Host Build failed. Check your pending changes. If you do not have any pending changes then you can try running 'dev\scorched get.bat' before retrying. Compiling Warewolf requires at at least MSBuild 15.0, download from: https://aka.ms/vs/15/release/vs_buildtools.exe and FSharp 4.0, download from http://download.microsoft.com/download/9/1/2/9122D406-F1E3-4880-A66D-D6C65E8B1545/FSharp_Bundle.exe
+				Write-Host Build failed. Check your pending changes. If you do not have any pending changes then you can try running 'dev\scorch.bat' to thoroughly clean your workspace. Compiling Warewolf requires at at least MSBuild 15.0, download from: https://aka.ms/vs/15/release/vs_buildtools.exe and FSharp 4.0, download from http://download.microsoft.com/download/9/1/2/9122D406-F1E3-4880-A66D-D6C65E8B1545/FSharp_Bundle.exe
                 exit 1
+            }
+			if ($SolutionWideOutputs.IsPresent -and ($Target -eq "/t:Debug" -or $Target -eq "")) {
+				if (Test-Path "$PSScriptRoot\Bin\$OutputFolderName\SQLite.Interop.dll") {
+					Remove-Item -Path "$PSScriptRoot\Bin\$OutputFolderName\SQLite.Interop.dll" -Force
+				}
+				if (Test-Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll") {
+					Copy-Item -Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll" -Destination "$PSScriptRoot\Bin\$OutputFolderName\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll" -Force
+				}
+				if (Test-Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll") {
+					Copy-Item -Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll" -Destination "$PSScriptRoot\Bin\$OutputFolderName\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll" -Force
+				}
+				if (Test-Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll") {
+					Copy-Item -Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll" -Destination "$PSScriptRoot\Bin\$OutputFolderName\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll" -Force
+				}
+				if (Test-Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.TestFramework.dll") {
+					Copy-Item -Path "$env:userprofile\.nuget\packages\mstest.testadapter\2.0.0\build\_common\Microsoft.VisualStudio.TestPlatform.TestFramework.dll" -Destination "$PSScriptRoot\Bin\$OutputFolderName\Microsoft.VisualStudio.TestPlatform.TestFramework.dll" -Force
+				}
             }
         }
     }

@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using System;
 using System.Collections.Generic;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
@@ -6,7 +7,9 @@ namespace Dev2.Comparer
 {
     internal class DataSplitDTOComparer : IEqualityComparer<DataSplitDTO>
     {
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public bool Equals(DataSplitDTO x, DataSplitDTO y)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (x == null && y == null)
             {

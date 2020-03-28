@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,6 +36,7 @@ using Moq;
 namespace Dev2.Core.Tests.Settings
 {
     [TestClass]
+    [TestCategory("Studio Settings Core")]
     public class SettingsViewModelTests
     {
 
@@ -453,7 +454,7 @@ You need Administrator permission.", viewModel.Errors);
             Assert.IsFalse(viewModel.IsSaved);
             Assert.IsTrue(viewModel.HasErrors);
             Assert.AreEqual("Error while saving: Server unreachable.", viewModel.Errors);
-            popupController.Verify(controller => controller.ShowSaveSettingsNotReachableErrorMsg(), Times.Once);
+            popupController.Verify(controller => controller.ShowSaveServerNotReachableErrorMsg(), Times.Once);
         }
 
         [TestMethod]

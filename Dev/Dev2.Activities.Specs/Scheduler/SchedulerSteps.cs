@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +21,7 @@ using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Core.Tests.Utils;
 using Dev2.Services.Events;
 using Dev2.Services.Security;
-using Dev2.Settings.Scheduler;
+using Dev2.Triggers.Scheduler;
 using Dev2.Studio.Core;
 using Dev2.TaskScheduler.Wrappers;
 using Dev2.Util;
@@ -33,8 +33,8 @@ using Dev2.Activities.Specs.BaseTypes;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Studio.Interfaces;
-
-
+using System.IO;
+using Dev2.Infrastructure.Tests;
 
 namespace Dev2.Activities.Specs.Scheduler
 {
@@ -68,13 +68,6 @@ namespace Dev2.Activities.Specs.Scheduler
             _scenarioContext.Add("WorkFlow", workFlow);
         }
 
-        [Given(@"""(.*)"" has a username of ""(.*)"" and a Password of ""(.*)"" and group ""(.*)""")]
-        public void GivenHasAUsernameOfAndAPasswordOf(string scheduleName, string userName, string password, string groupName)
-        {
-            _scenarioContext.Add("UserName", userName);
-            _scenarioContext.Add("Password", password);
-        }
-
         [Given(@"""(.*)"" has a username of ""(.*)"" and a Password of ""(.*)""")]
         public void GivenHasAUsernameOfAndAPasswordOf(string scheduleName, string userName, string password)
         {
@@ -82,7 +75,13 @@ namespace Dev2.Activities.Specs.Scheduler
             _scenarioContext.Add("Password", password);
         }
 
-
+        [Given(@"""(.*)"" has a username of ""(.*)"" and a saved password")]
+        public void GivenHasAUsernameOfAndAPasswordOf(string scheduleName, string userName)
+        {
+            _scenarioContext.Add("UserName", userName);
+            _scenarioContext.Add("Password", TestEnvironmentVariables.GetVar(userName));
+        }
+        
         [Given(@"""(.*)"" has a Schedule of")]
         public void GivenHasAScheduleOf(string scheduleName, Table table)
         {
@@ -212,11 +211,11 @@ namespace Dev2.Activities.Specs.Scheduler
 
                 if (status == "Success")
                 {
-                    Assert.AreEqual(ScheduleRunStatus.Success, x[0].TaskHistoryOutput.Success);
+                    Assert.AreEqual(ScheduleRunStatus.Success, x[0].TaskHistoryOutput.Success, x[0].TaskHistoryOutput.FailureReason);
                 }
                 else
                 {
-                    Assert.IsTrue(x[0].TaskHistoryOutput.Success == ScheduleRunStatus.Error || x[0].TaskHistoryOutput.Success == ScheduleRunStatus.Error);
+                    Assert.IsTrue(x[0].TaskHistoryOutput.Success == ScheduleRunStatus.Error);
                 }
                 _scenarioContext["History"] = x;
 
@@ -228,10 +227,7 @@ namespace Dev2.Activities.Specs.Scheduler
         }
 
         [Then(@"""(.*)"" has ""(.*)"" row of history")]
-        public void ThenHasRowOfHistory(string scheduleName, int history)
-        {
-            _scenarioContext["HistoryCount"] = history;
-        }
+        public void ThenHasRowOfHistory(string scheduleName, int history) => _scenarioContext["HistoryCount"] = history;
 
         [Then(@"the history debug output for ""(.*)"" for row ""(.*)"" is")]
         public void ThenTheHistoryDebugOutputForForRowIs(string p0, int p1, Table table)
@@ -245,18 +241,10 @@ namespace Dev2.Activities.Specs.Scheduler
         }
 
         [Given(@"task history ""(.*)"" is ""(.*)""")]
-        public void GivenTaskHistoryIs(string scheduleName, int history)
-        {
-            _scenarioContext["HistoryCount"] = history;
-        }
+        public void GivenTaskHistoryIs(string scheduleName, int history) => _scenarioContext["HistoryCount"] = history;
 
         [Given(@"the task status ""(.*)"" is ""(.*)""")]
-        public void GivenTheTaskStatusIs(string schedule, string status)
-        {
-            _scenarioContext["TaskStatus"] = status == "Enabled" ? SchedulerStatus.Enabled : SchedulerStatus.Disabled;
-        }
-
-
+        public void GivenTheTaskStatusIs(string schedule, string status) => _scenarioContext["TaskStatus"] = status == "Enabled" ? SchedulerStatus.Enabled : SchedulerStatus.Disabled;
 
         [Then(@"the Schedule task has ""(.*)"" error")]
         public void ThenTheScheduleTaskHasError(string error)
@@ -295,6 +283,10 @@ namespace Dev2.Activities.Specs.Scheduler
                     i++;
 
                 } while (i < times);
+                if (task.LastTaskResult != 0)
+                {
+                    throw new Exception($"Warewolf Agent Exitted with exit code: {task.LastTaskResult} executing scheduled task: {task.Name}\n{task.Xml}");
+                }
             }
             catch (Exception e)
             {
@@ -309,10 +301,8 @@ namespace Dev2.Activities.Specs.Scheduler
             {
                 var id = GetUserSecurityIdentifier(name);
                 accountExists = id.IsAccountSid();
-            }
-            
-            catch (Exception)
-            
+            }            
+            catch (Exception)            
             {
                 /* Invalid user account */
             }

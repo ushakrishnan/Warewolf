@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,7 +18,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using ActivityUnitTests;
-using ActivityUnitTests.ActivityTest;
 using Dev2.Activities;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
@@ -34,10 +34,8 @@ using Dev2.Runtime.Interfaces;
 using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Moq.Protected;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
-using Warewolf.Storage.Interfaces;
 
 namespace Dev2.Tests.Activities.ActivityTests
 {
@@ -129,12 +127,12 @@ namespace Dev2.Tests.Activities.ActivityTests
         static void VerifyDispatcherWriteCount(DsfDataObject dataObject, int expectedCount)
         {
             var dispatcher = new Mock<IDebugDispatcher>();
-            dispatcher.Setup(d => d.Write(It.IsAny<IDebugState>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IList<IDebugState>>())).Verifiable();
+            dispatcher.Setup(d => d.Write(new WriteArgs { debugState = It.IsAny<IDebugState>(), isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() })).Verifiable();
 
             var activity = new TestActivity(dispatcher.Object);
 
             Run(activity, dataObject,
-                () => dispatcher.Verify(d => d.Write(It.IsAny<IDebugState>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IList<IDebugState>>()), Times.Exactly(expectedCount)));
+                () => dispatcher.Verify(d => d.Write(new WriteArgs { debugState = It.IsAny<IDebugState>(), isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }), Times.Exactly(expectedCount)));
         }
 
         protected static void Run(Activity activity, DsfDataObject dataObject, Action completed)
@@ -280,10 +278,10 @@ namespace Dev2.Tests.Activities.ActivityTests
             };
             IDebugState passedDebugState = null;
             var mockDebugDispatcher = new Mock<IDebugDispatcher>();
-            mockDebugDispatcher.Setup(dispatcher => dispatcher.Write(It.IsAny<IDebugState>(), It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<IList<IDebugState>>()))
-                .Callback((IDebugState ds, bool isTestExecution, bool isDebugFromWeb, string testName, bool isRemoteInvoke, string remoteID, string parentId, IList<IDebugState> remoteItems) =>
+            mockDebugDispatcher.Setup(dispatcher => dispatcher.Write(It.IsAny<WriteArgs>()))
+               .Callback<WriteArgs> ((writeArgs) =>
                   {
-                      passedDebugState = ds;
+                      passedDebugState = writeArgs.debugState;
                   });
             var activity = new TestActivity(mockDebugDispatcher.Object)
             {

@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,8 +19,8 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Dev2;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Threading;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Interfaces;

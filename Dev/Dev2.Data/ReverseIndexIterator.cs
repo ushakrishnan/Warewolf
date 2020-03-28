@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -55,9 +55,7 @@ namespace Dev2.Data.Binary_Objects
 
         public int FetchNextIndex()
         {
-
             var canidate = _curValue;
-            // assign a new curValue
 
             while (IndexList.Gaps.Contains(canidate))
             {
@@ -66,7 +64,7 @@ namespace Dev2.Data.Binary_Objects
 
             var result = canidate;
 
-            _curValue = canidate - 1; // save next value ;)
+            _curValue = canidate - 1;
 
             return result;
         }

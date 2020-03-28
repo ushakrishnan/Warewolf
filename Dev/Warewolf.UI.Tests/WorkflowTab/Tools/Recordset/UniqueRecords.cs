@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Recordset
     [CodedUITest]
     public class UniqueRecordsTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Recordset Tools")]
         public void UniqueRecordsTool_Small_And_LargeView_UITest()
         {

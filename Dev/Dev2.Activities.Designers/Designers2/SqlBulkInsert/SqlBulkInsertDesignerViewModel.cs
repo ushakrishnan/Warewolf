@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -390,7 +391,9 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             });
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         void LoadTableColumns(System.Action continueWith = null)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (!IsTableSelected || _isInitializing)
             {
@@ -547,7 +550,9 @@ namespace Dev2.Activities.Designers2.SqlBulkInsert
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         IEnumerable<IActionableErrorInfo> ValidateVariables()
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var parser = new Dev2DataLanguageParser();
             var allActionableErrors = new List<IActionableErrorInfo>();

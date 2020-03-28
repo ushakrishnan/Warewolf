@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -76,7 +77,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             ExecuteTool(dataObject, 0);
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
 
 

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -310,6 +311,14 @@ namespace Dev2.Runtime.Hosting
             {
                 Dev2Logger.Error(e, "Warewolf Error");
             }
+        }
+
+        public int GetLatestVersionNumber(Guid resourceId)
+        {
+            // TODO: bugfix: version number can not be defined by the total count of version files in a directory
+            var path = GetVersionFolderPath(resourceId.ToString());
+            var files = _directory.GetFiles(path);
+            return files.Count() + 1;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +24,16 @@ namespace Dev2.Activities.Designers.Tests.DateTimeDifference
     [TestClass]
     public class DotNetDateTimeDifferenceDesignerViewModelTests
     {
+        [TestInitialize]
+        public void PreConditions()
+        {
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-ZA");
+            System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("en-ZA");
+
+            Assert.AreEqual("en-ZA", System.Threading.Thread.CurrentThread.CurrentCulture.Name);
+            Assert.AreEqual("en-ZA", System.Threading.Thread.CurrentThread.CurrentUICulture.Name);
+        }
+
         [TestMethod]
         [Owner("Tshepo Ntlhokoa")]
         [TestCategory("DateTimeDifferenceDesignerViewModel_Constructor")]

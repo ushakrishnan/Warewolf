@@ -6,9 +6,6 @@ using Warewolf.UI.Tests.WorkflowTab.Tools.StorageDropbox.DropboxToolsUIMapClasse
 using Warewolf.UI.Tests.WorkflowTab.WorkflowTabUIMapClasses;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.WorkflowTab.Tools.Utility.UtilityToolsUIMapClasses;
-using Warewolf.Launcher;
-using System.IO;
-using System.Reflection;
 
 namespace Warewolf.UI.Tests.DebugOutputTests
 {
@@ -18,7 +15,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
         const string SelectionHighlightWf = "SelectionHighlightWf";
         const string DropboxSelectionHighlightWf = "DropboxSelectionHighlightWf";
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void Change_Value_On_HelloWorld_Assign_Marks_Workflow_As_Dirty_UITest()
         {
@@ -28,9 +25,8 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             DataToolsUIMap.Add_Space_At_The_End_Of_Row1_Value();
             Assert.IsTrue(UIMap.MainStudioWindow.SideMenuBar.SaveButton.Enabled);
         }
-
         
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void HelloWorld_Is_Highlighted_After_Execution_UITest()
         {
@@ -43,7 +39,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(helloWorldIsHighlighted, "Sub-workflow is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void WebRequestTool_Is_Highlighted_After_Execution_UITest()
         {
@@ -54,7 +50,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(webRequest, "Web request tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void WorkFlowSelection_Validation_UITest()
         {
@@ -69,7 +65,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(assignHasNoFocus, "Assign tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void DropboxWorkFlowSelection_Validation_UITest()
         {
@@ -84,7 +80,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(assignHasNoFocus, "Dropbox delete tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void SelectAndApplyWorkFlowSelection_Validation_UITest()
         {
@@ -95,7 +91,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(selectAndApplyFocus, "Select and Apply tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void DropboxDownloadWorkFlowSelection_Validation_UITest()
         {
@@ -106,7 +102,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxDownloadHasFocus, "Dropbox download tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void DropboxDeleteWorkFlowSelection_Validation_UITest()
         {
@@ -117,7 +113,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxDeleteHasFocus, "Dropbox delete tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void DropboxUploadWorkFlowSelection_Validation_UITest()
         {
@@ -128,7 +124,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxUploadHasFocus, "Dropbox upload tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Debug Input")]
         public void DropboxListWorkFlowSelection_Validation_UITest()
         {
@@ -139,7 +135,7 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             Assert.IsTrue(dropboxListHasFocus, "Dropbox list tool is not selected on the design surface after it was executed with the F6 keyboard shortcut.");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("MSSql")]
         public void Executing_Sql_Procedure_With_Errors()
         {
@@ -149,6 +145,16 @@ namespace Warewolf.UI.Tests.DebugOutputTests
             UIMap.Press_F6();
             Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.UISQLServerDatabaseTreeItem.UISQLErrorError15700seText.Exists);
             Assert.IsTrue(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.ContentPane.ContentDockManager.SplitPaneRight.DebugOutput.DebugOutputTree.UISQLServerDatabaseTreeItem.UIErrorText.Exists);
+        }
+
+        [TestMethod]
+        [TestCategory("Debug Input")]
+        public void DebugOutput_MoreLink_UITest()
+        {
+            ExplorerUIMap.Open_Item_With_Double_Click("More Link UI Testing");
+            UIMap.Press_F6();
+            WorkflowTabUIMap.WaitForDebugOutput();
+            WorkflowTabUIMap.Click_Step_1_More_Link();
         }
 
         #region Additional test attributes

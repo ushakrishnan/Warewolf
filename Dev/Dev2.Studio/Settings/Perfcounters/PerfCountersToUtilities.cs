@@ -1,4 +1,15 @@
-﻿using System;
+﻿#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -6,8 +17,6 @@ using System.Linq;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Monitoring;
 using Dev2.PerformanceCounters.Counters;
-
-
 
 namespace Dev2.Settings.Perfcounters
 {
@@ -65,26 +74,27 @@ namespace Dev2.Settings.Perfcounters
         {
             var res = new List<IResourcePerformanceCounter>();
             var performanceCountersByResources = to.Where(resource => !resource.IsDeleted && !string.IsNullOrEmpty(resource.CounterName));
+            var performanceCounterFactory = new PerformanceCounterFactory();
             foreach (var resourcePerformanceCounter in performanceCountersByResources)
             {
                 if (resourcePerformanceCounter.TotalErrors)
                 {
-                    var counter = new WarewolfNumberOfErrorsByResource(resourcePerformanceCounter.ResourceId,resourcePerformanceCounter.CounterName);
+                    var counter = new WarewolfNumberOfErrorsByResource(resourcePerformanceCounter.ResourceId,resourcePerformanceCounter.CounterName, performanceCounterFactory);
                     res.Add(counter);
                 }
                 if (resourcePerformanceCounter.AverageExecutionTime)
                 {
-                    var counter = new WarewolfAverageExecutionTimePerformanceCounterByResource(resourcePerformanceCounter.ResourceId, resourcePerformanceCounter.CounterName);
+                    var counter = new WarewolfAverageExecutionTimePerformanceCounterByResource(resourcePerformanceCounter.ResourceId, resourcePerformanceCounter.CounterName, performanceCounterFactory);
                     res.Add(counter);
                 }
                 if (resourcePerformanceCounter.ConcurrentRequests)
                 {
-                    var counter = new WarewolfCurrentExecutionsPerformanceCounterByResource(resourcePerformanceCounter.ResourceId, resourcePerformanceCounter.CounterName);
+                    var counter = new WarewolfCurrentExecutionsPerformanceCounterByResource(resourcePerformanceCounter.ResourceId, resourcePerformanceCounter.CounterName, performanceCounterFactory);
                     res.Add(counter);
                 }
                 if (resourcePerformanceCounter.RequestPerSecond)
                 {
-                    var counter = new WarewolfRequestsPerSecondPerformanceCounterByResource(resourcePerformanceCounter.ResourceId, resourcePerformanceCounter.CounterName);
+                    var counter = new WarewolfRequestsPerSecondPerformanceCounterByResource(resourcePerformanceCounter.ResourceId, resourcePerformanceCounter.CounterName, performanceCounterFactory);
                     res.Add(counter);
                 }
             }

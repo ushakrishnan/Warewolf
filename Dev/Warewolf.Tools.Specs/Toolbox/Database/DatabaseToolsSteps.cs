@@ -11,7 +11,6 @@ using ActivityUnitTests;
 using Dev2.Activities.Specs.BaseTypes;
 using System;
 using System.Xml.Linq;
-using Dev2.Studio.ViewModels.DataList;
 using Dev2.Studio.Core.Models;
 using Dev2.Data.Util;
 using Dev2.Studio.Core.Models.DataList;
@@ -77,7 +76,7 @@ namespace Warewolf.Tools.Specs.Toolbox.Database
                     {
                         allErrors = item.ErrorMessage + Environment.NewLine;
                     }
-                    Assert.IsTrue(debugStates.Any(p => p.ErrorMessage.Contains(error)), error + " : Did not occure. But " + allErrors + "occured");
+                    Assert.IsTrue(debugStates.Any(p => p.ErrorMessage.Contains(error)), error + " : Did not occur. But " + allErrors + "occured");
                 }
             }
             else
@@ -217,22 +216,27 @@ namespace Warewolf.Tools.Specs.Toolbox.Database
 
         void EnsureEnvironmentConnected(IServer server, int timeout)
         {
-            if (timeout <= 0)
+            var startTime = DateTime.UtcNow;
+            server.Connect();
+
+
+            while (!server.IsConnected && !server.Connection.IsConnected)
+            {
+                Assert.AreEqual(server.IsConnected, server.Connection.IsConnected);
+
+                var now = DateTime.UtcNow;
+                if (now.Subtract(startTime).TotalSeconds > timeout)
+                {
+                    break;
+                }
+                Thread.Sleep(GlobalConstants.NetworkTimeOut);
+            }
+
+
+            if (!server.IsConnected && !server.Connection.IsConnected)
             {
                 _scenarioContext.Add("ConnectTimeoutCountdown", timeout);
                 throw new TimeoutException("Connection to Warewolf server \"" + server.Name + "\" timed out.");
-            }
-
-            if (!server.IsConnected && !server.Connection.IsConnected)
-            {
-                server.Connect();
-            }
-
-            if (!server.IsConnected && !server.Connection.IsConnected)
-            {
-                Thread.Sleep(GlobalConstants.NetworkTimeOut);
-                timeout--;
-                EnsureEnvironmentConnected(server, timeout);
             }
         }
         public void DebugWriterSubscribe(IServer environmentModel)

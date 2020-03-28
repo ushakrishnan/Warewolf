@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -92,6 +93,7 @@ namespace Warewolf.Studio.ViewModels
         async void ConnectControlSelectedExplorerEnvironmentChanged(object sender, Guid id)
         {
             IsDeployLoading = true;
+            SearchText = string.Empty;
 
             var connect = sender as IConnectControlViewModel;
             IEnvironmentViewModel environmentModel = null;

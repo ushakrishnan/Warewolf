@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.Tools
     [CodedUITest]
     public class Zip
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
 		[TestCategory("File Tools")]
         public void ZipTool_OpenLargeViewUITest()
         {

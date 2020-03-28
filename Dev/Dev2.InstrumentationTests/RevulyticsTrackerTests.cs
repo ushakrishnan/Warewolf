@@ -10,10 +10,6 @@ namespace Dev2.Instrumentation.Tests
     [TestClass()]
     public class RevulyticsTrackerTests
     {
-        /// <summary>
-        /// This method is used to read correct config needed in test cases
-        /// </summary>
-        /// <returns>RevulyticsTracker object</returns>
         private RevulyticsTracker GetRevulyticsTracker()
         {
             var tracker = RevulyticsTracker.GetTrackerInstance();
@@ -27,54 +23,45 @@ namespace Dev2.Instrumentation.Tests
             return tracker;
         }
 
-        /// <summary>
-        /// This method is used to read incorrect config needed in test cases
-        /// </summary>
-        /// <returns>RevulyticsTracker object</returns>
         private RevulyticsTracker GetRevulyticsTrackerWithIncorrectConfig()
         {
-            var tracker = new RevulyticsTracker();
-            tracker.SdkFilePath = "D:\\";
-            tracker.ConfigFilePath = ConfigurationManager.AppSettings["IConfigFilePath"];
-            tracker.ProductId = ConfigurationManager.AppSettings["IProductID"];
-            tracker.AppName = ConfigurationManager.AppSettings["IAppName"];
-            tracker.ProductUrl = ConfigurationManager.AppSettings["IProductUrl"];
-            tracker.AesHexKey = ConfigurationManager.AppSettings["IAesHexKey"];
+            var tracker = new RevulyticsTracker
+            {
+                SdkFilePath = "D:\\",
+                ConfigFilePath = ConfigurationManager.AppSettings["IConfigFilePath"],
+                ProductId = ConfigurationManager.AppSettings["IProductID"],
+                AppName = ConfigurationManager.AppSettings["IAppName"],
+                ProductUrl = ConfigurationManager.AppSettings["IProductUrl"],
+                AesHexKey = ConfigurationManager.AppSettings["IAesHexKey"]
+            };
 
             return tracker;
         }
 
-        /// <summary>
-        /// This exception occcur when require revulytics dll is not present or version is different
-        /// in the running application directory below are the dlls.
-        /// ruiSDK_5.1.0.x86.dll ruiSDK_5.1.0.x64.dll
-        /// </summary>
         [TestMethod()]
-        public void CreateRevulyticsConfigTestSdkException()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_CreateRevulyticsConfigTestSdkException()
         {
             var tracker = RevulyticsTracker.GetTrackerInstance();
             var result = tracker.CreateRevulyticsConfig();
             Assert.AreEqual(result, RUIResult.ok);
         }
 
-        /// <summary>
-        /// This test check to revulytics config is valid or not
-        /// </summary>
         [TestMethod()]
-        public void CreateRevulyticsConfigTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_CreateRevulyticsConfigTest()
         {
             var tracker = GetRevulyticsTracker();
             var configResult = tracker.CreateRevulyticsConfig();
             Assert.AreEqual(configResult, RUIResult.ok, "configNotCreated");
         }
 
-        /// <summary>
-        /// This Test case check the status of StartSdk method to ensure revultyics
-        /// sdk is started.
-        /// Test case will fail when status in other than ok.
-        /// </summary>
         [TestMethod()]
-        public void StartSdkTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_StartSdkTest()
         {
             var tracker = GetRevulyticsTracker();
             tracker.CreateRevulyticsConfig();
@@ -82,13 +69,10 @@ namespace Dev2.Instrumentation.Tests
             Assert.AreEqual(startSdkResult, RUIResult.ok, "sdkNotStarted");
         }
 
-        /// <summary>
-        /// This Test case check the status of StopSdk method to ensure revultyics
-        /// started sdk is stopped.
-        /// Test case will fail when status in other than ok.
-        /// </summary>
         [TestMethod()]
-        public void StopSdkTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_StopSdkTest()
         {
             var tracker = GetRevulyticsTracker();
             tracker.CreateRevulyticsConfig();
@@ -97,13 +81,10 @@ namespace Dev2.Instrumentation.Tests
             Assert.AreEqual(stopResult, RUIResult.ok, "sdkAlreadyStopped");
         }
 
-        /// <summary>
-        /// This Test case check the status of StartSession method to ensure revultyics
-        /// session is started.
-        /// Test case will fail when status in other than ok.
-        /// </summary>
         [TestMethod()]
-        public void StartSessionTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_StartSessionTest()
         {
             var tracker = GetRevulyticsTracker();
             tracker.CreateRevulyticsConfig();
@@ -113,13 +94,10 @@ namespace Dev2.Instrumentation.Tests
             Assert.AreEqual(startSessionResult, RUIResult.ok, "sdkSuspended");
         }
 
-        /// <summary>
-        /// This Test case check the status of StopSession method to ensure revultyics
-        /// started session is stopped.
-        /// Test case will fail when status in other than ok.
-        /// </summary>
         [TestMethod()]
-        public void StopSessionTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_StopSessionTest()
         {
             var tracker = GetRevulyticsTracker();
             tracker.CreateRevulyticsConfig();
@@ -131,13 +109,10 @@ namespace Dev2.Instrumentation.Tests
             Assert.AreEqual(stopSessionResult, RUIResult.ok, "sdkAlreadyStopped");
         }
 
-        /// <summary>
-        /// Before logging any events to revulytics,product version need to be set.
-        /// This test set the product version and check the status.
-        /// Test case will fail when status in other than ok.
-        /// </summary>
         [TestMethod()]
-        public void SetProductVersionTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_SetProductVersionTest()
         {
             var tracker = GetRevulyticsTracker();
             tracker.CreateRevulyticsConfig();
@@ -147,119 +122,134 @@ namespace Dev2.Instrumentation.Tests
             Assert.AreEqual(result, RUIResult.ok, "Error in setting product version");
         }
 
-        /// <summary>
-        /// This exception occcur when require revulytics dll is not present or version is different
-        /// in the running application directory below are the dlls.
-        /// ruiSDK_5.1.0.x86.dll ruiSDK_5.1.0.x64.dll
-        /// </summary>
         [TestMethod()]
-        public void EnableAppplicationTrackerSdkException()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_EnableAppplicationTrackerSdkException()
+        {
+            var tracker = GetRevulyticsTracker();
+            tracker.CreateRevulyticsConfig();
+            tracker.StartSdk();
+            tracker.InformationalVersion = "Git Commit ID, branch name, etc...";
+            var result = tracker.SetInformationalVersion();
+            Assert.AreEqual(result, RUIResult.ok, "Error in setting informational version");
+        }
+
+        [TestMethod]
+        public void EnableApplicationTrackerSdkException()
         {
             var tracker = RevulyticsTracker.GetTrackerInstance();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             Assert.AreEqual(tracker.EnableApplicationResultStatus, RUIResult.ok);
+            Assert.AreEqual(productVersion, tracker.ProductVersion);
+            Assert.AreEqual(infoVersion, tracker.InformationalVersion);
+            Assert.AreEqual(username, tracker.Username);
         }
 
-        /// <summary>
-        /// This exception occur whenever paramerter required for the revulytics config is
-        /// null or empty.
-        /// </summary>
         [TestMethod()]
-        public void EnableAppplicationTrackerArgumentNullException()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_EnableAppplicationTrackerArgumentNullException()
         {
             var tracker = GetRevulyticsTrackerWithIncorrectConfig();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
             tracker.SdkFilePath = null;
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             Assert.AreEqual(RUIResult.invalidConfigPath, tracker.EnableApplicationResultStatus);
+            Assert.AreEqual(productVersion, tracker.ProductVersion);
+            Assert.AreEqual(infoVersion, tracker.InformationalVersion);
+            Assert.AreEqual(username, tracker.Username);
+            Assert.IsNull(tracker.SdkFilePath);
         }
 
-        /// <summary>
-        /// Revulytics config must be created and sdk must be started before logging any event.
-        /// This Test will check the status of revultics with correct config provided.
-        /// The outcome must be running to validate the test case.
-        /// </summary>
         [TestMethod()]
-        public void EnableAppplicationTrackerTestWithCorrectonfig()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_EnableApplicationTrackerTestWithCorrectConfig()
         {
             var tracker = GetRevulyticsTracker();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
-            Assert.AreEqual(tracker.RuiSdk.GetState(), RUIState.running, "Revulytics Started");
-
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
+            Assert.IsTrue(tracker.RuiSdk.GetState() == RUIState.running || tracker.RuiSdk.GetState() == RUIState.startedNewRegRunning, "Revulytics Started");
+            Assert.AreEqual(productVersion, tracker.ProductVersion);
+            Assert.AreEqual(infoVersion, tracker.InformationalVersion);
+            Assert.AreEqual(username, tracker.Username);
         }
-        /// <summary>
-        /// Revulytics config must be created and sdk must be started before logging any event.
-        /// This Test will check the status of revultics config creation with
-        /// in correct config provided.
-        /// </summary>
+
         [TestMethod()]
-        public void EnableAppplicationTrackerTestWithInCorrectonfig()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_EnableAppplicationTrackerTestWithInCorrectonfig()
         {
             var tracker = GetRevulyticsTrackerWithIncorrectConfig();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             Assert.AreNotEqual(tracker.EnableApplicationResultStatus, RUIResult.ok, "Config is not created");
+            Assert.AreEqual(productVersion, tracker.ProductVersion);
+            Assert.AreEqual(infoVersion, tracker.InformationalVersion);
+            Assert.AreEqual(username, tracker.Username);
         }
 
-        /// <summary>
-        /// This test is to track application event
-        /// </summary>
         [TestMethod()]
-        public void TrackEventTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_TrackEventTest()
         {
             var tracker = RevulyticsTracker.GetTrackerInstance();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             tracker.TrackEvent("Test Event", "Unit Test");
         }
 
-        /// <summary>
-        /// This test is to track custom event
-        /// </summary>
         [TestMethod()]
-        public void TrackCustomEventTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_TrackCustomEventTest()
         {
             var tracker = RevulyticsTracker.GetTrackerInstance();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             tracker.TrackCustomEvent("Test Event", "Unit Test", "custom values");
         }
 
-        /// <summary>
-        /// Revulytics logging must be stopped once application closed.
-        /// This Test will check the status of revultics logging to stopped.
-        /// </summary>
         [TestMethod()]
-        public void DisableAppplicationTrackerTest()
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
+        public void RevulyticsTracker_DisableAppplicationTrackerTest()
         {
             var tracker = GetRevulyticsTracker();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             tracker.DisableApplicationTracker();
-            Assert.AreEqual(RUIState.stopped,tracker.RuiSdk.GetState(), "Revulytics stopped");
+            Assert.AreEqual(RUIState.stopped, tracker.RuiSdk.GetState(), "Revulytics stopped");
         }
 
-        /// <summary>
-        /// Revulytics logging must be stopped once application closed.
-        /// This Test will ensure exception is handled.
-        /// </summary>
         [TestMethod()]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(RevulyticsTracker))]
         [ExpectedException(typeof(NullReferenceException))]
-        public void DisableAppplicationTrackerExceptionTest()
+        public void RevulyticsTracker_DisableAppplicationTrackerExceptionTest()
         {
             var tracker = GetRevulyticsTracker();
             const string productVersion = "1.0.0.0";
+            const string infoVersion = "Some extra info...";
             const string username = "windows\\raju";
-            tracker.EnableApplicationTracker(productVersion, username);
+            tracker.EnableApplicationTracker(productVersion, infoVersion, username);
             tracker.RuiSdk = null;
             tracker.DisableApplicationTracker();
             tracker.RuiSdk.GetState();

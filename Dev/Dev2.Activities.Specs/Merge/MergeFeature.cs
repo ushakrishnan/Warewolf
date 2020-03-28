@@ -20,9 +20,11 @@ using System.Linq;
 using System.Reflection;
 using TechTalk.SpecFlow;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
 using Warewolf.MergeParser;
 using Warewolf.Studio.ViewModels;
+using Dev2.Activities.DropBox2016;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.Merge
 {
@@ -54,10 +56,7 @@ namespace Dev2.Activities.Specs.Merge
             CustomContainer.Register(environmentModel);
             CustomContainer.Register(pop.Object);
             localHost = environmentModel.Source;
-            localHost.Connect();
-#pragma warning disable S125 // Sections of code should not be "commented out"
-            //localHost.ResourceRepository.Load(true);
-#pragma warning restore S125 // Sections of code should not be "commented out"
+            localHost.ConnectAsync().Wait(60000);
         }
 
         IServer localHost;
@@ -67,12 +66,16 @@ namespace Dev2.Activities.Specs.Merge
         {
             if (serverName == "Remote Container")
             {
-                WorkflowExecutionSteps._containerOps = TestLauncher.StartLocalCIRemoteContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
+                WorkflowExecutionSteps._containerOps = new Depends(Depends.ContainerType.Warewolf);
+            }
+            if (serverName == "Remote Connection Integration")
+            {
+                WorkflowExecutionSteps._containerOps = new Depends(Depends.ContainerType.CIRemote);
             }
             if (!serverName.Equals("localhost", StringComparison.InvariantCultureIgnoreCase))
             {
                 var remoteServer = environmentModel.FindSingle(a => a.Name.Equals(serverName, StringComparison.InvariantCultureIgnoreCase));
-                remoteServer.Connect();
+                remoteServer.ConnectAsync().Wait(60000);
                 remoteServer.ResourceRepository.Load(true);
                 var remoteResource = remoteServer.ResourceRepository.FindSingle(p => p.ResourceName.Equals(resourceName, StringComparison.InvariantCultureIgnoreCase));
                 Assert.IsNotNull(remoteResource, "Resource \"" + resourceName + "\" not found on remote server \"" + serverName + "\".");
@@ -92,7 +95,7 @@ namespace Dev2.Activities.Specs.Merge
             if (!serverName.Equals("localhost", StringComparison.InvariantCultureIgnoreCase))
             {
                 var remoteServer = environmentModel.FindSingle(a => a.Name.Equals(serverName, StringComparison.InvariantCultureIgnoreCase));
-                remoteServer.Connect();
+                remoteServer.ConnectAsync().Wait(60000);
                 remoteServer.ResourceRepository.Load(true);
                 var remoteResource = remoteServer.ResourceRepository.FindSingle(p => p.ResourceName.Equals(resourceName, StringComparison.InvariantCultureIgnoreCase));
                 Assert.IsNotNull(remoteResource, "Resource \"" + resourceName + "\" not found on remote server \"" + serverName + "\".");
@@ -423,6 +426,7 @@ namespace Dev2.Activities.Specs.Merge
         {
             var dev2ActivityIOMapping = typeof(IDev2ActivityIOMapping);
             Type[] excludedTypes = { typeof(DsfBaseActivity),
+                                     typeof(DsfDropBoxBaseActivity),
                                      typeof(DsfActivityAbstract<>),
                                      typeof(DsfMethodBasedActivity),
                                      typeof(DsfWebActivityBase),

@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
     [CodedUITest]
     public class FindIndex
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
 		[TestCategory("Data Tools")]
         public void FindIndexTool_Small_And_LargeView_UITest()
         {

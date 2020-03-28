@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,9 +18,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Tests.Runtime.WebServer.Responses
 {
     [TestClass]
+    [TestCategory("Runtime WebServer")]
     public class DynamicFileResponseWriterTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("DynamicFileResponseWriter_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -34,7 +35,7 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
             //------------Assert Results-------------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("DynamicFileResponseWriter_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -48,7 +49,7 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
             //------------Assert Results-------------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("DynamicFileResponseWriter_Constructor")]
         [ExpectedException(typeof(ArgumentNullException))]
@@ -63,31 +64,37 @@ namespace Dev2.Tests.Runtime.WebServer.Responses
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Trevor Williams-Ros")]
         [TestCategory("DynamicFileResponseWriter_Write")]
         public void DynamicFileResponseWriter_Write_WebServerContext_WritesContent()
         {
-            var request = WebServerRequestTests.CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers);
+            try
+            {
+                var request = WebServerRequestTests.CreateHttpRequest(out string content, out NameValueCollection boundVars, out NameValueCollection queryStr, out NameValueCollection headers);
 
-            var context = new WebServerContext(request, boundVars);
+                var context = new WebServerContext(request, boundVars);
 
-            const string Token = "%%Token%%";
-            const string LayoutContentFormat = "<html><body>{0}</body></html>";
-            const string NewContent = "Hello world";
+                const string Token = "%%Token%%";
+                const string LayoutContentFormat = "<html><body>{0}</body></html>";
+                const string NewContent = "Hello world";
 
-            var responseWriter = new TestDynamicFileResponseWriter(string.Format(LayoutContentFormat, Token), Token, NewContent);
+                var responseWriter = new TestDynamicFileResponseWriter(string.Format(LayoutContentFormat, Token), Token, NewContent);
 
-            //------------Execute Test---------------------------
-            responseWriter.Write(context);
+                //------------Execute Test---------------------------
+                responseWriter.Write(context);
 
-            //------------Assert Results-------------------------
-            Assert.AreEqual(ContentTypes.Html, context.ResponseMessage.Content.Headers.ContentType);
-            Assert.IsInstanceOfType(context.ResponseMessage.Content, typeof(StringContent));
-            var task = context.ResponseMessage.Content.ReadAsStringAsync();
-            task.Wait();
+                //------------Assert Results-------------------------
+                Assert.AreEqual(ContentTypes.Html, context.ResponseMessage.Content.Headers.ContentType);
+                Assert.IsInstanceOfType(context.ResponseMessage.Content, typeof(StringContent));
+                var task = context.ResponseMessage.Content.ReadAsStringAsync();
+                task.Wait();
 
-            Assert.AreEqual(string.Format(LayoutContentFormat, NewContent), task.Result);
+                Assert.AreEqual(string.Format(LayoutContentFormat, NewContent), task.Result);
+            } catch (MissingMethodException e)
+            {
+                Assert.Fail(e.ToString());
+            }
         }
     }
 }

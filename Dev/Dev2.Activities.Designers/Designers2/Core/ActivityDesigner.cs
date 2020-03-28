@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -189,7 +189,9 @@ namespace Dev2.Activities.Designers2.Core
 
         #endregion
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         void ToggleView(MouseButtonEventArgs eventArgs)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var originalSource = eventArgs.OriginalSource;
             if (originalSource is FrameworkElement fe && (fe.TemplatedParent is ToggleButton || fe.TemplatedParent is ActivityDesignerButton))

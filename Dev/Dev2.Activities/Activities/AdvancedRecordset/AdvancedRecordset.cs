@@ -1,6 +1,7 @@
-﻿/*
+﻿#pragma warning disable
+/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,6 +26,16 @@ using System.Linq;
 
 namespace Dev2.Activities
 {
+    public interface IAdvancedRecordsetFactory
+    {
+        IAdvancedRecordset New(IExecutionEnvironment env);
+    }
+
+    public class AdvancedRecordsetFactory : IAdvancedRecordsetFactory
+    {
+        public IAdvancedRecordset New(IExecutionEnvironment env) => new AdvancedRecordset(env);
+    }
+
     public class AdvancedRecordset : IAdvancedRecordset
     {
         readonly SqliteServer _dbManager = new SqliteServer("Data Source=:memory:");
@@ -140,17 +151,23 @@ namespace Dev2.Activities
             var sqlBuildUp = new List<string>();
             foreach (var token in statement.Tokens)
             {
-                if (token.Type == TSQLTokenType.Identifier)
+                if (token.Type == TSQLTokenType.Identifier && sqlBuildUp.Count >=1)
                 {
-                    var hash = HashedRecSets.FirstOrDefault(x => x.recSet == token.Text);
-                    sqlBuildUp.Add(!hash.Equals(default) ? hash.hashCode : token.Text);
+                    if (sqlBuildUp[sqlBuildUp.Count - 1] == ".")
+                    {
+                        sqlBuildUp.Add(token.Text);
+                    }
+                    else
+                    {
+                        var hash = HashedRecSets.FirstOrDefault(x => x.recSet == token.Text);
+                        sqlBuildUp.Add(!hash.Equals(default) ? hash.hashCode : token.Text);
+                    }
                 }
                 else
                 {
                     sqlBuildUp.Add(token.Text);
                 }
             }
-
             return string.Join(" ", sqlBuildUp);
         }
         public void CreateVariableTable()
@@ -213,7 +230,7 @@ namespace Dev2.Activities
                 }
                 return newVariableValue.ToString();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new Exception(variableName + " is not declared.");
             }

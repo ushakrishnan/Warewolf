@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -418,7 +419,7 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             //check if quick debug called then dont log view in browser event 
             if (quickDebugClicked)
             {
-                workflowInputDataViewModel.WithoutActionTrackingViewInBrowser();
+                workflowInputDataViewModel.ViewInBrowser(false);
             }
             else
             {
@@ -541,6 +542,17 @@ namespace Dev2.Studio.ViewModels.WorkSurface
             BindToModel();
             if (!isLocalSave)
             {
+                var trigger = Dev2.Runtime.Hosting.TriggersCatalog.Instance.Queues.FirstOrDefault(o => o.ResourceId == resource.ID);
+                if (trigger != null)
+                {
+                    var messageResult = _popupController.Show(string.Format(StringResources.Workflow_HasQueue_Warning, trigger.Name), StringResources.Workflow_HasQueue_Title, 
+                        MessageBoxButton.YesNo, MessageBoxImage.Warning, "", false, false, false, true, false, false);
+                    if (messageResult == MessageBoxResult.No)
+                    {
+                        return false;
+                    }
+                }
+
                 var saveResult = resource.Environment.ResourceRepository.SaveToServer(resource);
                 DispatchServerDebugMessage(saveResult, resource);
                 resource.IsWorkflowSaved = true;

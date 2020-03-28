@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Tooltips {
@@ -893,6 +893,24 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select the source message dead-letter queue.
+        /// </summary>
+        public static string DeadLetterQueueSourceTooltip {
+            get {
+                return ResourceManager.GetString("DeadLetterQueueSourceTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The dead-letter queue name.
+        /// </summary>
+        public static string DeadLetterQueueTooltip {
+            get {
+                return ResourceManager.GetString("DeadLetterQueueTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Run and debug your workflow service.
         /// </summary>
         public static string DebugBrowserToolTip {
@@ -1414,6 +1432,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to If the gate conditions fail and &quot;Continue&quot; has been selected, then select an existing gate to roll back to..
+        /// </summary>
+        public static string ExistingGatesToolTip {
+            get {
+                return ResourceManager.GetString("ExistingGatesToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Expand or collapse all execution nodes..
         /// </summary>
         public static string ExpandCollapseAllToolTip {
@@ -1659,6 +1686,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string FormatNumberToolTipRoundvalue {
             get {
                 return ResourceManager.GetString("FormatNumberToolTipRoundvalue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Execute an Activity when there is a failure in the Gate referencing this Gate..
+        /// </summary>
+        public static string GateExecuteThisTooltip {
+            get {
+                return ResourceManager.GetString("GateExecuteThisTooltip", resourceCulture);
             }
         }
         
@@ -2761,6 +2797,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create a Queue event to run.
+        /// </summary>
+        public static string MenuQueueEventsToolTip {
+            get {
+                return ResourceManager.GetString("MenuQueueEventsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Save this tab [CTRL+S].
         /// </summary>
         public static string MenuSaveToolTip {
@@ -2793,6 +2838,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string MenuSettingsToolTip {
             get {
                 return ResourceManager.GetString("MenuSettingsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View schedules and events.
+        /// </summary>
+        public static string MenuTasksToolTip {
+            get {
+                return ResourceManager.GetString("MenuTasksToolTip", resourceCulture);
             }
         }
         
@@ -3134,6 +3188,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create a new redis source.
+        /// </summary>
+        public static string NewRedisSourceTooltip {
+            get {
+                return ResourceManager.GetString("NewRedisSourceTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create a new server source.
         /// </summary>
         public static string NewServerSourceTooltip {
@@ -3206,6 +3269,168 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to OptionAutocompleteTooltip.
+        /// </summary>
+        public static string OptionAutocompleteTooltip {
+            get {
+                return ResourceManager.GetString("OptionAutocompleteTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionBoolTooltip.
+        /// </summary>
+        public static string OptionBoolTooltip {
+            get {
+                return ResourceManager.GetString("OptionBoolTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionComboboxTooltip.
+        /// </summary>
+        public static string OptionComboboxTooltip {
+            get {
+                return ResourceManager.GetString("OptionComboboxTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionConditionToolTip.
+        /// </summary>
+        public static string OptionConditionToolTip {
+            get {
+                return ResourceManager.GetString("OptionConditionToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionEnumGenTooltip.
+        /// </summary>
+        public static string OptionEnumGenTooltip {
+            get {
+                return ResourceManager.GetString("OptionEnumGenTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionEnumTooltip.
+        /// </summary>
+        public static string OptionEnumTooltip {
+            get {
+                return ResourceManager.GetString("OptionEnumTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the retry count..
+        /// </summary>
+        public static string OptionGateCountToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateCountToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the delay increment between every retry attempt.
+        /// </summary>
+        public static string OptionGateIncrementToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateIncrementToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the maximum retry count. The tool will keep retrying until the maximum retry count is hit.
+        /// </summary>
+        public static string OptionGateMaxRetriesToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateMaxRetriesToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the resume workflow or API that will be executed on retry.
+        /// </summary>
+        public static string OptionGateResumeEndpointToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateResumeEndpointToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select whether the Gate Tool will continue on error or end the workflow.
+        /// </summary>
+        public static string OptionGateResumeToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateResumeToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the retry strategy that will be actioned.
+        /// </summary>
+        public static string OptionGateStrategyToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateStrategyToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the Timeout of each retry.
+        /// </summary>
+        public static string OptionGateTimeoutToolTip {
+            get {
+                return ResourceManager.GetString("OptionGateTimeoutToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionIntTooltip.
+        /// </summary>
+        public static string OptionIntTooltip {
+            get {
+                return ResourceManager.GetString("OptionIntTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set if the queue is durable.
+        /// </summary>
+        public static string OptionRabbitMqDurableToolTip {
+            get {
+                return ResourceManager.GetString("OptionRabbitMqDurableToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionRadioButtonTooltip.
+        /// </summary>
+        public static string OptionRadioButtonTooltip {
+            get {
+                return ResourceManager.GetString("OptionRadioButtonTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to OptionWorkflowTooltip.
+        /// </summary>
+        public static string OptionWorkflowTooltip {
+            get {
+                return ResourceManager.GetString("OptionWorkflowTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Connect using a specific account.
+        /// </summary>
+        public static string PasswordAuthenticationToolTip {
+            get {
+                return ResourceManager.GetString("PasswordAuthenticationToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter the corresponding password.
         /// </summary>
         public static string PasswordToolTip {
@@ -3238,6 +3463,114 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string PluginServiceSelectNamespaceToolTip {
             get {
                 return ResourceManager.GetString("PluginServiceSelectNamespaceToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the workflow to executed in the Queue.
+        /// </summary>
+        public static string QueueAddWorkflowCommandToolTip {
+            get {
+                return ResourceManager.GetString("QueueAddWorkflowCommandToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the concurrency of the queue.
+        /// </summary>
+        public static string QueueConcurrencyTooltip {
+            get {
+                return ResourceManager.GetString("QueueConcurrencyTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a Queue event to run.
+        /// </summary>
+        public static string QueueEventToolTip {
+            get {
+                return ResourceManager.GetString("QueueEventToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Map the entire message.
+        /// </summary>
+        public static string QueueMapEntireMessageTooltipTrigger {
+            get {
+                return ResourceManager.GetString("QueueMapEntireMessageTooltipTrigger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save the queue as.
+        /// </summary>
+        public static string QueueNameTooltip {
+            get {
+                return ResourceManager.GetString("QueueNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a new Queue.
+        /// </summary>
+        public static string QueueNewQueueTooltipTrigger {
+            get {
+                return ResourceManager.GetString("QueueNewQueueTooltipTrigger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Workflow will use this password for the above username.
+        /// </summary>
+        public static string QueueSettingsToolTipPassword {
+            get {
+                return ResourceManager.GetString("QueueSettingsToolTipPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Workflow should execute as this user.
+        /// </summary>
+        public static string QueueSettingsToolTipUsername {
+            get {
+                return ResourceManager.GetString("QueueSettingsToolTipUsername", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a Workflow to be triggered.
+        /// </summary>
+        public static string QueueSettingsToolTipWorkFlow {
+            get {
+                return ResourceManager.GetString("QueueSettingsToolTipWorkFlow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select the source message queue.
+        /// </summary>
+        public static string QueueSourceTooltip {
+            get {
+                return ResourceManager.GetString("QueueSourceTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Enable or Disable the Queue.
+        /// </summary>
+        public static string QueueStatusAltTooltipTrigger {
+            get {
+                return ResourceManager.GetString("QueueStatusAltTooltipTrigger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select to view Queue Stats.
+        /// </summary>
+        public static string QueueViewStatsToolTip {
+            get {
+                return ResourceManager.GetString("QueueViewStatsToolTip", resourceCulture);
             }
         }
         
@@ -3301,6 +3634,33 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string RabbitMQToolTipAcknowledge {
             get {
                 return ResourceManager.GetString("RabbitMQToolTipAcknowledge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use ExecutionID or CustomTransactionID from Header as CorrelationID of the Queue you want to consume from..
+        /// </summary>
+        public static string RabbitMQToolTipAutoCorrelationID {
+            get {
+                return ResourceManager.GetString("RabbitMQToolTipAutoCorrelationID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Use CustomTransactionID from Header as CorrelationID of the Queue you want to consume from..
+        /// </summary>
+        public static string RabbitMQToolTipAutoCustomTransactionIDCorrelationID {
+            get {
+                return ResourceManager.GetString("RabbitMQToolTipAutoCustomTransactionIDCorrelationID", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Provide a CorrelationID of the Queue you want to consume from..
+        /// </summary>
+        public static string RabbitMQToolTipCorrelationID {
+            get {
+                return ResourceManager.GetString("RabbitMQToolTipCorrelationID", resourceCulture);
             }
         }
         
@@ -3559,6 +3919,159 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ReadLocalFolderToolTipFolder {
             get {
                 return ResourceManager.GetString("ReadLocalFolderToolTipFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancel the test execution.
+        /// </summary>
+        public static string RedisCancelTestTooltip {
+            get {
+                return ResourceManager.GetString("RedisCancelTestTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Key to create a counter.
+        /// </summary>
+        public static string RedisCounterKeyToolTip {
+            get {
+                return ResourceManager.GetString("RedisCounterKeyToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Step Size to increment or decrement a counter.
+        /// </summary>
+        public static string RedisCounterStepSizeToolTip {
+            get {
+                return ResourceManager.GetString("RedisCounterStepSizeToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Decrement a counter.
+        /// </summary>
+        public static string RedisCounterTypeDecrementToolTip {
+            get {
+                return ResourceManager.GetString("RedisCounterTypeDecrementToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Increment a counter.
+        /// </summary>
+        public static string RedisCounterTypeIncrementToolTip {
+            get {
+                return ResourceManager.GetString("RedisCounterTypeIncrementToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit Redis Server Source.
+        /// </summary>
+        public static string RedisEditSourceToolTip {
+            get {
+                return ResourceManager.GetString("RedisEditSourceToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Key to store data into Redis cache.
+        /// </summary>
+        public static string RedisKeyToolTip {
+            get {
+                return ResourceManager.GetString("RedisKeyToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a new Redis Server Source.
+        /// </summary>
+        public static string RedisNewSourceToolTip {
+            get {
+                return ResourceManager.GetString("RedisNewSourceToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The account password.
+        /// </summary>
+        public static string RedisPasswordTooltip {
+            get {
+                return ResourceManager.GetString("RedisPasswordTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Key to remove data from cache.
+        /// </summary>
+        public static string RedisRemoveKeyToolTip {
+            get {
+                return ResourceManager.GetString("RedisRemoveKeyToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Returns Success if the key was found and removed or Failure otherwise..
+        /// </summary>
+        public static string RedisRemoveResultToolTip {
+            get {
+                return ResourceManager.GetString("RedisRemoveResultToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a preconfigured redis source..
+        /// </summary>
+        public static string RedisServersToolTip {
+            get {
+                return ResourceManager.GetString("RedisServersToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RedisSourceHostNameTooltip.
+        /// </summary>
+        public static string RedisSourceHostNameTooltip {
+            get {
+                return ResourceManager.GetString("RedisSourceHostNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RedisSourcePortTooltip.
+        /// </summary>
+        public static string RedisSourcePortTooltip {
+            get {
+                return ResourceManager.GetString("RedisSourcePortTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Test the redis source connection.
+        /// </summary>
+        public static string RedisTestTooltip {
+            get {
+                return ResourceManager.GetString("RedisTestTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Timeout for stored data.
+        /// </summary>
+        public static string RedisTimeoutToolTip {
+            get {
+                return ResourceManager.GetString("RedisTimeoutToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Time in seconds before the key expires. Default is 5 Seconds..
+        /// </summary>
+        public static string RedisTTLToolTip {
+            get {
+                return ResourceManager.GetString("RedisTTLToolTip", resourceCulture);
             }
         }
         
@@ -4384,6 +4897,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Verify the mapped data to the inputs of the selected workflow.
+        /// </summary>
+        public static string ServiceVerifyActionTooltip {
+            get {
+                return ResourceManager.GetString("ServiceVerifyActionTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Execute this flow as a REST API.
         /// </summary>
         public static string ServiceViewInBrowserTooltip {
@@ -5125,6 +5647,33 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Tags: cache data under a specified key.
+        /// </summary>
+        public static string Tool_Database_RedisCache {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to increment/decrement the number stored at key by one.
+        /// </summary>
+        public static string Tool_Database_RedisCounter {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisCounter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tags: removes the specified key and data from cache.
+        /// </summary>
+        public static string Tool_Database_RedisRemove {
+            get {
+                return ResourceManager.GetString("Tool_Database_RedisRemove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tags: source microsoft.
         /// </summary>
         public static string Tool_Database_SQL_Bulk_Insert {
@@ -5292,6 +5841,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string Tool_Flow_Decision {
             get {
                 return ResourceManager.GetString("Tool_Flow_Decision", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tags: gate retry stop end.
+        /// </summary>
+        public static string Tool_Flow_Gate {
+            get {
+                return ResourceManager.GetString("Tool_Flow_Gate", resourceCulture);
             }
         }
         
@@ -5868,7 +6426,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to View Execution Logging.
+        ///   Looks up a localized string similar to View Audit.
         /// </summary>
         public static string ViewExecutionLoggingTooltip {
             get {

@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,7 +8,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2.Data.Tests</RootNamespace>
     <AssemblyName>Dev2.Data.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
@@ -41,11 +41,10 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.4.2.0\lib\net45\Castle.Core.dll</HintPath>
-    </Reference>
     <Reference Include="InfragisticsWPF4.Calculations.XamCalculationManager.v15.1, Version=15.1.20151.2055, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\InfragisticsWPF4.Calculations.XamCalculationManager.v15.1.dll</HintPath>
@@ -55,18 +54,6 @@
       <HintPath>..\Binaries\Ionic.Zip.Reduced.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="Moq, Version=4.7.137.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
-      <HintPath>..\packages\Moq.4.7.137\lib\net45\Moq.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="ServiceStack.Common">
       <HintPath>..\Binaries\ServiceStack.Common.dll</HintPath>
     </Reference>
@@ -88,20 +75,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\Weave.dll</HintPath>
     </Reference>
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\FSharp.Core.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
-    <None Include="..\Run Tests.ps1">
-      <Visible>False</Visible>
-      <Link>Run Tests.ps1</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
       <Visible>False</Visible>
     </AdditionalFiles>
@@ -109,25 +87,26 @@
     <Compile Include="BinaryDataList\IndexListTest.cs" />
     <Compile Include="BinaryDataList\DataListUtilTest.cs" />
     <Compile Include="Builders\RecordSetCollectionBuilderTest.cs" />
+    <Compile Include="Builders\DataListIntellisenseBuilderTests.cs" />
     <Compile Include="DataListFactoryTests.cs" />
     <Compile Include="DecisionsTests\DecisionDisplayHelperTests.cs" />
     <Compile Include="DecisionsTests\IsAlphanumericTests.cs" />
-    <Compile Include="DecisionsTests\IsBase64Tests.cs" />
-    <Compile Include="DecisionsTests\IsBetweenTests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsBase64Tests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsBetweenTests.cs" />
     <Compile Include="DecisionsTests\IsBinaryTests.cs" />
     <Compile Include="DecisionsTests\IsDateTests.cs" />
     <Compile Include="DecisionsTests\IsEmailTests.cs" />
     <Compile Include="DecisionsTests\IsEqualTests.cs" />
     <Compile Include="DecisionsTests\IsErrorTests.cs" />
-    <Compile Include="DecisionsTests\IsHexTests.cs" />
-    <Compile Include="DecisionsTests\IsNotAlphanumericTests.cs" />
-    <Compile Include="DecisionsTests\IsNotBase64Tests.cs" />
-    <Compile Include="DecisionsTests\IsNotBinaryTests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsHexTests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsNotAlphanumericTests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsNotBase64Tests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsNotBinaryTests.cs" />
     <Compile Include="DecisionsTests\IsNotDateTests.cs" />
     <Compile Include="DecisionsTests\IsNotEmailTests.cs" />
     <Compile Include="DecisionsTests\IsNotEqualTests.cs" />
     <Compile Include="DecisionsTests\IsNotErrorTests.cs" />
-    <Compile Include="DecisionsTests\IsNotHexTests.cs" />
+    <Compile Include="DecisionsTests\Operations\IsNotHexTests.cs" />
     <Compile Include="DecisionsTests\IsNotNullTests.cs" />
     <Compile Include="DecisionsTests\IsNotNumericTests.cs" />
     <Compile Include="DecisionsTests\IsNotTextTests.cs" />
@@ -149,16 +128,37 @@
     <Compile Include="EnumTests\enTypeOfSystemInformationTests.cs" />
     <Compile Include="IndexListIndexIteratorTests.cs" />
     <Compile Include="MethodOutputTests.cs" />
+    <Compile Include="Operations\NotBetweenTests.cs" />
+    <Compile Include="Parsers\DataLanguageParserImplementationTests.cs" />
+    <Compile Include="Parsers\ServiceActivityVariableMappingTests.cs" />
+    <Compile Include="PathOperations\ActivityIOBrokerBaseDriverTests.cs" />
+    <Compile Include="PathOperations\ActivityIOBrokerMainDriverTests.cs" />
+    <Compile Include="PathOperations\ActivityIOBrokerValidatorDriverTests.cs" />
+    <Compile Include="PathOperations\Dev2ActivityIOBrokerTests.cs" />
+    <Compile Include="PathOperations\ActivityIOFactoryTests.cs" />
+    <Compile Include="PathOperations\Dev2ActivityIOPathUtilsTests.cs" />
+    <Compile Include="PathOperations\Extention\PathExtensionsTests.cs" />
+    <Compile Include="PathOperations\LogonProviderTests.cs" />
+    <Compile Include="PathOperations\Dev2FTPProviderTests.cs" />
+    <Compile Include="PathOperations\PerformBoolIOOperationTests.cs" />
+    <Compile Include="PathOperations\DoGetFilesAsPerTypeOperationTests.cs" />
+    <Compile Include="PathOperations\DoPathExistOperationTests.cs" />
+    <Compile Include="PathOperations\DoDeleteOperationTests.cs" />
+    <Compile Include="PathOperations\DoGetActionTests.cs" />
+    <Compile Include="PathOperations\DoCreateDirectoryTests.cs" />
+    <Compile Include="PathOperations\DoPutActionTests.cs" />
+    <Compile Include="PathOperations\PerformListOfIOPathOperationTests.cs" />
+    <Compile Include="PathOperations\ValidateAuthorizationTests.cs" />
     <Compile Include="PulseTrackerTests.cs" />
     <Compile Include="ServiceModel\SharePointSourceTests.cs" />
     <Compile Include="ServiceModel\RabbitMQSourceTests.cs" />
     <Compile Include="ServiceModel\OauthSourceTests.cs" />
+    <Compile Include="ServiceModel\RedisSourceTests.cs" />
     <Compile Include="SetingTest.cs" />
     <Compile Include="ListIndexIteratorTests.cs" />
     <Compile Include="LoopedIndexIteratorTests.cs" />
     <Compile Include="MathOperations\EvaluationFunctionTOTests.cs" />
     <Compile Include="MathOperations\MathOpsFactoryTests.cs" />
-    <Compile Include="Operations\Dev2ActivityIOBrokerTests.cs" />
     <Compile Include="Operations\Dev2DecisionFactoryTests.cs" />
     <Compile Include="Operations\Dev2DecisionOperationTests.cs" />
     <Compile Include="Operations\Dev2IndexFinderTests.cs" />
@@ -166,10 +166,13 @@
     <Compile Include="PathOperations\Dev2DataListDecisionHandlerTests.cs" />
     <Compile Include="ListOfIndexTests.cs" />
     <Compile Include="ReverseIndexIteratorTests.cs" />
+    <Compile Include="SystemTemplates\Models\Dev2SwitchTests.cs" />
+    <Compile Include="SystemTemplates\Models\Dev2DecisionTests.cs" />
     <Compile Include="TO\DateTimeVerifyPartTests.cs" />
     <Compile Include="TO\SafeTokenHandleTests.cs" />
     <Compile Include="TO\Dev2ZipOperationTOTests.cs" />
     <Compile Include="TO\Dev2PutOperationTOTests.cs" />
+    <Compile Include="TO\IntellisenseFilterOpsTOTests.cs" />
     <Compile Include="TO\UpsertTOTests.cs" />
     <Compile Include="Operations\Dev2ReplaceOperationTest.cs" />
     <Compile Include="Operations\Dev2MergeOperationsTests.cs" />
@@ -180,11 +183,20 @@
     <Compile Include="ServiceModel\ServiceUtilsTests.cs" />
     <Compile Include="TO\ErrorResultTOTests.cs" />
     <Compile Include="TO\CompileMessageTOTests.cs" />
-    <Compile Include="UtilTests\CommonDataUtilTests.cs" />
+    <Compile Include="ServiceTestOutputTOTests.cs" />
+    <Compile Include="Dev2DecisionComparerTests.cs" />
+    <Compile Include="DataListModelTests.cs" />
+    <Compile Include="DataListConversionUtilsTests.cs" />
+    <Compile Include="SharepointHelperTests.cs" />
+    <Compile Include="OptomizedObservableCollectionTests.cs" />
+    <Compile Include="DataListTOTests.cs" />
+    <Compile Include="Util\OperationsHelperTests.cs" />
+    <Compile Include="Util\CommonRecordSetUtilTests.cs" />
+    <Compile Include="WarewolfAtomComparerTests.cs" />
+    <Compile Include="Util\CommonDataUtilsTests.cs" />
     <Compile Include="TranslationConstantsTest.cs" />
     <Compile Include="WarewolfIteratorTests.cs" />
     <Compile Include="WarewolfListIteratorTests.cs" />
-    <Compile Include="XmlHelperTest.cs" />
     <Compile Include="ExtensionClassesTests.cs" />
     <Compile Include="XPathParserTests.cs" />
   </ItemGroup>
@@ -217,6 +229,10 @@
       <Project>{A7D9DA27-F023-4588-AA64-AC2DE44C0B82}</Project>
       <Name>Dev2.Diagnostics</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Infrastructure.Tests\Dev2.Infrastructure.Tests.csproj">
+      <Project>{D754B817-A714-4E6E-BD46-8C4FFFFBDACB}</Project>
+      <Name>Dev2.Infrastructure.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Infrastructure\Dev2.Infrastructure.csproj">
       <Project>{615eae6d-040c-4364-b708-63dc8755cd4f}</Project>
       <Name>Dev2.Infrastructure</Name>
@@ -229,6 +245,14 @@
       <Project>{85617545-2121-4683-9828-DAEDB5878CE9}</Project>
       <Name>Dev2.Runtime.Tests</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Data\Warewolf.Data.csproj">
+      <Project>{66DCB0B3-1F33-490F-B874-913CF1F43E49}</Project>
+      <Name>Warewolf.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Interfaces\Warewolf.Interfaces.csproj">
+      <Project>{926CF512-B3FD-410D-AA83-EBDF4C4868DE}</Project>
+      <Name>Warewolf.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
       <Project>{df3ab090-911f-4646-9ad1-205e2ced908a}</Project>
       <Name>Warewolf.Language.Parser</Name>
@@ -240,6 +264,10 @@
     <ProjectReference Include="..\Warewolf.Resource\Warewolf.Resource.csproj">
       <Project>{DFF93ECB-FDD1-405E-AE02-9F4BC7571C1B}</Project>
       <Name>Warewolf.Resource</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Sharepoint\Warewolf.Sharepoint.csproj">
+      <Project>{D7A04A3F-DDBD-497C-A311-EFD2016830DF}</Project>
+      <Name>Warewolf.Sharepoint</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Storage.Interfaces\Warewolf.Storage.Interfaces.csproj">
       <Project>{61A15557-1D18-4C69-88EB-31BF49B7FB50}</Project>
@@ -256,37 +284,26 @@
     <None Include="..\Dev2.Studio\App.config">
       <Link>App.config</Link>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
-  <Choose>
-    <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
-      <ItemGroup>
-        <Reference Include="Microsoft.VisualStudio.QualityTools.CodedUITestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Extension, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core.3">
+      <Version>0.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="Moq">
+      <Version>4.13.1</Version>
+    </PackageReference>
+    <PackageReference Include="MSTest.TestAdapter">
+      <Version>2.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="MSTest.TestFramework">
+      <Version>2.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
+    </PackageReference>
+  </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props'))" />
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets'))" />
-  </Target>
-  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,7 +21,11 @@ using Owin;
 
 namespace Dev2.Runtime.WebServer
 {
-    public class WebServerStartup
+    public interface IWebServerStartup
+    {
+
+    }
+    public class WebServerStartup : IWebServerStartup
     {
         public const double SizeCapForDownload = 51200; // 50 KB size limit
 

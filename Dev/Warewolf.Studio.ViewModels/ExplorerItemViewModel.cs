@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -154,6 +155,7 @@ namespace Warewolf.Studio.ViewModels
         private bool _canDebugStudio;
         private bool _canDebugBrowser;
         private bool _canCreateSchedule;
+        private bool _canCreateQueueEvent;
         private bool _isVersion;
         private bool _isDependenciesVisible;
         private bool _isDebugBrowserVisible;
@@ -168,7 +170,9 @@ namespace Warewolf.Studio.ViewModels
         private bool _isShowVersionHistoryVisible;
         private bool _isViewSwaggerVisible;
         private bool _isSource;
+        private bool _isTriggersVisible;
         private bool _isScheduleVisible;
+        private bool _isQueueEventVisible;
         private bool _isDuplicateVisible;
         private bool _isNewFolder;
         private bool _isSaveDialog;
@@ -295,6 +299,11 @@ namespace Warewolf.Studio.ViewModels
                 _explorerItemViewModelCommandController.NewWebSourceCommand(ResourcePath, Server);
             });
 
+            NewRedisSourceCommand = new DelegateCommand(o =>
+            {
+                _explorerItemViewModelCommandController.NewRedisSourceCommand(ResourcePath, Server);
+            });
+
             NewEmailSourceSourceCommand = new DelegateCommand(o =>
             {
                 _explorerItemViewModelCommandController.NewEmailSourceCommand(ResourcePath, Server);
@@ -334,6 +343,10 @@ namespace Warewolf.Studio.ViewModels
             ScheduleCommand = new DelegateCommand(type =>
             {
                 _explorerItemViewModelCommandController.ScheduleCommand(ResourceId);
+            });
+            QueueEventCommand = new DelegateCommand(type =>
+            {
+                _explorerItemViewModelCommandController.QueueEventCommand(ResourceId);
             });
             RunAllTestsCommand = new DelegateCommand(type =>
             {
@@ -493,7 +506,9 @@ namespace Warewolf.Studio.ViewModels
             IsOpenVersionVisible = _isService;
 
             IsDependenciesVisible = _isService || _isSource || _isServer;
+            IsTriggersVisible = _isService;
             IsScheduleVisible = _isService;
+            IsQueueEventVisible = _isService;
 
             CanViewApisJson = (_isFolder || _isService) && _canView;
             CanViewSwagger = _isService && _canView;
@@ -699,6 +714,7 @@ namespace Warewolf.Studio.ViewModels
             CanDebugStudio = false;
             CanDebugBrowser = false;
             CanCreateSchedule = false;
+            CanCreateQueueEvent = false;
             CanCreateTest = false;
             CanViewRunAllTests = false;
             CanCreateTest = false;
@@ -740,6 +756,7 @@ namespace Warewolf.Studio.ViewModels
             CanDebugStudio = true;
             CanDebugBrowser = true;
             CanCreateSchedule = true;
+            CanCreateQueueEvent = true;
             CanCreateTest = true;
         }
 
@@ -766,6 +783,7 @@ namespace Warewolf.Studio.ViewModels
             CanDebugStudio = true;
             CanDebugBrowser = true;
             CanCreateSchedule = true;
+            CanCreateQueueEvent = true;
             CanCreateTest = true;
             CanViewRunAllTests = true;
         }
@@ -975,6 +993,7 @@ namespace Warewolf.Studio.ViewModels
         public ICommand NewComPluginSourceCommand { get; set; }
         public ICommand NewWcfSourceCommand { get; set; }
         public ICommand NewWebSourceSourceCommand { get; set; }
+        public ICommand NewRedisSourceCommand { get; set; }
         public ICommand NewEmailSourceSourceCommand { get; set; }
         public ICommand NewExchangeSourceSourceCommand { get; set; }
         public ICommand NewRabbitMqSourceSourceCommand { get; set; }
@@ -985,6 +1004,7 @@ namespace Warewolf.Studio.ViewModels
         public ICommand DebugStudioCommand { get; set; }
         public ICommand DebugBrowserCommand { get; set; }
         public ICommand ScheduleCommand { get; set; }
+        public ICommand QueueEventCommand { get; set; }
         public ICommand RunAllTestsCommand { get; set; }
         public ICommand CopyUrlCommand { get; set; }
 
@@ -1313,6 +1333,17 @@ namespace Warewolf.Studio.ViewModels
                 _canCreateSchedule = value;
                 ExplorerTooltips.ScheduleTooltip = _canCreateSchedule ? Resources.Languages.Tooltips.ScheduleToolTip : Resources.Languages.Tooltips.NoPermissionsToolTip;
                 OnPropertyChanged(() => CanCreateSchedule);
+            }
+        }
+
+        public bool CanCreateQueueEvent
+        {
+            get => _canCreateQueueEvent && !IsSaveDialog;
+            set
+            {
+                _canCreateQueueEvent = value;
+                ExplorerTooltips.QueueEventTooltip = _canCreateQueueEvent ? Resources.Languages.Tooltips.QueueEventToolTip : Resources.Languages.Tooltips.NoPermissionsToolTip;
+                OnPropertyChanged(() => CanCreateQueueEvent);
             }
         }
 
@@ -1751,6 +1782,16 @@ namespace Warewolf.Studio.ViewModels
             }
         }
 
+        public bool IsTriggersVisible
+        {
+            get => _isTriggersVisible && !IsSaveDialog;
+            set
+            {
+                _isTriggersVisible = value;
+                OnPropertyChanged(() => IsTriggersVisible);
+            }
+        }
+
         public bool IsScheduleVisible
         {
             get => _isScheduleVisible && !IsSaveDialog;
@@ -1758,6 +1799,16 @@ namespace Warewolf.Studio.ViewModels
             {
                 _isScheduleVisible = value;
                 OnPropertyChanged(() => IsScheduleVisible);
+            }
+        }
+        
+        public bool IsQueueEventVisible
+        {
+            get => _isQueueEventVisible && !IsSaveDialog;
+            set
+            {
+                _isQueueEventVisible = value;
+                OnPropertyChanged(() => IsQueueEventVisible);
             }
         }
 

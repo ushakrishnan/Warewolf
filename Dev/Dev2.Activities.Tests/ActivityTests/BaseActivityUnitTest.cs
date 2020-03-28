@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,7 +18,9 @@ using System.Text;
 using Dev2;
 using Dev2.Activities;
 using Dev2.Common;
+using Dev2.Data;
 using Dev2.Data.Decision;
+using Dev2.Data.Settings;
 using Dev2.Data.TO;
 using Dev2.Data.Util;
 using Dev2.Diagnostics;
@@ -42,9 +44,6 @@ namespace ActivityUnitTests
     [TestClass]
     public class BaseActivityUnitTest
     {
-        
-       
-
         public BaseActivityUnitTest()
         {
             CustomContainer.Register<IActivityParser>(new ActivityParser());
@@ -56,7 +55,6 @@ namespace ActivityUnitTests
       
         }
 
-        
         protected Guid ExecutionId { get; set; }
 
         protected string TestData { get; set; }
@@ -126,7 +124,6 @@ namespace ActivityUnitTests
                         }
                     }
                 };
-
 
                 VisualBasic.SetSettings(builder, vbs);
 
@@ -207,6 +204,7 @@ namespace ActivityUnitTests
                 }
                 dataObject.ExecutionToken = new ExecutionToken();
                 var wfec = new WfExecutionContainer(svc, dataObject, WorkspaceRepository.Instance.ServerWorkspace, esbChannel);
+                dataObject.Settings = new Dev2WorkflowSettingsTO { EnableDetailedLogging = false };
 
                 errors.ClearErrors();
                 CustomContainer.Register<IActivityParser>(new ActivityParser());
@@ -255,13 +253,10 @@ namespace ActivityUnitTests
                     ParentThreadID = 1
                 };
 
-
-                // we need to set this now ;)
-
                 mockChannel.Setup(c => c.ExecuteSubRequest(It.IsAny<IDSFDataObject>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), out errors, 0, false)).Verifiable();
                 CustomContainer.Register<IActivityParser>(new ActivityParser());
                 var wfec = new WfExecutionContainer(svc, dataObject, WorkspaceRepository.Instance.ServerWorkspace, mockChannel.Object);
-
+                dataObject.Settings = new Dev2WorkflowSettingsTO{ EnableDetailedLogging = false };
                 errors.ClearErrors();
                 wfec.Eval(FlowchartProcess,dataObject, 0);
 
@@ -407,13 +402,22 @@ namespace ActivityUnitTests
             }
         }
 
-        protected List<string> RetrieveAllRecordSetFieldValues(IExecutionEnvironment environment, string recordSetName, string fieldToRetrieve, out string error)
+        protected List<string> RetrieveAllRecordSetFieldValuesSkipEmpty(IExecutionEnvironment environment, string recordSetName, string fieldToRetrieve, out string error)
         {
             var retVals = environment.EvalAsListOfStrings("[[" + recordSetName + "(*)." + fieldToRetrieve + "]]", 0);
             error = "";
             var retrieveAllRecordSetFieldValues = (List<string>)retVals;
             return retrieveAllRecordSetFieldValues.Where(s => !string.IsNullOrEmpty(s)).ToList();
         }
+
+        protected List<string> RetrieveAllRecordSetFieldValues(IExecutionEnvironment environment, string recordSetName, string fieldToRetrieve, out string error)
+        {
+            var retVals = environment.EvalAsListOfStrings("[[" + recordSetName + "(*)." + fieldToRetrieve + "]]", 0);
+            error = "";
+            var retrieveAllRecordSetFieldValues = (List<string>)retVals;
+            return retrieveAllRecordSetFieldValues;
+        }
+
 
         #endregion Retrieve DataList Values
     }

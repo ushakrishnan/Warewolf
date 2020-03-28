@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,7 +22,7 @@ using System.Windows.Input;
 using System.Windows.Media.Animation;
 using System.Xml;
 using Dev2.Common;
-using Dev2.Settings.Scheduler;
+using Dev2.Triggers.Scheduler;
 using Dev2.Studio.ViewModels;
 using FontAwesome.WPF;
 using Infragistics.Windows.DockManager.Events;
@@ -32,6 +33,7 @@ using Dev2.Studio.ViewModels.WorkSurface;
 using Dev2.ViewModels;
 using Dev2.Workspaces;
 using Infragistics.Windows.DockManager;
+using Dev2.Triggers.Scheduler;
 
 namespace Dev2.Studio.Views
 {
@@ -74,8 +76,8 @@ namespace Dev2.Studio.Views
                     {
                         _savedLayout = null;
                         File.Delete(FilePath);
-                        Dev2Logger.Error("Unable to load layout", "Warewolf Error");
-                        Dev2Logger.Error(err, "Warewolf Error");
+                        Dev2Logger.Error("Unable to load layout", GlobalConstants.WarewolfError);
+                        Dev2Logger.Error(err, GlobalConstants.WarewolfError);
                     }
                 }
             }
@@ -331,7 +333,16 @@ namespace Dev2.Studio.Views
             var xmlDocument = new XmlDocument();
             if (_savedLayout != null)
             {
-                xmlDocument.LoadXml(_savedLayout);
+                try
+                {
+                    xmlDocument.LoadXml(_savedLayout);
+                }
+                catch (Exception err)
+                {
+                    File.Delete(FilePath);
+                    Dev2Logger.Error("Unable to load layout", GlobalConstants.WarewolfError);
+                    Dev2Logger.Error(err, GlobalConstants.WarewolfError);
+                }
             }
             if (DataContext is ShellViewModel shellViewModel)
             {
@@ -468,7 +479,7 @@ namespace Dev2.Studio.Views
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex, "Warewolf Error");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
         }
 
@@ -560,7 +571,7 @@ namespace Dev2.Studio.Views
             }
             catch (Exception ex)
             {
-                Dev2Logger.Error(ex, "Warewolf Error");
+                Dev2Logger.Error(ex, GlobalConstants.WarewolfError);
             }
         }
 

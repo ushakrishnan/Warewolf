@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,8 +10,10 @@
 */
 
 using System;
+using Dev2.Common;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Communication;
+using Dev2.Data;
 using Dev2.Data.ServiceModel;
 using Dev2.Data.TO;
 using Dev2.DynamicServices.Objects;
@@ -27,7 +30,6 @@ namespace Dev2.Runtime.ESB.Execution
         protected ServiceAction ServiceAction { get; private set; }
         protected IDSFDataObject DataObject { get; private set; }
         protected IWorkspace TheWorkspace { get; private set; }
-        IEsbChannel EsbChannel { get; set; }
         protected EsbExecuteRequest Request { get; private set; }
 
         public string InstanceOutputDefinition { get; set; }
@@ -45,9 +47,8 @@ namespace Dev2.Runtime.ESB.Execution
             ServiceAction = sa;
             DataObject = dataObject;
             TheWorkspace = theWorkspace;
-            EsbChannel = esbChannel;
             Request = request;
-            DataObject.EsbChannel = EsbChannel;
+            DataObject.EsbChannel = esbChannel;
         }
 
         protected EsbExecutionContainer()
@@ -59,5 +60,18 @@ namespace Dev2.Runtime.ESB.Execution
 
         public abstract IDSFDataObject Execute(IDSFDataObject inputs, IDev2Activity activity);
         public virtual SerializableResource FetchRemoteResource(Guid serviceId, string serviceName, bool isDebugMode) { throw new NotImplementedException(); }
+        /// <summary>
+        /// TODO: This should not be initialized here once 
+        /// we have the front end for creating settings.
+        /// </summary>
+        public virtual Dev2WorkflowSettingsTO GetWorkflowSetting() =>
+            new Dev2WorkflowSettingsTO
+            {
+                EnableDetailedLogging = Config.Server.EnableDetailedLogging,
+                LoggerType = LoggerType.JSON,
+                KeepLogsForDays = 2,
+                CompressOldLogFiles = true
+            };
+
     }
 }

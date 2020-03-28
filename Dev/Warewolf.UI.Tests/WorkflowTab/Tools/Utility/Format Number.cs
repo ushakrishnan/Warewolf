@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Utility
     [CodedUITest]
     public class Format_Number
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Utility Tools")]
         public void FormatNumberTool_Small_And_LargeView_Then_RoundingInputBehaviour_UITest()
         { 

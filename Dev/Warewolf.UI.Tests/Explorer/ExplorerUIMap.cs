@@ -14,6 +14,7 @@ using Mouse = Microsoft.VisualStudio.TestTools.UITesting.Mouse;
 using System.Drawing;
 using System.IO;
 using TechTalk.SpecFlow;
+using TestStack.White.UIItems.Finders;
 using Warewolf.UI.Tests.WorkflowServiceTesting.WorkflowServiceTestingUIMapClasses;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
 using Warewolf.UI.Tests.Settings.SettingsUIMapClasses;
@@ -67,12 +68,17 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
             Filter_Explorer("Hello World");
         }
 
-        [Given(@"First remote Item should be ""(.*)""")]
-        [When(@"First remote Item should be ""(.*)""")]
-        [Then(@"First remote Item should be ""(.*)""")]
-        public void FirstRemoteItemShouldBe(string resource)
+        [Given(@"First remote Item should exist")]
+        [When(@"First remote Item should exist")]
+        [Then(@"First remote Item should exist")]
+        public void FirstRemoteItemShouldBe()
         {
-            Assert.AreEqual(resource, MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer.FirstItem.ItemEdit.Text);
+            if (!MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer.FirstItem.ItemEdit.Exists)
+            {
+                Click_Explorer_Refresh_Button();
+                MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer.FirstItem.ItemEdit.WaitForControlExist(10000);
+            }
+            Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer.FirstItem.ItemEdit.Exists, "No first item on remote server.");
         }
 
         public void Select_Source_From_ExplorerContextMenu(String sourceName)
@@ -200,6 +206,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         [Then(@"I Create New Workflow using shortcut")]
         public void Create_New_Workflow_In_LocalHost_With_Shortcut()
         {
+            UIMap.WaitForControlVisible(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost, 60000);
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost, new Point(74, 8));
             Keyboard.SendKeys(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost, "W", (ModifierKeys.Control));
         }
@@ -278,7 +285,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         {
             Playback.Wait(1000);
             Assert.IsTrue(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.localhost.FirstItem.Exists, "First Item does not exist in tree.");
-            Assert.AreEqual(tabName, WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.TabDescription.DisplayText);
+            Assert.IsTrue(tabName.Contains(WorkflowTabUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.WorkflowTab.TabDescription.DisplayText));
         }
 
         [When(@"I Select NewWorkFlowService From ContextMenu")]
@@ -517,7 +524,7 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         {
             UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.Spinner);
             Mouse.Click(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerRefreshButton, new Point(10, 10));
-            UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.Spinner);
+            Assert.IsTrue(UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.Spinner, 180000), "Timed out waiting for explorer spinner");
         }
 
         [Given(@"I setup Public Permissions for ""(.*)"" for Remote Server")]
@@ -588,9 +595,12 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         }
 
         [When(@"I Filter the Explorer with ""(.*)""")]
-        public void Filter_Explorer(string FilterText)
+        public void Filter_Explorer(string FilterText) => UIMap._window.Get(SearchCriteria.ByAutomationId("SearchTextBox")).Enter(FilterText);
+
+        [When(@"First Remote Server has loaded")]
+        public void WhenFirstRemoteServerHasLoaded()
         {
-            MainStudioWindow.DockManager.SplitPaneLeft.Explorer.SearchTextBox.Text = FilterText;
+            UIMap.WaitForSpinner(MainStudioWindow.DockManager.SplitPaneLeft.Explorer.ExplorerTree.FirstRemoteServer.Spinner);
         }
 
         [When(@"I validate and delete the existing resource with ""(.*)""")]
@@ -645,7 +655,6 @@ namespace Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses
         [Then(@"I Try Remove ""(.*)"" From Remote Server Explorer")]
         public void I_Try_Remove_From_Remote_Server_Explorer(string ResourceName)
         {
-            Select_RemoteContainer_From_Explorer();
             Filter_Explorer(ResourceName);
             try
             {

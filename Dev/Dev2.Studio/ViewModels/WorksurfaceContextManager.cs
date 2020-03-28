@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -21,7 +22,7 @@ using Dev2.Instrumentation;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Services.Events;
 using Dev2.Settings;
-using Dev2.Settings.Scheduler;
+using Dev2.Triggers.Scheduler;
 using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Factories;
@@ -48,6 +49,7 @@ using Dev2.ViewModels.Merge;
 using Dev2.Views.Merge;
 using Dev2.ViewModels.Search;
 using Dev2.Views.Search;
+using Dev2.Triggers;
 
 namespace Dev2.Studio.ViewModels
 {
@@ -89,6 +91,7 @@ namespace Dev2.Studio.ViewModels
         void NewOdbcSource(string resourcePath);
 		bool DuplicateResource(IExplorerItemViewModel explorerItemViewModel);
         void NewWebSource(string resourcePath);
+        void NewRedisSource(string resourcePath);
         void NewPluginSource(string resourcePath);
         void NewComPluginSource(string resourcePath);
         void NewWcfSource(string resourcePath);
@@ -128,7 +131,10 @@ namespace Dev2.Studio.ViewModels
         void TryShowDependencies(IContextualResourceModel resource);
         void AddSettingsWorkSurface();
         void AddSchedulerWorkSurface();
+        TriggersViewModel AddTriggersWorkSurface();
+        void AddQueuesWorkSurface();
         void TryCreateNewScheduleWorkSurface(IContextualResourceModel resourceModel);
+        void TryCreateNewQueueEventWorkSurface(IContextualResourceModel resourceModel);
 
         void AddWorkspaceItem(IContextualResourceModel model);
         void DeleteContext(IContextualResourceModel model);
@@ -146,7 +152,7 @@ namespace Dev2.Studio.ViewModels
         void ViewTestsForService(IContextualResourceModel resourceModel, IWorkSurfaceKey workSurfaceKey);
         void ViewSelectedTestForService(IContextualResourceModel resourceModel, IServiceTestModel selectedServiceTest, ServiceTestViewModel testViewModel, IWorkSurfaceKey workSurfaceKey);
         void RunAllTestsForService(IContextualResourceModel resourceModel);
-        void RunAllTestsForFolder(string ResourcePath);
+        void RunAllTestsForFolder(string ResourcePath, IExternalProcessExecutor ProcessExecutor);
         WorkSurfaceContextViewModel EditResource<T>(IWorkSurfaceKey workSurfaceKey, SourceViewModel<T> viewModel) where T : IEquatable<T>;
 
         IWorkSurfaceKey TryGetOrCreateWorkSurfaceKey(IWorkSurfaceKey workSurfaceKey, WorkSurfaceContext workSurfaceContext, Guid resourceID);
@@ -378,10 +384,9 @@ namespace Dev2.Studio.ViewModels
             }
         }
 
-        public void RunAllTestsForFolder(string ResourcePath)
+        public void RunAllTestsForFolder(string ResourcePath, IExternalProcessExecutor ProcessExecutor)
         {
             var ServiceTestCommandHandler = new ServiceTestCommandHandlerModel();
-            var ProcessExecutor = new ExternalProcessExecutor();
             var resourceTestsPath = ResourcePath + "/.tests";
             ServiceTestCommandHandler.RunAllTestsInBrowser(false, resourceTestsPath, ProcessExecutor);
         }
@@ -416,6 +421,18 @@ namespace Dev2.Studio.ViewModels
             var vm = new SourceViewModel<IWebServiceSource>(_shellViewModel.EventPublisher, viewModel, _shellViewModel.PopupProvider, view, ActiveServer);
 
             workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.WebSource, selectedSource.Id);
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(workSurfaceKey, vm);
+            OpeningWorkflowsHelper.AddWorkflow(workSurfaceKey);
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+
+        public void EditResource(IRedisServiceSource selectedSource, IView view) => EditResource(selectedSource, view, null);
+        public void EditResource(IRedisServiceSource selectedSource, IView view, IWorkSurfaceKey workSurfaceKey)
+        {
+            var viewModel = new RedisSourceViewModel(new RedisSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ""), new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), selectedSource, _shellViewModel.AsyncWorker, new ExternalProcessExecutor());
+            var vm = new SourceViewModel<IRedisServiceSource>(_shellViewModel.EventPublisher, viewModel, _shellViewModel.PopupProvider, view, ActiveServer);
+
+            workSurfaceKey = TryGetOrCreateWorkSurfaceKey(workSurfaceKey, WorkSurfaceContext.RedisSource, selectedSource.Id);
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(workSurfaceKey, vm);
             OpeningWorkflowsHelper.AddWorkflow(workSurfaceKey);
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
@@ -570,6 +587,16 @@ namespace Dev2.Studio.ViewModels
             key.ServerID = ActiveServer.ServerID;
 
             var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IWebServiceSource>(_shellViewModel.EventPublisher, new ManageWebserviceSourceViewModel(new ManageWebServiceSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveServer.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _shellViewModel.AsyncWorker, new ExternalProcessExecutor()) { SelectedGuid = key.ResourceID.Value }, _shellViewModel.PopupProvider, new ManageWebserviceSourceControl(), ActiveServer));
+            AddAndActivateWorkSurface(workSurfaceContextViewModel);
+        }
+
+        public void NewRedisSource(string resourcePath)
+        {
+            var saveViewModel = GetSaveViewModel(resourcePath, Warewolf.Studio.Resources.Languages.Core.RedisNewHeaderLabel);
+            var key = WorkSurfaceKeyFactory.CreateKey(WorkSurfaceContext.RedisSource);
+            key.ServerID = ActiveServer.ServerID;
+
+            var workSurfaceContextViewModel = new WorkSurfaceContextViewModel(key, new SourceViewModel<IRedisServiceSource>(_shellViewModel.EventPublisher, new RedisSourceViewModel(new RedisSourceModel(ActiveServer.UpdateRepository, ActiveServer.QueryProxy, ActiveServer.Name), saveViewModel, new Microsoft.Practices.Prism.PubSubEvents.EventAggregator(), _shellViewModel.AsyncWorker, new ExternalProcessExecutor()) { SelectedGuid = key.ResourceID.Value }, _shellViewModel.PopupProvider, new RedisSourceControl(), ActiveServer));
             AddAndActivateWorkSurface(workSurfaceContextViewModel);
         }
 
@@ -1205,6 +1232,21 @@ namespace Dev2.Studio.ViewModels
             ActivateOrCreateUniqueWorkSurface<SchedulerViewModel>(WorkSurfaceContext.Scheduler);
         }
 
+        public void AddQueuesWorkSurface()
+        {
+            var vm = AddTriggersWorkSurface();
+            vm.IsEventsSelected = true;
+        }
+        public TriggersViewModel AddTriggersWorkSurface()
+        {
+            if (_applicationTracker != null)
+            {
+                _applicationTracker.TrackEvent(Warewolf.Studio.Resources.Languages.TrackEventMenu.EventCategory,
+                                                Warewolf.Studio.Resources.Languages.TrackEventMenu.Task);
+            }
+            return ActivateOrCreateUniqueWorkSurface<TriggersViewModel>(WorkSurfaceContext.Triggers);
+        }
+
         public void TryShowDependencies(IContextualResourceModel resource)
         {
             if (resource != null)
@@ -1212,7 +1254,16 @@ namespace Dev2.Studio.ViewModels
                 ShowDependencies(true, resource, ActiveServer);
             }
         }
+        public void TryCreateNewQueueEventWorkSurface(IContextualResourceModel resourceModel)
+        {
+            if (resourceModel != null)
+            {
+                //TODO: Open Tasks QueueEvent Tab with workflow populated
+                AddTriggersWorkSurface();
+            }
+        }
 
+        //TODO: Remove or update?
         public void TryCreateNewScheduleWorkSurface(IContextualResourceModel resourceModel)
         {
             if (resourceModel != null)
@@ -1220,7 +1271,7 @@ namespace Dev2.Studio.ViewModels
                 CreateNewScheduleWorkSurface(resourceModel);
             }
         }
-
+        //TODO: Remove or update?
         void CreateNewScheduleWorkSurface(IContextualResourceModel resourceModel)
         {
             var key = WorkSurfaceKeyFactory.CreateEnvKey(WorkSurfaceContext.Scheduler, ActiveServer.EnvironmentID);
@@ -1415,9 +1466,9 @@ namespace Dev2.Studio.ViewModels
                     {
                         return CloseSettings(vm, true);
                     }
-                    if (vm.WorkSurfaceContext == WorkSurfaceContext.Scheduler)
+                    if (vm.WorkSurfaceContext == WorkSurfaceContext.Triggers)
                     {
-                        return RemoveScheduler(vm, true);
+                        return CloseTriggers(vm, true);
                     }
                 }
                 if (vm is IStudioTab tab)
@@ -1435,14 +1486,14 @@ namespace Dev2.Studio.ViewModels
             return remove;
         }
 
-        static bool RemoveScheduler(IWorkSurfaceViewModel vm, bool remove)
+        static bool CloseTriggers(IWorkSurfaceViewModel vm, bool remove)
         {
-            if (vm is SchedulerViewModel schedulerViewModel)
+            if (vm is TriggersViewModel tasksViewModel)
             {
-                remove = schedulerViewModel.DoDeactivate(true);
+                remove = tasksViewModel.DoDeactivate(true);
                 if (remove)
                 {
-                    schedulerViewModel.Dispose();
+                    tasksViewModel.Dispose();
                 }
             }
             return remove;

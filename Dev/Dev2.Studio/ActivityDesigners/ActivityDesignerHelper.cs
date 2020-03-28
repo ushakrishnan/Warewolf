@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -95,6 +96,14 @@ using Dev2.Activities.Designers2.MultiAssignObject;
 using Dev2.Activities.Scripting;
 using Dev2.Activities.DateAndTime;
 using Dev2.Activities.Designers2.AdvancedRecordset;
+using Dev2.Activities.RedisCache;
+using Dev2.Activities.Designers2.RedisCache;
+using Dev2.Activities.RedisRemove;
+using Dev2.Activities.Designers2.RedisRemove;
+using Dev2.Activities.RedisCounter;
+using Dev2.Activities.Designers2.RedisCounter;
+using Dev2.Activities.Designers2.Gate;
+using Dev2.Activities.Designers2.RabbitMQ.Publish2;
 
 namespace Dev2.Studio.ActivityDesigners
 {
@@ -188,10 +197,15 @@ namespace Dev2.Studio.ActivityDesigners
                 { typeof(SharepointDeleteFileActivity), typeof(SharePointDeleteFileDesigner) },
                 { typeof(SharepointMoveFileActivity), typeof(SharePointMoveFileDesigner) },
                 { typeof(DsfWcfEndPointActivity),typeof(WcfEndPointDesigner)},
+                { typeof(PublishRabbitMQActivity), typeof(RabbitMQPublishDesigner2) },
                 { typeof(DsfPublishRabbitMQActivity), typeof(RabbitMQPublishDesigner) },
                 { typeof(DsfSelectAndApplyActivity), typeof(SelectAndApplyDesigner) },
                 { typeof(DsfConsumeRabbitMQActivity), typeof(RabbitMQConsumeDesigner) },
-                { typeof(AdvancedRecordsetActivity), typeof(AdvancedRecordsetDesigner) }
+                { typeof(AdvancedRecordsetActivity), typeof(AdvancedRecordsetDesigner) },
+                { typeof(RedisRemoveActivity), typeof(RedisRemoveDesigner) },
+                { typeof(RedisCacheActivity), typeof(RedisCacheDesigner) },
+                { typeof(RedisCounterActivity), typeof(RedisCounterDesigner) },
+                { typeof(GateActivity), typeof(GateDesigner) }
             };
         static Hashtable _hashTable;
 

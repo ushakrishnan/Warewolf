@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
-using Dev2.Common.Interfaces.SaveDialog;
+using Dev2.Common.SaveDialog;
 using Dev2.Runtime.ServiceModel.Data;
 using Dev2.Studio.Core;
 using Dev2.Studio.Interfaces;
@@ -16,7 +16,9 @@ using Warewolf.UIBindingTests.Core;
 using Warewolf.Studio.Core.Infragistics_Prism_Region_Adapter;
 using Warewolf.Studio.ViewModels;
 using Warewolf.Studio.Views;
-
+using System.IO;
+using Dev2.Infrastructure.Tests;
+using Warewolf.UnitTestAttributes;
 
 namespace Warewolf.UIBindingTests.SharepointSource
 {
@@ -245,9 +247,11 @@ namespace Warewolf.UIBindingTests.SharepointSource
             Assert.AreEqual(userName, viewModel.UserName);
         }
 
-        [Given(@"I type Password as ""(.*)""")]
-        public void GivenITypePasswordAs(string password)
+        [Given(@"I type Password")]
+        public void GivenITypePassword()
         {
+            var username = @"dev2\IntegrationTester";
+            var password = TestEnvironmentVariables.GetVar(username);
             var manageSharepointServerSource = ScenarioContext.Current.Get<SharepointServerSource>(Utils.ViewNameKey);
             manageSharepointServerSource.EnterPassword(password);
             var viewModel = ScenarioContext.Current.Get<SharepointServerSourceViewModel>("viewModel");
@@ -291,13 +295,15 @@ namespace Warewolf.UIBindingTests.SharepointSource
             var mockEventAggregator = new Mock<IEventAggregator>();
             var mockExecutor = new Mock<IServer>();
 
+            var username = @"dev2\IntegrationTester";
+            var password = TestEnvironmentVariables.GetVar(username);
             var sharePointServiceSourceDefinition = new SharePointServiceSourceDefinition
             {
                 Name = "Test",
-                Server = "http://rsaklfsvrdev",
+                Server = $"http://{Depends.SharepointBackupServer}",
                 AuthenticationType = AuthenticationType.Windows,
                 UserName = "IntegrationTester",
-                Password = "I73573r0"
+                Password = password
             };
             mockStudioUpdateManager.Setup(model => model.FetchSource(It.IsAny<Guid>()))
                 .Returns(sharePointServiceSourceDefinition);

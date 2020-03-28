@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,10 +14,8 @@ using Dev2.Common.Interfaces.Core.Graph;
 namespace Unlimited.Framework.Converters.Graph.Poco
 {
     [Serializable]
-class PocoPathSegment : IPathSegment
+    class PocoPathSegment : IPathSegment
     {
-        #region Constructors
-
         internal PocoPathSegment()
         {
         }
@@ -28,17 +26,9 @@ class PocoPathSegment : IPathSegment
             IsEnumarable = isEnumarable;
         }
 
-        #endregion Constructors
-
-        #region Properties
-
         public string ActualSegment { get; set; }
         public string DisplaySegment { get; set; }
         public bool IsEnumarable { get; set; }
-
-        #endregion Properties
-
-        #region Methods
 
         public string ToString(bool considerEnumerable)
         {
@@ -60,6 +50,14 @@ class PocoPathSegment : IPathSegment
             return ActualSegment;
         }
 
-        #endregion Methods
+        public T As<T>() where T : class, IPathSegment
+        {
+            var ret = this as T;
+            if (ret != null)
+            {
+                return ret;
+            }
+            throw new NotImplementedException();
+        }
     }
 }

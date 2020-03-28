@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using Dev2.Activities.DropBox2016.DownloadActivity;
 using Dev2.Activities.DropBox2016.Result;
 using Dev2.Common;
@@ -42,7 +43,7 @@ namespace Dev2.Activities.DropBox2016.DropboxFileActivity
             InitializeCertPinning();
         }
 
-        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
+        public IDropboxResult ExecuteTask(IDropboxClient client)
         {
             try
             {

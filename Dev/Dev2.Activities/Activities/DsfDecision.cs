@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -160,7 +161,11 @@ namespace Dev2.Activities
             return new Dev2Decision { Cols1 = col1, Cols2 = col2, Cols3 = col3, EvaluationFn = decision.EvaluationFn };
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         IDev2Activity ExecuteDecision(IDSFDataObject dataObject)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             InitializeDebug(dataObject);
 
@@ -298,7 +303,7 @@ namespace Dev2.Activities
             try
             {
                 var dds = Conditions;
-                var userModel = dds.GenerateUserFriendlyModel(env, dds.Mode, out ErrorResultTO error);
+                var userModel = dds.GenerateToolLabel(env, dds.Mode, out ErrorResultTO error);
                 allErrors.MergeErrors(error);
 
                 foreach (Dev2Decision dev2Decision in dds.TheStack)

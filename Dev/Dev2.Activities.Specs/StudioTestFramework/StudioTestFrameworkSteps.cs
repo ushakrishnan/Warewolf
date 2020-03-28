@@ -42,7 +42,10 @@ using Dev2.Activities.Specs.BaseTypes;
 using System.IO;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Activities.Specs.Composition;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
+using Dev2.Common.Wrappers;
+using Dev2.Common.Interfaces.Wrappers;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.TestFramework
 {
@@ -51,9 +54,9 @@ namespace Dev2.Activities.Specs.TestFramework
     {
         static IServer _environmentModel;
         const int EXPECTED_NUMBER_OF_RESOURCES = 108;
-        public static IDirectoryHelper DirectoryHelperInstance()
+        public static IDirectory DirectoryWrapperInstance()
         {
-            return new DirectoryHelper();
+            return new DirectoryWrapper();
         }
         public StudioTestFrameworkSteps(ScenarioContext scenarioContext)
         {
@@ -139,7 +142,7 @@ namespace Dev2.Activities.Specs.TestFramework
         private static void ConnectAndLoadServer()
         {
             _environmentModel = ServerRepository.Instance.Source;
-            _environmentModel.Connect();
+            _environmentModel.ConnectAsync().Wait(60000);
             if (_environmentModel.IsConnected)
             {
                 _environmentModel.ResourceRepository.Load(true);
@@ -159,7 +162,7 @@ namespace Dev2.Activities.Specs.TestFramework
                 ConnectAndLoadServer();
             }
 
-            DirectoryHelperInstance().CleanUp(EnvironmentVariables.TestPath);
+            DirectoryWrapperInstance().CleanUp(EnvironmentVariables.TestPath);
             var commsController = new CommunicationController { ServiceName = "ReloadAllTests" };
             commsController.ExecuteCommand<ExecuteMessage>(_environmentModel.Connection, GlobalConstants.ServerWorkspaceID);
         }
@@ -169,12 +172,6 @@ namespace Dev2.Activities.Specs.TestFramework
         {
             var commsController = new CommunicationController { ServiceName = "ReloadAllTests" };
             commsController.ExecuteCommand<ExecuteMessage>(_environmentModel.Connection, GlobalConstants.ServerWorkspaceID);
-        }
-
-        [Then(@"test folder is cleaned")]
-        public void ThenTestFolderIsCleaned()
-        {
-            ((ResourceRepository)_environmentModel.ResourceRepository).DeleteAlltests(new List<string>() { "0bdc3207-ff6b-4c01-a5eb-c7060222f75d" });
         }
 
         FlowNode CreateFlowNode(Guid id, string displayName)
@@ -720,7 +717,7 @@ namespace Dev2.Activities.Specs.TestFramework
             var test = serviceTest.SelectedServiceTest;
             var errors = test.DebugForTest.Where((e) => { return e.ErrorMessage != ""; });
             Assert.IsNotNull(test, "Workflow Service Test expects Not Null for Test - " + test.TestName);
-            Assert.IsTrue(test.TestPassed, "Workflow Service Test expects Passed for Test - " + test.TestName + errors.FirstOrDefault());
+            Assert.IsTrue(test.TestPassed, "Workflow Service Test expects Passed for Test - " + test.TestName + string.Join("\n", errors.Select((state) => { return state.ErrorMessage; })));
             Assert.IsFalse(test.TestFailing, "Workflow Service Test expects Failed to be false for Test - " + test.TestName);
         }
 
@@ -952,7 +949,7 @@ namespace Dev2.Activities.Specs.TestFramework
             var serviceTest = GetTestFrameworkFromContext();
             var resourceId = serviceTest.SelectedServiceTest.ParentId;
             var path = Path.Combine(EnvironmentVariables.TestPath, resourceId.ToString());
-            var fyles = DirectoryHelperInstance().GetFiles(path);
+            var fyles = DirectoryWrapperInstance().GetFiles(path);
             Assert.AreEqual(testCount, fyles.Count());
         }
 
@@ -1747,7 +1744,7 @@ namespace Dev2.Activities.Specs.TestFramework
         {
             if (workflowName == "RabbitTestWf")
             {
-                WorkflowExecutionSteps._containerOps = TestLauncher.StartLocalRabbitMQContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
+                WorkflowExecutionSteps._containerOps = new Depends(Depends.ContainerType.RabbitMQ);
             }
             var env = ServerRepository.Instance.Source;
             env.ForceLoadResources();
@@ -2175,6 +2172,7 @@ namespace Dev2.Activities.Specs.TestFramework
         ServiceTestViewModel AddTestStep(string actNameToFind)
         {
             var serviceTest = GetTestFrameworkFromContext();
+
             var helper = new WorkflowHelper();
             var builder = helper.ReadXamlDefinition(serviceTest.ResourceModel.WorkflowXaml);
             Assert.IsNotNull(builder);

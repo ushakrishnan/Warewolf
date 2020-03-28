@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -113,7 +114,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                 if (setupInfo.Is32Bit)
                 {
                     var strings = setupInfo.Parameters.Select(parameter => new ParameterInfoTO { Name = parameter.Name, DefaultValue = parameter.Value, TypeName = parameter.TypeName }).ToArray();
-                    pluginResult = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(setupInfo.ClsId.ToGuid(), setupInfo.Method, Execute.ExecuteSpecifiedMethod, strings);
+                    pluginResult = IpcClient.GetIpcExecutor(_clientStreamWrapper).Invoke(setupInfo.ClsId.ToGuid(), setupInfo.Method, Execute.ExecuteSpecifiedMethod, strings);
                     return null;
                 }
                 var typeList = BuildTypeList(setupInfo.Parameters);
@@ -216,7 +217,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
                 if (is32Bit)
                 {
 
-                    var execute = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(classId.ToGuid(), "", Execute.GetNamespaces, new ParameterInfoTO[] { });
+                    var execute = IpcClient.GetIpcExecutor(_clientStreamWrapper).Invoke(classId.ToGuid(), "", Execute.GetNamespaces, new ParameterInfoTO[] { });
                     var namespaceList = execute as List<string>;
                     return namespaceList;
 
@@ -251,7 +252,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
 
                 try
                 {
-                    var execute = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(clasID, "", Execute.GetType, new ParameterInfoTO[] { });
+                    var execute = IpcClient.GetIpcExecutor(_clientStreamWrapper).Invoke(clasID, "", Execute.GetType, new ParameterInfoTO[] { });
                     type = execute as Type;
                 }
                 catch (Exception ex)
@@ -275,7 +276,7 @@ namespace Dev2.Runtime.ServiceModel.Esb.Brokers.ComPlugin
             classId = classId.Replace("{", "").Replace("}", "");
             if (is32Bit)
             {
-                var execute = IpcClient.GetIPCExecutor(_clientStreamWrapper).Invoke(classId.ToGuid(), "", Execute.GetMethods, new ParameterInfoTO[] { });
+                var execute = IpcClient.GetIpcExecutor(_clientStreamWrapper).Invoke(classId.ToGuid(), "", Execute.GetMethods, new ParameterInfoTO[] { });
                 if (execute is List<MethodInfoTO> ipcMethods)
                 {
                     ServiceMethodList(ref serviceMethodList, orderMethodsList, ipcMethods);

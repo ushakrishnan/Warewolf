@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -351,7 +351,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             var result = ExecuteProcess();
 
             var expected = new List<string> { "testRecValue1" };
-            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "testRecSet1", "testRec1", out string error);
+            var actual = RetrieveAllRecordSetFieldValuesSkipEmpty(result.Environment, "testRecSet1", "testRec1", out string error);
 
             // remove test datalist
 
@@ -499,7 +499,7 @@ namespace Dev2.Tests.Activities.ActivityTests
             var result = ExecuteProcess();
 
             var expected = new List<string>();
-            var actual = RetrieveAllRecordSetFieldValues(result.Environment, "cRec", "opt", out string error);
+            var actual = RetrieveAllRecordSetFieldValuesSkipEmpty(result.Environment, "cRec", "opt", out string error);
 
             // remove test datalist ;)
 

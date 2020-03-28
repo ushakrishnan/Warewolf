@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,11 +9,16 @@
 */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.DirectoryServices;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Security;
+using Dev2.Common.Interfaces.Wrappers;
 using Dev2.Services.Security;
 using Dev2.Services.Security.MoqInstallerActions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -34,9 +39,9 @@ namespace Dev2.Infrastructure.Tests.Services.Security
             //------------Setup for test--------------------------
 
             //------------Execute Test---------------------------
-            
+
             new TestAuthorizationServiceBase(null);
-            
+
 
             //------------Assert Results-------------------------
         }
@@ -416,7 +421,19 @@ namespace Dev2.Infrastructure.Tests.Services.Security
             warewolfGroupOps.DeleteWarewolfGroup();
             warewolfGroupOps.AddWarewolfGroup();
 
-            warewolfGroupOps.AddAdministratorsGroupToWarewolf();
+            Console.WriteLine("BEFOREEntering AddAdministratorsGroupToWarewolf");
+            try
+            {
+                warewolfGroupOps.AddAdministratorsGroupToWarewolf();
+            }
+            catch (COMException e)
+            {
+                //'The Server service is not started.' error is expected in containers. See: https://github.com/moby/moby/issues/26409#issuecomment-304978309
+                if (e.Message != "The Server service is not started.\r\n")
+                {
+                    throw e;
+                }
+            }
             var result = warewolfGroupOps.IsAdminMemberOfWarewolf();
 
             Assert.IsTrue(result);
@@ -438,6 +455,45 @@ namespace Dev2.Infrastructure.Tests.Services.Security
 
             //------------Assert Results-------------------------
             Assert.IsTrue(isMember);
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory("AuthorizationServiceBase_AdministratorsMembersOfWarewolfGroup_WhenAdministratorsMembersOfTheGroup")]
+        public void AuthorizationServiceBase_IsAuthorizedToConnect_ToLocalServer_AdministratorsMembersOfWarewolfGroup_WhenNonAdministratorsAreNotMembersOfTheGroup_ExpectFalse()
+        {
+            //------------Setup for test--------------------------
+
+            // permissions setup
+            var warewolfGroupOps = MoqInstallerActionFactory.CreateSecurityOperationsObject();
+
+            // Delete warewolf if already a member...
+            warewolfGroupOps.DeleteWarewolfGroup();
+            warewolfGroupOps.AddWarewolfGroup();
+
+            var result = warewolfGroupOps.IsAdminMemberOfWarewolf();
+
+            Assert.IsFalse(result);
+
+            // Setup rest of test ;)
+            var resource = Guid.NewGuid();
+            var securityPermission = new WindowsGroupPermission { IsServer = false, ResourceID = resource, Permissions = Permissions.View, WindowsGroup = GlobalConstants.WarewolfGroup };
+
+            var securityService = new Mock<ISecurityService>();
+            securityService.SetupGet(p => p.Permissions).Returns(new List<WindowsGroupPermission> { securityPermission });
+
+            var user = new Mock<IPrincipal>();
+            user.Setup(u => u.Identity.Name).Returns("TestUser");
+
+            var authorizationService = new TestAuthorizationServiceBase( securityService.Object, true, false, true) { User = user.Object };
+
+            authorizationService.MemberOfAdminOverride = false;
+
+            var isMemberTestAgain = authorizationService.AreAdministratorsMembersOfWarewolfAdministrators();
+
+            //------------Assert Results Again-------------------------
+            Assert.IsFalse(isMemberTestAgain);
+
         }
 
         [TestMethod]
@@ -468,13 +524,15 @@ namespace Dev2.Infrastructure.Tests.Services.Security
             var user = new Mock<IPrincipal>();
             user.Setup(u => u.Identity.Name).Returns("TestUser");
 
-            var authorizationService = new TestAuthorizationServiceBase(securityService.Object, true, true, true) { User = user.Object };
+            var authorizationService = new TestAuthorizationServiceBase(securityService.Object, true, false, true) { User = user.Object };
+            authorizationService.MemberOfAdminOverride = true;
 
             //------------Execute Test---------------------------
             var isMember = authorizationService.AreAdministratorsMembersOfWarewolfAdministrators();
 
             //------------Assert Results-------------------------
             Assert.IsFalse(isMember);
+
         }
 
 
@@ -622,6 +680,102 @@ namespace Dev2.Infrastructure.Tests.Services.Security
 
             //------------Assert Results-------------------------
             securityService.Verify(p => p.Remove(resourceID));
+        }
+        class TestDirectoryEntry : IDirectoryEntry
+        {
+            private string _name;
+
+            public TestDirectoryEntry(string name)
+            {
+                _name = name;
+            }
+            public IDirectoryEntries Children => new TestDirectoryEntries();
+
+            public string SchemaClassName => throw new NotImplementedException();
+
+            public string Name => _name;
+
+            public DirectoryEntry Instance => throw new NotImplementedException();
+
+            public void Dispose()
+            {
+
+            }
+
+            public object Invoke(string methodName, params object[] args)
+            {
+                if (methodName == "Members" && Name == "Warewolf Administrators")
+                {
+                    return new List<string> { "Administrators".ToString() };
+                }
+                return null;
+            }
+        }
+        class TestDirectoryEntries : IDirectoryEntries
+        {
+
+            public SchemaNameCollection SchemaFilter => new DirectoryEntry("LDAP://dev2.local", "IntegrationTester", "I73573r0").Children.SchemaFilter;
+
+            public DirectoryEntries Instance => throw new NotImplementedException();
+
+            public IEnumerator GetEnumerator()
+            {
+                yield return new TestDirectoryEntry("Test Group");
+                yield return new TestDirectoryEntry("Warewolf Administrators");
+                yield return new TestDirectoryEntry("no users");
+            }
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory("AuthorizationServiceBase_AdministratorsMembersOfWarewolfGroup_WhenAdministratorsMembersOfTheGroup")]
+        [Ignore]//TODO: re-introduce this test on the premier.local domain
+        public void AuthorizationServiceBase_IsAuthorizedToConnect_ToLocalServer_AdministratorsMembersOfWarewolfGroup_WhenMemberOfAdministrator_ExpectTrue()
+        {
+            //------------Setup for test--------------------------
+            var getPassword = TestEnvironmentVariables.GetVar("dev2\\IntegrationTester");
+            // permissions setup
+            var warewolfGroupOps = MoqInstallerActionFactory.CreateSecurityOperationsObject();
+
+            //Delete warewolf if already a member...
+            warewolfGroupOps.DeleteWarewolfGroup();
+            warewolfGroupOps.AddWarewolfGroup();
+
+            var result = warewolfGroupOps.IsAdminMemberOfWarewolf();
+
+            Assert.IsFalse(result);
+
+            // Setup rest of test
+            var resource = Guid.NewGuid();
+            var securityPermission = new WindowsGroupPermission { IsServer = false, ResourceID = resource, Permissions = Permissions.View, WindowsGroup = GlobalConstants.WarewolfGroup };
+            var securityService = new Mock<ISecurityService>();
+            var user = new Mock<IPrincipal>();
+            var actualGChildren = new List<Mock<IDirectoryEntry>> { new Mock<IDirectoryEntry>() };
+            var gChildren = new Mock<IDirectoryEntries>();
+            var actualChildren = new List<Mock<IDirectoryEntry>> { new Mock<IDirectoryEntry>() };
+            var children = new Mock<IDirectoryEntries>();
+            var dir = new Mock<IDirectoryEntryFactory>();
+
+            securityService.SetupGet(p => p.Permissions).Returns(new List<WindowsGroupPermission> { securityPermission });
+            user.Setup(u => u.Identity.Name).Returns("TestUser");
+            actualGChildren.ForEach(b => b.Setup(a => a.Name).Returns("Warewolf Administrators"));
+            actualGChildren.ForEach(b => b.Setup(a => a.SchemaClassName).Returns("Computer"));
+
+            gChildren.Setup(a => a.GetEnumerator()).Returns(actualGChildren.Select(a => a.Object).GetEnumerator());
+            actualChildren.First().Setup(a => a.Children).Returns(gChildren.Object);
+            children.Setup(a => a.GetEnumerator()).Returns(actualChildren.Select(a => a.Object).GetEnumerator());
+            SchemaNameCollection filterList = new DirectoryEntry("LDAP://dev2.local", "IntegrationTester", getPassword).Children.SchemaFilter;
+            children.Setup(a => a.SchemaFilter).Returns(filterList);
+            var ss = "WinNT://" + Environment.MachineName + ",computer";
+            dir.Setup(a => a.Create(ss)).Returns(new TestDirectoryEntry(ss));
+
+            var authorizationService = new TestAuthorizationServiceBase(dir.Object, securityService.Object, true, true, false) { User = user.Object };
+            authorizationService.MemberOfAdminOverride = true;
+            //------------Execute Test---------------------------
+            var isMember = authorizationService.AreAdministratorsMembersOfWarewolfAdministrators();
+
+            //------------Assert Results-------------------------
+            Assert.IsTrue(isMember);
         }
     }
 }

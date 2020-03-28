@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,38 +27,25 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Storage.Interfaces;
 
-
-
 namespace Dev2.Tests.Runtime.WF
 {
     [TestClass]
     public class WfApplicationUtilsTests
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void OnCreation_ShouldConstruct()
-        {
-            //---------------Set up test pack-------------------
-
-            //---------------Assert Precondition----------------
-
-            //---------------Execute Test ----------------------
-            var newWfApplicationUtils = new WfApplicationUtils();
-            //---------------Test Result -----------------------
-            Assert.IsNotNull(newWfApplicationUtils, "Cannot create new WfApplicationUtils object.");
-        }
-
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
-        [Owner("Nkosinathi Sangweni")]
-        public void GetDebugValues_GivenGiven2Values_ShouldReturnTwoDebugValueItems()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_GetDebugValues_GivenGiven2Values_ShouldReturnTwoDebugValueItems()
         {
             //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
             var privateObject = new PrivateObject(wfApplicationUtils);
             var objMock = new Mock<IDSFDataObject>();
-            IList<IDev2Definition> definitions = new List<IDev2Definition>();
-            definitions.Add(new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue"));
-            definitions.Add(new Dev2Definition("Name2", "Map2", "value", false, "defaultValue", false, "rawValue"));
+            IList<IDev2Definition> definitions = new List<IDev2Definition>
+            {
+                new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue"),
+                new Dev2Definition("Name2", "Map2", "value", false, "defaultValue", false, "rawValue")
+            };
             var errorResultTO = new ErrorResultTO();
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -58,17 +55,20 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(2, debugItems.Count);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void GetDebugValues_GivenDuplicateDefs_ShouldReturnDistinctValues()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_GetDebugValues_GivenDuplicateDefs_ShouldReturnDistinctValues()
         {
             //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
             var privateObject = new PrivateObject(wfApplicationUtils);
             var objMock = new Mock<IDSFDataObject>();
-            IList<IDev2Definition> definitions = new List<IDev2Definition>();
-            definitions.Add(new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue"));
-            definitions.Add(new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue"));
+            IList<IDev2Definition> definitions = new List<IDev2Definition>
+            {
+                new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue"),
+                new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue")
+            };
             var errorResultTO = new ErrorResultTO();
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -78,16 +78,19 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(1, debugItems.Count);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void GetDebugValues_GivenDefinations_ShouldAddBracketsToValues()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_GetDebugValues_GivenDefinations_ShouldAddBracketsToValues()
         {
             //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
             var privateObject = new PrivateObject(wfApplicationUtils);
             var objMock = new Mock<IDSFDataObject>();
-            IList<IDev2Definition> definitions = new List<IDev2Definition>();
-            definitions.Add(new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue"));
+            IList<IDev2Definition> definitions = new List<IDev2Definition>
+            {
+                new Dev2Definition("Name1", "Map1", "value", false, "defaultValue", false, "rawValue")
+            };
             var errorResultTO = new ErrorResultTO();
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -99,16 +102,19 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(1, count);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void GetDebugValues_GivenRecSetDefinations_ShouldAddRecNotationToValues()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_GetDebugValues_GivenRecSetDefinations_ShouldAddRecNotationToValues()
         {
             //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
             var privateObject = new PrivateObject(wfApplicationUtils);
             var objMock = new Mock<IDSFDataObject>();
-            IList<IDev2Definition> definitions = new List<IDev2Definition>();
-            definitions.Add(new Dev2Definition("rec().Name1", "rec().Map1", "value", false, "defaultValue", false, "rawValue"));
+            IList<IDev2Definition> definitions = new List<IDev2Definition>
+            {
+                new Dev2Definition("rec().Name1", "rec().Map1", "value", false, "defaultValue", false, "rawValue")
+            };
             var errorResultTO = new ErrorResultTO();
             //---------------Assert Precondition----------------
             //---------------Execute Test ----------------------
@@ -120,9 +126,71 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual(1, count);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_GetVariableName_GetDebugValues_Value_IsJsonArray_ShouldAddRecNotationToValues()
+        {
+            //---------------Set up test pack-------------------
+            var mockDSFDataObject = new Mock<IDSFDataObject>();
+
+            var wfApplicationUtils = new WfApplicationUtils();
+
+            IList<IDev2Definition> definitions = new List<IDev2Definition>
+            {
+                new Dev2Definition("@rec(*).Name1", "rec().Map1", "value", false, "defaultValue", false, "rawValue")
+                {
+                    IsJsonArray = true
+                }
+            };
+
+            var errorResultTO = new ErrorResultTO();
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var privateObject = new PrivateObject(wfApplicationUtils);
+            var debugItems = privateObject.Invoke("GetDebugValues", definitions, mockDSFDataObject.Object, errorResultTO) as List<DebugItem>;
+            //---------------Test Result -----------------------
+            Assert.IsNotNull(debugItems);
+            Assert.AreEqual(1, debugItems.Count);
+            var count = debugItems.Count(item => item.ResultsList.Count(result => result.Variable == "[[@rec(*).Name1(*)]]") == 1);
+            Assert.AreEqual(1, count);
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_GetVariableName_GetDebugValues_Value_IsJsonArrayAndRecordSetName_NotNull_ShouldAddRecNotationToValues()
+        {
+            //---------------Set up test pack-------------------
+            var mockDSFDataObject = new Mock<IDSFDataObject>();
+
+            var wfApplicationUtils = new WfApplicationUtils();
+
+            IList<IDev2Definition> definitions = new List<IDev2Definition>
+            {
+                new Dev2Definition("@rec(*).Name1", "rec().Map1", "value", false, "defaultValue", false, "rawValue")
+                {
+                    IsJsonArray = false,
+                    RecordSetName = "some recordSet"
+                }
+            };
+
+            var errorResultTO = new ErrorResultTO();
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            var privateObject = new PrivateObject(wfApplicationUtils);
+            var debugItems = privateObject.Invoke("GetDebugValues", definitions, mockDSFDataObject.Object, errorResultTO) as List<DebugItem>;
+            //---------------Test Result -----------------------
+            Assert.IsNotNull(debugItems);
+            Assert.AreEqual(1, debugItems.Count);
+            var count = debugItems.Count(item => item.ResultsList.Count(result => result.Variable == "[[some recordSet(*).@rec(*).Name1]]") == 1);
+            Assert.AreEqual(1, count);
+        }
+
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void FindServiceShape_GivenNoResource_ShouldEmptyShape()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_FindServiceShape_GivenNoResource_ShouldEmptyShape()
         {
             //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
@@ -138,17 +206,21 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual("<DataList></DataList>", shape);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void FindServiceShape_GivenResource_ShouldReturnShape()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_FindServiceShape_GivenResource_ShouldReturnShape()
         {
             //---------------Set up test pack-------------------
-            var mock1 = new Mock<IResourceCatalog>();
             var wfApplicationUtils = new WfApplicationUtils();
             var privateObject = new PrivateObject(wfApplicationUtils);
             var catLog = new Mock<IResourceCatalog>();
-            IResource dropBoxSource = new DropBoxSource() { AppKey = "Key", AccessToken = "token" };
-            dropBoxSource.DataList = new StringBuilder("SomeValue");
+            IResource dropBoxSource = new DropBoxSource
+            {
+                AppKey = "Key",
+                AccessToken = "token",
+                DataList = new StringBuilder("SomeValue")
+            };
             catLog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(dropBoxSource);
             privateObject.SetField("_lazyCat", catLog.Object);
             //---------------Assert Precondition----------------
@@ -160,13 +232,12 @@ namespace Dev2.Tests.Runtime.WF
             Assert.AreEqual("SomeValue", shape);
         }
 
-        //DispatchDebugState(IDSFDataObject dataObject, StateType stateType, bool hasErrors, string existingErrors, out ErrorResultTO errors, DateTime? workflowStartTime = null, bool interrogateInputs = false, bool interrogateOutputs = false, bool durationVisible=true)
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void DispatchDebugState_GivenValidParams_ShouldNotThrowException()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_DispatchDebugState_GivenValidParams_ShouldNotThrowException()
         {
             //---------------Set up test pack-------------------
-            var mock1 = new Mock<IResourceCatalog>();
             var wfApplicationUtils = new WfApplicationUtils();
             var envMock = new Mock<IExecutionEnvironment>();
 
@@ -176,27 +247,51 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Execute Test ----------------------
             try
             {
-                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, false, string.Empty, out ErrorResultTO error);
+                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, out ErrorResultTO error, false, false);
             }
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
-
             }
             //---------------Test Result -----------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
-        [Owner("Nkosinathi Sangweni")]
-        public void DispatchDebugState_GivenValidParamsAndIsDebugMode_ShouldWriteUsingDebugDispactcher()
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_DispatchDebugState_GetDebugState_HasRemote_ShouldNotThrowException()
         {
             //---------------Set up test pack-------------------
-            var mock1 = new Mock<IResourceCatalog>();
+            var wfApplicationUtils = new WfApplicationUtils();
+            var mockExecutionEnvironment = new Mock<IExecutionEnvironment>();
+            var mockDSFDataObject = new Mock<IDSFDataObject>();
+
+            mockDSFDataObject.Setup(o => o.Environment).Returns(mockExecutionEnvironment.Object);
+            mockDSFDataObject.Setup(o => o.RemoteInvokerID).Returns("fa4b4786-67d9-414f-8c2e-17673fdcef48");
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            try
+            {
+                wfApplicationUtils.DispatchDebugState(mockDSFDataObject.Object, StateType.Start, out ErrorResultTO error, false, false);
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            //---------------Test Result -----------------------
+        }
+
+        [TestMethod]
+        [Owner("Nkosinathi Sangweni")]
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_DispatchDebugState_GivenValidParamsAndIsDebugMode_ShouldWriteUsingDebugDispactcher()
+        {
+            //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
             var envMock = new Mock<IExecutionEnvironment>();
             var debugDispatcher = new Mock<IDebugDispatcher>();
             var debugState = new DebugState { StateType = StateType.Start };
-            debugDispatcher.Setup(dispatcher => dispatcher.Write(debugState, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+            debugDispatcher.Setup(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
             var mock = new Mock<Func<IDebugDispatcher>>();
             mock.Setup(func => func()).Returns(() => debugDispatcher.Object);
             var mockObj = new Mock<IDSFDataObject>();
@@ -208,34 +303,122 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Execute Test ----------------------
             try
             {
-
-                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, false, string.Empty, out ErrorResultTO error);
+                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, out var error, false, false);
                 var state = debugState;
-                debugDispatcher.Verify(dispatcher => dispatcher.Write(state, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+                debugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = state, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
 
                 debugState = new DebugState { StateType = StateType.End };
-                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.End, false, string.Empty, out error);
+                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.End, out error, false, false);
 
-                debugDispatcher.Verify(dispatcher => dispatcher.Write(debugState, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+                debugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
             }
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
-
             }
             //---------------Test Result -----------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_TryWriteDebug_WriteDebug_Environment_NotHasErrors_ShouldWriteUsingDebugDispactcher()
+        {
+            //---------------Set up test pack-------------------
+            var wfApplicationUtils = new WfApplicationUtils();
+            var mockExecutionEnvironment = new Mock<IExecutionEnvironment>();
+            var mockDebugDispatcher = new Mock<IDebugDispatcher>();
+            var mockDebugDispatcherFunc = new Mock<Func<IDebugDispatcher>>();
+            var mockDSFDataObject = new Mock<IDSFDataObject>();
+
+            var debugState = new DebugState { StateType = StateType.Start };
+
+            mockDebugDispatcher.Setup(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
+
+            mockDebugDispatcherFunc.Setup(func => func()).Returns(() => mockDebugDispatcher.Object);
+
+            mockDSFDataObject.Setup(o => o.Environment).Returns(mockExecutionEnvironment.Object);
+            mockDSFDataObject.Setup(o => o.IsDebugMode()).Returns(true);
+            mockDSFDataObject.Setup(o => o.ResourceID).Returns(new Guid("fa4b4786-67d9-414f-8c2e-17673fdcef48"));
+
+            var privateObject = new PrivateObject(wfApplicationUtils);
+            privateObject.SetField("_getDebugDispatcher", mockDebugDispatcherFunc.Object);
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            try
+            {
+                wfApplicationUtils.DispatchDebugState(mockDSFDataObject.Object, StateType.Start, out var error, false, false);
+                var state = debugState;
+                mockDebugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = state, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
+
+                debugState = new DebugState { StateType = StateType.End };
+                wfApplicationUtils.DispatchDebugState(mockDSFDataObject.Object, StateType.End, out error, false, false);
+
+                mockDebugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            //---------------Test Result -----------------------
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_TryWriteDebug_WriteDebug_Environment_HasErrors_ShouldWriteUsingDebugDispactcher()
+        {
+            //---------------Set up test pack-------------------
+            var wfApplicationUtils = new WfApplicationUtils();
+            var mockExecutionEnvironment = new Mock<IExecutionEnvironment>();
+            var mockDebugDispatcher = new Mock<IDebugDispatcher>();
+            var mockDebugDispatcherFunc = new Mock<Func<IDebugDispatcher>>();
+            var mockDSFDataObject = new Mock<IDSFDataObject>();
+
+            var debugState = new DebugState { StateType = StateType.Start };
+
+            mockDebugDispatcher.Setup(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
+
+            mockDebugDispatcherFunc.Setup(func => func()).Returns(() => mockDebugDispatcher.Object);
+
+            mockDSFDataObject.Setup(o => o.Environment).Returns(mockExecutionEnvironment.Object);
+            mockDSFDataObject.Setup(o => o.IsDebugMode()).Returns(true);
+            mockDSFDataObject.Setup(o => o.ResourceID).Returns(new Guid("fa4b4786-67d9-414f-8c2e-17673fdcef48"));
+            mockDSFDataObject.Setup(o => o.Environment.HasErrors()).Returns(true);
+
+            var privateObject = new PrivateObject(wfApplicationUtils);
+            privateObject.SetField("_getDebugDispatcher", mockDebugDispatcherFunc.Object);
+            //---------------Assert Precondition----------------
+            //---------------Execute Test ----------------------
+            try
+            {
+                wfApplicationUtils.DispatchDebugState(mockDSFDataObject.Object, StateType.Start, out var error, false, false);
+                var state = debugState;
+                mockDebugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = state, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
+
+                debugState = new DebugState { StateType = StateType.End };
+                wfApplicationUtils.DispatchDebugState(mockDSFDataObject.Object, StateType.End, out error, false, false);
+
+                mockDebugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
+            }
+            catch (Exception ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+            //---------------Test Result -----------------------
+        }
+
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void DispatchDebugState_GivenValidParamsAndIntergoateInputs_ShouldWriteUsingDebugDispactcher()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_DispatchDebugState_GivenValidParamsAndIntergoateInputs_ShouldWriteUsingDebugDispactcher()
         {
             //---------------Set up test pack-------------------
             var wfApplicationUtils = new WfApplicationUtils();
             var envMock = new Mock<IExecutionEnvironment>();
             var debugDispatcher = new Mock<IDebugDispatcher>();
             var debugState = new DebugState { StateType = StateType.Start };
-            debugDispatcher.Setup(dispatcher => dispatcher.Write(debugState, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+            debugDispatcher.Setup(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
             var mock = new Mock<Func<IDebugDispatcher>>();
             mock.Setup(func => func()).Returns(() => debugDispatcher.Object);
             var mockObj = new Mock<IDSFDataObject>();
@@ -247,9 +430,9 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Execute Test ----------------------
             try
             {
-                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, false, string.Empty, out ErrorResultTO error, DateTime.Now, true, true);
+                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, out var error, true);
                 var state = debugState;
-                debugDispatcher.Verify(dispatcher => dispatcher.Write(state, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+                debugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = state, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
             }
             catch (Exception ex)
             {
@@ -258,26 +441,31 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Test Result -----------------------
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
-        public void DispatchDebugState_GivenValidParamsAndIntergoateOutputs_ShouldWriteUsingDebugDispactcher_GetResourceForDatalist()
+        [TestCategory(nameof(WfApplicationUtils))]
+        public void WfApplicationUtils_DispatchDebugState_GivenValidParamsAndIntergoateOutputs_ShouldWriteUsingDebugDispactcher_GetResourceForDatalist()
         {
             //---------------Set up test pack-------------------
             var catLog = new Mock<IResourceCatalog>();
-            catLog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(new Resource()
+            catLog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(new Resource
             {
                 DataList = new StringBuilder()
             });
 
-            IResource dropBoxSource = new DropBoxSource() { AppKey = "Key", AccessToken = "token" };
-            dropBoxSource.DataList = new StringBuilder("<DataList></DataList>");
+            IResource dropBoxSource = new DropBoxSource
+            {
+                AppKey = "Key",
+                AccessToken = "token",
+                DataList = new StringBuilder("<DataList></DataList>")
+            };
             catLog.Setup(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(dropBoxSource);
 
             var wfApplicationUtils = new WfApplicationUtils();
             var envMock = new Mock<IExecutionEnvironment>();
             var debugDispatcher = new Mock<IDebugDispatcher>();
             var debugState = new DebugState { StateType = StateType.Start };
-            debugDispatcher.Setup(dispatcher => dispatcher.Write(debugState, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+            debugDispatcher.Setup(dispatcher => dispatcher.Write(new WriteArgs { debugState = debugState, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
             var mock = new Mock<Func<IDebugDispatcher>>();
             mock.Setup(func => func()).Returns(() => debugDispatcher.Object);
             var mockObj = new Mock<IDSFDataObject>();
@@ -290,18 +478,15 @@ namespace Dev2.Tests.Runtime.WF
             //---------------Execute Test ----------------------
             try
             {
-
-                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, false, string.Empty, out ErrorResultTO error, DateTime.Now, false, true);
+                wfApplicationUtils.DispatchDebugState(mockObj.Object, StateType.Start, out var error);
                 var state = debugState;
-                debugDispatcher.Verify(dispatcher => dispatcher.Write(state, It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>()));
+                debugDispatcher.Verify(dispatcher => dispatcher.Write(new WriteArgs { debugState = state, isTestExecution = It.IsAny<bool>(), isDebugFromWeb = It.IsAny<bool>(), testName = It.IsAny<string>(), isRemoteInvoke = It.IsAny<bool>(), remoteInvokerId = It.IsAny<string>(), parentInstanceId = It.IsAny<string>(), remoteDebugItems = It.IsAny<IList<IDebugState>>() }));
                 catLog.Verify(catalog => catalog.GetResource(It.IsAny<Guid>(), It.IsAny<Guid>()));
             }
             catch (Exception ex)
             {
                 Assert.Fail(ex.Message);
-
             }
-            //---------------Test Result -----------------------
         }
     }
 }

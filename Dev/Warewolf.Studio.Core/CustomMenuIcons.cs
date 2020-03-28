@@ -1,3 +1,14 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System.Collections.Generic;
 
 namespace Warewolf.Studio.Core
@@ -18,6 +29,7 @@ namespace Warewolf.Studio.Core
             OracleSource,
             OdbcSource,
             PluginSource,
+            RedisSource,
             WebSource,
             EmailSource,
             OauthSource,
@@ -46,6 +58,7 @@ namespace Warewolf.Studio.Core
             {MenuIcons.View, "Explorer-Permission-Disbled"},
             {MenuIcons.Execute, "Explorer-Run-Disabled"},
             {MenuIcons.WebSource, "WebMethodsSource"},
+            {MenuIcons.RedisSource, "RedisSource"},
             {MenuIcons.PluginSource, "DotNetDllSource"},
             {MenuIcons.EmailSource, "EmailSourceImageLogo"},
             {MenuIcons.ExchangeSource, "ExchangeSource"},
@@ -76,6 +89,8 @@ namespace Warewolf.Studio.Core
         public static string OracleSource => MenuIconsDictionary[MenuIcons.OracleSource];
 
         public static string PluginSource => MenuIconsDictionary[MenuIcons.PluginSource];
+
+        public static string RedisSource => MenuIconsDictionary[MenuIcons.RedisSource];
 
         public static string EmailSource => MenuIconsDictionary[MenuIcons.EmailSource];
 

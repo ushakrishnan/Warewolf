@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,11 +11,13 @@
 using Dev2.Common.Interfaces.Wrappers;
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Threading;
 
 namespace Dev2.Common.Wrappers
-{ // not required for code coverage this is simply a pass through required for unit testing
+{
+    [ExcludeFromCodeCoverage]
     public class FileWrapper : IFile
     {
         private static T PerformActionAsServerUser<T>(Func<T> actionToPerform)
@@ -41,7 +43,7 @@ namespace Dev2.Common.Wrappers
             });
         }
 
-        public string ReadAllText(string fileName) => PerformActionAsServerUser(()=>File.ReadAllText(fileName));
+        public string ReadAllText(string fileName) => PerformActionAsServerUser(() => File.ReadAllText(fileName));
 
         public void Move(string source, string destination)
         {
@@ -55,9 +57,9 @@ namespace Dev2.Common.Wrappers
             PerformActionAsServerUser(() => File.Delete(tmpFileName));
         }
 
-        public void WriteAllText(string p1, string p2)
+        public void WriteAllText(string path, string contents)
         {
-            PerformActionAsServerUser(() => File.WriteAllText(p1, p2));
+            PerformActionAsServerUser(() => File.WriteAllText(path, contents));
         }
 
         public void Copy(string source, string destination)
@@ -134,7 +136,25 @@ namespace Dev2.Common.Wrappers
         {
             return PerformActionAsServerUser(() => File.GetLastWriteTime(filePath).Date);
         }
+
+        public IFileInfo Info(string path)
+        {
+            return new FileInfoWrapper(new FileInfo(path));
+        }
+
+
+        public void Copy(string src, string dst, bool overwrite)
+        {
+            File.Copy(src, dst, overwrite);
+        }
+        public string DirectoryName(string path)
+        {
+            var f = new FileInfo(path);
+            return f.DirectoryName;
+        }
     }
+
+    [ExcludeFromCodeCoverage]
     class RefCountedStreamWriter : IDev2StreamWriter
     {
         public int _count;

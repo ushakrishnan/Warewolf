@@ -22,6 +22,7 @@ using TechTalk.SpecFlow;
 using Warewolf.Core;
 using Warewolf.Studio.ViewModels;
 using Warewolf.Tools.Specs.Toolbox.Database;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.Toolbox.Resources
 {
@@ -32,6 +33,7 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
         DbAction _selectedAction;
         DbSourceDefinition _testingDbSource;
         DbAction _getEmployees;
+        private Depends _containerOps;
         readonly ScenarioContext _scenarioContext;
         readonly CommonSteps _commonSteps;
 
@@ -319,12 +321,14 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
             _scenarioContext.Add("viewModel", posgreDesignerViewModel);
             _scenarioContext.Add("parentName", workflowName);
         }
+
         [Given(@"Postgres Server Source is Enabled")]
         public void GivenPostgresServerSourceIsEnabled()
         {
             var viewModel = GetViewModel();
             Assert.IsTrue(viewModel.SourceRegion.IsEnabled);
         }
+
         [Given(@"I Select ""(.*)"" as Postgres Source for ""(.*)""")]
         public void GivenISelectAsPostgresSourceFor(string sourceName, string activityName)
         {
@@ -349,6 +353,10 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
             SetDbAction(activityName, actionName);
             Assert.IsNotNull(vm.ActionRegion.SelectedAction);
         }
+
+        [Given(@"this test depends on a remote Postgres database container")]
+        public void GivenThisTestDependsOnARemotePostgresDatabaseContainer() => _containerOps = new Depends(Depends.ContainerType.PostGreSQL);
+
         [Given(@"Postgres Command Timeout is ""(.*)"" milliseconds for ""(.*)""")]
         [When(@"Postgres Command Timeout is ""(.*)"" milliseconds for ""(.*)""")]
         [Then(@"Postgres Command Timeout is ""(.*)"" milliseconds for ""(.*)""")]
@@ -360,7 +368,6 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
             SetCommandTimeout(ActivityName, timeout);
             Assert.AreEqual(timeout, vm.InputArea.CommandTimeout);
         }
-
 
         [Given(@"Postgres Server Inputs Are Enabled")]
         public void GivenPostgresServerInputsAreEnabled()
@@ -425,6 +432,7 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
         public void CleanUp()
         {
             CleanupForTimeOutSpecs();
+            _containerOps?.Dispose();
         }
     }
 }

@@ -196,7 +196,13 @@
     <value>Search</value>
   </data>
   <data name="MenuDialogTaskLabel" xml:space="preserve">
-    <value>Task</value>
+    <value>Triggers</value>
+  </data>
+  <data name="MenuDialogSchedulerLabel" xml:space="preserve">
+    <value>Scheduler</value>
+  </data>
+  <data name="MenuDialogQueueEventsLabel" xml:space="preserve">
+    <value>Queues</value>
   </data>
   <data name="MenuDialogUnLockLabel" xml:space="preserve">
     <value>Unlock Menu</value>
@@ -299,6 +305,12 @@ The window will be reloaded when you click OK.</value>
   <data name="ServiceTestRunAllUnsavedTestsHeader" xml:space="preserve">
     <value>Save before continuing</value>
   </data>
+  <data name="TriggerQueueSaveEditedTestsMessage" xml:space="preserve">
+    <value>Please save currently edited Queue before creating a new one.</value>
+  </data>
+  <data name="TriggerQueueSaveEditedQueueHeader" xml:space="preserve">
+    <value>Save before continuing</value>
+  </data>
   <data name="ExplorerMoveFailedMessage" xml:space="preserve">
     <value>An unexpected error occured which prevented the resource from being moved.</value>
   </data>
@@ -386,6 +398,9 @@ The window will be reloaded when you click OK.</value>
   <data name="WebserviceNewHeaderLabel" xml:space="preserve">
     <value>New Web Service Source</value>
   </data>
+  <data name="RedisNewHeaderLabel" xml:space="preserve">
+    <value>New Redis Source</value>
+  </data>
   <data name="SharePointServiceNewHeaderLabel" xml:space="preserve">
     <value>New SharePoint Service Source</value>
   </data>
@@ -470,6 +485,27 @@ The window will be reloaded when you click OK.</value>
   <data name="StandardStyling" xml:space="preserve">
     <value>&lt;html xmlns="http://www.w3.org/1999/xhtml"&gt;	&lt;head runat="server"&gt;	&lt;style&gt;	div {	clear: both;	margin: 0;	font-size: 12px;	font-family: 'Source Sans Pro';	}	h1 {	font-size: 17px;	font-family: 'Source Sans Pro';	text-decoration: underline;	align-content: center;	}	h2 {	font-size: 16px;	font-family: 'Source Sans Pro';	text-decoration: underline;	align-content: center;	}	h3 {	font-size: 15px;	font-family: 'Source Sans Pro';	text-decoration: underline;	align-content: center;	}	p {	font-size: 12px;	font-family: 'Source Sans Pro';	}	table {	border-left: 1px solid GrayText;	border-right: 1px solid GrayText;	border-bottom: 1px solid GrayText;	border-spacing: 1px;	}	table {	width: 100%;	}	th {	font-size: 13px;	background: rgb(244, 244, 244);	margin-left: 3px;	}	td {	font-size: 12px;	height: 25px;	background: rgb(244, 244, 244);	border: 1px solid GrayText;	padding: 0;	vertical-align: central;	align-content: center;	}	ul {	font-size: 12px;	font-family: 'Source Sans Pro';	list-style-type: circle;	}	ol {	font-size: 12px;	font-family: 'Source Sans Pro';	list-style-type: square;	}	/* unvisited link */	a:link {	text-decoration: none;	color: rgb(243,112,13);	}	/* visited link */	a:visited {	text-decoration: none;	color: rgb(243,112,13);	}	/* mouse over link */	a:hover {	text-decoration: underline;	}	/* selected link */	a:active {	text-decoration: underline;	color: rgb(243,112,13);	}	label {	display: inline-block;	cursor: pointer;	position: relative;	padding-left: 25px;	margin-right: 15px;	font-size: 13px;	}	input[type=radio] {	display: none;	}	label:before {	content: "";	display: inline-block;	width: 16px;	height: 16px;	margin-right: 10px;	font-size: 12px;	font-family: 'Source Sans Pro';	position: absolute;	left: 0;	bottom: 1px;	border: 1px solid GrayText;	background-color: whitesmoke;	box-shadow: inset 0px 2px 3px 0px rgba(0, 0, 0, .3), 0px 1px 0px 0px rgba(255, 255, 255, .8);	}	.radio label:before {	border-radius: 8px;	}	input[type=radio]:checked + label:before {	content: "\2022";	border: 1px solid rgb(243,112,13);	font-size: 30px;	text-align: center;	line-height: 18px;	}	input[type=checkbox] {	display: none;	}	.checkbox label:before {	border-radius: 3px;	}	input[type=checkbox] + label:hover:before,	input[type=radio] + label:hover:before {	border: 1px solid rgb(243,112,13);	}	input[type=checkbox]:checked + label:before {	content: "\2713";	text-shadow: 1px 1px 1px rgba(0, 0, 0, .2);	font-size: 15px;	color: rgb(43,39,38);	border: 1px solid rgb(243,112,13);	text-align: center;	line-height: 15px;	}	&lt;/style&gt;	&lt;title&gt;&lt;/title&gt;	&lt;/head&gt;	&lt;body&gt;	&lt;div&gt;</value>
   </data>
+  <data name="QueueEventsLoginErrorMessage" xml:space="preserve">
+    <value>Error while saving: Logon failure: unknown user name or bad password</value>
+  </data>
+  <data name="TriggerQueuesSaveErrorHeader" xml:space="preserve">
+    <value>Save failed</value>
+  </data>
+  <data name="TriggerQueuesSaveQueueSourceNotSelected" xml:space="preserve">
+    <value>Save failed: Please select a Queue Source</value>
+  </data>
+  <data name="TriggerQueuesSaveQueueNameEmpty" xml:space="preserve">
+    <value>Save failed: Please enter a Queue</value>
+  </data>
+  <data name="TriggerQueuesSaveWorkflowNotSelected" xml:space="preserve">
+    <value>Save failed: Please select a Workflow</value>
+  </data>
+  <data name="TriggerQueuesSaveQueueSinkNotSelected" xml:space="preserve">
+    <value>Save failed: Please select an OnError Queue Source</value>
+  </data>
+  <data name="TriggerQueuesSaveOnErrorQueueNameEmpty" xml:space="preserve">
+    <value>Save failed: Please enter an OnError Queue</value>
+  </data>
   <data name="SchedulerDuplicateNameErrorMessage" xml:space="preserve">
     <value>There is already a task with the same name</value>
   </data>
@@ -499,6 +535,9 @@ The window will be reloaded when you click OK.</value>
   </data>
   <data name="SchedulerConnectionError" xml:space="preserve">
     <value>You don't have permission to schedule on this server. You need Administrator permission.</value>
+  </data>
+  <data name="QueueConnectionError" xml:space="preserve">
+    <value>You don't have permission to queue on this server. You need Administrator permission.</value>
   </data>
   <data name="ConnectedLabel" xml:space="preserve">
     <value> (Connected)</value>
@@ -557,7 +596,7 @@ Please contact your Warewolf System Administrator.</value>
     <value>New SQL Server Source</value>
   </data>
   <data name="MyWarewolfUrl" xml:space="preserve">
-    <value>http://my.warewolf.io/ExecutionLogging</value>
+    <value>http://my.warewolf.io/</value>
   </data>
   <data name="IntellisenseTabInsertedHeader" xml:space="preserve">
     <value>Tabs Pasted</value>
@@ -587,5 +626,8 @@ Please note that tabs are fully supported at runtime, in variables and when read
   </data>
   <data name="ConnectionTimeoutLabel" xml:space="preserve">
     <value>Timeout</value>
+  </data>
+  <data name="RevulyticsSdkError" xml:space="preserve">
+    <value>Revulytics Sdk Error</value>
   </data>
 </root>

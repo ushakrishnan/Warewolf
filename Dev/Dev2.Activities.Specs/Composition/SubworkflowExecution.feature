@@ -23,7 +23,7 @@ Scenario: Workflow with an assign and remote workflow
 	 And "TestAssignWithRemoteWF" contains an Assign "AssignData" as
 	  | variable      | value |
 	  | [[inputData]] | hello |
-	And "TestAssignWithRemoteWF" contains "WorkflowUsedBySpecs" from server "Remote Container" with mapping as
+	And "TestAssignWithRemoteWF" contains "WorkflowUsedBySpecs" from server "Remote Connection Integration" with mapping as
 	| Input to Service | From Variable | Output from Service | To Variable      |
 	| inputData        | [[inputData]] | output              | [[output]]       |
 	|                  |               | values(*).up        | [[values().up]]  |
@@ -50,10 +50,10 @@ Scenario: Workflow with an assign and remote workflow
 	  | 1 | [[output]] = HELLO          |
 	  | 2 | [[values(1).up]] = HELLO |
 	  | 3 | [[values(1).low]] = hello |	  	 
-	  And the "WorkflowUsedBySpecs" in Workflow "TestAssignWithRemoteWF" debug outputs as
+	  And the "WorkflowUsedBySpecs" in Workflow "TestAssignWithRemoteWF" unsorted debug outputs as
 	  |                           |
-	  | [[values(1).low]] = hello |
 	  | [[values(1).up]] = HELLO  |	 
+	  | [[values(1).low]] = hello |
 	  | [[output]] = HELLO        |
 	
 Scenario: Executing Workflow Service and Decision tool expected bubling out error in workflow service
@@ -76,7 +76,7 @@ Scenario: Error from workflow service is expected to buble out
 	  And "TestAssignWithRemoteOutputsErrors" contains an Assign "AssignData" as
 	  | variable      | value |
 	  | [[inputData]] | hello |
-	  And "TestAssignWithRemoteOutputsErrors" contains "WorkflowUsedBySpecs" from server "Remote Container" with mapping as
+	  And "TestAssignWithRemoteOutputsErrors" contains "WorkflowUsedBySpecs" from server "Remote Connection Integration" with mapping as
 	  | Input to Service | From Variable | Output from Service | To Variable      |
 	  | inputData        | [[inputData]] | output              | [[output]]       |
 	  |                  |               | values(*).up        | [[values().&up]] |
@@ -134,14 +134,15 @@ Examples:
 | ScalToBlank                | [[var]]        | hello       | [[var]]        | InnerInput | InnerOutput |                | [[InnerInput]] = hello |                        |
 
  Scenario: Executing Postgres For Xml testing workflow base
-	  Given I have a workflow "Testing - Sql For Xml"
-	  And "Testing - Sql For Xml" contains "TestPostgresReturningXml" from server "localhost" with mapping as
-	  | Input to Service | From Variable | Output from Service | To Variable      |
-	  When "Testing - Sql For Xml" is executed
-	  Then the workflow execution has "NO" error
-	  And the "TestPostgresReturningXml" in Workflow "TestPostgresReturningXml" debug outputs as
-	  |                     |
-	  | [[Result]] = Passed |
+	 Given I depend on a valid PostgreSQL server
+	 And I have a workflow "Testing - Sql For Xml"
+	 And "Testing - Sql For Xml" contains "TestPostgresReturningXml" from server "localhost" with mapping as
+	 | Input to Service | From Variable | Output from Service | To Variable      |
+	 When "Testing - Sql For Xml" is executed
+	 Then the workflow execution has "NO" error
+	 And the "TestPostgresReturningXml" in Workflow "TestPostgresReturningXml" debug outputs as
+	 |                     |
+	 | [[Result]] = Passed |
 
  Scenario: Executing Oracle For Xml testing workflow base
 	  Given I have a workflow "Testing - Sql For Xml"
@@ -241,7 +242,7 @@ Scenario: Plugin connector backward Compatiblity
 @UsingRemoteResources
 Scenario: Executing WF on a remote server 
          Given I have a workflow "Testing - TestRemoteTools"
-         And "Testing - TestRemoteTools" contains "TestRemoteTools" from server "Remote Container" with mapping as
+         And "Testing - TestRemoteTools" contains "TestRemoteTools" from server "Remote Connection Integration" with mapping as
          | Input to Service | From Variable | Output from Service | To Variable      |
          When "Testing - TestRemoteTools" is executed
          Then the workflow execution has "NO" error     
@@ -274,16 +275,17 @@ Scenario: Workflow with Performance counters
 	| Request Per Second                                | x     |
 	| Count of requests for workflows which don't exist | 9     |
 
+@Ignore
 Scenario: Sharepoint Acceptance Tests
-	  Given I have a workflow "Sharepoint Acceptance Tests Outer"
-	  And "Sharepoint Acceptance Tests Outer" contains "Sharepoint Connectors Testing" from server "localhost" with mapping as
-      | Input to Service | From Variable | Output from Service | To Variable |
-	  |                  |               | Result              | [[Result]]  |
-	  When "Sharepoint Acceptance Tests Outer" is executed
+	Given I have a workflow "Sharepoint Acceptance Tests Outer"
+	And "Sharepoint Acceptance Tests Outer" contains "Sharepoint Connectors Testing" from server "localhost" with mapping as
+    | Input to Service | From Variable | Output from Service | To Variable |
+	|                  |               | Result              | [[Result]]  |
+	When "Sharepoint Acceptance Tests Outer" is executed
 	Then the workflow execution has "NO" error
-	  And the "Sharepoint Connectors Testing" in Workflow "Sharepoint Acceptance Tests Outer" debug outputs as
-	  |                   |
-	  | [[Result]] = Pass |
+	And the "Sharepoint Connectors Testing" in Workflow "Sharepoint Acceptance Tests Outer" debug outputs as
+	|                   |
+	| [[Result]] = Pass |
 
 Scenario: ForEach using * in CSV executed as a sub execution passes out an ordered recordset
 	  Given I have a workflow "Spec - Test For Each Shared Memory"
@@ -337,7 +339,7 @@ Scenario: Error not bubbling up
 	And "Wolf-1212_Test" contains "ErrorHandled" from server "localhost" with mapping as
       | Input to Service | From Variable | Output from Service | To Variable |
 	  |                  |               | Result              | [[Result]]  |
-	  |                  |               | Error              | [[Error]]  |
+	  |                  |               | Error               | [[Error]]   |
 	When "Wolf-1212_Test" is executed
 	Then the workflow execution has "NO" error
 	And the "ErrorHandled" in Workflow "Wolf-1212_Test" debug outputs as
@@ -358,15 +360,16 @@ Scenario: Error not bubbling up error message
 	  | [[Result]] = Pass |
 
 Scenario: Rabbit MQ Test
-	  Given I have a workflow "RabbitMQ Tester WF"
-	  And "RabbitMQ Tester WF" contains "RabbitMQTest" from server "localhost" with mapping as
-      | Input to Service | From Variable | Output from Service | To Variable |
-	  |                  |               | result              | [[result]]  |
-	  When "RabbitMQ Tester WF" is executed
+	Given I depend on a valid RabbitMQ server
+	And I have a workflow "RabbitMQ Tester WF"
+	And "RabbitMQ Tester WF" contains "RabbitMQTest" from server "localhost" with mapping as
+    | Input to Service | From Variable | Output from Service | To Variable |
+	|                  |               | result              | [[result]]  |
+	When "RabbitMQ Tester WF" is executed
 	Then the workflow execution has "NO" error
-	  And the "RabbitMQTest" in Workflow "RabbitMQ Tester WF" debug outputs as
-	  |                   |
-	  | [[result]] = Pass |
+	And the "RabbitMQTest" in Workflow "RabbitMQ Tester WF" debug outputs as
+	|                   |
+	| [[result]] = Pass |
 
 	  
 Scenario: Executing WebGet Returning False

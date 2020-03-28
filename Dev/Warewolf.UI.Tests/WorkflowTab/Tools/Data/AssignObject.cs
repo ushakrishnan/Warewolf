@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Data
     [CodedUITest]
     public class AssignObject
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Data Tools")]
         public void AssignObjectTool_Small_And_Large_Then_QVIView_UITest()
         {

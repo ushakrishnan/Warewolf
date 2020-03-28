@@ -1,6 +1,7 @@
-﻿/*
+﻿#pragma warning disable
+/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,7 +11,10 @@
 
 using System;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
+using Warewolf.Studio.ViewModels;
 
 namespace Warewolf.Studio.Views
 {
@@ -41,5 +45,31 @@ namespace Warewolf.Studio.Views
             VersionButton.Style = TryFindResource("SideMenuButtonStyle") as Style;
         }
 
+        private void MenuTaskButton_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (MenuTaskButton is Button menuTaskButton && !menuTaskButton.IsMouseOver ||
+                MenuQueueEventsButton is Button menuQueueEventsButton && !menuQueueEventsButton.IsMouseOver)
+            {
+                TasksPopup.IsOpen = true;
+                if (DataContext is MenuViewModel menuViewModel)
+                {
+                    menuViewModel.IsPopoutViewOpen = true;
+                }
+            }
+        }
+
+        private void MenuTaskButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (MenuTaskButton is Button menuTaskButton && !menuTaskButton.IsMouseOver &&
+                MenuQueueEventsButton is Button menuQueueEventsButton && !menuQueueEventsButton.IsMouseOver)
+            {
+                TasksPopup.IsOpen = false;
+                if (DataContext is MenuViewModel menuViewModel)
+                {
+                    menuViewModel.IsPopoutViewOpen = false;
+                    menuViewModel.SlideClosedCommand.Execute(null);
+                }
+            }
+        }
     }
 }

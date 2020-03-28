@@ -19,7 +19,7 @@ namespace Warewolf.Studio.Resources.Languages {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Core {
@@ -676,11 +676,29 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Queues.
+        /// </summary>
+        public static string MenuDialogQueueEventsLabel {
+            get {
+                return ResourceManager.GetString("MenuDialogQueueEventsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Save.
         /// </summary>
         public static string MenuDialogSaveLabel {
             get {
                 return ResourceManager.GetString("MenuDialogSaveLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scheduler.
+        /// </summary>
+        public static string MenuDialogSchedulerLabel {
+            get {
+                return ResourceManager.GetString("MenuDialogSchedulerLabel", resourceCulture);
             }
         }
         
@@ -721,7 +739,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Task.
+        ///   Looks up a localized string similar to Triggers.
         /// </summary>
         public static string MenuDialogTaskLabel {
             get {
@@ -766,7 +784,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to http://my.warewolf.io/ExecutionLogging.
+        ///   Looks up a localized string similar to http://my.warewolf.io/.
         /// </summary>
         public static string MyWarewolfUrl {
             get {
@@ -883,11 +901,38 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You don&apos;t have permission to queue on this server. You need Administrator permission..
+        /// </summary>
+        public static string QueueConnectionError {
+            get {
+                return ResourceManager.GetString("QueueConnectionError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error while saving: Logon failure: unknown user name or bad password.
+        /// </summary>
+        public static string QueueEventsLoginErrorMessage {
+            get {
+                return ResourceManager.GetString("QueueEventsLoginErrorMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New RabbitMQ Source.
         /// </summary>
         public static string RabbitMQSourceNewHeaderLabel {
             get {
                 return ResourceManager.GetString("RabbitMQSourceNewHeaderLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New Redis Source.
+        /// </summary>
+        public static string RedisNewHeaderLabel {
+            get {
+                return ResourceManager.GetString("RedisNewHeaderLabel", resourceCulture);
             }
         }
         
@@ -919,7 +964,7 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Revulytics sdk error.
+        ///   Looks up a localized string similar to Revulytics Sdk Error.
         /// </summary>
         public static string RevulyticsSdkError {
             get {
@@ -1377,6 +1422,78 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string ToolboxPopupHeader {
             get {
                 return ResourceManager.GetString("ToolboxPopupHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save before continuing.
+        /// </summary>
+        public static string TriggerQueueSaveEditedQueueHeader {
+            get {
+                return ResourceManager.GetString("TriggerQueueSaveEditedQueueHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please save currently edited Queue before creating a new one..
+        /// </summary>
+        public static string TriggerQueueSaveEditedTestsMessage {
+            get {
+                return ResourceManager.GetString("TriggerQueueSaveEditedTestsMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save failed.
+        /// </summary>
+        public static string TriggerQueuesSaveErrorHeader {
+            get {
+                return ResourceManager.GetString("TriggerQueuesSaveErrorHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save failed: Please enter an OnError Queue.
+        /// </summary>
+        public static string TriggerQueuesSaveOnErrorQueueNameEmpty {
+            get {
+                return ResourceManager.GetString("TriggerQueuesSaveOnErrorQueueNameEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save failed: Please enter a Queue.
+        /// </summary>
+        public static string TriggerQueuesSaveQueueNameEmpty {
+            get {
+                return ResourceManager.GetString("TriggerQueuesSaveQueueNameEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save failed: Please select an OnError Queue Source.
+        /// </summary>
+        public static string TriggerQueuesSaveQueueSinkNotSelected {
+            get {
+                return ResourceManager.GetString("TriggerQueuesSaveQueueSinkNotSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save failed: Please select a Queue Source.
+        /// </summary>
+        public static string TriggerQueuesSaveQueueSourceNotSelected {
+            get {
+                return ResourceManager.GetString("TriggerQueuesSaveQueueSourceNotSelected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save failed: Please select a Workflow.
+        /// </summary>
+        public static string TriggerQueuesSaveWorkflowNotSelected {
+            get {
+                return ResourceManager.GetString("TriggerQueuesSaveWorkflowNotSelected", resourceCulture);
             }
         }
         

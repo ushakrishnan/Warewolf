@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using Dev2.Interfaces;
@@ -18,6 +19,7 @@ namespace Dev2
         IDev2Activity Execute(IDSFDataObject data, int update);
         IEnumerable<IDev2Activity> NextNodes { get; set; }
         Guid ActivityId { get; set; }
+
         List<string> GetOutputs();
         IEnumerable<IDev2Activity> GetChildrenNodes();
         FlowNode GetFlowNode();
@@ -25,5 +27,6 @@ namespace Dev2
         IEnumerable<StateVariable> GetState();
         IEnumerable<IDev2Activity> GetNextNodes();
         List<(string Description, string Key, string SourceUniqueId, string DestinationUniqueId)> ArmConnectors();
+        T As<T>() where T : class, IDev2Activity;
     }
 }

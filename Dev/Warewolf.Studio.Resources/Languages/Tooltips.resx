@@ -228,12 +228,15 @@ Returns the response text of the web get request.</value>
     <value>View APIs.json url and content</value>
   </data>
   <data name="ViewExecutionLoggingTooltip" xml:space="preserve">
-    <value>View Execution Logging</value>
+    <value>View Audit</value>
   </data>
   <data name="UserNameToolTip" xml:space="preserve">
     <value>Enter the user name you want to connect with</value>
   </data>
   <data name="UserAuthenticationToolTip" xml:space="preserve">
+    <value>Connect using a specific account</value>
+  </data>
+  <data name="PasswordAuthenticationToolTip" xml:space="preserve">
     <value>Connect using a specific account</value>
   </data>
   <data name="UnzipToolTipZipname" xml:space="preserve">
@@ -633,6 +636,9 @@ Using recordset () will add a new record and (*) will assign every record.</valu
   <data name="ServiceTestActionTooltip" xml:space="preserve">
     <value>Test the procedure or function</value>
   </data>
+  <data name="ServiceVerifyActionTooltip" xml:space="preserve">
+    <value>Verify the mapped data to the inputs of the selected workflow</value>
+  </data>
   <data name="ServerVersionTooltip" xml:space="preserve">
     <value>View the version of this server</value>
   </data>
@@ -656,6 +662,9 @@ Using recordset () will add a new record and (*) will assign every record.</valu
 To execute more than one item in a loop construct etc. put the activities in a sequence first 
 and then put the sequence into the loop construct.
 Error handling operates as a catch all for all items in the sequence.</value>
+  </data>
+  <data name="GateExecuteThisTooltip" xml:space="preserve">
+    <value>Execute an Activity when there is a failure in the Gate referencing this Gate.</value>
   </data>
   <data name="SelectAndApplyDataSourceToolTip" xml:space="preserve">
     <value>Only collections go in here.
@@ -685,20 +694,47 @@ Returns the output of the script, if any.</value>
   <data name="ScheduleToolTip" xml:space="preserve">
     <value>Schedule a service to run</value>
   </data>
+  <data name="QueueEventToolTip" xml:space="preserve">
+    <value>Create a Queue event to run</value>
+  </data>
   <data name="SchedulerStatusAltTooltipTrigger" xml:space="preserve">
     <value>Enable or Disable the schedule</value>
+  </data>
+  <data name="QueueStatusAltTooltipTrigger" xml:space="preserve">
+    <value>Enable or Disable the Queue</value>
   </data>
   <data name="SchedulerSettingsToolTipWorkFlow" xml:space="preserve">
     <value>Select a workflow to be triggered</value>
   </data>
+  <data name="QueueSettingsToolTipWorkFlow" xml:space="preserve">
+    <value>Select a Workflow to be triggered</value>
+  </data>
   <data name="SchedulerSettingsToolTipUsername" xml:space="preserve">
     <value>Schedule should execute as this user</value>
+  </data>
+  <data name="QueueSettingsToolTipUsername" xml:space="preserve">
+    <value>Workflow should execute as this user</value>
+  </data>
+  <data name="QueueAddWorkflowCommandToolTip" xml:space="preserve">
+    <value>Select the workflow to executed in the Queue</value>
   </data>
   <data name="SchedulerSettingsToolTipRun" xml:space="preserve">
     <value>Allows a missed trigger to be executed</value>
   </data>
+  <data name="QueueMapEntireMessageTooltipTrigger" xml:space="preserve">
+    <value>Map the entire message</value>
+  </data>
+  <data name="QueueNameTooltip" xml:space="preserve">
+    <value>Save the queue as</value>
+  </data>
+  <data name="DeadLetterQueueTooltip" xml:space="preserve">
+    <value>The dead-letter queue name</value>
+  </data>
   <data name="SchedulerSettingsToolTipPassword" xml:space="preserve">
     <value>Schedule will use this password for the above username</value>
+  </data>
+  <data name="QueueSettingsToolTipPassword" xml:space="preserve">
+    <value>Workflow will use this password for the above username</value>
   </data>
   <data name="SchedulerSettingsToolTipName" xml:space="preserve">
     <value>What name do you want to give this Schedule?</value>
@@ -708,6 +744,9 @@ Returns the output of the script, if any.</value>
   </data>
   <data name="SchedulerNewScheduleTooltipTrigger" xml:space="preserve">
     <value>Create a new scheduled task</value>
+  </data>
+  <data name="QueueNewQueueTooltipTrigger" xml:space="preserve">
+    <value>Create a new Queue</value>
   </data>
   <data name="SchedulerDeleteTooltipTrigger" xml:space="preserve">
     <value>Delete this scheduled task</value>
@@ -842,6 +881,9 @@ Using recordset () will add a new record and (*) will assign every record.</valu
   <data name="RandomToolTipLength" xml:space="preserve">
     <value>Determines the character length to generate.</value>
   </data>
+  <data name="QueueViewStatsToolTip" xml:space="preserve">
+    <value>Select to view Queue Stats</value>
+  </data>
   <data name="RabbitMQToolTipTimeOut" xml:space="preserve">
     <value>How long you want the Consumer to delay when checking for messages in the queue.</value>
   </data>
@@ -860,6 +902,16 @@ Using recordset () will add a new record and (*) will assign every record.</valu
   <data name="RabbitMQToolTipQueueName" xml:space="preserve">
     <value>Provide a name of the Queue you want to consume from.</value>
   </data>
+  <data name="RabbitMQToolTipCorrelationID" xml:space="preserve">
+    <value>Provide a CorrelationID of the Queue you want to consume from.</value>
+  </data>
+  <data name="RabbitMQToolTipAutoCorrelationID" xml:space="preserve">
+    <value>Use ExecutionID or CustomTransactionID from Header as CorrelationID of the Queue you want to consume from.</value>
+  </data>
+  <data name="RabbitMQToolTipAutoCustomTransactionIDCorrelationID" xml:space="preserve">
+    <value>Use CustomTransactionID from Header as CorrelationID of the Queue you want to consume from.</value>
+  </data>
+  
   <data name="RabbitMQToolTipPrefetch" xml:space="preserve">
     <value>Provide number of processes that can run concurrently.</value>
   </data>
@@ -905,6 +957,9 @@ Using recordset () will add a new record and (*) will assign every record.</valu
   <data name="PluginServiceSelectConstructorToolTip" xml:space="preserve">
     <value>Select constructor to execute.</value>
   </data>
+  <data name="ExistingGatesToolTip" xml:space="preserve">
+    <value>If the gate conditions fail and "Continue" has been selected, then select an existing gate to roll back to.</value>
+  </data>
   <data name="PasswordToolTip" xml:space="preserve">
     <value>Enter the corresponding password</value>
   </data>
@@ -920,6 +975,9 @@ Using recordset () will add a new record and (*) will assign every record.</valu
   <data name="NewWebSourceTooltip" xml:space="preserve">
     <value>Create a new web source</value>
   </data>
+  <data name="NewRedisSourceTooltip" xml:space="preserve">
+    <value>Create a new redis source</value>
+  </data>
   <data name="NewSharepointSourceTooltip" xml:space="preserve">
     <value>Create a new sharepoint source</value>
   </data>
@@ -934,6 +992,15 @@ Using recordset () will add a new record and (*) will assign every record.</valu
   </data>
   <data name="NewRabbitMqSourceTooltip" xml:space="preserve">
     <value>Create a new rabbitmq source</value>
+  </data>
+  <data name="QueueSourceTooltip" xml:space="preserve">
+    <value>Select the source message queue</value>
+  </data>
+  <data name="QueueConcurrencyTooltip" xml:space="preserve">
+    <value>Set the concurrency of the queue</value>
+  </data>
+  <data name="DeadLetterQueueSourceTooltip" xml:space="preserve">
+    <value>Select the source message dead-letter queue</value>
   </data>
   <data name="NewPluginSourceTooltip" xml:space="preserve">
     <value>Create a new plugin source</value>
@@ -1020,6 +1087,12 @@ You can use File System, URI, SFTP, FTP or FTPS format.</value>
   <data name="MenuSchedulerToolTip" xml:space="preserve">
     <value>Schedule a service to run</value>
   </data>
+  <data name="MenuQueueEventsToolTip" xml:space="preserve">
+    <value>Create a Queue event to run</value>
+  </data>
+  <data name="MenuTasksToolTip" xml:space="preserve">
+    <value>View schedules and events</value>
+  </data>
   <data name="MenuSaveToolTip" xml:space="preserve">
     <value>Save this tab [CTRL+S]</value>
   </data>
@@ -1064,6 +1137,39 @@ You can use File System, URI, SFTP, FTP or FTPS format.</value>
   </data>
   <data name="ManageWebSourceHostNameTooltip" xml:space="preserve">
     <value>The base URL of the webservice</value>
+  </data>
+  <data name="RedisSourceHostNameTooltip" xml:space="preserve">
+    <value>RedisSourceHostNameTooltip</value>
+  </data>
+  <data name="RedisSourcePortTooltip" xml:space="preserve">
+    <value>RedisSourcePortTooltip</value>
+  </data>
+  <data name="RedisPasswordTooltip" xml:space="preserve">
+    <value>The account password</value>
+  </data>
+  <data name="RedisTestTooltip" xml:space="preserve">
+    <value>Test the redis source connection</value>
+  </data>
+  <data name="RedisCancelTestTooltip" xml:space="preserve">
+    <value>Cancel the test execution</value>
+  </data>
+  <data name="RedisServersToolTip" xml:space="preserve">
+    <value>Select a preconfigured redis source.</value>
+  </data>
+  <data name="RedisNewSourceToolTip" xml:space="preserve">
+    <value>Create a new Redis Server Source</value>
+  </data>
+  <data name="RedisEditSourceToolTip" xml:space="preserve">
+    <value>Edit Redis Server Source</value>
+  </data>
+  <data name="RedisKeyToolTip" xml:space="preserve">
+    <value>Key to store data into Redis cache</value>
+  </data>
+  <data name="RedisRemoveKeyToolTip" xml:space="preserve">
+    <value>Redis Key to remove data from cache</value>
+  </data>
+  <data name="RedisTimeoutToolTip" xml:space="preserve">
+    <value>Redis Timeout for stored data</value>
   </data>
   <data name="ManageWebSourceDefaultQueryTooltip" xml:space="preserve">
     <value>Optional default query</value>
@@ -2177,6 +2283,9 @@ To create a SFTP Key, put the full path and file or folder name here.</value>
   <data name="Tool_Data_Replace" xml:space="preserve">
     <value>Tags: find</value>
   </data>
+  <data name="Tool_Flow_Gate" xml:space="preserve">
+    <value>Tags: gate retry stop end</value>
+  </data>
   <data name="Tool_Data_Find_Index" xml:space="preserve">
     <value>Tags: search string position</value>
   </data>
@@ -2197,6 +2306,15 @@ To create a SFTP Key, put the full path and file or folder name here.</value>
   </data>
   <data name="Tool_Data_Assign_Object" xml:space="preserve">
     <value>Tags: json array declare setup variable set</value>
+  </data>
+  <data name="Tool_Database_RedisCache" xml:space="preserve">
+    <value>Tags: cache data under a specified key</value>
+  </data>
+  <data name="Tool_Database_RedisRemove" xml:space="preserve">
+    <value>Tags: removes the specified key and data from cache</value>
+  </data>
+  <data name="Tool_Database_RedisCounter" xml:space="preserve">
+    <value>increment/decrement the number stored at key by one</value>
   </data>
   <data name="Tool_Ruby" xml:space="preserve">
     <value>Tags: ruby script</value>
@@ -2308,5 +2426,74 @@ To create a SFTP Key, put the full path and file or folder name here.</value>
   </data>
   <data name="LoggingViewAuditsFilePathToolTip" xml:space="preserve">
     <value>Audits Folder Path</value>
+  </data>
+  <data name="RedisTTLToolTip" xml:space="preserve">
+    <value>Time in seconds before the key expires. Default is 5 Seconds.</value>
+  </data>
+  <data name="RedisCounterKeyToolTip" xml:space="preserve">
+    <value>Redis Key to create a counter</value>
+  </data>
+  <data name="RedisCounterStepSizeToolTip" xml:space="preserve">
+    <value>Redis Step Size to increment or decrement a counter</value>
+  </data>
+  <data name="RedisCounterTypeIncrementToolTip" xml:space="preserve">
+    <value>Redis Increment a counter</value>
+  </data>
+  <data name="RedisCounterTypeDecrementToolTip" xml:space="preserve">
+    <value>Redis Decrement a counter</value>
+  </data>
+  <data name="RedisRemoveResultToolTip" xml:space="preserve">
+    <value>Returns Success if the key was found and removed or Failure otherwise.</value>
+  </data>
+  <data name="OptionAutocompleteTooltip" xml:space="preserve">
+    <value>OptionAutocompleteTooltip</value>
+  </data>
+  <data name="OptionIntTooltip" xml:space="preserve">
+    <value>OptionIntTooltip</value>
+  </data>
+  <data name="OptionBoolTooltip" xml:space="preserve">
+    <value>OptionBoolTooltip</value>
+  </data>
+  <data name="OptionEnumTooltip" xml:space="preserve">
+    <value>OptionEnumTooltip</value>
+  </data>
+  <data name="OptionEnumGenTooltip" xml:space="preserve">
+    <value>OptionEnumGenTooltip</value>
+  </data>
+  <data name="OptionComboboxTooltip" xml:space="preserve">
+    <value>OptionComboboxTooltip</value>
+  </data>
+  <data name="OptionWorkflowTooltip" xml:space="preserve">
+    <value>OptionWorkflowTooltip</value>
+  </data>
+  <data name="OptionGateCountToolTip" xml:space="preserve">
+    <value>Set the retry count.</value>
+  </data>
+  <data name="OptionGateStrategyToolTip" xml:space="preserve">
+    <value>Select the retry strategy that will be actioned</value>
+  </data>
+  <data name="OptionGateResumeToolTip" xml:space="preserve">
+    <value>Select whether the Gate Tool will continue on error or end the workflow</value>
+  </data>
+  <data name="OptionGateMaxRetriesToolTip" xml:space="preserve">
+    <value>Set the maximum retry count. The tool will keep retrying until the maximum retry count is hit</value>
+  </data>
+  <data name="OptionGateTimeoutToolTip" xml:space="preserve">
+    <value>Set the Timeout of each retry</value>
+  </data>
+  <data name="OptionGateResumeEndpointToolTip" xml:space="preserve">
+    <value>Select the resume workflow or API that will be executed on retry</value>
+  </data>
+  <data name="OptionGateIncrementToolTip" xml:space="preserve">
+    <value>Set the delay increment between every retry attempt</value>
+  </data>
+  <data name="OptionRabbitMqDurableToolTip" xml:space="preserve">
+    <value>Set if the queue is durable</value>
+  </data>
+  <data name="OptionRadioButtonTooltip" xml:space="preserve">
+    <value>OptionRadioButtonTooltip</value>
+  </data>
+  <data name="OptionConditionToolTip" xml:space="preserve">
+    <value>OptionConditionToolTip</value>
   </data>
 </root>

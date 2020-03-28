@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -36,7 +36,7 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests
         {
             var conn = CreateConnection();
 
-            conn.Connect(Guid.Empty);
+            conn.ConnectAsync(Guid.Empty).Wait(60000);
             // The IsConnected property of the EnvironmentConnection references the TCPDispatch Client
             // Only if the connection to the server is successfully made by the dispatch client will the
             // IsConnected message return true
@@ -52,10 +52,10 @@ namespace Dev2.Integration.Tests.Dev2.Studio.Core.Tests
         {
             var conn = CreateConnection();
 
-            conn.Connect(Guid.Empty);
+            conn.ConnectAsync(Guid.Empty).Wait(60000);
             conn.Disconnect();
             Thread.Sleep(100);
-            conn.Connect(Guid.Empty);
+            conn.ConnectAsync(Guid.Empty).Wait(60000);
             Thread.Sleep(500);
             var afterReconnection = conn.IsConnected;
 

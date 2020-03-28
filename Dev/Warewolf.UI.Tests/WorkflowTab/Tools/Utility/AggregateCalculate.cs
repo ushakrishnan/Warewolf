@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Utility
     [CodedUITest]
     public class AggregateCalculate
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
 		[TestCategory("Utility Tools")]
         public void AggregateCalculateTool_Small_And_LargeView_UITest()
         {

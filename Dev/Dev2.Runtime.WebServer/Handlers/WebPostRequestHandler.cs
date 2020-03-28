@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -30,12 +31,12 @@ namespace Dev2.Runtime.WebServer.Handlers
         }
         public override void ProcessRequest(ICommunicationContext ctx)
         {
-            var serviceName = GetServiceName(ctx);
-            var instanceId = GetInstanceID(ctx);
-            var bookmark = GetBookmark(ctx);
-            var workspaceID = GetWorkspaceID(ctx);
+            var serviceName = ctx.GetServiceName();
+            var instanceId = ctx.GetInstanceID();
+            var bookmark = ctx.GetBookmark();
+            var workspaceID = ctx.GetWorkspaceID();
             var requestTO = new WebRequestTO();
-            var xml = GetPostData(ctx);
+            var xml = SubmittedData.GetPostData(ctx);
 
             if (!String.IsNullOrEmpty(xml))
             {

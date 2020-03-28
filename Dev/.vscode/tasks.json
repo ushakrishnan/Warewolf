@@ -1,0 +1,86 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "windows": {
+                "command": "${workspaceFolder}\\AcceptanceTesting.sln.Compile.bat"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build UITesting.sln",
+            "windows": {
+                "command": "${workspaceFolder}\\UITesting.sln.Compile.bat"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build Server.sln",
+            "windows": {
+                "command": "${workspaceFolder}\\Server.sln.Compile.bat"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build Studio.sln",
+            "windows": {
+                "command": "${workspaceFolder}\\Studio.sln.Compile.bat"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build Web.sln",
+            "windows": {
+                "command": "${workspaceFolder}\\Web.sln.Compile.bat"
+            },
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "deploy Server Testing Resources",
+            "windows": {
+                "command": "${workspaceFolder}\\Resources - ServerTests\\Deploy.bat"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "deploy UI Testing Resources",
+            "windows": {
+                "command": "${workspaceFolder}\\Resources - UITests\\Deploy.bat"
+            }
+        },
+        {
+            "label": "deploy Release Resources",
+            "windows": {
+                "command": "${workspaceFolder}\\Resources - Release\\Deploy.bat"
+            }
+        },
+        {
+            "label": "deploy Load Testing Resources",
+            "windows": {
+                "command": "${workspaceFolder}\\Resources - Load\\Deploy.bat"
+            }
+        }
+    ]
+}

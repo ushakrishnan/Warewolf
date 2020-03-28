@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,7 +14,7 @@ using Dev2.Data.Interfaces;
 
 namespace Dev2.DataList.Contract
 {
-    public class InputLanguageParser : LanguageParser, IDev2LanguageParser
+    public class InputLanguageParser : ServiceActivityVariableMapping, IDev2LanguageParser
     {
 
         #region Attributes

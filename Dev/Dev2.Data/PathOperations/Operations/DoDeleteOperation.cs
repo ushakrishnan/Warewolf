@@ -1,37 +1,61 @@
-﻿using System;
-using System.Security.Principal;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using Dev2.Common;
 using Dev2.Common.Common;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using Dev2.Data.Interfaces;
-using Dev2.PathOperations;
 
 namespace Dev2.Data.PathOperations.Operations
 {
     public class DoDeleteOperation : PerformBoolIOOperation
     {
-        readonly WindowsImpersonationContext ImpersonatedUser;
+        readonly IWindowsImpersonationContext _impersonatedUser;
         protected readonly IDev2LogonProvider _logOnProvider;
         protected readonly IActivityIOPath _path;
+        readonly IDeleteHelper _deleteHelper;
+
         public DoDeleteOperation(IActivityIOPath path)
+            : this(new DeleteHelper(new FileWrapper(), new DirectoryWrapper()), path)
         {
-            _logOnProvider = new LogonProvider();
-            _path = path;
-            ImpersonatedUser = ValidateAuthorization.RequiresAuth(_path, _logOnProvider);
+        }
+        public DoDeleteOperation(IDeleteHelper deleteHelper, IActivityIOPath path)
+            : this(deleteHelper, path, new LogonProvider(), ValidateAuthorization.RequiresAuth)
+        {
         }
         public DoDeleteOperation(IActivityIOPath path, IDev2LogonProvider logOnProvider)
+            : this(new DeleteHelper(new FileWrapper(), new DirectoryWrapper()), path, logOnProvider)
+        { }
+        public DoDeleteOperation(IDeleteHelper deleteHelper, IActivityIOPath path, IDev2LogonProvider logOnProvider)
+            :this(deleteHelper, path, logOnProvider, null)
         {
-            _logOnProvider = logOnProvider;
+        }
+        public DoDeleteOperation(IDeleteHelper deleteHelper,IActivityIOPath path, IDev2LogonProvider logOnProvider, ImpersonationDelegate impersonationDelegate)
+            :base(impersonationDelegate)
+        {
+            _deleteHelper = deleteHelper;
             _path = path;
+            _logOnProvider = logOnProvider;
+            _impersonatedUser = _impersonationDelegate?.Invoke(_path, _logOnProvider);
         }
         public override bool ExecuteOperation()
         {
             try
             {
-                if (ImpersonatedUser != null)
+                if (_impersonatedUser != null)
                 {
                     return ExecuteOperationWithAuth();
                 }
-                return DeleteHelper.Delete(_path.Path);
+                return _deleteHelper.Delete(_path.Path);
             }
             catch (Exception exception)
             {
@@ -41,11 +65,11 @@ namespace Dev2.Data.PathOperations.Operations
         }
         public override bool ExecuteOperationWithAuth()
         {
-            using (ImpersonatedUser)
+            using (_impersonatedUser)
             {
                 try
                 {
-                    return DeleteHelper.Delete(_path.Path);
+                    return _deleteHelper.Delete(_path.Path);
                 }
                 catch (Exception ex)
                 {
@@ -54,7 +78,7 @@ namespace Dev2.Data.PathOperations.Operations
                 }
                 finally
                 {
-                    ImpersonatedUser?.Undo();
+                    _impersonatedUser?.Undo();
                 }
             }
         }

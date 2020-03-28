@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
@@ -19,6 +20,7 @@ using Warewolf.Resource.Errors;
 using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
 using Dev2.Common.State;
+using Warewolf.Resource.Messages;
 
 namespace Dev2.Activities.SelectAndApply
 {
@@ -137,7 +139,11 @@ namespace Dev2.Activities.SelectAndApply
 
         public override List<DebugItem> GetDebugOutputs(IExecutionEnvironment env, int update) => _debugOutputs;
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var allErrors = new ErrorResultTO();
             InitializeDebug(dataObject);
@@ -319,7 +325,7 @@ namespace Dev2.Activities.SelectAndApply
             var nonPassingSteps = serviceTestStep.Children?.Where(step => step.Result?.RunTestResult != RunResult.TestPassed).ToList();
             if (nonPassingSteps != null && nonPassingSteps.Count == 0)
             {
-                testRunResult.Message = Warewolf.Resource.Messages.Messages.Test_PassedResult;
+                testRunResult.Message = Messages.Test_PassedResult;
                 testRunResult.RunTestResult = RunResult.TestPassed;
             }
             else

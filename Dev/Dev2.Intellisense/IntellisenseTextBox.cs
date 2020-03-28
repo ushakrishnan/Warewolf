@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -28,14 +29,6 @@ using Dev2.Data.Interfaces;
 using Dev2.Instrumentation;
 using Dev2.Studio.InterfaceImplementors;
 using Dev2.Studio.Interfaces;
-
-
-
-
-
-
-
-
 
 namespace Dev2.UI
 {
@@ -83,7 +76,9 @@ namespace Dev2.UI
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected override void OnPreviewKeyDown(KeyEventArgs e)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             base.OnPreviewKeyDown(e);
             var isOpen = IsDropDownOpen;
@@ -389,7 +384,8 @@ namespace Dev2.UI
             if (hasUnicode)
             {
                 var previousInput = inputText;
-                Text = "";
+                var characterWithoutAnsiCodes = inputText.Where(a => a <= 255).Select(a => a).ToArray();
+                Text = new string(characterWithoutAnsiCodes);
                 CustomContainer.Get<IPopupController>()
                     .ShowInvalidCharacterMessage(previousInput);
 

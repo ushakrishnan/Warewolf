@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,6 +17,7 @@ using System.Windows.Forms;
 using Caliburn.Micro;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Triggers.Scheduler;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Studio.Controller;
 using Dev2.Common.Interfaces.Threading;
@@ -25,7 +27,6 @@ using Dev2.Services.Events;
 using Dev2.Services.Security;
 using Dev2.Settings.Logging;
 using Dev2.Settings.Perfcounters;
-using Dev2.Settings.Scheduler;
 using Dev2.Settings.Security;
 using Dev2.Studio.Controller;
 using Dev2.Studio.ViewModels.WorkSurface;
@@ -79,8 +80,9 @@ namespace Dev2.Settings
 
             SaveCommand = new RelayCommand(o => SaveSettings(), o => IsDirty);
 
-            ToEnvironmentModel = toEnvironmentModel??( a=>a.ToEnvironmentModel());
-            CurrentEnvironment= ToEnvironmentModel?.Invoke(server);
+            ToEnvironmentModel = toEnvironmentModel ?? (a => a.ToEnvironmentModel());
+            CurrentEnvironment = ToEnvironmentModel?.Invoke(server);
+
             LoadSettings();
             // ReSharper disable once VirtualMemberCallInContructor
             DisplayName = StringResources.SettingsTitle + " - " + Server.DisplayName;
@@ -352,13 +354,14 @@ namespace Dev2.Settings
         {
             get
             {
-                return _toEnvironmentModel ?? (a => a.ToEnvironmentModel()); 
+                return _toEnvironmentModel ?? (a => a.ToEnvironmentModel());
             }
             set
             {
                 _toEnvironmentModel = value;
             }
         }
+
 
         void LoadSettings()
         {
@@ -588,12 +591,12 @@ namespace Dev2.Settings
                     }
                     return IsSaved;
                 }
-                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsPermissionsErrorMsg);
+                ShowError(StringResources.SaveErrorPrefix, StringResources.SaveSettingsPermissionsErrorMsg);
                 _popupController.ShowSaveSettingsPermissionsErrorMsg();
                 return false;
             }
-            ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsNotReachableErrorMsg);
-            _popupController.ShowSaveSettingsNotReachableErrorMsg();
+            ShowError(StringResources.SaveErrorPrefix, StringResources.SaveServerNotReachableErrorMsg);
+            _popupController.ShowSaveServerNotReachableErrorMsg();
             return false;
         }
 
@@ -616,7 +619,7 @@ namespace Dev2.Settings
             {
                 IsSaved = false;
                 IsDirty = true;
-                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateServerPermissions);
+                ShowError(StringResources.SaveErrorPrefix, StringResources.SaveSettingsDuplicateServerPermissions);
                 _popupController.ShowHasDuplicateServerPermissions();
                 return false;
             }
@@ -629,7 +632,7 @@ namespace Dev2.Settings
             {
                 IsSaved = false;
                 IsDirty = true;
-                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsInvalidPermissionEntry);
+                ShowError(StringResources.SaveErrorPrefix, StringResources.SaveSettingsInvalidPermissionEntry);
                 _popupController.ShowInvalidResourcePermission();
                 return false;
             }
@@ -641,7 +644,7 @@ namespace Dev2.Settings
             {
                 IsSaved = false;
                 IsDirty = true;
-                ShowError(StringResources.SaveSettingErrorPrefix, StringResources.SaveSettingsDuplicateResourcePermissions);
+                ShowError(StringResources.SaveErrorPrefix, StringResources.SaveSettingsDuplicateResourcePermissions);
                 _popupController.ShowHasDuplicateResourcePermissions();
                 return false;
             }
@@ -658,7 +661,7 @@ namespace Dev2.Settings
             }
             if(payload.HasError)
             {
-                ShowError(StringResources.SaveSettingErrorHeader, payload.Message.ToString());
+                ShowError(StringResources.SaveErrorHeader, payload.Message.ToString());
                 return false;
             }
             return true;

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +12,7 @@
 using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using Dev2.Common;
 using Dev2.Communication;
@@ -26,8 +28,6 @@ namespace Dev2.Utilities
             {
                 return null;
             }
-
-            // FetchSwitchData
             var expressionToInject = String.Join("", GlobalConstants.InjectedSwitchDataFetch,
                                                     "(\"", ds.SwitchVariable, "\",",
                                                     GlobalConstants.InjectedDecisionDataListVariable,
@@ -62,7 +62,6 @@ namespace Dev2.Utilities
         {
             if(val.IndexOf(GlobalConstants.InjectedSwitchDataFetch, StringComparison.Ordinal) >= 0)
             {
-                // Time to extract the data
                 var start = val.IndexOf("(", StringComparison.Ordinal);
                 if (start > 0)
                 {
@@ -72,8 +71,6 @@ namespace Dev2.Utilities
                     {
                         start += 2;
                         val = val.Substring(start, end - start);
-
-                        // Convert back for usage ;)
                         val = Dev2DecisionStack.FromVBPersitableModelToJSON(val);
                     }
                 }
@@ -90,19 +87,18 @@ namespace Dev2.Utilities
                 if (keyProperty != null)
                 {
                     keyProperty.SetValue(ds.SwitchExpression);
-
                 }
             }
         }
 
         public static void SetArmTextDefaults(Dev2DecisionStack dds)
         {
-            if(String.IsNullOrEmpty(dds.TrueArmText) || String.IsNullOrEmpty(dds.TrueArmText.Trim()))
+            if(String.IsNullOrEmpty(dds.TrueArmText?.Trim()))
             {
                 dds.TrueArmText = GlobalConstants.DefaultTrueArmText;
             }
 
-            if (String.IsNullOrEmpty(dds.FalseArmText) || String.IsNullOrEmpty(dds.FalseArmText.Trim()))
+            if (String.IsNullOrEmpty(dds.FalseArmText?.Trim()))
             {
                 dds.FalseArmText = GlobalConstants.DefaultFalseArmText;
             }
@@ -123,11 +119,7 @@ namespace Dev2.Utilities
                 tArm.SetValue(val);
             }
         }
-
-        #region SetDisplayName
-
-        // PBI 9220 - 2013.04.29 - TWR
-
+      
         public static void SetDisplayName(ModelItem modelItem, IDev2FlowModel flow)
         {
             var displayName = modelItem.Properties[GlobalConstants.DisplayNamePropertyText];
@@ -137,8 +129,7 @@ namespace Dev2.Utilities
             }
         }
 
-        #endregion
-
+        [ExcludeFromCodeCoverage]
         public static void HandleDragEnter(DragEventArgs e)
         {
             //This is to ensure nothing can be dragged onto a Activity Designer

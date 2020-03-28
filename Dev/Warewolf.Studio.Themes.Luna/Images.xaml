@@ -26,6 +26,9 @@
         <ResourceDictionary Source="Images/ODBC.xaml" />
         <ResourceDictionary Source="Images/RabbitMq.xaml" />
         <ResourceDictionary Source="Images/WebMethods.xaml" />
+        <ResourceDictionary Source="Images/RedisCache.xaml" />
+        <ResourceDictionary Source="Images/RedisRemove.xaml" />
+        <ResourceDictionary Source="Images/RedisCounter.xaml" />
         <ResourceDictionary Source="Images/MicrosoftSQL.xaml" />
 		<ResourceDictionary Source="Images/AdvancedRecordset.xaml" />
         <ResourceDictionary Source="Images/Dropbox.xaml" />
@@ -35,6 +38,7 @@
         <ResourceDictionary Source="Images/ControlFlow-Rules.xaml" />
         <ResourceDictionary Source="Images/ControlFlow-Sequence.xaml" />
         <ResourceDictionary Source="Images/ControlFlow-Switch.xaml" />
+        <ResourceDictionary Source="Images/ControlFlow-Gate.xaml" />
         <ResourceDictionary Source="Images/Data-Assign.xaml" />
         <ResourceDictionary Source="Images/Data-BaseConversion.xaml" />
         <ResourceDictionary Source="Images/Data-CaseConversion.xaml" />

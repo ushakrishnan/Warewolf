@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -120,7 +121,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 if (!string.IsNullOrEmpty(t.FieldName))
                 {
-                    AssignField(dataObject, update, innerCount, t);
+                    AssignField(dataObject, update, innerCount, t, allErrors);
                     innerCount++;
                 }
             }
@@ -133,7 +134,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             return innerCount;
         }
 
-        private void AssignField(IDSFDataObject dataObject, int update, int innerCount, ActivityDTO t)
+        private void AssignField(IDSFDataObject dataObject, int update, int innerCount, ActivityDTO t, ErrorResultTO allErrors)
         {
             var assignValue = new AssignValue(t.FieldName, t.FieldValue);
             var isCalcEvaluation = DataListUtil.IsCalcEvaluation(t.FieldValue, out string cleanExpression);
@@ -146,14 +147,23 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             {
                 debugItem = AddSingleInputDebugItem(dataObject.Environment, innerCount, assignValue, update);
             }
-            if (isCalcEvaluation)
+
+            try
             {
-                DoCalculation(dataObject.Environment, t.FieldName, t.FieldValue, update);
-            }
-            else
+                if (isCalcEvaluation)
+                {
+                    DoCalculation(dataObject.Environment, t.FieldName, t.FieldValue, update);
+                }
+                else
+                {
+                    dataObject.Environment.AssignWithFrame(assignValue, update);
+                }
+            } catch (Exception e)
             {
-                dataObject.Environment.AssignWithFrame(assignValue, update);
+                Dev2Logger.Error(e, GlobalConstants.WarewolfError);
+                allErrors.AddError(e.Message);
             }
+
             if (debugItem != null)
             {
                 _debugInputs.Add(debugItem);

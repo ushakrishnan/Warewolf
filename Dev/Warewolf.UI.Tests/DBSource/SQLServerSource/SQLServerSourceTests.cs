@@ -1,12 +1,10 @@
-﻿using System.Drawing;
+﻿
+using System.Drawing;
 using Microsoft.VisualStudio.TestTools.UITesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Warewolf.UI.Tests.DBSource.DBSourceUIMapClasses;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
-using Warewolf.Launcher;
-using System.Reflection;
-using System.IO;
 
 namespace Warewolf.UI.Tests
 {
@@ -14,8 +12,9 @@ namespace Warewolf.UI.Tests
     public class SQLServerSourceTests
     {
         const string SourceName = "CodedUITestSQLServerSource";
+        Depends _dependency;
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("MSSql")]
         // ReSharper disable once InconsistentNaming
         public void Create_Save_And_Edit_SQLServerSource_From_ExplorerContextMenu_UITests()
@@ -27,7 +26,7 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.UserRadioButton.Enabled, "User authentification rabio button is not enabled.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.WindowsRadioButton.Enabled, "Windows authentification type radio button not enabled.");
             Assert.IsFalse(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is enabled.");
-            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("rsaklfsvrdev.dev2.local");
+            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab(_dependency.Container.IP + "," + _dependency.Container.Port);
             DBSourceUIMap.Click_UserButton_On_DatabaseSource();
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.UserNameTextBox.Exists);
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.PasswordTextBox.Exists);
@@ -51,7 +50,7 @@ namespace Warewolf.UI.Tests
             Assert.AreEqual("master", DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.ManageDatabaseSourceControl.DatabaseComboxBox.masterText.DisplayText);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("MSSql")]
         // ReSharper disable once InconsistentNaming
         public void Test_SQLServerSource_From_ExplorerContextMenu_UITests()
@@ -63,7 +62,7 @@ namespace Warewolf.UI.Tests
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.UserRadioButton.Enabled, "User authentification rabio button is not enabled.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.WindowsRadioButton.Enabled, "Windows authentification type radio button not enabled.");
             Assert.IsFalse(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is enabled.");
-            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("rsaklfsvrdev.dev2.local");
+            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab(_dependency.Container.IP + "," + _dependency.Container.Port);
             DBSourceUIMap.Click_UserButton_On_DatabaseSource();
             DBSourceUIMap.IEnterRunAsUserTestUserOnDatabaseSource("testuser", "test123");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is not enabled.");
@@ -71,14 +70,14 @@ namespace Warewolf.UI.Tests
             DBSourceUIMap.Select_Dev2TestingDB_From_DB_Source_Wizard_Database_Combobox();
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Database Sources")]
         [Owner("Pieter Terblanche")]
         public void CreateSQLServerSource_GivenTabHasChanges_ClosingStudioPromptsChanges()
         {
             //Create Source
             ExplorerUIMap.Click_NewSQLServerSource_From_ExplorerContextMenu();
-            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("rsaklfsvrdev.dev2.local");
+            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab(_dependency.Container.IP + "," + _dependency.Container.Port);
             Mouse.Click(UIMap.MainStudioWindow.CloseStudioButton);
             DialogsUIMap.Click_MessageBox_Cancel();
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.Exists);
@@ -91,8 +90,12 @@ namespace Warewolf.UI.Tests
         {
             UIMap.SetPlaybackSettings();
             UIMap.AssertStudioIsRunning();
+            _dependency = new Depends(Depends.ContainerType.MSSQL);
         }
-        
+
+        [TestCleanup]
+        public void MyTestCleanup() => _dependency.Dispose();
+
         public UIMap UIMap
         {
             get

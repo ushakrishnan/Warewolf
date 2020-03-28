@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -279,7 +280,9 @@ namespace Dev2.Activities
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         private int TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, int indexToUpsertTo, EmailSource runtimeSource)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (IsDebug)
             {
@@ -492,7 +495,11 @@ namespace Dev2.Activities
 
         public override enFindMissingType GetFindMissingType() => enFindMissingType.StaticActivity;
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         public override void UpdateForEachInputs(IList<Tuple<string, string>> updates)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if(updates != null)
             {
@@ -566,7 +573,9 @@ namespace Dev2.Activities
 
         public override IList<DsfForEachItem> GetForEachOutputs() => GetForEachItems(Result);
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public bool Equals(DsfSendEmailActivity other)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (other is null)
             {
@@ -616,7 +625,9 @@ namespace Dev2.Activities
             return Equals((DsfSendEmailActivity) obj);
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public override int GetHashCode()
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             unchecked
             {

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -21,9 +21,10 @@ using Dev2.Runtime.ESB.Control;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechTalk.SpecFlow;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
 using Warewolf.Storage;
 using Warewolf.Tools.Specs.BaseTypes;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.Toolbox.Data.DataSplit
 {
@@ -31,7 +32,7 @@ namespace Dev2.Activities.Specs.Toolbox.Data.DataSplit
     public class DataSplitSteps : RecordSetBases
     {
         readonly ScenarioContext scenarioContext;
-        static ContainerLauncher _containerOps;
+        public static Depends _containerOps;
 
         public DataSplitSteps(ScenarioContext scenarioContext)
             : base(scenarioContext)
@@ -155,7 +156,6 @@ namespace Dev2.Activities.Specs.Toolbox.Data.DataSplit
         }
 
         [Given(@"assign to variable ""(.*)"" split type ""(.*)"" at ""(.*)"" and Include ""(.*)"" and Escape ""(.*)""")]
-        [Given(@"assign to variable ""(.*)"" split type ""(.*)"" at ""(.*)"" and Include ""(.*)"" and Escape ""(.*)""")]
         public void GivenAssignToVariableSplitTypeAtAndIncludeAndEscape(string variable, string splitType, string splitAt, string include, string escape)
         {
             var included = include.ToLower() == "selected";
@@ -245,7 +245,7 @@ namespace Dev2.Activities.Specs.Toolbox.Data.DataSplit
         }
 
         [Given(@"remote server container has started")]
-        public void GivenRemoteServerContainerHasStarted() => _containerOps = TestLauncher.StartLocalCIRemoteContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
+        public void GivenRemoteServerContainerHasStarted() => _containerOps = new Depends(Depends.ContainerType.CIRemote);
 
         [AfterScenario]
         public void CleanUp() => _containerOps?.Dispose();

@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace Dev2.Activities.Designers2.Core.InputRegion
         public DatabaseInputRegion() => ToolRegionName = "DatabaseInputRegion";
 
         public DatabaseInputRegion(ModelItem modelItem, IActionToolRegion<IDbAction> action)
-            : this(new ActionInputDatatalistMapper())
+            : this(new ActionInputDatalistMapper())
         {
             ToolRegionName = "DatabaseInputRegion";
             _modelItem = modelItem;

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,22 +10,23 @@
 
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
+using Dev2.Common.Interfaces.Resources;
 using Dev2.Runtime.ServiceModel.Data;
+using RabbitMQ.Client;
 using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
+using Warewolf.Driver.RabbitMQ;
 using Warewolf.Security.Encryption;
-
-
+using Warewolf.Triggers;
 
 namespace Dev2.Data.ServiceModel
 {
-    public class RabbitMQSource : Resource, IResourceSource, IRabbitMQ
+    //TODO: This class should be moved to Warewolf.Driver.RabbitMQ, hence the current class name duplicate
+    public class RabbitMQSource : Resource, IResourceSource, IRabbitMQ, IQueueSource
     {
         const int DefaultPort = 5672;
         const string DefaultVirtualHost = "/";
-
-        #region Properties
 
         public string HostName { get; set; }
         public int Port { get; set; }
@@ -33,9 +34,22 @@ namespace Dev2.Data.ServiceModel
         public string Password { get; set; }
         public string VirtualHost { get; set; }
 
-        #endregion Properties
-
-        #region CTOR
+        IConnectionFactory _factory; 
+        private IConnectionFactory GetConnectionFactory()
+        {
+            if (_factory is null)
+            {
+                _factory = new ConnectionFactory
+                {
+                    HostName = HostName,
+                    Port = Port,
+                    UserName = UserName,
+                    Password = Password,
+                    VirtualHost = VirtualHost
+                };
+            }
+            return _factory;
+        }
 
         public RabbitMQSource()
         {
@@ -72,10 +86,6 @@ namespace Dev2.Data.ServiceModel
             VirtualHost = !string.IsNullOrWhiteSpace(properties["VirtualHost"]) ? properties["VirtualHost"] : DefaultVirtualHost;
         }
 
-        #endregion CTOR
-
-        #region ToXml
-
         public override XElement ToXml()
         {
             var result = base.ToXml();
@@ -96,9 +106,10 @@ namespace Dev2.Data.ServiceModel
             return result;
         }
 
-        #endregion ToXml
-
-        #region Resource override
+        public IQueueConnection NewConnection()
+        {
+            return new RabbitConnection(GetConnectionFactory().CreateConnection());
+        }
 
         public override bool IsSource => true;
 
@@ -111,7 +122,5 @@ namespace Dev2.Data.ServiceModel
         public override bool IsServer => false;
 
         public override bool IsResourceVersion => false;
-
-        #endregion Resource override
     }
 }

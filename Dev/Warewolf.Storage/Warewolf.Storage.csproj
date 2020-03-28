@@ -9,7 +9,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Warewolf.Storage</RootNamespace>
     <AssemblyName>Warewolf.Storage</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -25,7 +26,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-	<WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>Warewolf.Storage.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -37,24 +39,20 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-	<WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>Warewolf.Storage.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\FSharp.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="policy.2.3.FSharp.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\policy.2.3.FSharp.Core.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,6 +62,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BuildJObjectArrayIndexMapHelper.cs" />
     <Compile Include="ExecutionEnvironment.cs" />
     <Compile Include="FSInteropFunctions.cs" />
     <Compile Include="ScopedEnvironment.cs" />
@@ -74,15 +73,9 @@
     <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
-    <None Include="..\Run Tests.ps1">
-      <Link>Run Tests.ps1</Link>
+    <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
       <Visible>False</Visible>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <AdditionalFiles Include="..\SonarQube\SonarLint.xml" >
-      <Visible>False</Visible>
-	</AdditionalFiles>
-    <None Include="packages.config" />
+    </AdditionalFiles>
     <None Include="Warewolf.Storage.ruleset" />
   </ItemGroup>
   <ItemGroup>
@@ -95,6 +88,14 @@
     <ProjectReference Include="..\Dev2.Common\Dev2.Common.csproj">
       <Project>{84405FDF-0FF8-49A2-8925-8A4AEBA8104A}</Project>
       <Name>Dev2.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Diagnostics\Dev2.Diagnostics.csproj">
+      <Project>{A7D9DA27-F023-4588-AA64-AC2DE44C0B82}</Project>
+      <Name>Dev2.Diagnostics</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Infrastructure\Dev2.Infrastructure.csproj">
+      <Project>{615eae6d-040c-4364-b708-63dc8755cd4f}</Project>
+      <Name>Dev2.Infrastructure</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
       <Project>{df3ab090-911f-4646-9ad1-205e2ced908a}</Project>
@@ -114,11 +115,17 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.Common.dll" />
-    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.CSharp.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\Google.Protobuf.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.CSharp.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.dll" />
+    <PackageReference Include="codecracker.CSharp">
+      <Version>1.1.0</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FSharp.Core.3">
+      <Version>0.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,4 +1,15 @@
-﻿using System;
+﻿#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -25,8 +36,8 @@ namespace Dev2.Activities
             : base(WebRequestDataDto.CreateRequestDataDto(WebRequestMethod.Put, "PUT Web Method", "PUT Web Method"))
         {
         }
+
         public string PutData { get; set; }
-        
         
         public override List<DebugItem> GetDebugInputs(IExecutionEnvironment env, int update)
         {
@@ -43,9 +54,24 @@ namespace Dev2.Activities
             base.GetDebugInputs(env, update);
             return _debugInputs;
         }
+
         protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
         {
             tmpErrors = new ErrorResultTO();
+
+            var (head, query, putData) = ConfigureHttp(dataObject, update);
+
+            var url = ResourceCatalog.GetResource<WebSource>(Guid.Empty, SourceId);
+            var webRequestResult = PerformWebRequest(head, query, url, putData);
+
+            tmpErrors.MergeErrors(_errorsTo);
+
+            ResponseManager = new ResponseManager { OutputDescription = OutputDescription, Outputs = Outputs, IsObject = IsObject, ObjectName = ObjectName };
+            ResponseManager.PushResponseIntoEnvironment(webRequestResult, update, dataObject);
+        }
+
+        private (IEnumerable<NameValue> head, string query, string data) ConfigureHttp(IDSFDataObject dataObject, int update)
+        {
             IEnumerable<NameValue> head = null;
             if (Headers != null)
             {
@@ -62,13 +88,10 @@ namespace Dev2.Activities
                 putData = ExecutionEnvironment.WarewolfEvalResultToString(dataObject.Environment.Eval(PutData, update));
             }
 
-            var url = ResourceCatalog.GetResource<WebSource>(Guid.Empty, SourceId);
-            var webRequestResult = PerformWebRequest(head, query, url, putData);
-
-            ResponseManager = new ResponseManager { OutputDescription = OutputDescription, Outputs = Outputs, IsObject = IsObject, ObjectName = ObjectName };
-            ResponseManager.PushResponseIntoEnvironment(webRequestResult, update, dataObject);
+            return (head, query, putData);
         }
-        public override HttpClient CreateClient(IEnumerable<NameValue> head, string query, WebSource source)
+
+        public override HttpClient CreateClient(IEnumerable<INameValue> head, string query, WebSource source)
         {
             var httpClient = new HttpClient();
             if (source.AuthenticationType == AuthenticationType.User)
@@ -105,8 +128,7 @@ namespace Dev2.Activities
 
             return httpClient;
         }
-
-
+        
         public bool Equals(DsfWebPutActivity other)
         {
             if (ReferenceEquals(null, other))

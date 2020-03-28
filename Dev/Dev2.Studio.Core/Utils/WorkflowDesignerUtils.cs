@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +21,7 @@ using Dev2.Studio.Interfaces.Enums;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
 using Warewolf.Storage;
 using Dev2.Data.Interfaces;
+using Dev2.Data.Parsers;
 
 namespace Dev2.Utils
 {
@@ -45,7 +47,7 @@ namespace Dev2.Utils
 
                 if (intellisenseParser.EventLog.HasEventLogs)
                 {
-                    var languageParser = DataListFactory.CreateStudioLanguageParser();
+                    var languageParser = new Dev2DataLanguageParser();
 
                     try
                     {

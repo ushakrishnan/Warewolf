@@ -1,4 +1,5 @@
-﻿/*
+﻿#pragma warning disable
+/*
 *  Warewolf - Once bitten, there's no going back
 *  Copyright 2017 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
@@ -58,7 +59,7 @@ namespace Dev2.Common.Interfaces.Search
         string Match { get; set; }
     }
 
-    public interface ISearch
+    public interface ISearch : INotifyPropertyChanged
     {
         string SearchInput { get; set; }
         ISearchOptions SearchOptions { get; set; }

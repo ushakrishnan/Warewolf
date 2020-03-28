@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -52,7 +53,7 @@ namespace Dev2.Runtime.ESB.Management.Services
                     throw new ArgumentException(string.Format(ErrorResource.ValueNotSupplied, "newPath"));
                 }
                 Dev2Logger.Info($"Reanme Folder. Path:{path} NewPath:{newPath}", GlobalConstants.WarewolfInfo);
-                var explorerRepository = new ServerExplorerRepository();
+                var explorerRepository = ServerExplorerRepository.Instance;
                 item = explorerRepository.RenameFolder(path.ToString(), newPath.ToString(), theWorkspace.ID);
             }
             catch(Exception e)

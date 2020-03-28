@@ -9,14 +9,15 @@ namespace Warewolf.Web.UI.Tests
     public class Web_UITests_For_IE
     {
         private BaseWebDriver driver;
-        string browserName = "InternetExplorer";
+        readonly string browserName = "InternetExplorer";
         public TestContext TestContext { get; set; }
-        private FfMpegVideoRecorder screenRecorder = new FfMpegVideoRecorder();
+        private FfMpegVideoRecorder screenRecorder;
 
         [TestInitialize]
         public void SetupTest()
         {
             driver = new InternetExplorerWebDriver();
+            screenRecorder = new FfMpegVideoRecorder();
             screenRecorder.StartRecording(TestContext, browserName);
         }
 
@@ -27,12 +28,54 @@ namespace Warewolf.Web.UI.Tests
             {
                 driver.Quit();
                 driver.Close();
+                screenRecorder.Dispose();
             }
             catch (Exception)
             {
                 // Ignore errors if unable to close the browser
             }
             screenRecorder.StopRecording(TestContext.CurrentTestOutcome);
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"avformat-57.dll")]
+        [DeploymentItem(@"avutil-55.dll")]
+        [DeploymentItem(@"swresample-2.dll")]
+        [DeploymentItem(@"swscale-4.dll")]
+        [DeploymentItem(@"avcodec-57.dll")]
+        [DeploymentItem(@"IEDriverServer.exe")]
+        [DeploymentItem(@"WebDriverProfiles", @"WebDriverProfiles")]
+        [TestCategory("Audit")]
+        public void InternetExplorer_Audit_ClickRefresh_UITest()
+        {
+            //Generate some test log data
+            driver.CreateWebRequest();
+            driver.GoToUrl();
+
+            Assert.IsTrue(driver.WaitForSpinner());
+            Assert.IsTrue(driver.WaitForExecutionList());
+            Assert.IsTrue(driver.IsExecutionListVisible());
+            var assertMessage = string.Format(GlobalConstants.UserCredentialsShowingError, browserName) + Environment.NewLine + driver.CloseAlertAndGetItsText(false);
+            Assert.IsFalse(driver.IsAlertPresent(), assertMessage);
+
+            driver.ClickUpdateServer();
+        }
+
+        [TestMethod]
+        [DeploymentItem(@"avformat-57.dll")]
+        [DeploymentItem(@"avutil-55.dll")]
+        [DeploymentItem(@"swresample-2.dll")]
+        [DeploymentItem(@"swscale-4.dll")]
+        [DeploymentItem(@"avcodec-57.dll")]
+        [DeploymentItem(@"IEDriverServer.exe")]
+        [DeploymentItem(@"WebDriverProfiles", @"WebDriverProfiles")]
+        [TestCategory("NoWarewolfServer")]
+        public void InternetExplorer_NoWarewolfServer_UITest()
+        {
+            Assert.IsTrue(driver.KillServerIfRunning(), GlobalConstants.LocalWarewolfServerExpectedDownError);
+            driver.GoToUrl();
+            Assert.IsTrue(driver.IsAlertPresent(), GlobalConstants.IsAlertPresentError);
+            Assert.AreEqual(GlobalConstants.LocalWarewolfServerError, driver.CloseAlertAndGetItsText(false), GlobalConstants.AlertText);
         }
 
         [TestMethod]
@@ -57,23 +100,6 @@ namespace Warewolf.Web.UI.Tests
             Assert.IsFalse(driver.IsAlertPresent(), assertMessage);
 
             driver.ClickUpdateServer();
-        }
-
-        [TestMethod]
-        [DeploymentItem(@"avformat-57.dll")]
-        [DeploymentItem(@"avutil-55.dll")]
-        [DeploymentItem(@"swresample-2.dll")]
-        [DeploymentItem(@"swscale-4.dll")]
-        [DeploymentItem(@"avcodec-57.dll")]
-        [DeploymentItem(@"IEDriverServer.exe")]
-        [DeploymentItem(@"WebDriverProfiles", @"WebDriverProfiles")]
-        [TestCategory("NoWarewolfServer")]
-        public void InternetExplorer_NoWarewolfServer_UITest()
-        {
-            Assert.IsTrue(driver.KillServerIfRunning(), GlobalConstants.LocalWarewolfServerExpectedDownError);
-            driver.GoToUrl();
-            Assert.IsTrue(driver.IsAlertPresent(), GlobalConstants.IsAlertPresentError);
-            Assert.AreEqual(GlobalConstants.LocalWarewolfServerError, driver.CloseAlertAndGetItsText(false), GlobalConstants.AlertText);
         }
     }
 }

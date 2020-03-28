@@ -1,3 +1,4 @@
+#pragma warning disable
 using Dev2.Activities.DropBox2016.Result;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
@@ -35,7 +36,7 @@ namespace Dev2.Activities.DropBox2016.DownloadActivity
 
         #region Implementation of IDropboxSingleExecutor<IDropboxResult>
 
-        public IDropboxResult ExecuteTask(IDropboxClientWrapper client)
+        public IDropboxResult ExecuteTask(IDropboxClient client)
         {
             try
             {

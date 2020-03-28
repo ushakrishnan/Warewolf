@@ -9,8 +9,9 @@ namespace Warewolf.UI.Tests.PostgreSQLSource
     public class PostgreSQLSourceTests
     {
         const string SourceName = "CodedUITestMyPostgreSQLSource";
+        Depends _dependency;
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Database Sources")]
         public void Create_Save_And_Edit_PostgreSQLSource_From_ExplorerContextMenu_UITests()
         {
@@ -22,7 +23,7 @@ namespace Warewolf.UI.Tests.PostgreSQLSource
             Assert.IsFalse(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is enabled.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.UserNameTextBox.Enabled, "Username textbox is not enabled.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.PasswordTextBox.Enabled, "Password textbos is not enabled.");
-            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("RSAKLFSVRDEV");
+            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab(_dependency.Container.IP);
             DBSourceUIMap.IEnterRunAsUserPostGresOnDatabaseSource();
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is not enabled.");
             DBSourceUIMap.Click_DB_Source_Wizard_Test_Connection_Button();
@@ -42,23 +43,24 @@ namespace Warewolf.UI.Tests.PostgreSQLSource
             ExplorerUIMap.Select_Source_From_ExplorerContextMenu(SourceName);
             Assert.AreEqual("TestDB", DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.ManageDatabaseSourceControl.DatabaseComboxBox.TestDBText.DisplayText);
         }
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Database Sources")]
         // ReSharper disable once InconsistentNaming
-        public void Test_MySQLSource_ConnectionTimeout_UITests()
+        public void Test_PostGreSQLSource_ConnectionTimeout_UITests()
         {
             //Create Source
             ExplorerUIMap.Select_NewPostgreSQLSource_From_ExplorerContextMenu();
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.Exists, "PostgreSQL Source Tab does not exist.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.ManageDatabaseSourceControl.ServerComboBox.Enabled, "PostgreSQL Server Address combobox is disabled new PostgreSQL Source wizard tab");
             Assert.IsFalse(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is enabled.");
-            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("RSAKLFSVRDEV");
+            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab(_dependency.Container.IP);
             DBSourceUIMap.Enter_Text_Into_DatabaseConnectionTimeout("0");
             DBSourceUIMap.IEnterRunAsUserPostGresOnDatabaseSource();
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is not enabled.");
             DBSourceUIMap.Click_DB_Source_Wizard_Test_Connection_Button();
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TimeOutError.Exists);
         }
+        
         #region Additional test attributes
 
         [TestInitialize()]
@@ -66,7 +68,11 @@ namespace Warewolf.UI.Tests.PostgreSQLSource
         {
             UIMap.SetPlaybackSettings();
             UIMap.AssertStudioIsRunning();
+            _dependency = new Depends(Depends.ContainerType.PostGreSQL);
         }
+
+        [TestCleanup]
+        public void MyTestCleanup() => _dependency.Dispose();
         
         public UIMap UIMap
         {

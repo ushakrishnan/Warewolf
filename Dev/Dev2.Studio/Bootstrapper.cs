@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,6 +25,7 @@ using Dev2.Studio.Core.Services;
 using Dev2.Studio.Interfaces;
 using Dev2.Studio.ViewModels;
 using Dev2.Threading;
+using Warewolf.Studio.Models;
 using Warewolf.Studio.ViewModels;
 
 namespace Dev2
@@ -170,7 +172,9 @@ namespace Dev2
             Application.Current.Shutdown();
         }
 
+#pragma warning disable CC0091 // Use static method
         bool IsLocal(Uri sysUri)
+#pragma warning restore CC0091 // Use static method
         {
             if (IsUnc(sysUri))
             {

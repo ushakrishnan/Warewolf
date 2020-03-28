@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -61,7 +62,7 @@ namespace Dev2.Runtime.Security
             _cachedRequests = new ConcurrentDictionary<Tuple<string, string, AuthorizationContext>, Tuple<bool, DateTime>>();
         }
 
-        public override bool IsAuthorized(AuthorizationContext context, string resource)
+        public sealed override bool IsAuthorized(AuthorizationContext context, string resource)
         {
             bool authorized;
 
@@ -95,7 +96,7 @@ namespace Dev2.Runtime.Security
             return authorized;
         }
 
-        public override bool IsAuthorized(IAuthorizationRequest request)
+        public sealed override bool IsAuthorized(IAuthorizationRequest request)
         {
             VerifyArgument.IsNotNull("request", request);
             bool authorized;

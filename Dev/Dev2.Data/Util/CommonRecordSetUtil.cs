@@ -1,3 +1,14 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +21,6 @@ namespace Dev2.Data.Util
     class CommonRecordSetUtil : ICommonRecordSetUtil
     {
         const string EmptyBrackets = "()";
-        #region Implementation of ICommonRecordSetUtil
 
         public string ReplaceRecordBlankWithStar(string fullRecSetName)
         {
@@ -141,9 +151,9 @@ namespace Dev2.Data.Util
         public string ExtractFieldNameOnlyFromValue(string value)
         {
             var result = string.Empty;
-            var dotIdx = value.LastIndexOf(".", StringComparison.Ordinal);
             var closeIdx = value.Contains("]]") ? value.LastIndexOf("]]", StringComparison.Ordinal) : value.Length;
-            if (dotIdx > 0)
+            var dotIdx = value.LastIndexOf(".", closeIdx, StringComparison.Ordinal);
+            if (dotIdx > 0 && closeIdx > dotIdx)
             {
                 result = value.Substring(dotIdx + 1, closeIdx - dotIdx - 1);
             }
@@ -382,7 +392,5 @@ namespace Dev2.Data.Util
                 }
             }
         }
-
-        #endregion
     }
 }

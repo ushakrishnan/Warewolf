@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.WebServices;
 using System;
@@ -15,6 +16,7 @@ namespace Dev2.Common.Interfaces.ServerProxyLayer
         void SaveDbSource(IDbSource toDbSource, Guid serverWorkspaceID);
         void SaveDbService(IDatabaseService dbService);
         void SaveWebserviceSource(IWebServiceSource resource, Guid serverWorkspaceId);
+        void SaveRedisServiceSource(IRedisServiceSource redisServiceSource, Guid serverWorkspaceId);
         void SaveSharePointServiceSource(ISharepointServerSource resource, Guid serverWorkspaceID);
         void SaveWebservice(IWebService model, Guid serverWorkspaceID);
         void SavePluginSource(IPluginSource source, Guid serverWorkspaceID);
@@ -34,6 +36,7 @@ namespace Dev2.Common.Interfaces.ServerProxyLayer
 		IList<string> TestSqliteConnection(ISqliteDBSource resource);
 		DataTable TestDbService(IDatabaseService inputValues);
         void TestConnection(IWebServiceSource resource);
+        void TestConnection(IRedisServiceSource redisServiceSource);
         void TestConnection(ISharepointServerSource resource);
         string TestWebService(IWebService inputValues);
         string TestPluginService(IPluginService inputValues);

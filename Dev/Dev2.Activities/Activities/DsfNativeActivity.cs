@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -89,10 +90,10 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         protected List<DebugItem> _debugOutputs = new List<DebugItem>(10000);
 
         readonly IDebugDispatcher _debugDispatcher;
-        readonly bool _isExecuteAsync;
+        protected readonly bool _isExecuteAsync;
         string _previousParentInstanceID;
         IDebugState _debugState;
-        bool _isOnDemandSimulation;
+        protected bool _isOnDemandSimulation;
         IResourceCatalog _resourceCatalog;
 
         protected IDebugState DebugState => _debugState;
@@ -228,7 +229,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
                     ErrorMessage = "Termination due to error in activity",
                     HasError = true
                 };
-                DebugDispatcher.Instance.Write(debugState, dataObject.IsServiceTestExecution, dataObject.IsDebugFromWeb, dataObject.TestName);
+                DebugDispatcher.Instance.Write(new WriteArgs { debugState = debugState, isTestExecution = dataObject.IsServiceTestExecution, isDebugFromWeb = dataObject.IsDebugFromWeb, testName = dataObject.TestName });
             }
         }
 
@@ -274,7 +275,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         public void DispatchDebugState(IDSFDataObject dataObject, StateType stateType, int update, DateTime? startTime, DateTime? endTime) => DispatchDebugState(dataObject, stateType, update, startTime, endTime, false);
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public void DispatchDebugState(IDSFDataObject dataObject, StateType stateType, int update, DateTime? startTime, DateTime? endTime, bool decision)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var clearErrors = false;
             try
@@ -334,8 +337,8 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             if (state != null)
             {
-                _debugDispatcher.Write(state, dataObject.IsServiceTestExecution, dataObject.IsDebugFromWeb, dataObject.TestName, dataObject.RemoteInvoke, dataObject.RemoteInvokerID, dataObject.ParentInstanceID, dataObject.RemoteDebugItems);
-            }
+                _debugDispatcher.Write( new WriteArgs { debugState = state, isTestExecution = dataObject.IsServiceTestExecution, isDebugFromWeb = dataObject.IsDebugFromWeb, testName = dataObject.TestName, isRemoteInvoke = dataObject.RemoteInvoke, remoteInvokerId = dataObject.RemoteInvokerID, parentInstanceId = dataObject.ParentInstanceID, remoteDebugItems = dataObject.RemoteDebugItems });
+            } 
         }
 
         bool Dispatch(IDSFDataObject dataObject, StateType stateType, int update, DateTime? startTime, DateTime? endTime, Guid remoteID)
@@ -419,7 +422,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         void DispatchForBeforeState(IDSFDataObject dataObject, StateType stateType, int update, DateTime? startTime, Guid remoteID)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (_debugState == null)
             {
@@ -474,7 +481,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         void UpdateDebugWithAssertions(IDSFDataObject dataObject)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (dataObject.IsServiceTestExecution)
             {
@@ -591,7 +600,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
-        void UpdateWithAssertions(IDSFDataObject dataObject)
+#pragma warning disable S1541 // Methods and properties should not be too complex
+        protected void UpdateWithAssertions(IDSFDataObject dataObject)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (dataObject.IsServiceTestExecution)
             {
@@ -632,7 +643,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected void UpdateForRegularActivity(IDSFDataObject dataObject, IServiceTestStep stepToBeAsserted)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var factory = Dev2DecisionFactory.Instance();
             var testRunResults = stepToBeAsserted.StepOutputs.SelectMany(output => GetTestRunResults(dataObject, output, factory)).ToList();
@@ -748,7 +761,11 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
             UpdateStepWithFinalResult(dataObject, stepToBeAsserted, assertPassed, new List<TestRunResult> { stepToBeAsserted.Result }, "");
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         IEnumerable<TestRunResult> GetTestRunResults(IDSFDataObject dataObject, IServiceTestOutput output, Dev2DecisionFactory factory)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (output == null)
             {
@@ -871,7 +888,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
 
         protected string GetServerName() => _debugState?.Server;
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected void InitializeDebugState(StateType stateType, IDSFDataObject dataObject, Guid remoteID, bool hasError, string errorMessage)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             Guid.TryParse(dataObject.ParentInstanceID, out Guid parentInstanceID);
             if (stateType != StateType.Duration)
@@ -1018,7 +1037,6 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public Guid ActivityId { get; set; }
 
-
         public virtual FlowNode GetFlowNode()
         {
             var flowStep = new FlowStep { Action = this as Activity };
@@ -1047,7 +1065,9 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         {
             IDebugItem itemToAdd = new DebugItem();
             itemToAdd.AddRange(parameters.GetDebugItemResult());
+#pragma warning disable S3215
             _debugInputs.Add((DebugItem)itemToAdd);
+#pragma warning restore S3215
         }
 
         protected void AddDebugOutputItem(DebugOutputBase parameters)
@@ -1101,6 +1121,7 @@ namespace Unlimited.Applications.BusinessDesignStudio.Activities
         public abstract override bool Equals(object obj);
 
         public override int GetHashCode() => UniqueID?.GetHashCode() ?? 0;
+        T1 IDev2Activity.As<T1>() => this as T1;
 
         public static bool operator ==(DsfNativeActivity<T> left, DsfNativeActivity<T> right) => Equals(left, right);
 

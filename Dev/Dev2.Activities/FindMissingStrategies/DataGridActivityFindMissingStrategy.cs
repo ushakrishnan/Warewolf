@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,14 +18,19 @@ using Dev2.Interfaces;
 using Dev2.Util;
 using Dev2.Utilities;
 using Unlimited.Applications.BusinessDesignStudio.Activities;
+using System.Linq;
 
 namespace Dev2.FindMissingStrategies
 {
     public class DataGridActivityFindMissingStrategy : IFindMissingStrategy
     {
         public Enum HandlesType() => enFindMissingType.DataGridActivity;
-        
+
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         public List<string> GetActivityFields(object activity)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             // TODO: refactor into all activities havnig a GetActivityFields() method
             var activityType = activity.GetType();
@@ -194,7 +200,9 @@ namespace Dev2.FindMissingStrategies
             return results;
         }
 
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         List<string> GetDsfEnhancedDotNetDllActivityFields(object activity)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
         {
             var results = new List<string>();
             if (activity is DsfEnhancedDotNetDllActivity maAct)
@@ -286,7 +294,11 @@ namespace Dev2.FindMissingStrategies
             return results;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         List<string> GetDsfWebGetActivityFields(object activity)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var results = new List<string>();
             if (activity is DsfWebGetActivity maAct)
@@ -338,7 +350,11 @@ namespace Dev2.FindMissingStrategies
             return results;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         List<string> GetDsfWebPutActivityFields(object activity)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var results = new List<string>();
             if (activity is DsfWebPutActivity maAct)
@@ -390,7 +406,11 @@ namespace Dev2.FindMissingStrategies
             return results;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         List<string> GetDsfWebDeleteActivityFields(object activity)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var results = new List<string>();
             if (activity is DsfWebDeleteActivity maAct)
@@ -438,7 +458,11 @@ namespace Dev2.FindMissingStrategies
             return results;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
+#pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
         private List<string> GetDsfWebPostActivityFields(object activity)
+#pragma warning restore S3776 // Cognitive Complexity of methods should not be too high
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var results = new List<string>();
             if (activity is DsfWebPostActivity maAct)
@@ -568,10 +592,29 @@ namespace Dev2.FindMissingStrategies
             return results;
         }
 
-        List<string> GetDsfAdvancedRecordsetActivity(object activity) {
+        List<string> GetDsfAdvancedRecordsetActivity(object activity)
+        {
             var results = new List<string>();
             if (activity is AdvancedRecordsetActivity maAct)
             {
+                if (maAct.SqlQuery != null)
+                {
+                    var identifiers = maAct.GetIdentifiers();
+
+                    foreach (var identifier in identifiers)
+                    {
+                        results.Add($"[[{identifier.Key}()]]");
+                        results.AddRange(identifier.Value.Select(a => $"[[{identifier.Key}().{a}]]"));
+
+                        if (maAct.Outputs != null)
+                        {
+                            //Find out identifier variables which are not in Outputs
+                            var outputVariables = maAct.Outputs.Where(b => !results.Contains($"[[{identifier.Key}().{b.MappedFrom}]]"));
+
+                            results.AddRange(outputVariables.Select(a => $"[[{identifier.Key}().{a.MappedFrom}]]"));
+                        }
+                    }
+                }
                 if (maAct.Inputs != null)
                 {
                     results.AddRange(InternalFindMissing(maAct.Inputs));
@@ -584,9 +627,9 @@ namespace Dev2.FindMissingStrategies
                 {
                     results.Add(maAct.OnErrorVariable);
                 }
-                if(maAct.DeclareVariables != null)
+                if (maAct.DeclareVariables != null)
                 {
-                    foreach(var item in maAct.DeclareVariables)
+                    foreach (var item in maAct.DeclareVariables)
                     {
                         results.Add(item.Value);
                     }

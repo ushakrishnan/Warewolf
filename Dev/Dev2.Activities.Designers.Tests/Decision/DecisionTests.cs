@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,6 +22,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Dev2.Data.TO;
 using Warewolf.Storage.Interfaces;
+using System;
+using System.Linq;
 
 namespace Dev2.Activities.Designers.Tests.Decision
 {
@@ -30,7 +32,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
     {
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_Equal_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("=", true, false);
@@ -38,7 +40,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_NotContains_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Doesn't Contain", true, false);
@@ -46,7 +48,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_Contains_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Contains", true, false);
@@ -54,7 +56,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_NotEqual_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("<> (Not Equal)", true, false);
@@ -62,7 +64,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
         }
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_EndsWith_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Ends With", true, false);
@@ -70,7 +72,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_StartsWith_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Starts With", true, false);
@@ -78,7 +80,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_Regex_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Is Regex", true, false);
@@ -86,7 +88,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_GreaterThan_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled(">", true, false);
@@ -94,7 +96,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_LessThan_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("<", true, false);
@@ -102,7 +104,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_LessThanEqual_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("<=", true, false);
@@ -110,7 +112,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_GreaterThanEqual_RequiresCriteriaInput_IsCriteriaEnabledTrue()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled(">=", true, false);
@@ -118,7 +120,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_NotInRequiresCriteriaInputList_IsCriteriaEnabledFalseSearchCriteriaEmptyString()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Is Numeric", false, false);
@@ -126,7 +128,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_IndexObjectIsnotZero()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Is Numeric", false, false, -1);
@@ -134,7 +136,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_InRequiresCriteriaInputList_IsCriteriaEnabledFalseSearchCriteriaInBetween()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Is Between", true, false);
@@ -142,7 +144,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_InRequiresCriteriaInputList_IsCriteriaEnabledFalseSearchCriteriaNotBetween()
         {
             Verify_OnSearchTypeChanged_IsSearchCriteriaEnabled("Not Between", true, false);
@@ -181,7 +183,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Rory McGuire")]
-        [TestCategory("DecisionDesignerViewModel")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void Verify_UpdateDecisionDisplayName()
         {
             //------------Setup for test--------------------------
@@ -206,7 +208,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_OnSearchTypeChanged")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_OnSearchTypeChanged_IndexOutOfBounds_DoesNothing()
         {
             Verify_OnSearchTypeChanged_IndexOutOfBounds_DoesNothing(-2);
@@ -240,7 +242,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_Validate")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_Validate_CustomizedDisplayText()
         {
             //------------Setup for test--------------------------
@@ -359,7 +361,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
-        [TestCategory("DecisionDesignerViewModel_Constructor")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_Constructor_PropertiesInitialized()
         {
             //------------Setup for test--------------------------
@@ -376,7 +378,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_Validate")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_Validate_All()
         {
             //------------Setup for test--------------------------
@@ -398,7 +400,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_Validate")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_Validate_DisplayText()
         {
             //------------Setup for test--------------------------
@@ -421,7 +423,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_Validate")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_Validate_TrueArm()
         {
             //------------Setup for test--------------------------
@@ -444,7 +446,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_Validate")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_Validate_FalseText()
         {
             //------------Setup for test--------------------------
@@ -467,7 +469,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_Handle")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_HandleConfigureMessage_SetShowLarge()
         {
             //------------Setup for test--------------------------            
@@ -481,7 +483,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_Handle")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_UpdateHelp_ShouldCallToHelpViewMode()
         {
             //------------Setup for test--------------------------            
@@ -499,7 +501,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_GetExpressionText")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_GetExpressionText_ShouldSetExpressionText()
         {
             //------------Setup for test--------------------------
@@ -525,7 +527,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("DecisionDesignerViewModel_GetExpressionText")]
+        [TestCategory(nameof(DecisionDesignerViewModel))]
         public void DecisionDesignerViewModel_RemoveRow_ShouldRemove()
         {
             //------------Setup for test--------------------------
@@ -573,7 +575,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                 };
                 var mockedEnvironment = new Mock<IExecutionEnvironment>();
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                var userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out ErrorResultTO errors);
+                var userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out ErrorResultTO errors);
                 Assert.AreEqual("If Some Value Is Between Some Value AND Some Value", userFriendlyModel, "User friendly model was not generated correctly for decision on multiple starred recordsets.");
                 var item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -585,7 +587,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col3 = "[[val]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 Assert.AreEqual("If Some Value Is Between Some Value AND [[val]]", userFriendlyModel, "User friendly model was not generated correctly.");
                 item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -597,7 +599,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col3 = "[[recset(*).field]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 Assert.AreEqual("If Some Value Is Between [[val]] AND Some Value", userFriendlyModel, "User friendly model was not generated correctly.");
                 item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -609,7 +611,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col3 = "[[recset(*).field]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 item = new DecisionTO(dev2Decision4, 1);
                 viewModel.Collection.Insert(0, item);
                 dev2Decision = new Dev2Decision
@@ -620,7 +622,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col3 = "[[recset(*).field]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 Assert.AreEqual("If [[val]] Is Between [[val]] AND Some Value", userFriendlyModel, "User friendly model was not generated correctly.");
                 item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -632,7 +634,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col3 = "[[val]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 Assert.AreEqual("If [[val]] Is Between Some Value AND [[val]]", userFriendlyModel, "User friendly model was not generated correctly.");
                 item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -644,7 +646,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col3 = "[[val]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 Assert.AreEqual("If Some Value Is Between [[val]] AND [[val]]", userFriendlyModel, "User friendly model was not generated correctly.");
                 item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -655,7 +657,7 @@ namespace Dev2.Activities.Designers.Tests.Decision
                     Col2 = "[[recset(*).field]]"
                 };
                 mockedEnvironment.Setup(env => env.EvalAsListOfStrings(It.IsAny<string>(), It.IsAny<int>())).Returns(new List<string> { "Some Value" });
-                userFriendlyModel = dev2Decision.GenerateUserFriendlyModel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
+                userFriendlyModel = dev2Decision.GenerateToolLabel(mockedEnvironment.Object, Dev2DecisionMode.AND, out errors);
                 Assert.AreEqual("If Some Value = Some Value", userFriendlyModel, "User friendly model was not generated correctly.");
                 item = new DecisionTO(dev2Decision, 1);
                 viewModel.Collection.Insert(0, item);
@@ -673,5 +675,44 @@ namespace Dev2.Activities.Designers.Tests.Decision
             return modelItem;
         }
 
+
+        class Entry
+        {
+            public enDecisionType _decisionType;
+            public bool _found;
+        }
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(enDecisionType))]
+        public void enDecisionType_Handled()
+        {
+            var type = typeof(IDecisionOperation);
+            var types = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(s => s.GetTypes())
+                .Where(p => type.IsAssignableFrom(p) && !p.IsInterface && !p.IsAbstract);
+
+            var names = Enum.GetValues(typeof(enDecisionType))
+                .Cast<enDecisionType>()
+                .Select(o => new Entry { _decisionType = o, _found = false })
+                .ToArray();
+
+            foreach (var item in names)
+            {
+                if (types.Any(t =>
+                {
+                    var v = Activator.CreateInstance(t) as IDecisionOperation;
+                    var handlesType = (enDecisionType)v.HandlesType();
+                    return handlesType == item._decisionType;
+                }))
+                {
+                    item._found = true;
+                }
+            }
+
+            var unhandledDecisionTypes = names.Where(o => !o._found).ToArray();
+
+            Assert.AreEqual(1, unhandledDecisionTypes.Length);
+            Assert.AreEqual(enDecisionType.Choose, unhandledDecisionTypes[0]._decisionType);
+        }
     }
 }

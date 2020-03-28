@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -53,11 +53,12 @@ using Dev2.Data.Interfaces.Enums;
 using Dev2.Data.Interfaces;
 using Dev2.Studio.Interfaces.Enums;
 using Dev2.Instrumentation;
+using Dev2.Activities;
 
 namespace Dev2.Core.Tests.Workflows
 {
-
     [TestClass]
+    [TestCategory("Studio Workflows Core")]
     public partial class WorkflowDesignerUnitTest
     {
         static bool _isDesignerInited;
@@ -2206,9 +2207,12 @@ namespace Dev2.Core.Tests.Workflows
 
             #region setup Mock ModelItem
             SetupEnvironmentRepo(Guid.Empty); // Set the active environment
-            var testAct = new DsfActivity();
-            testAct.DisplayName = "Test";
-            testAct.ServiceName = "NewService";
+            var testAct = new DsfActivity
+            {
+                DisplayName = "Test",
+                ServiceName = "NewService",
+                ResourceID = Guid.NewGuid()
+            };
 
             var propertyCollection = new Mock<ModelPropertyCollection>();
             var prop = new Mock<ModelProperty>();
@@ -2394,43 +2398,42 @@ namespace Dev2.Core.Tests.Workflows
         }
 
         [TestMethod]
-        [TestCategory("WorkflowDesignerViewModel_UpdateWorkflowLink")]
         [Owner("Pieter Terblanche")]
-        public void WorkflowDesignerViewModel_UpdateWorkflowLink_ChangeDisplayWorkflowLink_DisplayWorkflowLinkChanged()
+        [TestCategory(nameof(WorkflowDesignerViewModel))]
+        public void WorkflowDesignerViewModel_GetGates()
         {
-            #region Setup viewModel
-            var workflow = new ActivityBuilder();
-            var resourceRep = new Mock<IResourceRepository>();
-            resourceRep.Setup(r => r.All()).Returns(new List<IResourceModel>());
+            #region Setup view model constructor parameters
 
-            var resourceModel = new Mock<IContextualResourceModel>();
-            var envConn = new Mock<IEnvironmentConnection>();
-            var serverEvents = new Mock<IEventPublisher>();
-            envConn.Setup(m => m.ServerEvents).Returns(serverEvents.Object);
-            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
-            resourceModel.Setup(m => m.Environment.ResourceRepository).Returns(resourceRep.Object);
-            resourceModel.Setup(r => r.ResourceName).Returns("Test");
-            resourceModel.SetupProperty(model => model.IsWorkflowSaved);
-            var xamlBuilder = new StringBuilder(StringResources.xmlServiceDefinition);
-            resourceModel.Setup(res => res.WorkflowXaml).Returns(xamlBuilder);
+            var properties = new Dictionary<string, Mock<ModelProperty>>();
+            var repo = new Mock<IResourceRepository>();
+            var env = EnviromentRepositoryTest.CreateMockEnvironment();
+            env.Setup(e => e.ResourceRepository).Returns(repo.Object);
 
-            var workflowHelper = new Mock<IWorkflowHelper>();
-            workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
-            workflowHelper.Setup(h => h.SanitizeXaml(It.IsAny<StringBuilder>())).Returns(xamlBuilder);
+            var crm = new Mock<IContextualResourceModel>();
+            crm.Setup(r => r.Environment).Returns(env.Object);
+            crm.Setup(r => r.ResourceName).Returns("Test");
+            crm.Setup(res => res.WorkflowXaml).Returns(new StringBuilder(StringResourcesTest.xmlServiceDefinition));
 
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
+            var serviceDefinition = new StringBuilder();
+
+            var mockModelService = new Mock<ModelService>();
+
+            var mockWorkflowHelper = new Mock<IWorkflowHelper>();
+            mockWorkflowHelper.Setup(workflowHelper => workflowHelper.CreateWorkflow(It.IsAny<string>())).Returns(new ActivityBuilder());
+            mockWorkflowHelper.Setup(workflowHelper => workflowHelper.SerializeWorkflow(mockModelService.Object)).Returns(serviceDefinition);
 
             #endregion
 
             #region setup Mock ModelItem
+            SetupEnvironmentRepo(Guid.Empty); // Set the active environment
+            var testAct = new FlowSwitch<string>
+            {
+                DisplayName = "TestSwitch",
+                Expression = Activity<string>.FromValue("True")
+            };
 
-            var properties = new Dictionary<string, Mock<ModelProperty>>();
             var propertyCollection = new Mock<ModelPropertyCollection>();
-            var environmentRepository = SetupEnvironmentRepo(Guid.Empty); // Set the active environment
-            var testAct = DsfActivityFactory.CreateDsfActivity(resourceModel.Object, new DsfActivity(), true, environmentRepository, true);
-
             var prop = new Mock<ModelProperty>();
-            prop.Setup(p => p.SetValue(It.IsAny<DsfActivity>())).Verifiable();
             prop.Setup(p => p.ComputedValue).Returns(testAct);
             properties.Add("Action", prop);
 
@@ -2438,7 +2441,8 @@ namespace Dev2.Core.Tests.Workflows
 
             var source = new Mock<ModelItem>();
             source.Setup(s => s.Properties).Returns(propertyCollection.Object);
-            source.Setup(s => s.ItemType).Returns(typeof(FlowStep));
+            source.Setup(c => c.Content).Returns(prop.Object);
+            source.Setup(c => c.ItemType).Returns(testAct.GetType());
 
             #endregion
 
@@ -2452,11 +2456,44 @@ namespace Dev2.Core.Tests.Workflows
 
             #endregion
 
-            viewModel.UpdateWorkflowLink("");
-            viewModel.Dispose();
+            var uniqueId1 = Guid.NewGuid().ToString();
+            var uniqueId2 = Guid.NewGuid().ToString();
 
-            //Verify
-            Assert.AreEqual("", viewModel.DisplayWorkflowLink);
+            var gate1 = new GateActivity
+            {
+                UniqueID = uniqueId1,
+                DisplayName = "Gate 1",
+            };
+
+            var gate2 = new GateActivity
+            {
+                UniqueID = uniqueId2,
+                DisplayName = "Gate 2",
+            };
+
+            gate1.NextNodes = new List<IDev2Activity> { gate2 };
+            gate2.NextNodes = null;
+
+            var treeNodes = new List<Common.ConflictTreeNode>
+            {
+                new Common.ConflictTreeNode(gate1, new Point()),
+                new Common.ConflictTreeNode(gate2, new Point())
+            };
+
+            var mockServiceDifferenceParser = new Mock<IServiceDifferenceParser>();
+            mockServiceDifferenceParser.Setup(serviceDifferenceParser => serviceDifferenceParser.BuildWorkflow(serviceDefinition)).Returns(treeNodes);
+
+            CustomContainer.Register(mockServiceDifferenceParser.Object);
+
+            var wd = new WorkflowDesignerViewModelMock(crm.Object, mockWorkflowHelper.Object, new Mock<IEventAggregator>().Object, mockModelService.Object);
+
+            var list = wd.GetSelectableGates(uniqueId2);
+
+            Assert.AreEqual(2, list.Count);
+            Assert.AreEqual(Guid.Empty.ToString(), list[0].Value);
+            Assert.AreEqual("End", list[0].Name);
+            Assert.AreEqual(uniqueId1, list[1].Value);
+            Assert.AreEqual("Gate 1", list[1].Name);
         }
 
         #region TestModelServiceModelChangedNextReference
@@ -2680,8 +2717,8 @@ namespace Dev2.Core.Tests.Workflows
             var envConn = new Mock<IEnvironmentConnection>();
             var serverEvents = new Mock<IEventPublisher>();
             envConn.Setup(m => m.ServerEvents).Returns(serverEvents.Object);
-            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
             resourceModel.SetupAllProperties();
+            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
             resourceModel.Setup(m => m.Environment.ResourceRepository).Returns(resourceRep.Object);
             var xamlBuilder = new StringBuilder(StringResources.xmlServiceDefinition);
             resourceModel.Object.WorkflowXaml = new StringBuilder("<a/>");
@@ -2690,7 +2727,6 @@ namespace Dev2.Core.Tests.Workflows
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
             workflowHelper.Setup(h => h.SanitizeXaml(It.IsAny<StringBuilder>())).Returns(xamlBuilder);
             workflowHelper.Setup(h => h.SerializeWorkflow(It.IsAny<ModelService>())).Returns(new StringBuilder("<x></x>"));
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
 
             #endregion
 
@@ -2699,6 +2735,7 @@ namespace Dev2.Core.Tests.Workflows
             var properties = new Dictionary<string, Mock<ModelProperty>>();
             var propertyCollection = new Mock<ModelPropertyCollection>();
             var environmentRepository = SetupEnvironmentRepo(Guid.Empty); // Set the active environment
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             var testAct = DsfActivityFactory.CreateDsfActivity(resourceModel.Object, new DsfActivity(), true, environmentRepository, true);
 
             var prop = new Mock<ModelProperty>();
@@ -2751,8 +2788,8 @@ namespace Dev2.Core.Tests.Workflows
             var envConn = new Mock<IEnvironmentConnection>();
             var serverEvents = new Mock<IEventPublisher>();
             envConn.Setup(m => m.ServerEvents).Returns(serverEvents.Object);
-            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
             resourceModel.SetupAllProperties();
+            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
             resourceModel.Setup(m => m.Environment.ResourceRepository).Returns(resourceRep.Object);
             var xamlBuilder = new StringBuilder(StringResources.xmlServiceDefinition);
             resourceModel.Object.WorkflowXaml = new StringBuilder("<a/>");
@@ -2762,7 +2799,6 @@ namespace Dev2.Core.Tests.Workflows
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
             workflowHelper.Setup(h => h.SanitizeXaml(It.IsAny<StringBuilder>())).Returns(xamlBuilder);
             workflowHelper.Setup(h => h.SerializeWorkflow(It.IsAny<ModelService>())).Returns(new StringBuilder("<x></x>"));
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
 
             #endregion
 
@@ -2771,6 +2807,7 @@ namespace Dev2.Core.Tests.Workflows
             var properties = new Dictionary<string, Mock<ModelProperty>>();
             var propertyCollection = new Mock<ModelPropertyCollection>();
             var environmentRepository = SetupEnvironmentRepo(Guid.Empty); // Set the active environment
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             var testAct = DsfActivityFactory.CreateDsfActivity(resourceModel.Object, new DsfActivity(), true, environmentRepository, true);
 
             var prop = new Mock<ModelProperty>();
@@ -2822,8 +2859,8 @@ namespace Dev2.Core.Tests.Workflows
             var envConn = new Mock<IEnvironmentConnection>();
             var serverEvents = new Mock<IEventPublisher>();
             envConn.Setup(m => m.ServerEvents).Returns(serverEvents.Object);
-            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
             resourceModel.SetupAllProperties();
+            resourceModel.Setup(m => m.Environment.Connection).Returns(envConn.Object);
             resourceModel.Setup(m => m.Environment.ResourceRepository).Returns(resourceRep.Object);
             var xamlBuilder = new StringBuilder(StringResources.xmlServiceDefinition);
             resourceModel.Object.WorkflowXaml = new StringBuilder("<a/>");
@@ -2833,7 +2870,6 @@ namespace Dev2.Core.Tests.Workflows
             workflowHelper.Setup(h => h.CreateWorkflow(It.IsAny<string>())).Returns(workflow);
             workflowHelper.Setup(h => h.SanitizeXaml(It.IsAny<StringBuilder>())).Returns(xamlBuilder);
             workflowHelper.Setup(h => h.SerializeWorkflow(It.IsAny<ModelService>())).Returns(new StringBuilder("<x></x>"));
-            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
 
             #endregion
 
@@ -2842,6 +2878,7 @@ namespace Dev2.Core.Tests.Workflows
             var properties = new Dictionary<string, Mock<ModelProperty>>();
             var propertyCollection = new Mock<ModelPropertyCollection>();
             var environmentRepository = SetupEnvironmentRepo(Guid.Empty); // Set the active environment
+            var viewModel = new WorkflowDesignerViewModelMock(resourceModel.Object, workflowHelper.Object);
             var testAct = DsfActivityFactory.CreateDsfActivity(resourceModel.Object, new DsfActivity(), true, environmentRepository, true);
 
             var prop = new Mock<ModelProperty>();
@@ -2958,7 +2995,6 @@ namespace Dev2.Core.Tests.Workflows
 
         static IServerRepository GetEnvironmentRepository(Mock<IServer> mockEnvironment)
         {
-
             var repo = new TestLoadServerRespository(mockEnvironment.Object) { IsLoaded = true };
             CustomContainer.Register<IServerRepository>(repo);
 

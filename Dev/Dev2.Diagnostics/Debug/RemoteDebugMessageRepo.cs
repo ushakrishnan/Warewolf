@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,35 +14,26 @@ using Dev2.Common.Interfaces.Diagnostics.Debug;
 
 namespace Dev2.Diagnostics.Debug
 {
-    /// <summary>
-    /// Used to store remote debug data ;)
-    /// </summary>
     public class RemoteDebugMessageRepo
     {
         readonly IDictionary<Guid, IList<IDebugState>> _data = new Dictionary<Guid, IList<IDebugState>>();
         static readonly object Lock = new object();
 
-        static RemoteDebugMessageRepo _instance;
+        private static readonly RemoteDebugMessageRepo _instance = new RemoteDebugMessageRepo();
+        public static RemoteDebugMessageRepo Instance { get => _instance; }
 
-        /// <summary>
-        /// Gets the instance.
-        /// </summary>
-        /// <value>
-        /// The instance.
-        /// </value>
-        public static RemoteDebugMessageRepo Instance => _instance ?? (_instance = new RemoteDebugMessageRepo());
+        private RemoteDebugMessageRepo()
+        {
 
-        /// <summary>
-        /// Adds the debug item.
-        /// </summary>
-        /// <param name="remoteInvokeID">The remote invoke ID.</param>
-        /// <param name="ds">The ds.</param>
+        }
+
+        //TODO: Change remoteInvokeID to be a Guid
         public void AddDebugItem(string remoteInvokeID, IDebugState ds)
         {
             Guid.TryParse(remoteInvokeID, out Guid id);
             if (id != Guid.Empty)
             {
-                lock(Lock)
+                lock (Lock)
                 {
                     if (_data.TryGetValue(id, out IList<IDebugState> list))
                     {
@@ -63,18 +54,17 @@ namespace Dev2.Diagnostics.Debug
         }
 
         /// <summary>
-        /// Fetches the debug items.
+        /// Fetches the debug items and clear out all messages
         /// </summary>
         /// <param name="remoteInvokeID">The remote invoke ID.</param>
         /// <returns></returns>
         public IList<IDebugState> FetchDebugItems(Guid remoteInvokeID)
         {
-
-            lock(Lock)
+            lock (Lock)
             {
                 if (_data.TryGetValue(remoteInvokeID, out IList<IDebugState> list))
                 {
-                    _data.Remove(remoteInvokeID); // clear out all messages ;)
+                    _data.Remove(remoteInvokeID);
                     return list;
                 }
             }

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -203,8 +204,18 @@ namespace Warewolf.Studio.ViewModels
                     }
                     IsConnected = false;
                     ServerDisconnected?.Invoke(this, SelectedConnection);
-                    PopupController?.Show(ErrorResource.ServerconnectionDropped + Environment.NewLine + ErrorResource.EnsureConnectionToServerWorking
-                        , ErrorResource.ServerDroppedErrorHeading, MessageBoxButton.OK, MessageBoxImage.Information, "", false, false, true, false, false, false);
+                    try
+                    {
+                        PopupController?.Show(ErrorResource.ServerconnectionDropped + Environment.NewLine + ErrorResource.EnsureConnectionToServerWorking
+                            , ErrorResource.ServerDroppedErrorHeading, MessageBoxButton.OK, MessageBoxImage.Information, "", false, false, true, false, false, false);
+                    }
+                    catch (InvalidOperationException e)
+                    {
+                        if (e.Message != "The calling thread must be STA, because many UI components require this.")
+                        {
+                            throw e;
+                        }
+                    }
                 }
             }
             else
@@ -344,7 +355,6 @@ namespace Warewolf.Studio.ViewModels
             IsConnected = false;
             OnPropertyChanged(() => SelectedConnection);
         }
-
         public ICommand EditConnectionCommand { get; private set; }
         public ICommand NewConnectionCommand { get; private set; }
         public bool IsConnected
@@ -381,17 +391,17 @@ namespace Warewolf.Studio.ViewModels
             {
                 try
                 {
-                    await ConnectAsync(connection).ConfigureAwait(true);
+                    await ConnectAsync(connection).ConfigureAwait(true); 
+
+                    return _selectedConnection.IsConnected;
                 }
                 catch (Exception)
                 {
                     return false;
                 }
-                return true;
             }
             return false;
         }
-
         async Task ConnectAsync(IServer connection)
         {
             var connected = await connection.ConnectAsync().ConfigureAwait(true);
@@ -411,6 +421,9 @@ namespace Warewolf.Studio.ViewModels
                 }
                 else
                 {
+                    IsConnected = _selectedConnection.IsConnected;
+                    IsConnecting = false;
+                    IsLoading = false;
                     ServerDisconnected?.Invoke(this, connection);
                 }
             }

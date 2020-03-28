@@ -1,6 +1,7 @@
-﻿/*
+﻿#pragma warning disable
+/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -133,7 +134,8 @@ namespace Warewolf.MergeParser
             foreach (var n in allNodes)
             {
                 var loc = GetShapeLocation(wd, n);
-                var id = _activityParser.Parse(new List<IDev2Activity>(), n)?.UniqueID;
+                IDev2Activity dev2Activity = _activityParser?.Parse(new List<IDev2Activity>(), n);
+                var id = dev2Activity?.UniqueID;
                 idsLocations.Add((id, loc));
             }
             return idsLocations;

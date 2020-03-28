@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,8 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Core.Tests;
 using Dev2.Data.Util;
 using Dev2.Intellisense;
 using Dev2.Intellisense.Helper;
@@ -29,6 +29,10 @@ using TechTalk.SpecFlow;
 using Dev2.Studio.Interfaces.Enums;
 using Dev2.Data.Interfaces;
 using Dev2.Studio.Interfaces.DataList;
+using Dev2.Providers.Events;
+using Moq;
+using Dev2.Common.Interfaces.Infrastructure.Events;
+using System.Text;
 
 namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
 {
@@ -42,7 +46,7 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
             var datalist = root.Replace("##", variableList);
             ScenarioContext.Current.Add("dataList", datalist);
 
-            var testEnvironmentModel = ResourceModelTest.CreateMockEnvironment();
+            var testEnvironmentModel = CreateMockEnvironment(new EventPublisher());
 
             var resourceModel = new ResourceModel(testEnvironmentModel.Object)
             {
@@ -55,7 +59,17 @@ namespace Dev2.Studio.Core.Specs.IntellisenseSpecs
             DataListSingleton.SetDataList(setupDatalist);
             DataListSingleton.ActiveDataList.InitializeDataListViewModel(resourceModel);
             DataListSingleton.ActiveDataList.UpdateDataListItems(resourceModel, new List<IDataListVerifyPart>());
+        }
 
+        public static Mock<IServer> CreateMockEnvironment(IEventPublisher eventPublisher)
+        {
+            var connection = new Mock<IEnvironmentConnection>();
+            connection.Setup(model => model.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Returns(new StringBuilder());
+            connection.Setup(e => e.ServerEvents).Returns(eventPublisher);
+
+            var environmentModel = new Mock<IServer>();
+            environmentModel.Setup(e => e.Connection).Returns(connection.Object);
+            return environmentModel;
         }
 
         [Given(@"I have the following intellisense options '(.*)'")]

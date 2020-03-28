@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,7 @@ namespace Dev2.Studio.Interfaces
         string NewOracleSourceTooltip { get; set; }
         string NewOdbcSourceTooltip { get; set; }
         string NewWebSourceTooltip { get; set; }
+        string NewRedisSourceTooltip { get; set; }
         string NewPluginSourceTooltip { get; set; }
         string NewComPluginSourceTooltip { get; set; }
         string NewWcfSourceTooltip { get; set; }
@@ -32,6 +33,7 @@ namespace Dev2.Studio.Interfaces
         string DebugStudioTooltip { get; set; }
         string DebugBrowserTooltip { get; set; }
         string ScheduleTooltip { get; set; }
+        string QueueEventTooltip { get; set; }
         string NewFolderTooltip { get; set; }
         string RenameTooltip { get; set; }
         string DeleteTooltip { get; set; }

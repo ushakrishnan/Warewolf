@@ -124,6 +124,24 @@ namespace Dev2.Studio.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You have reached maximum limits of input data..
+        /// </summary>
+        public static string DataInput_Warning {
+            get {
+                return ResourceManager.GetString("DataInput_Warning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Maximum Input Data.
+        /// </summary>
+        public static string DataInput_Warning_Title {
+            get {
+                return ResourceManager.GetString("DataInput_Warning_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Please resolve all variable errors, before debugging..
         /// </summary>
         public static string Debugging_Error {
@@ -442,6 +460,15 @@ namespace Dev2.Studio.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Queues.
+        /// </summary>
+        public static string QueueEventsHeader {
+            get {
+                return ResourceManager.GetString("QueueEventsHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Debug.
         /// </summary>
         public static string Ribbon_Debug {
@@ -462,18 +489,27 @@ namespace Dev2.Studio.Core {
         /// <summary>
         ///   Looks up a localized string similar to Save Error.
         /// </summary>
-        public static string SaveSettingErrorHeader {
+        public static string SaveErrorHeader {
             get {
-                return ResourceManager.GetString("SaveSettingErrorHeader", resourceCulture);
+                return ResourceManager.GetString("SaveErrorHeader", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Error while saving.
         /// </summary>
-        public static string SaveSettingErrorPrefix {
+        public static string SaveErrorPrefix {
             get {
-                return ResourceManager.GetString("SaveSettingErrorPrefix", resourceCulture);
+                return ResourceManager.GetString("SaveErrorPrefix", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error while saving: Server unreachable..
+        /// </summary>
+        public static string SaveServerNotReachableErrorMsg {
+            get {
+                return ResourceManager.GetString("SaveServerNotReachableErrorMsg", resourceCulture);
             }
         }
         
@@ -509,15 +545,6 @@ namespace Dev2.Studio.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error while saving: Server unreachable..
-        /// </summary>
-        public static string SaveSettingsNotReachableErrorMsg {
-            get {
-                return ResourceManager.GetString("SaveSettingsNotReachableErrorMsg", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Error while saving: You don&apos;t have permission to change settings on this server.
         ///You need Administrator permission..
         /// </summary>
@@ -542,6 +569,15 @@ namespace Dev2.Studio.Core {
         public static string Saving_Error_Title {
             get {
                 return ResourceManager.GetString("Saving_Error_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scheduler.
+        /// </summary>
+        public static string SchedulerHeader {
+            get {
+                return ResourceManager.GetString("SchedulerHeader", resourceCulture);
             }
         }
         
@@ -591,6 +627,15 @@ namespace Dev2.Studio.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Triggers.
+        /// </summary>
+        public static string TriggersHeader {
+            get {
+                return ResourceManager.GetString("TriggersHeader", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Your changes have not been saved.
         ///Would you like to save? 
         ///-----------------------------------------------------------------
@@ -628,6 +673,24 @@ namespace Dev2.Studio.Core {
         public static string User_Interface_Layouts_Directory {
             get {
                 return ResourceManager.GetString("User_Interface_Layouts_Directory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Save.
+        /// </summary>
+        public static string Workflow_HasQueue_Title {
+            get {
+                return ResourceManager.GetString("Workflow_HasQueue_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This resource is linked to Queue: {0}. Do you want to continue?.
+        /// </summary>
+        public static string Workflow_HasQueue_Warning {
+            get {
+                return ResourceManager.GetString("Workflow_HasQueue_Warning", resourceCulture);
             }
         }
         

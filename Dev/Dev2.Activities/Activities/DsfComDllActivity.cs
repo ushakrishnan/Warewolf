@@ -1,6 +1,18 @@
-﻿using System;
+#pragma warning disable
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dev2.Activities.Factories;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.Toolbox;
@@ -18,20 +30,26 @@ using Warewolf.Storage;
 namespace Dev2.Activities
 {
     [ToolDescriptorInfo("DotNetDll", "Com DLL", ToolType.Native, "6AEB1038-6332-46F9-8BDD-642DE4EA029E", "Dev2.Activities", "1.0.0.0", "Legacy", "Resources", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Resources_Com_DLL")]
-    public class DsfComDllActivity : DsfMethodBasedActivity,ISimpePlugin
+    public class DsfComDllActivity : DsfMethodBasedActivity, ISimpePlugin
     {
         internal string _result;
         public IPluginAction Method { get; set; }
         public INamespaceItem Namespace { get; set; }
         public IOutputDescription OutputDescription { get; set; }
+        private readonly IResponseManagerFactory _responseManagerFactory;
+        public IResponseManager ResponseManager { get; set; }
 
         public DsfComDllActivity()
+            : this(new ResponseManagerFactory())
+        { }
+
+        public DsfComDllActivity(IResponseManagerFactory responseManagerFactory)
         {
             Type = "Com DLL Connector";
             DisplayName = "Com DLL";
+            _responseManagerFactory = responseManagerFactory;
         }
-
-
+        
         protected override void ExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
         {
             tmpErrors = new ErrorResultTO();
@@ -40,8 +58,7 @@ namespace Dev2.Activities
                 tmpErrors.AddError(ErrorResource.NoMethodSelected);
                 return;
             }
-
-
+            
             ExecuteService(update, out tmpErrors, Method, dataObject);
         }
 
@@ -76,7 +93,7 @@ namespace Dev2.Activities
         {
             if (Inputs == null || Inputs.Count == 0)
             {
-                PerfromExecution(update, dataObject, args);
+                PerformExecution(update, dataObject, args);
             }
             else
             {
@@ -98,12 +115,12 @@ namespace Dev2.Activities
 
                         pos++;
                     }
-                    PerfromExecution(update, dataObject, args);
+                    PerformExecution(update, dataObject, args);
                 }
             }
         }
 
-        void PerfromExecution(int update, IDSFDataObject dataObject, ComPluginInvokeArgs args)
+        void PerformExecution(int update, IDSFDataObject dataObject, ComPluginInvokeArgs args)
         {
             if (!IsObject)
             {
@@ -116,13 +133,20 @@ namespace Dev2.Activities
                 var outputFormatter = OutputFormatterFactory.CreateOutputFormatter(OutputDescription);
                 args.OutputFormatter = outputFormatter;
             }
-            Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.ServerUser, () => { _result = ComPluginServiceExecutionFactory.InvokeComPlugin(args).ToString(); });
+            ExecuteInsideImpersonatedContext(args);
 
-            ResponseManager = new ResponseManager { OutputDescription = OutputDescription, Outputs = Outputs, IsObject = IsObject, ObjectName = ObjectName };
+            ResponseManager = _responseManagerFactory.New(OutputDescription);
+            ResponseManager.Outputs = Outputs;
+            ResponseManager.IsObject = IsObject;
+            ResponseManager.ObjectName = ObjectName;
             ResponseManager.PushResponseIntoEnvironment(_result, update, dataObject, false);
         }
 
-        public IResponseManager ResponseManager { get; set; }
+        protected virtual void ExecuteInsideImpersonatedContext(ComPluginInvokeArgs args)
+        {
+            Common.Utilities.PerformActionInsideImpersonatedContext(Common.Utilities.ServerUser, () => { _result = ComPluginServiceExecutionFactory.InvokeComPlugin(args).ToString(); });
+        }
+        
         public override enFindMissingType GetFindMissingType() => enFindMissingType.DataGridActivity;
 
         public bool Equals(ISimpePlugin other)
@@ -144,22 +168,11 @@ namespace Dev2.Activities
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(null, obj))
+            if (obj is DsfComDllActivity dsfComDllActivity)
             {
-                return false;
+               return Equals(dsfComDllActivity);
             }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != this.GetType())
-            {
-                return false;
-            }
-
-            return Equals((ISimpePlugin)obj);
+            return false;
         }
 
         public override int GetHashCode()

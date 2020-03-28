@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.Workflow
     [CodedUITest]
     public class WorkflowTabs
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Tabs and Panes")]
         public void Workflow_Name_Counter()
         {

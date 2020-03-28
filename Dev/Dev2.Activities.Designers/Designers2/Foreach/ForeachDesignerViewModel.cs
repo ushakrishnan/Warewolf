@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -20,6 +20,7 @@ using Dev2.Studio.Interfaces;
 using System.Activities;
 using System.Windows.Media;
 using Dev2.Studio.Core.Activities.Utils;
+using Dev2.Common.ExtMethods;
 
 namespace Dev2.Activities.Designers2.Foreach
 {
@@ -29,7 +30,7 @@ namespace Dev2.Activities.Designers2.Foreach
             : base(modelItem)
         {
             ForeachTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enForEachType>();
-            SelectedForeachType = Dev2EnumConverter.ConvertEnumValueToString(ForEachType);
+            SelectedForeachType = ForEachType.GetDescription();
             AddTitleBarLargeToggle();
             HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_LoopConstruct_For_Each;
             var dataFunc = modelItem.Properties["DataFunc"]?.ComputedValue as ActivityFunc<string, bool>;

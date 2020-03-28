@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,12 +8,6 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Xml.Linq;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Data.TO;
@@ -22,6 +16,12 @@ using Dev2.Runtime.Hosting;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Xml.Linq;
 
 
 namespace Dev2.Runtime.ServiceModel
@@ -29,7 +29,6 @@ namespace Dev2.Runtime.ServiceModel
     public delegate string WebExecuteString(WebSource source, WebRequestMethod method, string relativeUri, string data, bool throwError, out ErrorResultTO errors, string[] headers = null);
     public delegate string WebExecuteBinary(WebSource source, WebRequestMethod method, string relativeUri, byte[] data, bool throwError, out ErrorResultTO errors, string[] headers = null);
 
-    // PBI 5656 - 2013.05.20 - TWR - Created
     public class WebSources : ExceptionManager
     {
         public WebSources()
@@ -44,9 +43,7 @@ namespace Dev2.Runtime.ServiceModel
                 throw new ArgumentNullException(nameof(resourceCatalog));
             }
         }
-        // POST: Service/WebSources/Get
-
-        public WebSource Get(string resourceId, Guid workspaceId, Guid dataListId)
+        public WebSource Get(string resourceId, Guid workspaceId)
         {
             var result = new WebSource();
             try
@@ -65,9 +62,7 @@ namespace Dev2.Runtime.ServiceModel
             return result;
         }
 
-        // POST: Service/WebSources/Test
-
-        public ValidationResult Test(string args, Guid workspaceId, Guid dataListId)
+        public ValidationResult Test(string args)
         {
             try
             {
@@ -150,8 +145,8 @@ namespace Dev2.Runtime.ServiceModel
             return $"{source.Address}{relativeUri}";
         }
 
-        public static byte[] Execute(WebSource source, WebRequestMethod method, string relativeUri, byte[] data, bool throwError, out ErrorResultTO errors) => Execute(source, method, relativeUri, data, throwError, out errors, null);
-        public static byte[] Execute(WebSource source, WebRequestMethod method, string relativeUri, byte[] data, bool throwError, out ErrorResultTO errors, string[] headers)
+        public static byte[] Execute(WebSource source, WebRequestMethod method, string relativeUri, byte[] data, out ErrorResultTO errors) => Execute(source, method, relativeUri, data, out errors, null);
+        public static byte[] Execute(WebSource source, WebRequestMethod method, string relativeUri, byte[] data, out ErrorResultTO errors, string[] headers)
         {
             CreateWebClient(source, headers);
             return Execute(source.Client, GetAddress(source, relativeUri), method, data, out errors);
@@ -169,17 +164,21 @@ namespace Dev2.Runtime.ServiceModel
             errors = new ErrorResultTO();
             try
             {
-                return method == WebRequestMethod.Get ? client.DownloadString(address) : client.UploadString(address, method.ToString().ToUpperInvariant(), data);
-            }            
-            catch(WebException webex)
-            {
-                if(webex.Response is HttpWebResponse httpResponse)
+                var contentType = client.Headers[HttpRequestHeader.ContentType];
+                if (contentType != null && contentType.ToLowerInvariant().Contains("multipart"))
                 {
-                    using (var responseStream = httpResponse.GetResponseStream())
-                    {
-                        var reader = new StreamReader(responseStream);
-                        return reader.ReadToEnd();
-                    }
+                    return PerformMultipartWebRequest(client, address, data);
+                }
+
+                return method == WebRequestMethod.Get ? client.DownloadString(address) : client.UploadString(address, method.ToString().ToUpperInvariant(), data);
+            }
+            catch (WebException webex) when (webex.Response is HttpWebResponse httpResponse)
+            {
+                errors.AddError(webex.Message);
+                using (var responseStream = httpResponse.GetResponseStream())
+                {
+                    var reader = new StreamReader(responseStream);
+                    return reader.ReadToEnd();
                 }
             }
             catch (Exception e)
@@ -192,13 +191,55 @@ namespace Dev2.Runtime.ServiceModel
             }
             finally
             {
-                // clean up client ;)
                 client.Dispose();
             }
 
             return string.Empty;
         }
 
+        public static string PerformMultipartWebRequest(WebClient client, string address, string data)
+        {
+            var wr = (HttpWebRequest)WebRequest.Create(address);
+            wr.Headers[HttpRequestHeader.Authorization] = client.Headers[HttpRequestHeader.Authorization];
+            wr.ContentType = client.Headers[HttpRequestHeader.ContentType];
+            wr.Method = "POST";
+            var byteData = ConvertToHttpNewLine(ref data);
+            wr.ContentLength = byteData.Length;
+
+            using (var requestStream = wr.GetRequestStream())
+            {
+                requestStream.Write(byteData, 0, byteData.Length);
+                requestStream.Close();
+            }
+
+            using (var wresp = (HttpWebResponse)wr.GetResponse())
+            {
+                if (wresp.StatusCode == HttpStatusCode.OK)
+                {
+                    using (var responseStream = wresp.GetResponseStream())
+                    {
+                        if (responseStream == null)
+                        {
+                            return null;
+                        }
+                        using (var responseReader = new StreamReader(responseStream))
+                        {
+                            return responseReader.ReadToEnd();
+                        }
+                    }
+                }
+
+                throw new ApplicationException("Error while upload files. Server status code: " + wresp.StatusCode);
+            }
+        }
+
+        internal static byte[] ConvertToHttpNewLine(ref string data)
+        {
+            data = data.Replace("\r\n", "\n");
+            data = data.Replace("\n", GlobalConstants.HTTPNewLine);
+            var byteData = Encoding.UTF8.GetBytes(data);
+            return byteData;
+        }
 
         public static void CreateWebClient(WebSource source, IEnumerable<string> headers)
         {

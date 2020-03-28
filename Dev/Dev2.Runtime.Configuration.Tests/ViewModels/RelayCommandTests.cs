@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,23 +15,20 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Runtime.Configuration.Tests.ViewModels
 {
     [TestClass]
-    
     public class RelayCommandTests
     {
         [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_Constructor")]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(RelayCommand))]
         [ExpectedException(typeof(ArgumentNullException))]
         public void RelayCommand_Constructor_ActionIsNull_ThrowsException()
         {
-            
             new RelayCommand(null);
-            
         }
 
         [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_Execute")]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(RelayCommand))]
         public void RelayCommand_Execute_PassingAnObject_ObjectPassedToAction()
         {
             //------------Setup for test--------------------------
@@ -44,13 +41,13 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
             relayCommand.Execute(new { Name = "Tshepo", Surname = "Ntlhokoa" });
             //------------Assert Results-------------------------
             Assert.IsNotNull(prop);
-            Assert.IsNotNull("Tshepo", prop.Name);
-            Assert.IsNotNull("Ntlhokoa", prop.Surname);
+            Assert.AreEqual("Tshepo", prop.Name);
+            Assert.AreEqual("Ntlhokoa", prop.Surname);
         }
 
         [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_CanExecute")]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(RelayCommand))]
         public void RelayCommand_CanExecute_WhenConstructedWithAPredicate_PredicateIsCalled()
         {
             //------------Setup for test--------------------------
@@ -68,8 +65,8 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
         }
 
         [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_CanExecute")]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(RelayCommand))]
         public void RelayCommand_CanExecute_WhenConstructedWithoutAPredicate_ReturnsTrueAsADefault()
         {
             //------------Setup for test--------------------------
@@ -79,71 +76,36 @@ namespace Dev2.Runtime.Configuration.Tests.ViewModels
             //------------Assert Results-------------------------
             Assert.IsTrue(canExecute);
         }
-    }
 
-    [TestClass]
-    public class RelayGenericCommandTests
-    {
         [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_Constructor")]
-        [ExpectedException(typeof(ArgumentNullException))]
-        public void RelayCommand_Constructor_ActionIsNull_ThrowsException()
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(RelayCommand))]
+        public void RelayCommand_RaiseCanExecuteChanged_EventNotTriggered_isDelegateCalled_ExpectFalse()
         {
+            //------------Setup for test--------------------------
+            var isDelegateCalled = false;
+
+            var relayCommand = new RelayCommand(o => { });
+            //------------Execute Test---------------------------
+            relayCommand.RaiseCanExecuteChanged();
+            //------------Assert Results-------------------------
+            Assert.IsFalse(isDelegateCalled);
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(RelayCommand))]
+        public void RelayCommand_RaiseCanExecuteChanged_EventTriggered_isDelegateCalled_ExpectTrue()
+        {
+            //------------Setup for test--------------------------
+            var isDelegateCalled = false;
             
-            new RelayCommand<object>(null);
-            
-        }
-
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_Execute")]
-        public void RelayCommand_Execute_PassingAnObject_ObjectPassedToAction()
-        {
-            //------------Setup for test--------------------------
-            dynamic prop = null;
-            var relayCommand = new RelayCommand<object>(o =>
-            {
-                prop = o;
-            });
+            var relayCommand = new RelayCommand(o => { });
             //------------Execute Test---------------------------
-            relayCommand.Execute(new { Name = "Tshepo", Surname = "Ntlhokoa" });
+            relayCommand.CanExecuteChanged += (s, MouseEventArgs) => { isDelegateCalled = true; };
+            relayCommand.RaiseCanExecuteChanged();
             //------------Assert Results-------------------------
-            Assert.IsNotNull(prop);
-            Assert.IsNotNull("Tshepo", prop.Name);
-            Assert.IsNotNull("Ntlhokoa", prop.Surname);
-        }
-
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_CanExecute")]
-        public void RelayCommand_CanExecute_WhenConstructedWithAPredicate_PredicateIsCalled()
-        {
-            //------------Setup for test--------------------------
-            var canExecuteWasCalled = false;
-            var relayCommand = new RelayCommand<object>(o => { }, o =>
-            {
-                canExecuteWasCalled = true;
-                return true;
-            });
-            //------------Execute Test---------------------------
-            var canExecute = relayCommand.CanExecute(null);
-            //------------Assert Results-------------------------
-            Assert.IsTrue(canExecuteWasCalled);
-            Assert.IsTrue(canExecute);
-        }
-
-        [TestMethod]
-        [Owner("Tshepo Ntlhokoa")]
-        [TestCategory("RelayCommand_CanExecute")]
-        public void RelayCommand_CanExecute_WhenConstructedWithoutAPredicate_ReturnsTrueAsADefault()
-        {
-            //------------Setup for test--------------------------
-            var relayCommand = new RelayCommand<object>(o => { });
-            //------------Execute Test---------------------------
-            var canExecute = relayCommand.CanExecute(null);
-            //------------Assert Results-------------------------
-            Assert.IsTrue(canExecute);
+            Assert.IsTrue(isDelegateCalled);
         }
     }
 }

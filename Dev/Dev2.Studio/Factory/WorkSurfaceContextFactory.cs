@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -12,14 +12,13 @@ using System;
 using Dev2.Common.ExtMethods;
 using Dev2.Factory;
 using Dev2.Settings;
-using Dev2.Settings.Scheduler;
 using Dev2.Studio.AppResources.Comparers;
 using Dev2.Studio.Interfaces;
 using Dev2.Studio.Interfaces.Enums;
 using Dev2.Studio.ViewModels.Help;
 using Dev2.Studio.ViewModels.Workflow;
 using Dev2.Studio.ViewModels.WorkSurface;
-
+using Dev2.Triggers;
 
 namespace Dev2.Studio.Factory
 {
@@ -60,8 +59,7 @@ namespace Dev2.Studio.Factory
             {
                 key.ResourceID = Guid.Empty;
             }
-
-            if (vm is SchedulerViewModel || vm is SettingsViewModel)
+            if (vm is TriggersViewModel || vm is SettingsViewModel)
             {
                 key = WorkSurfaceKeyFactory.CreateEnvKey(workSurfaceContext, CustomContainer.Get<IShellViewModel>().ActiveServer.EnvironmentID) as WorkSurfaceKey;
             }
@@ -76,7 +74,7 @@ namespace Dev2.Studio.Factory
         {
             var context = new WorkSurfaceContextViewModel(key, vm);
 
-            if (!(vm is SchedulerViewModel) && !(vm is SettingsViewModel))
+            if (!(vm is TriggersViewModel) && !(vm is SettingsViewModel))
             {
                 vm.DisplayName = workSurfaceContext.GetDescription();
             }

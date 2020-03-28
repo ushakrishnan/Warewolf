@@ -14,10 +14,10 @@ Scenario: Creating New Web Source
    Given I open New Web Source 
    Then "New Web Service Source" tab is opened
    And title is "New Web Service Source"
-   And I type Address as "http://RSAKLFSVRTFSBLD/IntegrationTestSite"
+   And I type Address as "http://TFSBLD.premier.local/IntegrationTestSite"
    And I type Default Query as "/GetCountries.ashx?extension=json&prefix=a"
    Then "New Web Service Source *" tab is opened
-   And TestQuery is "http://RSAKLFSVRTFSBLD/IntegrationTestSite/GetCountries.ashx?extension=json&prefix=a"
+   And TestQuery is "http://TFSBLD.premier.local/IntegrationTestSite/GetCountries.ashx?extension=json&prefix=a"
    And "Save" is "Enabled"
    And "Test Connection" is "Enabled"
    And "Cancel Test" is "Disabled"
@@ -31,7 +31,7 @@ Scenario: Creating New Web Source
    Then title is "Testing Resource Save"
    And "Testing Resource Save" tab is opened
    When I click TestQuery
-   Then the browser window opens with "http://RSAKLFSVRTFSBLD/IntegrationTestSite/GetCountries.ashx?extension=json&prefix=a"
+   Then the browser window opens with "http://TFSBLD.premier.local/IntegrationTestSite/GetCountries.ashx?extension=json&prefix=a"
 	
 @WebSource
 @MSTest:DeploymentItem:InfragisticsWPF4.Controls.Interactions.XamDialogWindow.v15.1.dll
@@ -41,7 +41,7 @@ Scenario: Creating New Web Source
 @MSTest:DeploymentItem:System.Windows.Interactivity.dll
 Scenario: Creating New Web Source under auth type as user
    Given I open New Web Source
-   And I type Address as "http://RSAKLFSVRTFSBLD/IntegrationTestSite"
+   And I type Address as "http://TFSBLD.premier.local/IntegrationTestSite"
    And I type Default Query as "/GetCountries.ashx?extension=json&prefix=a"
    And "Save" is "Enabled"
    And "Test Connection" is "Enabled"
@@ -49,7 +49,7 @@ Scenario: Creating New Web Source under auth type as user
    And Username field is "Visible"
    And Password field is "Visible"
    And I type Username as "IntegrationTester"
-   And I type Password as "I73573r0"
+   And I type Password
    When Test Connecton is "Successful"
    And "Save" is "Enabled"
    When I save the source
@@ -104,7 +104,7 @@ Scenario: Incorrect address user auth type is not allowing to save
    And "Test Connection" is "Enabled"
    And I Select Authentication Type as "User"
    And I type Username as "test"
-   And I type Password as "I73573r0"
+   And I type Password
    When Test Connecton is "UnSuccessful"
    And Validation message is thrown
    And "Save" is "Enabled"
@@ -118,13 +118,13 @@ Scenario: Incorrect address user auth type is not allowing to save
 Scenario: Testing Auth type as Anonymous and swaping it resets the test connection 
    Given I open New Web Source
    And "Save" is "Disabled"
-   And I type Address as "http://RSAKLFSVRTFSBLD/IntegrationTestSite" 
+   And I type Address as "http://TFSBLD.premier.local/IntegrationTestSite" 
    And I type Default Query as "/GetCountries.ashx?extension=json&prefix=a"
    And "Save" is "Enabled"
    And "Test Connection" is "Enabled"
    And I Select Authentication Type as "User"
    And I type Username as "test"
-   And I type Password as "I73573r0"
+   And I type Password
    When Test Connecton is "Successful"
    And Validation message is Not thrown
    And "Save" is "Enabled"
@@ -150,7 +150,7 @@ Scenario: Editing saved Web Source
    Given I open "Test" web source
    Then "Test" tab is opened
    And title is "Test"
-   And Address is "http://RSAKLFSVRTFSBLD/IntegrationTestSite"
+   And Address is "http://TFSBLD.premier.local/IntegrationTestSite"
    And Default Query is "/GetCountries.ashx?extension=json&prefix=a"
    And "Save" is "Enabled"
    And "Test Connection" is "Enabled"
@@ -158,7 +158,7 @@ Scenario: Editing saved Web Source
    And Username field is "Collapsed"
    And Password field is "Collapsed"
    And "Save" is "Enabled"
-   When I change Address to "http://RSAKLFSVRTFSBLD/IntegrationTestSite"
+   When I change Address to "http://TFSBLD.premier.local/IntegrationTestSite"
    And I type Default Query as "/GetCountries.ashx?extension=json&prefix=b"
    Then "Test *" tab is opened
    And "Save" is "Enabled"
@@ -177,7 +177,7 @@ Scenario: Editing saved Web Source
  Scenario: Editing saved Web Source auth type
    Given I open "Test" web source
    Then "Test" tab is opened
-   And Address is "http://RSAKLFSVRTFSBLD/IntegrationTestSite"
+   And Address is "http://TFSBLD.premier.local/IntegrationTestSite"
    And  Default Query is "/GetCountries.ashx?extension=json&prefix=a"
    And "Save" is "Enabled"
    And "Test Connection" is "Enabled"
@@ -188,7 +188,7 @@ Scenario: Editing saved Web Source
    And Username field is "Visible"
    And Password field is "Visible"
    And Username field as "IntegrationTester"
-   And Password field as "I73573r0"
+   And Password field
    And "Save" is "Enabled"
    When Test Connecton is "Successfull"
    Then "Save" is "Enabled" 

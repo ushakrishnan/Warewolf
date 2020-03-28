@@ -24,6 +24,7 @@ using Warewolf.Studio.ViewModels;
 using Dev2.Activities.Specs.BaseTypes;
 using Dev2.Studio.Core;
 using Dev2.Studio.Core.Models;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.Toolbox.Resources
 {
@@ -424,6 +425,10 @@ namespace Dev2.Activities.Specs.Toolbox.Resources
         [Given(@"I Select ""(.*)"" as Oracle Source for ""(.*)""")]
         public void GivenISelectAsOracleSourceFor(string sourceName, string activityName)
         {
+            if (sourceName == "NewOracleSource")
+            {
+                Depends.InjectOracleSources();
+            }
             var proxyLayer = _scenarioContext.Get<StudioServerProxy>("proxyLayer");
             var vm = GetViewModel();
             Assert.IsNotNull(vm.SourceRegion);            

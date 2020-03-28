@@ -1,6 +1,6 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -39,6 +39,9 @@ using Dev2.Data.Util;
 using static LanguageAST.LanguageExpression;
 using System.Text;
 using Dev2.Studio.Interfaces.DataList;
+using Dev2.Common;
+using Dev2.Activities.Utils;
+using static DataStorage;
 
 namespace Dev2.Activities.Designers2.AdvancedRecordset
 {
@@ -88,7 +91,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
             var model = CustomContainer.CreateInstance<ISqliteServiceModel>(server.UpdateRepository, server.QueryProxy, shellViewModel, server);
             Model = model;
             SetupCommonProperties();
-            SetupDeclareVariables(modelItem);
+            SetupDeclareVariables(_modelItem);
             this.RunViewSetup();
             HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_AdvancedRecordset;
         }
@@ -99,7 +102,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
             set
             {
                 _declareVariables = value;
-                OnPropertyChanged("DeclareVariables");
+                OnPropertyChanged(nameof(DeclareVariables));
             }
         }
         public string RecordsetName
@@ -158,48 +161,47 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
         }
         void SetupDeclareVariables(ModelItem modelItem)
         {
-            var existing = modelItem.GetProperty<IList<INameValue>>("DeclareVariables");
+            var existing = modelItem.GetProperty<IList<INameValue>>(nameof(DeclareVariables));
             var nameValues = existing ?? new List<INameValue>();
             DeclareVariables = new ObservableCollection<INameValue>();
             DeclareVariables.CollectionChanged += DeclareVariablesOnCollectionChanged;
-            foreach(var nv in nameValues.Where(name => !string.IsNullOrEmpty(name.Name)))
+            foreach (var nv in nameValues.Where(name => !string.IsNullOrEmpty(name.Name)))
             {
                 DeclareVariables.Add(nv);
             }
 
-            DeclareVariables.Add(new ObservableAwareNameValue(DeclareVariables, s =>
-            {
-                _modelItem.SetProperty("DeclareVariables",
-                    _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
-            }));
+            AddLastEmptyDeclareVariable();
+        }
 
-            
-            if (DeclareVariables.Count == 0)
-            {
-                DeclareVariables.Add(new ObservableAwareNameValue(DeclareVariables, s =>
-                {
-                    _modelItem.SetProperty("DeclareVariables",
-                        _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
-                }));
-            }
-            else
+        private void AddLastEmptyDeclareVariable()
+        {
+            var shouldAddEmpty = !DeclareVariables.Any();
+
+            if (!shouldAddEmpty)
             {
                 var nameValue = DeclareVariables.Last();
-                if (!string.IsNullOrWhiteSpace(nameValue.Name) || !string.IsNullOrWhiteSpace(nameValue.Value))
-                {
-                    DeclareVariables.Add(new ObservableAwareNameValue(DeclareVariables, s =>
-                    {
-                        _modelItem.SetProperty("DeclareVariables",
-                            _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
-                    }));
-                }
+                shouldAddEmpty = !string.IsNullOrWhiteSpace(nameValue.Name) || !string.IsNullOrWhiteSpace(nameValue.Value);
+            }
+
+            if (shouldAddEmpty)
+            {
+                AddDeclareVariables();
             }
         }
+
+        private void AddDeclareVariables()
+        {
+            DeclareVariables.Add(new ObservableAwareNameValue(DeclareVariables, s =>
+            {
+                _modelItem.SetProperty(nameof(DeclareVariables), _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
+            }));
+        }
+
         void DeclareVariablesOnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             AddItemPropertyChangeEvent(e);
             RemoveItemPropertyChangeEvent(e);
-            _modelItem.SetProperty("DeclareVariables", _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
+            _modelItem.SetProperty(nameof(DeclareVariables), _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
         }
         void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -210,13 +212,9 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
                     DeclareVariables.Remove(nv);
                 }
 
-                DeclareVariables.Add(new ObservableAwareNameValue(DeclareVariables, s =>
-                {
-                    _modelItem.SetProperty("DeclareVariables",
-                        _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
-                }));
+                AddDeclareVariables();
             }
-            _modelItem.SetProperty("DeclareVariables", _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
+            _modelItem.SetProperty(nameof(DeclareVariables), _declareVariables.Select(a => new NameValue(a.Name, a.Value) as INameValue).ToList());
         }
 
         private void GenerateOutputs()
@@ -229,7 +227,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
                     OutputsRegion.RecordsetName = string.Empty;
                     return;
                 }
-                
+
                 var service = ToModel();
                 ManageServiceModel.Model = service;
                 ValidateDeclareVariables();
@@ -256,7 +254,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
         public StringBuilder CleanUpSql()
         {
             var sqlString = new StringBuilder();
-            if (EvaluationFunctions.parseLanguageExpressionWithoutUpdate(SqlQuery) is ComplexExpression res)
+            if (EvaluationFunctions.parseLanguageExpressionWithoutUpdate(SqlQuery, ShouldTypeCast.Yes) is ComplexExpression res)
             {
                 foreach (var i in res.Item)
                 {
@@ -287,13 +285,13 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
         public void ValidateSql()
         {
             try
-            {                
+            {
                 SqlQuery = CleanUpSql().ToString();
                 var statements = TSQLStatementReader.ParseStatements(SqlQuery);
                 if (statements.Count > 0)
                 {
                     LoadRecordsets(SqlQuery);
-                    FormatSql();                
+                    FormatSql();
                 }
             }
             catch (Exception e)
@@ -306,11 +304,11 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
         void LoadRecordsets(string sqlQuery)
         {
             var advancedRecordset = new Dev2.Activities.AdvancedRecordset();
-            foreach(var recSet in DataListSingleton.ActiveDataList.RecsetCollection)
+            foreach (var recSet in DataListSingleton.ActiveDataList.RecsetCollection)
             {
                 if (!string.IsNullOrEmpty(recSet.DisplayName))
                 {
-                    var recSetHash = "A"+recSet.GetHashCode().ToString().Replace("-","B");
+                    var recSetHash = "A" + recSet.GetHashCode().ToString().Replace("-", "B");
                     _hashedRecSets.Add((recSetHash, recSet));
                     advancedRecordset.AddRecordsetAsTable((recSetHash, recSet.Children.Select(c => c.DisplayName).ToList()));
                 }
@@ -320,10 +318,10 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
             if (sqlQuery.Contains("UNION") && countOfStatements == 2)
             {
                 var sqlQueryToUpdate = sqlQuery;
-                foreach(var item in _hashedRecSets)
+                foreach (var item in _hashedRecSets)
                 {
                     sqlQueryToUpdate = sqlQueryToUpdate.Replace(item.recSet.DisplayName, item.hashCode);
-                }                
+                }
                 var sql = Regex.Replace(sqlQueryToUpdate, @"\@\w+\b", match => "''");
                 var result = advancedRecordset.ExecuteQuery(sql);
                 var table = result.Tables[0];
@@ -348,9 +346,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
             {
                 var statement = statements[i];
 
-                var sql = advancedRecordset.ReturnSql(statement.Tokens);
-                sql = UpdateSqlWithHashCodes(statement, sql);
-
+                var sql = UpdateSqlWithHashCodes(statement);
                 sql = Regex.Replace(sql, @"\@\w+\b", match => "''");
                 var result = advancedRecordset.ExecuteStatement(statement, sql);
                 if (i == countOfStatements - 1)
@@ -368,22 +364,29 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
             }
         }
 
-        private string UpdateSqlWithHashCodes(TSQLStatement statement, string sql)
+        private string UpdateSqlWithHashCodes(TSQLStatement statement)
         {
-            var sqlToUpdate = sql;
+            var sqlBuildUp = new List<string>();
             foreach (var token in statement.Tokens)
             {
-                if (token.Type == TSQL.Tokens.TSQLTokenType.Identifier)
+                if (token.Type == TSQL.Tokens.TSQLTokenType.Identifier && sqlBuildUp.Count >= 1)
                 {
-                    var hash = _hashedRecSets.FirstOrDefault(x => x.recSet.DisplayName == token.Text);
-                    if (!hash.Equals(default((string, IRecordSetItemModel))))
+                    if (sqlBuildUp[sqlBuildUp.Count - 1] == ".")
                     {
-                        sqlToUpdate = sqlToUpdate.Replace(token.Text, hash.hashCode);
+                        sqlBuildUp.Add(token.Text);
+                    }
+                    else
+                    {
+                        var hash = _hashedRecSets.FirstOrDefault(x => x.recSet.DisplayName == token.Text);
+                        sqlBuildUp.Add(!hash.Equals(default((string, IRecordSetItemModel))) ? hash.hashCode : token.Text);
                     }
                 }
+                else
+                {
+                    sqlBuildUp.Add(token.Text);
+                }
             }
-
-            return sqlToUpdate;
+            return string.Join(" ", sqlBuildUp);
         }
 
         private static List<string> GetFields(DataTable table)
@@ -431,9 +434,9 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
                 var correctedString = string.Join("", correctedItems);
                 allStatementsCorrected.Add(correctedString);
             }
-            SqlQuery = string.Join(Environment.NewLine, allStatementsCorrected);
+            SqlQuery = string.Join(Environment.NewLine, allStatementsCorrected).Replace(" . ",".");
         }
-        
+
         void AddToRegionOutputs(List<string> fieldNames, string recorsetName)
         {
             var recordsetName = OutputsRegion.RecordsetName;
@@ -498,7 +501,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
                 }
             }
         }
-       
+
         void RemoveItemPropertyChangeEvent(NotifyCollectionChangedEventArgs args)
         {
             if (args.OldItems == null)
@@ -683,7 +686,7 @@ namespace Dev2.Activities.Designers2.AdvancedRecordset
             }
         }
 
-        
+
     }
 
 

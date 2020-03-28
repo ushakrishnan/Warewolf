@@ -277,9 +277,8 @@ Scenario: Executing ForEach in Rec with star which contains Sequence
 	   And the "System info" in 'Seq1' in step 2 for "ForEachTest1" debug outputs as
 	  | # |                       |
 	  | 1 | [[rec(2).d]] = String |
-
-
-
+	  
+@NestedForEachExecution
  Scenario: Workflow with ForEach in Rec with star which contains Dot Net DLL
       Given I have a workflow "WFWithForEachContainingDotNetDLL"	
 	   And "WFWithForEachContainingDotNetDLL" contains an Assign "RecVal" as
@@ -380,6 +379,7 @@ Scenario: Executing 2 ForEach"s inside a ForEach which contains Assign only
 	  | # |                    |
 	  | 1 | [[rec(1).a]] = 123 |	  		
 
+@NestedForEachExecution
   Scenario: Executing 2 ForEach"s inside a ForEach which contains Assign only Large Execution
       Given I have a workflow "WFForEachInsideforEachLargeTenFifty"
 	  And "WFForEachInsideforEachLargeTenFifty" contains a Foreach "ForEachTest1" as "NumOfExecution" executions "10"
@@ -405,11 +405,11 @@ Scenario: Executing 2 ForEach"s inside a ForEach which contains Assign only
 	  When "WFForEachInsideforEachLargeTenFifty" is executed
 	  Then the workflow execution has "NO" error
 	  And the server CPU usage is less than 15%
-	  And the server memory difference is less than 200 mb
+	  And the server memory difference is less than 300 mb
 	  And the "ForEachTest1" in WorkFlow "WFForEachInsideforEachLargeTenFifty" debug inputs as 
 	  |                 | Number |
 	  | No. of Executes | 10      |
-	  And the "ForEachTest1" in WorkFlow "WFForEachInsideforEachLargeTenFifty" has  "10" nested children
+	  And the "ForEachTest1" in WorkFlow "WFForEachInsideforEachLargeTenFifty" has at least "5" nested children
       And the "ForEachTest2" in step 1 for "ForEachTest1" debug inputs as 
 	  |                 | Number |
 	  | No. of Executes | 50      |
@@ -432,7 +432,7 @@ Scenario: Executing 2 ForEach"s inside a ForEach which contains Assign only
 	  | 14 | [[rec().n]] = | aasdd222      |
 	  | 15 | [[rec().o]] = | 22323asda     |
 	  And the "Testingoutput" in step 50 for "ForEachTest2" debug outputs as
-	  | #  |                                |
+	  | #  |                               |
 	  | 1  | [[rec(50).a]] = 123asda       |
 	  | 2  | [[rec(50).b]] = aaaaa         |
 	  | 3  | [[rec(50).c]] = rrrrrrr       |
@@ -1221,17 +1221,20 @@ Examples:
 
 @WorkflowExecution
 Scenario Outline: Database MySqlDB Database service inputs and outputs
-     Given I have a workflow "<WorkflowName>"
-	 And "<WorkflowName>" contains a mysql database service "<ServiceName>" with mappings as
-	  | Input to Service | From Variable | Output from Service          | To Variable     |
-	  | name             | afg%          | countryid   | <nameVariable>  |
-	  |                  |               | description | <emailVariable> |
-      When "<WorkflowName>" is executed
-     Then the workflow execution has "<errorOccured>" error
-	 And the "<ServiceName>" in Workflow "<WorkflowName>" debug outputs as
-	  |                                            |
-	  | [[countries(1).id]] = 1                    |
-	  | [[countries(1).description]] = Afghanistan |
+	Given I depend on a valid MySQL server
+    And I have a workflow "<WorkflowName>"
+	And "<WorkflowName>" contains a mysql database service "<ServiceName>" with mappings as
+	 | Input to Service | From Variable | Output from Service | To Variable     |
+	 | name             | afg%          | countryid           | <nameVariable>  |
+	 |                  |               | description         | <emailVariable> |
+    When "<WorkflowName>" is executed
+    Then the workflow execution has "<errorOccured>" error
+	And the "<ServiceName>" in Workflow "<WorkflowName>" debug outputs as
+	 |                                            |
+	 | [[countries(1).id]] = 1                    |
+	 | [[countries(2).id]] = 1                    |
+	 | [[countries(1).description]] = Afghanistan |
+	 | [[countries(2).description]] = Afghanistan |
 Examples: 
     | WorkflowName                  | ServiceName           | nameVariable        | emailVariable                | errorOccured |
     | TestMySqlWFWithMySqlCountries | Pr_CitiesGetCountries | [[countries(*).id]] | [[countries(*).description]] | NO           |
@@ -1340,9 +1343,21 @@ Scenario: Executing unsaved workflow should execute by ID
 	  | 2 | [[rec(2).a]] = 2  |
 
 @WorkflowExecution
+Scenario:WF with DsfRabbitMq Consume timeout 5
+	Given I depend on a valid RabbitMQ server
+	And I have a workflow "RabbitMqConsume5mintimeout"
+	And "RabbitMqConsume5mintimeout" contains DsfRabbitMQPublish and Queue1 "DsfPublishRabbitMQActivity" into "[[result1]]"
+	And "RabbitMqConsume5mintimeout" contains RabbitMQConsume "DsfConsumeRabbitMQActivity" with timeout 5 seconds into "[[result]]"
+	When "RabbitMqConsume5mintimeout" is executed
+    Then the workflow execution has "No" error
+	And the "RabbitMqConsume5mintimeout" has a start and end duration
+	And "RabbitMqConsume5mintimeout" Duration is greater or equal to 5 seconds
+
+@WorkflowExecution
 Scenario:WF with RabbitMq Consume timeout 5
-	Given I have a workflow "RabbitMqConsume5mintimeout"
-	And "RabbitMqConsume5mintimeout" contains RabbitMQPublish and Queue1 "DsfPublishRabbitMQActivity" into "[[result1]]"
+	Given I depend on a valid RabbitMQ server
+	And I have a workflow "RabbitMqConsume5mintimeout"
+	And "RabbitMqConsume5mintimeout" contains RabbitMQPublish and Queue1 - CorrelationID "PublishRabbitMQActivity" into "[[result1]]"
 	And "RabbitMqConsume5mintimeout" contains RabbitMQConsume "DsfConsumeRabbitMQActivity" with timeout 5 seconds into "[[result]]"
 	When "RabbitMqConsume5mintimeout" is executed
     Then the workflow execution has "No" error
@@ -1420,73 +1435,3 @@ Scenario: Workflow with ForEach and Manual Loop
 	  And the "MyAssign" in step 2 for "ForEachTest" number '2' debug outputs as
 		| # |                     |
 		| 1 | [[rec(4).a]] = Test |
-
-	
-@WorkflowExecution
-Scenario: Audit Log Query Expect 3 Items Search on Activity Display Name
-	Given I have a server at "localhost" with workflow "Hello World"
-	And the audit database is empty
-	When "localhost" is the active environment used to execute "Hello World"
-    Then the workflow execution has "No" error
-	And The audit database has "3" search results containing "Dev2.Activities.DsfDecision" with type "" for "Hello World" as 
-	| AuditType               | WorkflowName | PreviousActivityType        | NextActivityType            |
-	| LogPreExecuteState      | Hello World  | null                        | Dev2.Activities.DsfDecision |
-	| LogPostExecuteState     | Hello World  | Dev2.Activities.DsfDecision | null                        |
-	| LogExecuteCompleteState | Hello World  | Dev2.Activities.DsfDecision | null                        |
-
-@WorkflowExecution
-Scenario: Audit Log Query Expect 3 Items Search on Activity Type
-	Given I have a server at "localhost" with workflow "Hello World"
-	And the audit database is empty
-	When "localhost" is the active environment used to execute "Hello World"
-    Then the workflow execution has "No" error
-	And The audit database has "3" search results containing "Dev2.Activities.DsfDecision" with type "" for "Hello World" as 
-	| AuditType               | WorkflowName | PreviousActivityType        | NextActivityType            |
-	| LogPreExecuteState      | Hello World  | null                        | Dev2.Activities.DsfDecision |
-	| LogPostExecuteState     | Hello World  | Dev2.Activities.DsfDecision | null                        |
-	| LogExecuteCompleteState | Hello World  | Dev2.Activities.DsfDecision | null                        |
-
-@WorkflowExecution
-Scenario: Audit Log Query Expect No Results
-	Given I have a server at "localhost" with workflow "Hello World"
-	And the audit database is empty
-	When "localhost" is the active environment used to execute "Hello World"
-    Then the workflow execution has "No" error
-	And The audit database has "0" search results containing "Something that doesn't exist" with log type "Dev2.Activities.DsfDecision" for "Hello World"
-
-@WorkflowExecution
-Scenario: Audit Log Query Expect 8 Items
-	Given I have a server at "localhost" with workflow "TestSqlExecutesOnce"
-	And the audit database is empty
-	Then Then I add Filter "SQL Server Database"
-	When "localhost" is the active environment used to execute "TestSqlExecutesOnce"
-    Then the workflow execution has "No" error
-	And The audit database has "8" search results containing "SQL Server Database" with type "" for "TestSqlExecutesOnce" as 
-	| AuditType           | WorkflowName        | PreviousActivityType                                                                | NextActivityType                                                                    |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfRandomActivity                                                   | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPreExecuteState  | TestSqlExecutesOnce | null                                                                                | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfSqlServerDatabaseActivity                                        | Unlimited.Applications.BusinessDesignStudio.Activities.DsfDotNetMultiAssignActivity |
-	| LogPostExecuteState | TestSqlExecutesOnce | Unlimited.Applications.BusinessDesignStudio.Activities.DsfDotNetMultiAssignActivity | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPreExecuteState  | TestSqlExecutesOnce | null                                                                                | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfSqlServerDatabaseActivity                                        | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPreExecuteState  | TestSqlExecutesOnce | null                                                                                | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfSqlServerDatabaseActivity                                        | Dev2.Activities.DsfDecision                                                         |
-	
-@WorkflowExecution
-Scenario: Audit Log Query Expect 8 Items from search
-	Given I have a server at "localhost" with workflow "TestSqlExecutesOnce"
-	And the audit database is empty
-	Then Then I add Filter "SQL Server Database"
-	When "localhost" is the active environment used to execute "TestSqlExecutesOnce"
-    Then the workflow execution has "No" error
-	And The audit database has "8" search results containing "SQL Server Database" with type "" for "TestSqlExecutesOnce" as 
-	| AuditType           | WorkflowName        | PreviousActivityType                                                                | NextActivityType                                                                    |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfRandomActivity                                                   | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPreExecuteState  | TestSqlExecutesOnce | null                                                                                | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfSqlServerDatabaseActivity                                        | Unlimited.Applications.BusinessDesignStudio.Activities.DsfDotNetMultiAssignActivity |
-	| LogPostExecuteState | TestSqlExecutesOnce | Unlimited.Applications.BusinessDesignStudio.Activities.DsfDotNetMultiAssignActivity | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPreExecuteState  | TestSqlExecutesOnce | null                                                                                | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfSqlServerDatabaseActivity                                        | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPreExecuteState  | TestSqlExecutesOnce | null                                                                                | Dev2.Activities.DsfSqlServerDatabaseActivity                                        |
-	| LogPostExecuteState | TestSqlExecutesOnce | Dev2.Activities.DsfSqlServerDatabaseActivity                                        | Dev2.Activities.DsfDecision                                                         |
-		

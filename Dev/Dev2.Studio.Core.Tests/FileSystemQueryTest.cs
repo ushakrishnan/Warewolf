@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,20 +10,22 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Management;
+using System.Threading;
 using Dev2.Common.Interfaces.Wrappers;
 using Dev2.Common.Wrappers;
+using Dev2.Infrastructure.Tests;
 using Dev2.Intellisense.Helper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using Warewolf.Launcher;
 
 namespace Dev2.Core.Tests
 {
     [TestClass]
-
     public class FileSystemQueryTest
     {
         [TestMethod]
@@ -619,10 +621,34 @@ namespace Dev2.Core.Tests
         [TestCategory("FileSystemQuery_ShareCollection")]
         public void FileSystemQuery_ShareCollection()
         {
-            //------------Execute Test---------------------------
-            var shareCollection = new ShareCollection(@"\\rsaklfsvrpdc\");
+            var shareCollection = new ShareCollection(@"\\SVRPDC.premier.local\");
             //------------Assert Results-------------------------
-            Assert.AreEqual(17, shareCollection.Count);
+            Assert.IsTrue(shareCollection.Count > 0, "Cannot get shared directory information.");
+        }
+
+        public static void AuthenticateForSharedFolder(string site, string user, string password)
+        {
+            var process = new Process();
+
+            process.StartInfo = new ProcessStartInfo()
+            {
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true,
+                ErrorDialog = false,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                FileName = "net.exe",
+                Arguments = $"use {site} /USER:{user} /PERSISTENT:YES {password}"
+            };
+            process.OutputDataReceived += (sender, arguments) => Console.WriteLine(arguments.Data);
+            process.ErrorDataReceived += (sender, arguments) => Console.WriteLine(arguments.Data);
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
         }
 
         static FileSystemQuery GetFileSystemQuery(bool hasShares = true)

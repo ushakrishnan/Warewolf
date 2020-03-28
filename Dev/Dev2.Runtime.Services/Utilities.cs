@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -15,8 +16,6 @@ namespace Dev2.Runtime
 {
     public static class Utilities
     {
-        #region GenerateString
-
         public static string GenerateString(this Random random, int length) => random.GenerateString(length, "");
 
         public static string GenerateString(this Random random, int length, string prefix)
@@ -34,7 +33,6 @@ namespace Dev2.Runtime
             }
             return builder.ToString();
         }
-
-        #endregion
+        
     }
 }

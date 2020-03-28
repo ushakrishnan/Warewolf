@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ActivityUnitTests;
 using Dev2.Common;
+using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Enums.Enums;
 using Dev2.Common.State;
 using Dev2.Data.Interfaces.Enums;
@@ -53,7 +54,7 @@ namespace Dev2.Tests.Activities.ActivityTests
                 {
                     Expression = expression,
                     Result = result,
-                    RoundingType = Dev2EnumConverter.ConvertEnumValueToString(roundingType),
+                    RoundingType = roundingType.GetDescription(),
                     RoundingDecimalPlaces = roundingDecimalPlaces,
                     DecimalPlacesToShow = decimalPlacesToShow,
                 }

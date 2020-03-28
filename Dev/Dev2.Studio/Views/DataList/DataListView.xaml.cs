@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -76,7 +77,7 @@ namespace Dev2.Studio.Views.DataList
             {
                 var itemThatChanged = txtbox.DataContext as IDataListItemModel;
                 vm.RemoveBlankRows(itemThatChanged);
-                vm.ValidateNames(itemThatChanged);
+                vm.ValidateVariableNamesForUI(itemThatChanged);
 
                 if (vm.HasErrors && vm.DataListErrorMessage.Length != 0)
                 {
@@ -96,7 +97,7 @@ namespace Dev2.Studio.Views.DataList
 
         void WriteToResourceModel()
         {
-            if (DataContext is IDataListViewModel vm && !vm.IsSorting)
+            if (DataContext is IDataListViewModel vm && !vm.IsSorting && !vm.HasErrors)
             {
                 vm.WriteToResourceModel();
             }

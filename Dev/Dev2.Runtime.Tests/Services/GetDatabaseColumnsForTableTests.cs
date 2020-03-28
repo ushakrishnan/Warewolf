@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,16 +24,17 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Tests.Runtime.Services
 {
     [TestClass]    
     public class GetDatabaseColumnsForTableTests
     {
-        public static ContainerLauncher _containerOps;
+        public static Depends _containerOps;
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("MSSql")]
         public void GetResourceID_ShouldReturnEmptyGuid()
@@ -47,7 +48,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(Guid.Empty, resId);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("MSSql")]
         public void GetAuthorizationContextForService_ShouldReturnContext()
@@ -63,7 +64,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region Execute
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [ExpectedException(typeof(InvalidDataContractException))]
@@ -75,7 +76,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual(string.Empty, actual);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
@@ -89,7 +90,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No database set.", result.Errors);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
@@ -104,7 +105,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No database set.", result.Errors);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
@@ -118,7 +119,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No database set.", result.Errors);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
@@ -133,7 +134,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No table name set.", result.Errors);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
@@ -148,7 +149,7 @@ namespace Dev2.Tests.Runtime.Services
             Assert.AreEqual("No table name set.", result.Errors);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
@@ -163,7 +164,7 @@ namespace Dev2.Tests.Runtime.Services
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("MSSql")]
         public void GetDatabaseColumnsForTable_Execute_ValidDatabaseSource_WithSchema_OnlyReturnsForThatSchema()
@@ -217,9 +218,9 @@ namespace Dev2.Tests.Runtime.Services
             StringAssert.Contains(result.Items[3].SqlDataType.ToString(), "NChar");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("MSSql")]
+        [TestCategory("MSSql with Invalid Schema")]
         public void GetDatabaseColumnsForTable_Execute_NullSchema_ValidDatabaseSource_ReturnsFromAllSchemas()
         {
             var parser = new Mock<IActivityParser>();
@@ -266,9 +267,9 @@ namespace Dev2.Tests.Runtime.Services
             StringAssert.Contains(result.Items[2].SqlDataType.ToString(), "Int");
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("MSSql")]
+        [TestCategory("MSSql with Invalid Schema")]
         public void GetDatabaseColumnsForTable_Execute_EmptySchema_ValidDatabaseSource_ReturnsFromAllSchemas()
         {
             var parser = new Mock<IActivityParser>();
@@ -316,13 +317,13 @@ namespace Dev2.Tests.Runtime.Services
 
         static DbSource CreateDev2TestingDbSource()
         {
-            _containerOps = TestLauncher.StartLocalMSSQLContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults"));
+            _containerOps = new Depends(Depends.ContainerType.MSSQL);
             var dbSource = new DbSource
             {
                 ResourceID = Guid.NewGuid(),
                 ResourceName = "Dev2TestingDB",
                 DatabaseName = "Dev2TestingDB",
-                Server = "rsaklfsvrdev.dev2.local",
+                Server = _containerOps.Container.IP,
                 AuthenticationType = AuthenticationType.User,
                 ServerType = enSourceType.SqlDatabase,
                 ReloadActions = true,
@@ -330,6 +331,8 @@ namespace Dev2.Tests.Runtime.Services
                 Password = "test123",
                 ConnectionTimeout = 30
             };
+            dbSource.Port = int.Parse(_containerOps.Container.Port);
+
             return dbSource;
         }
 
@@ -340,7 +343,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region HandlesType
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Huggs")]
         [TestCategory("MSSql")]
         public void GetDatabaseColumnsForTable_UnitTest_HandlesType_ExpectedReturnsGetDatabaseColumnsForTableService()
@@ -354,7 +357,7 @@ namespace Dev2.Tests.Runtime.Services
 
         #region CreateServiceEntry
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Description("Service should never get null values")]
         [Owner("Huggs")]
         [TestCategory("MSSql")]

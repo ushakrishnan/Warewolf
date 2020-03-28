@@ -1,6 +1,7 @@
+
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -8,7 +9,6 @@
 *  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
 */
 
-using System.Collections.Generic;
 using System.Text;
 using Dev2.Data.TO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -16,42 +16,78 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Dev2.Data.Tests.TO
 {
-    /// <summary>
-    /// Summary description for ErrorResultTOTests
-    /// </summary>
     [TestClass]
     public class ErrorResultTOTests
     {
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext { get; set; }
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_AddError_CheckForDuplicates_True_AddSameError_ExpectLstToBeSame()
+        {
+            var resultTo = new ErrorResultTO();
+            resultTo.AddError("some message", true);
+            resultTo.AddError("some message", true);
 
-        #region Additional test attributes
-        //
-        // You can use the following additional attributes as you write your tests:
-        //
-        // Use ClassInitialize to run code before running the first test in the class
-        // [ClassInitialize()]
-        // public static void MyClassInitialize(TestContext testContext) { }
-        //
-        // Use ClassCleanup to run code after all tests in a class have run
-        // [ClassCleanup()]
-        // public static void MyClassCleanup() { }
-        //
-        // Use TestInitialize to run code before running each test 
-        // [TestInitialize()]
-        // public void MyTestInitialize() { }
-        //
-        // Use TestCleanup to run code after each test has run
-        // [TestCleanup()]
-        // public void MyTestCleanup() { }
-        //
-        #endregion
+            Assert.IsTrue(resultTo.HasErrors());
+            Assert.AreEqual(1, resultTo.FetchErrors().Count);
+            Assert.AreEqual("some message", resultTo.FetchErrors()[0]);
+            Assert.AreEqual("<InnerError>some message</InnerError>", resultTo.MakeDataListReady());
+        }
+        
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_AddError_CheckForDuplicates_True_AddNewError_ExpectTrue()
+        {
+            var resultTo = new ErrorResultTO();
+            resultTo.AddError("some message", true);
+            resultTo.AddError("some message", true);
+            resultTo.AddError("deferent message", true);
+
+            Assert.IsTrue(resultTo.HasErrors());
+            Assert.AreEqual(2, resultTo.FetchErrors().Count);
+            Assert.AreEqual("some message", resultTo.FetchErrors()[0]);
+            Assert.AreEqual("deferent message", resultTo.FetchErrors()[1]);
+            Assert.AreEqual("<InnerError>some message</InnerError><InnerError>deferent message</InnerError>", resultTo.MakeDataListReady());
+        }
 
         [TestMethod]
-        public void ErrorResultsTOMakeErrorResultFromDataListStringWithMultipleErrorsExpectedCorrectErrorResultTO()
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_AddError_CheckForDuplicates_False_AddSameError_ExpectAdd()
+        {
+            var resultTo = new ErrorResultTO();
+            resultTo.AddError("some message", false);
+            resultTo.AddError("some message", false);
+            resultTo.AddError("some message", true);
+            resultTo.AddError("deferent message", false);
+
+            Assert.IsTrue(resultTo.HasErrors());
+            Assert.AreEqual(3, resultTo.FetchErrors().Count);
+            Assert.AreEqual("some message", resultTo.FetchErrors()[0]);
+            Assert.AreEqual("some message", resultTo.FetchErrors()[1]);
+            Assert.AreEqual("deferent message", resultTo.FetchErrors()[2]);
+            Assert.AreEqual("<InnerError>some message</InnerError><InnerError>some message</InnerError><InnerError>deferent message</InnerError>", resultTo.MakeDataListReady());
+        }
+        
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_AddError_NullMessage()
+        {
+            var resultTo = new ErrorResultTO();
+            resultTo.AddError(null, true);
+
+            Assert.IsFalse(resultTo.HasErrors());
+            // Shouldn't this be passing?
+            Assert.AreEqual(0, resultTo.FetchErrors().Count);
+            Assert.AreEqual("", resultTo.MakeDataListReady());
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_MakeErrorResultFromDataListStringWithMultipleErrorsExpectedCorrectErrorResultTO()
         {
             var makeErrorResultFromDataListString = ErrorResultTO.MakeErrorResultFromDataListString("<InnerError>First Error</InnerError><InnerError>Second Error</InnerError>");
             Assert.IsTrue(makeErrorResultFromDataListString.HasErrors());
@@ -61,8 +97,8 @@ namespace Dev2.Data.Tests.TO
         }
 
         [TestMethod]
-        [Owner("Hagashen Naidu")]
-        [TestCategory("ErrorResultTO_MakeErrorResultFromDataListString")]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
         public void ErrorResultTO_MakeErrorResultFromDataListString_WhenErrorStringNotValidXML_ShouldJustAddTheError()
         {
             //------------Setup for test--------------------------
@@ -74,123 +110,177 @@ namespace Dev2.Data.Tests.TO
         }
 
         [TestMethod]
-        [Owner("Hagashen Naidu")]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
         public void ErrorResultTO_MergeErrors_ShouldJustRemoveTheErrorInTheCollection()
         {
             var errorResultTo = new ErrorResultTO();
-            Assert.IsNotNull(errorResultTo);
-            var prObj = new PrivateObject(errorResultTo);
-            var errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            Assert.IsNotNull(errors);
-            Assert.AreEqual(0, errors.Count);
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
             errorResultTo.AddError("SomeError");
-            errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            if (errors != null)
-            {
-                Assert.AreEqual(1, errors.Count);
-            }
+            Assert.AreEqual(1, errorResultTo.FetchErrors().Count);
 
             var merge = new ErrorResultTO();
             merge.AddError("Error to merge");
             errorResultTo.MergeErrors(merge);
-            if (errors != null)
-            {
-                Assert.AreEqual(2, errors.Count);
-            }
+
+            Assert.AreEqual(2, errorResultTo.FetchErrors().Count);
         }
 
         [TestMethod]
-        [Owner("Hagashen Naidu")]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_MergeErrors_EmptyOther()
+        {
+            var errorResultTo = new ErrorResultTO();
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
+            errorResultTo.AddError("SomeError");
+
+            Assert.AreEqual(1, errorResultTo.FetchErrors().Count);
+
+            var merge = new ErrorResultTO();
+            errorResultTo.MergeErrors(merge);
+            Assert.AreEqual(1, errorResultTo.FetchErrors().Count);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_MergeErrors_NullOtherDoesNotThrow()
+        {
+            var errorResultTo = new ErrorResultTO();
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
+            errorResultTo.AddError("SomeError");
+
+            Assert.AreEqual(1, errorResultTo.FetchErrors().Count);
+
+            errorResultTo.MergeErrors(null);
+            Assert.AreEqual(1, errorResultTo.FetchErrors().Count);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
         public void ErrorResultTO_Remove_ShouldJustRemoveTheErrorInTheCollection()
         {
             var errorResultTo = new ErrorResultTO();
-            Assert.IsNotNull(errorResultTo);
-            var prObj = new PrivateObject(errorResultTo);
-            var errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            Assert.IsNotNull(errors);
-            Assert.AreEqual(0, errors.Count);
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
             errorResultTo.AddError("SomeError");
-            errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            if (errors != null)
-            {
-                Assert.AreEqual(1, errors.Count);
-            }
+
+            Assert.AreEqual(1, errorResultTo.FetchErrors().Count);
 
             errorResultTo.RemoveError("SomeError");
-            if (errors != null)
-            {
-                Assert.AreEqual(0, errors.Count);
-            }
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
         }
+
         [TestMethod]
-        [Owner("Hagashen Naidu")]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
         public void ErrorResultTO_Clear_ShouldEmptyTheErrorCollection()
         {
             var errorResultTo = new ErrorResultTO();
-            Assert.IsNotNull(errorResultTo);
-            var prObj = new PrivateObject(errorResultTo);
-            var errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            Assert.IsNotNull(errors);
-            Assert.AreEqual(0, errors.Count);
             errorResultTo.AddError("SomeError");
             errorResultTo.AddError("AnotherError");
-            errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            if (errors != null)
-            {
-                Assert.AreEqual(2, errors.Count);
-            }
+
+            Assert.AreEqual(2, errorResultTo.FetchErrors().Count);
 
             errorResultTo.ClearErrors();
-            if (errors != null)
-            {
-                Assert.AreEqual(0, errors.Count);
-            }
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
         }
 
         [TestMethod]
-        [Owner("Hagashen Naidu")]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
         public void ErrorResultTO_MakeDisplayReady_ShouldReturnAllErrorsAsOne()
         {
             var result = new StringBuilder();
             result.AppendLine("SomeError");
             result.Append("AnotherError");
             var errorResultTo = new ErrorResultTO();
-            Assert.IsNotNull(errorResultTo);
-            var prObj = new PrivateObject(errorResultTo);
-            var errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            Assert.IsNotNull(errors);
-            Assert.AreEqual(0, errors.Count);
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
             errorResultTo.AddError("SomeError");
             errorResultTo.AddError("AnotherError");
-            errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            if (errors != null)
-            {
-                Assert.AreEqual(2, errors.Count);
-            }
 
-            var makeDisplayReady = errorResultTo.MakeDisplayReady();            
+            Assert.AreEqual(2, errorResultTo.FetchErrors().Count);
+
+            var makeDisplayReady = errorResultTo.MakeDisplayReady();
             Assert.AreEqual(result.ToString(), makeDisplayReady);
         }
+
         [TestMethod]
-        [Owner("Hagashen Naidu")]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
         public void ErrorResultTO_MakeDataListReady_ShouldReturnAllErrorsAsOne()
         {
             var result = "<InnerError>SomeError</InnerError><InnerError>AnotherError</InnerError>";
             var errorResultTo = new ErrorResultTO();
-            Assert.IsNotNull(errorResultTo);
-            var prObj = new PrivateObject(errorResultTo);
-            var errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            Assert.IsNotNull(errors);
-            Assert.AreEqual(0, errors.Count);
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
             errorResultTo.AddError("SomeError");
             errorResultTo.AddError("AnotherError");
-            errors = prObj.GetField("_errorList") as IList<StringBuilder>;
-            if (errors != null)
-            {
-                Assert.AreEqual(2, errors.Count);
-            }
 
-            var makeDisplayReady = errorResultTo.MakeDataListReady();            
+            Assert.AreEqual(2, errorResultTo.FetchErrors().Count);
+
+            var makeDisplayReady = errorResultTo.MakeDataListReady();
+            Assert.AreEqual(result, makeDisplayReady);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_MakeDataListReady_ExpectJson_ShouldEscapeQuotesInErrorMessages()
+        {
+            var errorResultTo = new ErrorResultTO();
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
+            errorResultTo.AddError("this is some exception's \"message\" string");
+            errorResultTo.AddError("Another \"Error\"");
+            errorResultTo.AddError("\"Error\" message");
+
+            var makeDisplayReady = errorResultTo.MakeDataListReady(false);
+            var result = "\"errors\": [ \"this is some exception's \\\"message\\\" string\",\"Another \\\"Error\\\"\",\"\\\"Error\\\" message\"]";
+            Assert.AreEqual(result, makeDisplayReady);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_MakeDataListReady_AsXmlFalseShouldReturnAllErrorsAsOne()
+        {
+            var result = "\"errors\": [ \"SomeError\",\"AnotherError\"]";
+            var errorResultTo = new ErrorResultTO();
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
+            errorResultTo.AddError("SomeError");
+            errorResultTo.AddError("AnotherError");
+
+            Assert.AreEqual(2, errorResultTo.FetchErrors().Count);
+
+            var makeDisplayReady = errorResultTo.MakeDataListReady(false);
+            Assert.AreEqual(result, makeDisplayReady);
+        }
+
+        [TestMethod]
+        [Owner("Rory McGuire")]
+        [TestCategory(nameof(ErrorResultTO))]
+        public void ErrorResultTO_MakeDataListReady_CannotSetUnknownMember_RemapsErrorMessage()
+        {
+            var result = "\"errors\": [ \"SomeError\",\"Resource has unrecognized formatting, this Warewolf Server may be to outdated to read this resource.\",\"Another Error\"]";
+            var errorResultTo = new ErrorResultTO();
+
+            Assert.AreEqual(0, errorResultTo.FetchErrors().Count);
+            errorResultTo.AddError("SomeError");
+            errorResultTo.AddError("Cannot set unknown member");
+            errorResultTo.AddError("Another Error");
+
+            Assert.AreEqual(3, errorResultTo.FetchErrors().Count);
+
+            var makeDisplayReady = errorResultTo.MakeDataListReady(false);
             Assert.AreEqual(result, makeDisplayReady);
         }
     }

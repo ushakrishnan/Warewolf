@@ -8,7 +8,7 @@ namespace Warewolf.UI.Tests.Tools
     [CodedUITest]
     public class Move
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
 		[TestCategory("File Tools")]
         public void PathMoveTool_Small_And_LargeView_UITest()
         {

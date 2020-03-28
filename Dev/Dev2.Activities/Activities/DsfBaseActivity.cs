@@ -1,3 +1,4 @@
+#pragma warning disable
 using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
@@ -46,7 +47,6 @@ namespace Dev2.Activities
             ExecuteTool(dataObject, 0);
         }
 
-
         public override List<string> GetOutputs() => new List<string> { Result };
 
         protected override void ExecuteTool(IDSFDataObject dataObject, int update)
@@ -85,7 +85,9 @@ namespace Dev2.Activities
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         private void TryExecute(IDSFDataObject dataObject, int update, ErrorResultTO allErrors, ErrorResultTO errors)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             IsSingleValueRule.ApplyIsSingleValueRule(Result, allErrors);
 

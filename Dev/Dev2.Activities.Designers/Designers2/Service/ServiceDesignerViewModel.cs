@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -200,7 +201,7 @@ namespace Dev2.Activities.Designers2.Service
                 if (contentPresenter != null)
                 {
                     var json = item.GetJson();
-                    contentPresenter.Text = JSONUtils.Format(json);
+                    contentPresenter.Text = JsonUtils.Format(json);
                 }
 
                 window.ShowDialog();
@@ -615,7 +616,9 @@ namespace Dev2.Activities.Designers2.Service
         public MappingManager MappingManager { get; }
         public ValidationMemoManager ValidationMemoManager { get; }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         string GetIconPath(Common.Interfaces.Core.DynamicServices.enActionType actionType)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             switch (actionType)
             {

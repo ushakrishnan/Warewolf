@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -72,6 +72,16 @@ namespace Dev2.Core.Tests.Utils
         }
 
         public static Mock<IAsyncWorker> CreateSynchronousAsyncWorker()
+        {
+            return MockAsyncWorker();
+        }
+
+        public static IAsyncWorker CreateSynchronousAsyncWorkerObject()
+        {
+            return MockAsyncWorker().Object;
+        }
+
+        private static Mock<IAsyncWorker> MockAsyncWorker()
         {
             var mockWorker = new Mock<IAsyncWorker>();
             mockWorker.Setup(r => r.Start(It.IsAny<Action>(), It.IsAny<Action>()))

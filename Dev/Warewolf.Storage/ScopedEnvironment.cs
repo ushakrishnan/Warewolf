@@ -1,3 +1,14 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Collections.Generic;
 using Dev2.Common.Interfaces;
@@ -35,6 +46,10 @@ namespace Warewolf.Storage
         {
 
             _inner.Assign(UpdateDataSourceWithIterativeValue(_datasource, update, exp), UpdateDataSourceWithIterativeValue(_datasource, update, value), 0);
+        }
+        public void AssignString(string exp, string value, int update)
+        {
+            _inner.AssignString(UpdateDataSourceWithIterativeValue(_datasource, update, exp), UpdateDataSourceWithIterativeValue(_datasource, update, value), 0);
         }
 
         string UpdateDataSourceWithIterativeValueFunction(string datasource, int update, string exp) => exp.Replace(_alias, datasource);
@@ -141,6 +156,9 @@ namespace Warewolf.Storage
 
         public HashSet<string> AllErrors => _inner.AllErrors;
 
+        public Guid Id => _inner.Id;
+        public Guid ParentId => _inner.ParentId;
+
         public void AddError(string error)
         {
             _inner.AddError(error);
@@ -208,6 +226,16 @@ namespace Warewolf.Storage
         public string ToJson()
         {
             return "";
+        }
+
+        public IExecutionEnvironment Snapshot()
+        {
+            return _inner.Snapshot();
+        }
+
+        public void FromJson(string serializedEnv)
+        {
+            
         }
     }
 }

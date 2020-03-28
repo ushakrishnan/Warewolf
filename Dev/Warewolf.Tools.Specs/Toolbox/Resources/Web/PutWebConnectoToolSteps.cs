@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Dev2.Activities.Designers2.Web_Service_Put;
+using Dev2.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.DB;
@@ -64,7 +65,7 @@ namespace Dev2.Activities.Specs.Toolbox.Resources.Web
             _dev2CountriesWebServiceWebSource = new WebServiceSourceDefinition
             {
                 Name = "Dev2CountriesWebService",
-                HostName = "http://rsaklfsvrtfsbld/integrationTestSite/GetCountries.ashx"
+                HostName = "http://TFSBLD.premier.local/integrationTestSite/GetCountries.ashx"
             };
 
             _googleWebSource = new WebServiceSourceDefinition

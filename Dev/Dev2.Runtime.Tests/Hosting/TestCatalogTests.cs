@@ -1,12 +1,22 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Dev2.Common;
-using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Data;
-using Dev2.Common.Interfaces.Scheduler.Interfaces;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using Dev2.Communication;
 using Dev2.Data;
 using Dev2.DataList.Contract;
@@ -18,22 +28,23 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Dev2.Tests.Runtime.Hosting
 {
     [TestClass]
+    [TestCategory("Runtime Hosting")]
     public class TestCatalogTests
     {
-        public static IDirectoryHelper DirectoryHelperInstance()
+        public static IDirectory DirectoryWrapperInstance()
         {
-            return new DirectoryHelper();
+            return new DirectoryWrapper();
         }
         [TestInitialize]
         public void CleanupTestDirectory()
         {
             if (Directory.Exists(EnvironmentVariables.TestPath))
             {
-                DirectoryHelperInstance().CleanUp(EnvironmentVariables.TestPath);
+                DirectoryWrapperInstance().CleanUp(EnvironmentVariables.TestPath);
             }
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Constructor")]
         public void TestCatalog_Constructor_TestPathDoesNotExist_ShouldCreateIt()
@@ -47,7 +58,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsTrue(Directory.Exists(EnvironmentVariables.TestPath));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTests")]
         public void TestCatalog_SaveTests_WhenNullList_ShouldDoNothing()
@@ -61,7 +72,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsFalse(Directory.Exists(EnvironmentVariables.TestPath + "\\" + resourceID));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTests")]
         public void TestCatalog_SaveTests_WhenEmptyList_ShouldDoNothing()
@@ -75,7 +86,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsFalse(Directory.Exists(EnvironmentVariables.TestPath + "\\" + resourceID));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTests")]
         public void TestCatalog_SaveTests_WhenNotEmptyList_ShouldSaveTestsAsFiles()
@@ -120,7 +131,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTest")]
         public void TestCatalog_SaveTests_WhenNoResourceIdList_ShouldSaveTestAsFiles()
@@ -152,7 +163,7 @@ namespace Dev2.Tests.Runtime.Hosting
             
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTest")]
         public void TestCatalog_SaveTests_WhenResourceIdList_ShouldSaveTestAsAddToList()
@@ -197,7 +208,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_SaveTest")]
         public void TestCatalog_SaveTests_WhenResourceIdListHasTest_ShouldSaveTestUpdateToList()
@@ -260,7 +271,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_DeleteTest")]
         public void TestCatalog_DeleteTest_WhenResourceIdTestName_ShouldDeleteTest()
@@ -311,7 +322,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsNull(modelTO);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_DeleteTest")]
         public void TestCatalog_DeleteAllTests_WhenResourceIdTestName_ShouldDeleteTestFolder()
@@ -363,7 +374,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsFalse(Directory.Exists(path));
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Load")]
         public void TestCatalog_Load_WhenTests_ShouldLoadDictionaryWithResourceIdAndTests()
@@ -416,7 +427,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Load")]
         public void TestCatalog_Reload_ShouldLoadDictionaryWithResourceIdAndTests()
@@ -466,7 +477,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(2, res2Tests.Count);
             Assert.AreEqual("Test 21", res2Tests[0].TestName);
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
-            DirectoryHelperInstance().CleanUp(EnvironmentVariables.TestPath);
+            DirectoryWrapperInstance().CleanUp(EnvironmentVariables.TestPath);
             Directory.CreateDirectory(EnvironmentVariables.TestPath);
             //------------Execute Test---------------------------
             testCatalog.ReloadAllTests();
@@ -475,7 +486,7 @@ namespace Dev2.Tests.Runtime.Hosting
 
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenResourceIdValid_ShouldReturnListOfTestsForResourceId()
@@ -524,7 +535,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenPassResult_ShouldReturnListOfTestsForResourceIdWithCorrectPassResult()
@@ -595,7 +606,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual(true, res2Tests[1].TestPassed);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenResourceIdNotLoaded_ShouldReturnListOfTestsForResourceId()
@@ -643,7 +654,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 22", res2Tests[1].TestName);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_Fetch")]
         public void TestCatalog_Fetch_WhenResourceIdNotValid_ShouldReturnListOfTestsForResourceId()
@@ -690,7 +701,7 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_FetchTest")]
         public void TestCatalog_FetchTest_WhenResourceIdTestName_ShouldReturnTest()
@@ -720,7 +731,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("Test 2",test.TestName);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_FetchTest")]
         public void TestCatalog_FetchTest_WhenResourceIdInvalidTestName_ShouldReturnNull()
@@ -749,7 +760,7 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.IsNull(test);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_FetchTest")]
         public void TestCatalog_FetchTest_WhenInvalidResourceIdTestName_ShouldReturnNull()
@@ -780,14 +791,14 @@ namespace Dev2.Tests.Runtime.Hosting
 
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_UpdateTestsBasedOnIOChange")]
         public void TestCatalog_UpdateTestsBasedOnIOChange_WhenTestsFound_ShouldUpdateBasedOnChange_Scalars()
         {
             //------------Setup for test--------------------------
-            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition("Gender", "", "", "", false, "", false, "", false) };
-            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("MessageForUser", "", "", "", false, "", false, "", false) };
+            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition_Recordset("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("Gender", "", "", "", false, "", false, "", false) };
+            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition_Recordset("MessageForUser", "", "", "", false, "", false, "", false) };
             var testCatalog = new TestCatalog();
             var resourceID = Guid.NewGuid();
             var serviceTestModelTos = new List<IServiceTestModelTO>
@@ -883,14 +894,14 @@ namespace Dev2.Tests.Runtime.Hosting
         }
 
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_UpdateTestsBasedOnIOChange")]
         public void TestCatalog_UpdateTestsBasedOnIOChange_WhenTestsFound_ShouldUpdateBasedOnChange_RecordSets()
         {
             //------------Setup for test--------------------------
-            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition("Gender", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition("f", "", "", "rs", false, "", false, "", false), DataListFactory.CreateDefinition("g", "", "", "rs", false, "", false, "", false), DataListFactory.CreateDefinition("i", "", "", "rs", false, "", false, "", false), DataListFactory.CreateDefinition("set", "", "", "rec", false, "", false, "", false) };
-            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("MessageForUser", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition("out", "", "", "res", false, "", false, "", false) };
+            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition_Recordset("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("Gender", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("f", "", "", "rs", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("g", "", "", "rs", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("i", "", "", "rs", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("set", "", "", "rec", false, "", false, "", false) };
+            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition_Recordset("MessageForUser", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("out", "", "", "res", false, "", false, "", false) };
             var testCatalog = new TestCatalog();
             var resourceID = Guid.NewGuid();
             var serviceTestModelTos = new List<IServiceTestModelTO>
@@ -1015,14 +1026,14 @@ namespace Dev2.Tests.Runtime.Hosting
             Assert.AreEqual("", updatedTest2.Outputs[0].Value);
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("TestCatalog_UpdateTestsBasedOnIOChange")]
         public void TestCatalog_UpdateTestsBasedOnIOChange_WhenTestsFound_ShouldUpdateStepsToInvalid()
         {
             //------------Setup for test--------------------------
-            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition("Gender", "", "", "", false, "", false, "", false) };
-            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition("MessageForUser", "", "", "", false, "", false, "", false) };
+            var inputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition_Recordset("Age", "", "", "", false, "", false, "", false), DataListFactory.CreateDefinition_Recordset("Gender", "", "", "", false, "", false, "", false) };
+            var outputDefs = new List<IDev2Definition> { DataListFactory.CreateDefinition_Recordset("MessageForUser", "", "", "", false, "", false, "", false) };
             var testCatalog = new TestCatalog();
             var resourceID = Guid.NewGuid();
             var serviceTestModelTos = new List<IServiceTestModelTO>

@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -49,6 +50,7 @@ namespace Dev2.Common.Interfaces
         IServiceTestStep AddTestStep(string activityUniqueId, string activityDisplayName, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs);
         IServiceTestStep AddTestStep(string activityUniqueId, string activityDisplayName, string activityTypeName, ObservableCollection<IServiceTestOutput> serviceTestOutputs, StepType stepType);
         IServiceTestStep AddDebugItemTestStep(IDebugState debugItemContent, ObservableCollection<IServiceTestOutput> serviceTestOutputs);
+        T As<T>() where T : class, IServiceTestModel;
     }
 
     public interface IServiceTestInput
@@ -70,5 +72,6 @@ namespace Dev2.Common.Interfaces
         bool HasOptionsForValue { get; set; }
         List<string> OptionsForValue { get; set; }
         TestRunResult Result { get; set; }
+        void OnSearchTypeChanged();
     }
 }

@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -24,20 +24,24 @@ using Warewolf.Security.Encryption;
 using System.Runtime.InteropServices;
 using System.Runtime.ConstrainedExecution;
 using System.Security;
-using Warewolf.Launcher;
+using Dev2.Infrastructure.Tests;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Integration.Tests.Services.Sql
 {
     [TestClass]
     public class SqlDatabaseBrokerTests
     {
-        static ContainerLauncher _containerOps;
+        static Depends _containerOps;
 
         [ClassInitialize]
         public static void MyClassInitialize(TestContext testContext)
         {
-            _containerOps = TestLauncher.StartLocalMSSQLContainer(testContext.ResultsDirectory);
-            Thread.Sleep(10000);
+            _containerOps = new Depends(Depends.ContainerType.MSSQL);
+            if (_containerOps != null)
+            {
+                Thread.Sleep(10000);
+            }
         }
 
         [ClassCleanup]
@@ -45,12 +49,12 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         [TestMethod]
         [Owner("Ashley Lewis")]
-        [TestCategory("SqlDatabaseBroker_GetServiceMethods")]        
+        [Ignore("Ignoring until the move to premier.local domain is complete")]
         public void SqlDatabaseBroker_GetServiceMethods_WindowsUserWithDbAccess_GetsMethods()
         {
-            RunAs("IntegrationTester", "DEV2", "I73573r0", () =>
+            RunAs("IntegrationTester", "dev2", () =>
             {
-                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(AuthenticationType.Windows, "RSAKLFSVRDEV");
+                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port), AuthenticationType.Windows);
                 var broker = new SqlDatabaseBroker();
                 var result = broker.GetServiceMethods(dbSource);
                 Assert.AreEqual(true, result.Count > 0);
@@ -59,12 +63,11 @@ namespace Dev2.Integration.Tests.Services.Sql
         
         [TestMethod]
         [Owner("Ashley Lewis")]
-        [TestCategory("SqlDatabaseBroker")]        
         public void SqlDatabaseBroker_GetServiceMethods_WindowsUserWithoutDbAccess_ThrowsLoginFailedException()
         {
             RunAs("NoDBAccessTest", "DEV2", "One23456", () =>
             {
-                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(AuthenticationType.Windows);
+                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port), AuthenticationType.Windows);
                 var broker = new SqlDatabaseBroker();
                 try
                 {
@@ -82,13 +85,10 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         [TestMethod]
         [Owner("Ashley Lewis")]
-        [TestCategory("SqlDatabaseBroker")]
-        [ExpectedException(typeof(WarewolfDbException))]
-        
+        [ExpectedException(typeof(WarewolfDbException))]        
         public void SqlDatabaseBroker_GetServiceMethods_SqlUserWithInvalidUsername_ThrowsLoginFailedException()
-
         {
-            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
+            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port));
             dbSource.UserID = "Billy.Jane";
             dbSource.Password = "invalidPassword";
 
@@ -98,10 +98,9 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         [TestMethod]
         [Owner("Ashley Lewis")]
-        [TestCategory("SqlDatabaseBroker")]        
         public void SqlDatabaseBroker_GetServiceMethods_SqlUserWithValidUsername_GetsMethods()
         {
-            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
+            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port));
             var broker = new SqlDatabaseBroker();
             var result = broker.GetServiceMethods(dbSource);
             Assert.AreEqual(true, result.Count > 0);
@@ -109,12 +108,12 @@ namespace Dev2.Integration.Tests.Services.Sql
         
         [TestMethod]
         [Owner("Massimo.Guerrera")]
-        [TestCategory("SqlDatabaseBroker")]        
+        [TestCategory("SqlDatabaseBroker")]
         public void SqlDatabaseBroker_TestService_WindowsUserWithDbAccess_ReturnsValidResult()
         {
-            RunAs("IntegrationTester", "DEV2", "I73573r0", () =>
+            RunAs("IntegrationTester", "dev2", () =>
             {
-                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(AuthenticationType.Windows, "RSAKLFSVRDEV");
+                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port), AuthenticationType.Windows);
                 var serviceConn = new DbService
                 {
                     ResourceID = Guid.NewGuid(),
@@ -136,13 +135,13 @@ namespace Dev2.Integration.Tests.Services.Sql
         
         [TestMethod]
         [Owner("Massimo.Guerrera")]
-        [TestCategory("SqlDatabaseBroker")]        
+        [Ignore("Ignoring until the move to premier.local domain is complete")]
         public void SqlDatabaseBroker_TestService_WindowsUserWithoutDbAccess_ReturnsInvalidResult()
         {
             Exception exception = null;
-            RunAs("NoDBAccessTest", "DEV2", "One23456", () =>
+            RunAs("NoDBAccessTest", "DEV2", () =>
             {
-                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(AuthenticationType.Windows);
+                var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port), AuthenticationType.Windows);
 
                 var serviceConn = new DbService
                 {
@@ -176,12 +175,11 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         [TestMethod]
         [Owner("Massimo.Guerrera")]
-        [TestCategory("SqlDatabaseBroker")]
         [ExpectedException(typeof(WarewolfDbException))]        
         public void SqlDatabaseBroker_TestService_SqlUserWithInvalidUsername_ReturnsInvalidResult()
 
         {
-            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
+            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port));
             dbSource.UserID = "Billy.Jane";
             dbSource.Password = "invalidPassword";
 
@@ -204,10 +202,10 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         [TestMethod]
         [Owner("Massimo.Guerrera")]
-        [TestCategory("SqlDatabaseBroker")]        
+        [TestCategory("SqlDatabaseBroker")]
         public void SqlDatabaseBroker_TestService_SqlUserWithValidUsername_ReturnsValidResult()
         {
-            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource();
+            var dbSource = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port));
             var serviceConn = new DbService
             {
                 ResourceID = Guid.NewGuid(),
@@ -228,7 +226,6 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
-        [TestCategory("SqlDatabaseBroker")]        
         public void SqlDatabaseBroker_TestService_ValidDbServiceThatReturnsNull_RecordsetWithNullColumn()
         {
             var service = new DbService
@@ -246,7 +243,7 @@ namespace Dev2.Integration.Tests.Services.Sql
                 {
                     Name = "Collections",
                 },
-                Source = SqlServerTestUtils.CreateDev2TestingDbSource()
+                Source = SqlServerTestUtils.CreateDev2TestingDbSource(_containerOps.Container.IP, int.Parse(_containerOps.Container.Port))
             };
 
             var broker = new SqlDatabaseBroker();
@@ -256,6 +253,21 @@ namespace Dev2.Integration.Tests.Services.Sql
             Assert.IsNotNull(dataSourceShape);
             Assert.AreEqual(3, dataSourceShape.Paths.Count);
             StringAssert.Contains(dataSourceShape.Paths[2].DisplayPath, "TestTextNull"); //This is the field that contains a null value. Previously this column would not have been returned.
+        }
+
+        public static bool RunAs(string userName, string domain, Action action)
+        {
+            var result = false;
+            using (var impersonator = new Impersonator())
+            {
+                if (impersonator.Impersonate(userName, domain))
+                {
+                    action?.Invoke();
+                    result = true;
+                }
+            }
+
+            return result;
         }
 
         public static bool RunAs(string userName, string domain, string password, Action action)
@@ -275,6 +287,7 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         public interface IImpersonator
         {
+            bool Impersonate(string userName, string domain);
             bool Impersonate(string userName, string domain, string password);
             void Undo();
             bool ImpersonateForceDecrypt(string userName, string domain, string decryptIfEncrypted);
@@ -282,10 +295,8 @@ namespace Dev2.Integration.Tests.Services.Sql
 
         public class Impersonator : IDisposable, IImpersonator
         {
-
             const int LOGON32_PROVIDER_DEFAULT = 0;
             const int LOGON32_LOGON_INTERACTIVE = 2;
-
 
             #region DllImports
 
@@ -310,12 +321,13 @@ namespace Dev2.Integration.Tests.Services.Sql
 
             #region Impersonate
 
-            public bool Impersonate(string userName, string domain, string password)
+            public bool Impersonate(string username, string domain) => Impersonate(username, domain, TestEnvironmentVariables.GetVar(domain + "\\" + username));
+
+            public bool Impersonate(string username, string domain, string password)
             {
                 var token = IntPtr.Zero;
                 var tokenDuplicate = IntPtr.Zero;
-
-                if (RevertToSelf() && LogonUser(userName, domain, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, out token) && DuplicateToken(token, 2, out tokenDuplicate) != 0)
+                if (RevertToSelf() && LogonUser(username, domain, password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, out token) && DuplicateToken(token, 2, out tokenDuplicate) != 0)
                 {
                     var tempWindowsIdentity = new WindowsIdentity(tokenDuplicate);
                     _impersonationContext = tempWindowsIdentity.Impersonate();
@@ -354,7 +366,7 @@ namespace Dev2.Integration.Tests.Services.Sql
 
             public bool ImpersonateForceDecrypt(string userName, string domain, string decryptIfEncrypted)
             {
-                return Impersonate(userName, domain, DpapiWrapper.DecryptIfEncrypted(decryptIfEncrypted));
+                return Impersonate(userName, domain);
             }
 
             #endregion

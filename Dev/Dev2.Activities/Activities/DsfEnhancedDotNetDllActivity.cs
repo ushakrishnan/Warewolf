@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -25,6 +26,7 @@ using Warewolf.Resource.Errors;
 using Warewolf.Resource.Messages;
 using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
+using static DataStorage;
 
 namespace Dev2.Activities
 {
@@ -109,7 +111,9 @@ namespace Dev2.Activities
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         void TryExecuteService(int update, IDSFDataObject dataObject, PluginExecutionDto pluginExecutionDto, PluginInvokeArgs args)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             using (var appDomain = PluginServiceExecutionFactory.CreateAppDomain())
             {
@@ -267,7 +271,7 @@ namespace Dev2.Activities
             {
                 try
                 {
-                    var languageExpression = EvaluationFunctions.parseLanguageExpression(serviceTestStep.StepOutputs?[0].Variable, 0);
+                    var languageExpression = EvaluationFunctions.parseLanguageExpression(serviceTestStep.StepOutputs?[0].Variable, 0, ShouldTypeCast.Yes);
                     if (languageExpression.IsJsonIdentifierExpression)
                     {
                         var jToken = JToken.Parse(serviceTestStep.StepOutputs?[0].Value) as JContainer ?? serviceTestStep.StepOutputs?[0].Value.DeserializeToObject();
@@ -429,7 +433,9 @@ namespace Dev2.Activities
 
         #region Overrides of DsfActivity
         [ExcludeFromCodeCoverage] //This does not appear to be used anywhere
+#pragma warning disable S1541 // Methods and properties should not be too complex
         protected override void ChildDebugStateDispatch(IDSFDataObject dataObject)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (dataObject.IsDebugMode())
             {

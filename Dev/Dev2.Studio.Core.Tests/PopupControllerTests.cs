@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -1136,6 +1136,51 @@ namespace Dev2.Core.Tests
         }
 
         [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory("PopupController_ShowTasksCloseConfirmation")]
+        public void PopupController_ShowTasksCloseConfirmation_SetProperties_AllPropertiesDisplayed()
+        {
+            //------------Setup for test--------------------------
+            var popupWasCalled = false;
+            var description = string.Empty;
+            var header = string.Empty;
+            var buttons = MessageBoxButton.YesNoCancel;
+            var imageType = MessageBoxImage.Error;
+            var expectedDesc = "Tasks have not been saved." + Environment.NewLine
+                              + "Would you like to save the tasks? " + Environment.NewLine +
+                              "-----------------------------------------------------------------" +
+                              Environment.NewLine +
+                              "Yes - Save the tasks." + Environment.NewLine +
+                              "No - Discard your changes." + Environment.NewLine +
+                              "Cancel - Returns you to tasks.";
+
+            var popupController = new PopupController
+            {
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
+                {
+                    description = desc;
+                    header = hdr;
+                    buttons = btn;
+                    imageType = img;
+                    popupWasCalled = true;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
+                }
+            };
+
+            //------------Execute Test---------------------------
+            popupController.ShowTasksCloseConfirmation();
+            //------------Assert Results-------------------------
+            Assert.IsTrue(popupWasCalled);
+            Assert.AreEqual(MessageBoxButton.YesNoCancel, buttons);
+            Assert.AreEqual("Tasks Have Changed", header);
+            Assert.AreEqual(expectedDesc, description);
+            Assert.AreEqual(MessageBoxImage.Information, imageType);
+        }
+
+        [TestMethod]
         [Owner("Hagashen Naidu")]
         [TestCategory("PopupController_ShowNoInputsSelectedWhenClickLink")]
         public void PopupController_ShowNoInputsSelectedWhenClickLink_SetProperties_AllPropertiesDisplayed()
@@ -1220,5 +1265,58 @@ namespace Dev2.Core.Tests
             Assert.AreEqual(MessageBoxImage.Error, imageType);
             Assert.AreEqual(null, dontShowAgainKey);
         }
+
+        [TestMethod]
+        [Owner("Devaji Chotaliya")]
+        [TestCategory("PopupController_ShowSearchServerVersionConflict")]
+        public void PopupController_ShowSearchServerVersionConflict_SetProperties_AllPropertiesDisplayed()
+        {
+            //--------------Arrange------------------------------
+            var popupWasCalled = false;
+            var description = string.Empty;
+            var header = string.Empty;
+            var buttons = MessageBoxButton.OKCancel;
+
+            var popupController = new PopupController
+            {
+                ShowDev2MessageBox = (desc, hdr, btn, img, dntShwAgKy, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll) =>
+                {
+                    description = desc;
+                    header = hdr;
+                    buttons = btn;
+                    popupWasCalled = true;
+                    return new MessageBoxViewModel(desc, hdr, btn, FontAwesomeIcon.Adn, isDependBtnVisible, isErr, isInf, isQuest, duplicates, isDeleteAnywayBtnVisible, applyToAll)
+                    {
+                        Result = MessageBoxResult.OK
+                    };
+                }
+            };
+
+            //--------------Act----------------------------------
+            var serverVersion = "1.2.0.0";
+            var minimumSupportedVersion = "1.0.0.0";
+            popupController.ShowSearchServerVersionConflict(serverVersion, minimumSupportedVersion);
+
+            var message = Warewolf.Studio.Resources.Languages.Core.SearchVersionConflictError +
+                                        Environment.NewLine + GlobalConstants.ServerVersion + serverVersion +
+                                        Environment.NewLine + GlobalConstants.MinimumSupportedVersion + minimumSupportedVersion +
+                                        Environment.NewLine + "Click OK to continue or Cancel to return." +
+                Environment.NewLine +
+                          "--------------------------------------------------------------------------------" +
+                              Environment.NewLine +
+                          "OK - Continue to search resources." + Environment.NewLine +
+                          "Cancel - Cancel the search.";
+
+            //--------------Assert-------------------------------
+            Assert.IsTrue(popupWasCalled);
+            Assert.AreEqual(MessageBoxButton.OKCancel, buttons);
+            Assert.AreEqual("Server Version Conflict", header);
+            Assert.AreEqual(message, description);
+            Assert.IsTrue(popupController.IsInfo);
+            Assert.IsFalse(popupController.IsDependenciesButtonVisible);
+            Assert.IsFalse(popupController.IsError);
+            Assert.IsFalse(popupController.IsQuestion);
+        }
+
     }
 }

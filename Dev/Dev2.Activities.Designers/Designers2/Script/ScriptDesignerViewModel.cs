@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +14,7 @@ using System.Windows;
 using System.Windows.Input;
 using Caliburn.Micro;
 using Dev2.Activities.Designers2.Core;
+using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Enums;
 using Dev2.Common.Interfaces.Enums.Enums;
 using Dev2.Runtime.Configuration.ViewModels.Base;
@@ -35,7 +36,7 @@ namespace Dev2.Activities.Designers2.Script
             _scriptChooser = new ScriptChooser();
             EscapeScript = true;
             ScriptTypes = Dev2EnumConverter.ConvertEnumsTypeToStringList<enScriptType>();
-            SelectedScriptType = Dev2EnumConverter.ConvertEnumValueToString(ScriptType);
+            SelectedScriptType = ScriptType.GetDescription();
             ChooseScriptSourceCommand = new DelegateCommand(o => ChooseScriptSources());
             AddTitleBarLargeToggle();
             HelpText = Warewolf.Studio.Resources.Languages.HelpText.Tool_Scripting_Script;

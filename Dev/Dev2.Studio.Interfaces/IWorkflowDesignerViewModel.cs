@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +12,7 @@
 using System;
 using System.Activities.Presentation;
 using System.Activities.Presentation.Model;
+using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using Dev2.Common.Interfaces;
@@ -32,7 +34,6 @@ namespace Dev2.Studio.Interfaces
         bool CanViewWorkflowLink { get; set; }
         bool CanMerge { get; set; }
 
-        void UpdateWorkflowLink(string newLink);
         bool NotifyItemSelected(object primarySelection);
         void BindToModel();
         void AddMissingWithNoPopUpAndFindUnusedDataListItems();
@@ -41,6 +42,8 @@ namespace Dev2.Studio.Interfaces
         string GetWorkflowInputs(string field);
         void CreateBlankWorkflow();
         void UpdateWorkflowInputDataViewModel(IContextualResourceModel resourceModel);
+        string GetAndUpdateWorkflowLinkWithWorkspaceID();
+        List<NameValue> GetSelectableGates(string uniqueId);
     }
 
     public interface IMergePreviewWorkflowDesignerViewModel : IWorkflowDesignerViewModel

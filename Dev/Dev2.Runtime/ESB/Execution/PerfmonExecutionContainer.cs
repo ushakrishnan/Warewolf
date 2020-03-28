@@ -1,3 +1,13 @@
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Diagnostics;
 using Dev2.Common.Interfaces.Monitoring;
@@ -18,7 +28,7 @@ namespace Dev2.Runtime.ESB.Execution
 
         public  PerfmonExecutionContainer(IEsbExecutionContainer container)
         {
-            VerifyArgument.IsNotNull("Container",container);
+            VerifyArgument.IsNotNull(nameof(Container), container);
             _container = container;
             _locater = CustomContainer.Get<IWarewolfPerformanceCounterLocater>();
             _recPerSecondCounter = _locater.GetCounter("Request Per Second");
@@ -34,10 +44,12 @@ namespace Dev2.Runtime.ESB.Execution
         public Guid Execute(out ErrorResultTO errors, int update)
         {
             var start = _stopwatch.ElapsedTicks;
-            var errorsInstanceCounter = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.ExecutionErrors);
-            var concurrentInstanceCounter = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.ConcurrentRequests);
-            var avgExecutionsInstance = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.AverageExecutionTime);
-            var reqPerSecond = _locater.GetCounter(GetDataObject().ResourceID, WarewolfPerfCounterType.RequestsPerSecond);
+            var resourceId = GetDataObject().ResourceID;
+
+            var errorsInstanceCounter = _locater.GetCounter(resourceId, WarewolfPerfCounterType.ExecutionErrors);
+            var concurrentInstanceCounter = _locater.GetCounter(resourceId, WarewolfPerfCounterType.ConcurrentRequests);
+            var avgExecutionsInstance = _locater.GetCounter(resourceId, WarewolfPerfCounterType.AverageExecutionTime);
+            var reqPerSecond = _locater.GetCounter(resourceId, WarewolfPerfCounterType.RequestsPerSecond);
             var outErrors = new ErrorResultTO();
             try
             {
@@ -46,6 +58,7 @@ namespace Dev2.Runtime.ESB.Execution
                 reqPerSecond.Increment();
                 concurrentInstanceCounter.Increment();
                 var ret = Container.Execute(out outErrors, update);
+                // BUG: why do we only report errors if Execute completes successfully?
                 errors = outErrors;
                 return ret;
             }
@@ -59,9 +72,9 @@ namespace Dev2.Runtime.ESB.Execution
                 avgExecutionsInstance.IncrementBy(time);
                 if(outErrors != null)
                 {
-                    _totalErrors.IncrementBy(outErrors.FetchErrors().Count);
-                    errorsInstanceCounter.IncrementBy(outErrors.FetchErrors().Count);
-                    
+                    var errorCount = outErrors.FetchErrors().Count;
+                    _totalErrors.IncrementBy(errorCount);
+                    errorsInstanceCounter.IncrementBy(errorCount);
                 }
             }
             

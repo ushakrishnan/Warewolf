@@ -1,4 +1,15 @@
-﻿using Dev2.Common.Interfaces;
+#pragma warning disable
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Infrastructure.SharedModels;
 using Dev2.Runtime.ServiceModel.Data;
 using Microsoft.SharePoint.Client;
@@ -12,6 +23,14 @@ using File = Microsoft.SharePoint.Client.File;
 
 namespace Warewolf.Sharepoint
 {
+    public class SharepointHelperFactory : ISharepointHelperFactory
+    {
+        public ISharepointHelper New(string server, string userName, string password, bool isSharepointOnline)
+        {
+            return new SharepointHelper(server, userName, password, isSharepointOnline);
+        }
+    }
+
     public class SharepointHelper : ISharepointHelper
     {
         string Server { get; set; }
@@ -307,7 +326,9 @@ namespace Warewolf.Sharepoint
             return fullPath;
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         static SharepointFieldTo CreateSharepointFieldToFromSharepointField(Field field)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var sharepointFieldTo = new SharepointFieldTo { Name = field.Title, InternalName = field.InternalName, IsRequired = field.Required, IsEditable = !field.ReadOnlyField };
             switch (field.FieldTypeKind)

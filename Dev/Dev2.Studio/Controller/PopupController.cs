@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -389,6 +390,29 @@ namespace Dev2.Studio.Controller
             return Show();
         }
 
+        public MessageBoxResult ShowSearchServerVersionConflict(string serverVersion, string minimumSupportedVersion)
+        {
+            var description = Warewolf.Studio.Resources.Languages.Core.SearchVersionConflictError +
+                                        Environment.NewLine + GlobalConstants.ServerVersion + serverVersion +
+                                        Environment.NewLine + GlobalConstants.MinimumSupportedVersion + minimumSupportedVersion +
+                                        Environment.NewLine + "Click OK to continue or Cancel to return." +
+                Environment.NewLine +
+                          "--------------------------------------------------------------------------------" +
+                              Environment.NewLine +
+                          "OK - Continue to search resources." + Environment.NewLine +
+                          "Cancel - Cancel the search.";
+            AssignCommonValues("Server Version Conflict", description, MessageBoxButton.OKCancel);
+            ImageType = MessageBoxImage.Information;
+            IsDependenciesButtonVisible = false;
+            IsInfo = true;
+            IsError = false;
+            IsQuestion = false;
+            IsDeleteAnywayButtonVisible = false;
+            ApplyToAll = false;
+
+            return Show();
+        }
+
         public MessageBoxResult ShowDeployResourceNameConflict(string conflictResourceName)
         {
 
@@ -476,6 +500,25 @@ namespace Dev2.Studio.Controller
             return Show();
         }
 
+        public MessageBoxResult ShowTasksCloseConfirmation()
+        {
+            var description = "Tasks have not been saved." + Environment.NewLine
+                              + "Would you like to save the tasks? " + Environment.NewLine +
+                              "-----------------------------------------------------------------" +
+                              Environment.NewLine +
+                              "Yes - Save the tasks." + Environment.NewLine +
+                              "No - Discard your changes." + Environment.NewLine +
+                              "Cancel - Returns you to tasks.";
+            AssignCommonValues("Tasks Have Changed", description, MessageBoxButton.YesNoCancel);
+            ImageType = MessageBoxImage.Information;
+            IsDependenciesButtonVisible = false;
+            IsInfo = true;
+            IsError = false;
+            IsQuestion = false;
+            IsDeleteAnywayButtonVisible = false;
+            ApplyToAll = false;
+            return Show();
+        }
 
         public MessageBoxResult ShowSaveErrorDialog(string errorMessage)
         {
@@ -538,7 +581,7 @@ namespace Dev2.Studio.Controller
         }
         public MessageBoxResult ShowInvalidResourcePermission()
         {
-            AssignCommonValues(StringResources.SaveSettingErrorPrefix,
+            AssignCommonValues(StringResources.SaveErrorPrefix,
             StringResources.SaveSettingsInvalidPermissionEntry, MessageBoxButton.OK);
             ImageType = MessageBoxImage.Error;
             IsDependenciesButtonVisible = false;
@@ -551,7 +594,7 @@ namespace Dev2.Studio.Controller
         }
         public MessageBoxResult ShowHasDuplicateResourcePermissions()
         {
-            AssignCommonValues(StringResources.SaveSettingErrorPrefix,
+            AssignCommonValues(StringResources.SaveErrorPrefix,
             StringResources.SaveSettingsDuplicateResourcePermissions, MessageBoxButton.OK);
             ImageType = MessageBoxImage.Error;
             IsDependenciesButtonVisible = false;
@@ -564,7 +607,7 @@ namespace Dev2.Studio.Controller
         }
         public MessageBoxResult ShowHasDuplicateServerPermissions()
         {
-            AssignCommonValues(StringResources.SaveSettingErrorPrefix,
+            AssignCommonValues(StringResources.SaveErrorPrefix,
             StringResources.SaveSettingsDuplicateServerPermissions, MessageBoxButton.OK);
             ImageType = MessageBoxImage.Error;
             IsDependenciesButtonVisible = false;
@@ -575,10 +618,10 @@ namespace Dev2.Studio.Controller
             ApplyToAll = false;
             return Show();
         }
-        public MessageBoxResult ShowSaveSettingsNotReachableErrorMsg()
+        public MessageBoxResult ShowSaveServerNotReachableErrorMsg()
         {
-            AssignCommonValues(StringResources.SaveSettingErrorPrefix,
-            StringResources.SaveSettingsNotReachableErrorMsg, MessageBoxButton.OK);
+            AssignCommonValues(StringResources.SaveErrorPrefix,
+            StringResources.SaveServerNotReachableErrorMsg, MessageBoxButton.OK);
             ImageType = MessageBoxImage.Error;
             IsDependenciesButtonVisible = false;
             IsInfo = false;
@@ -590,7 +633,7 @@ namespace Dev2.Studio.Controller
         }
         public MessageBoxResult ShowSaveSettingsPermissionsErrorMsg()
         {
-            AssignCommonValues(StringResources.SaveSettingErrorPrefix,
+            AssignCommonValues(StringResources.SaveErrorPrefix,
             StringResources.SaveSettingsPermissionsErrorMsg, MessageBoxButton.OK);
             ImageType = MessageBoxImage.Error;
             IsDependenciesButtonVisible = false;

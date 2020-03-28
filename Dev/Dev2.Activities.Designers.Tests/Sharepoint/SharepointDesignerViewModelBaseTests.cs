@@ -114,8 +114,9 @@ namespace Dev2.Activities.Designers.Tests.Sharepoint
             var sharepointServerList = sharepointListDesignerViewModelBase.SharepointServers;
             //------------Assert Results-------------------------
             Assert.IsNotNull(sharepointServerList);
-            Assert.AreEqual(1,sharepointServerList.Count);
-            Assert.AreEqual(sharepointListDesignerViewModelBase.GetNewSharepointSource, sharepointServerList[0]);
+            Assert.AreEqual(2,sharepointServerList.Count);
+            Assert.AreEqual(sharepointListDesignerViewModelBase.GetSelectSharepointSource, sharepointServerList[0]);
+            Assert.AreEqual(sharepointListDesignerViewModelBase.GetNewSharepointSource, sharepointServerList[1]);
         }
 
         static TestSharepointListDesignerViewModelBase CreateSharepointListDesignerViewModel()
@@ -141,7 +142,7 @@ namespace Dev2.Activities.Designers.Tests.Sharepoint
             //------------Setup for test--------------------------
             var mockEnvironmentModel = new Mock<IServer>();
             var mockResourceRepo = new Mock<IResourceRepository>();
-            var sharepointSource = new SharepointSource
+            var sharepointSource = new SharepointSource()
             {
                 ResourceName = "SharepointServer1",
                 ResourceID = Guid.NewGuid()

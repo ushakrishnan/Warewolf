@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -215,9 +216,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                 messageList.AddRange(Exception.Select(exceptionUiModel => exceptionUiModel.Message.Replace("Error :", "")));
             }
 
-            var url = Warewolf.Studio.Resources.Languages.Core.SendErrorReportUrl;
-
-            AsyncWorker.Start(() => SetupProgressSpinner(messageList, url), () =>
+            AsyncWorker.Start(() => SubmitErrorToUserForum(messageList), () =>
             {
                 Testing = false;
                 RequestClose();
@@ -226,7 +225,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
             });
         }
 
-        void SetupProgressSpinner(List<string> messageList, string url)
+        void SubmitErrorToUserForum(List<string> messageList)
         {
             Dispatcher.CurrentDispatcher.Invoke(() =>
             {
@@ -254,7 +253,7 @@ namespace Dev2.Studio.ViewModels.Diagnostics
                                  "Warewolf Server log file : " + Environment.NewLine + " " + Environment.NewLine +
                                  ServerLogFile;
 
-            WebServer.SendErrorOpenInBrowser(messageList, description, url);
+            WebServer.SubmitErrorFormUsingWebBrowser(messageList, description, Warewolf.Studio.Resources.Languages.Core.SendErrorReportUrl);
         }
 
         public static async Task<string> GetServerLogFile()

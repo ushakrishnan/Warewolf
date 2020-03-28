@@ -7,7 +7,7 @@ namespace Warewolf.UI.Tests.WorkflowTab.Tools.Control_Flow
     [CodedUITest]
     public class Start_Node
     {
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
 		[TestCategory("Tools")]
         public void WorkflowDesignSurface_StartNode_IsVisible_UITest()
         {

@@ -1,6 +1,18 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dev2.Common.Interfaces;
 
@@ -39,18 +51,10 @@ namespace Warewolf.Storage
 
         public bool HasMoreData() => _variablesToIterateOn.Any(iterator => iterator.HasMoreData());
 
-        #region Implementation of IDisposable
-
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
         public void Dispose()
         {
         }
 
-        #endregion
-
-        #region Implementation of IDataRecord
 
         /// <summary>
         /// Gets the name for the field to find.
@@ -79,6 +83,7 @@ namespace Warewolf.Storage
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
         public Type GetFieldType(int i) => typeof(string);
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         /// <summary>
         /// Return the value of the specified field.
         /// </summary>
@@ -87,6 +92,7 @@ namespace Warewolf.Storage
         /// </returns>
         /// <param name="i">The index of the field to find. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
         public object GetValue(int i)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             var a =  FetchNextValue(i);
 
@@ -310,6 +316,7 @@ namespace Warewolf.Storage
         /// </returns>
         public int FieldCount => _variablesToIterateOn.Count;
 
+        [ExcludeFromCodeCoverage]
         /// <summary>
         /// Gets the column located at the specified index.
         /// </summary>
@@ -319,6 +326,7 @@ namespace Warewolf.Storage
         /// <param name="i">The zero-based index of the column to get. </param><exception cref="T:System.IndexOutOfRangeException">The index passed was outside the range of 0 through <see cref="P:System.Data.IDataRecord.FieldCount"/>. </exception>
         object IDataRecord.this[int i] => null;
 
+        [ExcludeFromCodeCoverage]
         /// <summary>
         /// Gets the column with the specified name.
         /// </summary>
@@ -327,10 +335,6 @@ namespace Warewolf.Storage
         /// </returns>
         /// <param name="name">The name of the column to find. </param><exception cref="T:System.IndexOutOfRangeException">No column with the specified name was found. </exception>
         object IDataRecord.this[string name] => null;
-
-        #endregion
-
-        #region Implementation of IDataReader
 
         /// <summary>
         /// Closes the <see cref="T:System.Data.IDataReader"/> Object.
@@ -391,8 +395,6 @@ namespace Warewolf.Storage
         /// The number of rows changed, inserted, or deleted; 0 if no rows were affected or the statement failed; and -1 for SELECT statements.
         /// </returns>
         public int RecordsAffected => 0;
-
-        #endregion
 
         public List<Type> Types { get; set; }
 

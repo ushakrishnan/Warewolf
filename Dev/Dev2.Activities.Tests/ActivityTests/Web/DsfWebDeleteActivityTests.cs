@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +17,7 @@ using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Common.Interfaces.Toolbox;
+using Dev2.Data.TO;
 using Dev2.DynamicServices;
 using Dev2.Interfaces;
 using Dev2.Runtime.Interfaces;
@@ -19,6 +30,8 @@ using Unlimited.Framework.Converters.Graph.Ouput;
 using Unlimited.Framework.Converters.Graph.String.Json;
 using Warewolf.Core;
 using Warewolf.Storage;
+using Warewolf.Storage.Interfaces;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Tests.Activities.ActivityTests.Web
 {
@@ -59,8 +72,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             //---------------Test Result -----------------------
             Assert.IsInstanceOfType(dsfWebDeleteActivity, typeof(DsfActivity));
         }
-
-
+        
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void DsfWebDeleteActivity_GivenNewActivity_ShouldHaveCustomAttribute()
@@ -74,6 +86,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             //---------------Test Result -----------------------
             Assert.IsNotNull(toolDescAtribute);
         }
+
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void DsfWebDeleteActivity_GivenNewActivity_ShouldHaveCorrectAttributeValues()
@@ -132,6 +145,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             //---------------Test Result -----------------------
             Assert.AreEqual(enFindMissingType.DataGridActivity, dsfWebDeleteActivity.GetFindMissingType());
         }
+
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         public void GetDebugInputs_GivenEnvironmentIsNull_ShouldReturnZeroDebugInputs()
@@ -236,8 +250,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             Assert.IsNotNull(dsfWebDeleteActivity.OutputDescription);
             Assert.AreEqual(response, ExecutionEnvironment.WarewolfEvalResultToString(environment.Eval("[[Response]]", 0)));
         }
-
-
+        
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("DsfWebDeleteActivity_Execute")]
@@ -283,9 +296,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             Assert.IsNotNull(dsfWebDeleteActivity.OutputDescription);
             Assert.AreEqual(0, environment.Errors.Count);
         }
-
-
-
+        
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("DsfWebDeleteActivity_Execute")]
@@ -342,8 +353,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             var wind = ExecutionEnvironment.WarewolfEvalResultToString(environment.Eval("[[weather().Wind]]", 0));
             Assert.AreEqual("from the NW (320 degrees) at 10 MPH (9 KT) (direction variable):0", wind);
         }
-
-
+        
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
         [TestCategory("DsfWebDeleteActivity_Execute")]
@@ -400,7 +410,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             dsfWebDeleteActivity.ResourceID = InArgument<Guid>.FromValue(Guid.Empty);
             var mockResourceCatalog = new Mock<IResourceCatalog>();
             var webSource = new WebSource();
-            webSource.Address = "http://rsaklfsvrtfsbld:9910/api/";
+            webSource.Address = $"http://{Depends.TFSBLDIP}:9910/api/";
             webSource.AuthenticationType = AuthenticationType.Anonymous;
             mockResourceCatalog.Setup(resCat => resCat.GetResource<WebSource>(It.IsAny<Guid>(), It.IsAny<Guid>())).Returns(webSource);
             dsfWebDeleteActivity.ResourceCatalog = mockResourceCatalog.Object;
@@ -422,28 +432,69 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
             Assert.AreEqual("Error", ExecutionEnvironment.WarewolfEvalResultToString(dataObject.Environment.Eval("[[Message]]", 0)));
         }
 
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(DsfWebDeleteActivity))]
+        public void DsfWebDeleteActivity_ExecutionImpl_ErrorResultTO_ReturnErrors_ToActivity_Success()
+        {
+            //-----------------------Arrange-------------------------
+            const string response = "{\"Message\":\"TEST Error\"}";
+            var environment = new ExecutionEnvironment();
+
+            var mockEsbChannel = new Mock<IEsbChannel>();
+            var mockDSFDataObject = new Mock<IDSFDataObject>();
+            var mockExecutionEnvironment = new Mock<IExecutionEnvironment>();
+
+            var errorResultTO = new ErrorResultTO();
+
+            using (var service = new WebService(XmlResource.Fetch("WebService")) { RequestResponse = response })
+            {
+                mockDSFDataObject.Setup(o => o.Environment).Returns(environment);
+                mockDSFDataObject.Setup(o => o.EsbChannel).Returns(new Mock<IEsbChannel>().Object);
+
+                var dsfWebGetActivity = new TestDsfWebDeleteActivity
+                {
+                    OutputDescription = service.GetOutputDescription(),
+                    ResourceID = InArgument<Guid>.FromValue(Guid.Empty),
+                    QueryString = "test Query",
+                    Headers = new List<INameValue>(),
+                    ResponseFromWeb = response,
+                    HasErrorMessage = "Some error"
+                };
+                //-----------------------Act-----------------------------
+                dsfWebGetActivity.TestExecutionImpl(mockEsbChannel.Object, mockDSFDataObject.Object, "Test Inputs", "Test Outputs", out errorResultTO, 0);
+                //-----------------------Assert--------------------------
+                Assert.AreEqual(1, errorResultTO.FetchErrors().Count);
+                Assert.AreEqual("Some error", errorResultTO.FetchErrors()[0]);
+            }
+        }
     }
 
     public class TestDsfWebDeleteActivity : DsfWebDeleteActivity
     {
-        #region Overrides of DsfWebPostActivity
+        public string HasErrorMessage { get; set; }
 
         public string ResponseFromWeb { private get; set; }
 
-        protected override string PerformWebRequest(IEnumerable<NameValue> head, string query, WebSource source, string putData)
+        protected override string PerformWebRequest(IEnumerable<INameValue> head, string query, WebSource source, string putData)
         {
             Head = head;
             QueryRes = query;
+            if (!string.IsNullOrWhiteSpace(HasErrorMessage))
+            {
+                base._errorsTo = new ErrorResultTO();
+                base._errorsTo.AddError(HasErrorMessage);
+            }
             return ResponseFromWeb;
         }
 
         public string QueryRes { get; private set; }
 
-        public IEnumerable<NameValue> Head { get; private set; }
-
-        #endregion
-
-
+        public IEnumerable<INameValue> Head { get; private set; }
+        public void TestExecutionImpl(IEsbChannel esbChannel, IDSFDataObject dataObject, string inputs, string outputs, out ErrorResultTO tmpErrors, int update)
+        {
+            base.ExecutionImpl(esbChannel, dataObject, inputs, outputs, out tmpErrors, update);
+        }
     }
 }
 

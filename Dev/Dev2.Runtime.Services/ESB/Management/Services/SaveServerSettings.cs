@@ -1,16 +1,24 @@
-﻿using Dev2.Common;
-using Dev2.Common.Interfaces;
+﻿#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using Dev2.Common;
 using Dev2.Common.Interfaces.Core;
 using Dev2.Common.Interfaces.Enums;
-using Dev2.Common.Interfaces.Wrappers;
-using Dev2.Common.Wrappers;
 using Dev2.Communication;
 using Dev2.DynamicServices;
 using Dev2.Workspaces;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
+using Warewolf.Configuration;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
@@ -29,27 +37,10 @@ namespace Dev2.Runtime.ESB.Management.Services
 
                 var updatedServerSettings = serializer.Deserialize<ServerSettingsData>(resourceDefinition);
 
-                var sourceFilePath = Config.Server.AuditFilePath;
-
                 var auditsFilePath = updatedServerSettings.AuditFilePath;
 
-                if (sourceFilePath != auditsFilePath)
-                {
-                    var source = Path.Combine(sourceFilePath, "auditDB.db");
-                    IFile _file = new FileWrapper();
-                    if (_file.Exists(source))
-                    {
-                        var destination = Path.Combine(auditsFilePath, "auditDB.db");
-                        CreateIfNotExists(auditsFilePath);
-                        _file.Move(source, destination);
-                        Config.Server.AuditFilePath = auditsFilePath;
-                        msg.Message = new StringBuilder("Moved");
-                    }
-                }
-                else
-                {
-                    msg.Message = new StringBuilder();
-                }
+                Config.Server.SaveLoggingPath(auditsFilePath);
+                msg.Message = new StringBuilder();
                 msg.HasError = false;
             }
             catch (Exception err)
@@ -59,12 +50,6 @@ namespace Dev2.Runtime.ESB.Management.Services
                 Dev2Logger.Error(err, GlobalConstants.WarewolfError);
             }
             return serializer.SerializeToBuilder(msg);
-        }
-
-        static void CreateIfNotExists(string path)
-        {
-            var directoryWrapper = new DirectoryWrapper();
-            directoryWrapper.CreateIfNotExists(path);
         }
 
         public Guid GetResourceID(Dictionary<string, StringBuilder> requestArgs) => Guid.Empty;

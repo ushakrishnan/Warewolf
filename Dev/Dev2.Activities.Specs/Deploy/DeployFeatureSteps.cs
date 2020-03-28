@@ -10,9 +10,10 @@ using Dev2.Studio.Interfaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechTalk.SpecFlow;
 using System.Linq;
-using Warewolf.Launcher;
+using Warewolf.Test.Agent;
 using System.Threading;
 using Dev2.Activities.Specs.Composition;
+using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Activities.Specs.Deploy
 {
@@ -34,25 +35,25 @@ namespace Dev2.Activities.Specs.Deploy
         [Given(@"localhost and destination server are connected")]
         public void ConnectServers()
         {
-            WorkflowExecutionSteps._containerOps = new ContainerLauncher("warewolfserver");
+            WorkflowExecutionSteps._containerOps = new Depends(Depends.ContainerType.Warewolf);
             AppUsageStats.LocalHost = $"http://{Environment.MachineName}:3142";
-            ConnectToRemoteServerContainer();
+            ConnectToRemoteServerContainer(new Depends(Depends.ContainerType.CIRemote));
             var localhost = ServerRepository.Instance.Source;
             _scenarioContext.Add("sourceServer", localhost);
             localhost.Connect();
         }
 
-        void ConnectToRemoteServerContainer()
+        void ConnectToRemoteServerContainer(Depends dependency)
         {
-            string destinationServerHostname = WorkflowExecutionSteps._containerOps.Hostname;
+            string destinationServer = dependency.Container.IP + ":" + dependency.Container.Port;
 
-            var formattableString = $"http://{destinationServerHostname}:3142";
-            IServer remoteServer = new Server(new Guid(), new ServerProxy(formattableString, ContainerLauncher.Username, ContainerLauncher.Password))
+            var formattableString = $"http://{destinationServer}";
+            IServer remoteServer = new Server(new Guid(), new ServerProxy(formattableString, "WarewolfAdmin", "W@rEw0lf@dm1n"))
             {
-                Name = destinationServerHostname
+                Name = destinationServer
             };
             _scenarioContext.Add("destinationServer", remoteServer);
-            remoteServer.Connect();
+            remoteServer.ConnectAsync().Wait(60000);
         }
 
         [Then(@"And the destination resource is ""(.*)""")]

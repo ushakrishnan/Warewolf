@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -14,6 +15,8 @@ using Dev2.Common;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces.Scheduler.Interfaces;
 using Dev2.Common.Interfaces.WindowsTaskScheduler.Wrappers;
+using Dev2.Common.Interfaces.Wrappers;
+using Dev2.Common.Wrappers;
 using Dev2.TaskScheduler.Wrappers;
 using Dev2.TaskScheduler.Wrappers.Interfaces;
 using Microsoft.Win32.TaskScheduler;
@@ -27,10 +30,10 @@ namespace Dev2.Scheduler
         readonly string _agentPath = string.Format("{0}\\{1}", Environment.CurrentDirectory, GlobalConstants.SchedulerAgentPath);
         readonly string _debugOutputPath = string.Format("{0}\\{1}", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), GlobalConstants.SchedulerDebugPath);
 
-        readonly IDirectoryHelper _dir;
+        readonly IDirectory _dir;
         readonly Func<IScheduledResource, string> _pathResolve;
 
-        public ServerSchedulerFactory(IDev2TaskService service, ITaskServiceConvertorFactory factory, IDirectoryHelper directory, Func<IScheduledResource, string> pathResolve)
+        public ServerSchedulerFactory(IDev2TaskService service, ITaskServiceConvertorFactory factory, IDirectory directory, Func<IScheduledResource, string> pathResolve)
         {
             var nullables = new Dictionary<string, object>
                 {
@@ -57,7 +60,7 @@ namespace Dev2.Scheduler
             _pathResolve = pathResolve;
             _factory = new TaskServiceConvertorFactory();
             _service = new Dev2TaskService(ConvertorFactory);
-            _dir = new DirectoryHelper();
+            _dir = new DirectoryWrapper();
             CreateDir();
         }
 
@@ -67,7 +70,9 @@ namespace Dev2.Scheduler
 
         public IScheduledResourceModel CreateModel(string schedulerFolderId, ISecurityWrapper securityWrapper) => new ScheduledResourceModel(TaskService, schedulerFolderId, _agentPath, ConvertorFactory, _debugOutputPath, securityWrapper, _pathResolve);
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public IScheduleTrigger CreateTrigger(Trigger trigger)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             switch (trigger.TriggerType)
             {

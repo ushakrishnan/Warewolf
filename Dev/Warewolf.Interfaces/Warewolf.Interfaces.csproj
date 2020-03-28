@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+ </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>Warewolf</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Triggers\Triggers\**" />
+    <EmbeddedResource Remove="Triggers\Triggers\**" />
+    <None Remove="Triggers\Triggers\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\AssemblyCommonInfo.cs" Link="Properties\AssemblyCommonInfo.cs" />
+ </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fleck" Version="1.1.0" />
+  </ItemGroup>
+</Project>
+

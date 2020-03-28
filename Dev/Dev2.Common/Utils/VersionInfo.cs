@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -9,20 +9,25 @@
 */
 
 using System;
+using System.Diagnostics;
 using System.Reflection;
-using Vestris.ResourceLib;
 
 
 
 namespace Dev2.Studio.Utils
 {
     public static class VersionInfo
-    {
-    
+    {    
         public static string FetchVersionInfo()
         {
             var versionResource = GetVersionResource();
             return versionResource.FileVersion;
+        }
+
+        public static string FetchInformationalVersion()
+        {
+            var versionResource = GetVersionResource();
+            return versionResource.ProductVersion;
         }
 
         public static Version FetchVersionInfoAsVersion()
@@ -31,13 +36,12 @@ namespace Dev2.Studio.Utils
             return new Version(versionResource.FileVersion);
         }
 
-        static VersionResource GetVersionResource()
+        static FileVersionInfo GetVersionResource()
         {
             var asm = Assembly.GetExecutingAssembly();
-            var versionResource = new VersionResource();
             var fileName = asm.Location;
-            versionResource.LoadFrom(fileName);
-            return versionResource;
+            var versionInfo = FileVersionInfo.GetVersionInfo(fileName);
+            return versionInfo;
         }
     }
 }

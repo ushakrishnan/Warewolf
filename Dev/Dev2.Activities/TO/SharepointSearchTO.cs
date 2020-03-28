@@ -1,3 +1,4 @@
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Validation;
@@ -247,7 +248,9 @@ namespace Dev2.TO
             }
         }
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public bool Equals(SharepointSearchTo other)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (ReferenceEquals(null, other))
             {

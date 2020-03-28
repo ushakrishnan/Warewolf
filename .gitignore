@@ -28,12 +28,20 @@
 *.sln.DotSettings.user
 *.stackdump
 *.lnk
+*.metaproj
 
 ####################################################################################
 # Visual Studio
 ####################################################################################
+.idea
 .vs/**
-Dev/.vs/**
+/Dev/.vs/**
+/Dev/.sonarlint
+/Dev/MigrationBackup/**
+/Dev/UpgradeLog.htm
+/Dev/UpgradeLog2.htm
+/Dev/UpgradeLog3.htm
+tools/
 
 ####################################################################################
 # Compile outputs
@@ -59,6 +67,7 @@ Dev/SonarQube/SolutionBinding.sqconfig
 /TestResults/**
 /Dev/*.bat
 *.tmp_proj
+/Dev/PrecompiledWeb/**
 
 ####################################################################################
 # DotCover
@@ -66,9 +75,26 @@ Dev/SonarQube/SolutionBinding.sqconfig
 /DotCoverOutput/**
 /DotCoverRunner.xml
 /DotCoverOutput.html
+
+####################################################################################
+# axoCover
+####################################################################################
 /Dev/.axoCover
 /Dev/.axoCover/settings.json
 /Dev/.axoCover/reports
 /Dev/.axoCover/runs
+
+####################################################################################
+# Tests
+####################################################################################
 /Dev/Dev2.IntegrationTests/TestEditorFlakeyTests.cs
 /Dev/Dev2.Activities.Tests/LargeRowsDataSplit.txt
+/Dev/warewolfBI/ClientApp/node_modules
+/Dev/Warewolf.Web.UI.Tests/BrowserWebDrivers/Profiles/Firefox/**
+/Dev/Warewolf.Web.UI.Tests/BrowserWebDrivers/Profiles/Firefox/places.sqlite
+
+####################################################################################
+# Versioning
+####################################################################################
+/Dev/Warewolf.Auditing/AssemblyCommonInfo.cs
+/Dev/Warewolf.Data1.Tests

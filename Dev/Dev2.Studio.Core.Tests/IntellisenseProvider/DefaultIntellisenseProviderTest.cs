@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -32,6 +32,7 @@ using Moq;
 namespace Dev2.Core.Tests.IntellisenseProvider
 {
     [TestClass]
+    [TestCategory("Intellisense Provider Core")]
     public class DefaultIntellisenseProviderTest
     {
 
@@ -49,7 +50,6 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             var cache2 = p.GetStaticField("_payloadCache") as ConcurrentDictionary<Tuple<string, string>, IList<IIntellisenseResult>>;
             Assert.IsNotNull(cache2);
             cache2.Clear();
-            Monitor.Enter(DataListSingletonTest.DataListSingletonTestGuard);
 
             var testEnvironmentModel = ResourceModelTest.CreateMockEnvironment();
 
@@ -74,12 +74,6 @@ namespace Dev2.Core.Tests.IntellisenseProvider
             DataListSingleton.SetDataList(setupDatalist);
             DataListSingleton.ActiveDataList.InitializeDataListViewModel(_resourceModel);
             DataListSingleton.ActiveDataList.UpdateDataListItems(_resourceModel, new List<IDataListVerifyPart>());
-        }
-
-        [TestCleanup]
-        public void Cleanup()
-        {
-            Monitor.Exit(DataListSingletonTest.DataListSingletonTestGuard);
         }
 
         #endregion Test Initialization

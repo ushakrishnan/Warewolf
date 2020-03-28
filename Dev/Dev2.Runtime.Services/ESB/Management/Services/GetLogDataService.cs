@@ -1,3 +1,14 @@
+#pragma warning disable
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,115 +16,81 @@ using System.Text;
 using Dev2.Common;
 using Dev2.Communication;
 using Dev2.DynamicServices;
+using Dev2.Runtime.Hosting;
 using Dev2.Workspaces;
-using Dev2.Util.ExtensionMethods;
+using Warewolf.Driver.Serilog;
+using Warewolf.Auditing;
+using Warewolf.Logging;
+using System.Threading;
+using Warewolf.Interfaces.Auditing;
 
 namespace Dev2.Runtime.ESB.Management.Services
 {
     public class GetLogDataService : LogDataServiceBase, IEsbManagementEndpoint
     {
+        private readonly IWebSocketPool _webSocketPool;
+        private readonly TimeSpan _waitTimeOut;
+
+        public GetLogDataService()
+             : this(new WebSocketPool(),TimeSpan.FromMinutes(5))
+        {
+        }
+
+        public GetLogDataService(IWebSocketPool webSocketFactory,TimeSpan waitTimeOut)
+        {
+            _webSocketPool = webSocketFactory;
+            _waitTimeOut = waitTimeOut;
+        }
+
         public StringBuilder Execute(Dictionary<string, StringBuilder> values, IWorkspace theWorkspace)
         {
+            IWebSocketWrapper client = null;
+            
             Dev2Logger.Info("Get Log Data Service", GlobalConstants.WarewolfInfo);
-
             var serializer = new Dev2JsonSerializer();
+            var result = new List<Audit>();
+            var response = "";
+            var message = new AuditCommand()
+            {
+                Type = "LogQuery",
+                Query = values
+            };
             try
             {
-                var tmpObjects = BuildTempObjects();
+                client = _webSocketPool.Acquire(Config.Auditing.Endpoint).Connect();
+                var ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-                var logEntries = new List<LogEntry>();
-                var groupedEntries = tmpObjects.GroupBy(o => o.ExecutionId);
-                foreach (var groupedEntry in groupedEntries)
+                client.OnMessage((msgResponse, socket) =>
                 {
-                    var logEntry = new LogEntry
-                    {
-                        ExecutionId = groupedEntry.Key,
-                        Status = "Success"
-                    };
-                    logEntry = UpdateLogEntry(groupedEntry, logEntry);
-                    if (logEntry.StartDateTime != DateTime.MinValue)
-                    {
-                        logEntry.ExecutionTime = (logEntry.CompletedDateTime - logEntry.StartDateTime).Milliseconds.ToString();
-                        logEntries.Add(logEntry);
-                    }
-                }
-                LogDataCache.CurrentResults = tmpObjects;
-                return FilterResults(values, logEntries, serializer);
+                    response = msgResponse;
+                    result.AddRange(serializer.Deserialize<List<Audit>>(response));
+                    ewh.Set();
+                });
+                client.SendMessage(serializer.Serialize(message));
+
+                ewh.WaitOne(_waitTimeOut);
+                LogDataCache.CurrentResults = result;
+                return serializer.SerializeToBuilder(result);
             }
             catch (Exception e)
             {
                 Dev2Logger.Info("Get Log Data ServiceError", e, GlobalConstants.WarewolfInfo);
             }
+            finally
+            {
+                _webSocketPool.Release(client);
+            }
             return serializer.SerializeToBuilder("");
         }
 
-        LogEntry UpdateLogEntry(IGrouping<dynamic, dynamic> groupedEntry, LogEntry logEntry)
+        T GetValue<T>(string key, Dictionary<string, StringBuilder> values)
         {
-            foreach (var s in groupedEntry)
-            {
-                if (s.Message.StartsWith("Started Execution"))
-                {
-                    logEntry.StartDateTime = ParseDate(s.DateTime);
-                }
-                if (s.LogType == "ERROR")
-                {
-                    logEntry.Status = "ERROR";
-                }
-                if (s.Message.StartsWith("Completed Execution"))
-                {
-                    logEntry.CompletedDateTime = ParseDate(s.DateTime);
-                }
-                if (s.Message.StartsWith("About to execute"))
-                {
-                    logEntry.User = GetUser(s.Message)?.TrimStart().TrimEnd() ?? "";
-                }
-                if (!string.IsNullOrEmpty(s.Url))
-                {
-                    logEntry.Url = s.Url;
-                }
-            }
-            return logEntry;
-        }
-
-        string GetValue(string key, Dictionary<string, StringBuilder> values)
-        {
-            var toReturn = "";
+            var toReturn = default(T);
             if (values.TryGetValue(key, out StringBuilder value))
             {
-                toReturn = value.ToString();
+                var item = value.ToString();
+                return (T)Convert.ChangeType(item, typeof(T));
             }
-            return toReturn;
-        }
-
-        DateTime GetDate(string key, Dictionary<string, StringBuilder> values) => ParseDate(GetValue(key, values));
-
-        StringBuilder FilterResults(Dictionary<string, StringBuilder> values, IEnumerable<LogEntry> filteredEntries, Dev2JsonSerializer dev2JsonSerializer)
-        {
-            var startTime = GetDate("StartDateTime", values);
-            var endTime = GetDate("CompletedDateTime", values);
-            var status = GetValue("Status", values);
-            var user = GetValue("User", values);
-            var executionId = GetValue("ExecutionId", values);
-            var executionTime = GetValue("ExecutionTime", values);
-
-            var entries = filteredEntries.Where(entry => entry.StartDateTime >= startTime)
-                .Where(entry => endTime == default(DateTime) || entry.CompletedDateTime <= endTime)
-                .Where(entry => string.IsNullOrEmpty(status) || entry.Status.Equals(status, StringComparison.CurrentCultureIgnoreCase))
-                .Where(entry => string.IsNullOrEmpty(executionId) || entry.ExecutionId.Equals(executionId, StringComparison.CurrentCultureIgnoreCase))
-                .Where(entry => string.IsNullOrEmpty(executionTime) || entry.ExecutionTime.Equals(executionTime, StringComparison.CurrentCultureIgnoreCase))
-                .Where(entry => string.IsNullOrEmpty(user) || (entry.User?.Contains(user, StringComparison.CurrentCultureIgnoreCase) ?? false));
-
-            return dev2JsonSerializer.SerializeToBuilder(entries);
-        }
-
-
-        static DateTime ParseDate(string s) => !string.IsNullOrEmpty(s) ?
-                DateTime.ParseExact(s, GlobalConstants.LogFileDateFormat, System.Globalization.CultureInfo.InvariantCulture) :
-                new DateTime();
-
-        string GetUser(string message)
-        {
-            var toReturn = message.Split('[')[2].Split(':')[0];
             return toReturn;
         }
 

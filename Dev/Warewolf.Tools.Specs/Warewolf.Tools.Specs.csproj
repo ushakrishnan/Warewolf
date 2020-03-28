@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" />
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -9,7 +8,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Warewolf.Tools.Specs</RootNamespace>
     <AssemblyName>Warewolf.Tools.Specs</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
@@ -32,57 +32,13 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
     <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376</WarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Caliburn.Micro, Version=1.4.1.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
-      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\Caliburn.Micro.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Castle.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=407dd0808d44fbdc, processorArchitecture=MSIL">
-      <HintPath>..\packages\Castle.Core.4.2.0\lib\net45\Castle.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="FluentAssertions">
-      <HintPath>..\packages\FluentAssertions.3.4.0\lib\net45\FluentAssertions.dll</HintPath>
-    </Reference>
-    <Reference Include="FluentAssertions.Core">
-      <HintPath>..\packages\FluentAssertions.3.4.0\lib\net45\FluentAssertions.Core.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Practices.Prism.Mvvm">
-      <HintPath>..\packages\Prism.Mvvm.1.1.1\lib\net45\Microsoft.Practices.Prism.Mvvm.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Practices.Prism.Mvvm.Desktop">
-      <HintPath>..\packages\Prism.Mvvm.1.1.1\lib\net45\Microsoft.Practices.Prism.Mvvm.Desktop.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Practices.Prism.SharedInterfaces">
-      <HintPath>..\packages\Prism.Mvvm.1.1.1\lib\net45\Microsoft.Practices.Prism.SharedInterfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MSTest.TestFramework.1.3.0\lib\net45\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="Moq, Version=4.7.137.0, Culture=neutral, PublicKeyToken=69f491c39445e920, processorArchitecture=MSIL">
-      <HintPath>..\packages\Moq.4.7.137\lib\net45\Moq.dll</HintPath>
-    </Reference>
-    <Reference Include="netDumbster">
-      <HintPath>..\packages\netDumbster.1.3.0.7\lib\net40\netDumbster.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="Nuane.SftpLite">
       <HintPath>..\Binaries\Sftp Server\Nuane.SftpLite.dll</HintPath>
     </Reference>
@@ -91,49 +47,31 @@
     <Reference Include="System.Activities.Presentation" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Data.SQLite, Version=1.0.108.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Data.SQLite.Core.1.0.108.0\lib\net46\System.Data.SQLite.dll</HintPath>
-    </Reference>
     <Reference Include="System.DirectoryServices" />
     <Reference Include="System.Runtime.DurableInstancing" />
-    <Reference Include="System.ValueTuple, Version=4.0.2.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\net47\System.ValueTuple.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Caliburn.Micro.1.4.1\lib\net45\System.Windows.Interactivity.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="TechTalk.SpecFlow, Version=2.3.2.0, Culture=neutral, PublicKeyToken=0778194805d6db41, processorArchitecture=MSIL">
-      <HintPath>..\packages\SpecFlow.2.3.2\lib\net45\TechTalk.SpecFlow.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
+    <Reference Include="Warewolf.Launcher, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Binaries\Warewolf Test Agent.exe</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Warewolf.Launcher\EnableDocker.txt">
-      <Visible>False</Visible>
-      <Link>EnableDocker.txt</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Compile Include="BuildConfig.cs" />
     <Compile Include="..\Dev2.IntegrationTests\Services.Sql\SqlServerTestUtils.cs">
       <Link>Toolbox\Recordset\SqlBulkInsert\SqlServerTestUtils.cs</Link>
     </Compile>
     <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
-    <None Include="..\Run Tests.ps1">
-      <Visible>False</Visible>
-      <Link>Run Tests.ps1</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
       <Visible>False</Visible>
     </AdditionalFiles>
     <Compile Include="BaseTypes\CommonSteps.cs" />
     <Compile Include="BaseTypes\FileToolsBase.cs" />
     <Compile Include="BaseTypes\RecordSetBase.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="RegionalSettingsSteps.cs" />
     <Compile Include="Toolbox\ControlFlow\Decision\Decision.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -251,13 +189,14 @@
     <Compile Include="Toolbox\FileAndFolder\Delete\DeleteSteps.cs" />
     <Compile Include="Toolbox\FileAndFolder\DomainResolution.cs" />
     <Compile Include="Toolbox\FileAndFolder\FileAndFolderSpecsCleanup.cs" />
+    <Compile Include="Toolbox\FileAndFolder\FileSharingSteps.cs" />
     <Compile Include="Toolbox\FileAndFolder\Move\Move.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Move.feature</DependentUpon>
     </Compile>
     <Compile Include="Toolbox\FileAndFolder\Move\MoveSteps.cs" />
-    <Compile Include="Toolbox\FileAndFolder\Read File\Read File1.feature.cs">
+    <Compile Include="Toolbox\FileAndFolder\Read File\Read File.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Read File.feature</DependentUpon>
@@ -533,6 +472,27 @@
       <DependentUpon>Random.feature</DependentUpon>
     </Compile>
     <Compile Include="Toolbox\Utility\Random\RandomSteps.cs" />
+    <Compile Include="Toolbox\Utility\Redis\Cache\CacheRedis.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CacheRedis.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Utility\Redis\SpecExecutionEnvironmentErrors.cs" />
+    <Compile Include="Toolbox\Utility\Redis\Remove\RemoveRedis.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RemoveRedis.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Utility\Redis\Remove\RemoveRedisSteps.cs" />
+    <Compile Include="Toolbox\Utility\Redis\Cache\CacheRedisSteps.cs" />
+    <Compile Include="Toolbox\Utility\Redis\Source\RedisSource.feature.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>RedisSource.feature</DependentUpon>
+    </Compile>
+    <Compile Include="Toolbox\Utility\Redis\Source\RedisSourceSteps.cs" />
+    <Compile Include="Toolbox\Utility\Redis\SpecRedisActivity.cs" />
+    <Compile Include="Toolbox\Utility\Redis\SpecAssignValue.cs" />
     <Compile Include="Toolbox\Utility\WebRequest\WebRequest.feature.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -553,11 +513,12 @@
     <Compile Include="Toolbox\Resources\WcfService\WcfServiceConnectorSteps.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <EmbeddedResource Include="key.opk">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <None Include="packages.config" />
     <None Include="Toolbox\ControlFlow\Decision\Decision.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Decision.feature.cs</LastGenOutput>
@@ -641,7 +602,7 @@
     </None>
     <None Include="Toolbox\FileAndFolder\Read File\Read File.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
-      <LastGenOutput>Read File1.feature.cs</LastGenOutput>
+      <LastGenOutput>Read File.feature.cs</LastGenOutput>
     </None>
     <None Include="Toolbox\FileAndFolder\ReadFolderNew\Read Folder New.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
@@ -829,6 +790,18 @@
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>Random.feature.cs</LastGenOutput>
     </None>
+    <None Include="Toolbox\Utility\Redis\Remove\RemoveRedis.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>RemoveRedis.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Toolbox\Utility\Redis\Cache\CacheRedis.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>CacheRedis.feature.cs</LastGenOutput>
+    </None>
+    <None Include="Toolbox\Utility\Redis\Source\RedisSource.feature">
+      <Generator>SpecFlowSingleFileGenerator</Generator>
+      <LastGenOutput>RedisSource.feature.cs</LastGenOutput>
+    </None>
     <None Include="Toolbox\Utility\WebRequest\WebRequest.feature">
       <Generator>SpecFlowSingleFileGenerator</Generator>
       <LastGenOutput>WebRequest.feature.cs</LastGenOutput>
@@ -845,41 +818,41 @@
   <ItemGroup>
     <EmbeddedResource Include="Toolbox\Database\SqlBulkInsert\Import_data_into_Table_Batch_size_is_1.sql" />
     <EmbeddedResource Include="Toolbox\Data\DataMerge\NewLineExample.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Data\DataSplit\CSVExample.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\FileAndFolder\Write File\testfiles\filewithvariables.txt" />
     <EmbeddedResource Include="Toolbox\FileAndFolder\Write File\testfiles\infile1WithCarriageReturn.txt" />
     <EmbeddedResource Include="Toolbox\FileAndFolder\Write File\testfiles\outfile1WithCarriageReturn.txt" />
     <Content Include="Toolbox\Database\SqlBulkInsert\databasesetup.txt" />
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\javascript_badly_formatted.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\javascript_one_variable.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\javascript_two_variables.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\python_badly_formatted.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\python_one_variable.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\python_two_variables.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\ruby_badly_formatted.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\ruby_one_variable.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Toolbox\Scripting\Script\testfiles\ruby_two_variables.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -923,6 +896,10 @@
       <Project>{A7D9DA27-F023-4588-AA64-AC2DE44C0B82}</Project>
       <Name>Dev2.Diagnostics</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Dev2.Infrastructure.Tests\Dev2.Infrastructure.Tests.csproj">
+      <Project>{D754B817-A714-4E6E-BD46-8C4FFFFBDACB}</Project>
+      <Name>Dev2.Infrastructure.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Dev2.Infrastructure\Dev2.Infrastructure.csproj">
       <Project>{615eae6d-040c-4364-b708-63dc8755cd4f}</Project>
       <Name>Dev2.Infrastructure</Name>
@@ -938,6 +915,10 @@
     <ProjectReference Include="..\Dev2.Runtime\Dev2.Runtime.csproj">
       <Project>{9623C7DD-85EE-41AB-89B1-1A9784A97DA7}</Project>
       <Name>Dev2.Runtime</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Dev2.Studio.Core.Tests\Dev2.Studio.Core.Tests.csproj">
+      <Project>{1fd73e36-fc73-4bdf-bcba-278a44f06550}</Project>
+      <Name>Dev2.Studio.Core.Tests</Name>
     </ProjectReference>
     <ProjectReference Include="..\Dev2.Studio.Core\Dev2.Studio.Core.csproj">
       <Project>{A58B157B-960B-4E84-8957-24E4884C5C77}</Project>
@@ -955,13 +936,21 @@
       <Project>{8FD23CE0-02BB-48E1-A914-BA467938CE78}</Project>
       <Name>Warewolf.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Driver.Redis\Warewolf.Driver.Redis.csproj">
+      <Project>{86DF54BB-E37D-4559-8014-13D6030A2242}</Project>
+      <Name>Warewolf.Driver.Redis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Data\Warewolf.Data.csproj">
+      <Project>{66DCB0B3-1F33-490F-B874-913CF1F43E49}</Project>
+      <Name>Warewolf.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Interfaces\Warewolf.Interfaces.csproj">
+      <Project>{926CF512-B3FD-410D-AA83-EBDF4C4868DE}</Project>
+      <Name>Warewolf.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
       <Project>{e0f7c709-a61b-4829-a659-d7780052326a}</Project>
       <Name>Warewolf.Language.Parser</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Warewolf.Launcher\Warewolf.Launcher.csproj">
-      <Project>{9B669D51-14CE-44A3-9407-8251BA3BAD19}</Project>
-      <Name>Warewolf.Launcher</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Parser.Interop\Warewolf.Parser.Interop.csproj">
       <Project>{6eb59eee-4e16-4f29-b1b0-715e56e9139d}</Project>
@@ -988,42 +977,50 @@
       <Name>Warewolf.Studio.ViewModels</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Caliburn.Micro">
+      <Version>1.4.1</Version>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions">
+      <Version>3.4.0</Version>
+    </PackageReference>
+    <PackageReference Include="Moq">
+      <Version>4.13.1</Version>
+    </PackageReference>
+    <PackageReference Include="MSTest.TestAdapter">
+      <Version>2.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="MSTest.TestFramework">
+      <Version>2.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="netDumbster">
+      <Version>1.3.0.7</Version>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="Prism.Mvvm">
+      <Version>1.1.1</Version>
+    </PackageReference>
+    <PackageReference Include="SpecFlow">
+      <Version>2.3.2</Version>
+    </PackageReference>
+    <PackageReference Include="SpecFlow.MsTest">
+      <Version>2.3.2</Version>
+    </PackageReference>
+    <PackageReference Include="SpecFlow.Tools.MsBuild.Generation">
+      <Version>2.3.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.112</Version>
+    </PackageReference>
+  </ItemGroup>
   <ItemGroup />
-  <Choose>
-    <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
-      <ItemGroup>
-        <Reference Include="Microsoft.VisualStudio.QualityTools.CodedUITestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITest.Extension, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-        <Reference Include="Microsoft.VisualStudio.TestTools.UITesting, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <Private>False</Private>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>powershell.exe -ExecutionPolicy RemoteSigned -nologo -noprofile -file "$(ProjectDir)Toolbox\FileAndFolder\AddGuidToPaths.ps1"</PreBuildEvent>
   </PropertyGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets'))" />
-    <Error Condition="!Exists('..\packages\SpecFlow.2.3.2\build\SpecFlow.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\SpecFlow.2.3.2\build\SpecFlow.targets'))" />
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.props'))" />
-    <Error Condition="!Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets'))" />
-  </Target>
-  <Import Project="..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.108.0\build\net46\System.Data.SQLite.Core.targets')" />
-  <Import Project="..\packages\SpecFlow.2.3.2\build\SpecFlow.targets" Condition="Exists('..\packages\SpecFlow.2.3.2\build\SpecFlow.targets')" />
-  <Import Project="..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets" Condition="Exists('..\packages\MSTest.TestAdapter.1.3.0\build\net45\MSTest.TestAdapter.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

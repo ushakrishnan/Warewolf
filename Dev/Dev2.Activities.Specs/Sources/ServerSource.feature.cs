@@ -94,14 +94,14 @@ namespace Dev2.Activities.Specs.Sources
 #line 7
 this.ScenarioSetup(scenarioInfo);
 #line hidden
-            TechTalk.SpecFlow.Table table1 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table929 = new TechTalk.SpecFlow.Table(new string[] {
                         "Address",
                         "AuthenticationType"});
-            table1.AddRow(new string[] {
+            table929.AddRow(new string[] {
                         "http://localhost:3142",
                         "Windows"});
 #line 8
- testRunner.Given("I create a server source as", ((string)(null)), table1, "Given ");
+ testRunner.Given("I create a server source as", ((string)(null)), table929, "Given ");
 #line 11
  testRunner.And("I save as \"WinServerSource\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
 #line 12
@@ -124,26 +124,19 @@ this.ScenarioSetup(scenarioInfo);
 #line 16
 this.ScenarioSetup(scenarioInfo);
 #line hidden
-            TechTalk.SpecFlow.Table table2 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table930 = new TechTalk.SpecFlow.Table(new string[] {
                         "Address",
                         "AuthenticationType"});
-            table2.AddRow(new string[] {
-                        "http://tst-ci-remote:3142",
+            table930.AddRow(new string[] {
+                        "http://tst-ci-remote.premier.local:3142",
                         "User"});
 #line 17
- testRunner.Given("I create a server source as", ((string)(null)), table2, "Given ");
-#line hidden
-            TechTalk.SpecFlow.Table table3 = new TechTalk.SpecFlow.Table(new string[] {
-                        "username",
-                        "Password"});
-            table3.AddRow(new string[] {
-                        "dev2\\integrationtester",
-                        "I73573r0"});
+ testRunner.Given("I create a server source as", ((string)(null)), table930, "Given ");
 #line 20
- testRunner.And("User details as", ((string)(null)), table3, "And ");
-#line 23
+ testRunner.And("User as \"WarewolfAdmin\" and with \"W@rEw0lf@dm1n\" as password", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 21
  testRunner.When("I Test the connection", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line 24
+#line 22
  testRunner.Then("The result is \"success\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();
@@ -156,29 +149,22 @@ this.ScenarioSetup(scenarioInfo);
         public virtual void CreateBadUserServerSource()
         {
             TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Create Bad User Server Source", ((string[])(null)));
-#line 26
+#line 24
 this.ScenarioSetup(scenarioInfo);
 #line hidden
-            TechTalk.SpecFlow.Table table4 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table931 = new TechTalk.SpecFlow.Table(new string[] {
                         "Address",
                         "AuthenticationType"});
-            table4.AddRow(new string[] {
+            table931.AddRow(new string[] {
                         "http://localhost:3142",
                         "User"});
-#line 27
- testRunner.Given("I create a server source as", ((string)(null)), table4, "Given ");
-#line hidden
-            TechTalk.SpecFlow.Table table5 = new TechTalk.SpecFlow.Table(new string[] {
-                        "username",
-                        "Password"});
-            table5.AddRow(new string[] {
-                        "BadUser",
-                        "W@rEw0lf@dm1n"});
-#line 30
- testRunner.And("User details as", ((string)(null)), table5, "And ");
-#line 33
+#line 25
+ testRunner.Given("I create a server source as", ((string)(null)), table931, "Given ");
+#line 28
+ testRunner.And("User as \"BadUser\" and with \"Dev2@dmin123\" as password", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "And ");
+#line 29
  testRunner.When("I Test the connection", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line 34
+#line 30
  testRunner.Then("The result is \"Connection Error :Unauthorized\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();
@@ -188,23 +174,25 @@ this.ScenarioSetup(scenarioInfo);
         [Microsoft.VisualStudio.TestTools.UnitTesting.DescriptionAttribute("Create Public Server Source")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestPropertyAttribute("FeatureTitle", "ServerSource")]
         [Microsoft.VisualStudio.TestTools.UnitTesting.TestCategoryAttribute("ServerSourceTests")]
+        [Microsoft.VisualStudio.TestTools.UnitTesting.IgnoreAttribute()]
         public virtual void CreatePublicServerSource()
         {
-            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Create Public Server Source", ((string[])(null)));
-#line 36
+            TechTalk.SpecFlow.ScenarioInfo scenarioInfo = new TechTalk.SpecFlow.ScenarioInfo("Create Public Server Source", new string[] {
+                        "Ignore"});
+#line 34
 this.ScenarioSetup(scenarioInfo);
 #line hidden
-            TechTalk.SpecFlow.Table table6 = new TechTalk.SpecFlow.Table(new string[] {
+            TechTalk.SpecFlow.Table table932 = new TechTalk.SpecFlow.Table(new string[] {
                         "Address",
                         "AuthenticationType"});
-            table6.AddRow(new string[] {
-                        "http://wolfs-den:3142",
+            table932.AddRow(new string[] {
+                        "http://wolfs-den.premier.local:3142",
                         "Public"});
-#line 37
- testRunner.Given("I create a server source as", ((string)(null)), table6, "Given ");
-#line 40
+#line 35
+ testRunner.Given("I create a server source as", ((string)(null)), table932, "Given ");
+#line 38
  testRunner.When("I Test the connection", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "When ");
-#line 41
+#line 39
  testRunner.Then("The result is \"success\"", ((string)(null)), ((TechTalk.SpecFlow.Table)(null)), "Then ");
 #line hidden
             this.ScenarioCleanup();

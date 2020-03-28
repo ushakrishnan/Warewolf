@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,7 +23,7 @@ namespace Dev2.Common
             ErrorIcon
         }
 
-        static readonly Dictionary<PopupIcons, string> CustomIconsDictionary = new Dictionary<PopupIcons, string>
+        static readonly IDictionary<PopupIcons, string> CustomIconsDictionary = new Dictionary<PopupIcons, string>
         {
             {PopupIcons.ErrorIcon, "pack://application:,,,/Warewolf Studio;component/Images/PopupError-32.png"},
             {PopupIcons.WarningIcon, "pack://application:,,,/Warewolf Studio;component/Images/PopupNotSavedWarning-32.png"},

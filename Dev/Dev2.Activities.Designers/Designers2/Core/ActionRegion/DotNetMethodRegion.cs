@@ -1,4 +1,15 @@
-﻿using System;
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+#pragma warning disable
+using System;
 using System.Activities.Presentation.Model;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -55,7 +66,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
         }
 
         public DotNetMethodRegion(IPluginServiceModel model, ModelItem modelItem, ISourceToolRegion<IPluginSource> source, INamespaceToolRegion<INamespaceItem> namespaceItem)
-            : this(CustomContainer.Get<IShellViewModel>(), new ActionInputDatatalistMapper())
+            : this(CustomContainer.Get<IShellViewModel>(), new ActionInputDatalistMapper())
         {
             try
             {
@@ -256,12 +267,12 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
 
         void ViewJsonObjects()
         {
-            JsonObjectsView?.ShowJsonString(JSONUtils.Format(ObjectResult));
+            JsonObjectsView?.ShowJsonString(JsonUtils.Format(ObjectResult));
         }
 
         void ViewObjectsResultForParameterInput(IServiceInput input)
         {
-            JsonObjectsView?.ShowJsonString(JSONUtils.Format(input.Dev2ReturnType));
+            JsonObjectsView?.ShowJsonString(JsonUtils.Format(input.Dev2ReturnType));
         }
 
         public string ObjectName
@@ -329,7 +340,7 @@ namespace Dev2.Activities.Designers2.Core.ActionRegion
             {
                 if (value != null)
                 {
-                    _selectedMethod.Dev2ReturnType = JSONUtils.Format(value);
+                    _selectedMethod.Dev2ReturnType = JsonUtils.Format(value);
                     OnPropertyChanged();
                 }
                 else

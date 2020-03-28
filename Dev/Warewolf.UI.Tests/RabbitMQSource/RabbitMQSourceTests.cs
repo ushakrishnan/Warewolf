@@ -2,10 +2,10 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Reflection;
-using Warewolf.Launcher;
 using Warewolf.UI.Tests.DialogsUIMapClasses;
 using Warewolf.UI.Tests.Explorer.ExplorerUIMapClasses;
 using Warewolf.UI.Tests.RabbitMQSource.RabbitMQSourceUIMapClasses;
+using Warewolf.UI.Tests;
 
 namespace Warewolf.UI.Tests.RabbitMQSource
 {
@@ -14,12 +14,12 @@ namespace Warewolf.UI.Tests.RabbitMQSource
     {
         const string SourceName = "CodedUITestRabbitMQSource";
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Database Sources")]
         // ReSharper disable once InconsistentNaming
         public void Create_Save_And_Open_RabbitMQSource_From_ExplorerContextMenu_UITests()
         {
-            using (ContainerLauncher RabbitMQContainer = TestLauncher.StartLocalRabbitMQContainer(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResults")))
+            using (var RabbitMQContainer = new Depends(Depends.ContainerType.RabbitMQ))
             {
                 //Create Source
                 ExplorerUIMap.Select_NewRabbitMQSource_From_ExplorerContextMenu();
@@ -30,7 +30,7 @@ namespace Warewolf.UI.Tests.RabbitMQSource
                 Assert.IsTrue(RabbitMQSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.RabbitMqSourceTab.RabbitMQSourceCustom.PasswordTextBoxEdit.Enabled, "Password Textbox is not enabled");
                 Assert.IsTrue(RabbitMQSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.RabbitMqSourceTab.RabbitMQSourceCustom.VirtualHostTextBoxEdit.Enabled, "Virtual Host Textbox is not enabled");
                 Assert.IsFalse(RabbitMQSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.RabbitMqSourceTab.RabbitMQSourceCustom.TestConnectionButton.Enabled, "Test Connection button is enabled");
-                RabbitMQSourceUIMap.Enter_Text_On_RabbitMQSourceTab();
+                RabbitMQSourceUIMap.Enter_Text_On_RabbitMQSourceTab(RabbitMQContainer.Container.IP, RabbitMQContainer.Container.Port);
                 Assert.IsTrue(RabbitMQSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.RabbitMqSourceTab.RabbitMQSourceCustom.TestConnectionButton.Enabled, "Test Connection button is not enabled");
                 RabbitMQSourceUIMap.Click_RabbitMQSource_TestConnectionButton();
                 Assert.IsTrue(RabbitMQSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.RabbitMqSourceTab.RabbitMQSourceCustom.ItemImage.Exists, "Test Connection successful image does not appear.");
@@ -46,14 +46,14 @@ namespace Warewolf.UI.Tests.RabbitMQSource
             }
         }
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("RabbitMQ Sources")]
         [Owner("Pieter Terblanche")]
         public void CreateRabbitMQSource_GivenTabHasChanges_ClosingStudioPromptsChanges()
         {
             //Create Source
             ExplorerUIMap.Select_NewRabbitMQSource_From_ExplorerContextMenu();
-            RabbitMQSourceUIMap.Enter_Text_On_RabbitMQSourceTab();
+            RabbitMQSourceUIMap.Enter_Text_On_RabbitMQSourceTab("dummy text", "321");
             Mouse.Click(UIMap.MainStudioWindow.CloseStudioButton);
             DialogsUIMap.Click_MessageBox_Cancel();
             Assert.IsTrue(RabbitMQSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.RabbitMqSourceTab.Exists);

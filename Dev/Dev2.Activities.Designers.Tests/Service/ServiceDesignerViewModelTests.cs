@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -2348,9 +2348,6 @@ namespace Dev2.Activities.Designers.Tests.Service
                 }
                 );
             //------------Execute Test---------------------------
-            
-
-
             var viewModel = new ServiceDesignerViewModel(modelItem, rootModel.Object, envRepository.Object, new Mock<IEventAggregator>().Object, new SynchronousAsyncWorker());
             var webFact = new Mock<IWebActivityFactory>();
             var wa = new Mock<IWebActivity>();
@@ -2368,10 +2365,7 @@ namespace Dev2.Activities.Designers.Tests.Service
                     .Returns(mapping.Object);
             viewModel.MappingManager.MappingFactory = mappingF.Object;
 
-            
-            
-            
-            resources.Setup(a => a.FindSingle(It.IsAny<Expression<Func<IResourceModel, bool>>>(), true, false))
+            resources.Setup(a => a.FindSingle(It.IsAny<Expression<Func<IResourceModel, bool>>>(), true))
                 .Returns(resourceModel.Object)
                 .Callback((Expression<Func<IResourceModel, bool>> expression, bool b) => Assert.IsTrue(expression.ToString().Contains("c => (c.ResourceName == ")))
 
@@ -2386,8 +2380,6 @@ namespace Dev2.Activities.Designers.Tests.Service
             Assert.IsTrue(viewModel.ValidationMemoManager.LastValidationMemo.Errors.First().Message.Contains("Incorrect Version. The remote workflow has changed.Please refresh"));
 
         }
-
-
 
         [TestMethod]
         [Owner("Trevor Williams-Ros")]

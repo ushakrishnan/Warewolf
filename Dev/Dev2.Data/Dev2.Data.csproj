@@ -9,7 +9,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Dev2.Data</RootNamespace>
     <AssemblyName>Dev2.Data</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <RuntimeIdentifier>win</RuntimeIdentifier>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>
     </SccProjectName>
@@ -35,7 +36,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>Dev2.Data.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -47,14 +49,11 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>S2306,S2930,S3237,S2387,S2931,S3427,S2953,S2278,S2368,S2190,S3447,S3217,S3600,S3216,S131,S2330,S2290,S2346,S3218,S1006,S3265,S3449,S2070,S2551,S2757,S3451,S3442,S1994,S907,S2688,S2995,S3262,S3597,S1479,S2996,S3005,S3244,S3249,S3453,S2275,S1854,S3172,S2761,S3655,S3264,S3445,S1163,S1244,S3246,CC0056,S1117,S3603,S2681,S3610,S3598,S2178,S1697,S2437,S3263,S2758,S1134,S3443,S2326,S1145,S2123,S1656,CC0064,CC0054,CC0010,CC0063,S1698,S2225,S1313,S1172,S125,S2360,S927,S127,S2997,S1121,S2583,S2372,S2357,S2933,S1764,S1117,S108,S2259,S1848,S3466,S2234,S1862,S2201,S122,S3010,S2743,S1144,S1118,S2376,S126,S134,S3215</WarningsAsErrors>
+    <WarningsAsErrors>CC0091, S1226, S100, CC0044, CC0021, S1449, S1541, S1067, S3235, CC0015, S107, S2292, S1450, S105, CC0074, S1135, S101, S3776, CS0168, S2339, CC0031, S3240, CC0020, CS0108, S1694, S1481, CC0008, S2328, S2696, S1643, CS0659, CS0067, CC0030, CA2202, S3376, S1185, CS0219, S3253, S1066, CC0075, S3459, S1871, S1125, CS0649, S2737, S1858, CC0082, CC0001, S3241, S2223, S1301, CC0013, S2955, S1944, CS4014, S3052, S2674, S2344, S1939, S1210, CC0033, CC0002, S3458, S3254, S3220, S2197, S1905, S1699, S1659, S1155, CS0105, CC0019, S3626, S3604, S3440, S3256, S2692, S2345, S1109, FS0058, CS1998, CS0661, CS0660, CS0162, CC0089, CC0032, CC0011, CA1001</WarningsAsErrors>
+    <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>Dev2.Data.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\FSharp.Core.dll</HintPath>
-    </Reference>
     <Reference Include="IKVM.OpenJDK.Charsets, Version=7.2.4630.5, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\IKVM.OpenJDK.Charsets.dll</HintPath>
@@ -86,18 +85,7 @@
     <Reference Include="Ionic.Zip.Reduced">
       <HintPath>..\Binaries\Ionic.Zip.Reduced.dll</HintPath>
     </Reference>
-    <Reference Include="log4net, Version=1.2.15.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
-      <HintPath>..\packages\log4net.2.0.5\lib\net45-full\log4net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="policy.2.3.FSharp.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <Private>True</Private>
-      <HintPath>..\packages\FSharp.Core.3.0.0.2\lib\net40\policy.2.3.FSharp.Core.dll</HintPath>
-    </Reference>
     <Reference Include="Renci.SshNet, Version=2014.4.6.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Binaries\Renci.SshNet.dll</HintPath>
@@ -131,11 +119,6 @@
     <Compile Include="..\AssemblyCommonInfo.cs" Condition="Exists('..\AssemblyCommonInfo.cs')">
       <Link>Properties\AssemblyCommonInfo.cs</Link>
     </Compile>
-    <None Include="..\Run Tests.ps1">
-      <Link>Run Tests.ps1</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Visible>False</Visible>
-    </None>
     <AdditionalFiles Include="..\SonarQube\SonarLint.xml">
       <Visible>False</Visible>
     </AdditionalFiles>
@@ -154,7 +137,13 @@
     <Compile Include="Dev2Column.cs" />
     <Compile Include="Dev2DecisionComparer.cs" />
     <Compile Include="Dev2WorkflowSettingsTO.cs" />
+    <Compile Include="PathOperations\ActivityIOBrokerMainDriver.cs" />
+    <Compile Include="PathOperations\ActivityIOBrokerBaseDriver.cs" />
+    <Compile Include="PathOperations\ActivityIOBrokerValidatorDriver.cs" />
+    <Compile Include="PathOperations\ImpersonationDelegate.cs" />
+    <Compile Include="PathOperations\ImpersonationOperation.cs" />
     <Compile Include="PathOperations\ValidateAuthorization.cs" />
+    <Compile Include="ServiceModel\RedisSource.cs" />
     <Compile Include="Util\OperationsHelper.cs" />
     <Compile Include="IComplexObject.cs" />
     <Compile Include="IDataListModel.cs" />
@@ -167,7 +156,6 @@
     <Compile Include="Parsers\XPathParser.cs" />
     <Compile Include="PathOperations\Extension\PathExtensions.cs" />
     <Compile Include="PathOperations\Interfaces\IDev2LogonProvider.cs" />
-    <Compile Include="PathOperations\Interfaces\IPutOperationArguments.cs" />
     <Compile Include="PathOperations\LogonProvider.cs" />
     <Compile Include="PathOperations\Operations\DoCreateDirectory.cs" />
     <Compile Include="PathOperations\Operations\DoDeleteOperation.cs" />
@@ -184,7 +172,6 @@
     <Compile Include="RecordSet.cs" />
     <Compile Include="ReverseIndexIterator.cs" />
     <Compile Include="Scalar.cs" />
-    <Compile Include="ScalarNameComparer.cs" />
     <Compile Include="ServiceModel\ComPluginSource.cs" />
     <Compile Include="ServiceModel\Connection.cs" />
     <Compile Include="ServiceModel\RabbitMQSource.cs" />
@@ -309,7 +296,6 @@
     <Compile Include="Util\ParserHelperUtil.cs" />
     <Compile Include="Util\Scrubber.cs" />
     <Compile Include="Util\ScrubType.cs" />
-    <Compile Include="Util\XmlHelper.cs" />
     <Compile Include="WarewolfAtomComparer.cs" />
     <Compile Include="WarewolfIterator.cs" />
   </ItemGroup>
@@ -337,6 +323,22 @@
     <ProjectReference Include="..\Dev2.Common\Dev2.Common.csproj">
       <Project>{84405fdf-0ff8-49a2-8925-8a4aeba8104a}</Project>
       <Name>Dev2.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Data\Warewolf.Data.csproj">
+      <Project>{66DCB0B3-1F33-490F-B874-913CF1F43E49}</Project>
+      <Name>Warewolf.Data</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Driver.RabbitMQ\Warewolf.Driver.RabbitMQ.csproj">
+      <Project>{b1ecf2e3-9706-43a5-a5ab-97ae8ca577cd}</Project>
+      <Name>Warewolf.Driver.RabbitMQ</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Driver.Redis\Warewolf.Driver.Redis.csproj">
+      <Project>{86df54bb-e37d-4559-8014-13d6030a2242}</Project>
+      <Name>Warewolf.Driver.Redis</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Warewolf.Interfaces\Warewolf.Interfaces.csproj">
+      <Project>{926CF512-B3FD-410D-AA83-EBDF4C4868DE}</Project>
+      <Name>Warewolf.Interfaces</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Language.Parser\Warewolf.Language.Parser.fsproj">
       <Project>{df3ab090-911f-4646-9ad1-205e2ced908a}</Project>
@@ -368,16 +370,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="Dev2.Data.ruleset" />
-    <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.Common.dll" />
-    <Analyzer Include="..\packages\codecracker.CSharp.1.0.1\analyzers\dotnet\cs\CodeCracker.CSharp.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\Google.Protobuf.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.CSharp.dll" />
-    <Analyzer Include="..\packages\SonarAnalyzer.CSharp.6.6.0.3969\analyzers\SonarAnalyzer.dll" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="RabbitMQ.Client">
+      <Version>5.1.2</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

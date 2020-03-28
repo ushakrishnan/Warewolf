@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -121,14 +122,15 @@ namespace Dev2.Runtime.ESB
                 }
                 finally
                 {
-                    if (dataObject.Environment.HasErrors())
+                    var environment = dataObject.Environment;
+                    if (environment.HasErrors())
                     {
-                        var errorString = dataObject.Environment.FetchErrors();
+                        var errorString = environment.FetchErrors();
                         var executionErrors = ErrorResultTO.MakeErrorResultFromDataListString(errorString);
                         errors.MergeErrors(executionErrors);
                     }
 
-                    dataObject.Environment.AddError(errors.MakeDataListReady());
+                    environment.AddError(errors.MakeDataListReady());
 
                     if (errors.HasErrors())
                     {
@@ -379,7 +381,7 @@ namespace Dev2.Runtime.ESB
                     ErrorMessage = errors.MakeDisplayReady()
                 };
 
-                DebugDispatcher.Instance.Write(debugState, dataObject.IsServiceTestExecution, dataObject.IsDebugFromWeb, dataObject.TestName, dataObject.RemoteInvoke, dataObject.RemoteInvokerID);
+                DebugDispatcher.Instance.Write( new WriteArgs { debugState = debugState, isTestExecution = dataObject.IsServiceTestExecution, isDebugFromWeb = dataObject.IsDebugFromWeb, testName = dataObject.TestName, isRemoteInvoke = dataObject.RemoteInvoke, remoteInvokerId = dataObject.RemoteInvokerID });
             }
         }
 

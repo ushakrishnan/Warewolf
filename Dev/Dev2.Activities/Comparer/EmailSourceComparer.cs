@@ -1,3 +1,4 @@
+#pragma warning disable
 ﻿using Dev2.Runtime.ServiceModel.Data;
 using System.Collections.Generic;
 
@@ -5,7 +6,9 @@ namespace Dev2.Comparer
 {
     internal class EmailSourceComparer : IEqualityComparer<EmailSource>
     {
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public bool Equals(EmailSource x, EmailSource y)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (x == null && y == null)
             {

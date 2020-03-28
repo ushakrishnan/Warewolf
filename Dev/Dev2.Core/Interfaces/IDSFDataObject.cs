@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -18,12 +19,23 @@ using Dev2.Data.Interfaces.Enums;
 using Dev2.Web;
 using Warewolf.Storage.Interfaces;
 using Dev2;
+using System.Collections.Concurrent;
+using Dev2.Common.Interfaces.Enums;
+using Warewolf.Data.Options;
 
 namespace Dev2.Interfaces
 {
+
+
+    public class RetryState
+    {
+        public int NumberOfRetries { get; set; }
+    }
+    
     public interface IDSFDataObject
     {
         Dictionary<int, List<Guid>> ThreadsToDispose { get; set; }
+        ConcurrentDictionary<(IPrincipal, AuthorizationContext, string), bool> AuthCache { get; set; }
 
         string CurrentBookmarkName { get; set; }
         Guid WorkflowInstanceId { get; set; }
@@ -43,6 +55,7 @@ namespace Dev2.Interfaces
         Guid ClientID { get; set; }
         bool IsOnDemandSimulation { get; set; }
         Guid ServerID { get; set; }
+        int VersionNumber { get; set; }
         int NumberOfSteps { get; set; }
         IPrincipal ExecutingUser { get; set; }
         Guid DatalistOutMergeID { get; set; }
@@ -67,6 +80,7 @@ namespace Dev2.Interfaces
         StringBuilder RawPayload { get; set; }
         StringBuilder RemoteInvokeResultShape { get; set; }
         bool RemoteInvoke { get; set; }
+        //TODO: Change this to Guid
         string RemoteInvokerID { get; set; }
         IList<IDebugState> RemoteDebugItems { get; set; }
         string RemoteServiceType { get; set; }
@@ -93,7 +107,7 @@ namespace Dev2.Interfaces
         bool IsDebugMode();
         bool IsRemoteWorkflow();
         IExecutionEnvironment Environment { get; set; }
-        IExecutionToken ExecutionToken   { get; set; }
+        IExecutionToken ExecutionToken { get; set; }
 
         void PopEnvironment();
         void PushEnvironment(IExecutionEnvironment env);
@@ -107,11 +121,14 @@ namespace Dev2.Interfaces
         IServiceTestModelTO ServiceTest { get; set; }
         List<Guid> TestsResourceIds { get; set; }
         Guid? ExecutionID { get; set; }
+        string CustomTransactionID { get; set; }
         string WebUrl { get; set; }
         bool IsSubExecution { get; set; }
         string QueryString { get; set; }
 
         IDev2WorkflowSettings Settings { get; set; }
         IStateNotifier StateNotifier { get; set; }
+        Exception ExecutionException { get; set; }
+        IDictionary<IDev2Activity, (RetryState, IEnumerator<bool>)> Gates { get; }
     }
 }

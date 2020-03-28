@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -22,8 +22,9 @@ using Caliburn.Micro;
 using Dev2;
 using Dev2.Common.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Common.Interfaces.Core;
+
 using Dev2.Common.Interfaces.Core.DynamicServices;
+using Dev2.Common.Interfaces.Data;
 using Dev2.Common.Interfaces.Infrastructure.Providers.Errors;
 using Dev2.Common.Interfaces.Security;
 using Dev2.Common.Interfaces.Studio.Controller;
@@ -50,7 +51,11 @@ using Dev2.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
+using Warewolf.Configuration;
+using Warewolf.Options;
+using Warewolf.Service;
 using Warewolf.Studio.ViewModels;
+using Warewolf.Triggers;
 
 namespace BusinessDesignStudio.Unit.Tests
 {
@@ -753,7 +758,120 @@ namespace BusinessDesignStudio.Unit.Tests
             Assert.AreEqual(1, serviceTestModelTos[0].TestSteps.Count);
         }
 
-       
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory(nameof(ResourceRepository))]
+        public void ResourceModel_FetchTriggerQueues_ExecuteMessageIsSuccessful_NoException()
+        {
+            var mockEnvironmentModel = new Mock<IServer>();
+            var returnValue = new StringBuilder();
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(connection => connection.IsConnected).Returns(true);
+            mockEnvironmentConnection.Setup(connection => connection.ServerEvents).Returns(new EventPublisher());
+            mockEnvironmentConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Callback((StringBuilder o, Guid workspaceID) =>
+            {
+                returnValue = o;
+            });
+
+            mockEnvironmentModel.Setup(e => e.Connection).Returns(mockEnvironmentConnection.Object);
+
+            var resourceRepository = new ResourceRepository(mockEnvironmentModel.Object);
+            resourceRepository.FetchTriggerQueues();
+
+            var serializer = new Dev2JsonSerializer();
+            var returnMessage = serializer.Deserialize<EsbExecuteRequest>(returnValue.ToString());
+            Assert.IsNotNull(returnMessage);
+            Assert.AreEqual("FetchTriggerQueues", returnMessage.ServiceName);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory(nameof(ResourceRepository))]
+        public void ResourceModel_SaveQueue_ExecuteMessageIsSuccessful_NoException()
+        {
+            var expectedTriggerId = Guid.NewGuid().ToString();
+            var commController = new Mock<ICommunicationController>();
+            commController.Setup(m => m.ExecuteCommand<ExecuteMessage>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>()))
+                          .Returns(new ExecuteMessage { Message = new StringBuilder(expectedTriggerId) });
+
+            var mockEnvironmentModel = new Mock<IServer>();
+            var returnValue = new StringBuilder();
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(connection => connection.IsConnected).Returns(true);
+            mockEnvironmentConnection.Setup(connection => connection.ServerEvents).Returns(new EventPublisher());
+            mockEnvironmentConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Callback((StringBuilder o, Guid workspaceID) =>
+            {
+                returnValue = o;
+            });
+
+            mockEnvironmentModel.Setup(e => e.Connection).Returns(mockEnvironmentConnection.Object);
+
+            var mockTriggerQueue = new Mock<ITriggerQueue>();
+
+            var resourceRepository = new ResourceRepository(mockEnvironmentModel.Object);
+            resourceRepository.GetCommunicationController = someName => commController.Object;
+
+            var triggerId = resourceRepository.SaveQueue(mockTriggerQueue.Object);
+
+            Assert.AreEqual(expectedTriggerId, triggerId.ToString());
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory(nameof(ResourceRepository))]
+        public void ResourceModel_DeleteQueue_ExecuteMessageIsSuccessful_NoException()
+        {
+            var mockEnvironmentModel = new Mock<IServer>();
+            var returnValue = new StringBuilder();
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(connection => connection.IsConnected).Returns(true);
+            mockEnvironmentConnection.Setup(connection => connection.ServerEvents).Returns(new EventPublisher());
+            mockEnvironmentConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Callback((StringBuilder o, Guid workspaceID) =>
+            {
+                returnValue = o;
+            });
+
+            mockEnvironmentModel.Setup(e => e.Connection).Returns(mockEnvironmentConnection.Object);
+
+            var mockTriggerQueue = new Mock<ITriggerQueue>();
+
+            var resourceRepository = new ResourceRepository(mockEnvironmentModel.Object);
+            resourceRepository.DeleteQueue(mockTriggerQueue.Object);
+
+            var serializer = new Dev2JsonSerializer();
+            var returnMessage = serializer.Deserialize<EsbExecuteRequest>(returnValue.ToString());
+            Assert.IsNotNull(returnMessage);
+            Assert.AreEqual("DeleteTriggerQueueService", returnMessage.ServiceName);
+        }
+
+        [TestMethod]
+        [Owner("Pieter Terblanche")]
+        [TestCategory(nameof(ResourceRepository))]
+        public void ResourceModel_GetTriggerQueueHistory_ExecuteMessageIsSuccessful_NoException()
+        {
+            var resourceId = Guid.NewGuid();
+            var mockEnvironmentModel = new Mock<IServer>();
+            var returnValue = new StringBuilder();
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(connection => connection.IsConnected).Returns(true);
+            mockEnvironmentConnection.Setup(connection => connection.ServerEvents).Returns(new EventPublisher());
+            mockEnvironmentConnection.Setup(connection => connection.ExecuteCommand(It.IsAny<StringBuilder>(), It.IsAny<Guid>())).Callback((StringBuilder o, Guid workspaceID) =>
+            {
+                returnValue = o;
+            });
+
+            mockEnvironmentModel.Setup(e => e.Connection).Returns(mockEnvironmentConnection.Object);
+
+            var resourceRepository = new ResourceRepository(mockEnvironmentModel.Object);
+            resourceRepository.GetTriggerQueueHistory(resourceId);
+
+            var serializer = new Dev2JsonSerializer();
+            var returnMessage = serializer.Deserialize<EsbExecuteRequest>(returnValue.ToString());
+            Assert.IsNotNull(returnMessage);
+            Assert.AreEqual("GetExecutionHistoryService", returnMessage.ServiceName);
+            Assert.AreEqual(1, returnMessage.Args.Count);
+            Assert.AreEqual(resourceId.ToString(), returnMessage.Args["ResourceId"].ToString());
+        }
 
         [TestMethod]
         [Owner("Pieter Terblanche")]
@@ -2445,6 +2563,55 @@ namespace BusinessDesignStudio.Unit.Tests
             _environmentModel.Setup(e => e.Connection).Returns(conn.Object);
             var serverSettingsData = new ServerSettingsData { AuditFilePath = "somePath" };
             _repo.SaveServerSettings(_environmentModel.Object, serverSettingsData);
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(ResourceRepository))]
+        public void ResourceRepository_FindOptionsBy_ExecuteCommand_Given_TargetEnvironment_IsNull_ExpectedFail()
+        {
+            //----------------------Arrange----------------------
+            using (var sut = new ResourceRepository(new Mock<IServer>().Object))
+            {
+                //----------------------Act--------------------------
+                var result = sut.FindOptionsBy(null, string.Empty);
+                //----------------------Assert-----------------------
+                Assert.AreEqual(0, result.Count);
+            };
+        }
+
+        [TestMethod]
+        [Owner("Siphamandla Dube")]
+        [TestCategory(nameof(ResourceRepository))]
+        public void ResourceRepository_FindOptionsBy_ExecuteCommand_Given_TargetEnvironment_IsNotNull_ExpectedOptions()
+        {
+            //----------------------Arrange----------------------
+            var mockEnvironmentConnection = new Mock<IEnvironmentConnection>();
+            mockEnvironmentConnection.Setup(o => o.IsConnected).Returns(true);
+
+            var mockServer = new Mock<IServer>();
+            mockServer.Setup(o => o.Connection).Returns(mockEnvironmentConnection.Object);
+            mockServer.Setup(o => o.IsConnected).Returns(true);
+
+            var executeOptions = new List<IOption>() { new OptionBool { Name = "Breakfast", Value = true }, new OptionAutocomplete { Name = "TestName", Value = "TestValue", Suggestions = new string[] { "TestSuggestion1", "TestSuggestion2" } } }.ToList();
+
+            var commController = new Mock<ICommunicationController>();
+            commController.Setup(o => o.ExecuteCommand<List<IOption>>(It.IsAny<IEnvironmentConnection>(), It.IsAny<Guid>())).Returns(executeOptions);
+
+            using (var resourceRepository = new ResourceRepository(new Mock<IServer>().Object))
+            {
+                resourceRepository.GetCommunicationController = someName => commController.Object;
+                //----------------------Act--------------------------
+                var result = resourceRepository.FindOptionsBy(mockServer.Object, OptionsService.GateResume);
+                //----------------------Assert-----------------------
+                Assert.AreEqual(2, result.Count);
+
+                Assert.AreEqual("Breakfast", ((OptionBool)result[0]).Name);
+                Assert.AreEqual(true, ((OptionBool)result[0]).Value);
+
+                Assert.AreEqual("TestName", ((OptionAutocomplete)result[1]).Name);
+                Assert.AreEqual("TestValue", ((OptionAutocomplete)result[1]).Value);
+            };
         }
 
         static Mock<IEnvironmentConnection> CreateEnvironmentConnection()

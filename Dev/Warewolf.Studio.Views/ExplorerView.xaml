@@ -293,6 +293,17 @@
                                                 <Image Style="{StaticResource NewWebSourceIcon}"/>
                                             </MenuItem.Icon>
                                         </MenuItem>
+                                        <MenuItem Name="NewRedisSource"
+                                                  Style="{StaticResource MenuItemStyle}"
+                                                  Command="{Binding NewRedisSourceCommand}"
+                                                  CommandParameter="RedisSource"
+                                                  Header="New Redis Source"
+                                                  IsEnabled="{Binding CanCreateSource}"
+                                                  ToolTip="{Binding ExplorerTooltips.NewRedisSourceTooltip}">
+                                            <MenuItem.Icon>
+                                                <Image Style="{StaticResource NewRedisSourceIcon}"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
                                         <MenuItem Name="NewPluginSource"
                                                   Style="{StaticResource MenuItemStyle}"
                                                   Command="{Binding NewPluginSourceCommand}"
@@ -526,7 +537,7 @@
 								                      ToolTip="{Binding ExplorerTooltips.DebugInputsTooltip}"
 								                      Visibility="{Binding IsDebugInputsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <MenuItem.Icon>
-                                                    <fa:FontAwesome Margin="0,2,0,0" FontSize="12" FontWeight="Light" Icon="Play" />
+                                                    <fa:FontAwesome Margin="0,2,0,0" FontSize="12" FontWeight="Light" Icon="Bug" />
                                                 </MenuItem.Icon>
                                             </MenuItem>
 
@@ -538,7 +549,7 @@
 								                      ToolTip="{Binding ExplorerTooltips.DebugStudioTooltip}"
 								                      Visibility="{Binding IsDebugStudioVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <MenuItem.Icon>
-                                                    <fa:FontAwesome Margin="0,2,0,0" FontSize="12" FontWeight="Light" Icon="Play" />
+                                                    <fa:FontAwesome Margin="0,2,0,0" FontSize="12" FontWeight="Light" Icon="Bug" />
                                                 </MenuItem.Icon>
                                             </MenuItem>
 
@@ -550,7 +561,7 @@
 								                      ToolTip="{Binding ExplorerTooltips.DebugBrowserTooltip}"
 								                      Visibility="{Binding IsDebugBrowserVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <MenuItem.Icon>
-                                                    <fa:FontAwesome Margin="0,2,0,0" FontSize="12" FontWeight="Light" Icon="Play" />
+                                                    <fa:FontAwesome Margin="0,2,0,0" FontSize="12" FontWeight="Light" Icon="Bug" />
                                                 </MenuItem.Icon>
                                             </MenuItem>
 
@@ -890,6 +901,17 @@
 									                      ToolTip="{Binding ExplorerTooltips.NewWebSourceTooltip}">
                                                     <MenuItem.Icon>
                                                         <Image Style="{StaticResource NewWebSourceIcon}"/>
+                                                    </MenuItem.Icon>
+                                                </MenuItem>
+                                                <MenuItem Name="NewRedisSourceItem"
+                                                          Style="{StaticResource MenuItemStyle}"
+                                                          Command="{Binding NewRedisSourceCommand}"
+                                                          CommandParameter="RedisSource"
+                                                          Header="New Redis Source"
+                                                          IsEnabled="{Binding CanCreateSource}"
+                                                          ToolTip="{Binding ExplorerTooltips.NewRedisSourceTooltip}">
+                                                    <MenuItem.Icon>
+                                                        <Image Style="{StaticResource NewRedisSourceIcon}"/>
                                                     </MenuItem.Icon>
                                                 </MenuItem>
                                                 <MenuItem Name="NewPluginSourceItem"

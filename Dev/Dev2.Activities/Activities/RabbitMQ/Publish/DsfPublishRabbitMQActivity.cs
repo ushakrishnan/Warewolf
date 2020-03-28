@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -25,7 +26,6 @@ using Dev2.Common.State;
 
 namespace Dev2.Activities.RabbitMQ.Publish
 {
-    [ToolDescriptorInfo("RabbitMq", "RabbitMQ Publish", ToolType.Native, "FFEC6885-597E-49A2-A1AD-AE81E33DF809", "Dev2.Activities", "1.0.0.0", "Legacy", "Utility", "/Warewolf.Studio.Themes.Luna;component/Images.xaml", "Tool_Utility_Rabbit_MQ_Publish")]
     public class DsfPublishRabbitMQActivity : DsfBaseActivity, IEquatable<DsfPublishRabbitMQActivity>
     {
         #region Ctor
@@ -174,7 +174,9 @@ namespace Dev2.Activities.RabbitMQ.Publish
 
         #endregion Overrides of DsfBaseActivity
 
+#pragma warning disable S1541 // Methods and properties should not be too complex
         public bool Equals(DsfPublishRabbitMQActivity other)
+#pragma warning restore S1541 // Methods and properties should not be too complex
         {
             if (ReferenceEquals(null, other))
             {

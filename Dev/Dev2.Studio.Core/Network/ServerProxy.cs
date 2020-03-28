@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -35,7 +36,7 @@ namespace Dev2.Network
         readonly IEnvironmentConnection _wrappedConnection;
         public ServerProxy(Uri serverUri)
         {
-           _wrappedConnection = new ServerProxyWithoutChunking(serverUri);
+           _wrappedConnection = new ServerProxyPersistentConnection(serverUri);
             SetupPassthroughEvents();
         }
 
@@ -50,13 +51,13 @@ namespace Dev2.Network
         
         public ServerProxy(string serverUri, ICredentials credentials, IAsyncWorker worker)
         {
-            _wrappedConnection = new ServerProxyWithoutChunking(serverUri,credentials,worker);
+            _wrappedConnection = new ServerProxyPersistentConnection(serverUri,credentials,worker);
             SetupPassthroughEvents();
         }
         
         public ServerProxy(string webAddress, string userName, string password)
         {
-            _wrappedConnection = new ServerProxyWithoutChunking(webAddress, userName, password);
+            _wrappedConnection = new ServerProxyPersistentConnection(webAddress, userName, password);
             SetupPassthroughEvents();
         }
 

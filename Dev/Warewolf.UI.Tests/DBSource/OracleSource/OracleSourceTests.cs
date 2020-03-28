@@ -10,7 +10,7 @@ namespace Warewolf.UI.Tests.OracleSource
     {
         const string SourceName = "CodedUITestOracleSource";
 
-        [TestMethod, DeploymentItem("EnableDocker.txt")]
+        [TestMethod]
         [TestCategory("Database Sources")]
         public void Create_Save_And_Open_OracleSource_From_ExplorerContextMenu_UITests()
         {
@@ -22,7 +22,7 @@ namespace Warewolf.UI.Tests.OracleSource
             Assert.IsFalse(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is enabled.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.UserNameTextBox.Enabled, "Username textbox is not enabled.");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.PasswordTextBox.Enabled, "Password textbos is not enabled.");
-            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("RSAKLFSVRDEV");
+            DBSourceUIMap.Enter_Text_Into_DatabaseServer_Tab("SVRDEV");
             DBSourceUIMap.IEnterRunAsUserTestUserOnDatabaseSource("testuser", "test123");
             Assert.IsTrue(DBSourceUIMap.MainStudioWindow.DockManager.SplitPaneMiddle.TabManSplitPane.TabMan.DBSourceTab.WorkSurfaceContext.TestConnectionButton.Enabled, "Test Connection Button is not enabled.");
             DBSourceUIMap.Click_DB_Source_Wizard_Test_Connection_Button();

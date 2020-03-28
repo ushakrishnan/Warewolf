@@ -1,6 +1,6 @@
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -16,8 +16,6 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
     [Serializable]
     public class XmlPathSegment : IPathSegment
     {
-        #region Constructors
-
         internal XmlPathSegment()
         {
         }
@@ -35,18 +33,20 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
             IsAttribute = isAttribute;
         }
 
-        #endregion Constructors
-
-        #region Properties
-
         public bool IsAttribute { get; set; }
         public string ActualSegment { get; set; }
         public string DisplaySegment { get; set; }
         public bool IsEnumarable { get; set; }
 
-        #endregion Properties
-
-        #region Methods
+        public T As<T>() where T : class, IPathSegment
+        {
+            var ret = this as T;
+            if (ret != null)
+            {
+                return ret;
+            }
+            throw new NotImplementedException();
+        }
 
         public string ToString(bool considerEnumerable)
         {
@@ -67,7 +67,5 @@ namespace Unlimited.Framework.Converters.Graph.String.Xml
 
             return ActualSegment;
         }
-
-        #endregion Methods
     }
 }

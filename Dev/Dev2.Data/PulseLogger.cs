@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -13,11 +14,10 @@ using System.Diagnostics;
 using System.Timers;
 using Dev2.Common;
 using Dev2.Common.Interfaces;
-using Dev2.Instrumentation;
 
 namespace Dev2.Data
 {
-    public class PulseLogger : IPulseLogger, IDisposable
+    public class PulseLogger : IStartTimer
     {
         internal readonly Timer _timer;
 
@@ -25,10 +25,10 @@ namespace Dev2.Data
         {
             Interval = intervalMs;
             _timer = new Timer(Interval);
-            _timer.Elapsed += _timer_Elapsed;       
+            _timer.Elapsed += Timer_Elapsed;       
         }
 
-        void _timer_Elapsed(object sender, ElapsedEventArgs e)
+        void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
@@ -48,34 +48,29 @@ namespace Dev2.Data
             }
         }
 
-        #region Implementation of IPulseLogger
-
-        public bool Start()
+        public IStartTimer Start()
         {
             try
             {
                 _timer.Start();
-                return true;
+                return this;
             }
             catch(Exception)
             {
 
-                return false;
+                return null;
             }
-            
         }
-
+        
         public void Dispose()
         {
             _timer.Dispose();
         }
 
         public double Interval { get; private set; }
-
-        #endregion
     }
 
-    public class PulseTracker : IPulseLogger, IDisposable
+    public class PulseTracker : IStartTimer
     {
         readonly Timer _timer;
 
@@ -83,10 +78,10 @@ namespace Dev2.Data
         {
             Interval = intervalMs;
             _timer = new Timer(Interval);
-            _timer.Elapsed += _timer_Elapsed;       
+            _timer.Elapsed += TimerElapsed;       
         }
 
-        void _timer_Elapsed(object sender, ElapsedEventArgs e)
+        void TimerElapsed(object sender, ElapsedEventArgs e)
         {
             try
             {
@@ -101,28 +96,25 @@ namespace Dev2.Data
             }
         }
 
-        #region Implementation of IPulseLogger
-
-        public bool Start()
+    
+        public IStartTimer Start()
         {
             try
             {
                 _timer.Start();
-                return true;
+                return this;
             }
             catch(Exception)
             {
-                return false;
+                return null;
             }
         }
-
+     
         public void Dispose()
         {
             _timer.Dispose();
         }
 
         public double Interval { get; private set; }
-
-        #endregion
     }
 }

@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -10,40 +11,23 @@
 
 using System;
 using System.IO;
-using System.Reflection;
 using System.Text;
-
 
 namespace Dev2.Common
 {
     public static class EnvironmentVariables
     {
-
-        static string _appPath;
         static readonly string DataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData, Environment.SpecialFolderOption.Create), "Warewolf");
 
-        public static string ApplicationPath
-        {
-            get
+        private static string _applicationPath;
+        public static string ApplicationPath {
+            get => _applicationPath;
+            set
             {
-
-                if (String.IsNullOrEmpty(_appPath))
+                if (_applicationPath is null)
                 {
-                    try
-                    {
-                        var assembly = Assembly.GetExecutingAssembly();
-                        var loc = assembly.Location;
-                        _appPath = Path.GetDirectoryName(loc);
-                    }
-                    catch (Exception e)
-                    {
-                        Dev2Logger.Info("ApplicationPath Error -> " + e.Message, GlobalConstants.WarewolfInfo);
-                        _appPath = Directory.GetCurrentDirectory(); // fail safe ;)
-                    }
-
+                    _applicationPath = value;
                 }
-
-                return _appPath;
             }
         }
 
@@ -73,6 +57,24 @@ namespace Dev2.Common
             get
             {
                 var resourcePath = Path.Combine(AppDataPath, "Tests");
+                return resourcePath;
+            }
+        }
+
+        public static string TriggersPath
+        {
+            get
+            {
+                var resourcePath = Path.Combine(AppDataPath, "Triggers");
+                return resourcePath;
+            }
+        }
+
+        public static string QueueTriggersPath
+        {
+            get
+            {
+                var resourcePath = Path.Combine(TriggersPath, "Queue");
                 return resourcePath;
             }
         }
@@ -189,6 +191,19 @@ namespace Dev2.Common
             }
         }
 
+        public static string DebugItemTempPath
+        {
+            get
+            {
+                var tempPath = Path.Combine(GlobalConstants.TempLocation, "Warewolf", "Debug");
+                if (!Directory.Exists(tempPath))
+                {
+                    Directory.CreateDirectory(tempPath);
+                }
+                return tempPath;
+            }
+        }
+
         public static string GetWorkspacePath(Guid workspaceID) => workspaceID == Guid.Empty
                        ? Path.Combine(AppDataPath, "Resources")
                        : Path.Combine(Path.Combine(WorkspacePath, workspaceID.ToString()), "Resources");
@@ -207,12 +222,7 @@ namespace Dev2.Common
         }
 
         static readonly Guid RemoteID = Guid.NewGuid();
-        /// <summary>
-        /// Gets the remote invoke ID.
-        /// </summary>
-        /// <value>
-        /// The remote invoke ID.
-        /// </value>
+        
         public static Guid RemoteInvokeID => RemoteID;
 
         public static string WebServerUri { get; set; }

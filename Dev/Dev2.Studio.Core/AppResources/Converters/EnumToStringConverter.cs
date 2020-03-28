@@ -1,6 +1,7 @@
+#pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -11,6 +12,7 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
+using Dev2.Common.ExtMethods;
 using Dev2.Common.Interfaces.Enums.Enums;
 
 
@@ -18,7 +20,7 @@ namespace Dev2.Studio.Core.AppResources.Converters
 {
     public class EnumToStringConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => Dev2EnumConverter.ConvertEnumValueToString(value as Enum);
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => (value as Enum).GetDescription();
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Dev2EnumConverter.GetEnumFromStringDiscription(value?.ToString(), targetType);
     }
 }

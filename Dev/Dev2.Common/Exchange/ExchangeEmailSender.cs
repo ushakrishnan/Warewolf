@@ -1,6 +1,7 @@
+#pragma warning disable
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2018 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -38,13 +39,12 @@ namespace Dev2.Common.Exchange
                 service.AutodiscoverUrl(_source.UserName, RedirectionUrlValidationCallback);
             }
         }
-
         static bool RedirectionUrlValidationCallback(string redirectionUrl)
         {
             var redirectionUri = new Uri(redirectionUrl);
             return redirectionUri.Scheme == "https";
         }
-
+        //TODO: add ExchangeServiceWrapper and EmailmessageWrapper  
         public void Send(ExchangeService service, EmailMessage message)
         {
             Initialize(service);
