@@ -1,5 +1,15 @@
 #pragma warning disable
-﻿using Dev2.Activities.Debug;
+/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using Dev2.Activities.Debug;
 using Dev2.Common;
 using Dev2.Common.Interfaces.Diagnostics.Debug;
 using Dev2.Common.Interfaces.Toolbox;
@@ -288,7 +298,7 @@ namespace Dev2.Activities.SelectAndApply
 
         void GetTestOutputForBrowserExecution(IDSFDataObject dataObject)
         {
-            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.FirstOrDefault(step => step.UniqueId == Guid.Parse(UniqueID));
+            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.FirstOrDefault(step => step.ActivityID == Guid.Parse(UniqueID));
             if (serviceTestStep != null)
             {
                 var testRunResult = new TestRunResult();
@@ -299,7 +309,7 @@ namespace Dev2.Activities.SelectAndApply
 
         void GetTestOurputResultForDebug(IDSFDataObject dataObject)
         {
-            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.UniqueId == _originalUniqueID);
+            var serviceTestStep = dataObject.ServiceTest?.TestSteps?.Flatten(step => step.Children)?.FirstOrDefault(step => step.ActivityID == _originalUniqueID);
             var serviceTestSteps = serviceTestStep?.Children;
             UpdateDebugStateWithAssertions(dataObject, serviceTestSteps?.ToList());
             if (serviceTestStep != null)
@@ -309,7 +319,7 @@ namespace Dev2.Activities.SelectAndApply
                 serviceTestStep.Result = testRunResult;
 
                 var debugItems = TestDebugMessageRepo.Instance.GetDebugItems(dataObject.ResourceID, dataObject.TestName);
-                debugItems = debugItems.Where(state => state.WorkSurfaceMappingId == serviceTestStep.UniqueId).ToList();
+                debugItems = debugItems.Where(state => state.WorkSurfaceMappingId == serviceTestStep.ActivityID).ToList();
                 var debugStates = debugItems.LastOrDefault();
 
                 var debugItemStaticDataParams = new DebugItemServiceTestStaticDataParams(serviceTestStep.Result.Message, serviceTestStep.Result.RunTestResult == RunResult.TestFailed);

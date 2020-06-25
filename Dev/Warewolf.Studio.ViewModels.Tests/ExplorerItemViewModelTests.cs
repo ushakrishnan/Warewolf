@@ -1,7 +1,7 @@
 ﻿/*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
-*  Licensed under GNU Affero General Public License 3.0 or later. 
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
 *  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
@@ -24,9 +24,8 @@ using Dev2.Studio.Interfaces;
 using Dev2.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using Warewolf.Data;
 using IPopupController = Dev2.Common.Interfaces.Studio.Controller.IPopupController;
-
-
 
 namespace Warewolf.Studio.ViewModels.Tests
 {
@@ -311,6 +310,22 @@ namespace Warewolf.Studio.ViewModels.Tests
             _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
             _shellViewModelMock.Verify(it => it.NewRedisSource(_target.ResourcePath));
         }
+        [TestMethod, Timeout(60000)]
+        public void TestNewElasticsearchSourceCommand()
+        {
+            //arrange
+            _target.ResourceType = "Elasticsearch";
+            _target.ResourceId = Guid.NewGuid();
+            _serverMock.SetupGet(it => it.EnvironmentID).Returns(Guid.NewGuid());
+
+            //act
+            _target.NewElasticsearchSourceCommand.Execute(null);
+            Assert.IsTrue(_target.NewElasticsearchSourceCommand.CanExecute(null));
+
+            //assert
+            _shellViewModelMock.Verify(it => it.SetActiveServer(_target.Server.EnvironmentID));
+            _shellViewModelMock.Verify(it => it.NewElasticsearchSource(_target.ResourcePath));
+        }
 
         [TestMethod,Timeout(60000)]
         public void TestNewEmailSourceCommand()
@@ -509,22 +524,6 @@ namespace Warewolf.Studio.ViewModels.Tests
 
             //assert
             _shellViewModelMock.Verify(it => it.NewQueueEvent(_target.ResourceId));
-        }
-
-        [TestMethod,Timeout(60000)]
-        public void RunAllTestsCommand()
-        {
-            //arrange
-            _target.ResourceType = "WorkflowService";
-            _target.ResourceId = Guid.NewGuid();
-            _serverMock.SetupGet(it => it.EnvironmentID).Returns(Guid.NewGuid());
-
-            //act
-            _target.RunAllTestsCommand.Execute(null);
-            Assert.IsTrue(_target.RunAllTestsCommand.CanExecute(null));
-
-            //assert
-            _shellViewModelMock.Verify(it => it.RunAllTests(null, _target.ResourceId));
         }
 
         [TestMethod,Timeout(60000)]
@@ -1169,6 +1168,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var canCreateNewPluginSourceCommand = _target.NewPluginSourceCommand.CanExecute(null);
             var canCreateNewWebSourceSourceCommand = _target.NewWebSourceSourceCommand.CanExecute(null);
             var canCreateNewRedisSourceCommand = _target.NewRedisSourceCommand.CanExecute(null);
+            var canCreateNewElasticsearchSourceCommand = _target.NewElasticsearchSourceCommand.CanExecute(null);
             var canCreateNewEmailSourceSourceCommand = _target.NewEmailSourceSourceCommand.CanExecute(null);
             var canCreateNewExchangeSourceSourceCommand = _target.NewExchangeSourceSourceCommand.CanExecute(null);
             var canCreateNewSharepointSourceSourceCommand = _target.NewSharepointSourceSourceCommand.CanExecute(null);
@@ -1190,6 +1190,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(canCreateNewPluginSourceCommand);
             Assert.IsTrue(canCreateNewWebSourceSourceCommand);
             Assert.IsTrue(canCreateNewRedisSourceCommand);
+            Assert.IsTrue(canCreateNewElasticsearchSourceCommand);
             Assert.IsTrue(canCreateNewEmailSourceSourceCommand);
             Assert.IsTrue(canCreateNewExchangeSourceSourceCommand);
             Assert.IsTrue(canCreateNewSharepointSourceSourceCommand);

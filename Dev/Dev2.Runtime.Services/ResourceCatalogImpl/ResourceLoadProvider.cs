@@ -1,7 +1,7 @@
 #pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later. 
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -33,6 +33,7 @@ using Dev2.Runtime.Hosting;
 using Dev2.Runtime.Interfaces;
 using Dev2.Runtime.ServiceModel.Data;
 using ServiceStack.Common.Extensions;
+using Warewolf.Data;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.Runtime.ResourceCatalogImpl
@@ -155,6 +156,11 @@ namespace Dev2.Runtime.ResourceCatalogImpl
             }
         }
 
+        public IEnumerable<T> GetResources<T>(Guid workspaceId) where T : IWarewolfResource
+        {
+            return GetResources(workspaceId).Where(o => o is T).Cast<T>();
+        }
+
         public IEnumerable GetModels(Guid workspaceID, enSourceType sourceType)
         {
             var workspaceResources = GetResources(workspaceID);
@@ -184,7 +190,8 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                 { enSourceType.OauthSource, ()=>BuildSourceList<DropBoxSource>(resources) },
                 { enSourceType.SharepointServerSource, ()=>BuildSourceList<SharepointSource>(resources) },
                 { enSourceType.ExchangeSource, ()=>BuildSourceList<ExchangeSource>(resources) },
-                { enSourceType.RedisSource, ()=>BuildSourceList<RedisSource>(resources) }
+                { enSourceType.RedisSource, ()=>BuildSourceList<RedisSource>(resources) },
+                { enSourceType.ElasticsearchSource, ()=>BuildSourceList<ElasticsearchSource>(resources) }
             };
 
             var result = commands.ContainsKey(sourceType) ? commands[sourceType].Invoke() : null;
@@ -304,6 +311,8 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                         return typeof(WcfSource);
                     case nameof(enSourceType.ComPluginSource):
                         return typeof(ComPluginSource);
+                    case nameof(enSourceType.ElasticsearchSource):
+                        return typeof(ElasticsearchSource);
                     case "WorkflowService":
                         return typeof(Workflow);
                 }
@@ -330,7 +339,6 @@ namespace Dev2.Runtime.ResourceCatalogImpl
                             .Where(o => destinationType.IsAssignableFrom(o));
             return types.ToArray();
         }
-
         public List<TServiceType> GetDynamicObjects<TServiceType>(Guid workspaceID, Guid resourceID) where TServiceType : DynamicServiceObjectBase
         {
             if (resourceID == Guid.Empty)

@@ -53,7 +53,6 @@ namespace Warewolf.Studio.ViewModels.Tests
 
         #region Test commands
 
-
         [TestMethod,Timeout(60000)]
         public void TestRefreshCommandChildrenAllowResourceCheck()
         {
@@ -107,6 +106,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             var canCreateNewPluginSourceCommand = _target.NewPluginSourceCommand.CanExecute(null);
             var canCreateNewWebSourceSourceCommand = _target.NewWebSourceSourceCommand.CanExecute(null);
             var canCreateNewRedisSourceCommand = _target.NewRedisSourceCommand.CanExecute(null);
+            var canCreateNewElasticsearchSourceCommand = _target.NewElasticsearchSourceCommand.CanExecute(null);
             var canCreateNewEmailSourceSourceCommand = _target.NewEmailSourceSourceCommand.CanExecute(null);
             var canCreateNewExchangeSourceSourceCommand = _target.NewExchangeSourceSourceCommand.CanExecute(null);
             var canCreateNewSharepointSourceSourceCommand = _target.NewSharepointSourceSourceCommand.CanExecute(null);
@@ -131,6 +131,7 @@ namespace Warewolf.Studio.ViewModels.Tests
             Assert.IsTrue(canCreateNewPluginSourceCommand);
             Assert.IsTrue(canCreateNewWebSourceSourceCommand);
             Assert.IsTrue(canCreateNewRedisSourceCommand);
+            Assert.IsTrue(canCreateNewElasticsearchSourceCommand);
             Assert.IsTrue(canCreateNewEmailSourceSourceCommand);
             Assert.IsTrue(canCreateNewExchangeSourceSourceCommand);
             Assert.IsTrue(canCreateNewSharepointSourceSourceCommand);

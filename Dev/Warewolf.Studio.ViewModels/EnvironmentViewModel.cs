@@ -69,6 +69,7 @@ namespace Warewolf.Studio.ViewModels
         bool _isSaveDialog;
         bool _canViewExecutionLogging;
         private bool _isMergeVisible;
+        private bool _canViewRunAllTests;
 
         EnvironmentViewModel()
         {
@@ -166,7 +167,11 @@ namespace Warewolf.Studio.ViewModels
                 UpdateActiveEnvironment(shellViewModel);
                 shellViewModel.NewRedisSource(ResourcePath);
             });
-
+            NewElasticsearchSourceCommand = new DelegateCommand(() =>
+            {
+                UpdateActiveEnvironment(shellViewModel);
+                shellViewModel.NewElasticsearchSource(ResourcePath);
+            });
             NewEmailSourceSourceCommand = new DelegateCommand(() =>
             {
                 UpdateActiveEnvironment(shellViewModel);
@@ -207,7 +212,7 @@ namespace Warewolf.Studio.ViewModels
             {
                 Process.Start(Resources.Languages.Core.MyWarewolfUrl);
             });
-
+            
             DeployCommand = new DelegateCommand(() =>
             {
                 shellViewModel.AddDeploySurface(AsList().Union<IExplorerTreeItem>(new[] { this }));
@@ -246,6 +251,7 @@ namespace Warewolf.Studio.ViewModels
             ShowServerVersionCommand = new DelegateCommand(ShowServerVersionAbout);
             CanCreateFolder = Server.UserPermissions == Permissions.Administrator || server.UserPermissions == Permissions.Contribute;
             CanDeploy = Server.UserPermissions == Permissions.Administrator || server.UserPermissions == Permissions.Contribute;
+            CanViewRunAllTests = true;
             CreateFolderCommand = new DelegateCommand(CreateFolder);
             Parent = null;
             ResourceType = @"ServerSource";
@@ -644,6 +650,16 @@ namespace Warewolf.Studio.ViewModels
                 ExplorerTooltips.NewFolderTooltip = _canCreateFolder ? Resources.Languages.Tooltips.NewFolderTooltip : Resources.Languages.Tooltips.NoPermissionsToolTip;
             }
         }
+        
+        public bool CanViewRunAllTests
+        {
+            get => _canViewRunAllTests;
+            set
+            {
+                _canViewRunAllTests = value;
+                ExplorerTooltips.RunAllTestsTooltip = _canViewRunAllTests ? Resources.Languages.Tooltips.RunAllServerTestsToolTip : Resources.Languages.Tooltips.NoPermissionsToolTip; 
+            }
+        }
 
         public bool CanDeploy
         {
@@ -800,6 +816,7 @@ namespace Warewolf.Studio.ViewModels
         public ICommand NewWcfSourceCommand { get; set; }
         public ICommand NewWebSourceSourceCommand { get; set; }
         public ICommand NewRedisSourceCommand { get; set; }
+        public ICommand NewElasticsearchSourceCommand { get; set; }
         public ICommand NewEmailSourceSourceCommand { get; set; }
         public ICommand NewExchangeSourceSourceCommand { get; set; }
         public ICommand NewRabbitMqSourceSourceCommand { get; set; }

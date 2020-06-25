@@ -24,7 +24,6 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
-using Warewolf.Test.Agent;
 using Warewolf.UnitTestAttributes;
 
 namespace Dev2.Tests.Runtime.Services
@@ -194,6 +193,9 @@ namespace Dev2.Tests.Runtime.Services
                 TypeNameHandling = TypeNameHandling.Objects,
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
+
+            Assert.IsFalse(result.HasErrors, $"error executing sql query: {result.Errors}");
+
             Assert.AreEqual(4, result.Items.Count);
 
             // Check Columns Returned ;)
@@ -248,6 +250,9 @@ namespace Dev2.Tests.Runtime.Services
                 TypeNameHandling = TypeNameHandling.Objects,
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
+
+            Assert.IsFalse(result.HasErrors, $"error executing sql query: {result.Errors}");
+
             Assert.AreEqual(3, result.Items.Count);
 
             // Check Columns Returned ;)
@@ -296,6 +301,9 @@ namespace Dev2.Tests.Runtime.Services
                 TypeNameHandling = TypeNameHandling.Objects,
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple
             });
+
+            Assert.IsFalse(result.HasErrors, $"error executing sql query: {result.Errors}");
+
             Assert.AreEqual(3, result.Items.Count);
 
             // Check Columns Returned ;)

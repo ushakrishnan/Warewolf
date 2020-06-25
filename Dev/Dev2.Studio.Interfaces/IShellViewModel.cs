@@ -1,7 +1,7 @@
 #pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -47,6 +47,8 @@ namespace Dev2.Studio.Interfaces
         void EditResource(IEmailServiceSource selectedSource, IWorkSurfaceKey key);
         void EditResource(IExchangeSource selectedSource);
         void EditResource(IExchangeSource selectedSource, IWorkSurfaceKey key);
+        void EditResource(IElasticsearchSourceDefinition selectedSource);
+        void EditResource(IElasticsearchSourceDefinition selectedSource, IWorkSurfaceKey key);
         void EditResource(IRabbitMQServiceSourceDefinition selectedSource);
         void EditResource(IRabbitMQServiceSourceDefinition selectedSource, IWorkSurfaceKey key);
         void EditResource(IWcfServerSource selectedSource);
@@ -67,6 +69,7 @@ namespace Dev2.Studio.Interfaces
         void NewPluginSource(string resourcePath);
         void NewWebSource(string resourcePath);
         void NewRedisSource(string resourcePath);
+        void NewElasticsearchSource(string resourcePath);
         void NewEmailSource(string resourcePath);
         void NewExchangeSource(string resourcePath);
         void NewRabbitMQSource(string resourcePath);
@@ -104,7 +107,6 @@ namespace Dev2.Studio.Interfaces
         void ViewApisJson(string resourcePath, Uri webServerUri);
         void CreateTest(Guid resourceId);
         void OpenSelectedTest(Guid resourceId, string testName);
-        void RunAllTests(string ResourcePath, Guid resourceId);
         void CloseResourceTestView(Guid resourceId, Guid serverId, Guid environmentId);
         void CloseResourceMergeView(Guid resourceId, Guid serverId, Guid environmentId);
         void BrowserDebug(Guid resourceId, IServer server);
@@ -128,6 +130,8 @@ namespace Dev2.Studio.Interfaces
         IAuthorizeCommand SettingsCommand { get; }
         ICommand SearchCommand { get; }
         ICommand AddWorkflowCommand { get; }
+        ICommand RunCoverageCommand { get; }
+        ICommand RunAllTestsCommand { get; }
         IAuthorizeCommand SchedulerCommand { get; }
         IAuthorizeCommand QueueEventsCommand { get; }
         IAuthorizeCommand TasksCommand { get; }

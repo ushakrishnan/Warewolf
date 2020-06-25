@@ -757,8 +757,23 @@ Returns the output of the script, if any.</value>
   <data name="MergeButtonTooltip" xml:space="preserve">
     <value>Merge the Service</value>
   </data>
+  <data name="RunAllServerTestsToolTip" xml:space="preserve">
+    <value>Run all tests in browser for all resources</value>
+  </data>
+  <data name="RunAllFolderTestsToolTip" xml:space="preserve">
+    <value>Run all tests in browser for all resources in this folder</value>
+  </data>
   <data name="RunAllTestsToolTip" xml:space="preserve">
     <value>Run all tests in browser for this resource</value>
+  </data>
+  <data name="RunServerCoverageToolTip" xml:space="preserve">
+    <value>Run coverage in browser for all resources</value>
+  </data>
+  <data name="RunFolderCoverageToolTip" xml:space="preserve">
+    <value>Run coverage in browser for all resources in this folder</value>
+  </data>
+  <data name="RunCoverageToolTip" xml:space="preserve">
+    <value>Run coverage in browser for this resource</value>
   </data>
   <data name="RollbackTooltip" xml:space="preserve">
     <value>Roll back to this version</value>
@@ -849,6 +864,9 @@ By default the account running Warewolf Server.exe service will be used.</value>
 Returns the content of the file.
 You can use [[Scalar]] as well as [[Recordset().Fields]].
 Using recordset () will add a new record and (*) will assign every record.</value>
+  </data>
+  <data name="ReadFileToolTipIsResultBase64" xml:space="preserve">
+    <value>If selected it returns the content of the file in base64 format.</value>
   </data>
   <data name="ReadFileToolTipPassword" xml:space="preserve">
     <value>For protected resources, specify the Password of an account with permission to perform this action. 
@@ -1170,6 +1188,40 @@ You can use File System, URI, SFTP, FTP or FTPS format.</value>
   </data>
   <data name="RedisTimeoutToolTip" xml:space="preserve">
     <value>Redis Timeout for stored data</value>
+  </data>
+  <data name="ElasticsearchSourceHostNameTooltip" xml:space="preserve">
+     <value>The address of the Elasticsearch server name to connect to. </value>
+  </data>
+  <data name="ElasticsearchSourcePortTooltip" xml:space="preserve">
+    <value>The default port on which elasticsearch listens is 9200.</value>
+  </data>
+  <data name="ElasticsearchPasswordTooltip" xml:space="preserve">
+    <value>The server password</value>
+  </data>
+  <data name="ElasticsearchUsernameTooltip" xml:space="preserve">
+    <value>The Elasticsearch server username</value>
+  </data>
+  <data name="ElasticsearchSearchIndexTooltip" xml:space="preserve">
+    <value>The Elasticsearch server index that will be used to index the data.</value>
+  </data>
+  
+  <data name="ElasticsearchPasswordTooltip" xml:space="preserve">
+    <value>The Elasticsearch server password</value>
+  </data>  
+  <data name="ElasticsearchTestTooltip" xml:space="preserve">
+    <value>Test the elasticsearch source connection</value>
+  </data>
+  <data name="ElasticsearchCancelTestTooltip" xml:space="preserve">
+    <value>Cancel the test execution</value>
+  </data>
+  <data name="ElasticsearchServersToolTip" xml:space="preserve">
+    <value>Select a preconfigured elasticsearch source.</value>
+  </data>
+  <data name="ElasticsearchNewSourceToolTip" xml:space="preserve">
+    <value>Create a new Elasticsearch Server Source</value>
+  </data>
+  <data name="ElasticsearchEditSourceToolTip" xml:space="preserve">
+    <value>Edit Elasticsearch Server Source</value>
   </data>
   <data name="ManageWebSourceDefaultQueryTooltip" xml:space="preserve">
     <value>Optional default query</value>
@@ -2427,6 +2479,10 @@ To create a SFTP Key, put the full path and file or folder name here.</value>
   <data name="LoggingViewAuditsFilePathToolTip" xml:space="preserve">
     <value>Audits Folder Path</value>
   </data>
+  <data name="LoggingViewAuditsDataSourceToolTip" xml:space="preserve">
+    <value>Auditing Data Source</value>
+  </data>
+
   <data name="RedisTTLToolTip" xml:space="preserve">
     <value>Time in seconds before the key expires. Default is 5 Seconds.</value>
   </data>

@@ -61,6 +61,7 @@
     <Reference Include="Oracle.ManagedDataAccess">
       <HintPath>..\packages\Oracle.ManagedDataAccess.12.1.2400\lib\net40\Oracle.ManagedDataAccess.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="ServiceStack.Common">
       <HintPath>..\Binaries\ServiceStack.Common.dll</HintPath>
@@ -70,6 +71,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Activities" />
+    <Reference Include="System.Activities.Presentation" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -114,15 +116,20 @@
     <Compile Include="ESB\Management\EsbManagementServiceEntry.cs" />
     <Compile Include="ESB\Management\Services\DeleteTriggerQueueService.cs" />
     <Compile Include="ESB\Management\Services\FetchAllTests.cs" />
+    <Compile Include="ESB\Management\Services\FetchElasticsearchServiceSources.cs" />
     <Compile Include="ESB\Management\Services\FindAutocompleteOptions.cs" />
     <Compile Include="ESB\Management\Services\FindOptionsBy.cs" />
+    <Compile Include="ESB\Management\Services\GetAuditingSettings.cs" />
     <Compile Include="ESB\Management\Services\GetResourceById.cs" />
     <Compile Include="ESB\Management\Services\FindResourcesByType.cs" />
     <Compile Include="ESB\Management\Services\GetExecutionHistory.cs" />
     <Compile Include="ESB\Management\Services\FindOptions.cs" />
     <Compile Include="ESB\Management\Services\FetchTriggerQueues.cs" />
+    <Compile Include="ESB\Management\Services\SaveAuditingSettings.cs" />
     <Compile Include="ESB\Management\Services\SaveRedisSource.cs" />
+    <Compile Include="ESB\Management\Services\SaveElasticsearchSource.cs" />
     <Compile Include="ESB\Management\Services\SaveTriggerQueueService.cs" />
+    <Compile Include="ESB\Management\Services\TestElasticsearchSource.cs" />
     <Compile Include="ESB\Management\Services\TestRedisSource.cs" />
     <Compile Include="ESB\Management\Services\WorkflowResume.cs" />
     <Compile Include="ESB\Management\Services\GetFilterListService.cs" />
@@ -131,6 +138,7 @@
     <Compile Include="ESB\Management\Services\TaskExtentions.cs" />
     <Compile Include="ESB\Management\Services\TestSqliteService.cs" />
     <Compile Include="ESB\Management\WorkflowManagementEndpointAbstract.cs" />
+    <Compile Include="Hosting\ContextualResourceCatalog.cs" />
     <Compile Include="Hosting\ResourceCatalogFactory.cs" />
     <Compile Include="Hosting\TriggersCatalog.cs" />
     <Compile Include="IDbSources.cs" />
@@ -337,6 +345,7 @@
     <Compile Include="ServiceModel\Data\WcfService.cs" />
     <Compile Include="ServiceModel\Data\WcfSource.cs" />
     <Compile Include="ServiceModel\Data\WebService.cs" />
+    <Compile Include="ServiceModel\ElasticsearchSources.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\ComPlugin\ComPluginBroker.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\ComPlugin\ComPluginRuntimeHandler.cs" />
     <Compile Include="ServiceModel\Esb\Brokers\ComPlugin\IRuntime.cs" />
@@ -393,6 +402,7 @@
     <Compile Include="ServiceModel\RabbitMQSources.cs" />
     <Compile Include="ServiceModel\WebSources.cs" />
     <Compile Include="TestCatalog.cs" />
+    <Compile Include="TestCoverageCatalog.cs" />
     <Compile Include="Utilities.cs" />
     <Compile Include="Workspaces\Workspace.cs" />
     <Compile Include="Workspaces\WorkspaceItem.cs" />
@@ -474,10 +484,6 @@
     <ProjectReference Include="..\Warewolf.Interfaces\Warewolf.Interfaces.csproj">
       <Project>{926CF512-B3FD-410D-AA83-EBDF4C4868DE}</Project>
       <Name>Warewolf.Interfaces</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Warewolf.Logger\Warewolf.Logger.csproj">
-      <Project>{a44298cd-2e74-4b81-a115-cf9497c982f2}</Project>
-      <Name>Warewolf.Logger</Name>
     </ProjectReference>
     <ProjectReference Include="..\Warewolf.Security\Warewolf.Security.csproj">
       <Project>{CA5E9373-46FE-41B9-AB2E-BD637F48B456}</Project>
@@ -569,6 +575,9 @@
     </PackageReference>
     <PackageReference Include="MySql.Data">
       <Version>6.9.9</Version>
+    </PackageReference>
+    <PackageReference Include="NEST">
+      <Version>7.6.0</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>

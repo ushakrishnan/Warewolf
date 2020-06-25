@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Warewolf.Data;
 using Warewolf.Logging;
 using System;
+using Dev2.Common;
 using Serilog.Events;
 using Warewolf.Interfaces.Auditing;
 
@@ -34,7 +35,7 @@ namespace Warewolf.Driver.Serilog
         {
             try
             {
-               LogMessage(item);
+                LogMessage(item);
 
                 return Task.FromResult(ConsumerResult.Success);
             }
@@ -46,25 +47,24 @@ namespace Warewolf.Driver.Serilog
 
         private void LogMessage(IAuditEntry audit)
         {
-            var logTemplate = "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {@Message}{NewLine}{Exception}";
+            var logTemplate = GlobalConstants.WarewolfLogsTemplate;
 
-            // TODO: do not use audit type to determine log level of audit entry
-            switch (audit.AuditType)
+            switch (audit.LogLevel)
             {
-                case "Information":
-                    _publisher.Info(logTemplate, DateTime.Now, LogEventLevel.Information, audit);
+                case LogLevel.Info:
+                    _publisher.Info(logTemplate, audit);
                     break;
-                case "Warning":
-                    _publisher.Warn(logTemplate, DateTime.Now, LogEventLevel.Warning, audit);
+                case LogLevel.Warn:
+                    _publisher.Warn(logTemplate, audit);
                     break;
-                case "Error":
-                    _publisher.Error(logTemplate, DateTime.Now, LogEventLevel.Error, audit, Environment.NewLine, audit.Exception);
+                case LogLevel.Error:
+                    _publisher.Error(logTemplate, audit);
                     break;
-                case "Fatal":
-                    _publisher.Fatal(logTemplate, DateTime.Now, LogEventLevel.Fatal, audit, Environment.NewLine, audit.Exception);
+                case LogLevel.Fatal:
+                    _publisher.Fatal(logTemplate, audit.Exception);
                     break;
                 default:
-                    _publisher.Debug(logTemplate,DateTime.Now,LogEventLevel.Debug,audit);
+                    _publisher.Debug(logTemplate, audit);
                     break;
             }
         }

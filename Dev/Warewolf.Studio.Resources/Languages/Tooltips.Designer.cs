@@ -1308,6 +1308,96 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cancel the test execution.
+        /// </summary>
+        public static string ElasticsearchCancelTestTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchCancelTestTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit Elasticsearch Server Source.
+        /// </summary>
+        public static string ElasticsearchEditSourceToolTip {
+            get {
+                return ResourceManager.GetString("ElasticsearchEditSourceToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a new Elasticsearch Server Source.
+        /// </summary>
+        public static string ElasticsearchNewSourceToolTip {
+            get {
+                return ResourceManager.GetString("ElasticsearchNewSourceToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Elasticsearch server password.
+        /// </summary>
+        public static string ElasticsearchPasswordTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchPasswordTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Elasticsearch server index that will be used to index the data..
+        /// </summary>
+        public static string ElasticsearchSearchIndexTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchSearchIndexTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a preconfigured elasticsearch source..
+        /// </summary>
+        public static string ElasticsearchServersToolTip {
+            get {
+                return ResourceManager.GetString("ElasticsearchServersToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The address of the Elasticsearch server name to connect to. .
+        /// </summary>
+        public static string ElasticsearchSourceHostNameTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchSourceHostNameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The default port on which elasticsearch listens is 9200..
+        /// </summary>
+        public static string ElasticsearchSourcePortTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchSourcePortTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Test the elasticsearch source connection.
+        /// </summary>
+        public static string ElasticsearchTestTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchTestTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Elasticsearch server username.
+        /// </summary>
+        public static string ElasticsearchUsernameTooltip {
+            get {
+                return ResourceManager.GetString("ElasticsearchUsernameTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter the path to the attachments you want to send separated by a semicolon ;.
         /// </summary>
         public static string EmailToolTipAttachments {
@@ -1731,6 +1821,15 @@ namespace Warewolf.Studio.Resources.Languages {
         public static string LengthToolTipResult {
             get {
                 return ResourceManager.GetString("LengthToolTipResult", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Auditing Data Source.
+        /// </summary>
+        public static string LoggingViewAuditsDataSourceToolTip {
+            get {
+                return ResourceManager.GetString("LoggingViewAuditsDataSourceToolTip", resourceCulture);
             }
         }
         
@@ -3827,6 +3926,15 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to If selected it returns the content of the file in base64 format..
+        /// </summary>
+        public static string ReadFileToolTipIsResultBase64 {
+            get {
+                return ResourceManager.GetString("ReadFileToolTipIsResultBase64", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to For protected resources, specify the Password of an account with permission to perform this action. 
         ///By default the account running Warewolf Server.exe service will be used..
         /// </summary>
@@ -4206,11 +4314,56 @@ namespace Warewolf.Studio.Resources.Languages {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Run all tests in browser for all resources in this folder.
+        /// </summary>
+        public static string RunAllFolderTestsToolTip {
+            get {
+                return ResourceManager.GetString("RunAllFolderTestsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Run all tests in browser for all resources.
+        /// </summary>
+        public static string RunAllServerTestsToolTip {
+            get {
+                return ResourceManager.GetString("RunAllServerTestsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Run all tests in browser for this resource.
         /// </summary>
         public static string RunAllTestsToolTip {
             get {
                 return ResourceManager.GetString("RunAllTestsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Run coverage in browser for this resource.
+        /// </summary>
+        public static string RunCoverageToolTip {
+            get {
+                return ResourceManager.GetString("RunCoverageToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Run coverage in browser for all resources in this folder.
+        /// </summary>
+        public static string RunFolderCoverageToolTip {
+            get {
+                return ResourceManager.GetString("RunFolderCoverageToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Run coverage in browser for all resources.
+        /// </summary>
+        public static string RunServerCoverageToolTip {
+            get {
+                return ResourceManager.GetString("RunServerCoverageToolTip", resourceCulture);
             }
         }
         

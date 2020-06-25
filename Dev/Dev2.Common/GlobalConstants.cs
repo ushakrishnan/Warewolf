@@ -1,7 +1,7 @@
 #pragma warning disable
 /*
 *  Warewolf - Once bitten, there's no going back
-*  Copyright 2019 by Warewolf Ltd <alpha@warewolf.io>
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
 *  Licensed under GNU Affero General Public License 3.0 or later.
 *  Some rights reserved.
 *  Visit our website for more information <http://warewolf.io/>
@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Security.Principal;
+using Warewolf.Data;
 using Warewolf.Resource.Errors;
 
 namespace Dev2.Common
@@ -187,12 +188,12 @@ namespace Dev2.Common
 
         public static readonly string XMLPrefix = "~XML~";
         
-        public static readonly string CalculateTextConvertPrefix = "!~calculation~!";
+        public static readonly string CalculateTextConvertPrefix = DataLayerConstants.CalculateTextConvertPrefix;
 
         public static readonly string CalculateTextConvertSuffix = "!~~calculation~!";
         public static readonly string CalculateTextConvertFormat = CalculateTextConvertPrefix + "{0}" + CalculateTextConvertSuffix;
 
-        public static readonly string AggregateCalculateTextConvertPrefix = "!~aggcalculation~!";
+        public static readonly string AggregateCalculateTextConvertPrefix = DataLayerConstants.AggregateCalculateTextConvertPrefix;
         public static readonly string AggregateCalculateTextConvertSuffix = "!~~aggcalculation~!";
         public static readonly string AggregateCalculateTextConvertFormat = AggregateCalculateTextConvertPrefix + "{0}" + AggregateCalculateTextConvertSuffix;
         
@@ -398,6 +399,8 @@ where pn.nspname = 'public';
         public static readonly string WarewolfError = "Warewolf Error";
         public static readonly string WarewolfDebug = "Warewolf Debug";
         public static readonly string WarewolfWarn = "Warewolf Warn";
+
+        public static readonly string WarewolfLogsTemplate = "{@Data}";
         public static readonly string HTTPSAddress = "https://";
         public static readonly string HTTPAddress = "http://";
 

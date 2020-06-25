@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +27,7 @@ using Dev2.Common.Interfaces.ToolBase.ExchangeEmail;
 namespace Dev2.Core.Tests
 {
     [TestClass]
+    [DoNotParallelize]
     public class QueryManagerProxyTest
     {
         [TestMethod]
@@ -382,6 +383,15 @@ namespace Dev2.Core.Tests
             var ser = new Dev2JsonSerializer();
             var res = ser.SerializeToBuilder(new List<IRabbitMQServiceSourceDefinition>());
             RunTest("FetchRabbitMQServiceSources", new ExecuteMessage { HasError = true, Message = res }, new List<Tuple<string, object>>(), a => Assert.AreEqual(0, a.Count()), a => a.FetchRabbitMQServiceSources());
+        }
+        [TestMethod]
+        [Owner("Candice Daniel")]
+        [TestCategory(nameof(QueryManagerProxy))]
+        public void QueryManagerProxy_Fetch_FetchElasticsearchSources()
+        {
+            var ser = new Dev2JsonSerializer();
+            var res = ser.SerializeToBuilder(new List<IElasticsearchSourceDefinition>());
+            RunTest("FetchElasticsearchServiceSources", new ExecuteMessage { HasError = false, Message = res }, new List<Tuple<string, object>>(), a => Assert.AreEqual(0, a.Count()), a => a.FetchElasticsearchServiceSources());
         }
 
         [TestMethod]

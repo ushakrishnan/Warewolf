@@ -39,6 +39,7 @@ namespace Dev2.Common.Interfaces.Studio.Controller
         MessageBoxResult ShowDeleteConfirmation(string nameOfItemBeingDeleted);
         MessageBoxResult ShowCorruptTaskResult(string errorMessage);
         MessageBoxResult ShowNameChangedConflict(string oldName, string newName);
+        MessageBoxResult ShowLoggerSourceChange(string resourceName);
         MessageBoxResult ShowDeployConflict(int conflictCount);
         MessageBoxResult ShowDeployNoResourcesToDeploy(string header, string description);
         MessageBoxResult ShowDeployServerVersionConflict(string sourceServerVersion, string destinationServerVersion);
@@ -54,6 +55,7 @@ namespace Dev2.Common.Interfaces.Studio.Controller
         MessageBoxResult ShowDeleteVersionMessage(string displayName);
 
         void ShowInvalidCharacterMessage(string invalidText);
+        void ShowInvalidElasticsearchIndexFormatMessage(string invalidText);
 
         MessageBoxResult ShowDeployNameConflict(string message);
         MessageBoxResult ShowDeploySuccessful(string message);

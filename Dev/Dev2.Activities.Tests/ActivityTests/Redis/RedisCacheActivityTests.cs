@@ -27,6 +27,7 @@ using Warewolf.Driver.Redis;
 using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
 using Warewolf.UnitTestAttributes;
+using Activity = System.Activities.Activity;
 
 namespace Dev2.Tests.Activities.ActivityTests.Redis
 {
@@ -39,6 +40,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Redis
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Candice Daniel")]
         [TestCategory(nameof(RedisCacheActivity))]
         public void RedisActivity_Equal_BothareObjects()
@@ -50,6 +52,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Redis
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Candice Daniel")]
         [TestCategory(nameof(RedisCacheActivity))]
         public void RedisActivity_GivenEnvironmentIsNull_ShouldHaveNoDebugOutputs()
@@ -64,9 +67,9 @@ namespace Dev2.Tests.Activities.ActivityTests.Redis
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Siphamandla Dube")]
         [TestCategory(nameof(RedisCacheActivity))]
-        [Depends(Depends.ContainerType.AnonymousRedis)]
         public void RedisActivity_GetDebugInputs_ShouldReturnInnerActivityOutputs()
         {
             //----------------------Arrange----------------------
@@ -117,9 +120,9 @@ namespace Dev2.Tests.Activities.ActivityTests.Redis
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Siphamandla Dube")]
         [TestCategory(nameof(RedisCacheActivity))]
-        [Depends(Depends.ContainerType.AnonymousRedis)]
         public void RedisActivity_GetDebugInputs_With_DataListUtilIsEvaluated_ShouldReturnInnerActivityOutputs()
         {
             //----------------------Arrange----------------------
@@ -176,6 +179,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Redis
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Siphamandla Dube")]
         [TestCategory(nameof(RedisCacheActivity))]
         public void RedisActivity_GetDebugOutputs_ShouldReturnCachedData_TTLNotReached()
@@ -227,9 +231,9 @@ namespace Dev2.Tests.Activities.ActivityTests.Redis
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Siphamandla Dube")]
         [TestCategory(nameof(RedisCacheActivity))]
-        [Depends(Depends.ContainerType.AnonymousRedis)]
         public void RedisActivity_GetDebugOutputs_ShouldReturnInnerActivityOutputs_TTLReached()
         {
             //----------------------Arrange----------------------

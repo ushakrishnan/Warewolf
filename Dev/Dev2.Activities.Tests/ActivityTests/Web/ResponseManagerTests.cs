@@ -1,8 +1,17 @@
-﻿using System;
+﻿/*
+*  Warewolf - Once bitten, there's no going back
+*  Copyright 2020 by Warewolf Ltd <alpha@warewolf.io>
+*  Licensed under GNU Affero General Public License 3.0 or later.
+*  Some rights reserved.
+*  Visit our website for more information <http://warewolf.io/>
+*  AUTHORS <http://warewolf.io/authors.php> , CONTRIBUTORS <http://warewolf.io/contributors.php>
+*  @license GNU Affero General Public License <http://www.gnu.org/licenses/agpl-3.0.html>
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Dev2.Activities;
-using Dev2.Common.Interfaces;
 using Dev2.Common.Interfaces.Core.Graph;
 using Dev2.Common.Interfaces.DB;
 using Dev2.Interfaces;
@@ -11,10 +20,9 @@ using Dev2.Tests.Activities.XML;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Warewolf.Core;
+using Warewolf.Data;
 using Warewolf.Storage;
 using Warewolf.Storage.Interfaces;
-
-
 
 namespace Dev2.Tests.Activities.ActivityTests.Web
 {
@@ -22,6 +30,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
     public class WebResponseManagerTests
     {
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void OnCreation_GivenOutputDescriptionANdMapping_ShouldNotThrowException()
         {
@@ -39,6 +48,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void UnescapeRawXml_GivenEscapedXml_ShouldUnescapeXml()
         {
@@ -60,6 +70,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void UnescapeRawXml_GivenUnEscapedXml_ShouldUnescapeXml()
         {
@@ -81,6 +92,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         [ExpectedException(typeof(ArgumentNullException))]
         public void PushResponseIntoEnvironment_GivenNoDataObject_ShouldCatchObjectNullException()
@@ -100,6 +112,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenResponse_ShouldNotThrowException()
         {
@@ -149,6 +162,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenResponseAndIsJosn_ShouldAssignJsonObjects()
         {
@@ -189,6 +203,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenScalaResponseAndIsJosn_ShouldAssignJsonObjects()
         {
@@ -227,6 +242,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushXmlIntoEnvironment_GivenNull_ShouldLoggError()
         {
@@ -273,6 +289,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenNoResponse_ShouldNotThrowException()
         {
@@ -298,6 +315,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
 
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenNoResponse_ShouldNotAssignOutputs()
         {
@@ -327,6 +345,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenNoResponse_ShouldNotAaddError()
         {
@@ -353,6 +372,7 @@ namespace Dev2.Tests.Activities.ActivityTests.Web
         }
 
         [TestMethod]
+        [Timeout(60000)]
         [Owner("Nkosinathi Sangweni")]
         public void PushResponseIntoEnvironment_GivenEmptyMappedTo_ShouldNotAddPath()
         {

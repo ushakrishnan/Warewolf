@@ -9,8 +9,7 @@ using Moq;
 using Warewolf.Core;
 using Warewolf.Storage.Interfaces;
 
-
-
+[assembly: Parallelize(Workers = 0, Scope = ExecutionScope.MethodLevel)]
 namespace Dev2.Services.Execution.Tests
 {
     [TestClass]
@@ -18,6 +17,7 @@ namespace Dev2.Services.Execution.Tests
     {
         [TestMethod]
         [Owner("Nkosinathi Sangweni")]
+        [DoNotParallelize]
         public void OnConstruction_GivenDataObject_ShouldConstruct()
         {
             //---------------Set up test pack-------------------
@@ -81,6 +81,7 @@ namespace Dev2.Services.Execution.Tests
             //---------------Test Result -----------------------
             env.Verify(environment => environment.HasRecordSet(It.IsAny<string>()), Times.Exactly(2));
         }
+        
         static DataTable GetTable()
         {
             // Here we create a DataTable with four columns.

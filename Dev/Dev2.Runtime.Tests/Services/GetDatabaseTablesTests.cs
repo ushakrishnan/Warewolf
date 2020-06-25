@@ -24,7 +24,6 @@ using Dev2.Workspaces;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Newtonsoft.Json;
-using Warewolf.Test.Agent;
 using System.Linq;
 using Warewolf.UnitTestAttributes;
 
@@ -129,6 +128,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [TestMethod]
         [Owner("Hagashen Naidu")]
+        [DoNotParallelize]
         public void GetDatabaseTables_Execute_ValidDatabaseSource()
         {
             var parser = new Mock<IActivityParser>();
@@ -161,6 +161,7 @@ namespace Dev2.Tests.Runtime.Services
 
         [TestMethod]
         [Owner("Leon Rajindrapersadh")]
+        [DoNotParallelize]
         public void GetDatabaseTables_Execute_InValidDatabaseName()
         {
             var parser = new Mock<IActivityParser>();
